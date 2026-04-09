@@ -1,0 +1,90 @@
+cmake_minimum_required(VERSION 3.24)
+
+project(CTBoost VERSION 0.1.0 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+option(CTBOOST_ENABLE_CUDA "Build CUDA backends when a CUDA toolkit is available" ON)
+
+include(CheckLanguage)
+
+find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
+find_package(pybind11 CONFIG REQUIRED)
+
+set(CTBOOST_WITH_CUDA OFF)
+if(CTBOOST_ENABLE_CUDA)
+  check_language(CUDA)
+  if(CMAKE_CUDA_COMPILER)
+    enable_language(CUDA)
+    find_package(CUDAToolkit QUIET)
+    if(CUDAToolkit_FOUND)
+      if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+        set(CMAKE_CUDA_ARCHITECTURES native CACHE STRING "CUDA architectures to build")
+      endif()
+      set(CTBOOST_WITH_CUDA ON)
+      message(STATUS "CTBoost: CUDA toolkit detected, enabling GPU backend")
+    else()
+      message(STATUS "CTBoost: CUDA compiler found but toolkit missing, building CPU-only")
+    endif()
+  else()
+    message(STATUS "CTBoost: CUDA compiler not found, building CPU-only")
+  endif()
+else()
+  message(STATUS "CTBoost: CUDA support disabled explicitly, building CPU-only")
+endif()
+
+add_library(ctboost_core STATIC
+  src/core/build_info.cpp
+)
+
+target_include_directories(ctboost_core
+  PUBLIC
+    ${PROJECT_SOURCE_DIR}/include
+)
+
+target_compile_features(ctboost_core PUBLIC cxx_std_17)
+target_compile_definitions(ctboost_core
+  PUBLIC
+    CTBOOST_VERSION="${PROJECT_VERSION}"
+)
+
+if(CTBOOST_WITH_CUDA)
+  add_library(ctboost_cuda_backend STATIC
+    cuda/cuda_backend.cu
+  )
+
+  set_target_properties(ctboost_cuda_backend PROPERTIES
+    CUDA_SEPARABLE_COMPILATION ON
+    CUDA_STANDARD 17
+    CUDA_STANDARD_REQUIRED ON
+  )
+
+  target_include_directories(ctboost_cuda_backend
+    PUBLIC
+      ${PROJECT_SOURCE_DIR}/include
+      ${PROJECT_SOURCE_DIR}/cuda
+  )
+
+  target_compile_definitions(ctboost_core PUBLIC CTBOOST_WITH_CUDA=1)
+  target_link_libraries(ctboost_cuda_backend PUBLIC CUDA::cudart)
+  target_link_libraries(ctboost_core PUBLIC ctboost_cuda_backend)
+else()
+  target_sources(ctboost_core PRIVATE src/core/cuda_backend_stub.cpp)
+  target_compile_definitions(ctboost_core PUBLIC CTBOOST_WITH_CUDA=0)
+endif()
+
+pybind11_add_module(_core MODULE
+  src/bindings/module.cpp
+)
+
+target_link_libraries(_core PRIVATE ctboost_core)
+target_include_directories(_core PRIVATE ${PROJECT_SOURCE_DIR}/include)
+
+install(TARGETS _core
+  LIBRARY DESTINATION ctboost
+  RUNTIME DESTINATION ctboost
+  ARCHIVE DESTINATION ctboost
+)
