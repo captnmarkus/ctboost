@@ -1,4 +1,5 @@
 import ctboost
+import numpy as np
 
 
 def test_build_info_matches_package_version():
@@ -17,8 +18,11 @@ def test_pool_shell_preserves_constructor_shape():
         cat_features=[1],
         feature_names=["a", "b"],
     )
+    assert pool.num_rows == 2
+    assert pool.num_cols == 2
     assert pool.cat_features == [1]
     assert pool.feature_names == ["a", "b"]
+    np.testing.assert_array_equal(pool.label, np.array([0.0, 1.0], dtype=np.float32))
 
 
 def test_estimators_expose_sklearn_params():

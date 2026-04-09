@@ -1,11 +1,18 @@
-cmake_minimum_required(VERSION 3.24)
+cmake_minimum_required(VERSION 4.3)
 
 project(CTBoost VERSION 0.1.0 LANGUAGES CXX)
+
+if(DEFINED SKBUILD_PROJECT_VERSION_FULL)
+  set(CTBOOST_PACKAGE_VERSION "${SKBUILD_PROJECT_VERSION_FULL}")
+else()
+  set(CTBOOST_PACKAGE_VERSION "${PROJECT_VERSION}")
+endif()
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 
 option(CTBOOST_ENABLE_CUDA "Build CUDA backends when a CUDA toolkit is available" ON)
 
@@ -37,7 +44,13 @@ else()
 endif()
 
 add_library(ctboost_core STATIC
+  src/core/booster.cpp
   src/core/build_info.cpp
+  src/core/data.cpp
+  src/core/histogram.cpp
+  src/core/objective.cpp
+  src/core/statistics.cpp
+  src/core/tree.cpp
 )
 
 target_include_directories(ctboost_core
@@ -46,14 +59,16 @@ target_include_directories(ctboost_core
 )
 
 target_compile_features(ctboost_core PUBLIC cxx_std_17)
+target_link_libraries(ctboost_core PUBLIC pybind11::pybind11)
 target_compile_definitions(ctboost_core
   PUBLIC
-    CTBOOST_VERSION="${PROJECT_VERSION}"
+    CTBOOST_VERSION="${CTBOOST_PACKAGE_VERSION}"
 )
 
 if(CTBOOST_WITH_CUDA)
   add_library(ctboost_cuda_backend STATIC
     cuda/cuda_backend.cu
+    cuda/hist_kernels.cu
   )
 
   set_target_properties(ctboost_cuda_backend PROPERTIES
