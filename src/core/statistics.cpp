@@ -170,13 +170,16 @@ BinStatistics LinearStatistic::ComputeBinStatistics(const std::vector<float>& gr
   return stats;
 }
 
-LinearStatisticResult LinearStatistic::Evaluate(const std::vector<float>& gradients,
-                                                const std::vector<float>& hessians,
-                                                const std::vector<std::uint16_t>& bins,
-                                                std::size_t num_bins) const {
-  const BinStatistics stats = ComputeBinStatistics(gradients, hessians, bins, num_bins);
-
+LinearStatisticResult LinearStatistic::EvaluateFromBinStatistics(const BinStatistics& stats,
+                                                                double total_gradient,
+                                                                std::size_t sample_count,
+                                                                double gradient_variance) const {
   LinearStatisticResult result;
+
+  const std::size_t num_bins = stats.gradient_sums.size();
+  if (stats.hessian_sums.size() != num_bins || stats.counts.size() != num_bins) {
+    throw std::invalid_argument("bin statistics vectors must have the same size");
+  }
 
   std::vector<std::size_t> active_bins;
   active_bins.reserve(num_bins);
@@ -187,7 +190,7 @@ LinearStatisticResult LinearStatistic::Evaluate(const std::vector<float>& gradie
   }
 
   result.num_bins = active_bins.size();
-  if (gradients.size() <= 1 || active_bins.size() <= 1) {
+  if (sample_count <= 1 || active_bins.size() <= 1) {
     result.degrees_of_freedom = 0;
     result.p_value = 1.0;
     return result;
@@ -196,18 +199,8 @@ LinearStatisticResult LinearStatistic::Evaluate(const std::vector<float>& gradie
   result.statistic.reserve(active_bins.size());
   result.expectation.reserve(active_bins.size());
 
-  const double total_gradient = std::accumulate(
-      gradients.begin(), gradients.end(), 0.0,
-      [](double acc, float value) { return acc + static_cast<double>(value); });
-  const double node_count = static_cast<double>(gradients.size());
+  const double node_count = static_cast<double>(sample_count);
   const double gradient_mean = total_gradient / node_count;
-
-  double centered_sum_of_squares = 0.0;
-  for (const float gradient : gradients) {
-    const double centered = static_cast<double>(gradient) - gradient_mean;
-    centered_sum_of_squares += centered * centered;
-  }
-  const double gradient_variance = centered_sum_of_squares / node_count;
 
   for (const std::size_t active_bin : active_bins) {
     result.statistic.push_back(stats.gradient_sums[active_bin]);
@@ -247,6 +240,28 @@ LinearStatisticResult LinearStatistic::Evaluate(const std::vector<float>& gradie
       reduced_diff.begin(), reduced_diff.end(), solved.begin(), 0.0);
   result.p_value = ChiSquareSurvival(result.chi_square, result.degrees_of_freedom);
   return result;
+}
+
+LinearStatisticResult LinearStatistic::Evaluate(const std::vector<float>& gradients,
+                                                const std::vector<float>& hessians,
+                                                const std::vector<std::uint16_t>& bins,
+                                                std::size_t num_bins) const {
+  const BinStatistics stats = ComputeBinStatistics(gradients, hessians, bins, num_bins);
+  const double total_gradient = std::accumulate(
+      gradients.begin(), gradients.end(), 0.0,
+      [](double acc, float value) { return acc + static_cast<double>(value); });
+  const double gradient_mean =
+      gradients.empty() ? 0.0 : total_gradient / static_cast<double>(gradients.size());
+
+  double centered_sum_of_squares = 0.0;
+  for (const float gradient : gradients) {
+    const double centered = static_cast<double>(gradient) - gradient_mean;
+    centered_sum_of_squares += centered * centered;
+  }
+  const double gradient_variance =
+      gradients.empty() ? 0.0 : centered_sum_of_squares / static_cast<double>(gradients.size());
+
+  return EvaluateFromBinStatistics(stats, total_gradient, gradients.size(), gradient_variance);
 }
 
 double LinearStatistic::epsilon() const noexcept { return epsilon_; }

@@ -13,7 +13,8 @@ class ObjectiveFunction {
   virtual void compute_gradients(const std::vector<float>& preds,
                                  const std::vector<float>& labels,
                                  std::vector<float>& out_g,
-                                 std::vector<float>& out_h) const = 0;
+                                 std::vector<float>& out_h,
+                                 int num_classes = 1) const = 0;
 };
 
 class SquaredError final : public ObjectiveFunction {
@@ -21,7 +22,8 @@ class SquaredError final : public ObjectiveFunction {
   void compute_gradients(const std::vector<float>& preds,
                          const std::vector<float>& labels,
                          std::vector<float>& out_g,
-                         std::vector<float>& out_h) const override;
+                         std::vector<float>& out_h,
+                         int num_classes = 1) const override;
 };
 
 class LogLoss final : public ObjectiveFunction {
@@ -29,7 +31,17 @@ class LogLoss final : public ObjectiveFunction {
   void compute_gradients(const std::vector<float>& preds,
                          const std::vector<float>& labels,
                          std::vector<float>& out_g,
-                         std::vector<float>& out_h) const override;
+                         std::vector<float>& out_h,
+                         int num_classes = 1) const override;
+};
+
+class SoftmaxLoss final : public ObjectiveFunction {
+ public:
+  void compute_gradients(const std::vector<float>& preds,
+                         const std::vector<float>& labels,
+                         std::vector<float>& out_g,
+                         std::vector<float>& out_h,
+                         int num_classes = 1) const override;
 };
 
 std::unique_ptr<ObjectiveFunction> CreateObjectiveFunction(std::string_view name);

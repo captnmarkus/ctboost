@@ -20,13 +20,19 @@ class GradientBooster {
                   int max_depth = 6,
                   double alpha = 0.05,
                   double lambda_l2 = 1.0,
-                  std::size_t max_bins = 256);
+                  int num_classes = 1,
+                  std::size_t max_bins = 256,
+                  std::string task_type = "CPU",
+                  std::string devices = "0");
 
   void Fit(const Pool& pool);
   std::vector<float> Predict(const Pool& pool) const;
 
   const std::vector<double>& loss_history() const noexcept;
   std::size_t num_trees() const noexcept;
+  int num_classes() const noexcept;
+  int prediction_dimension() const noexcept;
+  std::vector<float> get_feature_importances() const;
 
  private:
   std::string objective_name_;
@@ -36,10 +42,15 @@ class GradientBooster {
   int max_depth_{6};
   double alpha_{0.05};
   double lambda_l2_{1.0};
+  int num_classes_{1};
+  int prediction_dimension_{1};
   std::size_t max_bins_{256};
+  bool use_gpu_{false};
+  std::string devices_{"0"};
   HistBuilder hist_builder_;
   std::vector<Tree> trees_;
   std::vector<double> loss_history_;
+  std::vector<double> feature_importance_sums_;
 };
 
 }  // namespace ctboost

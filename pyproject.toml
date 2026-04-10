@@ -1,6 +1,5 @@
 [build-system]
 requires = [
-  "cmake>=4.3",
   "pybind11>=2.12",
   "scikit-build-core>=0.10",
 ]
@@ -28,7 +27,7 @@ dev = [
 
 [tool.scikit-build]
 minimum-version = "build-system.requires"
-cmake.version = ">=4.3"
+cmake.version = ">=3.24"
 build-dir = "build/{wheel_tag}"
 wheel.packages = ["ctboost"]
 sdist.include = [

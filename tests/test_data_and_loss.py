@@ -54,3 +54,49 @@ def test_squared_error_gradients_match_numpy():
 
     np.testing.assert_allclose(gradients, preds - labels, rtol=1e-6, atol=1e-6)
     np.testing.assert_allclose(hessians, np.ones_like(preds), rtol=1e-6, atol=1e-6)
+
+
+def test_softmax_loss_gradients_match_numpy():
+    logits = np.array(
+        [
+            0.2,
+            -0.1,
+            1.1,
+            -0.3,
+            0.4,
+            0.8,
+            1.2,
+            -0.7,
+            0.1,
+        ],
+        dtype=np.float32,
+    )
+    labels = np.array([2.0, 1.0, 0.0], dtype=np.float32)
+
+    gradients, hessians = _core._debug_compute_objective(
+        "MultiClass",
+        logits,
+        labels,
+        num_classes=3,
+    )
+
+    logits_2d = logits.reshape(3, 3)
+    shifted = logits_2d - logits_2d.max(axis=1, keepdims=True)
+    probabilities = np.exp(shifted)
+    probabilities /= probabilities.sum(axis=1, keepdims=True)
+    expected_gradients = probabilities.copy()
+    expected_gradients[np.arange(labels.size), labels.astype(np.int64)] -= 1.0
+    expected_hessians = probabilities * (1.0 - probabilities)
+
+    np.testing.assert_allclose(
+        gradients.reshape(3, 3),
+        expected_gradients,
+        rtol=1e-6,
+        atol=1e-6,
+    )
+    np.testing.assert_allclose(
+        hessians.reshape(3, 3),
+        expected_hessians,
+        rtol=1e-6,
+        atol=1e-6,
+    )

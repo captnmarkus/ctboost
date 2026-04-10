@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.3)
+cmake_minimum_required(VERSION 3.24...4.3)
 
 project(CTBoost VERSION 0.1.0 LANGUAGES CXX)
 
@@ -11,6 +11,7 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_CUDA_RUNTIME_LIBRARY Shared)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 
@@ -59,7 +60,7 @@ target_include_directories(ctboost_core
 )
 
 target_compile_features(ctboost_core PUBLIC cxx_std_17)
-target_link_libraries(ctboost_core PUBLIC pybind11::pybind11)
+target_link_libraries(ctboost_core PUBLIC pybind11::headers Python::Module)
 target_compile_definitions(ctboost_core
   PUBLIC
     CTBOOST_VERSION="${CTBOOST_PACKAGE_VERSION}"
@@ -72,7 +73,9 @@ if(CTBOOST_WITH_CUDA)
   )
 
   set_target_properties(ctboost_cuda_backend PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
     CUDA_SEPARABLE_COMPILATION ON
+    CUDA_RESOLVE_DEVICE_SYMBOLS ON
     CUDA_STANDARD 17
     CUDA_STANDARD_REQUIRED ON
   )
@@ -97,6 +100,11 @@ pybind11_add_module(_core MODULE
 
 target_link_libraries(_core PRIVATE ctboost_core)
 target_include_directories(_core PRIVATE ${PROJECT_SOURCE_DIR}/include)
+
+if(CTBOOST_WITH_CUDA)
+  target_link_libraries(_core PRIVATE ctboost_cuda_backend)
+  set_target_properties(_core PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
+endif()
 
 install(TARGETS _core
   LIBRARY DESTINATION ctboost

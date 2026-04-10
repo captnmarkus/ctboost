@@ -9,6 +9,8 @@
 namespace ctboost {
 namespace {
 
+constexpr std::size_t kMaxCategoricalBins = 256;
+
 bool ValidateMaxBins(std::size_t max_bins) {
   return max_bins > 0 &&
          max_bins <= static_cast<std::size_t>(std::numeric_limits<std::uint16_t>::max());
@@ -125,9 +127,9 @@ HistMatrix HistBuilder::Build(const Pool& pool) const {
       std::map<float, std::uint16_t> category_to_bin;
       for (std::size_t row = 0; row < hist.num_rows; ++row) {
         category_to_bin.emplace(column[row], 0);
-        if (category_to_bin.size() >
-            static_cast<std::size_t>(std::numeric_limits<std::uint16_t>::max())) {
-          throw std::invalid_argument("categorical feature has too many unique categories");
+        if (category_to_bin.size() > kMaxCategoricalBins) {
+          throw std::invalid_argument(
+              "categorical feature has too many unique categories; maximum supported is 256");
         }
       }
 

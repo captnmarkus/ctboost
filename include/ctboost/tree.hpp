@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <vector>
@@ -10,13 +11,17 @@
 
 namespace ctboost {
 
+inline constexpr std::size_t kMaxCategoricalRouteBins = 256;
+
 struct Node {
   bool is_leaf{true};
+  bool is_categorical_split{false};
   int split_feature_id{-1};
   std::uint16_t split_bin_index{0};
   int left_child{-1};
   int right_child{-1};
   float leaf_weight{0.0F};
+  std::array<std::uint8_t, kMaxCategoricalRouteBins> left_categories{};
 };
 
 class Tree {
@@ -26,12 +31,14 @@ class Tree {
              const std::vector<float>& hessians,
              double alpha,
              int max_depth,
-             double lambda_l2);
+             double lambda_l2,
+             bool use_gpu);
 
   float PredictRow(const Pool& pool, std::size_t row) const;
   float PredictBinnedRow(const HistMatrix& hist, std::size_t row) const;
   std::vector<float> Predict(const Pool& pool) const;
   const std::vector<Node>& nodes() const noexcept;
+  const std::vector<double>& feature_importances() const noexcept;
 
  private:
   int BuildNode(const HistMatrix& hist,
@@ -42,6 +49,7 @@ class Tree {
                 double alpha,
                 int max_depth,
                 double lambda_l2,
+                bool use_gpu,
                 const LinearStatistic& statistic_engine);
 
   std::uint16_t BinValue(std::size_t feature_index, float value) const;
@@ -51,6 +59,7 @@ class Tree {
   std::vector<std::size_t> cut_offsets_;
   std::vector<float> cut_values_;
   std::vector<std::uint8_t> categorical_mask_;
+  std::vector<double> feature_importances_;
 };
 
 }  // namespace ctboost

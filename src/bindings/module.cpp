@@ -97,14 +97,26 @@ PYBIND11_MODULE(_core, m) {
       });
 
   py::class_<ctboost::GradientBooster>(m, "GradientBooster")
-      .def(py::init<std::string, int, double, int, double, double, std::size_t>(),
+      .def(py::init<std::string,
+                    int,
+                    double,
+                    int,
+                    double,
+                    double,
+                    int,
+                    std::size_t,
+                    std::string,
+                    std::string>(),
            py::arg("objective") = "RMSE",
            py::arg("iterations") = 100,
            py::arg("learning_rate") = 0.1,
            py::arg("max_depth") = 6,
            py::arg("alpha") = 0.05,
            py::arg("lambda_l2") = 1.0,
-           py::arg("max_bins") = 256)
+           py::arg("num_classes") = 1,
+           py::arg("max_bins") = 256,
+           py::arg("task_type") = "CPU",
+           py::arg("devices") = "0")
       .def("fit",
            [](ctboost::GradientBooster& booster, const ctboost::Pool& pool)
                -> ctboost::GradientBooster& {
@@ -121,7 +133,12 @@ PYBIND11_MODULE(_core, m) {
       .def("loss_history", [](const ctboost::GradientBooster& booster) {
         return booster.loss_history();
       })
-      .def("num_trees", &ctboost::GradientBooster::num_trees);
+      .def("num_trees", &ctboost::GradientBooster::num_trees)
+      .def("num_classes", &ctboost::GradientBooster::num_classes)
+      .def("prediction_dimension", &ctboost::GradientBooster::prediction_dimension)
+      .def("feature_importances", [](const ctboost::GradientBooster& booster) {
+        return VectorToArray(booster.get_feature_importances());
+      });
 
   m.def("build_info", []() {
     const ctboost::BuildInfo info = ctboost::GetBuildInfo();
@@ -137,7 +154,8 @@ PYBIND11_MODULE(_core, m) {
   m.def("_debug_compute_objective",
         [](const std::string& objective_name,
            py::array_t<float, py::array::forcecast> preds,
-           py::array_t<float, py::array::forcecast> labels) {
+           py::array_t<float, py::array::forcecast> labels,
+           int num_classes) {
           const auto pred_values = ArrayToVector(preds, "preds");
           const auto label_values = ArrayToVector(labels, "labels");
           std::unique_ptr<ctboost::ObjectiveFunction> objective =
@@ -145,12 +163,14 @@ PYBIND11_MODULE(_core, m) {
 
           std::vector<float> gradients;
           std::vector<float> hessians;
-          objective->compute_gradients(pred_values, label_values, gradients, hessians);
+          objective->compute_gradients(
+              pred_values, label_values, gradients, hessians, num_classes);
           return py::make_tuple(VectorToArray(gradients), VectorToArray(hessians));
         },
         py::arg("objective_name"),
         py::arg("preds"),
-        py::arg("labels"));
+        py::arg("labels"),
+        py::arg("num_classes") = 1);
 
   m.def("_debug_compute_pvalue",
         [](py::array_t<float, py::array::forcecast> gradients,
