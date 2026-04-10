@@ -28,6 +28,18 @@ def _normalize_categorical_features(cat_features: Optional[List[int]]) -> List[i
     return sorted({int(feature_index) for feature_index in cat_features})
 
 
+def _is_pandas_categorical_series(series: Any) -> bool:
+    if pd is None:
+        return False
+
+    dtype = series.dtype
+    return bool(
+        isinstance(dtype, pd.CategoricalDtype)
+        or pd.api.types.is_object_dtype(dtype)
+        or pd.api.types.is_string_dtype(dtype)
+    )
+
+
 def _series_to_float32(series: Any) -> np.ndarray:
     try:
         values = series.to_numpy(dtype=np.float32, copy=False)
@@ -43,16 +55,13 @@ def _dataframe_to_numpy(
     data_array = np.empty((dataframe.shape[0], dataframe.shape[1]), dtype=np.float32)
 
     for column_index, (_, series) in enumerate(dataframe.items()):
-        if series.dtype.name == "category":
+        if _is_pandas_categorical_series(series):
             resolved_cat_features.add(column_index)
-            data_array[:, column_index] = series.cat.codes.to_numpy(copy=False)
-            continue
-
-        if series.dtype == object or series.dtype.name == "object":
-            resolved_cat_features.add(column_index)
-            data_array[:, column_index] = (
-                series.astype("category").cat.codes.to_numpy(copy=False)
-            )
+            if isinstance(series.dtype, pd.CategoricalDtype):
+                codes = series.cat.codes
+            else:
+                codes = series.astype("category").cat.codes
+            data_array[:, column_index] = codes.to_numpy(copy=False)
             continue
 
         data_array[:, column_index] = _series_to_float32(series)

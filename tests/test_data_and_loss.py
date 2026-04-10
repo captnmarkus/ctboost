@@ -37,7 +37,7 @@ def test_pool_accepts_pandas_dataframe_with_categorical_columns():
         {
             "numeric": [1.0, 2.0, 3.0],
             "city": pd.Categorical(["berlin", "paris", "berlin"]),
-            "segment": ["retail", "enterprise", "retail"],
+            "segment": pd.Series(["retail", "enterprise", "retail"], dtype="string"),
         }
     )
     label = pd.Series([0.0, 1.0, 0.0], dtype="float32")
