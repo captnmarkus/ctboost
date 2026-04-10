@@ -68,8 +68,8 @@ build = ["cp38-*", "cp39-*", "cp310-*", "cp311-*", "cp312-*", "cp313-*", "cp314-
 skip = ["*-musllinux_*"]
 dependency-versions = "pinned"
 build-verbosity = 1
-test-requires = ["pytest", "scikit-learn", "numpy", "pandas"]
-test-command = "python -X faulthandler -m pytest {project}/tests -q"
+test-requires = ["pytest"]
+test-command = "python -X faulthandler -m pytest {project}/tests/test_wheel_smoke.py -q"
 
 [tool.cibuildwheel.config-settings]
 "cmake.define.CTBOOST_ENABLE_CUDA" = "OFF"

@@ -22,7 +22,8 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 ## Validation
 
 - CI validates CMake-based CPU builds across Windows, Linux, and macOS.
-- Wheel builds run the Python test suite against built artifacts.
+- Wheel builds run a dedicated smoke test against built artifacts.
+- The broader Python test suite runs in the regular CI matrix.
 - Source builds can optionally enable CUDA when a suitable toolkit is available.
 
 ## Repository Layout

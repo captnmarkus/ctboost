@@ -234,7 +234,7 @@ Wheel builds are configured through `cibuildwheel` for:
 GitHub Actions workflows:
 
 - `.github/workflows/cmake.yml`: configures, builds, installs, and tests CPU builds on Ubuntu, Windows, and macOS for pushes and pull requests
-- `.github/workflows/publish.yml`: builds release wheels and the sdist, publishes tagged releases, and uploads a dedicated Linux GPU wheel artifact
+- `.github/workflows/publish.yml`: builds release wheels and the sdist, runs wheel smoke tests on built artifacts, publishes tagged releases, and uploads a dedicated Linux GPU wheel artifact
 
 The standard release workflow builds CPU-only wheels by setting:
 
