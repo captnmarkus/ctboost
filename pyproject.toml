@@ -1,6 +1,5 @@
 [build-system]
 requires = [
-  "ninja>=1.11; platform_system == 'Windows'",
   "pybind11>=2.12,<3",
   "scikit-build-core>=0.10",
 ]
@@ -75,8 +74,8 @@ test-command = "python -X faulthandler -m pytest {project}/tests/test_wheel_smok
 "cmake.define.CTBOOST_ENABLE_CUDA" = "OFF"
 
 [tool.cibuildwheel.linux]
-manylinux-x86_64-image = "manylinux2014"
-manylinux-aarch64-image = "manylinux2014"
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
 
 [tool.pytest.ini_options]
 addopts = "-ra"

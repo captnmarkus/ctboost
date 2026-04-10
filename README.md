@@ -227,7 +227,7 @@ cmake --build build --config Release --parallel
 Wheel builds are configured through `cibuildwheel` for:
 
 - Windows `amd64`
-- Linux `x86_64` and `aarch64`
+- Linux `x86_64` and `aarch64` using the current manylinux baseline
 - macOS `universal2`
 - CPython `3.8`, `3.9`, `3.10`, `3.11`, `3.12`, `3.13`, and `3.14`
 

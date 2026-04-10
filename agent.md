@@ -16,7 +16,7 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 - Wheel builds are driven by `cibuildwheel`.
 - CPU wheel coverage targets Windows `amd64`, Linux `x86_64` and `aarch64`, and macOS `universal2`.
 - Wheel coverage targets current supported CPython releases declared in project metadata.
-- Linux wheels target `manylinux2014` for broad compatibility.
+- Linux CPU wheels target the current `cibuildwheel` manylinux baseline (`manylinux_2_28`).
 - PyPI publishing is handled through GitHub Actions with trusted publishing.
 
 ## Validation
