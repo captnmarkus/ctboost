@@ -150,6 +150,25 @@ void UpdatePredictions(const Tree& tree,
   }
 }
 
+void UpdatePredictions(const Tree& tree,
+                       const Pool& pool,
+                       double learning_rate,
+                       int prediction_dimension,
+                       int class_index,
+                       std::vector<float>& predictions) {
+  if (prediction_dimension == 1) {
+    for (std::size_t row = 0; row < pool.num_rows(); ++row) {
+      predictions[row] += learning_rate * tree.PredictRow(pool, row);
+    }
+    return;
+  }
+
+  for (std::size_t row = 0; row < pool.num_rows(); ++row) {
+    const std::size_t offset = row * static_cast<std::size_t>(prediction_dimension) + class_index;
+    predictions[offset] += learning_rate * tree.PredictRow(pool, row);
+  }
+}
+
 void AccumulateFeatureImportances(const Tree& tree, std::vector<double>& feature_importance_sums) {
   const auto& tree_feature_importances = tree.feature_importances();
   for (std::size_t feature = 0; feature < tree_feature_importances.size(); ++feature) {
@@ -270,11 +289,9 @@ void GradientBooster::Fit(const Pool& pool,
   int completed_iterations = 0;
   bool early_stopped = false;
 
-  HistMatrix eval_hist;
   const std::vector<float>* eval_labels = nullptr;
   std::vector<float> eval_predictions;
   if (eval_pool != nullptr) {
-    eval_hist = hist_builder_.Build(*eval_pool);
     eval_labels = &eval_pool->labels();
     eval_predictions.assign(
         eval_pool->num_rows() * static_cast<std::size_t>(prediction_dimension_), 0.0F);
@@ -292,8 +309,7 @@ void GradientBooster::Fit(const Pool& pool,
 
       UpdatePredictions(tree, hist, learning_rate_, prediction_dimension_, 0, predictions);
       if (eval_pool != nullptr) {
-        UpdatePredictions(
-            tree, eval_hist, learning_rate_, prediction_dimension_, 0, eval_predictions);
+        UpdatePredictions(tree, *eval_pool, learning_rate_, prediction_dimension_, 0, eval_predictions);
       }
       AccumulateFeatureImportances(tree, feature_importance_sums_);
 
@@ -324,7 +340,7 @@ void GradientBooster::Fit(const Pool& pool,
         if (eval_pool != nullptr) {
           UpdatePredictions(
               tree,
-              eval_hist,
+              *eval_pool,
               learning_rate_,
               prediction_dimension_,
               class_index,

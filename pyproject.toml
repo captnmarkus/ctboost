@@ -62,7 +62,7 @@ sdist.include = [
 
 [tool.cibuildwheel]
 build = ["cp38-*", "cp39-*", "cp310-*", "cp311-*", "cp312-*"]
-skip = ["pp*", "*i686"]
+archs = ["auto64"]
 environment = "CMAKE_ARGS='-DCTBOOST_ENABLE_CUDA=OFF'"
 test-requires = ["pytest", "scikit-learn", "numpy", "pandas"]
 test-command = "pytest {project}/tests"
