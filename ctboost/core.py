@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, List, Optional
 
 import numpy as np
 
@@ -16,9 +16,9 @@ class Pool:
         self,
         data: Any,
         label: Any,
-        cat_features: list[int] | None = None,
+        cat_features: Optional[List[int]] = None,
         weight: Any = None,
-        feature_names: list[str] | None = None,
+        feature_names: Optional[List[str]] = None,
     ) -> None:
         if cat_features is None:
             cat_features = []

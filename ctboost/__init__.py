@@ -1,5 +1,7 @@
 """Public Python API for CTBoost."""
 
+from typing import Any, Dict
+
 from ._core import build_info as _native_build_info
 from ._version import __version__
 from .core import Pool
@@ -7,7 +9,7 @@ from .sklearn import CBoostClassifier, CBoostRegressor, CTBoostClassifier, CTBoo
 from .training import Booster, train
 
 
-def build_info() -> dict[str, object]:
+def build_info() -> Dict[str, Any]:
     info = dict(_native_build_info())
     info["version"] = __version__
     return info

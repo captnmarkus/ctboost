@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, List, Optional
 
 import numpy as np
 
@@ -17,7 +17,7 @@ class Booster:
     def __init__(self, handle: Any) -> None:
         self._handle = handle
 
-    def predict(self, data: Pool | Any) -> np.ndarray:
+    def predict(self, data: Any) -> np.ndarray:
         pool = data if isinstance(data, Pool) else Pool(
             data=data,
             label=np.zeros(np.asarray(data).shape[0], dtype=np.float32),
@@ -29,7 +29,7 @@ class Booster:
         return raw
 
     @property
-    def loss_history(self) -> list[float]:
+    def loss_history(self) -> List[float]:
         return list(self._handle.loss_history())
 
     @property
@@ -48,10 +48,10 @@ class Booster:
 def train(
     pool: Pool,
     params: Mapping[str, Any],
-    num_boost_round: int | None = None,
+    num_boost_round: Optional[int] = None,
     *,
     eval_set: Any = None,
-    early_stopping_rounds: int | None = None,
+    early_stopping_rounds: Optional[int] = None,
 ) -> Booster:
     if not isinstance(pool, Pool):
         raise TypeError("pool must be an instance of ctboost.Pool")

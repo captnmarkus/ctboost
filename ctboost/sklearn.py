@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Optional
 
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
@@ -20,7 +20,7 @@ class _BaseCTBoost(BaseEstimator):
         max_depth: int = 6,
         alpha: float = 0.05,
         lambda_l2: float = 1.0,
-        loss_function: str | None = None,
+        loss_function: Optional[str] = None,
         task_type: str = "CPU",
         devices: str = "0",
     ) -> None:
@@ -39,7 +39,7 @@ class _BaseCTBoost(BaseEstimator):
         y: Any = None,
         *,
         eval_set: Any = None,
-        early_stopping_rounds: int | None = None,
+        early_stopping_rounds: Optional[int] = None,
         objective: str,
         num_classes: int = 1,
     ) -> "_BaseCTBoost":
@@ -107,7 +107,7 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
         y: Any = None,
         *,
         eval_set: Any = None,
-        early_stopping_rounds: int | None = None,
+        early_stopping_rounds: Optional[int] = None,
     ) -> "CTBoostClassifier":
         if isinstance(X, Pool):
             raw_labels = np.asarray(X.label if y is None else y)
@@ -203,7 +203,7 @@ class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
         y: Any = None,
         *,
         eval_set: Any = None,
-        early_stopping_rounds: int | None = None,
+        early_stopping_rounds: Optional[int] = None,
     ) -> "CTBoostRegressor":
         return self._fit_impl(
             X,
