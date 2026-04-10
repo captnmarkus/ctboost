@@ -1,6 +1,6 @@
 [build-system]
 requires = [
-  "pybind11>=2.12",
+  "pybind11>=2.12,<3",
   "scikit-build-core>=0.10",
 ]
 build-backend = "scikit_build_core.build"
@@ -65,7 +65,7 @@ build = ["cp38-*", "cp39-*", "cp310-*", "cp311-*", "cp312-*"]
 archs = ["auto64"]
 environment = "CMAKE_ARGS='-DCTBOOST_ENABLE_CUDA=OFF'"
 test-requires = ["pytest", "scikit-learn", "numpy", "pandas"]
-test-command = "pytest {project}/tests"
+test-command = "python -X faulthandler -m pytest {project}/tests -q"
 
 [tool.pytest.ini_options]
 addopts = "-ra"
