@@ -30,6 +30,30 @@ def test_pool_rejects_mismatched_label_length():
         ctboost.Pool(data, label)
 
 
+def test_pool_accepts_pandas_dataframe_with_categorical_columns():
+    pd = pytest.importorskip("pandas")
+
+    data = pd.DataFrame(
+        {
+            "numeric": [1.0, 2.0, 3.0],
+            "city": pd.Categorical(["berlin", "paris", "berlin"]),
+            "segment": ["retail", "enterprise", "retail"],
+        }
+    )
+    label = pd.Series([0.0, 1.0, 0.0], dtype="float32")
+
+    pool = ctboost.Pool(data, label, cat_features=[0])
+
+    assert pool.num_rows == 3
+    assert pool.num_cols == 3
+    assert pool.cat_features == [0, 1, 2]
+    assert pool.feature_names == ["numeric", "city", "segment"]
+    assert pool.data.dtype == np.float32
+    np.testing.assert_array_equal(pool.label, label.to_numpy())
+    assert set(np.unique(pool.data[:, 1]).tolist()) == {0.0, 1.0}
+    assert set(np.unique(pool.data[:, 2]).tolist()) == {0.0, 1.0}
+
+
 def test_logloss_gradients_match_numpy():
     preds = np.array([-2.0, -0.5, 0.0, 1.75], dtype=np.float32)
     labels = np.array([0.0, 1.0, 0.0, 1.0], dtype=np.float32)

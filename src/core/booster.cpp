@@ -37,6 +37,13 @@ bool IsMulticlassObjective(const std::string& normalized_objective) {
          normalized_objective == "softmaxloss";
 }
 
+bool SameCategoricalFeatures(const Pool& lhs, const Pool& rhs) {
+  const auto& lhs_features = lhs.cat_features();
+  const auto& rhs_features = rhs.cat_features();
+  return lhs_features.size() == rhs_features.size() &&
+         std::is_permutation(lhs_features.begin(), lhs_features.end(), rhs_features.begin());
+}
+
 int LabelToClassIndex(float label, int num_classes) {
   const float rounded = std::round(label);
   if (std::fabs(label - rounded) > 1e-6F) {
@@ -124,6 +131,41 @@ std::string NormalizeTaskType(std::string task_type) {
   return NormalizeToken(std::move(task_type));
 }
 
+void UpdatePredictions(const Tree& tree,
+                       const HistMatrix& hist,
+                       double learning_rate,
+                       int prediction_dimension,
+                       int class_index,
+                       std::vector<float>& predictions) {
+  if (prediction_dimension == 1) {
+    for (std::size_t row = 0; row < hist.num_rows; ++row) {
+      predictions[row] += learning_rate * tree.PredictBinnedRow(hist, row);
+    }
+    return;
+  }
+
+  for (std::size_t row = 0; row < hist.num_rows; ++row) {
+    const std::size_t offset = row * static_cast<std::size_t>(prediction_dimension) + class_index;
+    predictions[offset] += learning_rate * tree.PredictBinnedRow(hist, row);
+  }
+}
+
+void AccumulateFeatureImportances(const Tree& tree, std::vector<double>& feature_importance_sums) {
+  const auto& tree_feature_importances = tree.feature_importances();
+  for (std::size_t feature = 0; feature < tree_feature_importances.size(); ++feature) {
+    feature_importance_sums[feature] += tree_feature_importances[feature];
+  }
+}
+
+void RecomputeFeatureImportances(const std::vector<Tree>& trees,
+                                 std::size_t num_features,
+                                 std::vector<double>& feature_importance_sums) {
+  feature_importance_sums.assign(num_features, 0.0);
+  for (const Tree& tree : trees) {
+    AccumulateFeatureImportances(tree, feature_importance_sums);
+  }
+}
+
 }  // namespace
 
 GradientBooster::GradientBooster(std::string objective,
@@ -195,15 +237,49 @@ GradientBooster::GradientBooster(std::string objective,
   }
 }
 
-void GradientBooster::Fit(const Pool& pool) {
+void GradientBooster::Fit(const Pool& pool,
+                          const Pool* eval_pool,
+                          int early_stopping_rounds) {
+  if (early_stopping_rounds < 0) {
+    early_stopping_rounds = 0;
+  }
+  if (early_stopping_rounds > 0 && eval_pool == nullptr) {
+    throw std::invalid_argument("early_stopping_rounds requires eval_pool");
+  }
+  if (eval_pool != nullptr) {
+    if (eval_pool->num_cols() != pool.num_cols()) {
+      throw std::invalid_argument(
+          "eval_pool must have the same number of columns as the training pool");
+    }
+    if (!SameCategoricalFeatures(pool, *eval_pool)) {
+      throw std::invalid_argument(
+          "eval_pool categorical feature indices must match the training pool");
+    }
+  }
+
   trees_.clear();
   loss_history_.clear();
+  best_iteration_ = -1;
+  best_loss_ = 0.0;
 
   const HistMatrix hist = hist_builder_.Build(pool);
   const auto& labels = pool.labels();
   std::vector<float> predictions(
       pool.num_rows() * static_cast<std::size_t>(prediction_dimension_), 0.0F);
   feature_importance_sums_.assign(pool.num_cols(), 0.0);
+  int completed_iterations = 0;
+  bool early_stopped = false;
+
+  HistMatrix eval_hist;
+  const std::vector<float>* eval_labels = nullptr;
+  std::vector<float> eval_predictions;
+  if (eval_pool != nullptr) {
+    eval_hist = hist_builder_.Build(*eval_pool);
+    eval_labels = &eval_pool->labels();
+    eval_predictions.assign(
+        eval_pool->num_rows() * static_cast<std::size_t>(prediction_dimension_), 0.0F);
+    best_loss_ = std::numeric_limits<double>::infinity();
+  }
 
   for (int iteration = 0; iteration < iterations_; ++iteration) {
     std::vector<float> gradients;
@@ -214,14 +290,12 @@ void GradientBooster::Fit(const Pool& pool) {
       Tree tree;
       tree.Build(hist, gradients, hessians, alpha_, max_depth_, lambda_l2_, use_gpu_);
 
-      for (std::size_t row = 0; row < pool.num_rows(); ++row) {
-        predictions[row] += learning_rate_ * tree.PredictBinnedRow(hist, row);
+      UpdatePredictions(tree, hist, learning_rate_, prediction_dimension_, 0, predictions);
+      if (eval_pool != nullptr) {
+        UpdatePredictions(
+            tree, eval_hist, learning_rate_, prediction_dimension_, 0, eval_predictions);
       }
-
-      const auto& tree_feature_importances = tree.feature_importances();
-      for (std::size_t feature = 0; feature < tree_feature_importances.size(); ++feature) {
-        feature_importance_sums_[feature] += tree_feature_importances[feature];
-      }
+      AccumulateFeatureImportances(tree, feature_importance_sums_);
 
       trees_.push_back(std::move(tree));
     } else {
@@ -245,23 +319,58 @@ void GradientBooster::Fit(const Pool& pool) {
                    lambda_l2_,
                    use_gpu_);
 
-        for (std::size_t row = 0; row < pool.num_rows(); ++row) {
-          const std::size_t offset =
-              row * static_cast<std::size_t>(prediction_dimension_) + class_index;
-          predictions[offset] += learning_rate_ * tree.PredictBinnedRow(hist, row);
+        UpdatePredictions(
+            tree, hist, learning_rate_, prediction_dimension_, class_index, predictions);
+        if (eval_pool != nullptr) {
+          UpdatePredictions(
+              tree,
+              eval_hist,
+              learning_rate_,
+              prediction_dimension_,
+              class_index,
+              eval_predictions);
         }
-
-        const auto& tree_feature_importances = tree.feature_importances();
-        for (std::size_t feature = 0; feature < tree_feature_importances.size(); ++feature) {
-          feature_importance_sums_[feature] += tree_feature_importances[feature];
-        }
+        AccumulateFeatureImportances(tree, feature_importance_sums_);
 
         trees_.push_back(std::move(tree));
       }
     }
 
     loss_history_.push_back(ComputeLoss(objective_name_, predictions, labels, num_classes_));
+    completed_iterations = iteration + 1;
+    if (eval_pool == nullptr) {
+      continue;
+    }
+
+    const double eval_loss =
+        ComputeLoss(objective_name_, eval_predictions, *eval_labels, num_classes_);
+    if (best_iteration_ < 0 || eval_loss < best_loss_) {
+      best_iteration_ = iteration;
+      best_loss_ = eval_loss;
+      continue;
+    }
+
+    if (early_stopping_rounds > 0 &&
+        iteration - best_iteration_ >= early_stopping_rounds) {
+      early_stopped = true;
+      break;
+    }
   }
+
+  if (eval_pool == nullptr) {
+    best_iteration_ = completed_iterations > 0 ? completed_iterations - 1 : -1;
+    return;
+  }
+
+  if (!early_stopped || best_iteration_ < 0) {
+    return;
+  }
+
+  const std::size_t retained_iterations =
+      static_cast<std::size_t>(best_iteration_ + 1);
+  trees_.resize(retained_iterations * static_cast<std::size_t>(prediction_dimension_));
+  loss_history_.resize(retained_iterations);
+  RecomputeFeatureImportances(trees_, pool.num_cols(), feature_importance_sums_);
 }
 
 std::vector<float> GradientBooster::Predict(const Pool& pool) const {
@@ -296,6 +405,8 @@ std::size_t GradientBooster::num_trees() const noexcept { return trees_.size(); 
 int GradientBooster::num_classes() const noexcept { return num_classes_; }
 
 int GradientBooster::prediction_dimension() const noexcept { return prediction_dimension_; }
+
+int GradientBooster::best_iteration() const noexcept { return best_iteration_; }
 
 std::vector<float> GradientBooster::get_feature_importances() const {
   std::vector<float> importances(feature_importance_sums_.size(), 0.0F);

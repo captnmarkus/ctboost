@@ -118,12 +118,22 @@ PYBIND11_MODULE(_core, m) {
            py::arg("task_type") = "CPU",
            py::arg("devices") = "0")
       .def("fit",
-           [](ctboost::GradientBooster& booster, const ctboost::Pool& pool)
+           [](ctboost::GradientBooster& booster,
+              const ctboost::Pool& pool,
+              py::object eval_pool,
+              int early_stopping_rounds)
                -> ctboost::GradientBooster& {
-             booster.Fit(pool);
+             if (eval_pool.is_none()) {
+               booster.Fit(pool, nullptr, early_stopping_rounds);
+             } else {
+               const auto& eval_pool_ref = eval_pool.cast<const ctboost::Pool&>();
+               booster.Fit(pool, &eval_pool_ref, early_stopping_rounds);
+             }
              return booster;
            },
            py::arg("pool"),
+           py::arg("eval_pool") = py::none(),
+           py::arg("early_stopping_rounds") = 0,
            py::return_value_policy::reference_internal)
       .def("predict",
            [](const ctboost::GradientBooster& booster, const ctboost::Pool& pool) {
@@ -134,6 +144,7 @@ PYBIND11_MODULE(_core, m) {
         return booster.loss_history();
       })
       .def("num_trees", &ctboost::GradientBooster::num_trees)
+      .def("best_iteration", &ctboost::GradientBooster::best_iteration)
       .def("num_classes", &ctboost::GradientBooster::num_classes)
       .def("prediction_dimension", &ctboost::GradientBooster::prediction_dimension)
       .def("feature_importances", [](const ctboost::GradientBooster& booster) {

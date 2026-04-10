@@ -41,6 +41,7 @@ Issues = "https://github.com/captnmarkus/ctboost/issues"
 
 [project.optional-dependencies]
 dev = [
+  "pandas",
   "pytest>=8.0",
 ]
 
@@ -63,7 +64,7 @@ sdist.include = [
 build = ["cp38-*", "cp39-*", "cp310-*", "cp311-*", "cp312-*"]
 skip = ["pp*", "*i686"]
 environment = "CMAKE_ARGS='-DCTBOOST_ENABLE_CUDA=OFF'"
-test-requires = ["pytest", "scikit-learn", "numpy"]
+test-requires = ["pytest", "scikit-learn", "numpy", "pandas"]
 test-command = "pytest {project}/tests"
 
 [tool.pytest.ini_options]

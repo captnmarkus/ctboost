@@ -11,6 +11,50 @@ from . import _core
 from .core import Pool
 
 
+def _pool_from_data_and_label(data: Any, label: Any) -> Pool:
+    if isinstance(data, Pool):
+        resolved_label = data.label if label is None else label
+        return Pool(
+            data=data.data,
+            label=resolved_label,
+            cat_features=data.cat_features,
+            weight=data.weight,
+            feature_names=data.feature_names,
+        )
+
+    if label is None:
+        raise ValueError("y must be provided when data is not a Pool")
+    return Pool(data=data, label=label)
+
+
+def _normalize_eval_set(eval_set: Any) -> Optional[Any]:
+    if eval_set is None:
+        return None
+    if isinstance(eval_set, Pool):
+        return eval_set
+    if isinstance(eval_set, tuple) and len(eval_set) == 2:
+        return eval_set
+    if (
+        isinstance(eval_set, list)
+        and len(eval_set) == 1
+        and isinstance(eval_set[0], tuple)
+        and len(eval_set[0]) == 2
+    ):
+        return eval_set[0]
+    raise TypeError(
+        "eval_set must be a Pool, a single (X, y) tuple, or a list containing one (X, y) tuple"
+    )
+
+
+def _resolve_eval_pool(eval_set: Any) -> Optional[Pool]:
+    normalized = _normalize_eval_set(eval_set)
+    if normalized is None or isinstance(normalized, Pool):
+        return normalized
+
+    X_eval, y_eval = normalized
+    return _pool_from_data_and_label(X_eval, y_eval)
+
+
 class Booster:
     """Small Python wrapper around the native gradient booster."""
 
@@ -20,7 +64,7 @@ class Booster:
     def predict(self, data: Any) -> np.ndarray:
         pool = data if isinstance(data, Pool) else Pool(
             data=data,
-            label=np.zeros(np.asarray(data).shape[0], dtype=np.float32),
+            label=np.zeros(len(data), dtype=np.float32),
         )
         raw = np.asarray(self._handle.predict(pool._handle), dtype=np.float32)
         prediction_dimension = int(self._handle.prediction_dimension())
@@ -44,6 +88,10 @@ class Booster:
     def prediction_dimension(self) -> int:
         return int(self._handle.prediction_dimension())
 
+    @property
+    def best_iteration(self) -> int:
+        return int(self._handle.best_iteration())
+
 
 def train(
     pool: Pool,
@@ -55,10 +103,14 @@ def train(
 ) -> Booster:
     if not isinstance(pool, Pool):
         raise TypeError("pool must be an instance of ctboost.Pool")
-    if eval_set is not None:
-        raise NotImplementedError("eval_set is not implemented yet.")
+
+    eval_pool = _resolve_eval_pool(eval_set)
     if early_stopping_rounds is not None:
-        raise NotImplementedError("early_stopping_rounds is not implemented yet.")
+        if early_stopping_rounds <= 0:
+            raise ValueError("early_stopping_rounds must be a positive integer")
+        if eval_pool is None:
+            raise ValueError("early_stopping_rounds requires eval_set")
+    early_stopping = 0 if early_stopping_rounds is None else int(early_stopping_rounds)
 
     config = dict(params)
     iterations = int(num_boost_round if num_boost_round is not None else config.get("iterations", 100))
@@ -89,5 +141,9 @@ def train(
         task_type=task_type,
         devices=devices,
     )
-    booster.fit(pool._handle)
+    booster.fit(
+        pool._handle,
+        None if eval_pool is None else eval_pool._handle,
+        early_stopping,
+    )
     return Booster(booster)

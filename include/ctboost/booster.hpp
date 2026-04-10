@@ -25,13 +25,14 @@ class GradientBooster {
                   std::string task_type = "CPU",
                   std::string devices = "0");
 
-  void Fit(const Pool& pool);
+  void Fit(const Pool& pool, const Pool* eval_pool = nullptr, int early_stopping_rounds = 0);
   std::vector<float> Predict(const Pool& pool) const;
 
   const std::vector<double>& loss_history() const noexcept;
   std::size_t num_trees() const noexcept;
   int num_classes() const noexcept;
   int prediction_dimension() const noexcept;
+  int best_iteration() const noexcept;
   std::vector<float> get_feature_importances() const;
 
  private:
@@ -51,6 +52,8 @@ class GradientBooster {
   std::vector<Tree> trees_;
   std::vector<double> loss_history_;
   std::vector<double> feature_importance_sums_;
+  int best_iteration_{-1};
+  double best_loss_{0.0};
 };
 
 }  // namespace ctboost

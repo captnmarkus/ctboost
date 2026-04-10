@@ -64,6 +64,42 @@ def test_regressor_feature_importances_match_feature_count():
     assert reg.feature_importances_.shape == (X.shape[1],)
 
 
+def test_regressor_early_stopping_uses_eval_set():
+    X, y = make_regression(
+        n_samples=256,
+        n_features=8,
+        n_informative=5,
+        noise=20.0,
+        random_state=29,
+    )
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+
+    X_train, X_val = X[:96], X[96:]
+    y_train = y[:96]
+    y_val = -y[96:]
+
+    reg = ctboost.CTBoostRegressor(
+        iterations=500,
+        learning_rate=0.3,
+        max_depth=4,
+        alpha=1.0,
+        lambda_l2=0.5,
+    )
+    reg.fit(
+        X_train,
+        y_train,
+        eval_set=[(X_val, y_val)],
+        early_stopping_rounds=15,
+    )
+
+    predictions = reg.predict(X_val)
+
+    assert reg.best_iteration_ + 1 < 500
+    assert len(reg._booster.loss_history) == reg.best_iteration_ + 1
+    assert predictions.shape == (X_val.shape[0],)
+
+
 def test_classifier_cpu_gpu_parity_or_graceful_cuda_error():
     X, y = _make_classification_data()
 

@@ -2,13 +2,37 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 
 from .core import Pool
-from .training import train
+from .training import _normalize_eval_set, _pool_from_data_and_label, train
+
+
+def _encode_class_labels(raw_labels: Any, label_to_index: Dict[Any, int], label_name: str) -> np.ndarray:
+    label_array = np.asarray(raw_labels)
+    if label_array.ndim != 1:
+        raise ValueError("classification labels must be a 1D array")
+
+    try:
+        encoded = [label_to_index[label] for label in label_array]
+    except KeyError as exc:
+        raise ValueError(f"{label_name} contains labels not seen in the training data") from exc
+    return np.asarray(encoded, dtype=np.float32)
+
+
+def _resolve_classifier_eval_pool(
+    eval_set: Any, label_to_index: Dict[Any, int]
+) -> Optional[Pool]:
+    normalized = _normalize_eval_set(eval_set)
+    if normalized is None or isinstance(normalized, Pool):
+        return normalized
+
+    X_eval, y_eval = normalized
+    encoded_labels = _encode_class_labels(y_eval, label_to_index, "eval_set")
+    return _pool_from_data_and_label(X_eval, encoded_labels)
 
 
 class _BaseCTBoost(BaseEstimator):
@@ -43,7 +67,7 @@ class _BaseCTBoost(BaseEstimator):
         objective: str,
         num_classes: int = 1,
     ) -> "_BaseCTBoost":
-        train_pool = X if isinstance(X, Pool) else Pool(data=X, label=y)
+        train_pool = X if isinstance(X, Pool) and y is None else _pool_from_data_and_label(X, y)
         resolved_objective = objective if num_classes > 2 else (self.loss_function or objective)
         self._booster = train(
             train_pool,
@@ -63,14 +87,14 @@ class _BaseCTBoost(BaseEstimator):
             early_stopping_rounds=early_stopping_rounds,
         )
         self.n_features_in_ = train_pool.num_cols
+        self.best_iteration_ = self._booster.best_iteration
         return self
 
     @staticmethod
     def _prediction_pool(X: Any) -> Pool:
         if isinstance(X, Pool):
             return X
-        data = np.asarray(X, dtype=np.float32)
-        return Pool(data=data, label=np.zeros(data.shape[0], dtype=np.float32))
+        return Pool(data=X, label=np.zeros(len(X), dtype=np.float32))
 
     @property
     def feature_importances_(self) -> np.ndarray:
@@ -111,36 +135,28 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
     ) -> "CTBoostClassifier":
         if isinstance(X, Pool):
             raw_labels = np.asarray(X.label if y is None else y)
-            if raw_labels.ndim != 1:
-                raise ValueError("classification labels must be a 1D array")
-            classes, inverse = np.unique(raw_labels, return_inverse=True)
-            encoded_labels = inverse.astype(np.float32, copy=False)
-            train_pool = Pool(
-                data=X.data,
-                label=encoded_labels,
-                cat_features=X.cat_features,
-                weight=X.weight,
-                feature_names=X.feature_names,
-            )
         else:
             if y is None:
                 raise ValueError("y must be provided when X is not a Pool")
             raw_labels = np.asarray(y)
-            if raw_labels.ndim != 1:
-                raise ValueError("classification labels must be a 1D array")
-            classes, inverse = np.unique(raw_labels, return_inverse=True)
-            encoded_labels = inverse.astype(np.float32, copy=False)
-            train_pool = Pool(data=X, label=encoded_labels)
+        if raw_labels.ndim != 1:
+            raise ValueError("classification labels must be a 1D array")
+
+        classes, inverse = np.unique(raw_labels, return_inverse=True)
+        encoded_labels = inverse.astype(np.float32, copy=False)
+        train_pool = _pool_from_data_and_label(X, encoded_labels)
 
         self.classes_ = classes
         self.n_classes_ = int(self.classes_.size)
         if self.n_classes_ < 2:
             raise ValueError("CTBoostClassifier requires at least two distinct classes.")
 
+        label_to_index = {label: index for index, label in enumerate(self.classes_.tolist())}
+        eval_pool = _resolve_classifier_eval_pool(eval_set, label_to_index)
         objective = "MultiClass" if self.n_classes_ > 2 else "Logloss"
         fitted = self._fit_impl(
             train_pool,
-            eval_set=eval_set,
+            eval_set=eval_pool,
             early_stopping_rounds=early_stopping_rounds,
             objective=objective,
             num_classes=self.n_classes_,
