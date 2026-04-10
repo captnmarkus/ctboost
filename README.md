@@ -7,7 +7,7 @@ The current codebase supports end-to-end training and prediction for regression,
 ## Current Status
 
 - Language mix: Python + C++17, with optional CUDA
-- Python support: `3.8` through `3.12`
+- Python support: `3.8` through `3.14`
 - Packaging: `scikit-build-core`
 - CI/CD: GitHub Actions for CMake validation and `cibuildwheel` release builds
 - Status: actively evolving native + Python package
@@ -47,6 +47,12 @@ Install development dependencies:
 pip install -e .[dev]
 ```
 
+### Wheels vs Source Builds
+
+`pip install ctboost` works without a compiler only when PyPI has a prebuilt wheel for your exact Python/OS tag. If no matching wheel exists, `pip` falls back to the source distribution and has to compile the native extension locally.
+
+The release workflow is configured to publish CPU wheels for current CPython releases on Windows, Linux, and macOS so standard `pip install ctboost` usage does not depend on a local compiler.
+
 ### CPU-Only Source Build
 
 To force a CPU-only native build:
@@ -61,6 +67,8 @@ On PowerShell:
 $env:CMAKE_ARGS="-DCTBOOST_ENABLE_CUDA=OFF"
 pip install .
 ```
+
+Windows source builds require a working C++ toolchain. In practice that means Visual Studio Build Tools 2022 or a compatible MSVC environment, plus CMake. `ninja` is recommended, but it does not replace the compiler itself.
 
 ### CUDA Source Build
 
@@ -218,10 +226,10 @@ cmake --build build --config Release --parallel
 
 Wheel builds are configured through `cibuildwheel` for:
 
-- Windows
-- Linux
-- macOS
-- CPython `3.8`, `3.9`, `3.10`, `3.11`, and `3.12`
+- Windows `amd64`
+- Linux `x86_64` and `aarch64`
+- macOS `universal2`
+- CPython `3.8`, `3.9`, `3.10`, `3.11`, `3.12`, `3.13`, and `3.14`
 
 GitHub Actions workflows:
 

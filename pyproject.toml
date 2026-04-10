@@ -1,5 +1,6 @@
 [build-system]
 requires = [
+  "ninja>=1.11; platform_system == 'Windows'",
   "pybind11>=2.12,<3",
   "scikit-build-core>=0.10",
 ]
@@ -27,6 +28,8 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
@@ -61,12 +64,19 @@ sdist.include = [
 ]
 
 [tool.cibuildwheel]
-build = ["cp38-*", "cp39-*", "cp310-*", "cp311-*", "cp312-*"]
+build = ["cp38-*", "cp39-*", "cp310-*", "cp311-*", "cp312-*", "cp313-*", "cp314-*"]
 skip = ["*-musllinux_*"]
-archs = ["auto64"]
-environment = "CMAKE_ARGS='-DCTBOOST_ENABLE_CUDA=OFF'"
+dependency-versions = "pinned"
+build-verbosity = 1
 test-requires = ["pytest", "scikit-learn", "numpy", "pandas"]
 test-command = "python -X faulthandler -m pytest {project}/tests -q"
+
+[tool.cibuildwheel.config-settings]
+"cmake.define.CTBOOST_ENABLE_CUDA" = "OFF"
+
+[tool.cibuildwheel.linux]
+manylinux-x86_64-image = "manylinux2014"
+manylinux-aarch64-image = "manylinux2014"
 
 [tool.pytest.ini_options]
 addopts = "-ra"

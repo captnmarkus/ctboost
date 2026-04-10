@@ -18,15 +18,28 @@ permissions:
 
 jobs:
   build_wheels:
-    name: Build wheels (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
+    name: Build wheels (${{ matrix.name }})
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-latest
-          - windows-latest
-          - macos-latest
+        include:
+          - name: linux-x86_64
+            runner: ubuntu-latest
+            artifact: wheelhouse-linux-x86_64
+            cibw_archs: x86_64
+          - name: linux-aarch64
+            runner: ubuntu-24.04-arm
+            artifact: wheelhouse-linux-aarch64
+            cibw_archs: aarch64
+          - name: windows-amd64
+            runner: windows-latest
+            artifact: wheelhouse-windows-amd64
+            cibw_archs: AMD64
+          - name: macos-universal2
+            runner: macos-latest
+            artifact: wheelhouse-macos-universal2
+            cibw_archs: universal2
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -34,18 +47,20 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Install cibuildwheel
-        run: python -m pip install --upgrade pip cibuildwheel
+        run: python -m pip install --upgrade pip "cibuildwheel==3.4.1"
 
       - name: Build wheels
+        env:
+          CIBW_ARCHS: ${{ matrix.cibw_archs }}
         run: python -m cibuildwheel --output-dir wheelhouse
 
       - name: Upload wheel artifacts
         uses: actions/upload-artifact@v6
         with:
-          name: wheelhouse-${{ matrix.os }}
+          name: ${{ matrix.artifact }}
           path: wheelhouse/*.whl
 
   build_sdist:
@@ -77,7 +92,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CIBW_BUILD: cp310-manylinux_x86_64
-      CIBW_ENVIRONMENT: "CMAKE_ARGS='-DCTBOOST_ENABLE_CUDA=ON'"
+      CIBW_CONFIG_SETTINGS: "cmake.define.CTBOOST_ENABLE_CUDA=ON"
       CIBW_BEFORE_ALL: "yum install -y wget && wget https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo -O /etc/yum.repos.d/cuda.repo && yum clean all && yum -y install cuda-compiler-12-0"
     steps:
       - name: Checkout
@@ -86,10 +101,10 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: "3.13"
 
       - name: Install cibuildwheel
-        run: python -m pip install --upgrade pip cibuildwheel
+        run: python -m pip install --upgrade pip "cibuildwheel==3.4.1"
 
       - name: Build GPU Linux wheel
         run: python -m cibuildwheel --output-dir wheelhouse
@@ -113,19 +128,25 @@ jobs:
       - name: Download Linux CPU wheel artifacts
         uses: actions/download-artifact@v5
         with:
-          name: wheelhouse-ubuntu-latest
+          name: wheelhouse-linux-x86_64
+          path: dist
+
+      - name: Download Linux ARM wheel artifacts
+        uses: actions/download-artifact@v5
+        with:
+          name: wheelhouse-linux-aarch64
           path: dist
 
       - name: Download Windows CPU wheel artifacts
         uses: actions/download-artifact@v5
         with:
-          name: wheelhouse-windows-latest
+          name: wheelhouse-windows-amd64
           path: dist
 
       - name: Download macOS CPU wheel artifacts
         uses: actions/download-artifact@v5
         with:
-          name: wheelhouse-macos-latest
+          name: wheelhouse-macos-universal2
           path: dist
 
       - name: Download sdist artifact

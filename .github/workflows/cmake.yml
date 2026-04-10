@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   cmake-build:
-    name: CMake Build (${{ matrix.os }})
+    name: CMake Build (${{ matrix.os }} / py${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -23,6 +23,10 @@ jobs:
           - ubuntu-latest
           - windows-latest
           - macos-latest
+        python-version:
+          - "3.12"
+          - "3.13"
+          - "3.14"
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -30,7 +34,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
 
       - name: Install build and test dependencies
         shell: pwsh
