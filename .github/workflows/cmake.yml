@@ -1,0 +1,74 @@
+name: CMake
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  cmake-build:
+    name: CMake Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install build and test dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pybind11 numpy pandas scikit-learn pytest
+
+      - name: Export Python and pybind11 paths
+        shell: pwsh
+        run: |
+          @'
+          import os
+          import pathlib
+          import sys
+          import pybind11
+
+          def normalize(path: str) -> str:
+              return pathlib.Path(path).as_posix()
+
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as handle:
+              handle.write(f"PYBIND11_DIR={normalize(pybind11.get_cmake_dir())}\n")
+              handle.write(f"PYTHON_EXECUTABLE={normalize(sys.executable)}\n")
+          '@ | python -
+
+      - name: Configure CMake
+        shell: pwsh
+        run: >
+          cmake -S . -B build
+          -DCMAKE_BUILD_TYPE=Release
+          -DCTBOOST_ENABLE_CUDA=OFF
+          "-Dpybind11_DIR=$env:PYBIND11_DIR"
+          "-DPython_EXECUTABLE=$env:PYTHON_EXECUTABLE"
+
+      - name: Build
+        shell: pwsh
+        run: cmake --build build --config Release --parallel
+
+      - name: Install package
+        shell: pwsh
+        run: python -m pip install . --no-deps --config-settings=cmake.define.CTBOOST_ENABLE_CUDA=OFF
+
+      - name: Run tests
+        shell: pwsh
+        run: pytest tests -q

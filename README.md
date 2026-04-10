@@ -1,25 +1,27 @@
 # CTBoost
 
-CTBoost is an alpha-stage gradient boosting library built around Conditional Inference Trees, with a native C++17 core, Python bindings via `pybind11`, and optional CUDA support for source builds.
+CTBoost is a gradient boosting library built around Conditional Inference Trees, with a native C++17 core, Python bindings via `pybind11`, optional CUDA support for source builds, and a scikit-learn style API.
 
-The current codebase already supports end-to-end training and prediction for regression, binary classification, and multiclass classification through both a low-level training API and scikit-learn style estimators.
+The current codebase supports end-to-end training and prediction for regression, binary classification, and multiclass classification, plus native pandas `DataFrame` ingestion with automatic categorical detection and early stopping via `eval_set`.
 
 ## Current Status
 
-- Version: `0.1.0`
 - Language mix: Python + C++17, with optional CUDA
 - Python support: `3.8` through `3.12`
 - Packaging: `scikit-build-core`
-- Release automation: GitHub Actions + `cibuildwheel`
-- Stability: alpha
+- CI/CD: GitHub Actions for CMake validation and `cibuildwheel` release builds
+- Status: actively evolving native + Python package
 
 ## What Works Today
 
 - Native gradient boosting backend exposed as `ctboost._core`
 - `Pool` abstraction for dense tabular data and categorical feature indices
+- Native pandas `DataFrame` and `Series` support
+- Automatic categorical detection for pandas `category` and `object` columns
 - Regression training with `ctboost.train(...)`
 - scikit-learn compatible `CTBoostClassifier` and `CTBoostRegressor`
 - Binary and multiclass classification
+- Early stopping with `eval_set` and `early_stopping_rounds`
 - Feature importance reporting
 - Build metadata reporting through `ctboost.build_info()`
 - CPU builds on standard CI runners
@@ -27,10 +29,9 @@ The current codebase already supports end-to-end training and prediction for reg
 
 ## Current Limitations
 
-- Public wheel builds are CPU-only for `0.1.0`
-- `eval_set` is not implemented yet
-- `early_stopping_rounds` is not implemented yet
 - The Python package currently targets dense NumPy-compatible input
+- Dedicated GPU wheel automation currently targets Linux CPython 3.10
+- CUDA wheel builds in CI depend on container-side toolkit provisioning
 
 ## Installation
 
@@ -81,7 +82,7 @@ print(ctboost.build_info())
 ### scikit-learn Style Classification
 
 ```python
-import numpy as np
+import pandas as pd
 from sklearn.datasets import make_classification
 
 from ctboost import CTBoostClassifier
@@ -92,13 +93,13 @@ X, y = make_classification(
     n_informative=5,
     n_redundant=0,
     random_state=13,
-)
-
-X = X.astype(np.float32)
-y = y.astype(np.float32)
+).astype("float32")
+X = pd.DataFrame(X, columns=[f"f{i}" for i in range(X.shape[1])])
+X["segment"] = pd.Categorical(["a" if i % 2 == 0 else "b" for i in range(len(X))])
+y = y.astype("float32")
 
 model = CTBoostClassifier(
-    iterations=32,
+    iterations=256,
     learning_rate=0.1,
     max_depth=3,
     alpha=1.0,
@@ -106,10 +107,16 @@ model = CTBoostClassifier(
     task_type="CPU",
 )
 
-model.fit(X, y)
+model.fit(
+    X.iloc[:200],
+    y[:200],
+    eval_set=[(X.iloc[200:], y[200:])],
+    early_stopping_rounds=20,
+)
 proba = model.predict_proba(X)
 pred = model.predict(X)
 importance = model.feature_importances_
+best_iteration = model.best_iteration_
 ```
 
 ### Low-Level Training API
@@ -143,7 +150,7 @@ loss_history = booster.loss_history
 
 ### Working With Categorical Features
 
-Categorical columns can be marked through the `Pool` API:
+Categorical columns can still be marked manually through the `Pool` API:
 
 ```python
 import numpy as np
@@ -153,6 +160,25 @@ X = np.array([[0.0], [1.0], [2.0], [3.0]], dtype=np.float32)
 y = np.array([1.0, 0.0, 1.0, 0.0], dtype=np.float32)
 
 pool = ctboost.Pool(X, y, cat_features=[0])
+```
+
+For pandas inputs, categorical/object columns are detected automatically:
+
+```python
+import pandas as pd
+import ctboost
+
+frame = pd.DataFrame(
+    {
+        "value": [1.0, 2.0, 3.0, 4.0],
+        "city": pd.Categorical(["berlin", "paris", "berlin", "rome"]),
+        "segment": ["retail", "enterprise", "retail", "enterprise"],
+    }
+)
+label = pd.Series([0.0, 1.0, 0.0, 1.0], dtype="float32")
+
+pool = ctboost.Pool(frame, label)
+assert pool.cat_features == [1, 2]
 ```
 
 ## Public Python API
@@ -182,6 +208,14 @@ Build an sdist:
 python -m build --sdist
 ```
 
+Configure and build the native extension directly with CMake:
+
+```bash
+python -m pip install pybind11 numpy pandas scikit-learn pytest
+cmake -S . -B build -DCTBOOST_ENABLE_CUDA=OFF -Dpybind11_DIR="$(python -m pybind11 --cmakedir)"
+cmake --build build --config Release --parallel
+```
+
 Wheel builds are configured through `cibuildwheel` for:
 
 - Windows
@@ -189,7 +223,12 @@ Wheel builds are configured through `cibuildwheel` for:
 - macOS
 - CPython `3.8`, `3.9`, `3.10`, `3.11`, and `3.12`
 
-The release workflow builds CPU-only wheels by setting:
+GitHub Actions workflows:
+
+- `.github/workflows/cmake.yml`: configures, builds, installs, and tests CPU builds on Ubuntu, Windows, and macOS for pushes and pull requests
+- `.github/workflows/publish.yml`: builds release wheels and the sdist, publishes tagged releases, and uploads a dedicated Linux GPU wheel artifact
+
+The standard release workflow builds CPU-only wheels by setting:
 
 ```text
 CMAKE_ARGS='-DCTBOOST_ENABLE_CUDA=OFF'
