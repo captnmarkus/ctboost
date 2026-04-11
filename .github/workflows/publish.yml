@@ -6,9 +6,6 @@ on:
       - master
     tags:
       - "v*"
-  release:
-    types:
-      - published
   workflow_dispatch:
 
 env:
@@ -89,18 +86,41 @@ jobs:
           path: dist/*.tar.gz
 
   build_gpu_linux_wheels:
-    name: Build GPU Linux wheel (Kaggle cp312)
+    name: Build GPU Linux wheel (${{ matrix.python_abi }})
     if: |
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
       (github.event_name == 'workflow_dispatch' && startsWith(github.ref_name, 'v'))
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python_abi: cp310
+            cibw_build: cp310-manylinux_x86_64
+            artifact: wheelhouse-gpu-linux-cp310
+          - python_abi: cp311
+            cibw_build: cp311-manylinux_x86_64
+            artifact: wheelhouse-gpu-linux-cp311
+          - python_abi: cp312
+            cibw_build: cp312-manylinux_x86_64
+            artifact: wheelhouse-gpu-linux-cp312
+          - python_abi: cp313
+            cibw_build: cp313-manylinux_x86_64
+            artifact: wheelhouse-gpu-linux-cp313
+          - python_abi: cp314
+            cibw_build: cp314-manylinux_x86_64
+            artifact: wheelhouse-gpu-linux-cp314
     env:
-      CIBW_BUILD: cp312-manylinux_x86_64
-      CIBW_CONFIG_SETTINGS: "cmake.define.CTBOOST_ENABLE_CUDA=ON"
+      CIBW_BUILD: ${{ matrix.cibw_build }}
+      CIBW_ARCHS: x86_64
+      CIBW_CONFIG_SETTINGS: "cmake.define.CTBOOST_ENABLE_CUDA=ON wheel.build-tag=1gpu"
       CIBW_ENVIRONMENT: "CTBOOST_EXPECT_CUDA=1"
       CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
-      CIBW_TEST_SKIP: cp312-manylinux_x86_64
-      CIBW_BEFORE_ALL: "yum install -y wget && wget https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo -O /etc/yum.repos.d/cuda.repo && yum clean all && yum -y install cuda-compiler-12-0"
+      CIBW_BEFORE_ALL_LINUX: >-
+        yum install -y wget &&
+        wget https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo -O /etc/yum.repos.d/cuda.repo &&
+        yum clean all &&
+        yum -y install cuda-compiler-12-0
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -119,7 +139,7 @@ jobs:
       - name: Upload GPU Linux wheel artifact
         uses: actions/upload-artifact@v6
         with:
-          name: wheelhouse-gpu-linux-kaggle-cp312
+          name: ${{ matrix.artifact }}
           path: wheelhouse/*.whl
 
   publish_pypi:
@@ -129,7 +149,6 @@ jobs:
       - build_sdist
     if: |
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
-      (github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')) ||
       (github.event_name == 'workflow_dispatch' && startsWith(github.ref_name, 'v'))
     runs-on: ubuntu-latest
     permissions:
@@ -170,9 +189,11 @@ jobs:
         with:
           packages-dir: dist
 
-  publish_gpu_release_asset:
-    name: Publish GPU Release Asset
+  publish_release_assets:
+    name: Publish GitHub Release Assets
     needs:
+      - build_wheels
+      - build_sdist
       - build_gpu_linux_wheels
     if: |
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
@@ -181,16 +202,26 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download GPU Linux wheel artifact
+      - name: Download wheel artifacts
         uses: actions/download-artifact@v5
         with:
-          name: wheelhouse-gpu-linux-kaggle-cp312
+          pattern: wheelhouse-*
+          path: dist
+          merge-multiple: true
+
+      - name: Download sdist artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: sdist
           path: dist
 
-      - name: Publish GitHub release with GPU wheel asset
+      - name: Publish GitHub release with CPU and GPU assets
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          files: dist/*.whl
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
           fail_on_unmatched_files: true
           generate_release_notes: true
+          overwrite_files: true

@@ -43,7 +43,7 @@ The current codebase supports end-to-end training and prediction for regression,
 ## Current Limitations
 
 - SciPy sparse matrices are currently densified at the Python boundary before native training
-- Dedicated GPU wheel automation targets a Linux CPython `3.12` release asset for Kaggle-style environments
+- Dedicated GPU wheel automation targets Linux `x86_64` CPython `3.10` through `3.14` release assets for Kaggle-style environments
 - CUDA wheel builds in CI depend on container-side toolkit provisioning
 
 ## Installation
@@ -66,7 +66,43 @@ pip install -e .[dev]
 
 The release workflow is configured to publish CPU wheels for current CPython releases on Windows, Linux, and macOS so standard `pip install ctboost` usage does not depend on a local compiler.
 
-For Kaggle-style GPU environments running Python `3.12`, the release workflow also attaches a dedicated Linux CUDA wheel to the corresponding GitHub release. That GPU wheel is meant to be installed via its direct release-asset URL rather than through the default PyPI wheel resolution path.
+Each tagged GitHub release also attaches the CPU wheels, the source distribution, and dedicated Linux `x86_64` CUDA wheels for CPython `3.10` through `3.14`. The GPU wheel filenames carry a `1gpu` build tag so the release can publish CPU and GPU artifacts for the same Python and platform tags without filename collisions.
+
+### Kaggle GPU Install
+
+`pip install ctboost` still resolves to the CPU wheel on PyPI. On Kaggle, install the matching GPU release wheel from GitHub instead:
+
+```python
+import json
+import subprocess
+import sys
+import urllib.request
+
+tag = "v0.1.4"
+py_tag = f"cp{sys.version_info.major}{sys.version_info.minor}"
+api_url = f"https://api.github.com/repos/captnmarkus/ctboost/releases/tags/{tag}"
+
+with urllib.request.urlopen(api_url) as response:
+    release = json.load(response)
+
+asset = next(
+    item
+    for item in release["assets"]
+    if item["name"].endswith(".whl") and f"-1gpu-{py_tag}-{py_tag}-" in item["name"]
+)
+
+subprocess.check_call(
+    [sys.executable, "-m", "pip", "install", "-U", asset["browser_download_url"]]
+)
+```
+
+After installation, confirm the wheel really contains CUDA support:
+
+```python
+import ctboost
+
+print(ctboost.build_info())
+```
 
 ### CPU-Only Source Build
 
@@ -300,12 +336,19 @@ Wheel builds are configured through `cibuildwheel` for:
 GitHub Actions workflows:
 
 - `.github/workflows/cmake.yml`: configures, builds, installs, and tests CPU builds on Ubuntu, Windows, and macOS for pushes and pull requests
-- `.github/workflows/publish.yml`: builds release wheels and the sdist, runs wheel smoke tests on built artifacts, publishes tagged releases, and uploads a dedicated Linux GPU wheel artifact
+- `.github/workflows/publish.yml`: builds release wheels and the sdist, runs wheel smoke tests on built artifacts, publishes CPU wheels to PyPI, and attaches both CPU and Linux GPU wheels to tagged GitHub releases
 
-The standard release workflow builds CPU-only wheels by setting:
+The standard PyPI release wheel workflow builds CPU-only wheels by setting:
 
 ```text
-CMAKE_ARGS='-DCTBOOST_ENABLE_CUDA=OFF'
+cmake.define.CTBOOST_ENABLE_CUDA=OFF
+```
+
+The Linux GPU release-wheel matrix enables CUDA separately with:
+
+```text
+cmake.define.CTBOOST_ENABLE_CUDA=ON
+wheel.build-tag=1gpu
 ```
 
 ## Project Layout
