@@ -278,6 +278,7 @@ void GradientBooster::Fit(const Pool& pool,
 
   trees_.clear();
   loss_history_.clear();
+  eval_loss_history_.clear();
   best_iteration_ = -1;
   best_loss_ = 0.0;
 
@@ -360,6 +361,7 @@ void GradientBooster::Fit(const Pool& pool,
 
     const double eval_loss =
         ComputeLoss(objective_name_, eval_predictions, *eval_labels, num_classes_);
+    eval_loss_history_.push_back(eval_loss);
     if (best_iteration_ < 0 || eval_loss < best_loss_) {
       best_iteration_ = iteration;
       best_loss_ = eval_loss;
@@ -386,14 +388,23 @@ void GradientBooster::Fit(const Pool& pool,
       static_cast<std::size_t>(best_iteration_ + 1);
   trees_.resize(retained_iterations * static_cast<std::size_t>(prediction_dimension_));
   loss_history_.resize(retained_iterations);
+  eval_loss_history_.resize(retained_iterations);
   RecomputeFeatureImportances(trees_, pool.num_cols(), feature_importance_sums_);
 }
 
-std::vector<float> GradientBooster::Predict(const Pool& pool) const {
+std::vector<float> GradientBooster::Predict(const Pool& pool, int num_iteration) const {
+  std::size_t tree_limit = trees_.size();
+  if (num_iteration >= 0) {
+    tree_limit = std::min(
+        trees_.size(),
+        static_cast<std::size_t>(num_iteration) * static_cast<std::size_t>(prediction_dimension_));
+  }
+
   std::vector<float> predictions(
       pool.num_rows() * static_cast<std::size_t>(prediction_dimension_), 0.0F);
   if (prediction_dimension_ == 1) {
-    for (const Tree& tree : trees_) {
+    for (std::size_t tree_index = 0; tree_index < tree_limit; ++tree_index) {
+      const Tree& tree = trees_[tree_index];
       for (std::size_t row = 0; row < pool.num_rows(); ++row) {
         predictions[row] += learning_rate_ * tree.PredictRow(pool, row);
       }
@@ -401,7 +412,7 @@ std::vector<float> GradientBooster::Predict(const Pool& pool) const {
     return predictions;
   }
 
-  for (std::size_t tree_index = 0; tree_index < trees_.size(); ++tree_index) {
+  for (std::size_t tree_index = 0; tree_index < tree_limit; ++tree_index) {
     const int class_index = static_cast<int>(
         tree_index % static_cast<std::size_t>(prediction_dimension_));
     for (std::size_t row = 0; row < pool.num_rows(); ++row) {
@@ -412,17 +423,66 @@ std::vector<float> GradientBooster::Predict(const Pool& pool) const {
   return predictions;
 }
 
+void GradientBooster::LoadState(std::vector<Tree> trees,
+                                std::vector<double> loss_history,
+                                std::vector<double> eval_loss_history,
+                                std::vector<double> feature_importance_sums,
+                                int best_iteration,
+                                double best_loss,
+                                bool use_gpu) {
+  trees_ = std::move(trees);
+  loss_history_ = std::move(loss_history);
+  eval_loss_history_ = std::move(eval_loss_history);
+  feature_importance_sums_ = std::move(feature_importance_sums);
+  best_iteration_ = best_iteration;
+  best_loss_ = best_loss;
+  use_gpu_ = use_gpu;
+}
+
 const std::vector<double>& GradientBooster::loss_history() const noexcept {
   return loss_history_;
 }
 
+const std::vector<double>& GradientBooster::eval_loss_history() const noexcept {
+  return eval_loss_history_;
+}
+
 std::size_t GradientBooster::num_trees() const noexcept { return trees_.size(); }
+
+std::size_t GradientBooster::num_iterations_trained() const noexcept {
+  if (prediction_dimension_ <= 0) {
+    return 0;
+  }
+  return trees_.size() / static_cast<std::size_t>(prediction_dimension_);
+}
 
 int GradientBooster::num_classes() const noexcept { return num_classes_; }
 
 int GradientBooster::prediction_dimension() const noexcept { return prediction_dimension_; }
 
 int GradientBooster::best_iteration() const noexcept { return best_iteration_; }
+
+const std::string& GradientBooster::objective_name() const noexcept {
+  return objective_name_;
+}
+
+int GradientBooster::iterations() const noexcept { return iterations_; }
+
+double GradientBooster::learning_rate() const noexcept { return learning_rate_; }
+
+int GradientBooster::max_depth() const noexcept { return max_depth_; }
+
+double GradientBooster::alpha() const noexcept { return alpha_; }
+
+double GradientBooster::lambda_l2() const noexcept { return lambda_l2_; }
+
+std::size_t GradientBooster::max_bins() const noexcept { return max_bins_; }
+
+bool GradientBooster::use_gpu() const noexcept { return use_gpu_; }
+
+const std::string& GradientBooster::devices() const noexcept { return devices_; }
+
+const std::vector<Tree>& GradientBooster::trees() const noexcept { return trees_; }
 
 std::vector<float> GradientBooster::get_feature_importances() const {
   std::vector<float> importances(feature_importance_sums_.size(), 0.0F);

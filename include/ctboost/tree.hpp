@@ -37,7 +37,17 @@ class Tree {
   float PredictRow(const Pool& pool, std::size_t row) const;
   float PredictBinnedRow(const HistMatrix& hist, std::size_t row) const;
   std::vector<float> Predict(const Pool& pool) const;
+  void LoadState(std::vector<Node> nodes,
+                 std::vector<std::uint16_t> num_bins_per_feature,
+                 std::vector<std::size_t> cut_offsets,
+                 std::vector<float> cut_values,
+                 std::vector<std::uint8_t> categorical_mask,
+                 std::vector<double> feature_importances);
   const std::vector<Node>& nodes() const noexcept;
+  const std::vector<std::uint16_t>& num_bins_per_feature() const noexcept;
+  const std::vector<std::size_t>& cut_offsets() const noexcept;
+  const std::vector<float>& cut_values() const noexcept;
+  const std::vector<std::uint8_t>& categorical_mask() const noexcept;
   const std::vector<double>& feature_importances() const noexcept;
 
  private:

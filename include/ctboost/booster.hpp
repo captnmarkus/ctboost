@@ -26,13 +26,32 @@ class GradientBooster {
                   std::string devices = "0");
 
   void Fit(const Pool& pool, const Pool* eval_pool = nullptr, int early_stopping_rounds = 0);
-  std::vector<float> Predict(const Pool& pool) const;
+  std::vector<float> Predict(const Pool& pool, int num_iteration = -1) const;
+  void LoadState(std::vector<Tree> trees,
+                 std::vector<double> loss_history,
+                 std::vector<double> eval_loss_history,
+                 std::vector<double> feature_importance_sums,
+                 int best_iteration,
+                 double best_loss,
+                 bool use_gpu);
 
   const std::vector<double>& loss_history() const noexcept;
+  const std::vector<double>& eval_loss_history() const noexcept;
   std::size_t num_trees() const noexcept;
+  std::size_t num_iterations_trained() const noexcept;
   int num_classes() const noexcept;
   int prediction_dimension() const noexcept;
   int best_iteration() const noexcept;
+  const std::string& objective_name() const noexcept;
+  int iterations() const noexcept;
+  double learning_rate() const noexcept;
+  int max_depth() const noexcept;
+  double alpha() const noexcept;
+  double lambda_l2() const noexcept;
+  std::size_t max_bins() const noexcept;
+  bool use_gpu() const noexcept;
+  const std::string& devices() const noexcept;
+  const std::vector<Tree>& trees() const noexcept;
   std::vector<float> get_feature_importances() const;
 
  private:
@@ -51,6 +70,7 @@ class GradientBooster {
   HistBuilder hist_builder_;
   std::vector<Tree> trees_;
   std::vector<double> loss_history_;
+  std::vector<double> eval_loss_history_;
   std::vector<double> feature_importance_sums_;
   int best_iteration_{-1};
   double best_loss_{0.0};

@@ -2,13 +2,17 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+import pickle
+from pathlib import Path
+from typing import Any, Dict, Iterable, Optional, Union
 
 import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 
 from .core import Pool
 from .training import _normalize_eval_set, _pool_from_data_and_label, train
+
+PathLike = Union[str, Path]
 
 
 def _encode_class_labels(raw_labels: Any, label_to_index: Dict[Any, int], label_name: str) -> np.ndarray:
@@ -88,6 +92,8 @@ class _BaseCTBoost(BaseEstimator):
         )
         self.n_features_in_ = train_pool.num_cols
         self.best_iteration_ = self._booster.best_iteration
+        self.evals_result_ = self._booster.evals_result_
+        self.best_score_ = self._compute_best_score()
         return self
 
     @staticmethod
@@ -95,6 +101,30 @@ class _BaseCTBoost(BaseEstimator):
         if isinstance(X, Pool):
             return X
         return Pool(data=X, label=np.zeros(len(X), dtype=np.float32))
+
+    def _compute_best_score(self) -> Dict[str, float]:
+        best_score: Dict[str, float] = {}
+        if self._booster.loss_history:
+            best_index = self.best_iteration_ if self.best_iteration_ >= 0 else len(self._booster.loss_history) - 1
+            best_score["learn"] = float(self._booster.loss_history[best_index])
+        if self._booster.eval_loss_history:
+            best_index = self.best_iteration_ if self.best_iteration_ >= 0 else len(self._booster.eval_loss_history) - 1
+            best_score["validation"] = float(self._booster.eval_loss_history[best_index])
+        return best_score
+
+    def save_model(self, path: PathLike) -> None:
+        destination = Path(path)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        with destination.open("wb") as stream:
+            pickle.dump(self, stream, protocol=pickle.HIGHEST_PROTOCOL)
+
+    @classmethod
+    def load_model(cls, path: PathLike) -> "_BaseCTBoost":
+        with Path(path).open("rb") as stream:
+            model = pickle.load(stream)
+        if not isinstance(model, cls):
+            raise TypeError(f"serialized model does not contain a {cls.__name__} instance")
+        return model
 
     @property
     def feature_importances_(self) -> np.ndarray:
@@ -169,24 +199,44 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
         exp_scores = np.exp(shifted)
         return exp_scores / exp_scores.sum(axis=1, keepdims=True)
 
-    def predict(self, X: Any) -> Any:
+    def predict(self, X: Any, *, num_iteration: Optional[int] = None) -> Any:
         pool = self._prediction_pool(X)
-        probabilities = self.predict_proba(pool)
+        probabilities = self.predict_proba(pool, num_iteration=num_iteration)
         if self.n_classes_ > 2:
             indices = np.argmax(probabilities, axis=1)
         else:
             indices = (probabilities[:, 1] >= 0.5).astype(np.int64)
         return self.classes_[indices]
 
-    def predict_proba(self, X: Any) -> Any:
+    def predict_proba(self, X: Any, *, num_iteration: Optional[int] = None) -> Any:
         pool = self._prediction_pool(X)
-        scores = np.asarray(self._booster.predict(pool), dtype=np.float32)
+        scores = np.asarray(self._booster.predict(pool, num_iteration=num_iteration), dtype=np.float32)
         if self.n_classes_ > 2:
             if scores.ndim == 1:
                 scores = scores.reshape((pool.num_rows, self.n_classes_))
             return self._softmax(scores)
         probabilities = 1.0 / (1.0 + np.exp(-scores))
         return np.column_stack([1.0 - probabilities, probabilities])
+
+    def staged_predict_proba(self, X: Any) -> Iterable[Any]:
+        pool = self._prediction_pool(X)
+        for scores in self._booster.staged_predict(pool):
+            scores = np.asarray(scores, dtype=np.float32)
+            if self.n_classes_ > 2:
+                if scores.ndim == 1:
+                    scores = scores.reshape((pool.num_rows, self.n_classes_))
+                yield self._softmax(scores)
+            else:
+                probabilities = 1.0 / (1.0 + np.exp(-scores))
+                yield np.column_stack([1.0 - probabilities, probabilities])
+
+    def staged_predict(self, X: Any) -> Iterable[Any]:
+        for probabilities in self.staged_predict_proba(X):
+            if self.n_classes_ > 2:
+                indices = np.argmax(probabilities, axis=1)
+            else:
+                indices = (probabilities[:, 1] >= 0.5).astype(np.int64)
+            yield self.classes_[indices]
 
 
 class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
@@ -229,9 +279,13 @@ class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
             objective="SquaredError",
         )
 
-    def predict(self, X: Any) -> Any:
+    def predict(self, X: Any, *, num_iteration: Optional[int] = None) -> Any:
         pool = self._prediction_pool(X)
-        return np.asarray(self._booster.predict(pool), dtype=np.float32)
+        return np.asarray(self._booster.predict(pool, num_iteration=num_iteration), dtype=np.float32)
+
+    def staged_predict(self, X: Any) -> Iterable[Any]:
+        pool = self._prediction_pool(X)
+        yield from self._booster.staged_predict(pool)
 
 
 CBoostClassifier = CTBoostClassifier

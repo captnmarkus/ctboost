@@ -1,0 +1,124 @@
+from pathlib import Path
+
+import numpy as np
+from sklearn.datasets import make_classification, make_regression
+
+import ctboost
+
+
+def test_booster_save_load_and_staged_predict_round_trip(tmp_path: Path):
+    X, y = make_regression(
+        n_samples=160,
+        n_features=6,
+        n_informative=4,
+        noise=0.2,
+        random_state=41,
+    )
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+
+    train_pool = ctboost.Pool(X[:120], y[:120])
+    valid_pool = ctboost.Pool(X[120:], y[120:])
+    full_pool = ctboost.Pool(X, y)
+    booster = ctboost.train(
+        train_pool,
+        {
+            "objective": "RMSE",
+            "learning_rate": 0.15,
+            "max_depth": 3,
+            "alpha": 1.0,
+            "lambda_l2": 1.0,
+        },
+        num_boost_round=12,
+        eval_set=valid_pool,
+    )
+
+    staged_predictions = list(booster.staged_predict(full_pool))
+
+    assert len(staged_predictions) == booster.num_iterations_trained
+    np.testing.assert_allclose(staged_predictions[-1], booster.predict(full_pool), rtol=1e-6, atol=1e-6)
+    assert booster.eval_loss_history
+
+    model_path = tmp_path / "booster.pkl"
+    booster.save_model(model_path)
+    restored = ctboost.load_model(model_path)
+
+    np.testing.assert_allclose(restored.predict(full_pool), booster.predict(full_pool), rtol=1e-6, atol=1e-6)
+    assert restored.loss_history == booster.loss_history
+    assert restored.eval_loss_history == booster.eval_loss_history
+
+
+def test_cv_returns_fold_aggregates():
+    X, y = make_classification(
+        n_samples=180,
+        n_features=8,
+        n_informative=5,
+        n_redundant=0,
+        random_state=19,
+    )
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+
+    results = ctboost.cv(
+        ctboost.Pool(X, y),
+        {
+            "objective": "Logloss",
+            "learning_rate": 0.2,
+            "max_depth": 2,
+            "alpha": 1.0,
+            "lambda_l2": 1.0,
+        },
+        num_boost_round=10,
+        nfold=3,
+        random_state=7,
+    )
+
+    expected_keys = {
+        "iterations",
+        "train_loss_mean",
+        "train_loss_std",
+        "valid_loss_mean",
+        "valid_loss_std",
+        "best_iteration_mean",
+        "best_iteration_std",
+    }
+    assert expected_keys == set(results)
+    assert results["iterations"].shape == results["train_loss_mean"].shape
+    assert results["iterations"].shape == results["valid_loss_mean"].shape
+    assert np.all(np.isfinite(results["train_loss_mean"]))
+    assert np.all(np.isfinite(results["valid_loss_mean"]))
+    assert np.isfinite(results["best_iteration_mean"])
+
+
+def test_classifier_save_load_and_staged_predict_proba(tmp_path: Path):
+    X, y = make_classification(
+        n_samples=192,
+        n_features=8,
+        n_informative=5,
+        n_redundant=0,
+        random_state=23,
+    )
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+
+    clf = ctboost.CTBoostClassifier(
+        iterations=14,
+        learning_rate=0.15,
+        max_depth=2,
+        alpha=1.0,
+        lambda_l2=1.0,
+    )
+    clf.fit(X, y)
+
+    staged_probabilities = list(clf.staged_predict_proba(X))
+
+    assert len(staged_probabilities) == clf._booster.num_iterations_trained
+    np.testing.assert_allclose(staged_probabilities[-1], clf.predict_proba(X), rtol=1e-6, atol=1e-6)
+
+    model_path = tmp_path / "classifier.pkl"
+    clf.save_model(model_path)
+    restored = ctboost.CTBoostClassifier.load_model(model_path)
+
+    np.testing.assert_array_equal(restored.classes_, clf.classes_)
+    np.testing.assert_allclose(restored.predict_proba(X), clf.predict_proba(X), rtol=1e-6, atol=1e-6)
+    np.testing.assert_array_equal(restored.predict(X), clf.predict(X))

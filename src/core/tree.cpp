@@ -464,7 +464,33 @@ std::vector<float> Tree::Predict(const Pool& pool) const {
   return predictions;
 }
 
+void Tree::LoadState(std::vector<Node> nodes,
+                     std::vector<std::uint16_t> num_bins_per_feature,
+                     std::vector<std::size_t> cut_offsets,
+                     std::vector<float> cut_values,
+                     std::vector<std::uint8_t> categorical_mask,
+                     std::vector<double> feature_importances) {
+  nodes_ = std::move(nodes);
+  num_bins_per_feature_ = std::move(num_bins_per_feature);
+  cut_offsets_ = std::move(cut_offsets);
+  cut_values_ = std::move(cut_values);
+  categorical_mask_ = std::move(categorical_mask);
+  feature_importances_ = std::move(feature_importances);
+}
+
 const std::vector<Node>& Tree::nodes() const noexcept { return nodes_; }
+
+const std::vector<std::uint16_t>& Tree::num_bins_per_feature() const noexcept {
+  return num_bins_per_feature_;
+}
+
+const std::vector<std::size_t>& Tree::cut_offsets() const noexcept { return cut_offsets_; }
+
+const std::vector<float>& Tree::cut_values() const noexcept { return cut_values_; }
+
+const std::vector<std::uint8_t>& Tree::categorical_mask() const noexcept {
+  return categorical_mask_;
+}
 
 const std::vector<double>& Tree::feature_importances() const noexcept {
   return feature_importances_;

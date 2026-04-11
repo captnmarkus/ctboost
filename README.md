@@ -2,7 +2,7 @@
 
 CTBoost is a gradient boosting library built around Conditional Inference Trees, with a native C++17 core, Python bindings via `pybind11`, optional CUDA support for source builds, and a scikit-learn style API.
 
-The current codebase supports end-to-end training and prediction for regression, binary classification, and multiclass classification, plus native pandas `DataFrame` ingestion with automatic categorical detection and early stopping via `eval_set`.
+The current codebase supports end-to-end training and prediction for regression, binary classification, and multiclass classification, plus native pandas `DataFrame` ingestion with automatic categorical detection, early stopping via `eval_set`, model persistence, staged prediction, and a built-in cross-validation helper.
 
 ## Current Status
 
@@ -22,6 +22,10 @@ The current codebase supports end-to-end training and prediction for regression,
 - scikit-learn compatible `CTBoostClassifier` and `CTBoostRegressor`
 - Binary and multiclass classification
 - Early stopping with `eval_set` and `early_stopping_rounds`
+- Validation loss history and `evals_result_`
+- Per-iteration prediction through staged prediction and `num_iteration`
+- Model persistence for low-level boosters and scikit-learn style estimators
+- Cross-validation with `ctboost.cv(...)`
 - Feature importance reporting
 - Build metadata reporting through `ctboost.build_info()`
 - CPU builds on standard CI runners
@@ -154,6 +158,7 @@ booster = ctboost.train(
 
 predictions = booster.predict(pool)
 loss_history = booster.loss_history
+eval_loss_history = booster.eval_loss_history
 ```
 
 ### Working With Categorical Features
@@ -189,18 +194,52 @@ pool = ctboost.Pool(frame, label)
 assert pool.cat_features == [1, 2]
 ```
 
+### Model Persistence And Cross-Validation
+
+```python
+import ctboost
+
+booster.save_model("regression-model.pkl")
+restored = ctboost.load_model("regression-model.pkl")
+restored_predictions = restored.predict(pool)
+
+cv_result = ctboost.cv(
+    pool,
+    {
+        "objective": "RMSE",
+        "learning_rate": 0.2,
+        "max_depth": 2,
+        "alpha": 1.0,
+        "lambda_l2": 1.0,
+    },
+    num_boost_round=25,
+    nfold=3,
+)
+```
+
+The scikit-learn compatible estimators also expose:
+
+- `save_model(...)`
+- `load_model(...)`
+- `staged_predict(...)`
+- `staged_predict_proba(...)` for classifiers
+- `evals_result_`
+- `best_score_`
+
 ## Public Python API
 
 The main entry points are:
 
 - `ctboost.Pool`
 - `ctboost.train`
+- `ctboost.cv`
 - `ctboost.Booster`
 - `ctboost.CTBoostClassifier`
 - `ctboost.CTBoostRegressor`
 - `ctboost.CBoostClassifier`
 - `ctboost.CBoostRegressor`
 - `ctboost.build_info`
+- `ctboost.load_model`
 
 ## Build and Test
 

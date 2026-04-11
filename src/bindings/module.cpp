@@ -12,6 +12,7 @@
 
 #include "ctboost/build_info.hpp"
 #include "ctboost/booster.hpp"
+#include "ctboost/cuda_backend.hpp"
 #include "ctboost/data.hpp"
 #include "ctboost/objective.hpp"
 #include "ctboost/statistics.hpp"
@@ -70,6 +71,76 @@ std::vector<std::uint16_t> ArrayToBinVector(py::array_t<std::int64_t, py::array:
     out[i] = static_cast<std::uint16_t>(value);
   }
   return out;
+}
+
+py::tuple NodeToState(const ctboost::Node& node) {
+  return py::make_tuple(node.is_leaf,
+                        node.is_categorical_split,
+                        node.split_feature_id,
+                        node.split_bin_index,
+                        node.left_child,
+                        node.right_child,
+                        node.leaf_weight,
+                        std::vector<std::uint8_t>(node.left_categories.begin(),
+                                                  node.left_categories.end()));
+}
+
+ctboost::Node NodeFromState(const py::handle& handle) {
+  const py::tuple state = handle.cast<py::tuple>();
+  if (state.size() != 8) {
+    throw std::runtime_error("invalid serialized tree node state");
+  }
+
+  ctboost::Node node;
+  node.is_leaf = state[0].cast<bool>();
+  node.is_categorical_split = state[1].cast<bool>();
+  node.split_feature_id = state[2].cast<int>();
+  node.split_bin_index = state[3].cast<std::uint16_t>();
+  node.left_child = state[4].cast<int>();
+  node.right_child = state[5].cast<int>();
+  node.leaf_weight = state[6].cast<float>();
+
+  const auto categories = state[7].cast<std::vector<std::uint8_t>>();
+  if (categories.size() != ctboost::kMaxCategoricalRouteBins) {
+    throw std::runtime_error("invalid serialized categorical routing table");
+  }
+  std::copy(categories.begin(), categories.end(), node.left_categories.begin());
+  return node;
+}
+
+py::tuple TreeToState(const ctboost::Tree& tree) {
+  py::list node_states;
+  for (const ctboost::Node& node : tree.nodes()) {
+    node_states.append(NodeToState(node));
+  }
+
+  return py::make_tuple(node_states,
+                        tree.num_bins_per_feature(),
+                        tree.cut_offsets(),
+                        tree.cut_values(),
+                        tree.categorical_mask(),
+                        tree.feature_importances());
+}
+
+ctboost::Tree TreeFromState(const py::handle& handle) {
+  const py::tuple state = handle.cast<py::tuple>();
+  if (state.size() != 6) {
+    throw std::runtime_error("invalid serialized tree state");
+  }
+
+  std::vector<ctboost::Node> nodes;
+  for (const py::handle node_handle : state[0].cast<py::list>()) {
+    nodes.push_back(NodeFromState(node_handle));
+  }
+
+  ctboost::Tree tree;
+  tree.LoadState(std::move(nodes),
+                 state[1].cast<std::vector<std::uint16_t>>(),
+                 state[2].cast<std::vector<std::size_t>>(),
+                 state[3].cast<std::vector<float>>(),
+                 state[4].cast<std::vector<std::uint8_t>>(),
+                 state[5].cast<std::vector<double>>());
+  return tree;
 }
 
 }  // namespace
@@ -136,20 +207,95 @@ PYBIND11_MODULE(_core, m) {
            py::arg("early_stopping_rounds") = 0,
            py::return_value_policy::reference_internal)
       .def("predict",
-           [](const ctboost::GradientBooster& booster, const ctboost::Pool& pool) {
-             return VectorToArray(booster.Predict(pool));
+           [](const ctboost::GradientBooster& booster,
+              const ctboost::Pool& pool,
+              int num_iteration) {
+             return VectorToArray(booster.Predict(pool, num_iteration));
            },
-           py::arg("pool"))
+           py::arg("pool"),
+           py::arg("num_iteration") = -1)
       .def("loss_history", [](const ctboost::GradientBooster& booster) {
         return booster.loss_history();
       })
+      .def("eval_loss_history", [](const ctboost::GradientBooster& booster) {
+        return booster.eval_loss_history();
+      })
       .def("num_trees", &ctboost::GradientBooster::num_trees)
+      .def("num_iterations_trained", &ctboost::GradientBooster::num_iterations_trained)
       .def("best_iteration", &ctboost::GradientBooster::best_iteration)
       .def("num_classes", &ctboost::GradientBooster::num_classes)
       .def("prediction_dimension", &ctboost::GradientBooster::prediction_dimension)
       .def("feature_importances", [](const ctboost::GradientBooster& booster) {
         return VectorToArray(booster.get_feature_importances());
-      });
+      })
+      .def(py::pickle(
+          [](const ctboost::GradientBooster& booster) {
+            py::list tree_states;
+            for (const ctboost::Tree& tree : booster.trees()) {
+              tree_states.append(TreeToState(tree));
+            }
+
+            return py::make_tuple(booster.objective_name(),
+                                  booster.iterations(),
+                                  booster.learning_rate(),
+                                  booster.max_depth(),
+                                  booster.alpha(),
+                                  booster.lambda_l2(),
+                                  booster.num_classes(),
+                                  booster.max_bins(),
+                                  booster.devices(),
+                                  booster.use_gpu(),
+                                  tree_states,
+                                  booster.loss_history(),
+                                  booster.eval_loss_history(),
+                                  booster.best_iteration(),
+                                  booster.get_feature_importances());
+          },
+          [](const py::tuple& state) {
+            if (state.size() != 15) {
+              throw std::runtime_error("invalid serialized GradientBooster state");
+            }
+
+            std::vector<ctboost::Tree> trees;
+            for (const py::handle tree_handle : state[10].cast<py::list>()) {
+              trees.push_back(TreeFromState(tree_handle));
+            }
+
+            std::vector<double> feature_importance_sums;
+            for (const float value : state[14].cast<std::vector<float>>()) {
+              feature_importance_sums.push_back(static_cast<double>(value));
+            }
+
+            const bool requested_gpu = state[9].cast<bool>();
+            const bool use_gpu = requested_gpu && ctboost::CudaBackendCompiled();
+            ctboost::GradientBooster booster(state[0].cast<std::string>(),
+                                             state[1].cast<int>(),
+                                             state[2].cast<double>(),
+                                             state[3].cast<int>(),
+                                             state[4].cast<double>(),
+                                             state[5].cast<double>(),
+                                             state[6].cast<int>(),
+                                             state[7].cast<std::size_t>(),
+                                             use_gpu ? "GPU" : "CPU",
+                                             state[8].cast<std::string>());
+
+            const auto eval_loss_history = state[12].cast<std::vector<double>>();
+            const int best_iteration = state[13].cast<int>();
+            double best_loss = 0.0;
+            if (best_iteration >= 0 &&
+                static_cast<std::size_t>(best_iteration) < eval_loss_history.size()) {
+              best_loss = eval_loss_history[static_cast<std::size_t>(best_iteration)];
+            }
+
+            booster.LoadState(std::move(trees),
+                              state[11].cast<std::vector<double>>(),
+                              eval_loss_history,
+                              std::move(feature_importance_sums),
+                              best_iteration,
+                              best_loss,
+                              use_gpu);
+            return booster;
+          }));
 
   m.def("build_info", []() {
     const ctboost::BuildInfo info = ctboost::GetBuildInfo();

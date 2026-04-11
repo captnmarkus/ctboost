@@ -6,7 +6,7 @@ from ._core import build_info as _native_build_info
 from ._version import __version__
 from .core import Pool
 from .sklearn import CBoostClassifier, CBoostRegressor, CTBoostClassifier, CTBoostRegressor
-from .training import Booster, train
+from .training import Booster, cv, load_model, train
 
 
 def build_info() -> Dict[str, Any]:
@@ -23,5 +23,7 @@ __all__ = [
     "CTBoostRegressor",
     "Pool",
     "build_info",
+    "cv",
+    "load_model",
     "train",
 ]
