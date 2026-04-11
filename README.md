@@ -68,7 +68,7 @@ The release workflow is configured to publish CPU wheels for current CPython rel
 
 Each tagged GitHub release also attaches the CPU wheels, the source distribution, and dedicated Linux `x86_64` CUDA wheels for CPython `3.10` through `3.14`. The GPU wheel filenames carry a `1gpu` build tag so the release can publish CPU and GPU artifacts for the same Python and platform tags without filename collisions.
 
-The tag release workflow skips the in-container GPU wheel smoke test for these Linux CUDA assets. GitHub's manylinux build containers do not provide a Kaggle-like NVIDIA runtime, so the GPU wheels are published as release assets for downstream validation on real CUDA hosts such as Kaggle.
+The GPU release job installs the full CUDA toolkit, exports the toolkit paths into the build environment, and sets `CTBOOST_REQUIRE_CUDA=ON` so the wheel build fails instead of silently degrading to a CPU-only artifact. The release smoke test also checks that `ctboost.build_info()["cuda_enabled"]` is `True` before the GPU wheel is uploaded.
 
 ### Kaggle GPU Install
 
@@ -80,7 +80,7 @@ import subprocess
 import sys
 import urllib.request
 
-tag = "v0.1.5"
+tag = "v0.1.6"
 py_tag = f"cp{sys.version_info.major}{sys.version_info.minor}"
 api_url = f"https://api.github.com/repos/captnmarkus/ctboost/releases/tags/{tag}"
 
@@ -103,7 +103,10 @@ After installation, confirm the wheel really contains CUDA support:
 ```python
 import ctboost
 
-print(ctboost.build_info())
+info = ctboost.build_info()
+if not info["cuda_enabled"]:
+    raise RuntimeError(f"Expected a CUDA-enabled CTBoost wheel, got: {info}")
+print(info)
 ```
 
 ### CPU-Only Source Build
@@ -350,6 +353,10 @@ The Linux GPU release-wheel matrix enables CUDA separately with:
 
 ```text
 cmake.define.CTBOOST_ENABLE_CUDA=ON
+cmake.define.CTBOOST_REQUIRE_CUDA=ON
+cmake.define.CMAKE_CUDA_COMPILER=/usr/local/cuda-12.0/bin/nvcc
+cmake.define.CUDAToolkit_ROOT=/usr/local/cuda-12.0
+cmake.define.CMAKE_CUDA_ARCHITECTURES=60;70;75;80;86;89
 wheel.build-tag=1gpu
 ```
 

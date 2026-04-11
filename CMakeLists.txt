@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24...4.3)
 
-project(CTBoost VERSION 0.1.5 LANGUAGES CXX)
+project(CTBoost VERSION 0.1.6 LANGUAGES CXX)
 
 if(DEFINED SKBUILD_PROJECT_VERSION_FULL)
   set(CTBOOST_PACKAGE_VERSION "${SKBUILD_PROJECT_VERSION_FULL}")
@@ -16,6 +16,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 
 option(CTBOOST_ENABLE_CUDA "Build CUDA backends when a CUDA toolkit is available" ON)
+option(CTBOOST_REQUIRE_CUDA
+       "Fail the build if CUDA was requested but a working toolkit is unavailable"
+       OFF)
 
 include(CheckLanguage)
 
@@ -34,10 +37,23 @@ if(CTBOOST_ENABLE_CUDA)
       endif()
       set(CTBOOST_WITH_CUDA ON)
       message(STATUS "CTBoost: CUDA toolkit detected, enabling GPU backend")
+      message(STATUS "CTBoost: CUDA compiler: ${CMAKE_CUDA_COMPILER}")
+      message(STATUS "CTBoost: CUDA toolkit root: ${CUDAToolkit_ROOT}")
+      message(STATUS "CTBoost: CUDA architectures: ${CMAKE_CUDA_ARCHITECTURES}")
     else()
+      if(CTBOOST_REQUIRE_CUDA)
+        message(FATAL_ERROR
+                "CTBoost: CUDA was required but CUDAToolkit could not be found. "
+                "Install the full CUDA toolkit and set CUDAToolkit_ROOT if needed.")
+      endif()
       message(STATUS "CTBoost: CUDA compiler found but toolkit missing, building CPU-only")
     endif()
   else()
+    if(CTBOOST_REQUIRE_CUDA)
+      message(FATAL_ERROR
+              "CTBoost: CUDA was required but no CUDA compiler was found. "
+              "Set CUDACXX/CMAKE_CUDA_COMPILER and ensure the CUDA bin directory is on PATH.")
+    endif()
     message(STATUS "CTBoost: CUDA compiler not found, building CPU-only")
   endif()
 else()
