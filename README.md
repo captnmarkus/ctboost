@@ -68,7 +68,7 @@ The release workflow is configured to publish CPU wheels for current CPython rel
 
 Each tagged GitHub release also attaches the CPU wheels, the source distribution, and dedicated Linux `x86_64` CUDA wheels for CPython `3.10` through `3.14`. The GPU wheel filenames carry a `1gpu` build tag so the release can publish CPU and GPU artifacts for the same Python and platform tags without filename collisions.
 
-The GPU release job installs the full CUDA toolkit, exports the toolkit paths into the build environment, and sets `CTBOOST_REQUIRE_CUDA=ON` so the wheel build fails instead of silently degrading to a CPU-only artifact. The release smoke test also checks that `ctboost.build_info()["cuda_enabled"]` is `True` before the GPU wheel is uploaded.
+The GPU release job installs the CUDA compiler plus the CUDA runtime development package, exports the toolkit paths into the build environment, and sets `CTBOOST_REQUIRE_CUDA=ON` so the wheel build fails instead of silently degrading to a CPU-only artifact. The release smoke test also checks that `ctboost.build_info()["cuda_enabled"]` is `True` before the GPU wheel is uploaded.
 
 ### Kaggle GPU Install
 
@@ -80,7 +80,7 @@ import subprocess
 import sys
 import urllib.request
 
-tag = "v0.1.6"
+tag = "v0.1.7"
 py_tag = f"cp{sys.version_info.major}{sys.version_info.minor}"
 api_url = f"https://api.github.com/repos/captnmarkus/ctboost/releases/tags/{tag}"
 

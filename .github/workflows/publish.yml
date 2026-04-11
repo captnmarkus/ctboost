@@ -128,10 +128,11 @@ jobs:
         LD_LIBRARY_PATH=/usr/local/cuda-12.0/lib64:$LD_LIBRARY_PATH
       CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
       CIBW_BEFORE_ALL_LINUX: >-
+        rm -f /etc/yum.repos.d/epel*.repo &&
         yum install -y wget &&
         wget https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo -O /etc/yum.repos.d/cuda.repo &&
         yum clean all &&
-        yum -y install cuda-toolkit-12-0 &&
+        yum -y install cuda-compiler-12-0 cuda-cudart-devel-12-0 &&
         /usr/local/cuda-12.0/bin/nvcc --version &&
         test -f /usr/local/cuda-12.0/lib64/libcudart.so
     steps:
