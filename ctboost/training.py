@@ -78,6 +78,10 @@ def _objective_name(params: Mapping[str, Any]) -> str:
     return str(params.get("objective", params.get("loss_function", "RMSE")))
 
 
+def _is_binary_classification_objective(objective_name: str) -> bool:
+    return objective_name.lower() in {"logloss", "binary_logloss", "binary:logistic"}
+
+
 def _is_classification_objective(objective_name: str) -> bool:
     return objective_name.lower() in {
         "logloss",
@@ -87,6 +91,147 @@ def _is_classification_objective(objective_name: str) -> bool:
         "softmax",
         "softmaxloss",
     }
+
+
+def _combine_weight_arrays(*arrays: Optional[np.ndarray]) -> Optional[np.ndarray]:
+    combined: Optional[np.ndarray] = None
+    for array in arrays:
+        if array is None:
+            continue
+        resolved = np.asarray(array, dtype=np.float32)
+        combined = resolved.copy() if combined is None else combined * resolved
+    return combined
+
+
+def _apply_sample_weight_to_pool(pool: Pool, sample_weight: Optional[Any]) -> Pool:
+    if sample_weight is None:
+        return pool
+
+    resolved_weight = np.asarray(sample_weight, dtype=np.float32)
+    if resolved_weight.ndim != 1:
+        raise ValueError("sample_weight must be a 1D array")
+    if resolved_weight.shape[0] != len(pool):
+        raise ValueError("sample_weight size must match the number of rows")
+
+    combined_weight = _combine_weight_arrays(pool.weight, resolved_weight)
+    return Pool(
+        data=pool.data,
+        label=pool.label,
+        cat_features=pool.cat_features,
+        weight=combined_weight,
+        feature_names=pool.feature_names,
+    )
+
+
+def _balanced_class_weight(labels: np.ndarray) -> Dict[Any, float]:
+    unique_labels, counts = np.unique(labels, return_counts=True)
+    class_count = unique_labels.size
+    sample_count = labels.shape[0]
+    return {
+        label.item() if hasattr(label, "item") else label: float(sample_count / (class_count * count))
+        for label, count in zip(unique_labels, counts)
+    }
+
+
+def _resolve_class_weight_map(
+    labels: np.ndarray,
+    class_weights: Optional[Any],
+    auto_class_weights: Optional[str],
+) -> Optional[Dict[Any, float]]:
+    if class_weights is not None and auto_class_weights is not None:
+        raise ValueError("class_weights and auto_class_weights cannot be used together")
+
+    if auto_class_weights is not None:
+        normalized = str(auto_class_weights).lower()
+        if normalized != "balanced":
+            raise ValueError("auto_class_weights must be 'balanced'")
+        return _balanced_class_weight(labels)
+
+    if class_weights is None:
+        return None
+
+    if isinstance(class_weights, Mapping):
+        return {
+            key.item() if hasattr(key, "item") else key: float(value)
+            for key, value in class_weights.items()
+        }
+
+    weight_values = np.asarray(class_weights, dtype=np.float32).reshape(-1)
+    unique_labels = np.unique(labels)
+    if weight_values.shape[0] != unique_labels.shape[0]:
+        raise ValueError("class_weights must match the number of unique labels")
+    return {
+        label.item() if hasattr(label, "item") else label: float(weight)
+        for label, weight in zip(unique_labels.tolist(), weight_values.tolist())
+    }
+
+
+def _classification_weight_multiplier(
+    labels: np.ndarray,
+    objective_name: str,
+    *,
+    class_weights: Optional[Any] = None,
+    auto_class_weights: Optional[str] = None,
+    scale_pos_weight: Optional[float] = None,
+) -> Optional[np.ndarray]:
+    if (
+        class_weights is None
+        and auto_class_weights is None
+        and scale_pos_weight is None
+    ):
+        return None
+
+    if not _is_classification_objective(objective_name):
+        raise ValueError("class weighting parameters require a classification objective")
+
+    labels = np.asarray(labels)
+    if labels.ndim != 1:
+        raise ValueError("classification labels must be a 1D array")
+
+    multiplier = np.ones(labels.shape[0], dtype=np.float32)
+    class_weight_map = _resolve_class_weight_map(labels, class_weights, auto_class_weights)
+    if class_weight_map is not None:
+        unique_labels = {
+            label.item() if hasattr(label, "item") else label for label in np.unique(labels).tolist()
+        }
+        if set(class_weight_map) != unique_labels:
+            raise ValueError("class_weights must provide a weight for every class in the data")
+        for label_value, weight in class_weight_map.items():
+            if weight <= 0.0:
+                raise ValueError("class weights must be positive")
+            multiplier[labels == label_value] *= float(weight)
+
+    if scale_pos_weight is not None:
+        if not _is_binary_classification_objective(objective_name):
+            raise ValueError("scale_pos_weight is only supported for binary classification")
+        scale_value = float(scale_pos_weight)
+        if scale_value <= 0.0:
+            raise ValueError("scale_pos_weight must be positive")
+        positive_mask = labels == 1
+        multiplier[positive_mask] *= scale_value
+
+    return multiplier
+
+
+def _apply_objective_weights(pool: Pool, params: Mapping[str, Any], objective_name: str) -> Pool:
+    objective_weight = _classification_weight_multiplier(
+        np.asarray(pool.label),
+        objective_name,
+        class_weights=params.get("class_weights"),
+        auto_class_weights=params.get("auto_class_weights"),
+        scale_pos_weight=params.get("scale_pos_weight"),
+    )
+    if objective_weight is None:
+        return pool
+
+    combined_weight = _combine_weight_arrays(pool.weight, objective_weight)
+    return Pool(
+        data=pool.data,
+        label=pool.label,
+        cat_features=pool.cat_features,
+        weight=combined_weight,
+        feature_names=pool.feature_names,
+    )
 
 
 def _slice_pool(pool: Pool, indices: Iterable[int]) -> Pool:
@@ -166,7 +311,8 @@ class Booster:
     def evals_result_(self) -> Dict[str, Dict[str, List[float]]]:
         result = {"learn": {"loss": self.loss_history}}
         if self.eval_loss_history:
-            result["validation"] = {"loss": self.eval_loss_history}
+            metric_name = "loss" if self.eval_metric_name.lower() == self.objective_name.lower() else self.eval_metric_name
+            result["validation"] = {metric_name: self.eval_loss_history}
         return result
 
     @property
@@ -184,6 +330,14 @@ class Booster:
     @property
     def best_iteration(self) -> int:
         return int(self._handle.best_iteration())
+
+    @property
+    def objective_name(self) -> str:
+        return str(self._handle.objective_name())
+
+    @property
+    def eval_metric_name(self) -> str:
+        return str(self._handle.eval_metric_name())
 
 
 def load_model(path: PathLike) -> Booster:
@@ -291,8 +445,16 @@ def train(
     else:
         num_classes = 1
     max_bins = int(config.get("max_bins", 256))
+    nan_mode = str(config.get("nan_mode", "Min"))
+    eval_metric = str(config.get("eval_metric", ""))
+    quantile_alpha = float(config.get("quantile_alpha", 0.5))
+    huber_delta = float(config.get("huber_delta", 1.0))
     task_type = str(config.get("task_type", "CPU"))
     devices = str(config.get("devices", "0"))
+    weighted_pool = _apply_objective_weights(pool, config, objective)
+    weighted_eval_pool = (
+        None if eval_pool is None else _apply_objective_weights(eval_pool, config, objective)
+    )
 
     booster = _core.GradientBooster(
         objective=objective,
@@ -303,12 +465,16 @@ def train(
         lambda_l2=lambda_l2,
         num_classes=num_classes,
         max_bins=max_bins,
+        nan_mode=nan_mode,
+        eval_metric=eval_metric,
+        quantile_alpha=quantile_alpha,
+        huber_delta=huber_delta,
         task_type=task_type,
         devices=devices,
     )
     booster.fit(
-        pool._handle,
-        None if eval_pool is None else eval_pool._handle,
+        weighted_pool._handle,
+        None if weighted_eval_pool is None else weighted_eval_pool._handle,
         early_stopping,
     )
     return Booster(booster)

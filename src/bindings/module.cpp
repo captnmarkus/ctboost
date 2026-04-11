@@ -119,12 +119,14 @@ py::tuple TreeToState(const ctboost::Tree& tree) {
                         tree.cut_offsets(),
                         tree.cut_values(),
                         tree.categorical_mask(),
+                        tree.missing_value_mask(),
+                        tree.nan_mode(),
                         tree.feature_importances());
 }
 
 ctboost::Tree TreeFromState(const py::handle& handle) {
   const py::tuple state = handle.cast<py::tuple>();
-  if (state.size() != 6) {
+  if (state.size() != 8) {
     throw std::runtime_error("invalid serialized tree state");
   }
 
@@ -139,7 +141,9 @@ ctboost::Tree TreeFromState(const py::handle& handle) {
                  state[2].cast<std::vector<std::size_t>>(),
                  state[3].cast<std::vector<float>>(),
                  state[4].cast<std::vector<std::uint8_t>>(),
-                 state[5].cast<std::vector<double>>());
+                 state[5].cast<std::vector<std::uint8_t>>(),
+                 state[6].cast<std::uint8_t>(),
+                 state[7].cast<std::vector<double>>());
   return tree;
 }
 
@@ -149,12 +153,28 @@ PYBIND11_MODULE(_core, m) {
   m.doc() = "Native backend scaffolding for CTBoost";
 
   py::class_<ctboost::Pool>(m, "Pool")
-      .def(py::init<py::array_t<float, py::array::forcecast>,
-                    py::array_t<float, py::array::forcecast>,
-                    std::vector<int>>(),
+      .def(py::init([](py::array_t<float, py::array::forcecast> data,
+                       py::array_t<float, py::array::forcecast> label,
+                       std::vector<int> cat_features,
+                       py::object weight) {
+             py::array_t<float, py::array::forcecast> resolved_weight;
+             if (weight.is_none()) {
+               const py::buffer_info label_info = label.request();
+               py::array_t<float> ones(static_cast<py::ssize_t>(label_info.shape[0]));
+               auto mutable_weights = ones.mutable_unchecked<1>();
+               for (py::ssize_t index = 0; index < label_info.shape[0]; ++index) {
+                 mutable_weights(index) = 1.0F;
+               }
+               resolved_weight = std::move(ones);
+             } else {
+               resolved_weight = weight.cast<py::array_t<float, py::array::forcecast>>();
+             }
+             return ctboost::Pool(data, label, std::move(cat_features), resolved_weight);
+           }),
            py::arg("data"),
            py::arg("label"),
-           py::arg("cat_features") = std::vector<int>{})
+           py::arg("cat_features") = std::vector<int>{},
+           py::arg("weight") = py::none())
       .def("num_rows", &ctboost::Pool::num_rows)
       .def("num_cols", &ctboost::Pool::num_cols)
       .def("feature_data", [](const ctboost::Pool& pool) {
@@ -162,6 +182,9 @@ PYBIND11_MODULE(_core, m) {
       })
       .def("label", [](const ctboost::Pool& pool) {
         return VectorToArray(pool.labels());
+      })
+      .def("weight", [](const ctboost::Pool& pool) {
+        return VectorToArray(pool.weights());
       })
       .def("cat_features", [](const ctboost::Pool& pool) {
         return pool.cat_features();
@@ -177,6 +200,10 @@ PYBIND11_MODULE(_core, m) {
                     int,
                     std::size_t,
                     std::string,
+                    std::string,
+                    double,
+                    double,
+                    std::string,
                     std::string>(),
            py::arg("objective") = "RMSE",
            py::arg("iterations") = 100,
@@ -186,6 +213,10 @@ PYBIND11_MODULE(_core, m) {
            py::arg("lambda_l2") = 1.0,
            py::arg("num_classes") = 1,
            py::arg("max_bins") = 256,
+           py::arg("nan_mode") = "Min",
+           py::arg("eval_metric") = "",
+           py::arg("quantile_alpha") = 0.5,
+           py::arg("huber_delta") = 1.0,
            py::arg("task_type") = "CPU",
            py::arg("devices") = "0")
       .def("fit",
@@ -225,6 +256,8 @@ PYBIND11_MODULE(_core, m) {
       .def("best_iteration", &ctboost::GradientBooster::best_iteration)
       .def("num_classes", &ctboost::GradientBooster::num_classes)
       .def("prediction_dimension", &ctboost::GradientBooster::prediction_dimension)
+      .def("objective_name", &ctboost::GradientBooster::objective_name)
+      .def("eval_metric_name", &ctboost::GradientBooster::eval_metric_name)
       .def("feature_importances", [](const ctboost::GradientBooster& booster) {
         return VectorToArray(booster.get_feature_importances());
       })
@@ -243,6 +276,10 @@ PYBIND11_MODULE(_core, m) {
                                   booster.lambda_l2(),
                                   booster.num_classes(),
                                   booster.max_bins(),
+                                  booster.nan_mode_name(),
+                                  booster.eval_metric_name(),
+                                  booster.quantile_alpha(),
+                                  booster.huber_delta(),
                                   booster.devices(),
                                   booster.use_gpu(),
                                   tree_states,
@@ -252,21 +289,21 @@ PYBIND11_MODULE(_core, m) {
                                   booster.get_feature_importances());
           },
           [](const py::tuple& state) {
-            if (state.size() != 15) {
+            if (state.size() != 19) {
               throw std::runtime_error("invalid serialized GradientBooster state");
             }
 
             std::vector<ctboost::Tree> trees;
-            for (const py::handle tree_handle : state[10].cast<py::list>()) {
+            for (const py::handle tree_handle : state[14].cast<py::list>()) {
               trees.push_back(TreeFromState(tree_handle));
             }
 
             std::vector<double> feature_importance_sums;
-            for (const float value : state[14].cast<std::vector<float>>()) {
+            for (const float value : state[18].cast<std::vector<float>>()) {
               feature_importance_sums.push_back(static_cast<double>(value));
             }
 
-            const bool requested_gpu = state[9].cast<bool>();
+            const bool requested_gpu = state[13].cast<bool>();
             const bool use_gpu = requested_gpu && ctboost::CudaBackendCompiled();
             ctboost::GradientBooster booster(state[0].cast<std::string>(),
                                              state[1].cast<int>(),
@@ -276,11 +313,15 @@ PYBIND11_MODULE(_core, m) {
                                              state[5].cast<double>(),
                                              state[6].cast<int>(),
                                              state[7].cast<std::size_t>(),
+                                             state[8].cast<std::string>(),
+                                             state[9].cast<std::string>(),
+                                             state[10].cast<double>(),
+                                             state[11].cast<double>(),
                                              use_gpu ? "GPU" : "CPU",
-                                             state[8].cast<std::string>());
+                                             state[12].cast<std::string>());
 
-            const auto eval_loss_history = state[12].cast<std::vector<double>>();
-            const int best_iteration = state[13].cast<int>();
+            const auto eval_loss_history = state[16].cast<std::vector<double>>();
+            const int best_iteration = state[17].cast<int>();
             double best_loss = 0.0;
             if (best_iteration >= 0 &&
                 static_cast<std::size_t>(best_iteration) < eval_loss_history.size()) {
@@ -288,7 +329,7 @@ PYBIND11_MODULE(_core, m) {
             }
 
             booster.LoadState(std::move(trees),
-                              state[11].cast<std::vector<double>>(),
+                              state[15].cast<std::vector<double>>(),
                               eval_loss_history,
                               std::move(feature_importance_sums),
                               best_iteration,
@@ -316,7 +357,7 @@ PYBIND11_MODULE(_core, m) {
           const auto pred_values = ArrayToVector(preds, "preds");
           const auto label_values = ArrayToVector(labels, "labels");
           std::unique_ptr<ctboost::ObjectiveFunction> objective =
-              ctboost::CreateObjectiveFunction(objective_name);
+              ctboost::CreateObjectiveFunction(objective_name, ctboost::ObjectiveConfig{});
 
           std::vector<float> gradients;
           std::vector<float> hessians;
@@ -337,10 +378,12 @@ PYBIND11_MODULE(_core, m) {
           const std::uint16_t max_bin =
               bin_values.empty() ? 0 : *std::max_element(bin_values.begin(), bin_values.end());
           std::vector<float> hessians(gradient_values.size(), 1.0F);
+          std::vector<float> weights(gradient_values.size(), 1.0F);
           const ctboost::LinearStatistic statistic;
           const ctboost::LinearStatisticResult result =
               statistic.Evaluate(gradient_values,
                                  hessians,
+                                 weights,
                                  bin_values,
                                  static_cast<std::size_t>(max_bin) + 1);
 

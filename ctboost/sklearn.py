@@ -10,7 +10,7 @@ import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 
 from .core import Pool
-from .training import _normalize_eval_set, _pool_from_data_and_label, train
+from .training import _apply_sample_weight_to_pool, _normalize_eval_set, _pool_from_data_and_label, train
 
 PathLike = Union[str, Path]
 
@@ -49,6 +49,8 @@ class _BaseCTBoost(BaseEstimator):
         alpha: float = 0.05,
         lambda_l2: float = 1.0,
         loss_function: Optional[str] = None,
+        eval_metric: Optional[str] = None,
+        nan_mode: str = "Min",
         task_type: str = "CPU",
         devices: str = "0",
     ) -> None:
@@ -58,6 +60,8 @@ class _BaseCTBoost(BaseEstimator):
         self.alpha = alpha
         self.lambda_l2 = lambda_l2
         self.loss_function = loss_function
+        self.eval_metric = eval_metric
+        self.nan_mode = nan_mode
         self.task_type = task_type
         self.devices = devices
 
@@ -66,26 +70,35 @@ class _BaseCTBoost(BaseEstimator):
         X: Any,
         y: Any = None,
         *,
+        sample_weight: Any = None,
         eval_set: Any = None,
         early_stopping_rounds: Optional[int] = None,
         objective: str,
         num_classes: int = 1,
+        extra_train_params: Optional[Dict[str, Any]] = None,
     ) -> "_BaseCTBoost":
         train_pool = X if isinstance(X, Pool) and y is None else _pool_from_data_and_label(X, y)
+        train_pool = _apply_sample_weight_to_pool(train_pool, sample_weight)
         resolved_objective = objective if num_classes > 2 else (self.loss_function or objective)
+        train_params = {
+            "iterations": self.iterations,
+            "learning_rate": self.learning_rate,
+            "max_depth": self.max_depth,
+            "alpha": self.alpha,
+            "lambda_l2": self.lambda_l2,
+            "objective": resolved_objective,
+            "num_classes": num_classes,
+            "nan_mode": self.nan_mode,
+            "task_type": self.task_type,
+            "devices": self.devices,
+        }
+        if self.eval_metric is not None:
+            train_params["eval_metric"] = self.eval_metric
+        if extra_train_params:
+            train_params.update(extra_train_params)
         self._booster = train(
             train_pool,
-            {
-                "iterations": self.iterations,
-                "learning_rate": self.learning_rate,
-                "max_depth": self.max_depth,
-                "alpha": self.alpha,
-                "lambda_l2": self.lambda_l2,
-                "objective": resolved_objective,
-                "num_classes": num_classes,
-                "task_type": self.task_type,
-                "devices": self.devices,
-            },
+            train_params,
             num_boost_round=self.iterations,
             eval_set=eval_set,
             early_stopping_rounds=early_stopping_rounds,
@@ -141,6 +154,10 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
         alpha: float = 0.05,
         lambda_l2: float = 1.0,
         loss_function: str = "Logloss",
+        class_weight: Optional[Any] = None,
+        scale_pos_weight: Optional[float] = None,
+        eval_metric: Optional[str] = None,
+        nan_mode: str = "Min",
         task_type: str = "CPU",
         devices: str = "0",
     ) -> None:
@@ -151,15 +168,20 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
             alpha=alpha,
             lambda_l2=lambda_l2,
             loss_function=loss_function,
+            eval_metric=eval_metric,
+            nan_mode=nan_mode,
             task_type=task_type,
             devices=devices,
         )
+        self.class_weight = class_weight
+        self.scale_pos_weight = scale_pos_weight
 
     def fit(
         self,
         X: Any,
         y: Any = None,
         *,
+        sample_weight: Any = None,
         eval_set: Any = None,
         early_stopping_rounds: Optional[int] = None,
     ) -> "CTBoostClassifier":
@@ -184,12 +206,29 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
         label_to_index = {label: index for index, label in enumerate(self.classes_.tolist())}
         eval_pool = _resolve_classifier_eval_pool(eval_set, label_to_index)
         objective = "MultiClass" if self.n_classes_ > 2 else "Logloss"
+        train_params: Dict[str, Any] = {}
+        if self.class_weight is not None:
+            if isinstance(self.class_weight, str) and self.class_weight == "balanced":
+                train_params["auto_class_weights"] = "balanced"
+            elif isinstance(self.class_weight, dict):
+                encoded_class_weights = {}
+                for label, weight in self.class_weight.items():
+                    if label not in label_to_index:
+                        raise ValueError("class_weight contains labels not seen in the training data")
+                    encoded_class_weights[label_to_index[label]] = weight
+                train_params["class_weights"] = encoded_class_weights
+            else:
+                train_params["class_weights"] = self.class_weight
+        if self.scale_pos_weight is not None:
+            train_params["scale_pos_weight"] = self.scale_pos_weight
         fitted = self._fit_impl(
             train_pool,
+            sample_weight=sample_weight,
             eval_set=eval_pool,
             early_stopping_rounds=early_stopping_rounds,
             objective=objective,
             num_classes=self.n_classes_,
+            extra_train_params=train_params,
         )
         return fitted
 
@@ -249,6 +288,8 @@ class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
         alpha: float = 0.05,
         lambda_l2: float = 1.0,
         loss_function: str = "RMSE",
+        eval_metric: Optional[str] = None,
+        nan_mode: str = "Min",
         task_type: str = "CPU",
         devices: str = "0",
     ) -> None:
@@ -259,6 +300,8 @@ class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
             alpha=alpha,
             lambda_l2=lambda_l2,
             loss_function=loss_function,
+            eval_metric=eval_metric,
+            nan_mode=nan_mode,
             task_type=task_type,
             devices=devices,
         )
@@ -268,12 +311,14 @@ class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
         X: Any,
         y: Any = None,
         *,
+        sample_weight: Any = None,
         eval_set: Any = None,
         early_stopping_rounds: Optional[int] = None,
     ) -> "CTBoostRegressor":
         return self._fit_impl(
             X,
             y,
+            sample_weight=sample_weight,
             eval_set=eval_set,
             early_stopping_rounds=early_stopping_rounds,
             objective="SquaredError",

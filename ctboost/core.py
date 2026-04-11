@@ -90,12 +90,17 @@ class Pool:
 
         data_array = np.ascontiguousarray(data, dtype=np.float32)
         label_array = np.ascontiguousarray(label, dtype=np.float32)
+        if weight is None:
+            native_weight = np.ones(data_array.shape[0], dtype=np.float32)
+            self.weight = None
+        else:
+            native_weight = np.ascontiguousarray(weight, dtype=np.float32)
+            self.weight = native_weight
 
-        self._handle = _core.Pool(data_array, label_array, resolved_cat_features)
+        self._handle = _core.Pool(data_array, label_array, resolved_cat_features, native_weight)
         self.num_rows = self._handle.num_rows()
         self.num_cols = self._handle.num_cols()
         self.cat_features = list(self._handle.cat_features())
-        self.weight = None if weight is None else np.ascontiguousarray(weight, dtype=np.float32)
         self.feature_names = None if feature_names is None else list(feature_names)
 
         if self.weight is not None:

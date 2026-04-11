@@ -7,6 +7,7 @@
 
 #include "ctboost/data.hpp"
 #include "ctboost/histogram.hpp"
+#include "ctboost/metric.hpp"
 #include "ctboost/objective.hpp"
 #include "ctboost/tree.hpp"
 
@@ -22,6 +23,10 @@ class GradientBooster {
                   double lambda_l2 = 1.0,
                   int num_classes = 1,
                   std::size_t max_bins = 256,
+                  std::string nan_mode = "Min",
+                  std::string eval_metric = "",
+                  double quantile_alpha = 0.5,
+                  double huber_delta = 1.0,
                   std::string task_type = "CPU",
                   std::string devices = "0");
 
@@ -32,7 +37,7 @@ class GradientBooster {
                  std::vector<double> eval_loss_history,
                  std::vector<double> feature_importance_sums,
                  int best_iteration,
-                 double best_loss,
+                 double best_score,
                  bool use_gpu);
 
   const std::vector<double>& loss_history() const noexcept;
@@ -49,6 +54,10 @@ class GradientBooster {
   double alpha() const noexcept;
   double lambda_l2() const noexcept;
   std::size_t max_bins() const noexcept;
+  const std::string& nan_mode_name() const noexcept;
+  const std::string& eval_metric_name() const noexcept;
+  double quantile_alpha() const noexcept;
+  double huber_delta() const noexcept;
   bool use_gpu() const noexcept;
   const std::string& devices() const noexcept;
   const std::vector<Tree>& trees() const noexcept;
@@ -56,7 +65,11 @@ class GradientBooster {
 
  private:
   std::string objective_name_;
+  std::string eval_metric_name_;
+  ObjectiveConfig objective_config_;
   std::unique_ptr<ObjectiveFunction> objective_;
+  std::unique_ptr<MetricFunction> objective_metric_;
+  std::unique_ptr<MetricFunction> eval_metric_;
   int iterations_{100};
   double learning_rate_{0.1};
   int max_depth_{6};
@@ -73,7 +86,8 @@ class GradientBooster {
   std::vector<double> eval_loss_history_;
   std::vector<double> feature_importance_sums_;
   int best_iteration_{-1};
-  double best_loss_{0.0};
+  double best_score_{0.0};
+  bool maximize_eval_metric_{false};
 };
 
 }  // namespace ctboost

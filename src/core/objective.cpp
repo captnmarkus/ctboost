@@ -142,12 +142,105 @@ void SoftmaxLoss::compute_gradients(const std::vector<float>& preds,
   }
 }
 
-std::unique_ptr<ObjectiveFunction> CreateObjectiveFunction(std::string_view name) {
+void AbsoluteError::compute_gradients(const std::vector<float>& preds,
+                                      const std::vector<float>& labels,
+                                      std::vector<float>& out_g,
+                                      std::vector<float>& out_h,
+                                      int num_classes) const {
+  if (num_classes != 1) {
+    throw std::invalid_argument("absolute error expects num_classes equal to one");
+  }
+  ValidatePredictionLabelSizes(preds, labels);
+
+  out_g.resize(preds.size());
+  out_h.resize(preds.size(), 1.0F);
+
+  for (std::size_t i = 0; i < preds.size(); ++i) {
+    const float residual = preds[i] - labels[i];
+    if (residual > 0.0F) {
+      out_g[i] = 1.0F;
+    } else if (residual < 0.0F) {
+      out_g[i] = -1.0F;
+    } else {
+      out_g[i] = 0.0F;
+    }
+  }
+}
+
+HuberLoss::HuberLoss(double delta) : delta_(delta) {
+  if (delta_ <= 0.0) {
+    throw std::invalid_argument("huber_delta must be positive");
+  }
+}
+
+void HuberLoss::compute_gradients(const std::vector<float>& preds,
+                                  const std::vector<float>& labels,
+                                  std::vector<float>& out_g,
+                                  std::vector<float>& out_h,
+                                  int num_classes) const {
+  if (num_classes != 1) {
+    throw std::invalid_argument("huber loss expects num_classes equal to one");
+  }
+  ValidatePredictionLabelSizes(preds, labels);
+
+  out_g.resize(preds.size());
+  out_h.resize(preds.size());
+
+  for (std::size_t i = 0; i < preds.size(); ++i) {
+    const double residual = static_cast<double>(preds[i]) - labels[i];
+    const double absolute_residual = std::fabs(residual);
+    if (absolute_residual <= delta_) {
+      out_g[i] = static_cast<float>(residual);
+      out_h[i] = 1.0F;
+    } else {
+      out_g[i] = static_cast<float>(delta_ * (residual > 0.0 ? 1.0 : -1.0));
+      out_h[i] = 0.0F;
+    }
+  }
+}
+
+QuantileLoss::QuantileLoss(double alpha) : alpha_(alpha) {
+  if (!(alpha_ > 0.0 && alpha_ < 1.0)) {
+    throw std::invalid_argument("quantile_alpha must be in the open interval (0, 1)");
+  }
+}
+
+void QuantileLoss::compute_gradients(const std::vector<float>& preds,
+                                     const std::vector<float>& labels,
+                                     std::vector<float>& out_g,
+                                     std::vector<float>& out_h,
+                                     int num_classes) const {
+  if (num_classes != 1) {
+    throw std::invalid_argument("quantile loss expects num_classes equal to one");
+  }
+  ValidatePredictionLabelSizes(preds, labels);
+
+  out_g.resize(preds.size());
+  out_h.resize(preds.size(), 1.0F);
+
+  for (std::size_t i = 0; i < preds.size(); ++i) {
+    const double residual = static_cast<double>(labels[i]) - preds[i];
+    out_g[i] = residual > 0.0 ? static_cast<float>(-alpha_) : static_cast<float>(1.0 - alpha_);
+  }
+}
+
+std::unique_ptr<ObjectiveFunction> CreateObjectiveFunction(std::string_view name,
+                                                           const ObjectiveConfig& config) {
   const std::string normalized = NormalizeName(name);
 
   if (normalized == "rmse" || normalized == "squarederror" ||
       normalized == "squared_error") {
     return std::make_unique<SquaredError>();
+  }
+  if (normalized == "mae" || normalized == "l1" || normalized == "absoluteerror" ||
+      normalized == "absolute_error") {
+    return std::make_unique<AbsoluteError>();
+  }
+  if (normalized == "huber" || normalized == "huberloss") {
+    return std::make_unique<HuberLoss>(config.huber_delta);
+  }
+  if (normalized == "quantile" || normalized == "quantileloss") {
+    return std::make_unique<QuantileLoss>(config.quantile_alpha);
   }
   if (normalized == "logloss" || normalized == "binary_logloss" ||
       normalized == "binary:logistic") {

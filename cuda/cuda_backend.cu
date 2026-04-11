@@ -57,12 +57,13 @@ void BuildHistogramsGpu(const std::vector<std::uint16_t>& bins,
                         const std::vector<std::uint16_t>& num_bins_per_feature,
                         const std::vector<float>& gradients,
                         const std::vector<float>& hessians,
+                        const std::vector<float>& weights,
                         std::vector<float>& out_gradient_sums,
                         std::vector<float>& out_hessian_sums,
-                        std::vector<std::uint32_t>& out_counts,
+                        std::vector<float>& out_weight_sums,
                         std::vector<std::size_t>& out_feature_offsets) {
-  if (gradients.size() != num_rows || hessians.size() != num_rows) {
-    throw std::invalid_argument("GPU histogram gradients and hessians must match num_rows");
+  if (gradients.size() != num_rows || hessians.size() != num_rows || weights.size() != num_rows) {
+    throw std::invalid_argument("GPU histogram gradients, hessians, and weights must match num_rows");
   }
   if (num_bins_per_feature.size() != num_features) {
     throw std::invalid_argument("GPU histogram num_bins_per_feature must match num_features");
@@ -75,7 +76,7 @@ void BuildHistogramsGpu(const std::vector<std::uint16_t>& bins,
   const std::size_t total_bins = out_feature_offsets.back();
   out_gradient_sums.assign(total_bins, 0.0F);
   out_hessian_sums.assign(total_bins, 0.0F);
-  out_counts.assign(total_bins, 0);
+  out_weight_sums.assign(total_bins, 0.0F);
 
   if (num_rows == 0 || num_features == 0 || total_bins == 0) {
     return;
@@ -87,9 +88,10 @@ void BuildHistogramsGpu(const std::vector<std::uint16_t>& bins,
         out_feature_offsets.begin(), out_feature_offsets.end());
     thrust::device_vector<float> d_gradients(gradients.begin(), gradients.end());
     thrust::device_vector<float> d_hessians(hessians.begin(), hessians.end());
+    thrust::device_vector<float> d_weights(weights.begin(), weights.end());
     thrust::device_vector<float> d_gradient_sums(total_bins, 0.0F);
     thrust::device_vector<float> d_hessian_sums(total_bins, 0.0F);
-    thrust::device_vector<std::uint32_t> d_counts(total_bins, 0U);
+    thrust::device_vector<float> d_weight_sums(total_bins, 0.0F);
 
     const int threads = 256;
     const int row_blocks = static_cast<int>((num_rows + threads - 1) / threads);
@@ -99,9 +101,10 @@ void BuildHistogramsGpu(const std::vector<std::uint16_t>& bins,
         thrust::raw_pointer_cast(d_feature_offsets.data()),
         thrust::raw_pointer_cast(d_gradients.data()),
         thrust::raw_pointer_cast(d_hessians.data()),
+        thrust::raw_pointer_cast(d_weights.data()),
         thrust::raw_pointer_cast(d_gradient_sums.data()),
         thrust::raw_pointer_cast(d_hessian_sums.data()),
-        thrust::raw_pointer_cast(d_counts.data()),
+        thrust::raw_pointer_cast(d_weight_sums.data()),
         num_rows,
         num_features);
     CTBOOST_CUDA_CHECK(cudaGetLastError());
@@ -109,7 +112,7 @@ void BuildHistogramsGpu(const std::vector<std::uint16_t>& bins,
 
     thrust::copy(d_gradient_sums.begin(), d_gradient_sums.end(), out_gradient_sums.begin());
     thrust::copy(d_hessian_sums.begin(), d_hessian_sums.end(), out_hessian_sums.begin());
-    thrust::copy(d_counts.begin(), d_counts.end(), out_counts.begin());
+    thrust::copy(d_weight_sums.begin(), d_weight_sums.end(), out_weight_sums.begin());
   } catch (const thrust::system_error& error) {
     throw std::runtime_error(std::string("CUDA thrust failure: ") + error.what());
   }

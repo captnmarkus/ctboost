@@ -9,7 +9,7 @@ namespace ctboost {
 struct BinStatistics {
   std::vector<double> gradient_sums;
   std::vector<double> hessian_sums;
-  std::vector<std::uint32_t> counts;
+  std::vector<double> weight_sums;
 };
 
 struct LinearStatisticResult {
@@ -28,16 +28,18 @@ class LinearStatistic {
 
   BinStatistics ComputeBinStatistics(const std::vector<float>& gradients,
                                      const std::vector<float>& hessians,
+                                     const std::vector<float>& weights,
                                      const std::vector<std::uint16_t>& bins,
                                      std::size_t num_bins) const;
 
   LinearStatisticResult EvaluateFromBinStatistics(const BinStatistics& stats,
                                                   double total_gradient,
-                                                  std::size_t sample_count,
+                                                  double sample_weight_sum,
                                                   double gradient_variance) const;
 
   LinearStatisticResult Evaluate(const std::vector<float>& gradients,
                                  const std::vector<float>& hessians,
+                                 const std::vector<float>& weights,
                                  const std::vector<std::uint16_t>& bins,
                                  std::size_t num_bins) const;
 

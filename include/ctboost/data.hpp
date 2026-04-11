@@ -11,12 +11,14 @@ class Pool {
  public:
   Pool(pybind11::array_t<float, pybind11::array::forcecast> data,
        pybind11::array_t<float, pybind11::array::forcecast> label,
-       std::vector<int> cat_features = {});
+       std::vector<int> cat_features = {},
+       pybind11::array_t<float, pybind11::array::forcecast> weight = pybind11::array_t<float>());
 
   std::size_t num_rows() const noexcept;
   std::size_t num_cols() const noexcept;
   const std::vector<float>& feature_data() const noexcept;
   const std::vector<float>& labels() const noexcept;
+  const std::vector<float>& weights() const noexcept;
   const std::vector<int>& cat_features() const noexcept;
   float feature_value(std::size_t row, std::size_t col) const;
 
@@ -25,6 +27,7 @@ class Pool {
   std::size_t num_cols_{0};
   std::vector<float> feature_data_;
   std::vector<float> labels_;
+  std::vector<float> weights_;
   std::vector<int> cat_features_;
 };
 

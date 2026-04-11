@@ -16,10 +16,12 @@ constexpr double kGammaTiny = 1e-300;
 
 void ValidateSizes(const std::vector<float>& gradients,
                    const std::vector<float>& hessians,
+                   const std::vector<float>& weights,
                    const std::vector<std::uint16_t>& bins,
                    std::size_t num_bins) {
-  if (gradients.size() != hessians.size() || gradients.size() != bins.size()) {
-    throw std::invalid_argument("gradients, hessians, and bins must have the same size");
+  if (gradients.size() != hessians.size() || gradients.size() != weights.size() ||
+      gradients.size() != bins.size()) {
+    throw std::invalid_argument("gradients, hessians, weights, and bins must have the same size");
   }
   if (num_bins == 0) {
     throw std::invalid_argument("num_bins must be greater than zero");
@@ -148,23 +150,25 @@ LinearStatistic::LinearStatistic(double epsilon) : epsilon_(epsilon) {
 
 BinStatistics LinearStatistic::ComputeBinStatistics(const std::vector<float>& gradients,
                                                     const std::vector<float>& hessians,
+                                                    const std::vector<float>& weights,
                                                     const std::vector<std::uint16_t>& bins,
                                                     std::size_t num_bins) const {
-  ValidateSizes(gradients, hessians, bins, num_bins);
+  ValidateSizes(gradients, hessians, weights, bins, num_bins);
 
   BinStatistics stats;
   stats.gradient_sums.assign(num_bins, 0.0);
   stats.hessian_sums.assign(num_bins, 0.0);
-  stats.counts.assign(num_bins, 0);
+  stats.weight_sums.assign(num_bins, 0.0);
 
   for (std::size_t i = 0; i < gradients.size(); ++i) {
     const std::size_t bin = static_cast<std::size_t>(bins[i]);
     if (bin >= num_bins) {
       throw std::invalid_argument("bin index is out of range");
     }
-    stats.gradient_sums[bin] += gradients[i];
-    stats.hessian_sums[bin] += hessians[i];
-    stats.counts[bin] += 1;
+    const double sample_weight = static_cast<double>(weights[i]);
+    stats.gradient_sums[bin] += sample_weight * gradients[i];
+    stats.hessian_sums[bin] += sample_weight * hessians[i];
+    stats.weight_sums[bin] += sample_weight;
   }
 
   return stats;
@@ -172,25 +176,25 @@ BinStatistics LinearStatistic::ComputeBinStatistics(const std::vector<float>& gr
 
 LinearStatisticResult LinearStatistic::EvaluateFromBinStatistics(const BinStatistics& stats,
                                                                 double total_gradient,
-                                                                std::size_t sample_count,
+                                                                double sample_weight_sum,
                                                                 double gradient_variance) const {
   LinearStatisticResult result;
 
   const std::size_t num_bins = stats.gradient_sums.size();
-  if (stats.hessian_sums.size() != num_bins || stats.counts.size() != num_bins) {
+  if (stats.hessian_sums.size() != num_bins || stats.weight_sums.size() != num_bins) {
     throw std::invalid_argument("bin statistics vectors must have the same size");
   }
 
   std::vector<std::size_t> active_bins;
   active_bins.reserve(num_bins);
   for (std::size_t bin = 0; bin < num_bins; ++bin) {
-    if (stats.counts[bin] > 0) {
+    if (stats.weight_sums[bin] > 0.0) {
       active_bins.push_back(bin);
     }
   }
 
   result.num_bins = active_bins.size();
-  if (sample_count <= 1 || active_bins.size() <= 1) {
+  if (sample_weight_sum <= 1.0 || active_bins.size() <= 1) {
     result.degrees_of_freedom = 0;
     result.p_value = 1.0;
     return result;
@@ -199,13 +203,12 @@ LinearStatisticResult LinearStatistic::EvaluateFromBinStatistics(const BinStatis
   result.statistic.reserve(active_bins.size());
   result.expectation.reserve(active_bins.size());
 
-  const double node_count = static_cast<double>(sample_count);
+  const double node_count = sample_weight_sum;
   const double gradient_mean = total_gradient / node_count;
 
   for (const std::size_t active_bin : active_bins) {
     result.statistic.push_back(stats.gradient_sums[active_bin]);
-    result.expectation.push_back(
-        static_cast<double>(stats.counts[active_bin]) * gradient_mean);
+    result.expectation.push_back(stats.weight_sums[active_bin] * gradient_mean);
   }
 
   result.degrees_of_freedom = active_bins.size() - 1;
@@ -222,10 +225,10 @@ LinearStatisticResult LinearStatistic::EvaluateFromBinStatistics(const BinStatis
   const double outer_scale = gradient_variance / (node_count - 1.0);
 
   for (std::size_t i = 0; i < result.degrees_of_freedom; ++i) {
-    const double count_i = static_cast<double>(stats.counts[active_bins[i]]);
+    const double count_i = stats.weight_sums[active_bins[i]];
     reduced_diff[i] = result.statistic[i] - result.expectation[i];
     for (std::size_t j = 0; j < result.degrees_of_freedom; ++j) {
-      const double count_j = static_cast<double>(stats.counts[active_bins[j]]);
+      const double count_j = stats.weight_sums[active_bins[j]];
       double covariance = -outer_scale * count_i * count_j;
       if (i == j) {
         covariance += diagonal_scale * count_i;
@@ -244,24 +247,27 @@ LinearStatisticResult LinearStatistic::EvaluateFromBinStatistics(const BinStatis
 
 LinearStatisticResult LinearStatistic::Evaluate(const std::vector<float>& gradients,
                                                 const std::vector<float>& hessians,
+                                                const std::vector<float>& weights,
                                                 const std::vector<std::uint16_t>& bins,
                                                 std::size_t num_bins) const {
-  const BinStatistics stats = ComputeBinStatistics(gradients, hessians, bins, num_bins);
-  const double total_gradient = std::accumulate(
-      gradients.begin(), gradients.end(), 0.0,
-      [](double acc, float value) { return acc + static_cast<double>(value); });
-  const double gradient_mean =
-      gradients.empty() ? 0.0 : total_gradient / static_cast<double>(gradients.size());
+  const BinStatistics stats = ComputeBinStatistics(gradients, hessians, weights, bins, num_bins);
+  double total_gradient = 0.0;
+  double total_weight = 0.0;
+  for (std::size_t i = 0; i < gradients.size(); ++i) {
+    total_gradient += static_cast<double>(weights[i]) * gradients[i];
+    total_weight += static_cast<double>(weights[i]);
+  }
+  const double gradient_mean = total_weight <= 0.0 ? 0.0 : total_gradient / total_weight;
 
   double centered_sum_of_squares = 0.0;
-  for (const float gradient : gradients) {
-    const double centered = static_cast<double>(gradient) - gradient_mean;
-    centered_sum_of_squares += centered * centered;
+  for (std::size_t i = 0; i < gradients.size(); ++i) {
+    const double centered = static_cast<double>(gradients[i]) - gradient_mean;
+    centered_sum_of_squares += static_cast<double>(weights[i]) * centered * centered;
   }
   const double gradient_variance =
-      gradients.empty() ? 0.0 : centered_sum_of_squares / static_cast<double>(gradients.size());
+      total_weight <= 0.0 ? 0.0 : centered_sum_of_squares / total_weight;
 
-  return EvaluateFromBinStatistics(stats, total_gradient, gradients.size(), gradient_variance);
+  return EvaluateFromBinStatistics(stats, total_gradient, total_weight, gradient_variance);
 }
 
 double LinearStatistic::epsilon() const noexcept { return epsilon_; }

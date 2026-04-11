@@ -4,9 +4,10 @@ __global__ void HistMatrixSumsKernel(const std::uint16_t* bins,
                                      const std::size_t* feature_offsets,
                                      const float* gradients,
                                      const float* hessians,
+                                     const float* weights,
                                      float* gradient_sums,
                                      float* hessian_sums,
-                                     std::uint32_t* counts,
+                                     float* weight_sums,
                                      std::size_t num_rows,
                                      std::size_t num_features) {
   const std::size_t row = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
@@ -24,7 +25,8 @@ __global__ void HistMatrixSumsKernel(const std::uint16_t* bins,
   }
 
   const std::size_t output_index = feature_offset + bin;
-  atomicAdd(&gradient_sums[output_index], gradients[row]);
-  atomicAdd(&hessian_sums[output_index], hessians[row]);
-  atomicAdd(&counts[output_index], 1U);
+  const float sample_weight = weights[row];
+  atomicAdd(&gradient_sums[output_index], sample_weight * gradients[row]);
+  atomicAdd(&hessian_sums[output_index], sample_weight * hessians[row]);
+  atomicAdd(&weight_sums[output_index], sample_weight);
 }

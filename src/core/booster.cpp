@@ -27,6 +27,19 @@ bool IsSquaredErrorObjective(const std::string& normalized_objective) {
          normalized_objective == "squared_error";
 }
 
+bool IsAbsoluteErrorObjective(const std::string& normalized_objective) {
+  return normalized_objective == "mae" || normalized_objective == "l1" ||
+         normalized_objective == "absoluteerror" || normalized_objective == "absolute_error";
+}
+
+bool IsHuberObjective(const std::string& normalized_objective) {
+  return normalized_objective == "huber" || normalized_objective == "huberloss";
+}
+
+bool IsQuantileObjective(const std::string& normalized_objective) {
+  return normalized_objective == "quantile" || normalized_objective == "quantileloss";
+}
+
 bool IsBinaryObjective(const std::string& normalized_objective) {
   return normalized_objective == "logloss" || normalized_objective == "binary_logloss" ||
          normalized_objective == "binary:logistic";
@@ -35,6 +48,13 @@ bool IsBinaryObjective(const std::string& normalized_objective) {
 bool IsMulticlassObjective(const std::string& normalized_objective) {
   return normalized_objective == "multiclass" || normalized_objective == "softmax" ||
          normalized_objective == "softmaxloss";
+}
+
+bool IsRegressionObjective(const std::string& normalized_objective) {
+  return IsSquaredErrorObjective(normalized_objective) ||
+         IsAbsoluteErrorObjective(normalized_objective) ||
+         IsHuberObjective(normalized_objective) ||
+         IsQuantileObjective(normalized_objective);
 }
 
 bool SameCategoricalFeatures(const Pool& lhs, const Pool& rhs) {
@@ -56,75 +76,6 @@ int LabelToClassIndex(float label, int num_classes) {
   }
 
   return class_index;
-}
-
-double ComputeLoss(const std::string& objective_name,
-                   const std::vector<float>& predictions,
-                   const std::vector<float>& labels,
-                   int num_classes) {
-  const std::string normalized = NormalizeToken(objective_name);
-
-  if (IsSquaredErrorObjective(normalized)) {
-    if (predictions.size() != labels.size()) {
-      throw std::invalid_argument("predictions and labels must have the same size");
-    }
-    double sum_squared_error = 0.0;
-    for (std::size_t i = 0; i < predictions.size(); ++i) {
-      const double residual = static_cast<double>(predictions[i]) - labels[i];
-      sum_squared_error += residual * residual;
-    }
-    return predictions.empty() ? 0.0 : sum_squared_error / predictions.size();
-  }
-
-  if (IsBinaryObjective(normalized)) {
-    if (predictions.size() != labels.size()) {
-      throw std::invalid_argument("predictions and labels must have the same size");
-    }
-    constexpr double kEpsilon = 1e-12;
-    double loss = 0.0;
-    for (std::size_t i = 0; i < predictions.size(); ++i) {
-      const double margin = predictions[i];
-      const double probability =
-          margin >= 0.0 ? 1.0 / (1.0 + std::exp(-margin))
-                        : std::exp(margin) / (1.0 + std::exp(margin));
-      const double clipped = std::clamp(probability, kEpsilon, 1.0 - kEpsilon);
-      loss += -labels[i] * std::log(clipped) - (1.0 - labels[i]) * std::log(1.0 - clipped);
-    }
-    return predictions.empty() ? 0.0 : loss / predictions.size();
-  }
-
-  if (IsMulticlassObjective(normalized)) {
-    if (num_classes <= 2) {
-      throw std::invalid_argument("multiclass loss requires num_classes greater than two");
-    }
-    if (predictions.size() != labels.size() * static_cast<std::size_t>(num_classes)) {
-      throw std::invalid_argument(
-          "multiclass predictions must have num_rows * num_classes elements");
-    }
-
-    constexpr double kEpsilon = 1e-12;
-    double loss = 0.0;
-    for (std::size_t row = 0; row < labels.size(); ++row) {
-      const std::size_t row_offset = row * static_cast<std::size_t>(num_classes);
-      double max_logit = static_cast<double>(predictions[row_offset]);
-      for (int class_index = 1; class_index < num_classes; ++class_index) {
-        max_logit = std::max(max_logit, static_cast<double>(predictions[row_offset + class_index]));
-      }
-
-      double exp_sum = 0.0;
-      for (int class_index = 0; class_index < num_classes; ++class_index) {
-        exp_sum += std::exp(static_cast<double>(predictions[row_offset + class_index]) - max_logit);
-      }
-
-      const int target_class = LabelToClassIndex(labels[row], num_classes);
-      const double target_probability =
-          std::exp(static_cast<double>(predictions[row_offset + target_class]) - max_logit) / exp_sum;
-      loss -= std::log(std::clamp(target_probability, kEpsilon, 1.0));
-    }
-    return labels.empty() ? 0.0 : loss / labels.size();
-  }
-
-  throw std::invalid_argument("unsupported objective for loss computation: " + objective_name);
 }
 
 std::string NormalizeTaskType(std::string task_type) {
@@ -195,10 +146,17 @@ GradientBooster::GradientBooster(std::string objective,
                                  double lambda_l2,
                                  int num_classes,
                                  std::size_t max_bins,
+                                 std::string nan_mode,
+                                 std::string eval_metric,
+                                 double quantile_alpha,
+                                 double huber_delta,
                                  std::string task_type,
                                  std::string devices)
     : objective_name_(std::move(objective)),
-      objective_(CreateObjectiveFunction(objective_name_)),
+      eval_metric_name_(std::move(eval_metric)),
+      objective_config_{huber_delta, quantile_alpha},
+      objective_(CreateObjectiveFunction(objective_name_, objective_config_)),
+      objective_metric_(CreateMetricFunctionForObjective(objective_name_, objective_config_)),
       iterations_(iterations),
       learning_rate_(learning_rate),
       max_depth_(max_depth),
@@ -207,7 +165,13 @@ GradientBooster::GradientBooster(std::string objective,
       num_classes_(num_classes),
       max_bins_(max_bins),
       devices_(std::move(devices)),
-      hist_builder_(max_bins_) {
+      hist_builder_(max_bins_, std::move(nan_mode)) {
+  if (eval_metric_name_.empty()) {
+    eval_metric_name_ = objective_name_;
+  }
+  eval_metric_ = CreateMetricFunction(eval_metric_name_, objective_config_);
+  maximize_eval_metric_ = eval_metric_->HigherIsBetter();
+
   if (iterations_ <= 0) {
     throw std::invalid_argument("iterations must be positive");
   }
@@ -230,7 +194,7 @@ GradientBooster::GradientBooster(std::string objective,
       throw std::invalid_argument("multiclass objective requires num_classes greater than two");
     }
     prediction_dimension_ = num_classes_;
-  } else if (IsSquaredErrorObjective(normalized_objective)) {
+  } else if (IsRegressionObjective(normalized_objective)) {
     if (num_classes_ != 1) {
       throw std::invalid_argument("regression objectives require num_classes equal to one");
     }
@@ -280,10 +244,17 @@ void GradientBooster::Fit(const Pool& pool,
   loss_history_.clear();
   eval_loss_history_.clear();
   best_iteration_ = -1;
-  best_loss_ = 0.0;
+  best_score_ = 0.0;
 
   const HistMatrix hist = hist_builder_.Build(pool);
   const auto& labels = pool.labels();
+  const auto& weights = pool.weights();
+  const double total_weight = std::accumulate(
+      weights.begin(), weights.end(), 0.0,
+      [](double acc, float value) { return acc + static_cast<double>(value); });
+  if (total_weight <= 0.0) {
+    throw std::invalid_argument("training pool must have a positive total sample weight");
+  }
   std::vector<float> predictions(
       pool.num_rows() * static_cast<std::size_t>(prediction_dimension_), 0.0F);
   feature_importance_sums_.assign(pool.num_cols(), 0.0);
@@ -291,12 +262,21 @@ void GradientBooster::Fit(const Pool& pool,
   bool early_stopped = false;
 
   const std::vector<float>* eval_labels = nullptr;
+  const std::vector<float>* eval_weights = nullptr;
   std::vector<float> eval_predictions;
   if (eval_pool != nullptr) {
     eval_labels = &eval_pool->labels();
+    eval_weights = &eval_pool->weights();
+    const double eval_total_weight = std::accumulate(
+        eval_weights->begin(), eval_weights->end(), 0.0,
+        [](double acc, float value) { return acc + static_cast<double>(value); });
+    if (eval_total_weight <= 0.0) {
+      throw std::invalid_argument("eval_pool must have a positive total sample weight");
+    }
     eval_predictions.assign(
         eval_pool->num_rows() * static_cast<std::size_t>(prediction_dimension_), 0.0F);
-    best_loss_ = std::numeric_limits<double>::infinity();
+    best_score_ = maximize_eval_metric_ ? -std::numeric_limits<double>::infinity()
+                                        : std::numeric_limits<double>::infinity();
   }
 
   for (int iteration = 0; iteration < iterations_; ++iteration) {
@@ -306,7 +286,7 @@ void GradientBooster::Fit(const Pool& pool,
 
     if (prediction_dimension_ == 1) {
       Tree tree;
-      tree.Build(hist, gradients, hessians, alpha_, max_depth_, lambda_l2_, use_gpu_);
+      tree.Build(hist, gradients, hessians, weights, alpha_, max_depth_, lambda_l2_, use_gpu_);
 
       UpdatePredictions(tree, hist, learning_rate_, prediction_dimension_, 0, predictions);
       if (eval_pool != nullptr) {
@@ -331,6 +311,7 @@ void GradientBooster::Fit(const Pool& pool,
         tree.Build(hist,
                    class_gradients,
                    class_hessians,
+                   weights,
                    alpha_,
                    max_depth_,
                    lambda_l2_,
@@ -353,18 +334,22 @@ void GradientBooster::Fit(const Pool& pool,
       }
     }
 
-    loss_history_.push_back(ComputeLoss(objective_name_, predictions, labels, num_classes_));
+    loss_history_.push_back(
+        objective_metric_->Evaluate(predictions, labels, weights, num_classes_));
     completed_iterations = iteration + 1;
     if (eval_pool == nullptr) {
       continue;
     }
 
-    const double eval_loss =
-        ComputeLoss(objective_name_, eval_predictions, *eval_labels, num_classes_);
-    eval_loss_history_.push_back(eval_loss);
-    if (best_iteration_ < 0 || eval_loss < best_loss_) {
+    const double eval_score =
+        eval_metric_->Evaluate(eval_predictions, *eval_labels, *eval_weights, num_classes_);
+    eval_loss_history_.push_back(eval_score);
+    const bool improved =
+        best_iteration_ < 0 ||
+        (maximize_eval_metric_ ? eval_score > best_score_ : eval_score < best_score_);
+    if (improved) {
       best_iteration_ = iteration;
-      best_loss_ = eval_loss;
+      best_score_ = eval_score;
       continue;
     }
 
@@ -428,14 +413,14 @@ void GradientBooster::LoadState(std::vector<Tree> trees,
                                 std::vector<double> eval_loss_history,
                                 std::vector<double> feature_importance_sums,
                                 int best_iteration,
-                                double best_loss,
+                                double best_score,
                                 bool use_gpu) {
   trees_ = std::move(trees);
   loss_history_ = std::move(loss_history);
   eval_loss_history_ = std::move(eval_loss_history);
   feature_importance_sums_ = std::move(feature_importance_sums);
   best_iteration_ = best_iteration;
-  best_loss_ = best_loss;
+  best_score_ = best_score;
   use_gpu_ = use_gpu;
 }
 
@@ -477,6 +462,22 @@ double GradientBooster::alpha() const noexcept { return alpha_; }
 double GradientBooster::lambda_l2() const noexcept { return lambda_l2_; }
 
 std::size_t GradientBooster::max_bins() const noexcept { return max_bins_; }
+
+const std::string& GradientBooster::nan_mode_name() const noexcept {
+  return hist_builder_.nan_mode_name();
+}
+
+const std::string& GradientBooster::eval_metric_name() const noexcept {
+  return eval_metric_name_;
+}
+
+double GradientBooster::quantile_alpha() const noexcept {
+  return objective_config_.quantile_alpha;
+}
+
+double GradientBooster::huber_delta() const noexcept {
+  return objective_config_.huber_delta;
+}
 
 bool GradientBooster::use_gpu() const noexcept { return use_gpu_; }
 

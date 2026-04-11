@@ -2,7 +2,7 @@
 
 CTBoost is a gradient boosting library built around Conditional Inference Trees, with a native C++17 core, Python bindings via `pybind11`, optional CUDA support for source builds, and a scikit-learn style API.
 
-The current codebase supports end-to-end training and prediction for regression, binary classification, and multiclass classification, plus native pandas `DataFrame` ingestion with automatic categorical detection, early stopping via `eval_set`, model persistence, staged prediction, and a built-in cross-validation helper.
+The current codebase supports end-to-end training and prediction for regression, binary classification, and multiclass classification, plus native pandas `DataFrame` ingestion with automatic categorical detection, row weights and class imbalance controls, explicit missing-value handling, configurable validation metrics, model persistence, staged prediction, and a built-in cross-validation helper.
 
 ## Current Status
 
@@ -21,11 +21,17 @@ The current codebase supports end-to-end training and prediction for regression,
 - Regression training with `ctboost.train(...)`
 - scikit-learn compatible `CTBoostClassifier` and `CTBoostRegressor`
 - Binary and multiclass classification
+- Row weights through `Pool(..., weight=...)` and `sample_weight` on sklearn estimators
+- Class imbalance controls through `class_weight`, `class_weights`, `auto_class_weights="balanced"`, and `scale_pos_weight`
+- Explicit missing-value handling through `nan_mode`
 - Early stopping with `eval_set` and `early_stopping_rounds`
-- Validation loss history and `evals_result_`
+- Separate `eval_metric` support for validation history and early stopping
+- Validation loss/metric history and `evals_result_`
 - Per-iteration prediction through staged prediction and `num_iteration`
 - Model persistence for low-level boosters and scikit-learn style estimators
 - Cross-validation with `ctboost.cv(...)`
+- Regression objectives: `RMSE`, `MAE`, `Huber`, `Quantile`
+- Generic eval metrics including `RMSE`, `MAE`, `Accuracy`, `Precision`, `Recall`, `F1`, and `AUC`
 - Feature importance reporting
 - Build metadata reporting through `ctboost.build_info()`
 - CPU builds on standard CI runners
@@ -145,12 +151,15 @@ pool = ctboost.Pool(X, y)
 booster = ctboost.train(
     pool,
     {
-        "objective": "RMSE",
+        "objective": "Huber",
         "learning_rate": 0.2,
         "max_depth": 2,
         "alpha": 1.0,
         "lambda_l2": 1.0,
         "max_bins": 64,
+        "huber_delta": 1.5,
+        "eval_metric": "MAE",
+        "nan_mode": "Min",
         "task_type": "CPU",
     },
     num_boost_round=10,
@@ -225,6 +234,8 @@ The scikit-learn compatible estimators also expose:
 - `staged_predict_proba(...)` for classifiers
 - `evals_result_`
 - `best_score_`
+- `sample_weight` on `fit(...)`
+- `class_weight`, `scale_pos_weight`, `eval_metric`, and `nan_mode`
 
 ## Public Python API
 

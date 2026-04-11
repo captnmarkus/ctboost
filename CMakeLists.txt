@@ -49,6 +49,7 @@ add_library(ctboost_core STATIC
   src/core/build_info.cpp
   src/core/data.cpp
   src/core/histogram.cpp
+  src/core/metric.cpp
   src/core/objective.cpp
   src/core/statistics.cpp
   src/core/tree.cpp

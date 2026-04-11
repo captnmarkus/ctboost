@@ -29,7 +29,7 @@ struct SplitChoice {
 
 struct NodeHistogramSet {
   std::vector<BinStatistics> by_feature;
-  std::size_t sample_count{0};
+  double sample_weight_sum{0.0};
   double total_gradient{0.0};
   double total_hessian{0.0};
   double gradient_variance{0.0};
@@ -46,33 +46,40 @@ double ComputeGain(double gradient_sum, double hessian_sum, double lambda_l2) {
 NodeHistogramSet ComputeNodeHistogramSet(const HistMatrix& hist,
                                          const std::vector<float>& gradients,
                                          const std::vector<float>& hessians,
+                                         const std::vector<float>& weights,
                                          const std::vector<std::size_t>& row_indices,
                                          bool use_gpu) {
   NodeHistogramSet stats;
   stats.by_feature.resize(hist.num_cols);
-  stats.sample_count = row_indices.size();
 
   std::vector<float> node_gradients;
   std::vector<float> node_hessians;
+  std::vector<float> node_weights;
   node_gradients.reserve(row_indices.size());
   node_hessians.reserve(row_indices.size());
+  node_weights.reserve(row_indices.size());
 
-  double gradient_square_sum = 0.0;
+  double centered_gradient_square_sum = 0.0;
   for (const std::size_t row : row_indices) {
     const double gradient = gradients[row];
     const double hessian = hessians[row];
-    stats.total_gradient += gradient;
-    stats.total_hessian += hessian;
-    gradient_square_sum += gradient * gradient;
+    const double sample_weight = weights[row];
+    stats.total_gradient += sample_weight * gradient;
+    stats.total_hessian += sample_weight * hessian;
+    stats.sample_weight_sum += sample_weight;
     node_gradients.push_back(gradients[row]);
     node_hessians.push_back(hessians[row]);
+    node_weights.push_back(weights[row]);
   }
 
-  if (!row_indices.empty()) {
-    const double sample_count = static_cast<double>(row_indices.size());
-    const double mean_gradient = stats.total_gradient / sample_count;
+  if (stats.sample_weight_sum > 0.0) {
+    const double mean_gradient = stats.total_gradient / stats.sample_weight_sum;
+    for (const std::size_t row : row_indices) {
+      const double centered = static_cast<double>(gradients[row]) - mean_gradient;
+      centered_gradient_square_sum += static_cast<double>(weights[row]) * centered * centered;
+    }
     stats.gradient_variance =
-        std::max(0.0, gradient_square_sum / sample_count - mean_gradient * mean_gradient);
+        std::max(0.0, centered_gradient_square_sum / stats.sample_weight_sum);
   }
 
   if (use_gpu) {
@@ -87,7 +94,7 @@ NodeHistogramSet ComputeNodeHistogramSet(const HistMatrix& hist,
 
     std::vector<float> flat_gradient_sums;
     std::vector<float> flat_hessian_sums;
-    std::vector<std::uint32_t> flat_counts;
+    std::vector<float> flat_weight_sums;
     std::vector<std::size_t> feature_offsets;
     BuildHistogramsGpu(node_bins,
                        row_indices.size(),
@@ -95,9 +102,10 @@ NodeHistogramSet ComputeNodeHistogramSet(const HistMatrix& hist,
                        hist.num_bins_per_feature,
                        node_gradients,
                        node_hessians,
+                       node_weights,
                        flat_gradient_sums,
                        flat_hessian_sums,
-                       flat_counts,
+                       flat_weight_sums,
                        feature_offsets);
 
     for (std::size_t feature = 0; feature < hist.num_cols; ++feature) {
@@ -106,11 +114,11 @@ NodeHistogramSet ComputeNodeHistogramSet(const HistMatrix& hist,
       BinStatistics feature_stats;
       feature_stats.gradient_sums.reserve(end - begin);
       feature_stats.hessian_sums.reserve(end - begin);
-      feature_stats.counts.reserve(end - begin);
+      feature_stats.weight_sums.reserve(end - begin);
       for (std::size_t index = begin; index < end; ++index) {
         feature_stats.gradient_sums.push_back(flat_gradient_sums[index]);
         feature_stats.hessian_sums.push_back(flat_hessian_sums[index]);
-        feature_stats.counts.push_back(flat_counts[index]);
+        feature_stats.weight_sums.push_back(flat_weight_sums[index]);
       }
       stats.by_feature[feature] = std::move(feature_stats);
     }
@@ -123,14 +131,15 @@ NodeHistogramSet ComputeNodeHistogramSet(const HistMatrix& hist,
     BinStatistics feature_stats;
     feature_stats.gradient_sums.assign(feature_bins_count, 0.0);
     feature_stats.hessian_sums.assign(feature_bins_count, 0.0);
-    feature_stats.counts.assign(feature_bins_count, 0);
+    feature_stats.weight_sums.assign(feature_bins_count, 0.0);
 
     const auto* feature_bins = hist.feature_bins(feature);
     for (const std::size_t row : row_indices) {
       const std::size_t bin = feature_bins[row];
-      feature_stats.gradient_sums[bin] += gradients[row];
-      feature_stats.hessian_sums[bin] += hessians[row];
-      feature_stats.counts[bin] += 1;
+      const double sample_weight = static_cast<double>(weights[row]);
+      feature_stats.gradient_sums[bin] += sample_weight * gradients[row];
+      feature_stats.hessian_sums[bin] += sample_weight * hessians[row];
+      feature_stats.weight_sums[bin] += sample_weight;
     }
 
     stats.by_feature[feature] = std::move(feature_stats);
@@ -145,14 +154,14 @@ FeatureChoice SelectBestFeature(const NodeHistogramSet& node_stats,
 
   for (std::size_t feature = 0; feature < node_stats.by_feature.size(); ++feature) {
     const BinStatistics& feature_stats = node_stats.by_feature[feature];
-    if (feature_stats.counts.size() <= 1) {
+    if (feature_stats.weight_sums.size() <= 1) {
       continue;
     }
 
     const LinearStatisticResult result = statistic_engine.EvaluateFromBinStatistics(
         feature_stats,
         node_stats.total_gradient,
-        node_stats.sample_count,
+        node_stats.sample_weight_sum,
         node_stats.gradient_variance);
     if (result.degrees_of_freedom == 0) {
       continue;
@@ -173,7 +182,7 @@ FeatureChoice SelectBestFeature(const NodeHistogramSet& node_stats,
 SplitChoice SelectBestSplit(const BinStatistics& feature_stats,
                             double total_gradient,
                             double total_hessian,
-                            std::size_t sample_count,
+                            double sample_weight_sum,
                             double lambda_l2,
                             bool is_categorical) {
   SplitChoice best;
@@ -187,15 +196,15 @@ SplitChoice SelectBestSplit(const BinStatistics& feature_stats,
   if (!is_categorical) {
     double left_gradient = 0.0;
     double left_hessian = 0.0;
-    std::size_t left_count = 0;
+    double left_count = 0.0;
 
     for (std::size_t split_bin = 0; split_bin + 1 < feature_bins_count; ++split_bin) {
       left_gradient += feature_stats.gradient_sums[split_bin];
       left_hessian += feature_stats.hessian_sums[split_bin];
-      left_count += feature_stats.counts[split_bin];
+      left_count += feature_stats.weight_sums[split_bin];
 
-      const std::size_t right_count = sample_count - left_count;
-      if (left_count == 0 || right_count == 0) {
+      const double right_count = sample_weight_sum - left_count;
+      if (left_count <= 0.0 || right_count <= 0.0) {
         continue;
       }
 
@@ -222,14 +231,14 @@ SplitChoice SelectBestSplit(const BinStatistics& feature_stats,
     std::uint16_t bin{0};
     double gradient{0.0};
     double hessian{0.0};
-    std::uint32_t count{0};
+    double count{0.0};
     double weight{0.0};
   };
 
   std::vector<WeightedBin> active_bins;
   active_bins.reserve(feature_bins_count);
   for (std::size_t bin = 0; bin < feature_bins_count; ++bin) {
-    if (feature_stats.counts[bin] == 0) {
+    if (feature_stats.weight_sums[bin] <= 0.0) {
       continue;
     }
 
@@ -238,7 +247,7 @@ SplitChoice SelectBestSplit(const BinStatistics& feature_stats,
         static_cast<std::uint16_t>(bin),
         feature_stats.gradient_sums[bin],
         feature_stats.hessian_sums[bin],
-        feature_stats.counts[bin],
+        feature_stats.weight_sums[bin],
         denominator > 0.0 ? feature_stats.gradient_sums[bin] / denominator : 0.0,
     });
   }
@@ -256,15 +265,15 @@ SplitChoice SelectBestSplit(const BinStatistics& feature_stats,
 
   double left_gradient = 0.0;
   double left_hessian = 0.0;
-  std::size_t left_count = 0;
+  double left_count = 0.0;
 
   for (std::size_t split_index = 0; split_index + 1 < active_bins.size(); ++split_index) {
     left_gradient += active_bins[split_index].gradient;
     left_hessian += active_bins[split_index].hessian;
     left_count += active_bins[split_index].count;
 
-    const std::size_t right_count = sample_count - left_count;
-    if (left_count == 0 || right_count == 0) {
+    const double right_count = sample_weight_sum - left_count;
+    if (left_count <= 0.0 || right_count <= 0.0) {
       continue;
     }
 
@@ -292,12 +301,15 @@ SplitChoice SelectBestSplit(const BinStatistics& feature_stats,
 void Tree::Build(const HistMatrix& hist,
                  const std::vector<float>& gradients,
                  const std::vector<float>& hessians,
+                 const std::vector<float>& weights,
                  double alpha,
                  int max_depth,
                  double lambda_l2,
                  bool use_gpu) {
-  if (gradients.size() != hist.num_rows || hessians.size() != hist.num_rows) {
-    throw std::invalid_argument("gradient and hessian sizes must match the histogram row count");
+  if (gradients.size() != hist.num_rows || hessians.size() != hist.num_rows ||
+      weights.size() != hist.num_rows) {
+    throw std::invalid_argument(
+        "gradient, hessian, and weight sizes must match the histogram row count");
   }
 
   nodes_.clear();
@@ -305,6 +317,8 @@ void Tree::Build(const HistMatrix& hist,
   cut_offsets_ = hist.cut_offsets;
   cut_values_ = hist.cut_values;
   categorical_mask_ = hist.categorical_mask;
+  missing_value_mask_ = hist.missing_value_mask;
+  nan_mode_ = hist.nan_mode;
   feature_importances_.assign(hist.num_cols, 0.0);
 
   std::vector<std::size_t> row_indices(hist.num_rows);
@@ -314,6 +328,7 @@ void Tree::Build(const HistMatrix& hist,
   BuildNode(hist,
             gradients,
             hessians,
+            weights,
             row_indices,
             0,
             alpha,
@@ -326,6 +341,7 @@ void Tree::Build(const HistMatrix& hist,
 int Tree::BuildNode(const HistMatrix& hist,
                     const std::vector<float>& gradients,
                     const std::vector<float>& hessians,
+                    const std::vector<float>& weights,
                     const std::vector<std::size_t>& row_indices,
                     int depth,
                     double alpha,
@@ -334,7 +350,7 @@ int Tree::BuildNode(const HistMatrix& hist,
                     bool use_gpu,
                     const LinearStatistic& statistic_engine) {
   const NodeHistogramSet node_stats =
-      ComputeNodeHistogramSet(hist, gradients, hessians, row_indices, use_gpu);
+      ComputeNodeHistogramSet(hist, gradients, hessians, weights, row_indices, use_gpu);
 
   Node node;
   node.leaf_weight =
@@ -356,7 +372,7 @@ int Tree::BuildNode(const HistMatrix& hist,
       node_stats.by_feature[static_cast<std::size_t>(feature_choice.feature_id)],
       node_stats.total_gradient,
       node_stats.total_hessian,
-      row_indices.size(),
+      node_stats.sample_weight_sum,
       lambda_l2,
       hist.is_categorical(static_cast<std::size_t>(feature_choice.feature_id)));
   if (!split_choice.valid || split_choice.gain <= 0.0) {
@@ -397,6 +413,7 @@ int Tree::BuildNode(const HistMatrix& hist,
       BuildNode(hist,
                 gradients,
                 hessians,
+                weights,
                 left_rows,
                 depth + 1,
                 alpha,
@@ -408,6 +425,7 @@ int Tree::BuildNode(const HistMatrix& hist,
       BuildNode(hist,
                 gradients,
                 hessians,
+                weights,
                 right_rows,
                 depth + 1,
                 alpha,
@@ -469,12 +487,16 @@ void Tree::LoadState(std::vector<Node> nodes,
                      std::vector<std::size_t> cut_offsets,
                      std::vector<float> cut_values,
                      std::vector<std::uint8_t> categorical_mask,
+                     std::vector<std::uint8_t> missing_value_mask,
+                     std::uint8_t nan_mode,
                      std::vector<double> feature_importances) {
   nodes_ = std::move(nodes);
   num_bins_per_feature_ = std::move(num_bins_per_feature);
   cut_offsets_ = std::move(cut_offsets);
   cut_values_ = std::move(cut_values);
   categorical_mask_ = std::move(categorical_mask);
+  missing_value_mask_ = std::move(missing_value_mask);
+  nan_mode_ = nan_mode;
   feature_importances_ = std::move(feature_importances);
 }
 
@@ -492,6 +514,12 @@ const std::vector<std::uint8_t>& Tree::categorical_mask() const noexcept {
   return categorical_mask_;
 }
 
+const std::vector<std::uint8_t>& Tree::missing_value_mask() const noexcept {
+  return missing_value_mask_;
+}
+
+std::uint8_t Tree::nan_mode() const noexcept { return nan_mode_; }
+
 const std::vector<double>& Tree::feature_importances() const noexcept {
   return feature_importances_;
 }
@@ -503,6 +531,8 @@ std::uint16_t Tree::BinValue(std::size_t feature_index, float value) const {
   hist.cut_offsets = cut_offsets_;
   hist.cut_values = cut_values_;
   hist.categorical_mask = categorical_mask_;
+  hist.missing_value_mask = missing_value_mask_;
+  hist.nan_mode = nan_mode_;
   return hist.bin_value(feature_index, value);
 }
 
