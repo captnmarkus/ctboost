@@ -7,13 +7,23 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Union
 
 import numpy as np
-from sklearn.model_selection import GroupKFold, KFold, StratifiedKFold
 
 from . import _core
 from ._serialization import load_booster, save_booster
 from .core import Pool
 
 PathLike = Union[str, Path]
+
+
+def _load_sklearn_splitters():
+    try:
+        from sklearn.model_selection import GroupKFold, KFold, StratifiedKFold
+    except ModuleNotFoundError as exc:
+        raise ImportError(
+            "ctboost.cv requires scikit-learn>=1.3. "
+            "Install 'ctboost[sklearn]' or add scikit-learn to your environment."
+        ) from exc
+    return GroupKFold, KFold, StratifiedKFold
 
 
 def _pool_from_data_and_label(data: Any, label: Any, group_id: Any = None) -> Pool:
@@ -401,6 +411,7 @@ def cv(
     if nfold < 2:
         raise ValueError("nfold must be at least 2")
 
+    GroupKFold, KFold, StratifiedKFold = _load_sklearn_splitters()
     objective = _objective_name(params)
     labels = np.asarray(pool.label)
     if _is_ranking_objective(objective):

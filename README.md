@@ -1,6 +1,6 @@
 # CTBoost
 
-CTBoost is a gradient boosting library built around Conditional Inference Trees, with a native C++17 core, Python bindings via `pybind11`, optional CUDA support for source builds, and a scikit-learn style API.
+CTBoost is a gradient boosting library built around Conditional Inference Trees, with a native C++17 core, Python bindings via `pybind11`, optional CUDA support for source builds, and an optional scikit-learn style API.
 
 The current codebase supports end-to-end training and prediction for regression, classification, and grouped ranking, plus pandas and SciPy sparse ingestion, row weights and class imbalance controls, explicit missing-value handling, configurable validation metrics, stable JSON model persistence, staged prediction, warm-start continuation, and a built-in cross-validation helper.
 
@@ -19,7 +19,7 @@ The current codebase supports end-to-end training and prediction for regression,
 - Native pandas `DataFrame` and `Series` support
 - Automatic categorical detection for pandas `category` and `object` columns
 - Regression training with `ctboost.train(...)`
-- scikit-learn compatible `CTBoostClassifier`, `CTBoostRegressor`, and `CTBoostRanker`
+- scikit-learn compatible `CTBoostClassifier`, `CTBoostRegressor`, and `CTBoostRanker` when `scikit-learn` is installed
 - Binary and multiclass classification
 - Grouped ranking with `PairLogit` and `NDCG`
 - Row weights through `Pool(..., weight=...)` and `sample_weight` on sklearn estimators
@@ -30,7 +30,7 @@ The current codebase supports end-to-end training and prediction for regression,
 - Validation loss/metric history and `evals_result_`
 - Per-iteration prediction through staged prediction and `num_iteration`
 - Stable JSON and pickle model persistence for low-level boosters and scikit-learn style estimators
-- Cross-validation with `ctboost.cv(...)`
+- Cross-validation with `ctboost.cv(...)` when `scikit-learn` is installed
 - Regression objectives: `RMSE`, `MAE`, `Huber`, `Quantile`
 - Generic eval metrics including `RMSE`, `MAE`, `Accuracy`, `Precision`, `Recall`, `F1`, `AUC`, and `NDCG`
 - Feature importance reporting
@@ -60,6 +60,12 @@ Install development dependencies:
 pip install -e .[dev]
 ```
 
+Install the optional scikit-learn wrappers and `ctboost.cv(...)` support:
+
+```bash
+pip install -e .[sklearn]
+```
+
 ### Wheels vs Source Builds
 
 `pip install ctboost` works without a compiler only when PyPI has a prebuilt wheel for your exact Python/OS tag. If no matching wheel exists, `pip` falls back to the source distribution and has to compile the native extension locally.
@@ -80,7 +86,7 @@ import subprocess
 import sys
 import urllib.request
 
-tag = "v0.1.7"
+tag = "v0.1.8"
 py_tag = f"cp{sys.version_info.major}{sys.version_info.minor}"
 api_url = f"https://api.github.com/repos/captnmarkus/ctboost/releases/tags/{tag}"
 

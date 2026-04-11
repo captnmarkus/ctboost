@@ -112,6 +112,9 @@ jobs:
       CIBW_BUILD: ${{ matrix.cibw_build }}
       CIBW_ARCHS: x86_64
       CIBW_BUILD_VERBOSITY: 3
+      CIBW_TEST_REQUIRES: pytest
+      CIBW_TEST_COMMAND: >-
+        python -X faulthandler -m pytest {project}/tests/test_gpu_wheel_smoke.py -q
       CIBW_CONFIG_SETTINGS: >-
         cmake.define.CTBOOST_ENABLE_CUDA=ON
         cmake.define.CTBOOST_REQUIRE_CUDA=ON
@@ -161,6 +164,7 @@ jobs:
     needs:
       - build_wheels
       - build_sdist
+      - build_gpu_linux_wheels
     if: |
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
       (github.event_name == 'workflow_dispatch' && startsWith(github.ref_name, 'v'))
