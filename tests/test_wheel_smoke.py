@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 
 import ctboost
@@ -9,6 +11,8 @@ def test_build_info_smoke():
     assert info["version"] == ctboost.__version__
     assert isinstance(info["cuda_enabled"], bool)
     assert isinstance(info["compiler"], str)
+    expected_cuda = os.environ.get("CTBOOST_EXPECT_CUDA", "0") == "1"
+    assert info["cuda_enabled"] is expected_cuda
 
 
 def test_low_level_training_smoke():

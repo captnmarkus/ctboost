@@ -43,7 +43,7 @@ The current codebase supports end-to-end training and prediction for regression,
 ## Current Limitations
 
 - SciPy sparse matrices are currently densified at the Python boundary before native training
-- Dedicated GPU wheel automation currently targets Linux CPython 3.10
+- Dedicated GPU wheel automation targets a Linux CPython `3.12` release asset for Kaggle-style environments
 - CUDA wheel builds in CI depend on container-side toolkit provisioning
 
 ## Installation
@@ -65,6 +65,8 @@ pip install -e .[dev]
 `pip install ctboost` works without a compiler only when PyPI has a prebuilt wheel for your exact Python/OS tag. If no matching wheel exists, `pip` falls back to the source distribution and has to compile the native extension locally.
 
 The release workflow is configured to publish CPU wheels for current CPython releases on Windows, Linux, and macOS so standard `pip install ctboost` usage does not depend on a local compiler.
+
+For Kaggle-style GPU environments running Python `3.12`, the release workflow also attaches a dedicated Linux CUDA wheel to the corresponding GitHub release. That GPU wheel is meant to be installed via its direct release-asset URL rather than through the default PyPI wheel resolution path.
 
 ### CPU-Only Source Build
 
