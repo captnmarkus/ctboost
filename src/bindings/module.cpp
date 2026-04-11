@@ -483,7 +483,7 @@ PYBIND11_MODULE(_core, m) {
         return BoosterFromStateDict(state);
       })
       .def(py::pickle(
-          [](const ctboost::GradientBooster& booster) {
+          [](const ctboost::GradientBooster& booster) -> py::object {
             return BoosterToStateDict(booster);
           },
           [](const py::object& state_object) {
