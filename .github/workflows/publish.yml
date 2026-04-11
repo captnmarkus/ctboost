@@ -2,8 +2,6 @@ name: Publish
 
 on:
   push:
-    branches:
-      - master
     tags:
       - "v*"
   workflow_dispatch:
@@ -114,8 +112,8 @@ jobs:
       CIBW_BUILD: ${{ matrix.cibw_build }}
       CIBW_ARCHS: x86_64
       CIBW_CONFIG_SETTINGS: "cmake.define.CTBOOST_ENABLE_CUDA=ON wheel.build-tag=1gpu"
-      CIBW_ENVIRONMENT: "CTBOOST_EXPECT_CUDA=1"
       CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+      CIBW_TEST_SKIP: ${{ matrix.cibw_build }}
       CIBW_BEFORE_ALL_LINUX: >-
         yum install -y wget &&
         wget https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo -O /etc/yum.repos.d/cuda.repo &&
