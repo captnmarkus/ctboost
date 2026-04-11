@@ -99,6 +99,7 @@ jobs:
       CIBW_CONFIG_SETTINGS: "cmake.define.CTBOOST_ENABLE_CUDA=ON"
       CIBW_ENVIRONMENT: "CTBOOST_EXPECT_CUDA=1"
       CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+      CIBW_TEST_SKIP: cp312-manylinux_x86_64
       CIBW_BEFORE_ALL: "yum install -y wget && wget https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo -O /etc/yum.repos.d/cuda.repo && yum clean all && yum -y install cuda-compiler-12-0"
     steps:
       - name: Checkout

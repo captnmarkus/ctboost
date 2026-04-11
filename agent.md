@@ -17,6 +17,7 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 - Release wheels are CPU-only by default.
 - CUDA remains an optional source-build capability rather than the default PyPI wheel path.
 - The release workflow also publishes a dedicated Linux CPython 3.12 CUDA wheel as a GitHub release asset for Kaggle-style installs.
+- The dedicated Kaggle CUDA wheel is built in a `manylinux2014` container and skips the default `cibuildwheel` smoke test path there because that container is stricter than the target Kaggle runtime for Python 3.12 dependency resolution.
 
 ## Release and Wheel Policy
 
