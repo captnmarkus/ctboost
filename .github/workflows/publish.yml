@@ -9,6 +9,7 @@ on:
   release:
     types:
       - published
+  workflow_dispatch:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
@@ -121,7 +122,11 @@ jobs:
     needs:
       - build_wheels
       - build_sdist
-    if: startsWith(github.ref, 'refs/tags/v')
+      - build_gpu_linux_wheels
+    if: |
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+      (github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')) ||
+      (github.event_name == 'workflow_dispatch' && startsWith(github.ref_name, 'v'))
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -148,6 +153,12 @@ jobs:
         uses: actions/download-artifact@v5
         with:
           name: wheelhouse-macos-universal2
+          path: dist
+
+      - name: Download GPU Linux wheel artifact
+        uses: actions/download-artifact@v5
+        with:
+          name: cibw-wheels-gpu-linux
           path: dist
 
       - name: Download sdist artifact
