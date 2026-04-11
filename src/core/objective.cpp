@@ -4,8 +4,11 @@
 #include <cctype>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
+#include <utility>
 
 namespace ctboost {
 namespace {
@@ -57,6 +60,24 @@ void ValidateMulticlassSizes(const std::vector<float>& preds,
   }
 }
 
+const std::vector<std::int64_t>& ValidateRankingInputs(
+    const std::vector<float>& preds,
+    const std::vector<float>& labels,
+    int num_classes,
+    const std::vector<std::int64_t>* group_ids) {
+  if (num_classes != 1) {
+    throw std::invalid_argument("ranking objectives expect num_classes equal to one");
+  }
+  ValidatePredictionLabelSizes(preds, labels);
+  if (group_ids == nullptr || group_ids->empty()) {
+    throw std::invalid_argument("ranking objectives require group_id values");
+  }
+  if (group_ids->size() != labels.size()) {
+    throw std::invalid_argument("group_id size must match the number of labels");
+  }
+  return *group_ids;
+}
+
 std::string NormalizeName(std::string_view name) {
   std::string normalized;
   normalized.reserve(name.size());
@@ -73,7 +94,8 @@ void SquaredError::compute_gradients(const std::vector<float>& preds,
                                      const std::vector<float>& labels,
                                      std::vector<float>& out_g,
                                      std::vector<float>& out_h,
-                                     int num_classes) const {
+                                     int num_classes,
+                                     const std::vector<std::int64_t>*) const {
   if (num_classes != 1) {
     throw std::invalid_argument("squared error expects num_classes equal to one");
   }
@@ -91,7 +113,8 @@ void LogLoss::compute_gradients(const std::vector<float>& preds,
                                 const std::vector<float>& labels,
                                 std::vector<float>& out_g,
                                 std::vector<float>& out_h,
-                                int num_classes) const {
+                                int num_classes,
+                                const std::vector<std::int64_t>*) const {
   if (num_classes != 1 && num_classes != 2) {
     throw std::invalid_argument("logloss expects num_classes equal to one or two");
   }
@@ -111,7 +134,8 @@ void SoftmaxLoss::compute_gradients(const std::vector<float>& preds,
                                     const std::vector<float>& labels,
                                     std::vector<float>& out_g,
                                     std::vector<float>& out_h,
-                                    int num_classes) const {
+                                    int num_classes,
+                                    const std::vector<std::int64_t>*) const {
   ValidateMulticlassSizes(preds, labels, num_classes);
 
   out_g.resize(preds.size());
@@ -146,7 +170,8 @@ void AbsoluteError::compute_gradients(const std::vector<float>& preds,
                                       const std::vector<float>& labels,
                                       std::vector<float>& out_g,
                                       std::vector<float>& out_h,
-                                      int num_classes) const {
+                                      int num_classes,
+                                      const std::vector<std::int64_t>*) const {
   if (num_classes != 1) {
     throw std::invalid_argument("absolute error expects num_classes equal to one");
   }
@@ -177,7 +202,8 @@ void HuberLoss::compute_gradients(const std::vector<float>& preds,
                                   const std::vector<float>& labels,
                                   std::vector<float>& out_g,
                                   std::vector<float>& out_h,
-                                  int num_classes) const {
+                                  int num_classes,
+                                  const std::vector<std::int64_t>*) const {
   if (num_classes != 1) {
     throw std::invalid_argument("huber loss expects num_classes equal to one");
   }
@@ -209,7 +235,8 @@ void QuantileLoss::compute_gradients(const std::vector<float>& preds,
                                      const std::vector<float>& labels,
                                      std::vector<float>& out_g,
                                      std::vector<float>& out_h,
-                                     int num_classes) const {
+                                     int num_classes,
+                                     const std::vector<std::int64_t>*) const {
   if (num_classes != 1) {
     throw std::invalid_argument("quantile loss expects num_classes equal to one");
   }
@@ -221,6 +248,56 @@ void QuantileLoss::compute_gradients(const std::vector<float>& preds,
   for (std::size_t i = 0; i < preds.size(); ++i) {
     const double residual = static_cast<double>(labels[i]) - preds[i];
     out_g[i] = residual > 0.0 ? static_cast<float>(-alpha_) : static_cast<float>(1.0 - alpha_);
+  }
+}
+
+void PairLogitLoss::compute_gradients(const std::vector<float>& preds,
+                                      const std::vector<float>& labels,
+                                      std::vector<float>& out_g,
+                                      std::vector<float>& out_h,
+                                      int num_classes,
+                                      const std::vector<std::int64_t>* group_ids) const {
+  const auto& resolved_group_ids =
+      ValidateRankingInputs(preds, labels, num_classes, group_ids);
+
+  out_g.assign(preds.size(), 0.0F);
+  out_h.assign(preds.size(), 0.0F);
+
+  std::unordered_map<std::int64_t, std::vector<std::size_t>> group_rows;
+  group_rows.reserve(resolved_group_ids.size());
+  for (std::size_t row = 0; row < resolved_group_ids.size(); ++row) {
+    group_rows[resolved_group_ids[row]].push_back(row);
+  }
+
+  std::size_t pair_count = 0;
+  for (const auto& entry : group_rows) {
+    const auto& rows = entry.second;
+    for (std::size_t left = 0; left < rows.size(); ++left) {
+      for (std::size_t right = left + 1; right < rows.size(); ++right) {
+        const std::size_t i = rows[left];
+        const std::size_t j = rows[right];
+        if (labels[i] == labels[j]) {
+          continue;
+        }
+
+        const std::size_t positive = labels[i] > labels[j] ? i : j;
+        const std::size_t negative = labels[i] > labels[j] ? j : i;
+        const float margin = preds[positive] - preds[negative];
+        const float probability = Sigmoid(margin);
+        const float gradient = probability - 1.0F;
+        const float hessian = probability * (1.0F - probability);
+
+        out_g[positive] += gradient;
+        out_g[negative] -= gradient;
+        out_h[positive] += hessian;
+        out_h[negative] += hessian;
+        ++pair_count;
+      }
+    }
+  }
+
+  if (pair_count == 0) {
+    throw std::invalid_argument("ranking objective requires at least one comparable pair");
   }
 }
 
@@ -249,6 +326,10 @@ std::unique_ptr<ObjectiveFunction> CreateObjectiveFunction(std::string_view name
   if (normalized == "multiclass" || normalized == "softmax" ||
       normalized == "softmaxloss") {
     return std::make_unique<SoftmaxLoss>();
+  }
+  if (normalized == "pairlogit" || normalized == "pairwise" ||
+      normalized == "ranknet") {
+    return std::make_unique<PairLogitLoss>();
   }
 
   throw std::invalid_argument("unknown objective function: " + std::string(name));

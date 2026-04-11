@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #include <pybind11/numpy.h>
@@ -12,13 +13,17 @@ class Pool {
   Pool(pybind11::array_t<float, pybind11::array::forcecast> data,
        pybind11::array_t<float, pybind11::array::forcecast> label,
        std::vector<int> cat_features = {},
-       pybind11::array_t<float, pybind11::array::forcecast> weight = pybind11::array_t<float>());
+       pybind11::array_t<float, pybind11::array::forcecast> weight = pybind11::array_t<float>(),
+       pybind11::array_t<std::int64_t, pybind11::array::forcecast> group_id =
+           pybind11::array_t<std::int64_t>());
 
   std::size_t num_rows() const noexcept;
   std::size_t num_cols() const noexcept;
   const std::vector<float>& feature_data() const noexcept;
   const std::vector<float>& labels() const noexcept;
   const std::vector<float>& weights() const noexcept;
+  const std::vector<std::int64_t>& group_ids() const noexcept;
+  bool has_group_ids() const noexcept;
   const std::vector<int>& cat_features() const noexcept;
   float feature_value(std::size_t row, std::size_t col) const;
 
@@ -28,7 +33,9 @@ class Pool {
   std::vector<float> feature_data_;
   std::vector<float> labels_;
   std::vector<float> weights_;
+  std::vector<std::int64_t> group_ids_;
   std::vector<int> cat_features_;
+  bool has_group_ids_{false};
 };
 
 }  // namespace ctboost

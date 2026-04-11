@@ -5,7 +5,14 @@ from typing import Any, Dict
 from ._core import build_info as _native_build_info
 from ._version import __version__
 from .core import Pool
-from .sklearn import CBoostClassifier, CBoostRegressor, CTBoostClassifier, CTBoostRegressor
+from .sklearn import (
+    CBoostClassifier,
+    CBoostRanker,
+    CBoostRegressor,
+    CTBoostClassifier,
+    CTBoostRanker,
+    CTBoostRegressor,
+)
 from .training import Booster, cv, load_model, train
 
 
@@ -18,8 +25,10 @@ __all__ = [
     "__version__",
     "Booster",
     "CBoostClassifier",
+    "CBoostRanker",
     "CBoostRegressor",
     "CTBoostClassifier",
+    "CTBoostRanker",
     "CTBoostRegressor",
     "Pool",
     "build_info",

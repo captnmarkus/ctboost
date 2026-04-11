@@ -438,8 +438,13 @@ int Tree::BuildNode(const HistMatrix& hist,
 }
 
 float Tree::PredictRow(const Pool& pool, std::size_t row) const {
+  const int leaf_index = PredictLeafIndex(pool, row);
+  return leaf_index < 0 ? 0.0F : nodes_[leaf_index].leaf_weight;
+}
+
+int Tree::PredictLeafIndex(const Pool& pool, std::size_t row) const {
   if (nodes_.empty()) {
-    return 0.0F;
+    return -1;
   }
 
   int node_index = 0;
@@ -453,7 +458,42 @@ float Tree::PredictRow(const Pool& pool, std::size_t row) const {
                      : (bin <= node.split_bin_index ? node.left_child : node.right_child);
   }
 
-  return nodes_[node_index].leaf_weight;
+  return node_index;
+}
+
+void Tree::AccumulateContributions(
+    const Pool& pool, std::size_t row, float scale, std::vector<float>& row_contributions) const {
+  if (row_contributions.empty()) {
+    return;
+  }
+  if (nodes_.empty()) {
+    row_contributions.back() += scale * 0.0F;
+    return;
+  }
+
+  std::vector<int> path_features;
+  int node_index = 0;
+  while (!nodes_[node_index].is_leaf) {
+    const Node& node = nodes_[node_index];
+    path_features.push_back(node.split_feature_id);
+    const std::uint16_t bin = BinValue(
+        static_cast<std::size_t>(node.split_feature_id),
+        pool.feature_value(row, static_cast<std::size_t>(node.split_feature_id)));
+    node_index = node.is_categorical_split
+                     ? (node.left_categories[bin] != 0 ? node.left_child : node.right_child)
+                     : (bin <= node.split_bin_index ? node.left_child : node.right_child);
+  }
+
+  const float leaf_value = scale * nodes_[node_index].leaf_weight;
+  if (path_features.empty()) {
+    row_contributions.back() += leaf_value;
+    return;
+  }
+
+  const float share = leaf_value / static_cast<float>(path_features.size());
+  for (const int feature_index : path_features) {
+    row_contributions[static_cast<std::size_t>(feature_index)] += share;
+  }
 }
 
 float Tree::PredictBinnedRow(const HistMatrix& hist, std::size_t row) const {

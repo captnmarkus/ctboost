@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <string_view>
 #include <vector>
@@ -15,7 +16,8 @@ class MetricFunction {
   virtual double Evaluate(const std::vector<float>& preds,
                           const std::vector<float>& labels,
                           const std::vector<float>& weights,
-                          int num_classes = 1) const = 0;
+                          int num_classes = 1,
+                          const std::vector<std::int64_t>* group_ids = nullptr) const = 0;
   virtual bool HigherIsBetter() const noexcept = 0;
 };
 

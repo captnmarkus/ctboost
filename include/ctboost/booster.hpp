@@ -30,8 +30,13 @@ class GradientBooster {
                   std::string task_type = "CPU",
                   std::string devices = "0");
 
-  void Fit(const Pool& pool, const Pool* eval_pool = nullptr, int early_stopping_rounds = 0);
+  void Fit(const Pool& pool,
+           const Pool* eval_pool = nullptr,
+           int early_stopping_rounds = 0,
+           bool continue_training = false);
   std::vector<float> Predict(const Pool& pool, int num_iteration = -1) const;
+  std::vector<std::int32_t> PredictLeafIndices(const Pool& pool, int num_iteration = -1) const;
+  std::vector<float> PredictContributions(const Pool& pool, int num_iteration = -1) const;
   void LoadState(std::vector<Tree> trees,
                  std::vector<double> loss_history,
                  std::vector<double> eval_loss_history,
@@ -47,6 +52,7 @@ class GradientBooster {
   int num_classes() const noexcept;
   int prediction_dimension() const noexcept;
   int best_iteration() const noexcept;
+  double best_score() const noexcept;
   const std::string& objective_name() const noexcept;
   int iterations() const noexcept;
   double learning_rate() const noexcept;

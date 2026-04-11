@@ -29,6 +29,14 @@ py::array_t<float> VectorToArray(const std::vector<float>& values) {
   return result;
 }
 
+py::array_t<std::int32_t> IntVectorToArray(const std::vector<std::int32_t>& values) {
+  py::array_t<std::int32_t> result(values.size());
+  if (!values.empty()) {
+    std::memcpy(result.mutable_data(), values.data(), values.size() * sizeof(std::int32_t));
+  }
+  return result;
+}
+
 std::vector<float> ArrayToVector(py::array_t<float, py::array::forcecast> values,
                                  const char* name) {
   const py::buffer_info info = values.request();
@@ -108,6 +116,40 @@ ctboost::Node NodeFromState(const py::handle& handle) {
   return node;
 }
 
+py::dict NodeToStateDict(const ctboost::Node& node) {
+  py::dict state;
+  state["is_leaf"] = node.is_leaf;
+  state["is_categorical_split"] = node.is_categorical_split;
+  state["split_feature_id"] = node.split_feature_id;
+  state["split_bin_index"] = node.split_bin_index;
+  state["left_child"] = node.left_child;
+  state["right_child"] = node.right_child;
+  state["leaf_weight"] = node.leaf_weight;
+  state["left_categories"] =
+      std::vector<std::uint8_t>(node.left_categories.begin(), node.left_categories.end());
+  return state;
+}
+
+ctboost::Node NodeFromStateDict(const py::handle& handle) {
+  const py::dict state = handle.cast<py::dict>();
+
+  ctboost::Node node;
+  node.is_leaf = py::cast<bool>(state["is_leaf"]);
+  node.is_categorical_split = py::cast<bool>(state["is_categorical_split"]);
+  node.split_feature_id = py::cast<int>(state["split_feature_id"]);
+  node.split_bin_index = py::cast<std::uint16_t>(state["split_bin_index"]);
+  node.left_child = py::cast<int>(state["left_child"]);
+  node.right_child = py::cast<int>(state["right_child"]);
+  node.leaf_weight = py::cast<float>(state["leaf_weight"]);
+
+  const auto categories = py::cast<std::vector<std::uint8_t>>(state["left_categories"]);
+  if (categories.size() != ctboost::kMaxCategoricalRouteBins) {
+    throw std::runtime_error("invalid serialized categorical routing table");
+  }
+  std::copy(categories.begin(), categories.end(), node.left_categories.begin());
+  return node;
+}
+
 py::tuple TreeToState(const ctboost::Tree& tree) {
   py::list node_states;
   for (const ctboost::Node& node : tree.nodes()) {
@@ -147,6 +189,109 @@ ctboost::Tree TreeFromState(const py::handle& handle) {
   return tree;
 }
 
+py::dict TreeToStateDict(const ctboost::Tree& tree) {
+  py::list node_states;
+  for (const ctboost::Node& node : tree.nodes()) {
+    node_states.append(NodeToStateDict(node));
+  }
+
+  py::dict state;
+  state["nodes"] = node_states;
+  state["num_bins_per_feature"] = tree.num_bins_per_feature();
+  state["cut_offsets"] = tree.cut_offsets();
+  state["cut_values"] = tree.cut_values();
+  state["categorical_mask"] = tree.categorical_mask();
+  state["missing_value_mask"] = tree.missing_value_mask();
+  state["nan_mode"] = tree.nan_mode();
+  state["feature_importances"] = tree.feature_importances();
+  return state;
+}
+
+ctboost::Tree TreeFromStateDict(const py::handle& handle) {
+  const py::dict state = handle.cast<py::dict>();
+
+  std::vector<ctboost::Node> nodes;
+  for (const py::handle node_handle : py::cast<py::list>(state["nodes"])) {
+    nodes.push_back(NodeFromStateDict(node_handle));
+  }
+
+  ctboost::Tree tree;
+  tree.LoadState(std::move(nodes),
+                 py::cast<std::vector<std::uint16_t>>(state["num_bins_per_feature"]),
+                 py::cast<std::vector<std::size_t>>(state["cut_offsets"]),
+                 py::cast<std::vector<float>>(state["cut_values"]),
+                 py::cast<std::vector<std::uint8_t>>(state["categorical_mask"]),
+                 py::cast<std::vector<std::uint8_t>>(state["missing_value_mask"]),
+                 py::cast<std::uint8_t>(state["nan_mode"]),
+                 py::cast<std::vector<double>>(state["feature_importances"]));
+  return tree;
+}
+
+py::dict BoosterToStateDict(const ctboost::GradientBooster& booster) {
+  py::list tree_states;
+  for (const ctboost::Tree& tree : booster.trees()) {
+    tree_states.append(TreeToStateDict(tree));
+  }
+
+  py::dict state;
+  state["objective_name"] = booster.objective_name();
+  state["iterations"] = booster.iterations();
+  state["learning_rate"] = booster.learning_rate();
+  state["max_depth"] = booster.max_depth();
+  state["alpha"] = booster.alpha();
+  state["lambda_l2"] = booster.lambda_l2();
+  state["num_classes"] = booster.num_classes();
+  state["max_bins"] = booster.max_bins();
+  state["nan_mode"] = booster.nan_mode_name();
+  state["eval_metric_name"] = booster.eval_metric_name();
+  state["quantile_alpha"] = booster.quantile_alpha();
+  state["huber_delta"] = booster.huber_delta();
+  state["devices"] = booster.devices();
+  state["task_type"] = booster.use_gpu() ? "GPU" : "CPU";
+  state["trees"] = tree_states;
+  state["loss_history"] = booster.loss_history();
+  state["eval_loss_history"] = booster.eval_loss_history();
+  state["best_iteration"] = booster.best_iteration();
+  state["best_score"] = booster.best_score();
+  state["feature_importances"] = booster.get_feature_importances();
+  return state;
+}
+
+ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
+  std::vector<ctboost::Tree> trees;
+  for (const py::handle tree_handle : py::cast<py::list>(state["trees"])) {
+    trees.push_back(TreeFromStateDict(tree_handle));
+  }
+
+  const std::string task_type = py::cast<std::string>(state["task_type"]);
+  const bool requested_gpu = task_type == "GPU" || task_type == "gpu";
+  const bool use_gpu = requested_gpu && ctboost::CudaBackendCompiled();
+
+  ctboost::GradientBooster booster(py::cast<std::string>(state["objective_name"]),
+                                   py::cast<int>(state["iterations"]),
+                                   py::cast<double>(state["learning_rate"]),
+                                   py::cast<int>(state["max_depth"]),
+                                   py::cast<double>(state["alpha"]),
+                                   py::cast<double>(state["lambda_l2"]),
+                                   py::cast<int>(state["num_classes"]),
+                                   py::cast<std::size_t>(state["max_bins"]),
+                                   py::cast<std::string>(state["nan_mode"]),
+                                   py::cast<std::string>(state["eval_metric_name"]),
+                                   py::cast<double>(state["quantile_alpha"]),
+                                   py::cast<double>(state["huber_delta"]),
+                                   use_gpu ? "GPU" : "CPU",
+                                   py::cast<std::string>(state["devices"]));
+
+  booster.LoadState(std::move(trees),
+                    py::cast<std::vector<double>>(state["loss_history"]),
+                    py::cast<std::vector<double>>(state["eval_loss_history"]),
+                    std::vector<double>{},
+                    py::cast<int>(state["best_iteration"]),
+                    py::cast<double>(state["best_score"]),
+                    use_gpu);
+  return booster;
+}
+
 }  // namespace
 
 PYBIND11_MODULE(_core, m) {
@@ -156,7 +301,8 @@ PYBIND11_MODULE(_core, m) {
       .def(py::init([](py::array_t<float, py::array::forcecast> data,
                        py::array_t<float, py::array::forcecast> label,
                        std::vector<int> cat_features,
-                       py::object weight) {
+                       py::object weight,
+                       py::object group_id) {
              py::array_t<float, py::array::forcecast> resolved_weight;
              if (weight.is_none()) {
                const py::buffer_info label_info = label.request();
@@ -169,12 +315,18 @@ PYBIND11_MODULE(_core, m) {
              } else {
                resolved_weight = weight.cast<py::array_t<float, py::array::forcecast>>();
              }
-             return ctboost::Pool(data, label, std::move(cat_features), resolved_weight);
+             py::array_t<std::int64_t, py::array::forcecast> resolved_group_id;
+             if (!group_id.is_none()) {
+               resolved_group_id = group_id.cast<py::array_t<std::int64_t, py::array::forcecast>>();
+             }
+             return ctboost::Pool(
+                 data, label, std::move(cat_features), resolved_weight, resolved_group_id);
            }),
            py::arg("data"),
            py::arg("label"),
            py::arg("cat_features") = std::vector<int>{},
-           py::arg("weight") = py::none())
+           py::arg("weight") = py::none(),
+           py::arg("group_id") = py::none())
       .def("num_rows", &ctboost::Pool::num_rows)
       .def("num_cols", &ctboost::Pool::num_cols)
       .def("feature_data", [](const ctboost::Pool& pool) {
@@ -185,6 +337,17 @@ PYBIND11_MODULE(_core, m) {
       })
       .def("weight", [](const ctboost::Pool& pool) {
         return VectorToArray(pool.weights());
+      })
+      .def("group_id", [](const ctboost::Pool& pool) -> py::object {
+        if (!pool.has_group_ids()) {
+          return py::none();
+        }
+        py::array_t<std::int64_t> result(pool.group_ids().size());
+        if (!pool.group_ids().empty()) {
+          std::memcpy(
+              result.mutable_data(), pool.group_ids().data(), pool.group_ids().size() * sizeof(std::int64_t));
+        }
+        return result;
       })
       .def("cat_features", [](const ctboost::Pool& pool) {
         return pool.cat_features();
@@ -223,25 +386,43 @@ PYBIND11_MODULE(_core, m) {
            [](ctboost::GradientBooster& booster,
               const ctboost::Pool& pool,
               py::object eval_pool,
-              int early_stopping_rounds)
+              int early_stopping_rounds,
+              bool continue_training)
                -> ctboost::GradientBooster& {
              if (eval_pool.is_none()) {
-               booster.Fit(pool, nullptr, early_stopping_rounds);
+               booster.Fit(pool, nullptr, early_stopping_rounds, continue_training);
              } else {
                const auto& eval_pool_ref = eval_pool.cast<const ctboost::Pool&>();
-               booster.Fit(pool, &eval_pool_ref, early_stopping_rounds);
+               booster.Fit(pool, &eval_pool_ref, early_stopping_rounds, continue_training);
              }
              return booster;
            },
            py::arg("pool"),
            py::arg("eval_pool") = py::none(),
            py::arg("early_stopping_rounds") = 0,
+           py::arg("continue_training") = false,
            py::return_value_policy::reference_internal)
       .def("predict",
            [](const ctboost::GradientBooster& booster,
               const ctboost::Pool& pool,
               int num_iteration) {
              return VectorToArray(booster.Predict(pool, num_iteration));
+           },
+           py::arg("pool"),
+           py::arg("num_iteration") = -1)
+      .def("predict_leaf_indices",
+           [](const ctboost::GradientBooster& booster,
+              const ctboost::Pool& pool,
+              int num_iteration) {
+             return IntVectorToArray(booster.PredictLeafIndices(pool, num_iteration));
+           },
+           py::arg("pool"),
+           py::arg("num_iteration") = -1)
+      .def("predict_contributions",
+           [](const ctboost::GradientBooster& booster,
+              const ctboost::Pool& pool,
+              int num_iteration) {
+             return VectorToArray(booster.PredictContributions(pool, num_iteration));
            },
            py::arg("pool"),
            py::arg("num_iteration") = -1)
@@ -258,84 +439,99 @@ PYBIND11_MODULE(_core, m) {
       .def("prediction_dimension", &ctboost::GradientBooster::prediction_dimension)
       .def("objective_name", &ctboost::GradientBooster::objective_name)
       .def("eval_metric_name", &ctboost::GradientBooster::eval_metric_name)
+      .def("iterations", &ctboost::GradientBooster::iterations)
+      .def("learning_rate", &ctboost::GradientBooster::learning_rate)
+      .def("max_depth", &ctboost::GradientBooster::max_depth)
+      .def("alpha", &ctboost::GradientBooster::alpha)
+      .def("lambda_l2", &ctboost::GradientBooster::lambda_l2)
+      .def("max_bins", &ctboost::GradientBooster::max_bins)
+      .def("nan_mode_name", &ctboost::GradientBooster::nan_mode_name)
+      .def("quantile_alpha", &ctboost::GradientBooster::quantile_alpha)
+      .def("huber_delta", &ctboost::GradientBooster::huber_delta)
+      .def("use_gpu", &ctboost::GradientBooster::use_gpu)
+      .def("devices", &ctboost::GradientBooster::devices)
+      .def("export_state", [](const ctboost::GradientBooster& booster) {
+        return BoosterToStateDict(booster);
+      })
+      .def("load_state",
+           [](ctboost::GradientBooster& booster, const py::dict& state)
+               -> ctboost::GradientBooster& {
+             const bool requested_gpu =
+                 py::cast<std::string>(state["task_type"]) == "GPU" ||
+                 py::cast<std::string>(state["task_type"]) == "gpu";
+             const bool use_gpu = requested_gpu && ctboost::CudaBackendCompiled();
+
+             std::vector<ctboost::Tree> trees;
+             for (const py::handle tree_handle : py::cast<py::list>(state["trees"])) {
+               trees.push_back(TreeFromStateDict(tree_handle));
+             }
+             booster.LoadState(std::move(trees),
+                               py::cast<std::vector<double>>(state["loss_history"]),
+                               py::cast<std::vector<double>>(state["eval_loss_history"]),
+                               std::vector<double>{},
+                               py::cast<int>(state["best_iteration"]),
+                               py::cast<double>(state["best_score"]),
+                               use_gpu);
+             return booster;
+           },
+           py::arg("state"),
+           py::return_value_policy::reference_internal)
       .def("feature_importances", [](const ctboost::GradientBooster& booster) {
         return VectorToArray(booster.get_feature_importances());
       })
+      .def_static("from_state", [](const py::dict& state) {
+        return BoosterFromStateDict(state);
+      })
       .def(py::pickle(
           [](const ctboost::GradientBooster& booster) {
-            py::list tree_states;
-            for (const ctboost::Tree& tree : booster.trees()) {
-              tree_states.append(TreeToState(tree));
+            return BoosterToStateDict(booster);
+          },
+          [](const py::object& state_object) {
+            if (py::isinstance<py::dict>(state_object)) {
+              return BoosterFromStateDict(state_object.cast<py::dict>());
             }
 
-            return py::make_tuple(booster.objective_name(),
-                                  booster.iterations(),
-                                  booster.learning_rate(),
-                                  booster.max_depth(),
-                                  booster.alpha(),
-                                  booster.lambda_l2(),
-                                  booster.num_classes(),
-                                  booster.max_bins(),
-                                  booster.nan_mode_name(),
-                                  booster.eval_metric_name(),
-                                  booster.quantile_alpha(),
-                                  booster.huber_delta(),
-                                  booster.devices(),
-                                  booster.use_gpu(),
-                                  tree_states,
-                                  booster.loss_history(),
-                                  booster.eval_loss_history(),
-                                  booster.best_iteration(),
-                                  booster.get_feature_importances());
-          },
-          [](const py::tuple& state) {
+            const py::tuple state = state_object.cast<py::tuple>();
             if (state.size() != 19) {
               throw std::runtime_error("invalid serialized GradientBooster state");
             }
 
-            std::vector<ctboost::Tree> trees;
+            py::dict upgraded_state;
+            upgraded_state["objective_name"] = state[0];
+            upgraded_state["iterations"] = state[1];
+            upgraded_state["learning_rate"] = state[2];
+            upgraded_state["max_depth"] = state[3];
+            upgraded_state["alpha"] = state[4];
+            upgraded_state["lambda_l2"] = state[5];
+            upgraded_state["num_classes"] = state[6];
+            upgraded_state["max_bins"] = state[7];
+            upgraded_state["nan_mode"] = state[8];
+            upgraded_state["eval_metric_name"] = state[9];
+            upgraded_state["quantile_alpha"] = state[10];
+            upgraded_state["huber_delta"] = state[11];
+            upgraded_state["devices"] = state[12];
+            upgraded_state["task_type"] =
+                state[13].cast<bool>() ? py::str("GPU") : py::str("CPU");
+
+            py::list tree_states;
             for (const py::handle tree_handle : state[14].cast<py::list>()) {
-              trees.push_back(TreeFromState(tree_handle));
+              tree_states.append(TreeToStateDict(TreeFromState(tree_handle)));
             }
-
-            std::vector<double> feature_importance_sums;
-            for (const float value : state[18].cast<std::vector<float>>()) {
-              feature_importance_sums.push_back(static_cast<double>(value));
-            }
-
-            const bool requested_gpu = state[13].cast<bool>();
-            const bool use_gpu = requested_gpu && ctboost::CudaBackendCompiled();
-            ctboost::GradientBooster booster(state[0].cast<std::string>(),
-                                             state[1].cast<int>(),
-                                             state[2].cast<double>(),
-                                             state[3].cast<int>(),
-                                             state[4].cast<double>(),
-                                             state[5].cast<double>(),
-                                             state[6].cast<int>(),
-                                             state[7].cast<std::size_t>(),
-                                             state[8].cast<std::string>(),
-                                             state[9].cast<std::string>(),
-                                             state[10].cast<double>(),
-                                             state[11].cast<double>(),
-                                             use_gpu ? "GPU" : "CPU",
-                                             state[12].cast<std::string>());
+            upgraded_state["trees"] = tree_states;
+            upgraded_state["loss_history"] = state[15];
+            upgraded_state["eval_loss_history"] = state[16];
+            upgraded_state["best_iteration"] = state[17];
 
             const auto eval_loss_history = state[16].cast<std::vector<double>>();
             const int best_iteration = state[17].cast<int>();
-            double best_loss = 0.0;
+            double best_score = 0.0;
             if (best_iteration >= 0 &&
                 static_cast<std::size_t>(best_iteration) < eval_loss_history.size()) {
-              best_loss = eval_loss_history[static_cast<std::size_t>(best_iteration)];
+              best_score = eval_loss_history[static_cast<std::size_t>(best_iteration)];
             }
-
-            booster.LoadState(std::move(trees),
-                              state[15].cast<std::vector<double>>(),
-                              eval_loss_history,
-                              std::move(feature_importance_sums),
-                              best_iteration,
-                              best_loss,
-                              use_gpu);
-            return booster;
+            upgraded_state["best_score"] = best_score;
+            upgraded_state["feature_importances"] = state[18];
+            return BoosterFromStateDict(upgraded_state);
           }));
 
   m.def("build_info", []() {
@@ -347,6 +543,10 @@ PYBIND11_MODULE(_core, m) {
     result["compiler"] = info.compiler;
     result["cxx_standard"] = info.cxx_standard;
     return result;
+  });
+
+  m.def("_booster_from_state", [](const py::dict& state) {
+    return BoosterFromStateDict(state);
   });
 
   m.def("_debug_compute_objective",
@@ -362,7 +562,7 @@ PYBIND11_MODULE(_core, m) {
           std::vector<float> gradients;
           std::vector<float> hessians;
           objective->compute_gradients(
-              pred_values, label_values, gradients, hessians, num_classes);
+              pred_values, label_values, gradients, hessians, num_classes, nullptr);
           return py::make_tuple(VectorToArray(gradients), VectorToArray(hessians));
         },
         py::arg("objective_name"),

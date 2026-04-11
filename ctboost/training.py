@@ -4,32 +4,34 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from pathlib import Path
-import pickle
 from typing import Any, Dict, Iterable, List, Optional, Union
 
 import numpy as np
-from sklearn.model_selection import KFold, StratifiedKFold
+from sklearn.model_selection import GroupKFold, KFold, StratifiedKFold
 
 from . import _core
+from ._serialization import load_booster, save_booster
 from .core import Pool
 
 PathLike = Union[str, Path]
 
 
-def _pool_from_data_and_label(data: Any, label: Any) -> Pool:
+def _pool_from_data_and_label(data: Any, label: Any, group_id: Any = None) -> Pool:
     if isinstance(data, Pool):
         resolved_label = data.label if label is None else label
+        resolved_group_id = data.group_id if group_id is None else group_id
         return Pool(
             data=data.data,
             label=resolved_label,
             cat_features=data.cat_features,
             weight=data.weight,
+            group_id=resolved_group_id,
             feature_names=data.feature_names,
         )
 
     if label is None:
         raise ValueError("y must be provided when data is not a Pool")
-    return Pool(data=data, label=label)
+    return Pool(data=data, label=label, group_id=group_id)
 
 
 def _normalize_eval_set(eval_set: Any) -> Optional[Any]:
@@ -37,17 +39,17 @@ def _normalize_eval_set(eval_set: Any) -> Optional[Any]:
         return None
     if isinstance(eval_set, Pool):
         return eval_set
-    if isinstance(eval_set, tuple) and len(eval_set) == 2:
+    if isinstance(eval_set, tuple) and len(eval_set) in {2, 3}:
         return eval_set
     if (
         isinstance(eval_set, list)
         and len(eval_set) == 1
         and isinstance(eval_set[0], tuple)
-        and len(eval_set[0]) == 2
+        and len(eval_set[0]) in {2, 3}
     ):
         return eval_set[0]
     raise TypeError(
-        "eval_set must be a Pool, a single (X, y) tuple, or a list containing one (X, y) tuple"
+        "eval_set must be a Pool, a single (X, y) or (X, y, group_id) tuple, or a list containing one such tuple"
     )
 
 
@@ -56,14 +58,19 @@ def _resolve_eval_pool(eval_set: Any) -> Optional[Pool]:
     if normalized is None or isinstance(normalized, Pool):
         return normalized
 
-    X_eval, y_eval = normalized
-    return _pool_from_data_and_label(X_eval, y_eval)
+    if len(normalized) == 2:
+        X_eval, y_eval = normalized
+        return _pool_from_data_and_label(X_eval, y_eval)
+
+    X_eval, y_eval, group_id = normalized
+    return _pool_from_data_and_label(X_eval, y_eval, group_id=group_id)
 
 
 def _prediction_pool(data: Any) -> Pool:
     if isinstance(data, Pool):
         return data
-    return Pool(data=data, label=np.zeros(len(data), dtype=np.float32))
+    num_rows = int(data.shape[0]) if hasattr(data, "shape") else len(data)
+    return Pool(data=data, label=np.zeros(num_rows, dtype=np.float32))
 
 
 def _resolve_num_iteration(num_iteration: Optional[int]) -> int:
@@ -93,6 +100,10 @@ def _is_classification_objective(objective_name: str) -> bool:
     }
 
 
+def _is_ranking_objective(objective_name: str) -> bool:
+    return objective_name.lower() in {"pairlogit", "pairwise", "ranknet"}
+
+
 def _combine_weight_arrays(*arrays: Optional[np.ndarray]) -> Optional[np.ndarray]:
     combined: Optional[np.ndarray] = None
     for array in arrays:
@@ -119,6 +130,7 @@ def _apply_sample_weight_to_pool(pool: Pool, sample_weight: Optional[Any]) -> Po
         label=pool.label,
         cat_features=pool.cat_features,
         weight=combined_weight,
+        group_id=pool.group_id,
         feature_names=pool.feature_names,
     )
 
@@ -230,6 +242,7 @@ def _apply_objective_weights(pool: Pool, params: Mapping[str, Any], objective_na
         label=pool.label,
         cat_features=pool.cat_features,
         weight=combined_weight,
+        group_id=pool.group_id,
         feature_names=pool.feature_names,
     )
 
@@ -242,6 +255,7 @@ def _slice_pool(pool: Pool, indices: Iterable[int]) -> Pool:
         label=pool.label[index_array],
         cat_features=pool.cat_features,
         weight=weight,
+        group_id=None if pool.group_id is None else pool.group_id[index_array],
         feature_names=pool.feature_names,
     )
 
@@ -254,6 +268,19 @@ def _stack_histories(histories: List[np.ndarray]) -> np.ndarray:
     for column_index, history in enumerate(histories):
         stacked[: history.shape[0], column_index] = history
     return stacked
+
+
+def _resolve_init_model_handle(init_model: Any) -> Optional[Any]:
+    if init_model is None:
+        return None
+    if isinstance(init_model, Booster):
+        return init_model._handle
+    if isinstance(init_model, _core.GradientBooster):
+        return init_model
+    booster = getattr(init_model, "_booster", None)
+    if isinstance(booster, Booster):
+        return booster._handle
+    raise TypeError("init_model must be a ctboost.Booster, native GradientBooster, or CTBoost estimator")
 
 
 class Booster:
@@ -281,19 +308,33 @@ class Booster:
         for iteration in range(1, self.num_iterations_trained + 1):
             yield self._predict_raw(pool, num_iteration=iteration)
 
-    def save_model(self, path: PathLike) -> None:
+    def predict_leaf_index(self, data: Any, *, num_iteration: Optional[int] = None) -> np.ndarray:
+        pool = _prediction_pool(data)
+        values = np.asarray(
+            self._handle.predict_leaf_indices(pool._handle, _resolve_num_iteration(num_iteration)),
+            dtype=np.int32,
+        )
+        tree_count = 0 if pool.num_rows == 0 else values.size // pool.num_rows
+        return values.reshape((pool.num_rows, tree_count))
+
+    def predict_contrib(self, data: Any, *, num_iteration: Optional[int] = None) -> np.ndarray:
+        pool = _prediction_pool(data)
+        values = np.asarray(
+            self._handle.predict_contributions(pool._handle, _resolve_num_iteration(num_iteration)),
+            dtype=np.float32,
+        )
+        width = pool.num_cols + 1
+        if self.prediction_dimension > 1:
+            return values.reshape((pool.num_rows, self.prediction_dimension, width))
+        return values.reshape((pool.num_rows, width))
+
+    def save_model(self, path: PathLike, *, model_format: Optional[str] = None) -> None:
         destination = Path(path)
-        destination.parent.mkdir(parents=True, exist_ok=True)
-        with destination.open("wb") as stream:
-            pickle.dump(self._handle, stream, protocol=pickle.HIGHEST_PROTOCOL)
+        save_booster(destination, self._handle, model_format=model_format)
 
     @classmethod
     def load_model(cls, path: PathLike) -> "Booster":
-        with Path(path).open("rb") as stream:
-            handle = pickle.load(stream)
-        if not isinstance(handle, _core.GradientBooster):
-            raise TypeError("serialized model does not contain a CTBoost booster")
-        return cls(handle)
+        return cls(load_booster(Path(path)))
 
     @property
     def loss_history(self) -> List[float]:
@@ -362,22 +403,32 @@ def cv(
 
     objective = _objective_name(params)
     labels = np.asarray(pool.label)
-    use_stratified = _is_classification_objective(objective) if stratified is None else bool(stratified)
-
-    if use_stratified:
-        splitter = StratifiedKFold(
-            n_splits=nfold,
-            shuffle=shuffle,
-            random_state=random_state if shuffle else None,
+    if _is_ranking_objective(objective):
+        if pool.group_id is None:
+            raise ValueError("ranking cross-validation requires group_id on the input pool")
+        splitter = GroupKFold(n_splits=nfold)
+        split_iterator = splitter.split(
+            np.zeros(labels.shape[0], dtype=np.float32),
+            labels,
+            groups=np.asarray(pool.group_id),
         )
-        split_iterator = splitter.split(np.zeros(labels.shape[0], dtype=np.float32), labels)
     else:
-        splitter = KFold(
-            n_splits=nfold,
-            shuffle=shuffle,
-            random_state=random_state if shuffle else None,
-        )
-        split_iterator = splitter.split(np.zeros(labels.shape[0], dtype=np.float32))
+        use_stratified = _is_classification_objective(objective) if stratified is None else bool(stratified)
+
+        if use_stratified:
+            splitter = StratifiedKFold(
+                n_splits=nfold,
+                shuffle=shuffle,
+                random_state=random_state if shuffle else None,
+            )
+            split_iterator = splitter.split(np.zeros(labels.shape[0], dtype=np.float32), labels)
+        else:
+            splitter = KFold(
+                n_splits=nfold,
+                shuffle=shuffle,
+                random_state=random_state if shuffle else None,
+            )
+            split_iterator = splitter.split(np.zeros(labels.shape[0], dtype=np.float32))
 
     train_histories: List[np.ndarray] = []
     valid_histories: List[np.ndarray] = []
@@ -419,6 +470,7 @@ def train(
     *,
     eval_set: Any = None,
     early_stopping_rounds: Optional[int] = None,
+    init_model: Any = None,
 ) -> Booster:
     if not isinstance(pool, Pool):
         raise TypeError("pool must be an instance of ctboost.Pool")
@@ -432,25 +484,51 @@ def train(
     early_stopping = 0 if early_stopping_rounds is None else int(early_stopping_rounds)
 
     config = dict(params)
+    init_handle = _resolve_init_model_handle(init_model)
+    init_state = None if init_handle is None else dict(init_handle.export_state())
     iterations = int(num_boost_round if num_boost_round is not None else config.get("iterations", 100))
-    objective = str(config.get("objective", config.get("loss_function", "RMSE")))
-    learning_rate = float(config.get("learning_rate", 0.1))
-    max_depth = int(config.get("max_depth", 6))
-    alpha = float(config.get("alpha", 0.05))
-    lambda_l2 = float(config.get("lambda", config.get("lambda_l2", 1.0)))
+    objective = str(
+        config.get(
+            "objective",
+            config.get(
+                "loss_function",
+                "RMSE" if init_state is None else init_state["objective_name"],
+            ),
+        )
+    )
+    learning_rate = float(
+        config.get("learning_rate", 0.1 if init_state is None else init_state["learning_rate"])
+    )
+    max_depth = int(config.get("max_depth", 6 if init_state is None else init_state["max_depth"]))
+    alpha = float(config.get("alpha", 0.05 if init_state is None else init_state["alpha"]))
+    lambda_l2 = float(
+        config.get(
+            "lambda",
+            config.get("lambda_l2", 1.0 if init_state is None else init_state["lambda_l2"]),
+        )
+    )
     if "num_classes" in config:
         num_classes = int(config["num_classes"])
+    elif init_state is not None:
+        num_classes = int(init_state["num_classes"])
     elif objective.lower() in {"multiclass", "softmax", "softmaxloss"}:
         num_classes = int(np.unique(pool.label).size)
     else:
         num_classes = 1
-    max_bins = int(config.get("max_bins", 256))
-    nan_mode = str(config.get("nan_mode", "Min"))
-    eval_metric = str(config.get("eval_metric", ""))
-    quantile_alpha = float(config.get("quantile_alpha", 0.5))
-    huber_delta = float(config.get("huber_delta", 1.0))
-    task_type = str(config.get("task_type", "CPU"))
-    devices = str(config.get("devices", "0"))
+    max_bins = int(config.get("max_bins", 256 if init_state is None else init_state["max_bins"]))
+    nan_mode = str(config.get("nan_mode", "Min" if init_state is None else init_state["nan_mode"]))
+    eval_metric = str(config.get("eval_metric", "" if init_state is None else init_state["eval_metric_name"]))
+    quantile_alpha = float(
+        config.get("quantile_alpha", 0.5 if init_state is None else init_state["quantile_alpha"])
+    )
+    huber_delta = float(config.get("huber_delta", 1.0 if init_state is None else init_state["huber_delta"]))
+    task_type = str(config.get("task_type", "CPU" if init_state is None else init_state["task_type"]))
+    devices = str(config.get("devices", "0" if init_state is None else init_state["devices"]))
+    if init_state is not None:
+        if objective.lower() != str(init_state["objective_name"]).lower():
+            raise ValueError("init_model objective must match the current training objective")
+        if num_classes != int(init_state["num_classes"]):
+            raise ValueError("init_model num_classes must match the current training configuration")
     weighted_pool = _apply_objective_weights(pool, config, objective)
     weighted_eval_pool = (
         None if eval_pool is None else _apply_objective_weights(eval_pool, config, objective)
@@ -472,9 +550,12 @@ def train(
         task_type=task_type,
         devices=devices,
     )
+    if init_state is not None:
+        booster.load_state(init_state)
     booster.fit(
         weighted_pool._handle,
         None if weighted_eval_pool is None else weighted_eval_pool._handle,
         early_stopping,
+        init_state is not None,
     )
     return Booster(booster)

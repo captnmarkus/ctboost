@@ -2,7 +2,7 @@
 
 CTBoost is a gradient boosting library built around Conditional Inference Trees, with a native C++17 core, Python bindings via `pybind11`, optional CUDA support for source builds, and a scikit-learn style API.
 
-The current codebase supports end-to-end training and prediction for regression, binary classification, and multiclass classification, plus native pandas `DataFrame` ingestion with automatic categorical detection, row weights and class imbalance controls, explicit missing-value handling, configurable validation metrics, model persistence, staged prediction, and a built-in cross-validation helper.
+The current codebase supports end-to-end training and prediction for regression, classification, and grouped ranking, plus pandas and SciPy sparse ingestion, row weights and class imbalance controls, explicit missing-value handling, configurable validation metrics, stable JSON model persistence, staged prediction, warm-start continuation, and a built-in cross-validation helper.
 
 ## Current Status
 
@@ -15,12 +15,13 @@ The current codebase supports end-to-end training and prediction for regression,
 ## What Works Today
 
 - Native gradient boosting backend exposed as `ctboost._core`
-- `Pool` abstraction for dense tabular data and categorical feature indices
+- `Pool` abstraction for dense tabular data, SciPy sparse input, categorical feature indices, and optional `group_id`
 - Native pandas `DataFrame` and `Series` support
 - Automatic categorical detection for pandas `category` and `object` columns
 - Regression training with `ctboost.train(...)`
-- scikit-learn compatible `CTBoostClassifier` and `CTBoostRegressor`
+- scikit-learn compatible `CTBoostClassifier`, `CTBoostRegressor`, and `CTBoostRanker`
 - Binary and multiclass classification
+- Grouped ranking with `PairLogit` and `NDCG`
 - Row weights through `Pool(..., weight=...)` and `sample_weight` on sklearn estimators
 - Class imbalance controls through `class_weight`, `class_weights`, `auto_class_weights="balanced"`, and `scale_pos_weight`
 - Explicit missing-value handling through `nan_mode`
@@ -28,18 +29,20 @@ The current codebase supports end-to-end training and prediction for regression,
 - Separate `eval_metric` support for validation history and early stopping
 - Validation loss/metric history and `evals_result_`
 - Per-iteration prediction through staged prediction and `num_iteration`
-- Model persistence for low-level boosters and scikit-learn style estimators
+- Stable JSON and pickle model persistence for low-level boosters and scikit-learn style estimators
 - Cross-validation with `ctboost.cv(...)`
 - Regression objectives: `RMSE`, `MAE`, `Huber`, `Quantile`
-- Generic eval metrics including `RMSE`, `MAE`, `Accuracy`, `Precision`, `Recall`, `F1`, and `AUC`
+- Generic eval metrics including `RMSE`, `MAE`, `Accuracy`, `Precision`, `Recall`, `F1`, `AUC`, and `NDCG`
 - Feature importance reporting
+- Leaf-index introspection and path-based prediction contributions
+- Continued training through `init_model` and estimator `warm_start`
 - Build metadata reporting through `ctboost.build_info()`
 - CPU builds on standard CI runners
 - Optional CUDA compilation when building from source with a suitable toolkit
 
 ## Current Limitations
 
-- The Python package currently targets dense NumPy-compatible input
+- SciPy sparse matrices are currently densified at the Python boundary before native training
 - Dedicated GPU wheel automation currently targets Linux CPython 3.10
 - CUDA wheel builds in CI depend on container-side toolkit provisioning
 
@@ -203,14 +206,21 @@ pool = ctboost.Pool(frame, label)
 assert pool.cat_features == [1, 2]
 ```
 
-### Model Persistence And Cross-Validation
+### Model Persistence, Warm Start, And Cross-Validation
 
 ```python
 import ctboost
 
-booster.save_model("regression-model.pkl")
-restored = ctboost.load_model("regression-model.pkl")
+booster.save_model("regression-model.json")
+restored = ctboost.load_model("regression-model.json")
 restored_predictions = restored.predict(pool)
+
+continued = ctboost.train(
+    pool,
+    {"objective": "RMSE", "learning_rate": 0.2, "max_depth": 2, "alpha": 1.0, "lambda_l2": 1.0},
+    num_boost_round=10,
+    init_model=restored,
+)
 
 cv_result = ctboost.cv(
     pool,
@@ -232,10 +242,12 @@ The scikit-learn compatible estimators also expose:
 - `load_model(...)`
 - `staged_predict(...)`
 - `staged_predict_proba(...)` for classifiers
+- `predict_leaf_index(...)`
+- `predict_contrib(...)`
 - `evals_result_`
 - `best_score_`
 - `sample_weight` on `fit(...)`
-- `class_weight`, `scale_pos_weight`, `eval_metric`, and `nan_mode`
+- `class_weight`, `scale_pos_weight`, `eval_metric`, `nan_mode`, and `warm_start`
 
 ## Public Python API
 
@@ -246,8 +258,10 @@ The main entry points are:
 - `ctboost.cv`
 - `ctboost.Booster`
 - `ctboost.CTBoostClassifier`
+- `ctboost.CTBoostRanker`
 - `ctboost.CTBoostRegressor`
 - `ctboost.CBoostClassifier`
+- `ctboost.CBoostRanker`
 - `ctboost.CBoostRegressor`
 - `ctboost.build_info`
 - `ctboost.load_model`

@@ -50,6 +50,11 @@ bool IsMulticlassObjective(const std::string& normalized_objective) {
          normalized_objective == "softmaxloss";
 }
 
+bool IsRankingObjective(const std::string& normalized_objective) {
+  return normalized_objective == "pairlogit" || normalized_objective == "pairwise" ||
+         normalized_objective == "ranknet";
+}
+
 bool IsRegressionObjective(const std::string& normalized_objective) {
   return IsSquaredErrorObjective(normalized_objective) ||
          IsAbsoluteErrorObjective(normalized_objective) ||
@@ -194,6 +199,11 @@ GradientBooster::GradientBooster(std::string objective,
       throw std::invalid_argument("multiclass objective requires num_classes greater than two");
     }
     prediction_dimension_ = num_classes_;
+  } else if (IsRankingObjective(normalized_objective)) {
+    if (num_classes_ != 1) {
+      throw std::invalid_argument("ranking objectives require num_classes equal to one");
+    }
+    prediction_dimension_ = 1;
   } else if (IsRegressionObjective(normalized_objective)) {
     if (num_classes_ != 1) {
       throw std::invalid_argument("regression objectives require num_classes equal to one");
@@ -222,7 +232,8 @@ GradientBooster::GradientBooster(std::string objective,
 
 void GradientBooster::Fit(const Pool& pool,
                           const Pool* eval_pool,
-                          int early_stopping_rounds) {
+                          int early_stopping_rounds,
+                          bool continue_training) {
   if (early_stopping_rounds < 0) {
     early_stopping_rounds = 0;
   }
@@ -240,49 +251,76 @@ void GradientBooster::Fit(const Pool& pool,
     }
   }
 
-  trees_.clear();
-  loss_history_.clear();
-  eval_loss_history_.clear();
-  best_iteration_ = -1;
-  best_score_ = 0.0;
+  const bool has_existing_state = continue_training && !trees_.empty();
+  if (!continue_training) {
+    trees_.clear();
+    loss_history_.clear();
+    eval_loss_history_.clear();
+    best_iteration_ = -1;
+    best_score_ = 0.0;
+  } else if (!feature_importance_sums_.empty() &&
+             feature_importance_sums_.size() != pool.num_cols()) {
+    throw std::invalid_argument(
+        "warm-start training requires the same number of features as the initial model");
+  }
 
   const HistMatrix hist = hist_builder_.Build(pool);
   const auto& labels = pool.labels();
   const auto& weights = pool.weights();
+  const std::vector<std::int64_t>* group_ids =
+      pool.has_group_ids() ? &pool.group_ids() : nullptr;
   const double total_weight = std::accumulate(
       weights.begin(), weights.end(), 0.0,
       [](double acc, float value) { return acc + static_cast<double>(value); });
   if (total_weight <= 0.0) {
     throw std::invalid_argument("training pool must have a positive total sample weight");
   }
-  std::vector<float> predictions(
-      pool.num_rows() * static_cast<std::size_t>(prediction_dimension_), 0.0F);
-  feature_importance_sums_.assign(pool.num_cols(), 0.0);
-  int completed_iterations = 0;
+  std::vector<float> predictions = has_existing_state
+                                       ? Predict(pool, -1)
+                                       : std::vector<float>(
+                                             pool.num_rows() *
+                                                 static_cast<std::size_t>(prediction_dimension_),
+                                             0.0F);
+  if (!continue_training || feature_importance_sums_.empty()) {
+    feature_importance_sums_.assign(pool.num_cols(), 0.0);
+  }
+  int completed_iterations = static_cast<int>(num_iterations_trained());
   bool early_stopped = false;
 
   const std::vector<float>* eval_labels = nullptr;
   const std::vector<float>* eval_weights = nullptr;
+  const std::vector<std::int64_t>* eval_group_ids = nullptr;
   std::vector<float> eval_predictions;
   if (eval_pool != nullptr) {
     eval_labels = &eval_pool->labels();
     eval_weights = &eval_pool->weights();
+    eval_group_ids = eval_pool->has_group_ids() ? &eval_pool->group_ids() : nullptr;
     const double eval_total_weight = std::accumulate(
         eval_weights->begin(), eval_weights->end(), 0.0,
         [](double acc, float value) { return acc + static_cast<double>(value); });
     if (eval_total_weight <= 0.0) {
       throw std::invalid_argument("eval_pool must have a positive total sample weight");
     }
-    eval_predictions.assign(
-        eval_pool->num_rows() * static_cast<std::size_t>(prediction_dimension_), 0.0F);
-    best_score_ = maximize_eval_metric_ ? -std::numeric_limits<double>::infinity()
-                                        : std::numeric_limits<double>::infinity();
+    eval_predictions = has_existing_state
+                           ? Predict(*eval_pool, -1)
+                           : std::vector<float>(
+                                 eval_pool->num_rows() *
+                                     static_cast<std::size_t>(prediction_dimension_),
+                                 0.0F);
+    if (!continue_training || eval_loss_history_.empty()) {
+      best_score_ = maximize_eval_metric_ ? -std::numeric_limits<double>::infinity()
+                                          : std::numeric_limits<double>::infinity();
+      if (!continue_training) {
+        best_iteration_ = -1;
+      }
+    }
   }
 
   for (int iteration = 0; iteration < iterations_; ++iteration) {
+    const int total_iteration = completed_iterations + iteration;
     std::vector<float> gradients;
     std::vector<float> hessians;
-    objective_->compute_gradients(predictions, labels, gradients, hessians, num_classes_);
+    objective_->compute_gradients(predictions, labels, gradients, hessians, num_classes_, group_ids);
 
     if (prediction_dimension_ == 1) {
       Tree tree;
@@ -335,26 +373,27 @@ void GradientBooster::Fit(const Pool& pool,
     }
 
     loss_history_.push_back(
-        objective_metric_->Evaluate(predictions, labels, weights, num_classes_));
-    completed_iterations = iteration + 1;
+        objective_metric_->Evaluate(predictions, labels, weights, num_classes_, group_ids));
+    completed_iterations = total_iteration + 1;
     if (eval_pool == nullptr) {
       continue;
     }
 
     const double eval_score =
-        eval_metric_->Evaluate(eval_predictions, *eval_labels, *eval_weights, num_classes_);
+        eval_metric_->Evaluate(
+            eval_predictions, *eval_labels, *eval_weights, num_classes_, eval_group_ids);
     eval_loss_history_.push_back(eval_score);
     const bool improved =
         best_iteration_ < 0 ||
         (maximize_eval_metric_ ? eval_score > best_score_ : eval_score < best_score_);
     if (improved) {
-      best_iteration_ = iteration;
+      best_iteration_ = total_iteration;
       best_score_ = eval_score;
       continue;
     }
 
     if (early_stopping_rounds > 0 &&
-        iteration - best_iteration_ >= early_stopping_rounds) {
+        total_iteration - best_iteration_ >= early_stopping_rounds) {
       early_stopped = true;
       break;
     }
@@ -408,6 +447,52 @@ std::vector<float> GradientBooster::Predict(const Pool& pool, int num_iteration)
   return predictions;
 }
 
+std::vector<std::int32_t> GradientBooster::PredictLeafIndices(const Pool& pool,
+                                                              int num_iteration) const {
+  std::size_t tree_limit = trees_.size();
+  if (num_iteration >= 0) {
+    tree_limit = std::min(
+        trees_.size(),
+        static_cast<std::size_t>(num_iteration) * static_cast<std::size_t>(prediction_dimension_));
+  }
+
+  std::vector<std::int32_t> leaf_indices(pool.num_rows() * tree_limit, -1);
+  for (std::size_t tree_index = 0; tree_index < tree_limit; ++tree_index) {
+    for (std::size_t row = 0; row < pool.num_rows(); ++row) {
+      leaf_indices[row * tree_limit + tree_index] =
+          trees_[tree_index].PredictLeafIndex(pool, row);
+    }
+  }
+  return leaf_indices;
+}
+
+std::vector<float> GradientBooster::PredictContributions(const Pool& pool, int num_iteration) const {
+  std::size_t tree_limit = trees_.size();
+  if (num_iteration >= 0) {
+    tree_limit = std::min(
+        trees_.size(),
+        static_cast<std::size_t>(num_iteration) * static_cast<std::size_t>(prediction_dimension_));
+  }
+
+  const std::size_t row_width =
+      static_cast<std::size_t>(prediction_dimension_) * (pool.num_cols() + 1);
+  std::vector<float> contributions(pool.num_rows() * row_width, 0.0F);
+  for (std::size_t tree_index = 0; tree_index < tree_limit; ++tree_index) {
+    const std::size_t class_index = prediction_dimension_ == 1
+                                        ? 0
+                                        : tree_index % static_cast<std::size_t>(prediction_dimension_);
+    for (std::size_t row = 0; row < pool.num_rows(); ++row) {
+      std::vector<float> row_buffer(pool.num_cols() + 1, 0.0F);
+      trees_[tree_index].AccumulateContributions(pool, row, static_cast<float>(learning_rate_), row_buffer);
+      const std::size_t row_offset = row * row_width + class_index * (pool.num_cols() + 1);
+      for (std::size_t feature = 0; feature < row_buffer.size(); ++feature) {
+        contributions[row_offset + feature] += row_buffer[feature];
+      }
+    }
+  }
+  return contributions;
+}
+
 void GradientBooster::LoadState(std::vector<Tree> trees,
                                 std::vector<double> loss_history,
                                 std::vector<double> eval_loss_history,
@@ -418,7 +503,13 @@ void GradientBooster::LoadState(std::vector<Tree> trees,
   trees_ = std::move(trees);
   loss_history_ = std::move(loss_history);
   eval_loss_history_ = std::move(eval_loss_history);
-  feature_importance_sums_ = std::move(feature_importance_sums);
+  if (feature_importance_sums.empty()) {
+    const std::size_t num_features =
+        trees_.empty() ? 0 : trees_.front().feature_importances().size();
+    RecomputeFeatureImportances(trees_, num_features, feature_importance_sums_);
+  } else {
+    feature_importance_sums_ = std::move(feature_importance_sums);
+  }
   best_iteration_ = best_iteration;
   best_score_ = best_score;
   use_gpu_ = use_gpu;
@@ -446,6 +537,8 @@ int GradientBooster::num_classes() const noexcept { return num_classes_; }
 int GradientBooster::prediction_dimension() const noexcept { return prediction_dimension_; }
 
 int GradientBooster::best_iteration() const noexcept { return best_iteration_; }
+
+double GradientBooster::best_score() const noexcept { return best_score_; }
 
 const std::string& GradientBooster::objective_name() const noexcept {
   return objective_name_;

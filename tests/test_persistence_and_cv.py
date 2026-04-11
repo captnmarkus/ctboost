@@ -48,6 +48,39 @@ def test_booster_save_load_and_staged_predict_round_trip(tmp_path: Path):
     assert restored.eval_loss_history == booster.eval_loss_history
 
 
+def test_booster_json_save_load_round_trip(tmp_path: Path):
+    X, y = make_regression(
+        n_samples=96,
+        n_features=5,
+        n_informative=4,
+        noise=0.1,
+        random_state=29,
+    )
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+
+    pool = ctboost.Pool(X, y)
+    booster = ctboost.train(
+        pool,
+        {
+            "objective": "RMSE",
+            "learning_rate": 0.2,
+            "max_depth": 2,
+            "alpha": 1.0,
+            "lambda_l2": 1.0,
+        },
+        num_boost_round=8,
+    )
+
+    model_path = tmp_path / "booster.json"
+    booster.save_model(model_path)
+    restored = ctboost.load_model(model_path)
+
+    np.testing.assert_allclose(restored.predict(pool), booster.predict(pool), rtol=1e-6, atol=1e-6)
+    assert restored.objective_name == booster.objective_name
+    assert restored.eval_metric_name == booster.eval_metric_name
+
+
 def test_cv_returns_fold_aggregates():
     X, y = make_classification(
         n_samples=180,
@@ -122,3 +155,31 @@ def test_classifier_save_load_and_staged_predict_proba(tmp_path: Path):
     np.testing.assert_array_equal(restored.classes_, clf.classes_)
     np.testing.assert_allclose(restored.predict_proba(X), clf.predict_proba(X), rtol=1e-6, atol=1e-6)
     np.testing.assert_array_equal(restored.predict(X), clf.predict(X))
+
+
+def test_classifier_json_save_load_round_trip(tmp_path: Path):
+    X, y = make_classification(
+        n_samples=128,
+        n_features=6,
+        n_informative=4,
+        n_redundant=0,
+        random_state=31,
+    )
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+
+    clf = ctboost.CTBoostClassifier(
+        iterations=10,
+        learning_rate=0.2,
+        max_depth=2,
+        alpha=1.0,
+        lambda_l2=1.0,
+    )
+    clf.fit(X, y)
+
+    model_path = tmp_path / "classifier.json"
+    clf.save_model(model_path)
+    restored = ctboost.CTBoostClassifier.load_model(model_path)
+
+    np.testing.assert_array_equal(restored.classes_, clf.classes_)
+    np.testing.assert_allclose(restored.predict_proba(X), clf.predict_proba(X), rtol=1e-6, atol=1e-6)
