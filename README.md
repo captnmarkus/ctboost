@@ -48,16 +48,6 @@ The current codebase supports end-to-end training and prediction for regression,
 - Dedicated GPU wheel automation targets Linux `x86_64` CPython `3.10` through `3.14` release assets for Kaggle-style environments
 - CUDA wheel builds in CI depend on container-side toolkit provisioning
 
-## Gap To CatBoost / XGBoost
-
-CTBoost is now usable for end-to-end training, but it still lacks several generic capabilities that mature gradient boosting libraries already expose:
-
-- Native ordered categorical statistics and categorical feature combinations. CTBoost can route integer-encoded categorical bins, but it does not yet provide CatBoost-style CTR features, ordered boosting over categorical target statistics, or automatic categorical feature interaction generation.
-- Native sparse and external-memory training. SciPy sparse input is still densified before training, and there is no XGBoost-style out-of-core or external-memory path for very large datasets.
-- Richer tree-growth and constraint controls. There is no support yet for row or column subsampling, leaf-wise growth policies, `max_leaves`, `min_child_weight` or `min_data_in_leaf`, `gamma` or minimum split loss, monotonic constraints, or interaction constraints.
-- Broader booster and objective coverage. CTBoost currently ships one conditional-inference-tree booster path; it does not yet offer DART-style dropout boosting, random-forest boosting modes, linear boosters, Poisson or Tweedie count objectives, survival objectives, or LambdaMART-style ranking losses.
-- Production extras common in larger libraries. There is still no callback system, snapshot or checkpoint resume, distributed or multi-GPU training, richer SHAP tooling such as interaction values, or first-class model export targets such as ONNX or Treelite.
-
 ## Benchmark Snapshot
 
 The current merged GPU path was replayed on the heavy ordered-target-encoding `playground-series-s6e4` benchmark with the `v0.1.11` source tree on April 12, 2026. The one-fold Kaggle source-build replay completed successfully with:

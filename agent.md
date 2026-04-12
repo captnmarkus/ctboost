@@ -4,6 +4,12 @@
 
 CTBoost is a gradient boosting library centered on Conditional Inference Trees. The repository combines a C++17 core, `pybind11` Python bindings, a Python API layer, and optional CUDA sources for accelerated source builds.
 
+## Core Principle
+
+- CTBoost's defining feature is its conditional-inference-tree learner and the conditional evaluation of candidate features and splits during tree growth.
+- That conditional tree logic is the product identity and must not be replaced with XGBoost-style or CatBoost-style split selection just to chase generic feature parity.
+- New capabilities should be layered around that core through objectives, weighting, data plumbing, prediction paths, profiling, categorical preprocessing, and systems work while preserving the existing conditional evaluation principle.
+
 ## Current State
 
 - The public Python package exposes low-level training primitives plus optional scikit-learn compatible estimators.
@@ -64,13 +70,14 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 - That one-fold replay reported source build `55.41s`, fold preprocess `57.17s`, fold fit `2107.10s`, fold predict `5.89s`, fold total `2170.17s`, and validation score `0.9732134730`.
 - In this Windows environment, native local install/build verification still depends on manually setting the MSVC include/lib environment before rebuilding the extension.
 
-## Known Gaps
+## Local Plan
 
-- CTBoost still lacks CatBoost-style ordered target statistics, CTR feature generation, and automatic categorical feature combinations.
-- SciPy sparse input is accepted but still densified before native training; there is no native sparse or external-memory training path yet.
-- There is no support yet for row or column subsampling, leaf-wise grow policies, `max_leaves`, `min_child_weight` or `min_data_in_leaf`, `gamma` or minimum split loss, monotonic constraints, or interaction constraints.
-- The library still exposes only the current conditional-inference-tree booster path; there is no DART-style dropout boosting, random-forest boosting mode, linear booster, Poisson or Tweedie count objective, survival objective, or LambdaMART-style ranking objective.
-- Production features common in XGBoost and CatBoost are still missing, including callbacks, snapshot or checkpoint resume, distributed or multi-GPU training, richer SHAP tooling such as interaction values, and first-class export targets such as ONNX or Treelite.
+- Preserve the current conditional-inference-tree learner and conditional feature-evaluation path as the non-negotiable core while closing generic usability gaps around it.
+- Add native ordered categorical statistics, CTR-style feature generation, and categorical feature-combination support without replacing the conditional tree criterion.
+- Add native sparse and external-memory training so large sparse or disk-backed datasets no longer have to be densified before fitting.
+- Add richer tree-growth and constraint controls around the existing learner, including row and column subsampling, `max_leaves`, minimum leaf-size controls, minimum split-loss controls, monotonic constraints, and interaction constraints.
+- Broaden booster and objective coverage only where it can reuse the existing conditional tree backbone, such as DART-style dropout, random-forest modes, count objectives, survival objectives, and ranking objectives.
+- Add production tooling expected from mature libraries, including callbacks, snapshot or checkpoint resume, distributed or multi-GPU execution, richer SHAP tooling, and first-class export targets.
 
 ## Repository Layout
 
@@ -87,4 +94,4 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 - Treat wheel coverage as part of the public install contract.
 - Keep CPU wheels easy to install with plain `pip install ctboost`; avoid making standard PyPI installation depend on local CUDA or platform-specific compiler setup.
 - Preserve backward compatibility of the JSON booster schema when changing native tree or booster internals, or version the persistence format explicitly if that becomes necessary.
-- Keep the CTBoost split-selection principle intact when adding generic training features; generic additions should sit in weighting, metrics, objectives, data handling, and API plumbing rather than replacing the conditional-inference tree logic.
+- Keep the CTBoost conditional-inference split-selection principle intact when adding generic training features; additions should sit in weighting, metrics, objectives, data handling, categorical statistics, systems work, and API plumbing rather than replacing the core conditional tree logic.
