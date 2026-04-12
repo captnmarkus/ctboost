@@ -20,9 +20,10 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 - Native validation metrics now include regression metrics plus generic classification metrics such as `Accuracy`, `Precision`, `Recall`, `F1`, and `AUC`, plus ranking-oriented `NDCG`.
 - `Pool` now accepts pandas inputs, SciPy sparse matrices, row weights, categorical feature indices, and optional `group_id` metadata.
 - The Python boundary preserves column-major input layout for dense pandas and SciPy-ingested matrices so large pools can be handed to the native layer without an extra full-table transpose.
+- Histogram storage now compacts to 1-byte bins when the fitted feature bin counts permit it, reducing resident fit memory while preserving the existing conditional-inference split logic.
 - CUDA source builds now keep the binned feature matrix and histogram buffers resident on device for the full fit instead of rebuilding node-local bin matrices on every split.
 - GPU histogram construction now uses shared-memory accumulation, with a chunked shared-memory path for larger per-feature bin counts.
-- GPU tree building now batches histogram work across feature chunks, computes node aggregate statistics on device, reuses a single row-index buffer with in-place partitioning, and avoids per-class gradient and hessian re-uploads in the multiclass GPU path.
+- GPU tree building now batches histogram work across feature chunks, computes node aggregate statistics on device, reuses a single row-index buffer with in-place partitioning, avoids per-class gradient and hessian re-uploads in the multiclass GPU path, and performs node-level feature search on device so full node histograms no longer have to round-trip to host.
 - Tree growth now uses histogram subtraction so one child histogram can be derived from `parent - sibling` instead of rescanning both children.
 - GPU raw-score prediction is implemented for regression, binary classification, and multiclass models built with `task_type="GPU"`.
 - Histogram building now parallelizes across features and uses a hybrid exact quantile strategy that chooses between full sort and order-statistic selection per feature; large-row approximation remains available through environment overrides.
@@ -60,6 +61,8 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
   `python -m pytest tests/test_booster.py tests/test_multiclass.py tests/test_sklearn.py -q`
 - The post-`0.1.9` tree-build optimization pass was revalidated locally on April 12, 2026 with:
   `python -m pytest tests/test_build.py tests/test_booster.py tests/test_multiclass.py tests/test_sklearn.py -q`
+- The `0.1.12` compact-bin and GPU node-search follow-up was validated locally on April 12, 2026 with:
+  `python -X faulthandler -m pytest tests/test_build.py tests/test_booster.py tests/test_multiclass.py -q`
 - Kaggle source-build validation on `playground-series-s6e4` succeeded on April 12, 2026 using notebook `maiernator/ctboost-gpu-source-validate-s6e4` version `8`.
 - That Kaggle run reported `cuda_enabled=True`, `cuda_runtime="12.8"`, `630000` training rows, and `270000` test rows.
 - The latest merged Kaggle timings are:

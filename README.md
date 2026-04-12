@@ -40,6 +40,8 @@ The current codebase supports end-to-end training and prediction for regression,
 - CPU builds on standard CI runners
 - Optional CUDA compilation when building from source with a suitable toolkit
 - GPU source builds now keep fit-scoped histogram data resident on device, support shared-memory histogram accumulation, and expose GPU raw-score prediction for regression, binary classification, and multiclass models
+- Histogram storage now compacts to 1-byte bins when a feature set fits in `<=256` bins, reducing resident fit memory without changing the conditional tree logic
+- GPU tree building now performs node-level feature scoring and split proposal on device, returning compact search summaries instead of copying full node histograms back to host
 - Training can emit native histogram/tree timing via `verbose=True` or `CTBOOST_PROFILE=1`
 
 ## Current Limitations
