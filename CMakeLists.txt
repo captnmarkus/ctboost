@@ -67,6 +67,7 @@ add_library(ctboost_core STATIC
   src/core/histogram.cpp
   src/core/metric.cpp
   src/core/objective.cpp
+  src/core/profiler.cpp
   src/core/statistics.cpp
   src/core/tree.cpp
 )
@@ -104,7 +105,7 @@ if(CTBOOST_WITH_CUDA)
   )
 
   target_compile_definitions(ctboost_core PUBLIC CTBOOST_WITH_CUDA=1)
-  target_link_libraries(ctboost_cuda_backend PUBLIC CUDA::cudart)
+  target_link_libraries(ctboost_cuda_backend PUBLIC CUDA::cudart pybind11::headers Python::Module)
   target_link_libraries(ctboost_core PUBLIC ctboost_cuda_backend)
 else()
   target_sources(ctboost_core PRIVATE src/core/cuda_backend_stub.cpp)

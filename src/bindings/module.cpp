@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <chrono>
 #include <cstring>
 #include <cstdint>
 #include <limits>
@@ -14,6 +15,7 @@
 #include "ctboost/booster.hpp"
 #include "ctboost/cuda_backend.hpp"
 #include "ctboost/data.hpp"
+#include "ctboost/histogram.hpp"
 #include "ctboost/objective.hpp"
 #include "ctboost/statistics.hpp"
 
@@ -248,6 +250,7 @@ py::dict BoosterToStateDict(const ctboost::GradientBooster& booster) {
   state["huber_delta"] = booster.huber_delta();
   state["devices"] = booster.devices();
   state["task_type"] = booster.use_gpu() ? "GPU" : "CPU";
+  state["verbose"] = booster.verbose();
   state["trees"] = tree_states;
   state["loss_history"] = booster.loss_history();
   state["eval_loss_history"] = booster.eval_loss_history();
@@ -280,7 +283,8 @@ ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
                                    py::cast<double>(state["quantile_alpha"]),
                                    py::cast<double>(state["huber_delta"]),
                                    use_gpu ? "GPU" : "CPU",
-                                   py::cast<std::string>(state["devices"]));
+                                   py::cast<std::string>(state["devices"]),
+                                   state.contains("verbose") ? py::cast<bool>(state["verbose"]) : false);
 
   booster.LoadState(std::move(trees),
                     py::cast<std::vector<double>>(state["loss_history"]),
@@ -367,7 +371,8 @@ PYBIND11_MODULE(_core, m) {
                     double,
                     double,
                     std::string,
-                    std::string>(),
+                    std::string,
+                    bool>(),
            py::arg("objective") = "RMSE",
            py::arg("iterations") = 100,
            py::arg("learning_rate") = 0.1,
@@ -381,7 +386,8 @@ PYBIND11_MODULE(_core, m) {
            py::arg("quantile_alpha") = 0.5,
            py::arg("huber_delta") = 1.0,
            py::arg("task_type") = "CPU",
-           py::arg("devices") = "0")
+           py::arg("devices") = "0",
+           py::arg("verbose") = false)
       .def("fit",
            [](ctboost::GradientBooster& booster,
               const ctboost::Pool& pool,
@@ -450,6 +456,7 @@ PYBIND11_MODULE(_core, m) {
       .def("huber_delta", &ctboost::GradientBooster::huber_delta)
       .def("use_gpu", &ctboost::GradientBooster::use_gpu)
       .def("devices", &ctboost::GradientBooster::devices)
+      .def("verbose", &ctboost::GradientBooster::verbose)
       .def("export_state", [](const ctboost::GradientBooster& booster) {
         return BoosterToStateDict(booster);
       })
@@ -512,6 +519,7 @@ PYBIND11_MODULE(_core, m) {
             upgraded_state["devices"] = state[12];
             upgraded_state["task_type"] =
                 state[13].cast<bool>() ? py::str("GPU") : py::str("CPU");
+            upgraded_state["verbose"] = py::bool_(false);
 
             py::list tree_states;
             for (const py::handle tree_handle : state[14].cast<py::list>()) {
@@ -598,4 +606,27 @@ PYBIND11_MODULE(_core, m) {
         },
         py::arg("gradients"),
         py::arg("binned_feature"));
+
+  m.def("_debug_build_histogram",
+        [](const ctboost::Pool& pool, std::size_t max_bins, const std::string& nan_mode) {
+          const auto started = std::chrono::steady_clock::now();
+          const ctboost::HistBuilder builder(max_bins, nan_mode);
+          const ctboost::HistMatrix hist = builder.Build(pool, nullptr);
+          const double elapsed_ms =
+              std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started)
+                  .count();
+
+          py::dict out;
+          out["elapsed_ms"] = elapsed_ms;
+          out["num_rows"] = hist.num_rows;
+          out["num_cols"] = hist.num_cols;
+          out["num_bins_per_feature"] = hist.num_bins_per_feature;
+          out["cut_offsets"] = hist.cut_offsets;
+          out["cut_values"] = hist.cut_values;
+          out["cut_values_count"] = hist.cut_values.size();
+          return out;
+        },
+        py::arg("pool"),
+        py::arg("max_bins") = 256,
+        py::arg("nan_mode") = "Min");
 }

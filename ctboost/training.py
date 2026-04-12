@@ -535,6 +535,7 @@ def train(
     huber_delta = float(config.get("huber_delta", 1.0 if init_state is None else init_state["huber_delta"]))
     task_type = str(config.get("task_type", "CPU" if init_state is None else init_state["task_type"]))
     devices = str(config.get("devices", "0" if init_state is None else init_state["devices"]))
+    verbose = bool(config.get("verbose", False if init_state is None else init_state.get("verbose", False)))
     if init_state is not None:
         if objective.lower() != str(init_state["objective_name"]).lower():
             raise ValueError("init_model objective must match the current training objective")
@@ -560,6 +561,7 @@ def train(
         huber_delta=huber_delta,
         task_type=task_type,
         devices=devices,
+        verbose=verbose,
     )
     if init_state is not None:
         booster.load_state(init_state)

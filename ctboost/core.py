@@ -77,7 +77,7 @@ def _dataframe_to_numpy(
     dataframe: Any, cat_features: Optional[List[int]]
 ) -> Tuple[np.ndarray, List[int]]:
     resolved_cat_features = set(_normalize_categorical_features(cat_features))
-    data_array = np.empty((dataframe.shape[0], dataframe.shape[1]), dtype=np.float32)
+    data_array = np.empty((dataframe.shape[0], dataframe.shape[1]), dtype=np.float32, order="F")
 
     for column_index, (_, series) in enumerate(dataframe.items()):
         if _is_pandas_categorical_series(series):
@@ -112,12 +112,14 @@ class Pool:
                 feature_names = [str(column_name) for column_name in data.columns]
             data, resolved_cat_features = _dataframe_to_numpy(data, resolved_cat_features)
         elif _is_scipy_sparse_matrix(data):
-            data = data.astype(np.float32, copy=False).toarray()
+            data = data.astype(np.float32, copy=False).toarray(order="F")
         if _is_pandas_series(label):
             label = label.to_numpy(copy=False)
         resolved_group_id = _normalize_group_id(group_id)
 
-        data_array = np.ascontiguousarray(data, dtype=np.float32)
+        # The native pool stores features column-major and can memcpy Fortran-ordered
+        # matrices directly, avoiding an extra full-table transpose on large datasets.
+        data_array = np.asfortranarray(data, dtype=np.float32)
         label_array = np.ascontiguousarray(label, dtype=np.float32)
         if weight is None:
             native_weight = np.ones(data_array.shape[0], dtype=np.float32)
