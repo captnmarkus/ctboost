@@ -60,7 +60,17 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
   multiclass fit `21.50s`, predict `0.353s`
   binary fit `5.77s`, predict `0.348s`
   regression fit `7.82s`, predict `0.326s`
+- The heavier ordered-target-encoding Kaggle replay also succeeded on April 12, 2026 using notebook `maiernator/ps-s6e4-yx-ctb-src-bench-v0-1-11` version `1`.
+- That one-fold replay reported source build `55.41s`, fold preprocess `57.17s`, fold fit `2107.10s`, fold predict `5.89s`, fold total `2170.17s`, and validation score `0.9732134730`.
 - In this Windows environment, native local install/build verification still depends on manually setting the MSVC include/lib environment before rebuilding the extension.
+
+## Known Gaps
+
+- CTBoost still lacks CatBoost-style ordered target statistics, CTR feature generation, and automatic categorical feature combinations.
+- SciPy sparse input is accepted but still densified before native training; there is no native sparse or external-memory training path yet.
+- There is no support yet for row or column subsampling, leaf-wise grow policies, `max_leaves`, `min_child_weight` or `min_data_in_leaf`, `gamma` or minimum split loss, monotonic constraints, or interaction constraints.
+- The library still exposes only the current conditional-inference-tree booster path; there is no DART-style dropout boosting, random-forest boosting mode, linear booster, Poisson or Tweedie count objective, survival objective, or LambdaMART-style ranking objective.
+- Production features common in XGBoost and CatBoost are still missing, including callbacks, snapshot or checkpoint resume, distributed or multi-GPU training, richer SHAP tooling such as interaction values, and first-class export targets such as ONNX or Treelite.
 
 ## Repository Layout
 
