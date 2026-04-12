@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24...4.3)
 
-project(CTBoost VERSION 0.1.12 LANGUAGES CXX)
+project(CTBoost VERSION 0.1.13 LANGUAGES CXX)
 
 if(DEFINED SKBUILD_PROJECT_VERSION_FULL)
   set(CTBOOST_PACKAGE_VERSION "${SKBUILD_PROJECT_VERSION_FULL}")
@@ -126,6 +126,7 @@ target_include_directories(_core PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(_core PRIVATE ctboost_core)
 
 if(CTBOOST_WITH_CUDA)
+  target_link_libraries(_core PRIVATE ctboost_cuda_backend)
   set_target_properties(_core PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 endif()
 
