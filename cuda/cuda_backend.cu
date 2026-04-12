@@ -37,6 +37,13 @@ constexpr std::size_t kHistogramRowTileSize = 1024;
 constexpr std::size_t kHistogramChunkBins = 256;
 constexpr int kPredictionThreads = 256;
 
+__host__ __device__ __forceinline__ std::uint16_t ReadWorkspaceBin(const std::uint8_t* bins_u8,
+                                                                   const std::uint16_t* bins_u16,
+                                                                   std::uint8_t bin_index_bytes,
+                                                                   std::size_t index) {
+  return bin_index_bytes == 1 ? static_cast<std::uint16_t>(bins_u8[index]) : bins_u16[index];
+}
+
 std::vector<std::size_t> BuildFeatureOffsets(
     const std::vector<std::uint16_t>& num_bins_per_feature) {
   std::vector<std::size_t> feature_offsets(num_bins_per_feature.size() + 1, 0);
@@ -67,7 +74,7 @@ struct RowSplitPredicate {
   std::uint8_t left_categories[kGpuCategoricalRouteBins]{};
 
   __host__ __device__ bool operator()(const std::size_t row) const {
-    const std::uint16_t bin = ReadBin(
+    const std::uint16_t bin = ReadWorkspaceBin(
         bins_u8, bins_u16, bin_index_bytes, feature_index * num_rows + row);
     return is_categorical ? left_categories[bin] != 0 : bin <= split_bin;
   }

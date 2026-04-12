@@ -36,7 +36,7 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 - CUDA remains an optional source-build capability rather than the default PyPI wheel path.
 - The release workflow publishes dedicated Linux `x86_64` CUDA wheels as GitHub release assets for CPython `3.10` through `3.14`.
 - The dedicated CUDA wheels are built in `manylinux2014`, require a detected CUDA toolkit via `CTBOOST_REQUIRE_CUDA=ON`, and run a dedicated GPU smoke test before upload.
-- As of April 12, 2026, the repository version is bumped to `0.1.13`, following the `0.1.11` PyPI release and the merged memory-reduction and GPU node-search follow-up work.
+- As of April 12, 2026, the repository version is bumped to `0.1.14`, following the `0.1.11` PyPI release and the merged memory-reduction and GPU node-search follow-up work.
 - The base wheel no longer hard-depends on `scikit-learn`; estimator and CV entry points are lazy-loaded and raise a clear import error if `scikit-learn` is absent.
 
 ## Release and Wheel Policy
@@ -61,7 +61,7 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
   `python -m pytest tests/test_booster.py tests/test_multiclass.py tests/test_sklearn.py -q`
 - The post-`0.1.9` tree-build optimization pass was revalidated locally on April 12, 2026 with:
   `python -m pytest tests/test_build.py tests/test_booster.py tests/test_multiclass.py tests/test_sklearn.py -q`
-- The `0.1.13` compact-bin and GPU node-search follow-up was validated locally on April 12, 2026 with:
+- The `0.1.14` compact-bin and GPU node-search follow-up was validated locally on April 12, 2026 with:
   `python -X faulthandler -m pytest tests/test_build.py tests/test_booster.py tests/test_multiclass.py -q`
 - Kaggle source-build validation on `playground-series-s6e4` succeeded on April 12, 2026 using notebook `maiernator/ctboost-gpu-source-validate-s6e4` version `8`.
 - That Kaggle run reported `cuda_enabled=True`, `cuda_runtime="12.8"`, `630000` training rows, and `270000` test rows.
