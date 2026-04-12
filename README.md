@@ -101,7 +101,7 @@ import subprocess
 import sys
 import urllib.request
 
-tag = "v0.1.11"
+tag = "v0.1.12"
 py_tag = f"cp{sys.version_info.major}{sys.version_info.minor}"
 api_url = f"https://api.github.com/repos/captnmarkus/ctboost/releases/tags/{tag}"
 

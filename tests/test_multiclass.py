@@ -76,3 +76,57 @@ def test_categorical_split_routes_non_ordinal_categories_better_than_random_spli
     np.testing.assert_allclose(probabilities.sum(axis=1), 1.0, rtol=1e-6, atol=1e-6)
     assert accuracy > 0.95
     assert accuracy > baseline_accuracy + 0.2
+
+
+def test_multiclass_iteration_shares_tree_structure_across_classes():
+    X, y = make_classification(
+        n_samples=180,
+        n_features=6,
+        n_informative=4,
+        n_redundant=0,
+        n_repeated=0,
+        n_classes=3,
+        n_clusters_per_class=1,
+        class_sep=1.2,
+        random_state=29,
+    )
+    X = X.astype(np.float32)
+
+    clf = ctboost.CBoostClassifier(
+        iterations=1,
+        learning_rate=0.3,
+        max_depth=3,
+        alpha=1.0,
+        lambda_l2=1.0,
+        random_seed=19,
+    )
+    clf.fit(X, y)
+
+    state = dict(clf._booster._handle.export_state())
+    trees = state["trees"]
+    assert len(trees) == 3
+
+    def structure_signature(tree_state):
+        signature = []
+        for node in tree_state["nodes"]:
+            signature.append(
+                (
+                    node["is_leaf"],
+                    node["is_categorical_split"],
+                    node["split_feature_id"],
+                    node["split_bin_index"],
+                    node["left_child"],
+                    node["right_child"],
+                    tuple(node["left_categories"]),
+                )
+            )
+        return signature
+
+    signatures = [structure_signature(tree_state) for tree_state in trees]
+    assert signatures[0] == signatures[1] == signatures[2]
+
+    leaf_weights = [
+        tuple(node["leaf_weight"] for node in tree_state["nodes"] if node["is_leaf"])
+        for tree_state in trees
+    ]
+    assert len(set(leaf_weights)) > 1

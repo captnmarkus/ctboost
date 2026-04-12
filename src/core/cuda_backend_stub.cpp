@@ -27,6 +27,11 @@ GpuHistogramWorkspacePtr CreateGpuHistogramWorkspace(const HistMatrix& hist,
   throw std::runtime_error("CUDA histogram builder requested but CTBoost was compiled without CUDA");
 }
 
+std::size_t EstimateGpuHistogramWorkspaceBytes(const GpuHistogramWorkspace* workspace) noexcept {
+  (void)workspace;
+  return 0;
+}
+
 void UploadHistogramTargetsGpu(GpuHistogramWorkspace* workspace,
                                const std::vector<float>& gradients,
                                const std::vector<float>& hessians) {
@@ -53,24 +58,61 @@ void SelectHistogramTargetGpuClass(GpuHistogramWorkspace* workspace, std::size_t
   throw std::runtime_error("CUDA histogram builder requested but CTBoost was compiled without CUDA");
 }
 
-void BuildHistogramsGpu(GpuHistogramWorkspace* workspace,
-                        const std::vector<std::size_t>& row_indices,
-                        std::size_t row_begin,
-                        std::size_t row_end,
-                        std::vector<float>& out_gradient_sums,
-                        std::vector<float>& out_hessian_sums,
-                        std::vector<float>& out_weight_sums,
-                        std::vector<std::size_t>& out_feature_offsets,
-                        GpuNodeStatistics* out_node_stats) {
+void ResetHistogramRowIndicesGpu(GpuHistogramWorkspace* workspace) {
   (void)workspace;
-  (void)row_indices;
+  throw std::runtime_error("CUDA histogram builder requested but CTBoost was compiled without CUDA");
+}
+
+void DownloadHistogramRowIndicesGpu(const GpuHistogramWorkspace* workspace,
+                                    std::vector<std::size_t>& out_row_indices) {
+  (void)workspace;
+  (void)out_row_indices;
+  throw std::runtime_error("CUDA histogram builder requested but CTBoost was compiled without CUDA");
+}
+
+std::size_t PartitionHistogramRowsGpu(
+    GpuHistogramWorkspace* workspace,
+    std::size_t row_begin,
+    std::size_t row_end,
+    std::size_t feature_index,
+    bool is_categorical,
+    std::uint16_t split_bin,
+    const std::array<std::uint8_t, kGpuCategoricalRouteBins>& left_categories) {
+  (void)workspace;
   (void)row_begin;
   (void)row_end;
-  (void)out_gradient_sums;
-  (void)out_hessian_sums;
-  (void)out_weight_sums;
-  (void)out_feature_offsets;
+  (void)feature_index;
+  (void)is_categorical;
+  (void)split_bin;
+  (void)left_categories;
+  throw std::runtime_error("CUDA histogram builder requested but CTBoost was compiled without CUDA");
+}
+
+void BuildHistogramsGpu(GpuHistogramWorkspace* workspace,
+                        std::size_t row_begin,
+                        std::size_t row_end,
+                        GpuNodeStatistics* out_node_stats) {
+  (void)workspace;
+  (void)row_begin;
+  (void)row_end;
   (void)out_node_stats;
+  throw std::runtime_error("CUDA histogram builder requested but CTBoost was compiled without CUDA");
+}
+
+void SearchBestNodeSplitGpu(GpuHistogramWorkspace* workspace,
+                            const std::vector<int>* allowed_features,
+                            double lambda_l2,
+                            int min_data_in_leaf,
+                            double min_child_weight,
+                            double min_split_gain,
+                            GpuNodeSearchResult* out_result) {
+  (void)workspace;
+  (void)allowed_features;
+  (void)lambda_l2;
+  (void)min_data_in_leaf;
+  (void)min_child_weight;
+  (void)min_split_gain;
+  (void)out_result;
   throw std::runtime_error("CUDA histogram builder requested but CTBoost was compiled without CUDA");
 }
 

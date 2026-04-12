@@ -92,6 +92,31 @@ void TrainingProfiler::LogHistogramBuild(std::size_t rows,
           elapsed_ms);
 }
 
+void TrainingProfiler::LogFitStage(const char* stage, double elapsed_ms) const {
+  if (!enabled_) {
+    return;
+  }
+  LogLine("fit_stage stage=%s elapsed_ms=%.3f", stage, elapsed_ms);
+}
+
+void TrainingProfiler::LogFitMemory(const char* stage,
+                                    std::size_t train_dense_bytes,
+                                    std::size_t eval_dense_bytes,
+                                    std::size_t train_hist_bytes,
+                                    std::size_t eval_hist_bytes,
+                                    std::size_t gpu_workspace_bytes) const {
+  if (!enabled_) {
+    return;
+  }
+  LogLine("fit_memory stage=%s train_dense_mb=%.2f eval_dense_mb=%.2f train_hist_mb=%.2f eval_hist_mb=%.2f gpu_workspace_mb=%.2f",
+          stage,
+          static_cast<double>(train_dense_bytes) / (1024.0 * 1024.0),
+          static_cast<double>(eval_dense_bytes) / (1024.0 * 1024.0),
+          static_cast<double>(train_hist_bytes) / (1024.0 * 1024.0),
+          static_cast<double>(eval_hist_bytes) / (1024.0 * 1024.0),
+          static_cast<double>(gpu_workspace_bytes) / (1024.0 * 1024.0));
+}
+
 void TrainingProfiler::LogNodeHistogram(int depth,
                                         std::size_t rows,
                                         bool use_gpu,
@@ -145,6 +170,13 @@ void TrainingProfiler::LogTreeBuild(int iteration,
                                     int prediction_dimension,
                                     double elapsed_ms) const {
   if (!enabled_) {
+    return;
+  }
+  if (class_index < 0 || prediction_dimension <= 0) {
+    LogLine("tree_build iteration=%d/%d class=shared elapsed_ms=%.3f",
+            iteration,
+            total_iterations,
+            elapsed_ms);
     return;
   }
   LogLine("tree_build iteration=%d/%d class=%d/%d elapsed_ms=%.3f",

@@ -59,10 +59,12 @@ class Tree {
 
   float PredictRow(const Pool& pool, std::size_t row) const;
   float PredictBinnedRow(const HistMatrix& hist, std::size_t row) const;
+  int PredictBinnedLeafIndex(const HistMatrix& hist, std::size_t row) const;
   int PredictLeafIndex(const Pool& pool, std::size_t row) const;
   void AccumulateContributions(
       const Pool& pool, std::size_t row, float scale, std::vector<float>& row_contributions) const;
   std::vector<float> Predict(const Pool& pool) const;
+  void SetLeafWeight(std::size_t node_index, float leaf_weight);
   void LoadState(std::vector<Node> nodes,
                  std::vector<std::uint16_t> num_bins_per_feature,
                  std::vector<std::size_t> cut_offsets,

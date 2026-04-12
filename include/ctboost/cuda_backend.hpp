@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -24,11 +25,35 @@ struct GpuNodeStatistics {
   double gradient_square_sum{0.0};
 };
 
+struct GpuFeatureSearchResult {
+  std::uint32_t degrees_of_freedom{0};
+  std::uint8_t split_valid{0};
+  std::uint8_t is_categorical{0};
+  std::uint16_t split_bin{0};
+  double chi_square{0.0};
+  double p_value{1.0};
+  double gain{0.0};
+  std::uint8_t left_categories[kGpuCategoricalRouteBins]{};
+};
+
+struct GpuNodeSearchResult {
+  int feature_id{-1};
+  double p_value{1.0};
+  double chi_square{0.0};
+  bool split_valid{false};
+  bool is_categorical{false};
+  std::uint16_t split_bin{0};
+  double gain{0.0};
+  std::array<std::uint8_t, kGpuCategoricalRouteBins> left_categories{};
+  GpuNodeStatistics node_statistics;
+};
+
 bool CudaBackendCompiled() noexcept;
 std::string CudaRuntimeVersionString();
 
 GpuHistogramWorkspacePtr CreateGpuHistogramWorkspace(const HistMatrix& hist,
                                                      const std::vector<float>& weights);
+std::size_t EstimateGpuHistogramWorkspaceBytes(const GpuHistogramWorkspace* workspace) noexcept;
 void UploadHistogramTargetsGpu(GpuHistogramWorkspace* workspace,
                                const std::vector<float>& gradients,
                                const std::vector<float>& hessians);
@@ -37,15 +62,28 @@ void UploadHistogramTargetMatrixGpu(GpuHistogramWorkspace* workspace,
                                     const std::vector<float>& hessians,
                                     std::size_t target_stride);
 void SelectHistogramTargetGpuClass(GpuHistogramWorkspace* workspace, std::size_t class_index);
+void ResetHistogramRowIndicesGpu(GpuHistogramWorkspace* workspace);
+void DownloadHistogramRowIndicesGpu(const GpuHistogramWorkspace* workspace,
+                                    std::vector<std::size_t>& out_row_indices);
+std::size_t PartitionHistogramRowsGpu(
+    GpuHistogramWorkspace* workspace,
+    std::size_t row_begin,
+    std::size_t row_end,
+    std::size_t feature_index,
+    bool is_categorical,
+    std::uint16_t split_bin,
+    const std::array<std::uint8_t, kGpuCategoricalRouteBins>& left_categories);
 void BuildHistogramsGpu(GpuHistogramWorkspace* workspace,
-                        const std::vector<std::size_t>& row_indices,
                         std::size_t row_begin,
                         std::size_t row_end,
-                        std::vector<float>& out_gradient_sums,
-                        std::vector<float>& out_hessian_sums,
-                        std::vector<float>& out_weight_sums,
-                        std::vector<std::size_t>& out_feature_offsets,
                         GpuNodeStatistics* out_node_stats);
+void SearchBestNodeSplitGpu(GpuHistogramWorkspace* workspace,
+                            const std::vector<int>* allowed_features,
+                            double lambda_l2,
+                            int min_data_in_leaf,
+                            double min_child_weight,
+                            double min_split_gain,
+                            GpuNodeSearchResult* out_result);
 
 struct GpuTreeNode {
   std::uint8_t is_leaf{1};

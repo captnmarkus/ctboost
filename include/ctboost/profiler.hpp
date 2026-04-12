@@ -25,6 +25,13 @@ class TrainingProfiler {
                          std::size_t cols,
                          std::size_t total_bins,
                          double elapsed_ms) const;
+  void LogFitStage(const char* stage, double elapsed_ms) const;
+  void LogFitMemory(const char* stage,
+                    std::size_t train_dense_bytes,
+                    std::size_t eval_dense_bytes,
+                    std::size_t train_hist_bytes,
+                    std::size_t eval_hist_bytes,
+                    std::size_t gpu_workspace_bytes) const;
   void LogNodeHistogram(int depth, std::size_t rows, bool use_gpu, double elapsed_ms) const;
   void LogNodeSearch(int depth,
                      std::size_t rows,

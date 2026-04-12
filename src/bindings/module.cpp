@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <chrono>
+#include <cstdio>
 #include <cstring>
 #include <cstdint>
 #include <limits>
@@ -350,7 +351,11 @@ PYBIND11_MODULE(_core, m) {
                resolved_group_id = group_id.cast<py::array_t<std::int64_t, py::array::forcecast>>();
              }
              return ctboost::Pool(
-                 data, label, std::move(cat_features), resolved_weight, resolved_group_id);
+                 data,
+                 label,
+                 std::move(cat_features),
+                 resolved_weight,
+                 resolved_group_id);
            }),
            py::arg("data"),
            py::arg("label"),
@@ -381,7 +386,8 @@ PYBIND11_MODULE(_core, m) {
       })
       .def("cat_features", [](const ctboost::Pool& pool) {
         return pool.cat_features();
-      });
+      })
+      .def("set_feature_storage_releasable", &ctboost::Pool::SetFeatureStorageReleasable);
 
   py::class_<ctboost::GradientBooster>(m, "GradientBooster")
       .def(py::init<std::string,
@@ -428,15 +434,16 @@ PYBIND11_MODULE(_core, m) {
            py::arg("verbose") = false)
       .def("fit",
            [](ctboost::GradientBooster& booster,
-              const ctboost::Pool& pool,
+              py::object pool_obj,
               py::object eval_pool,
               int early_stopping_rounds,
               bool continue_training)
                -> ctboost::GradientBooster& {
+             auto& pool = pool_obj.cast<ctboost::Pool&>();
              if (eval_pool.is_none()) {
                booster.Fit(pool, nullptr, early_stopping_rounds, continue_training);
              } else {
-               const auto& eval_pool_ref = eval_pool.cast<const ctboost::Pool&>();
+               auto& eval_pool_ref = eval_pool.cast<ctboost::Pool&>();
                booster.Fit(pool, &eval_pool_ref, early_stopping_rounds, continue_training);
              }
              return booster;
@@ -677,4 +684,5 @@ PYBIND11_MODULE(_core, m) {
         py::arg("pool"),
         py::arg("max_bins") = 256,
         py::arg("nan_mode") = "Min");
+
 }

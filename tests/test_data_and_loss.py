@@ -82,6 +82,9 @@ def test_pool_passes_fortran_ordered_matrix_to_native(monkeypatch):
         def label(self):
             return captured["label"]
 
+        def set_feature_storage_releasable(self, releasable):
+            captured["releasable_feature_storage"] = releasable
+
     monkeypatch.setattr(ctcore._core, "Pool", FakePoolHandle)
 
     data = np.arange(12, dtype=np.float32).reshape(4, 3)
@@ -124,6 +127,9 @@ def test_dataframe_pool_preserves_fortran_layout_to_native(monkeypatch):
         def label(self):
             return np.zeros(captured["data"].shape[0], dtype=np.float32)
 
+        def set_feature_storage_releasable(self, releasable):
+            captured["releasable_feature_storage"] = releasable
+
     monkeypatch.setattr(ctcore._core, "Pool", FakePoolHandle)
 
     data = pd.DataFrame(
@@ -141,7 +147,6 @@ def test_dataframe_pool_preserves_fortran_layout_to_native(monkeypatch):
     assert not captured["data"].flags.c_contiguous
 
     monkeypatch.setattr(ctcore._core, "Pool", original_pool)
-
 
 def test_logloss_gradients_match_numpy():
     preds = np.array([-2.0, -0.5, 0.0, 1.75], dtype=np.float32)

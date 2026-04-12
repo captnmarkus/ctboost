@@ -72,47 +72,9 @@ NodeHistogramSet ComputeNodeHistogramSet(const HistMatrix& hist,
   stats.by_feature.resize(hist.num_cols);
 
   if (use_gpu) {
-    if (gpu_workspace == nullptr) {
-      throw std::invalid_argument("GPU histogram workspace must be provided when task_type='GPU'");
-    }
-
-    std::vector<float> flat_gradient_sums;
-    std::vector<float> flat_hessian_sums;
-    std::vector<float> flat_weight_sums;
-    std::vector<std::size_t> feature_offsets;
-    GpuNodeStatistics gpu_node_stats;
-    BuildHistogramsGpu(gpu_workspace,
-                       row_indices,
-                       row_begin,
-                       row_end,
-                       flat_gradient_sums,
-                       flat_hessian_sums,
-                       flat_weight_sums,
-                       feature_offsets,
-                       &gpu_node_stats);
-    stats.sample_weight_sum = gpu_node_stats.sample_weight_sum;
-    stats.total_gradient = gpu_node_stats.total_gradient;
-    stats.total_hessian = gpu_node_stats.total_hessian;
-    stats.gradient_square_sum = gpu_node_stats.gradient_square_sum;
-    stats.gradient_variance = ComputeGradientVariance(
-        stats.total_gradient, stats.gradient_square_sum, stats.sample_weight_sum);
-
-    for (std::size_t feature = 0; feature < hist.num_cols; ++feature) {
-      const std::size_t begin = feature_offsets[feature];
-      const std::size_t end = feature_offsets[feature + 1];
-      BinStatistics feature_stats;
-      feature_stats.gradient_sums.reserve(end - begin);
-      feature_stats.hessian_sums.reserve(end - begin);
-      feature_stats.weight_sums.reserve(end - begin);
-      for (std::size_t index = begin; index < end; ++index) {
-        feature_stats.gradient_sums.push_back(flat_gradient_sums[index]);
-        feature_stats.hessian_sums.push_back(flat_hessian_sums[index]);
-        feature_stats.weight_sums.push_back(flat_weight_sums[index]);
-      }
-      stats.by_feature[feature] = std::move(feature_stats);
-    }
-
-    return stats;
+    (void)gpu_workspace;
+    throw std::invalid_argument(
+        "GPU node histogram materialization is no longer supported in the CPU search path");
   }
 
   for (std::size_t index = row_begin; index < row_end; ++index) {
@@ -135,7 +97,7 @@ NodeHistogramSet ComputeNodeHistogramSet(const HistMatrix& hist,
     feature_stats.hessian_sums.assign(feature_bins_count, 0.0);
     feature_stats.weight_sums.assign(feature_bins_count, 0.0);
 
-    const auto* feature_bins = hist.feature_bins(feature);
+    const auto feature_bins = hist.feature_bins(feature);
     for (std::size_t index = row_begin; index < row_end; ++index) {
       const std::size_t row = row_indices[index];
       const std::size_t bin = feature_bins[row];
@@ -415,8 +377,14 @@ void Tree::Build(const HistMatrix& hist,
   nan_mode_ = hist.nan_mode;
   feature_importances_.assign(hist.num_cols, 0.0);
 
-  std::vector<std::size_t> row_indices(hist.num_rows);
-  std::iota(row_indices.begin(), row_indices.end(), 0);
+  std::vector<std::size_t> row_indices;
+  const std::size_t initial_row_count = hist.num_rows;
+  if (!options.use_gpu) {
+    row_indices.resize(hist.num_rows);
+    std::iota(row_indices.begin(), row_indices.end(), 0);
+  } else {
+    ResetHistogramRowIndicesGpu(gpu_workspace);
+  }
   if (leaf_row_ranges_out != nullptr) {
     leaf_row_ranges_out->clear();
   }
@@ -429,7 +397,7 @@ void Tree::Build(const HistMatrix& hist,
             weights,
             row_indices,
             0,
-            row_indices.size(),
+            initial_row_count,
             0,
             options,
             gpu_workspace,
@@ -440,7 +408,11 @@ void Tree::Build(const HistMatrix& hist,
             leaf_row_ranges_out,
             &leaf_count);
   if (row_indices_out != nullptr) {
-    *row_indices_out = std::move(row_indices);
+    if (options.use_gpu) {
+      DownloadHistogramRowIndicesGpu(gpu_workspace, *row_indices_out);
+    } else {
+      *row_indices_out = std::move(row_indices);
+    }
   }
 }
 
@@ -461,6 +433,179 @@ int Tree::BuildNode(const HistMatrix& hist,
                     std::vector<LeafRowRange>* leaf_row_ranges_out,
                     int* leaf_count) {
   const std::size_t row_count = row_end - row_begin;
+  if (options.use_gpu) {
+    (void)precomputed_node_stats;
+    (void)precomputed_histogram_ms;
+    (void)statistic_engine;
+
+    GpuNodeStatistics gpu_node_stats;
+    const auto histogram_start = std::chrono::steady_clock::now();
+    BuildHistogramsGpu(gpu_workspace, row_begin, row_end, &gpu_node_stats);
+    const double histogram_ms =
+        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - histogram_start)
+            .count();
+    if (profiler != nullptr && profiler->enabled()) {
+      profiler->LogNodeHistogram(depth, row_count, true, histogram_ms);
+    }
+
+    Node node;
+    node.leaf_weight =
+        ComputeLeafWeight(gpu_node_stats.total_gradient, gpu_node_stats.total_hessian, options.lambda_l2);
+
+    const int node_index = static_cast<int>(nodes_.size());
+    nodes_.push_back(node);
+    if (leaf_row_ranges_out != nullptr && leaf_row_ranges_out->size() < nodes_.size()) {
+      leaf_row_ranges_out->resize(nodes_.size());
+    }
+
+    if (row_count <= 1 || depth >= options.max_depth ||
+        (options.max_leaves > 0 && leaf_count != nullptr && *leaf_count >= options.max_leaves)) {
+      if (leaf_row_ranges_out != nullptr) {
+        (*leaf_row_ranges_out)[node_index] = LeafRowRange{row_begin, row_end};
+      }
+      return node_index;
+    }
+
+    const auto search_start = std::chrono::steady_clock::now();
+    GpuNodeSearchResult node_search;
+    SearchBestNodeSplitGpu(gpu_workspace,
+                           options.allowed_features,
+                           options.lambda_l2,
+                           options.min_data_in_leaf,
+                           options.min_child_weight,
+                           options.min_split_gain,
+                           &node_search);
+    const double feature_ms =
+        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - search_start)
+            .count();
+    const double split_ms = 0.0;
+    if (node_search.feature_id < 0 || node_search.p_value > options.alpha) {
+      if (profiler != nullptr && profiler->enabled()) {
+        profiler->LogNodeSearch(depth,
+                                row_count,
+                                node_search.feature_id,
+                                node_search.p_value,
+                                node_search.chi_square,
+                                false,
+                                node_search.is_categorical,
+                                node_search.gain,
+                                0,
+                                0,
+                                feature_ms,
+                                split_ms,
+                                0.0);
+      }
+      if (leaf_row_ranges_out != nullptr) {
+        (*leaf_row_ranges_out)[node_index] = LeafRowRange{row_begin, row_end};
+      }
+      return node_index;
+    }
+
+    if (!node_search.split_valid || node_search.gain <= 0.0) {
+      if (profiler != nullptr && profiler->enabled()) {
+        profiler->LogNodeSearch(depth,
+                                row_count,
+                                node_search.feature_id,
+                                node_search.p_value,
+                                node_search.chi_square,
+                                false,
+                                node_search.is_categorical,
+                                node_search.gain,
+                                0,
+                                0,
+                                feature_ms,
+                                split_ms,
+                                0.0);
+      }
+      if (leaf_row_ranges_out != nullptr) {
+        (*leaf_row_ranges_out)[node_index] = LeafRowRange{row_begin, row_end};
+      }
+      return node_index;
+    }
+
+    const auto partition_start = std::chrono::steady_clock::now();
+    const std::size_t left_end = PartitionHistogramRowsGpu(gpu_workspace,
+                                                           row_begin,
+                                                           row_end,
+                                                           static_cast<std::size_t>(node_search.feature_id),
+                                                           node_search.is_categorical,
+                                                           node_search.split_bin,
+                                                           node_search.left_categories);
+    const double partition_ms =
+        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - partition_start)
+            .count();
+    const std::size_t left_count = left_end - row_begin;
+    const std::size_t right_count = row_end - left_end;
+    if (profiler != nullptr && profiler->enabled()) {
+      profiler->LogNodeSearch(depth,
+                              row_count,
+                              node_search.feature_id,
+                              node_search.p_value,
+                              node_search.chi_square,
+                              true,
+                              node_search.is_categorical,
+                              node_search.gain,
+                              left_count,
+                              right_count,
+                              feature_ms,
+                              split_ms,
+                              partition_ms);
+    }
+    if (left_end == row_begin || left_end == row_end) {
+      if (leaf_row_ranges_out != nullptr) {
+        (*leaf_row_ranges_out)[node_index] = LeafRowRange{row_begin, row_end};
+      }
+      return node_index;
+    }
+
+    nodes_[node_index].is_leaf = false;
+    nodes_[node_index].split_feature_id = node_search.feature_id;
+    nodes_[node_index].split_bin_index = node_search.split_bin;
+    nodes_[node_index].is_categorical_split = node_search.is_categorical;
+    if (node_search.is_categorical) {
+      nodes_[node_index].left_categories = node_search.left_categories;
+    }
+    feature_importances_[static_cast<std::size_t>(node_search.feature_id)] += node_search.gain;
+    if (leaf_count != nullptr) {
+      ++(*leaf_count);
+    }
+    nodes_[node_index].left_child =
+        BuildNode(hist,
+                  gradients,
+                  hessians,
+                  weights,
+                  row_indices,
+                  row_begin,
+                  left_end,
+                  depth + 1,
+                  options,
+                  gpu_workspace,
+                  nullptr,
+                  0.0,
+                  profiler,
+                  statistic_engine,
+                  leaf_row_ranges_out,
+                  leaf_count);
+    nodes_[node_index].right_child =
+        BuildNode(hist,
+                  gradients,
+                  hessians,
+                  weights,
+                  row_indices,
+                  left_end,
+                  row_end,
+                  depth + 1,
+                  options,
+                  gpu_workspace,
+                  nullptr,
+                  0.0,
+                  profiler,
+                  statistic_engine,
+                  leaf_row_ranges_out,
+                  leaf_count);
+    return node_index;
+  }
+
   NodeHistogramSet node_stats;
   double histogram_ms = precomputed_histogram_ms;
   if (precomputed_node_stats != nullptr) {
@@ -567,20 +712,35 @@ int Tree::BuildNode(const HistMatrix& hist,
     return node_index;
   }
 
-  const auto* feature_bins = hist.feature_bins(static_cast<std::size_t>(feature_choice.feature_id));
-  const auto left_begin = row_indices.begin() + static_cast<std::ptrdiff_t>(row_begin);
-  const auto right_end = row_indices.begin() + static_cast<std::ptrdiff_t>(row_end);
-  const auto partition_start = std::chrono::steady_clock::now();
-  const auto split_middle = std::partition(left_begin, right_end, [&](std::size_t row) {
-    const std::uint16_t bin = feature_bins[row];
-    return split_choice.is_categorical ? split_choice.left_categories[bin] != 0
-                                       : bin <= split_choice.split_bin;
-  });
-  const double partition_ms =
-      std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - partition_start)
-          .count();
-  const std::size_t left_end =
-      row_begin + static_cast<std::size_t>(std::distance(left_begin, split_middle));
+  std::size_t left_end = row_begin;
+  double partition_ms = 0.0;
+  if (options.use_gpu) {
+    const auto partition_start = std::chrono::steady_clock::now();
+    left_end = PartitionHistogramRowsGpu(gpu_workspace,
+                                         row_begin,
+                                         row_end,
+                                         static_cast<std::size_t>(feature_choice.feature_id),
+                                         split_choice.is_categorical,
+                                         split_choice.split_bin,
+                                         split_choice.left_categories);
+    partition_ms =
+        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - partition_start)
+            .count();
+  } else {
+    const auto feature_bins = hist.feature_bins(static_cast<std::size_t>(feature_choice.feature_id));
+    const auto left_begin = row_indices.begin() + static_cast<std::ptrdiff_t>(row_begin);
+    const auto right_end = row_indices.begin() + static_cast<std::ptrdiff_t>(row_end);
+    const auto partition_start = std::chrono::steady_clock::now();
+    const auto split_middle = std::partition(left_begin, right_end, [&](std::size_t row) {
+      const std::uint16_t bin = feature_bins[row];
+      return split_choice.is_categorical ? split_choice.left_categories[bin] != 0
+                                         : bin <= split_choice.split_bin;
+    });
+    partition_ms =
+        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - partition_start)
+            .count();
+    left_end = row_begin + static_cast<std::size_t>(std::distance(left_begin, split_middle));
+  }
   const std::size_t left_count = left_end - row_begin;
   const std::size_t right_count = row_end - left_end;
   if (profiler != nullptr && profiler->enabled()) {
@@ -760,21 +920,26 @@ void Tree::AccumulateContributions(
 }
 
 float Tree::PredictBinnedRow(const HistMatrix& hist, std::size_t row) const {
+  const int leaf_index = PredictBinnedLeafIndex(hist, row);
+  return leaf_index < 0 ? 0.0F : nodes_[leaf_index].leaf_weight;
+}
+
+int Tree::PredictBinnedLeafIndex(const HistMatrix& hist, std::size_t row) const {
   if (nodes_.empty()) {
-    return 0.0F;
+    return -1;
   }
 
   int node_index = 0;
   while (!nodes_[node_index].is_leaf) {
     const Node& node = nodes_[node_index];
-    const auto* feature_bins = hist.feature_bins(static_cast<std::size_t>(node.split_feature_id));
+    const auto feature_bins = hist.feature_bins(static_cast<std::size_t>(node.split_feature_id));
     const std::uint16_t bin = feature_bins[row];
     node_index = node.is_categorical_split
                      ? (node.left_categories[bin] != 0 ? node.left_child : node.right_child)
                      : (bin <= node.split_bin_index ? node.left_child : node.right_child);
   }
 
-  return nodes_[node_index].leaf_weight;
+  return node_index;
 }
 
 std::vector<float> Tree::Predict(const Pool& pool) const {
@@ -783,6 +948,16 @@ std::vector<float> Tree::Predict(const Pool& pool) const {
     predictions[row] = PredictRow(pool, row);
   }
   return predictions;
+}
+
+void Tree::SetLeafWeight(std::size_t node_index, float leaf_weight) {
+  if (node_index >= nodes_.size()) {
+    throw std::out_of_range("node index is out of bounds");
+  }
+  if (!nodes_[node_index].is_leaf) {
+    throw std::invalid_argument("leaf weight can only be set on leaf nodes");
+  }
+  nodes_[node_index].leaf_weight = leaf_weight;
 }
 
 void Tree::LoadState(std::vector<Node> nodes,

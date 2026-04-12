@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24...4.3)
 
-project(CTBoost VERSION 0.1.11 LANGUAGES CXX)
+project(CTBoost VERSION 0.1.12 LANGUAGES CXX)
 
 if(DEFINED SKBUILD_PROJECT_VERSION_FULL)
   set(CTBOOST_PACKAGE_VERSION "${SKBUILD_PROJECT_VERSION_FULL}")
@@ -24,6 +24,12 @@ include(CheckLanguage)
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 find_package(pybind11 CONFIG REQUIRED)
+
+if(pybind11_VERSION VERSION_GREATER_EQUAL "3.0.0")
+  message(FATAL_ERROR
+          "CTBoost currently requires pybind11 < 3.0. "
+          "Install a 2.x release such as pybind11==2.13.6 before building.")
+endif()
 
 set(CTBOOST_WITH_CUDA OFF)
 if(CTBOOST_ENABLE_CUDA)
@@ -116,11 +122,10 @@ pybind11_add_module(_core MODULE
   src/bindings/module.cpp
 )
 
-target_link_libraries(_core PRIVATE ctboost_core)
 target_include_directories(_core PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(_core PRIVATE ctboost_core)
 
 if(CTBOOST_WITH_CUDA)
-  target_link_libraries(_core PRIVATE ctboost_cuda_backend)
   set_target_properties(_core PROPERTIES CUDA_RESOLVE_DEVICE_SYMBOLS ON)
 endif()
 

@@ -90,3 +90,30 @@ def test_regressor_warm_start_adds_iterations():
     assert model._booster.num_iterations_trained == 7
     contrib = model.predict_contrib(X)
     np.testing.assert_allclose(contrib.sum(axis=1), model.predict(X), rtol=1e-6, atol=1e-6)
+
+
+def test_explicit_training_pool_keeps_feature_storage_after_fit():
+    X, y = make_regression(
+        n_samples=80,
+        n_features=4,
+        n_informative=3,
+        noise=0.2,
+        random_state=71,
+    )
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+    pool = ctboost.Pool(X, y)
+
+    ctboost.train(
+        pool,
+        {
+            "objective": "RMSE",
+            "learning_rate": 0.2,
+            "max_depth": 2,
+            "alpha": 1.0,
+            "lambda_l2": 1.0,
+        },
+        num_boost_round=4,
+    )
+
+    np.testing.assert_allclose(pool.data, X, rtol=0.0, atol=0.0)

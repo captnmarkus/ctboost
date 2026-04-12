@@ -105,6 +105,7 @@ class Pool:
         weight: Any = None,
         group_id: Any = None,
         feature_names: Optional[List[str]] = None,
+        _releasable_feature_storage: bool = False,
     ) -> None:
         resolved_cat_features = _normalize_categorical_features(cat_features)
         if _is_pandas_dataframe(data):
@@ -136,11 +137,14 @@ class Pool:
             native_weight,
             native_group_id,
         )
+        if _releasable_feature_storage:
+            self._handle.set_feature_storage_releasable(True)
         self.num_rows = self._handle.num_rows()
         self.num_cols = self._handle.num_cols()
         self.cat_features = list(self._handle.cat_features())
         self.feature_names = None if feature_names is None else list(feature_names)
         self.group_id = None if native_group_id is None else native_group_id.copy()
+        self._releasable_feature_storage = bool(_releasable_feature_storage)
 
         if self.weight is not None:
             if self.weight.ndim != 1:

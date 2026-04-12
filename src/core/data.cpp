@@ -26,6 +26,7 @@ Pool::Pool(py::array_t<float, py::array::forcecast> data,
            py::array_t<float, py::array::forcecast> weight,
            py::array_t<std::int64_t, py::array::forcecast> group_id)
     : cat_features_(std::move(cat_features)) {
+  feature_owner_ = py::reinterpret_borrow<py::object>(data);
   const py::buffer_info data_info = data.request();
   const py::buffer_info label_info = label.request();
   const py::buffer_info weight_info = weight.request();
@@ -65,13 +66,13 @@ Pool::Pool(py::array_t<float, py::array::forcecast> data,
     }
   }
 
-  const auto* data_ptr = static_cast<const float*>(data_info.ptr);
+  feature_data_ptr_ = static_cast<const float*>(data_info.ptr);
   const auto* label_ptr = static_cast<const float*>(label_info.ptr);
   const auto* weight_ptr = static_cast<const float*>(weight_info.ptr);
   const auto* group_ptr = static_cast<const std::int64_t*>(group_info.ptr);
 
-  const py::ssize_t data_row_stride = ValidateFloatStride(data_info.strides[0], "data");
-  const py::ssize_t data_col_stride = ValidateFloatStride(data_info.strides[1], "data");
+  feature_row_stride_ = ValidateFloatStride(data_info.strides[0], "data");
+  feature_col_stride_ = ValidateFloatStride(data_info.strides[1], "data");
   const py::ssize_t label_stride = ValidateFloatStride(label_info.strides[0], "label");
   const py::ssize_t weight_stride = ValidateFloatStride(weight_info.strides[0], "weight");
   if (has_group_ids &&
@@ -81,28 +82,11 @@ Pool::Pool(py::array_t<float, py::array::forcecast> data,
   const py::ssize_t group_stride =
       has_group_ids ? group_info.strides[0] / static_cast<py::ssize_t>(sizeof(std::int64_t)) : 0;
 
-  feature_data_.resize(num_rows_ * num_cols_);
   labels_.resize(num_rows_);
   weights_.resize(num_rows_);
   if (has_group_ids) {
     group_ids_.resize(num_rows_);
     has_group_ids_ = true;
-  }
-
-  if (!feature_data_.empty()) {
-    const py::ssize_t fortran_row_stride = 1;
-    const py::ssize_t fortran_col_stride = static_cast<py::ssize_t>(num_rows_);
-    if (data_row_stride == fortran_row_stride && data_col_stride == fortran_col_stride) {
-      std::memcpy(feature_data_.data(), data_ptr, feature_data_.size() * sizeof(float));
-    } else {
-      for (std::size_t col = 0; col < num_cols_; ++col) {
-        for (std::size_t row = 0; row < num_rows_; ++row) {
-          const py::ssize_t offset = static_cast<py::ssize_t>(row) * data_row_stride +
-                                     static_cast<py::ssize_t>(col) * data_col_stride;
-          feature_data_[col * num_rows_ + row] = *(data_ptr + offset);
-        }
-      }
-    }
   }
 
   if (!labels_.empty()) {
@@ -142,7 +126,36 @@ std::size_t Pool::num_rows() const noexcept { return num_rows_; }
 
 std::size_t Pool::num_cols() const noexcept { return num_cols_; }
 
-const std::vector<float>& Pool::feature_data() const noexcept { return feature_data_; }
+const std::vector<float>& Pool::feature_data() const {
+  if (!feature_data_cache_.empty()) {
+    return feature_data_cache_;
+  }
+  if (feature_data_ptr_ == nullptr) {
+    throw std::runtime_error("feature storage has been released from this pool");
+  }
+
+  feature_data_cache_.resize(num_rows_ * num_cols_);
+  if (feature_data_cache_.empty()) {
+    return feature_data_cache_;
+  }
+
+  const py::ssize_t fortran_row_stride = 1;
+  const py::ssize_t fortran_col_stride = static_cast<py::ssize_t>(num_rows_);
+  if (feature_row_stride_ == fortran_row_stride && feature_col_stride_ == fortran_col_stride) {
+    std::memcpy(
+        feature_data_cache_.data(), feature_data_ptr_, feature_data_cache_.size() * sizeof(float));
+    return feature_data_cache_;
+  }
+
+  for (std::size_t col = 0; col < num_cols_; ++col) {
+    for (std::size_t row = 0; row < num_rows_; ++row) {
+      const py::ssize_t offset = static_cast<py::ssize_t>(row) * feature_row_stride_ +
+                                 static_cast<py::ssize_t>(col) * feature_col_stride_;
+      feature_data_cache_[col * num_rows_ + row] = *(feature_data_ptr_ + offset);
+    }
+  }
+  return feature_data_cache_;
+}
 
 const std::vector<float>& Pool::labels() const noexcept { return labels_; }
 
@@ -158,7 +171,65 @@ float Pool::feature_value(std::size_t row, std::size_t col) const {
   if (row >= num_rows_ || col >= num_cols_) {
     throw std::out_of_range("feature index is out of bounds");
   }
-  return feature_data_[col * num_rows_ + row];
+  if (feature_data_ptr_ != nullptr) {
+    const py::ssize_t offset = static_cast<py::ssize_t>(row) * feature_row_stride_ +
+                               static_cast<py::ssize_t>(col) * feature_col_stride_;
+    return *(feature_data_ptr_ + offset);
+  }
+  if (!feature_data_cache_.empty()) {
+    return feature_data_cache_[col * num_rows_ + row];
+  }
+  throw std::runtime_error("feature storage has been released from this pool");
+}
+
+bool Pool::is_column_major_contiguous() const noexcept {
+  return feature_data_ptr_ != nullptr && feature_row_stride_ == 1 &&
+         feature_col_stride_ == static_cast<py::ssize_t>(num_rows_);
+}
+
+const float* Pool::feature_column_ptr(std::size_t col) const {
+  if (col >= num_cols_) {
+    throw std::out_of_range("feature index is out of bounds");
+  }
+  if (is_column_major_contiguous()) {
+    return feature_data_ptr_ + col * num_rows_;
+  }
+  if (!feature_data_cache_.empty()) {
+    return feature_data_cache_.data() + col * num_rows_;
+  }
+  return nullptr;
+}
+
+std::size_t Pool::dense_feature_bytes() const noexcept {
+  const std::size_t dense_bytes = num_rows_ * num_cols_ * sizeof(float);
+  std::size_t total_bytes = 0;
+  if (feature_data_ptr_ != nullptr) {
+    total_bytes += dense_bytes;
+  }
+  if (!feature_data_cache_.empty()) {
+    total_bytes += feature_data_cache_.capacity() * sizeof(float);
+  }
+  return total_bytes;
+}
+
+bool Pool::ReleaseFeatureStorage() noexcept {
+  if (!feature_storage_releasable_) {
+    return false;
+  }
+
+  feature_owner_ = py::object();
+  feature_data_ptr_ = nullptr;
+  feature_row_stride_ = 0;
+  feature_col_stride_ = 0;
+  feature_data_cache_.clear();
+  feature_data_cache_.shrink_to_fit();
+  return true;
+}
+
+bool Pool::feature_storage_releasable() const noexcept { return feature_storage_releasable_; }
+
+void Pool::SetFeatureStorageReleasable(bool releasable) noexcept {
+  feature_storage_releasable_ = releasable;
 }
 
 }  // namespace ctboost

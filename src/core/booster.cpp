@@ -127,6 +127,7 @@ HistMatrix BuildPredictionHist(const Pool& pool, const Tree& reference_tree) {
   hist.num_rows = pool.num_rows();
   hist.num_cols = pool.num_cols();
   hist.bin_indices.resize(hist.num_rows * hist.num_cols, 0);
+  hist.bin_index_bytes = 2;
   hist.num_bins_per_feature = reference_tree.num_bins_per_feature();
   hist.cut_offsets = reference_tree.cut_offsets();
   hist.cut_values = reference_tree.cut_values();
@@ -135,12 +136,15 @@ HistMatrix BuildPredictionHist(const Pool& pool, const Tree& reference_tree) {
   hist.nan_mode = reference_tree.nan_mode();
 
   for (std::size_t feature = 0; feature < hist.num_cols; ++feature) {
-    const std::size_t offset = feature * hist.num_rows;
+    const float* const contiguous_column = pool.feature_column_ptr(feature);
     for (std::size_t row = 0; row < hist.num_rows; ++row) {
-      hist.bin_indices[offset + row] = hist.bin_value(feature, pool.feature_value(row, feature));
+      const float value =
+          contiguous_column != nullptr ? contiguous_column[row] : pool.feature_value(row, feature);
+      hist.set_bin_index(feature, row, hist.bin_value(feature, value));
     }
   }
 
+  hist.CompactBinStorage();
   return hist;
 }
 
@@ -154,6 +158,7 @@ HistMatrix BuildPredictionHist(const Pool& pool, const HistMatrix& reference_his
   hist.num_rows = pool.num_rows();
   hist.num_cols = pool.num_cols();
   hist.bin_indices.resize(hist.num_rows * hist.num_cols, 0);
+  hist.bin_index_bytes = 2;
   hist.num_bins_per_feature = reference_hist.num_bins_per_feature;
   hist.cut_offsets = reference_hist.cut_offsets;
   hist.cut_values = reference_hist.cut_values;
@@ -162,12 +167,15 @@ HistMatrix BuildPredictionHist(const Pool& pool, const HistMatrix& reference_his
   hist.nan_mode = reference_hist.nan_mode;
 
   for (std::size_t feature = 0; feature < hist.num_cols; ++feature) {
-    const std::size_t offset = feature * hist.num_rows;
+    const float* const contiguous_column = pool.feature_column_ptr(feature);
     for (std::size_t row = 0; row < hist.num_rows; ++row) {
-      hist.bin_indices[offset + row] = hist.bin_value(feature, pool.feature_value(row, feature));
+      const float value =
+          contiguous_column != nullptr ? contiguous_column[row] : pool.feature_value(row, feature);
+      hist.set_bin_index(feature, row, hist.bin_value(feature, value));
     }
   }
 
+  hist.CompactBinStorage();
   return hist;
 }
 
@@ -226,6 +234,38 @@ void UpdatePredictions(const Tree& tree,
   }
 }
 
+std::vector<float> PredictFromHist(const std::vector<Tree>& trees,
+                                   const HistMatrix& hist,
+                                   std::size_t tree_limit,
+                                   double learning_rate,
+                                   bool use_gpu,
+                                   int prediction_dimension) {
+  std::vector<float> predictions(
+      hist.num_rows * static_cast<std::size_t>(prediction_dimension), 0.0F);
+  if (tree_limit == 0 || hist.num_rows == 0) {
+    return predictions;
+  }
+
+  if (use_gpu && CudaBackendCompiled()) {
+    std::vector<std::int32_t> tree_offsets;
+    const std::vector<GpuTreeNode> flattened_nodes =
+        FlattenTreesForGpu(trees, tree_limit, tree_offsets);
+    PredictRawGpu(
+        hist, flattened_nodes, tree_offsets, static_cast<float>(learning_rate), prediction_dimension, predictions);
+    return predictions;
+  }
+
+  for (std::size_t tree_index = 0; tree_index < tree_limit; ++tree_index) {
+    const int class_index =
+        prediction_dimension == 1
+            ? 0
+            : static_cast<int>(tree_index % static_cast<std::size_t>(prediction_dimension));
+    UpdatePredictions(
+        trees[tree_index], hist, learning_rate, prediction_dimension, class_index, predictions);
+  }
+  return predictions;
+}
+
 void UpdatePredictionsFromLeafRanges(const Tree& tree,
                                      const std::vector<std::size_t>& row_indices,
                                      const std::vector<LeafRowRange>& leaf_row_ranges,
@@ -273,6 +313,164 @@ void UpdatePredictionsFromLeafRanges(const Tree& tree,
       predictions[offset] += update;
     }
   }
+}
+
+float ComputeLeafWeightFromSums(double gradient_sum, double hessian_sum, double lambda_l2) {
+  return static_cast<float>(-gradient_sum / (hessian_sum + lambda_l2));
+}
+
+void BuildSharedMulticlassTargets(const std::vector<float>& gradients,
+                                  const std::vector<float>& hessians,
+                                  const std::vector<float>& weights,
+                                  std::size_t num_rows,
+                                  int prediction_dimension,
+                                  std::vector<float>& structure_gradients,
+                                  std::vector<float>& structure_hessians) {
+  structure_gradients.assign(num_rows, 0.0F);
+  structure_hessians.assign(num_rows, 0.0F);
+  if (prediction_dimension <= 0) {
+    return;
+  }
+
+  std::vector<double> gradient_sums(static_cast<std::size_t>(prediction_dimension), 0.0);
+  std::vector<double> gradient_square_sums(static_cast<std::size_t>(prediction_dimension), 0.0);
+  std::vector<double> weight_sums(static_cast<std::size_t>(prediction_dimension), 0.0);
+  for (std::size_t row = 0; row < num_rows; ++row) {
+    const double sample_weight = static_cast<double>(weights[row]);
+    const std::size_t offset = row * static_cast<std::size_t>(prediction_dimension);
+    for (int class_index = 0; class_index < prediction_dimension; ++class_index) {
+      const double gradient = gradients[offset + static_cast<std::size_t>(class_index)];
+      gradient_sums[static_cast<std::size_t>(class_index)] += sample_weight * gradient;
+      gradient_square_sums[static_cast<std::size_t>(class_index)] +=
+          sample_weight * gradient * gradient;
+      weight_sums[static_cast<std::size_t>(class_index)] += sample_weight;
+    }
+  }
+
+  int structure_class = 0;
+  double best_variance = -1.0;
+  for (int class_index = 0; class_index < prediction_dimension; ++class_index) {
+    const double total_weight = weight_sums[static_cast<std::size_t>(class_index)];
+    if (total_weight <= 0.0) {
+      continue;
+    }
+    const double mean_gradient =
+        gradient_sums[static_cast<std::size_t>(class_index)] / total_weight;
+    const double variance =
+        std::max(0.0,
+                 gradient_square_sums[static_cast<std::size_t>(class_index)] / total_weight -
+                     mean_gradient * mean_gradient);
+    if (variance > best_variance) {
+      best_variance = variance;
+      structure_class = class_index;
+    }
+  }
+
+  for (std::size_t row = 0; row < num_rows; ++row) {
+    const std::size_t offset = row * static_cast<std::size_t>(prediction_dimension);
+    const std::size_t target_index = offset + static_cast<std::size_t>(structure_class);
+    structure_gradients[row] = gradients[target_index];
+    structure_hessians[row] = std::max(0.0F, hessians[target_index]);
+  }
+}
+
+std::vector<int> PredictLeafIndicesFromHist(const Tree& tree, const HistMatrix& hist) {
+  std::vector<int> leaf_indices(hist.num_rows, -1);
+  for (std::size_t row = 0; row < hist.num_rows; ++row) {
+    leaf_indices[row] = tree.PredictBinnedLeafIndex(hist, row);
+  }
+  return leaf_indices;
+}
+
+void UpdatePredictionsFromLeafIndices(const Tree& tree,
+                                      const std::vector<int>& leaf_indices,
+                                      double learning_rate,
+                                      int prediction_dimension,
+                                      int class_index,
+                                      std::vector<float>& predictions) {
+  const auto& nodes = tree.nodes();
+  if (nodes.empty() || leaf_indices.empty()) {
+    return;
+  }
+
+  if (prediction_dimension == 1) {
+    for (std::size_t row = 0; row < leaf_indices.size(); ++row) {
+      const int leaf_index = leaf_indices[row];
+      if (leaf_index < 0) {
+        continue;
+      }
+      predictions[row] += learning_rate * nodes[static_cast<std::size_t>(leaf_index)].leaf_weight;
+    }
+    return;
+  }
+
+  for (std::size_t row = 0; row < leaf_indices.size(); ++row) {
+    const int leaf_index = leaf_indices[row];
+    if (leaf_index < 0) {
+      continue;
+    }
+    const std::size_t offset = row * static_cast<std::size_t>(prediction_dimension) + class_index;
+    predictions[offset] +=
+        learning_rate * nodes[static_cast<std::size_t>(leaf_index)].leaf_weight;
+  }
+}
+
+std::vector<Tree> MaterializeMulticlassTreesFromStructure(
+    const Tree& structure_tree,
+    const std::vector<std::size_t>& row_indices,
+    const std::vector<LeafRowRange>& leaf_row_ranges,
+    const std::vector<float>& gradients,
+    const std::vector<float>& hessians,
+    const std::vector<float>& weights,
+    int prediction_dimension,
+    double lambda_l2) {
+  std::vector<Tree> class_trees(
+      static_cast<std::size_t>(prediction_dimension), structure_tree);
+  const auto& structure_nodes = structure_tree.nodes();
+  if (structure_nodes.empty() || row_indices.empty() ||
+      leaf_row_ranges.size() < structure_nodes.size()) {
+    return class_trees;
+  }
+
+  for (std::size_t node_index = 0; node_index < structure_nodes.size(); ++node_index) {
+    const Node& node = structure_nodes[node_index];
+    if (!node.is_leaf) {
+      continue;
+    }
+
+    const LeafRowRange& range = leaf_row_ranges[node_index];
+    if (range.end <= range.begin) {
+      for (Tree& tree : class_trees) {
+        tree.SetLeafWeight(node_index, 0.0F);
+      }
+      continue;
+    }
+
+    std::vector<double> gradient_sums(static_cast<std::size_t>(prediction_dimension), 0.0);
+    std::vector<double> hessian_sums(static_cast<std::size_t>(prediction_dimension), 0.0);
+    for (std::size_t position = range.begin; position < range.end; ++position) {
+      const std::size_t row = row_indices[position];
+      const double sample_weight = static_cast<double>(weights[row]);
+      const std::size_t offset = row * static_cast<std::size_t>(prediction_dimension);
+      for (int class_index = 0; class_index < prediction_dimension; ++class_index) {
+        const std::size_t target_index = offset + static_cast<std::size_t>(class_index);
+        gradient_sums[static_cast<std::size_t>(class_index)] +=
+            sample_weight * static_cast<double>(gradients[target_index]);
+        hessian_sums[static_cast<std::size_t>(class_index)] +=
+            sample_weight * static_cast<double>(hessians[target_index]);
+      }
+    }
+
+    for (int class_index = 0; class_index < prediction_dimension; ++class_index) {
+      class_trees[static_cast<std::size_t>(class_index)].SetLeafWeight(
+          node_index,
+          ComputeLeafWeightFromSums(gradient_sums[static_cast<std::size_t>(class_index)],
+                                    hessian_sums[static_cast<std::size_t>(class_index)],
+                                    lambda_l2));
+    }
+  }
+
+  return class_trees;
 }
 
 void UpdatePredictions(const Tree& tree,
@@ -333,6 +531,49 @@ void RecomputeFeatureImportances(const std::vector<Tree>& trees,
   for (const Tree& tree : trees) {
     AccumulateFeatureImportances(tree, feature_importance_sums);
   }
+}
+
+struct FitWorkspace {
+  HistMatrix train_hist;
+  HistMatrix eval_hist;
+  GpuHistogramWorkspacePtr gpu_hist_workspace{nullptr, DestroyGpuHistogramWorkspace};
+  std::vector<float> predictions;
+  std::vector<float> eval_predictions;
+  std::vector<float> gradients;
+  std::vector<float> hessians;
+
+  std::size_t train_hist_bytes() const noexcept { return train_hist.storage_bytes(); }
+  std::size_t eval_hist_bytes() const noexcept { return eval_hist.storage_bytes(); }
+  std::size_t gpu_workspace_bytes() const noexcept {
+    return EstimateGpuHistogramWorkspaceBytes(gpu_hist_workspace.get());
+  }
+
+  void ReleaseFitScratch() noexcept {
+    predictions.clear();
+    predictions.shrink_to_fit();
+    eval_predictions.clear();
+    eval_predictions.shrink_to_fit();
+    gradients.clear();
+    gradients.shrink_to_fit();
+    hessians.clear();
+    hessians.shrink_to_fit();
+    eval_hist.ReleaseStorage();
+    train_hist.ReleaseStorage();
+    gpu_hist_workspace.reset();
+  }
+};
+
+void LogFitMemorySnapshot(const TrainingProfiler& profiler,
+                          const char* stage,
+                          const Pool& train_pool,
+                          const Pool* eval_pool,
+                          const FitWorkspace& workspace) {
+  profiler.LogFitMemory(stage,
+                        train_pool.dense_feature_bytes(),
+                        eval_pool == nullptr ? 0U : eval_pool->dense_feature_bytes(),
+                        workspace.train_hist_bytes(),
+                        workspace.eval_hist_bytes(),
+                        workspace.gpu_workspace_bytes());
 }
 
 }  // namespace
@@ -454,8 +695,8 @@ GradientBooster::GradientBooster(std::string objective,
   }
 }
 
-void GradientBooster::Fit(const Pool& pool,
-                          const Pool* eval_pool,
+void GradientBooster::Fit(Pool& pool,
+                          Pool* eval_pool,
                           int early_stopping_rounds,
                           bool continue_training) {
   const auto fit_start = std::chrono::steady_clock::now();
@@ -492,17 +733,22 @@ void GradientBooster::Fit(const Pool& pool,
         "warm-start training requires the same number of features as the initial model");
   }
 
+  FitWorkspace workspace;
+  LogFitMemorySnapshot(profiler, "pre_quantize", pool, eval_pool, workspace);
+
   const auto hist_build_start = std::chrono::steady_clock::now();
-  const HistMatrix hist = hist_builder_.Build(pool, &profiler);
+  workspace.train_hist = hist_builder_.Build(pool, &profiler);
   const double hist_build_ms =
       std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - hist_build_start)
           .count();
+  profiler.LogFitStage("train_quantize", hist_build_ms);
+  LogFitMemorySnapshot(profiler, "post_quantize", pool, eval_pool, workspace);
   const auto& labels = pool.labels();
   const auto& weights = pool.weights();
-  GpuHistogramWorkspacePtr gpu_hist_workspace(nullptr, DestroyGpuHistogramWorkspace);
   if (use_gpu_) {
-    gpu_hist_workspace = CreateGpuHistogramWorkspace(hist, weights);
+    workspace.gpu_hist_workspace = CreateGpuHistogramWorkspace(workspace.train_hist, weights);
   }
+  LogFitMemorySnapshot(profiler, "post_workspace", pool, eval_pool, workspace);
   const std::vector<std::int64_t>* group_ids =
       pool.has_group_ids() ? &pool.group_ids() : nullptr;
   const double total_weight = std::accumulate(
@@ -511,12 +757,17 @@ void GradientBooster::Fit(const Pool& pool,
   if (total_weight <= 0.0) {
     throw std::invalid_argument("training pool must have a positive total sample weight");
   }
-  std::vector<float> predictions = has_existing_state
-                                       ? Predict(pool, -1)
-                                       : std::vector<float>(
-                                             pool.num_rows() *
-                                                 static_cast<std::size_t>(prediction_dimension_),
-                                             0.0F);
+  workspace.predictions = has_existing_state
+                              ? PredictFromHist(trees_,
+                                                workspace.train_hist,
+                                                trees_.size(),
+                                                learning_rate_,
+                                                use_gpu_,
+                                                prediction_dimension_)
+                              : std::vector<float>(
+                                    pool.num_rows() *
+                                        static_cast<std::size_t>(prediction_dimension_),
+                                    0.0F);
   if (!continue_training || feature_importance_sums_.empty()) {
     feature_importance_sums_.assign(pool.num_cols(), 0.0);
   }
@@ -528,8 +779,6 @@ void GradientBooster::Fit(const Pool& pool,
   const std::vector<float>* eval_labels = nullptr;
   const std::vector<float>* eval_weights = nullptr;
   const std::vector<std::int64_t>* eval_group_ids = nullptr;
-  std::vector<float> eval_predictions;
-  HistMatrix eval_hist;
   if (eval_pool != nullptr) {
     eval_labels = &eval_pool->labels();
     eval_weights = &eval_pool->weights();
@@ -540,13 +789,24 @@ void GradientBooster::Fit(const Pool& pool,
     if (eval_total_weight <= 0.0) {
       throw std::invalid_argument("eval_pool must have a positive total sample weight");
     }
-    eval_predictions = has_existing_state
-                           ? Predict(*eval_pool, -1)
-                           : std::vector<float>(
-                                 eval_pool->num_rows() *
-                                     static_cast<std::size_t>(prediction_dimension_),
-                                 0.0F);
-    eval_hist = BuildPredictionHist(*eval_pool, hist);
+    const auto eval_hist_build_start = std::chrono::steady_clock::now();
+    workspace.eval_hist = BuildPredictionHist(*eval_pool, workspace.train_hist);
+    const double eval_hist_build_ms =
+        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - eval_hist_build_start)
+            .count();
+    profiler.LogFitStage("eval_quantize", eval_hist_build_ms);
+    workspace.eval_predictions = has_existing_state
+                                     ? PredictFromHist(trees_,
+                                                       workspace.eval_hist,
+                                                       trees_.size(),
+                                                       learning_rate_,
+                                                       use_gpu_,
+                                                       prediction_dimension_)
+                                     : std::vector<float>(
+                                           eval_pool->num_rows() *
+                                               static_cast<std::size_t>(prediction_dimension_),
+                                           0.0F);
+    LogFitMemorySnapshot(profiler, "post_eval_quantize", pool, eval_pool, workspace);
     if (!continue_training || eval_loss_history_.empty()) {
       best_score_ = maximize_eval_metric_ ? -std::numeric_limits<double>::infinity()
                                           : std::numeric_limits<double>::infinity();
@@ -556,13 +816,18 @@ void GradientBooster::Fit(const Pool& pool,
     }
   }
 
+  pool.ReleaseFeatureStorage();
+  if (eval_pool != nullptr) {
+    eval_pool->ReleaseFeatureStorage();
+  }
+  LogFitMemorySnapshot(profiler, "post_release_dense", pool, eval_pool, workspace);
+
   for (int iteration = 0; iteration < iterations_; ++iteration) {
     const auto iteration_start = std::chrono::steady_clock::now();
     const int total_iteration = initial_completed_iterations + iteration;
-    std::vector<float> gradients;
-    std::vector<float> hessians;
     const auto gradient_start = std::chrono::steady_clock::now();
-    objective_->compute_gradients(predictions, labels, gradients, hessians, num_classes_, group_ids);
+    objective_->compute_gradients(
+        workspace.predictions, labels, workspace.gradients, workspace.hessians, num_classes_, group_ids);
     const double gradient_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - gradient_start)
             .count();
@@ -571,7 +836,8 @@ void GradientBooster::Fit(const Pool& pool,
 
     if (prediction_dimension_ == 1) {
       if (use_gpu_) {
-        UploadHistogramTargetsGpu(gpu_hist_workspace.get(), gradients, hessians);
+        UploadHistogramTargetsGpu(
+            workspace.gpu_hist_workspace.get(), workspace.gradients, workspace.hessians);
       }
       Tree tree;
       const std::vector<int> allowed_features =
@@ -591,12 +857,12 @@ void GradientBooster::Fit(const Pool& pool,
       std::vector<LeafRowRange> training_leaf_ranges;
       const auto tree_start = std::chrono::steady_clock::now();
       tree.Build(
-          hist,
-          gradients,
-          hessians,
+          workspace.train_hist,
+          workspace.gradients,
+          workspace.hessians,
           weights,
           build_options,
-          gpu_hist_workspace.get(),
+          workspace.gpu_hist_workspace.get(),
           &profiler,
           &training_row_indices,
           &training_leaf_ranges);
@@ -609,10 +875,21 @@ void GradientBooster::Fit(const Pool& pool,
 
       const auto prediction_start = std::chrono::steady_clock::now();
       UpdatePredictionsFromLeafRanges(
-          tree, training_row_indices, training_leaf_ranges, learning_rate_, prediction_dimension_, 0, predictions);
+          tree,
+          training_row_indices,
+          training_leaf_ranges,
+          learning_rate_,
+          prediction_dimension_,
+          0,
+          workspace.predictions);
       if (eval_pool != nullptr) {
         UpdatePredictions(
-            tree, eval_hist, learning_rate_, prediction_dimension_, 0, eval_predictions);
+            tree,
+            workspace.eval_hist,
+            learning_rate_,
+            prediction_dimension_,
+            0,
+            workspace.eval_predictions);
       }
       prediction_ms +=
           std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - prediction_start)
@@ -621,99 +898,103 @@ void GradientBooster::Fit(const Pool& pool,
 
       trees_.push_back(std::move(tree));
     } else {
-      std::vector<float> class_gradients;
-      std::vector<float> class_hessians;
-      const std::vector<float> empty_targets;
+      std::vector<float> structure_gradients;
+      std::vector<float> structure_hessians;
+      BuildSharedMulticlassTargets(workspace.gradients,
+                                   workspace.hessians,
+                                   weights,
+                                   pool.num_rows(),
+                                   prediction_dimension_,
+                                   structure_gradients,
+                                   structure_hessians);
       if (use_gpu_) {
-        UploadHistogramTargetMatrixGpu(
-            gpu_hist_workspace.get(),
-            gradients,
-            hessians,
-            static_cast<std::size_t>(prediction_dimension_));
-      } else {
-        class_gradients.assign(pool.num_rows(), 0.0F);
-        class_hessians.assign(pool.num_rows(), 0.0F);
+        UploadHistogramTargetsGpu(
+            workspace.gpu_hist_workspace.get(), structure_gradients, structure_hessians);
       }
 
-      for (int class_index = 0; class_index < prediction_dimension_; ++class_index) {
-        if (use_gpu_) {
-          SelectHistogramTargetGpuClass(
-              gpu_hist_workspace.get(), static_cast<std::size_t>(class_index));
-        } else {
-          for (std::size_t row = 0; row < pool.num_rows(); ++row) {
-            const std::size_t offset =
-                row * static_cast<std::size_t>(prediction_dimension_) + class_index;
-            class_gradients[row] = gradients[offset];
-            class_hessians[row] = hessians[offset];
-          }
-        }
-        Tree tree;
-        const std::vector<int> allowed_features =
-            SampleFeatureSubset(pool.num_cols(), colsample_bytree_, rng_state_);
-        const TreeBuildOptions build_options{
-            alpha_,
-            max_depth_,
-            lambda_l2_,
-            use_gpu_,
-            max_leaves_,
-            min_data_in_leaf_,
-            min_child_weight_,
-            gamma_,
-            allowed_features.empty() ? nullptr : &allowed_features,
-        };
-        std::vector<std::size_t> training_row_indices;
-        std::vector<LeafRowRange> training_leaf_ranges;
-        const auto tree_start = std::chrono::steady_clock::now();
-        tree.Build(
-            hist,
-            use_gpu_ ? empty_targets : class_gradients,
-            use_gpu_ ? empty_targets : class_hessians,
-            weights,
-            build_options,
-            gpu_hist_workspace.get(),
-            &profiler,
-            &training_row_indices,
-            &training_leaf_ranges);
-        const double single_tree_ms =
-            std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - tree_start)
-                .count();
-        tree_ms += single_tree_ms;
-        profiler.LogTreeBuild(total_iteration + 1,
-                              target_total_iterations,
-                              class_index,
-                              prediction_dimension_,
-                              single_tree_ms);
+      Tree structure_tree;
+      const std::vector<int> allowed_features =
+          SampleFeatureSubset(pool.num_cols(), colsample_bytree_, rng_state_);
+      const TreeBuildOptions build_options{
+          alpha_,
+          max_depth_,
+          lambda_l2_,
+          use_gpu_,
+          max_leaves_,
+          min_data_in_leaf_,
+          min_child_weight_,
+          gamma_,
+          allowed_features.empty() ? nullptr : &allowed_features,
+      };
+      std::vector<std::size_t> training_row_indices;
+      std::vector<LeafRowRange> training_leaf_ranges;
+      const auto tree_start = std::chrono::steady_clock::now();
+      structure_tree.Build(workspace.train_hist,
+                           structure_gradients,
+                           structure_hessians,
+                           weights,
+                           build_options,
+                           workspace.gpu_hist_workspace.get(),
+                           &profiler,
+                           &training_row_indices,
+                           &training_leaf_ranges);
+      const double shared_tree_ms =
+          std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - tree_start)
+              .count();
+      tree_ms += shared_tree_ms;
+      profiler.LogTreeBuild(
+          total_iteration + 1, target_total_iterations, -1, prediction_dimension_, shared_tree_ms);
 
-        const auto prediction_start = std::chrono::steady_clock::now();
-        UpdatePredictionsFromLeafRanges(
-            tree,
-            training_row_indices,
-            training_leaf_ranges,
-            learning_rate_,
-            prediction_dimension_,
-            class_index,
-            predictions);
+      const auto leaf_fit_start = std::chrono::steady_clock::now();
+      std::vector<Tree> class_trees = MaterializeMulticlassTreesFromStructure(
+          structure_tree,
+          training_row_indices,
+          training_leaf_ranges,
+          workspace.gradients,
+          workspace.hessians,
+          weights,
+          prediction_dimension_,
+          lambda_l2_);
+      tree_ms +=
+          std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - leaf_fit_start)
+              .count();
+
+      std::vector<int> eval_leaf_indices;
+      if (eval_pool != nullptr) {
+        eval_leaf_indices = PredictLeafIndicesFromHist(structure_tree, workspace.eval_hist);
+      }
+
+      const auto prediction_start = std::chrono::steady_clock::now();
+      for (int class_index = 0; class_index < prediction_dimension_; ++class_index) {
+        Tree& tree = class_trees[static_cast<std::size_t>(class_index)];
+        UpdatePredictionsFromLeafRanges(tree,
+                                        training_row_indices,
+                                        training_leaf_ranges,
+                                        learning_rate_,
+                                        prediction_dimension_,
+                                        class_index,
+                                        workspace.predictions);
         if (eval_pool != nullptr) {
-          UpdatePredictions(
+          UpdatePredictionsFromLeafIndices(
               tree,
-              eval_hist,
+              eval_leaf_indices,
               learning_rate_,
               prediction_dimension_,
               class_index,
-              eval_predictions);
+              workspace.eval_predictions);
         }
-        prediction_ms +=
-            std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - prediction_start)
-                .count();
         AccumulateFeatureImportances(tree, feature_importance_sums_);
-
         trees_.push_back(std::move(tree));
       }
+      prediction_ms +=
+          std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - prediction_start)
+              .count();
     }
 
     const auto metric_start = std::chrono::steady_clock::now();
     loss_history_.push_back(
-        objective_metric_->Evaluate(predictions, labels, weights, num_classes_, group_ids));
+        objective_metric_->Evaluate(
+            workspace.predictions, labels, weights, num_classes_, group_ids));
     const double metric_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - metric_start)
             .count();
@@ -736,7 +1017,7 @@ void GradientBooster::Fit(const Pool& pool,
     const auto eval_start = std::chrono::steady_clock::now();
     const double eval_score =
         eval_metric_->Evaluate(
-            eval_predictions, *eval_labels, *eval_weights, num_classes_, eval_group_ids);
+            workspace.eval_predictions, *eval_labels, *eval_weights, num_classes_, eval_group_ids);
     const double eval_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - eval_start)
             .count();
@@ -768,12 +1049,23 @@ void GradientBooster::Fit(const Pool& pool,
     }
   }
 
+  auto finish_fit = [&](double total_fit_ms) {
+    const auto cleanup_start = std::chrono::steady_clock::now();
+    workspace.ReleaseFitScratch();
+    const double cleanup_ms =
+        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - cleanup_start)
+            .count();
+    profiler.LogFitStage("cleanup", cleanup_ms);
+    LogFitMemorySnapshot(profiler, "post_cleanup", pool, eval_pool, workspace);
+    profiler.LogFitSummary(hist_build_ms, total_fit_ms);
+  };
+
   if (eval_pool == nullptr) {
     best_iteration_ = completed_iterations > 0 ? completed_iterations - 1 : -1;
     const double total_fit_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - fit_start)
             .count();
-    profiler.LogFitSummary(hist_build_ms, total_fit_ms);
+    finish_fit(total_fit_ms);
     return;
   }
 
@@ -781,7 +1073,7 @@ void GradientBooster::Fit(const Pool& pool,
     const double total_fit_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - fit_start)
             .count();
-    profiler.LogFitSummary(hist_build_ms, total_fit_ms);
+    finish_fit(total_fit_ms);
     return;
   }
 
@@ -794,7 +1086,7 @@ void GradientBooster::Fit(const Pool& pool,
   const double total_fit_ms =
       std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - fit_start)
           .count();
-  profiler.LogFitSummary(hist_build_ms, total_fit_ms);
+  finish_fit(total_fit_ms);
 }
 
 std::vector<float> GradientBooster::Predict(const Pool& pool, int num_iteration) const {

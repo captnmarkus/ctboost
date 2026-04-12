@@ -28,6 +28,8 @@ def _load_sklearn_splitters():
 
 def _pool_from_data_and_label(data: Any, label: Any, group_id: Any = None) -> Pool:
     if isinstance(data, Pool):
+        if label is None and group_id is None:
+            return data
         resolved_label = data.label if label is None else label
         resolved_group_id = data.group_id if group_id is None else group_id
         return Pool(
@@ -37,11 +39,17 @@ def _pool_from_data_and_label(data: Any, label: Any, group_id: Any = None) -> Po
             weight=data.weight,
             group_id=resolved_group_id,
             feature_names=data.feature_names,
+            _releasable_feature_storage=True,
         )
 
     if label is None:
         raise ValueError("y must be provided when data is not a Pool")
-    return Pool(data=data, label=label, group_id=group_id)
+    return Pool(
+        data=data,
+        label=label,
+        group_id=group_id,
+        _releasable_feature_storage=True,
+    )
 
 
 def _normalize_eval_set(eval_set: Any) -> Optional[Any]:
@@ -142,6 +150,7 @@ def _apply_sample_weight_to_pool(pool: Pool, sample_weight: Optional[Any]) -> Po
         weight=combined_weight,
         group_id=pool.group_id,
         feature_names=pool.feature_names,
+        _releasable_feature_storage=True,
     )
 
 
@@ -254,6 +263,7 @@ def _apply_objective_weights(pool: Pool, params: Mapping[str, Any], objective_na
         weight=combined_weight,
         group_id=pool.group_id,
         feature_names=pool.feature_names,
+        _releasable_feature_storage=True,
     )
 
 
@@ -267,6 +277,7 @@ def _slice_pool(pool: Pool, indices: Iterable[int]) -> Pool:
         weight=weight,
         group_id=None if pool.group_id is None else pool.group_id[index_array],
         feature_names=pool.feature_names,
+        _releasable_feature_storage=True,
     )
 
 

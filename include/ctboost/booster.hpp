@@ -38,8 +38,8 @@ class GradientBooster {
                   std::uint64_t random_seed = 0,
                   bool verbose = false);
 
-  void Fit(const Pool& pool,
-           const Pool* eval_pool = nullptr,
+  void Fit(Pool& pool,
+           Pool* eval_pool = nullptr,
            int early_stopping_rounds = 0,
            bool continue_training = false);
   std::vector<float> Predict(const Pool& pool, int num_iteration = -1) const;
