@@ -196,13 +196,14 @@ NodeHistogramSet SubtractNodeHistogramSet(const NodeHistogramSet& parent,
 }
 
 FeatureChoice SelectBestFeature(const NodeHistogramSet& node_stats,
-                                const LinearStatistic& statistic_engine) {
+                                const LinearStatistic& statistic_engine,
+                                const std::vector<int>* allowed_features) {
   FeatureChoice best;
 
-  for (std::size_t feature = 0; feature < node_stats.by_feature.size(); ++feature) {
+  const auto evaluate_feature = [&](std::size_t feature) {
     const BinStatistics& feature_stats = node_stats.by_feature[feature];
     if (feature_stats.weight_sums.size() <= 1) {
-      continue;
+      return;
     }
 
     const auto result = statistic_engine.EvaluateScoreFromBinStatistics(
@@ -211,7 +212,7 @@ FeatureChoice SelectBestFeature(const NodeHistogramSet& node_stats,
         node_stats.sample_weight_sum,
         node_stats.gradient_variance);
     if (result.degrees_of_freedom == 0) {
-      continue;
+      return;
     }
 
     if (best.feature_id < 0 || result.p_value < best.p_value ||
@@ -221,6 +222,21 @@ FeatureChoice SelectBestFeature(const NodeHistogramSet& node_stats,
       best.p_value = result.p_value;
       best.chi_square = result.chi_square;
     }
+  };
+
+  if (allowed_features != nullptr && !allowed_features->empty()) {
+    for (int feature_id : *allowed_features) {
+      if (feature_id < 0 ||
+          static_cast<std::size_t>(feature_id) >= node_stats.by_feature.size()) {
+        continue;
+      }
+      evaluate_feature(static_cast<std::size_t>(feature_id));
+    }
+    return best;
+  }
+
+  for (std::size_t feature = 0; feature < node_stats.by_feature.size(); ++feature) {
+    evaluate_feature(feature);
   }
 
   return best;
@@ -231,6 +247,9 @@ SplitChoice SelectBestSplit(const BinStatistics& feature_stats,
                             double total_hessian,
                             double sample_weight_sum,
                             double lambda_l2,
+                            int min_data_in_leaf,
+                            double min_child_weight,
+                            double min_split_gain,
                             bool is_categorical) {
   SplitChoice best;
   const std::size_t feature_bins_count = feature_stats.gradient_sums.size();
@@ -251,14 +270,22 @@ SplitChoice SelectBestSplit(const BinStatistics& feature_stats,
       left_count += feature_stats.weight_sums[split_bin];
 
       const double right_count = sample_weight_sum - left_count;
-      if (left_count <= 0.0 || right_count <= 0.0) {
+      if (left_count <= 0.0 || right_count <= 0.0 ||
+          left_count < static_cast<double>(min_data_in_leaf) ||
+          right_count < static_cast<double>(min_data_in_leaf)) {
         continue;
       }
 
       const double right_gradient = total_gradient - left_gradient;
       const double right_hessian = total_hessian - left_hessian;
+      if (left_hessian < min_child_weight || right_hessian < min_child_weight) {
+        continue;
+      }
       const double gain = ComputeGain(left_gradient, left_hessian, lambda_l2) +
                           ComputeGain(right_gradient, right_hessian, lambda_l2) - parent_gain;
+      if (gain <= min_split_gain) {
+        continue;
+      }
 
       if (!best.valid || gain > best.gain) {
         best.valid = true;
@@ -320,14 +347,22 @@ SplitChoice SelectBestSplit(const BinStatistics& feature_stats,
     left_count += active_bins[split_index].count;
 
     const double right_count = sample_weight_sum - left_count;
-    if (left_count <= 0.0 || right_count <= 0.0) {
+    if (left_count <= 0.0 || right_count <= 0.0 ||
+        left_count < static_cast<double>(min_data_in_leaf) ||
+        right_count < static_cast<double>(min_data_in_leaf)) {
       continue;
     }
 
     const double right_gradient = total_gradient - left_gradient;
     const double right_hessian = total_hessian - left_hessian;
+    if (left_hessian < min_child_weight || right_hessian < min_child_weight) {
+      continue;
+    }
     const double gain = ComputeGain(left_gradient, left_hessian, lambda_l2) +
                         ComputeGain(right_gradient, right_hessian, lambda_l2) - parent_gain;
+    if (gain <= min_split_gain) {
+      continue;
+    }
 
     if (!best.valid || gain > best.gain) {
       best.valid = true;
@@ -349,10 +384,7 @@ void Tree::Build(const HistMatrix& hist,
                  const std::vector<float>& gradients,
                  const std::vector<float>& hessians,
                  const std::vector<float>& weights,
-                 double alpha,
-                 int max_depth,
-                 double lambda_l2,
-                 bool use_gpu,
+                 const TreeBuildOptions& options,
                  GpuHistogramWorkspace* gpu_workspace,
                  const TrainingProfiler* profiler,
                  std::vector<std::size_t>* row_indices_out,
@@ -360,7 +392,7 @@ void Tree::Build(const HistMatrix& hist,
   if (weights.size() != hist.num_rows) {
     throw std::invalid_argument("weight size must match the histogram row count");
   }
-  if (use_gpu) {
+  if (options.use_gpu) {
     if (gpu_workspace == nullptr) {
       throw std::invalid_argument("GPU histogram workspace must be provided when task_type='GPU'");
     }
@@ -389,6 +421,7 @@ void Tree::Build(const HistMatrix& hist,
     leaf_row_ranges_out->clear();
   }
 
+  int leaf_count = 1;
   const LinearStatistic statistic_engine;
   BuildNode(hist,
             gradients,
@@ -398,16 +431,14 @@ void Tree::Build(const HistMatrix& hist,
             0,
             row_indices.size(),
             0,
-            alpha,
-            max_depth,
-            lambda_l2,
-            use_gpu,
+            options,
             gpu_workspace,
             nullptr,
             0.0,
             profiler,
             statistic_engine,
-            leaf_row_ranges_out);
+            leaf_row_ranges_out,
+            &leaf_count);
   if (row_indices_out != nullptr) {
     *row_indices_out = std::move(row_indices);
   }
@@ -421,16 +452,14 @@ int Tree::BuildNode(const HistMatrix& hist,
                     std::size_t row_begin,
                     std::size_t row_end,
                     int depth,
-                    double alpha,
-                    int max_depth,
-                    double lambda_l2,
-                    bool use_gpu,
+                    const TreeBuildOptions& options,
                     GpuHistogramWorkspace* gpu_workspace,
                     const NodeHistogramSet* precomputed_node_stats,
                     double precomputed_histogram_ms,
                     const TrainingProfiler* profiler,
                     const LinearStatistic& statistic_engine,
-                    std::vector<LeafRowRange>* leaf_row_ranges_out) {
+                    std::vector<LeafRowRange>* leaf_row_ranges_out,
+                    int* leaf_count) {
   const std::size_t row_count = row_end - row_begin;
   NodeHistogramSet node_stats;
   double histogram_ms = precomputed_histogram_ms;
@@ -439,18 +468,26 @@ int Tree::BuildNode(const HistMatrix& hist,
   } else {
     const auto histogram_start = std::chrono::steady_clock::now();
     node_stats = ComputeNodeHistogramSet(
-        hist, gradients, hessians, weights, row_indices, row_begin, row_end, use_gpu, gpu_workspace);
+        hist,
+        gradients,
+        hessians,
+        weights,
+        row_indices,
+        row_begin,
+        row_end,
+        options.use_gpu,
+        gpu_workspace);
     histogram_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - histogram_start)
             .count();
   }
   if (profiler != nullptr && profiler->enabled()) {
-    profiler->LogNodeHistogram(depth, row_count, use_gpu, histogram_ms);
+    profiler->LogNodeHistogram(depth, row_count, options.use_gpu, histogram_ms);
   }
 
   Node node;
   node.leaf_weight =
-      ComputeLeafWeight(node_stats.total_gradient, node_stats.total_hessian, lambda_l2);
+      ComputeLeafWeight(node_stats.total_gradient, node_stats.total_hessian, options.lambda_l2);
 
   const int node_index = static_cast<int>(nodes_.size());
   nodes_.push_back(node);
@@ -458,7 +495,8 @@ int Tree::BuildNode(const HistMatrix& hist,
     leaf_row_ranges_out->resize(nodes_.size());
   }
 
-  if (row_count <= 1 || depth >= max_depth) {
+  if (row_count <= 1 || depth >= options.max_depth ||
+      (options.max_leaves > 0 && leaf_count != nullptr && *leaf_count >= options.max_leaves)) {
     if (leaf_row_ranges_out != nullptr) {
       (*leaf_row_ranges_out)[node_index] = LeafRowRange{row_begin, row_end};
     }
@@ -466,11 +504,12 @@ int Tree::BuildNode(const HistMatrix& hist,
   }
 
   const auto feature_start = std::chrono::steady_clock::now();
-  const FeatureChoice feature_choice = SelectBestFeature(node_stats, statistic_engine);
+  const FeatureChoice feature_choice =
+      SelectBestFeature(node_stats, statistic_engine, options.allowed_features);
   const double feature_ms =
       std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - feature_start)
           .count();
-  if (feature_choice.feature_id < 0 || feature_choice.p_value > alpha) {
+  if (feature_choice.feature_id < 0 || feature_choice.p_value > options.alpha) {
     if (profiler != nullptr && profiler->enabled()) {
       profiler->LogNodeSearch(depth,
                               row_count,
@@ -498,7 +537,10 @@ int Tree::BuildNode(const HistMatrix& hist,
       node_stats.total_gradient,
       node_stats.total_hessian,
       node_stats.sample_weight_sum,
-      lambda_l2,
+      options.lambda_l2,
+      options.min_data_in_leaf,
+      options.min_child_weight,
+      options.min_split_gain,
       hist.is_categorical(static_cast<std::size_t>(feature_choice.feature_id)));
   const double split_ms =
       std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - split_start)
@@ -577,7 +619,7 @@ int Tree::BuildNode(const HistMatrix& hist,
         row_indices,
         row_begin,
         left_end,
-        use_gpu,
+        options.use_gpu,
         gpu_workspace);
     left_child_histogram_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - direct_child_start)
@@ -597,7 +639,7 @@ int Tree::BuildNode(const HistMatrix& hist,
         row_indices,
         left_end,
         row_end,
-        use_gpu,
+        options.use_gpu,
         gpu_workspace);
     right_child_histogram_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - direct_child_start)
@@ -617,6 +659,9 @@ int Tree::BuildNode(const HistMatrix& hist,
     nodes_[node_index].left_categories = split_choice.left_categories;
   }
   feature_importances_[static_cast<std::size_t>(feature_choice.feature_id)] += split_choice.gain;
+  if (leaf_count != nullptr) {
+    ++(*leaf_count);
+  }
   nodes_[node_index].left_child =
       BuildNode(hist,
                 gradients,
@@ -626,16 +671,14 @@ int Tree::BuildNode(const HistMatrix& hist,
                 row_begin,
                 left_end,
                 depth + 1,
-                alpha,
-                max_depth,
-                lambda_l2,
-                use_gpu,
+                options,
                 gpu_workspace,
                 &left_child_stats,
                 left_child_histogram_ms,
                 profiler,
                 statistic_engine,
-                leaf_row_ranges_out);
+                leaf_row_ranges_out,
+                leaf_count);
   nodes_[node_index].right_child =
       BuildNode(hist,
                 gradients,
@@ -645,16 +688,14 @@ int Tree::BuildNode(const HistMatrix& hist,
                 left_end,
                 row_end,
                 depth + 1,
-                alpha,
-                max_depth,
-                lambda_l2,
-                use_gpu,
+                options,
                 gpu_workspace,
                 &right_child_stats,
                 right_child_histogram_ms,
                 profiler,
                 statistic_engine,
-                leaf_row_ranges_out);
+                leaf_row_ranges_out,
+                leaf_count);
 
   return node_index;
 }

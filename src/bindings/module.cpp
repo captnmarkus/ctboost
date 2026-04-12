@@ -242,6 +242,11 @@ py::dict BoosterToStateDict(const ctboost::GradientBooster& booster) {
   state["max_depth"] = booster.max_depth();
   state["alpha"] = booster.alpha();
   state["lambda_l2"] = booster.lambda_l2();
+  state["colsample_bytree"] = booster.colsample_bytree();
+  state["max_leaves"] = booster.max_leaves();
+  state["min_data_in_leaf"] = booster.min_data_in_leaf();
+  state["min_child_weight"] = booster.min_child_weight();
+  state["gamma"] = booster.gamma();
   state["num_classes"] = booster.num_classes();
   state["max_bins"] = booster.max_bins();
   state["nan_mode"] = booster.nan_mode_name();
@@ -249,6 +254,8 @@ py::dict BoosterToStateDict(const ctboost::GradientBooster& booster) {
   state["quantile_alpha"] = booster.quantile_alpha();
   state["huber_delta"] = booster.huber_delta();
   state["devices"] = booster.devices();
+  state["random_seed"] = booster.random_seed();
+  state["rng_state"] = booster.rng_state();
   state["task_type"] = booster.use_gpu() ? "GPU" : "CPU";
   state["verbose"] = booster.verbose();
   state["trees"] = tree_states;
@@ -276,6 +283,21 @@ ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
                                    py::cast<int>(state["max_depth"]),
                                    py::cast<double>(state["alpha"]),
                                    py::cast<double>(state["lambda_l2"]),
+                                   state.contains("colsample_bytree")
+                                       ? py::cast<double>(state["colsample_bytree"])
+                                       : 1.0,
+                                   state.contains("max_leaves")
+                                       ? py::cast<int>(state["max_leaves"])
+                                       : 0,
+                                   state.contains("min_data_in_leaf")
+                                       ? py::cast<int>(state["min_data_in_leaf"])
+                                       : 0,
+                                   state.contains("min_child_weight")
+                                       ? py::cast<double>(state["min_child_weight"])
+                                       : 0.0,
+                                   state.contains("gamma")
+                                       ? py::cast<double>(state["gamma"])
+                                       : 0.0,
                                    py::cast<int>(state["num_classes"]),
                                    py::cast<std::size_t>(state["max_bins"]),
                                    py::cast<std::string>(state["nan_mode"]),
@@ -284,6 +306,9 @@ ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
                                    py::cast<double>(state["huber_delta"]),
                                    use_gpu ? "GPU" : "CPU",
                                    py::cast<std::string>(state["devices"]),
+                                   state.contains("random_seed")
+                                       ? py::cast<std::uint64_t>(state["random_seed"])
+                                       : 0U,
                                    state.contains("verbose") ? py::cast<bool>(state["verbose"]) : false);
 
   booster.LoadState(std::move(trees),
@@ -292,7 +317,8 @@ ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
                     std::vector<double>{},
                     py::cast<int>(state["best_iteration"]),
                     py::cast<double>(state["best_score"]),
-                    use_gpu);
+                    use_gpu,
+                    state.contains("rng_state") ? py::cast<std::uint64_t>(state["rng_state"]) : 0U);
   return booster;
 }
 
@@ -364,6 +390,11 @@ PYBIND11_MODULE(_core, m) {
                     int,
                     double,
                     double,
+                    double,
+                    int,
+                    int,
+                    double,
+                    double,
                     int,
                     std::size_t,
                     std::string,
@@ -372,6 +403,7 @@ PYBIND11_MODULE(_core, m) {
                     double,
                     std::string,
                     std::string,
+                    std::uint64_t,
                     bool>(),
            py::arg("objective") = "RMSE",
            py::arg("iterations") = 100,
@@ -379,6 +411,11 @@ PYBIND11_MODULE(_core, m) {
            py::arg("max_depth") = 6,
            py::arg("alpha") = 0.05,
            py::arg("lambda_l2") = 1.0,
+           py::arg("colsample_bytree") = 1.0,
+           py::arg("max_leaves") = 0,
+           py::arg("min_data_in_leaf") = 0,
+           py::arg("min_child_weight") = 0.0,
+           py::arg("gamma") = 0.0,
            py::arg("num_classes") = 1,
            py::arg("max_bins") = 256,
            py::arg("nan_mode") = "Min",
@@ -387,6 +424,7 @@ PYBIND11_MODULE(_core, m) {
            py::arg("huber_delta") = 1.0,
            py::arg("task_type") = "CPU",
            py::arg("devices") = "0",
+           py::arg("random_seed") = 0,
            py::arg("verbose") = false)
       .def("fit",
            [](ctboost::GradientBooster& booster,
@@ -450,12 +488,19 @@ PYBIND11_MODULE(_core, m) {
       .def("max_depth", &ctboost::GradientBooster::max_depth)
       .def("alpha", &ctboost::GradientBooster::alpha)
       .def("lambda_l2", &ctboost::GradientBooster::lambda_l2)
+      .def("colsample_bytree", &ctboost::GradientBooster::colsample_bytree)
+      .def("max_leaves", &ctboost::GradientBooster::max_leaves)
+      .def("min_data_in_leaf", &ctboost::GradientBooster::min_data_in_leaf)
+      .def("min_child_weight", &ctboost::GradientBooster::min_child_weight)
+      .def("gamma", &ctboost::GradientBooster::gamma)
       .def("max_bins", &ctboost::GradientBooster::max_bins)
       .def("nan_mode_name", &ctboost::GradientBooster::nan_mode_name)
       .def("quantile_alpha", &ctboost::GradientBooster::quantile_alpha)
       .def("huber_delta", &ctboost::GradientBooster::huber_delta)
       .def("use_gpu", &ctboost::GradientBooster::use_gpu)
       .def("devices", &ctboost::GradientBooster::devices)
+      .def("random_seed", &ctboost::GradientBooster::random_seed)
+      .def("rng_state", &ctboost::GradientBooster::rng_state)
       .def("verbose", &ctboost::GradientBooster::verbose)
       .def("export_state", [](const ctboost::GradientBooster& booster) {
         return BoosterToStateDict(booster);
@@ -478,7 +523,10 @@ PYBIND11_MODULE(_core, m) {
                                std::vector<double>{},
                                py::cast<int>(state["best_iteration"]),
                                py::cast<double>(state["best_score"]),
-                               use_gpu);
+                               use_gpu,
+                               state.contains("rng_state")
+                                   ? py::cast<std::uint64_t>(state["rng_state"])
+                                   : 0U);
              return booster;
            },
            py::arg("state"),

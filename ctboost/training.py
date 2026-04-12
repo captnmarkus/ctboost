@@ -518,6 +518,30 @@ def train(
             config.get("lambda_l2", 1.0 if init_state is None else init_state["lambda_l2"]),
         )
     )
+    colsample_bytree = float(
+        config.get(
+            "colsample_bytree",
+            1.0 if init_state is None else init_state.get("colsample_bytree", 1.0),
+        )
+    )
+    max_leaves = int(
+        config.get("max_leaves", 0 if init_state is None else init_state.get("max_leaves", 0))
+    )
+    min_data_in_leaf = int(
+        config.get(
+            "min_data_in_leaf",
+            0 if init_state is None else init_state.get("min_data_in_leaf", 0),
+        )
+    )
+    min_child_weight = float(
+        config.get(
+            "min_child_weight",
+            0.0 if init_state is None else init_state.get("min_child_weight", 0.0),
+        )
+    )
+    gamma = float(
+        config.get("gamma", 0.0 if init_state is None else init_state.get("gamma", 0.0))
+    )
     if "num_classes" in config:
         num_classes = int(config["num_classes"])
     elif init_state is not None:
@@ -535,6 +559,9 @@ def train(
     huber_delta = float(config.get("huber_delta", 1.0 if init_state is None else init_state["huber_delta"]))
     task_type = str(config.get("task_type", "CPU" if init_state is None else init_state["task_type"]))
     devices = str(config.get("devices", "0" if init_state is None else init_state["devices"]))
+    random_seed = int(
+        config.get("random_seed", 0 if init_state is None else init_state.get("random_seed", 0))
+    )
     verbose = bool(config.get("verbose", False if init_state is None else init_state.get("verbose", False)))
     if init_state is not None:
         if objective.lower() != str(init_state["objective_name"]).lower():
@@ -553,6 +580,11 @@ def train(
         max_depth=max_depth,
         alpha=alpha,
         lambda_l2=lambda_l2,
+        colsample_bytree=colsample_bytree,
+        max_leaves=max_leaves,
+        min_data_in_leaf=min_data_in_leaf,
+        min_child_weight=min_child_weight,
+        gamma=gamma,
         num_classes=num_classes,
         max_bins=max_bins,
         nan_mode=nan_mode,
@@ -561,6 +593,7 @@ def train(
         huber_delta=huber_delta,
         task_type=task_type,
         devices=devices,
+        random_seed=random_seed,
         verbose=verbose,
     )
     if init_state is not None:

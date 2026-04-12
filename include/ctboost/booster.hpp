@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -21,6 +22,11 @@ class GradientBooster {
                   int max_depth = 6,
                   double alpha = 0.05,
                   double lambda_l2 = 1.0,
+                  double colsample_bytree = 1.0,
+                  int max_leaves = 0,
+                  int min_data_in_leaf = 0,
+                  double min_child_weight = 0.0,
+                  double gamma = 0.0,
                   int num_classes = 1,
                   std::size_t max_bins = 256,
                   std::string nan_mode = "Min",
@@ -29,6 +35,7 @@ class GradientBooster {
                   double huber_delta = 1.0,
                   std::string task_type = "CPU",
                   std::string devices = "0",
+                  std::uint64_t random_seed = 0,
                   bool verbose = false);
 
   void Fit(const Pool& pool,
@@ -44,7 +51,8 @@ class GradientBooster {
                  std::vector<double> feature_importance_sums,
                  int best_iteration,
                  double best_score,
-                 bool use_gpu);
+                 bool use_gpu,
+                 std::uint64_t rng_state = 0);
 
   const std::vector<double>& loss_history() const noexcept;
   const std::vector<double>& eval_loss_history() const noexcept;
@@ -60,6 +68,11 @@ class GradientBooster {
   int max_depth() const noexcept;
   double alpha() const noexcept;
   double lambda_l2() const noexcept;
+  double colsample_bytree() const noexcept;
+  int max_leaves() const noexcept;
+  int min_data_in_leaf() const noexcept;
+  double min_child_weight() const noexcept;
+  double gamma() const noexcept;
   std::size_t max_bins() const noexcept;
   const std::string& nan_mode_name() const noexcept;
   const std::string& eval_metric_name() const noexcept;
@@ -67,6 +80,8 @@ class GradientBooster {
   double huber_delta() const noexcept;
   bool use_gpu() const noexcept;
   const std::string& devices() const noexcept;
+  std::uint64_t random_seed() const noexcept;
+  std::uint64_t rng_state() const noexcept;
   bool verbose() const noexcept;
   const std::vector<Tree>& trees() const noexcept;
   std::vector<float> get_feature_importances() const;
@@ -83,11 +98,18 @@ class GradientBooster {
   int max_depth_{6};
   double alpha_{0.05};
   double lambda_l2_{1.0};
+  double colsample_bytree_{1.0};
+  int max_leaves_{0};
+  int min_data_in_leaf_{0};
+  double min_child_weight_{0.0};
+  double gamma_{0.0};
   int num_classes_{1};
   int prediction_dimension_{1};
   std::size_t max_bins_{256};
   bool use_gpu_{false};
   std::string devices_{"0"};
+  std::uint64_t random_seed_{0};
+  std::uint64_t rng_state_{0};
   bool verbose_{false};
   HistBuilder hist_builder_;
   std::vector<Tree> trees_;

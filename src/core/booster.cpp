@@ -58,6 +58,32 @@ bool IsRankingObjective(const std::string& normalized_objective) {
          normalized_objective == "ranknet";
 }
 
+std::uint64_t NormalizeRngState(std::uint64_t seed) {
+  return seed == 0 ? 0x9E3779B97F4A7C15ULL : seed;
+}
+
+std::uint64_t NextRandom(std::uint64_t& state) {
+  state += 0x9E3779B97F4A7C15ULL;
+  std::uint64_t z = state;
+  z = (z ^ (z >> 30U)) * 0xBF58476D1CE4E5B9ULL;
+  z = (z ^ (z >> 27U)) * 0x94D049BB133111EBULL;
+  return z ^ (z >> 31U);
+}
+
+std::size_t UniformIndex(std::uint64_t& state, std::size_t limit) {
+  if (limit <= 1) {
+    return 0;
+  }
+  const std::uint64_t bound = static_cast<std::uint64_t>(limit);
+  const std::uint64_t threshold = static_cast<std::uint64_t>(-bound) % bound;
+  while (true) {
+    const std::uint64_t value = NextRandom(state);
+    if (value >= threshold) {
+      return static_cast<std::size_t>(value % bound);
+    }
+  }
+}
+
 bool IsRegressionObjective(const std::string& normalized_objective) {
   return IsSquaredErrorObjective(normalized_objective) ||
          IsAbsoluteErrorObjective(normalized_objective) ||
@@ -268,6 +294,31 @@ void UpdatePredictions(const Tree& tree,
   }
 }
 
+std::vector<int> SampleFeatureSubset(std::size_t num_features,
+                                     double colsample_bytree,
+                                     std::uint64_t& rng_state) {
+  if (num_features <= 1 || colsample_bytree >= 1.0) {
+    return {};
+  }
+
+  const std::size_t subset_size = std::max<std::size_t>(
+      1, static_cast<std::size_t>(std::ceil(colsample_bytree * static_cast<double>(num_features))));
+  if (subset_size >= num_features) {
+    return {};
+  }
+
+  std::vector<int> features(num_features);
+  std::iota(features.begin(), features.end(), 0);
+  for (std::size_t index = 0; index < subset_size; ++index) {
+    const std::size_t swap_index =
+        index + UniformIndex(rng_state, num_features - index);
+    std::swap(features[index], features[swap_index]);
+  }
+  features.resize(subset_size);
+  std::sort(features.begin(), features.end());
+  return features;
+}
+
 void AccumulateFeatureImportances(const Tree& tree, std::vector<double>& feature_importance_sums) {
   const auto& tree_feature_importances = tree.feature_importances();
   for (std::size_t feature = 0; feature < tree_feature_importances.size(); ++feature) {
@@ -292,6 +343,11 @@ GradientBooster::GradientBooster(std::string objective,
                                  int max_depth,
                                  double alpha,
                                  double lambda_l2,
+                                 double colsample_bytree,
+                                 int max_leaves,
+                                 int min_data_in_leaf,
+                                 double min_child_weight,
+                                 double gamma,
                                  int num_classes,
                                  std::size_t max_bins,
                                  std::string nan_mode,
@@ -300,6 +356,7 @@ GradientBooster::GradientBooster(std::string objective,
                                  double huber_delta,
                                  std::string task_type,
                                  std::string devices,
+                                 std::uint64_t random_seed,
                                  bool verbose)
     : objective_name_(std::move(objective)),
       eval_metric_name_(std::move(eval_metric)),
@@ -311,9 +368,16 @@ GradientBooster::GradientBooster(std::string objective,
       max_depth_(max_depth),
       alpha_(alpha),
       lambda_l2_(lambda_l2),
+      colsample_bytree_(colsample_bytree),
+      max_leaves_(max_leaves),
+      min_data_in_leaf_(min_data_in_leaf),
+      min_child_weight_(min_child_weight),
+      gamma_(gamma),
       num_classes_(num_classes),
       max_bins_(max_bins),
       devices_(std::move(devices)),
+      random_seed_(random_seed),
+      rng_state_(NormalizeRngState(random_seed)),
       verbose_(TrainingProfiler::ResolveEnabled(verbose)),
       hist_builder_(max_bins_, std::move(nan_mode)) {
   if (eval_metric_name_.empty()) {
@@ -333,6 +397,21 @@ GradientBooster::GradientBooster(std::string objective,
   }
   if (lambda_l2_ < 0.0) {
     throw std::invalid_argument("lambda_l2 must be non-negative");
+  }
+  if (colsample_bytree_ <= 0.0 || colsample_bytree_ > 1.0) {
+    throw std::invalid_argument("colsample_bytree must be in (0, 1]");
+  }
+  if (max_leaves_ < 0) {
+    throw std::invalid_argument("max_leaves must be non-negative");
+  }
+  if (min_data_in_leaf_ < 0) {
+    throw std::invalid_argument("min_data_in_leaf must be non-negative");
+  }
+  if (min_child_weight_ < 0.0) {
+    throw std::invalid_argument("min_child_weight must be non-negative");
+  }
+  if (gamma_ < 0.0) {
+    throw std::invalid_argument("gamma must be non-negative");
   }
   if (num_classes_ <= 0) {
     throw std::invalid_argument("num_classes must be positive");
@@ -495,6 +574,19 @@ void GradientBooster::Fit(const Pool& pool,
         UploadHistogramTargetsGpu(gpu_hist_workspace.get(), gradients, hessians);
       }
       Tree tree;
+      const std::vector<int> allowed_features =
+          SampleFeatureSubset(pool.num_cols(), colsample_bytree_, rng_state_);
+      const TreeBuildOptions build_options{
+          alpha_,
+          max_depth_,
+          lambda_l2_,
+          use_gpu_,
+          max_leaves_,
+          min_data_in_leaf_,
+          min_child_weight_,
+          gamma_,
+          allowed_features.empty() ? nullptr : &allowed_features,
+      };
       std::vector<std::size_t> training_row_indices;
       std::vector<LeafRowRange> training_leaf_ranges;
       const auto tree_start = std::chrono::steady_clock::now();
@@ -503,10 +595,7 @@ void GradientBooster::Fit(const Pool& pool,
           gradients,
           hessians,
           weights,
-          alpha_,
-          max_depth_,
-          lambda_l2_,
-          use_gpu_,
+          build_options,
           gpu_hist_workspace.get(),
           &profiler,
           &training_row_indices,
@@ -559,6 +648,19 @@ void GradientBooster::Fit(const Pool& pool,
           }
         }
         Tree tree;
+        const std::vector<int> allowed_features =
+            SampleFeatureSubset(pool.num_cols(), colsample_bytree_, rng_state_);
+        const TreeBuildOptions build_options{
+            alpha_,
+            max_depth_,
+            lambda_l2_,
+            use_gpu_,
+            max_leaves_,
+            min_data_in_leaf_,
+            min_child_weight_,
+            gamma_,
+            allowed_features.empty() ? nullptr : &allowed_features,
+        };
         std::vector<std::size_t> training_row_indices;
         std::vector<LeafRowRange> training_leaf_ranges;
         const auto tree_start = std::chrono::steady_clock::now();
@@ -567,10 +669,7 @@ void GradientBooster::Fit(const Pool& pool,
             use_gpu_ ? empty_targets : class_gradients,
             use_gpu_ ? empty_targets : class_hessians,
             weights,
-            alpha_,
-            max_depth_,
-            lambda_l2_,
-            use_gpu_,
+            build_options,
             gpu_hist_workspace.get(),
             &profiler,
             &training_row_indices,
@@ -794,7 +893,8 @@ void GradientBooster::LoadState(std::vector<Tree> trees,
                                 std::vector<double> feature_importance_sums,
                                 int best_iteration,
                                 double best_score,
-                                bool use_gpu) {
+                                bool use_gpu,
+                                std::uint64_t rng_state) {
   trees_ = std::move(trees);
   loss_history_ = std::move(loss_history);
   eval_loss_history_ = std::move(eval_loss_history);
@@ -808,6 +908,9 @@ void GradientBooster::LoadState(std::vector<Tree> trees,
   best_iteration_ = best_iteration;
   best_score_ = best_score;
   use_gpu_ = use_gpu;
+  if (rng_state != 0) {
+    rng_state_ = NormalizeRngState(rng_state);
+  }
 }
 
 const std::vector<double>& GradientBooster::loss_history() const noexcept {
@@ -849,6 +952,16 @@ double GradientBooster::alpha() const noexcept { return alpha_; }
 
 double GradientBooster::lambda_l2() const noexcept { return lambda_l2_; }
 
+double GradientBooster::colsample_bytree() const noexcept { return colsample_bytree_; }
+
+int GradientBooster::max_leaves() const noexcept { return max_leaves_; }
+
+int GradientBooster::min_data_in_leaf() const noexcept { return min_data_in_leaf_; }
+
+double GradientBooster::min_child_weight() const noexcept { return min_child_weight_; }
+
+double GradientBooster::gamma() const noexcept { return gamma_; }
+
 std::size_t GradientBooster::max_bins() const noexcept { return max_bins_; }
 
 const std::string& GradientBooster::nan_mode_name() const noexcept {
@@ -870,6 +983,10 @@ double GradientBooster::huber_delta() const noexcept {
 bool GradientBooster::use_gpu() const noexcept { return use_gpu_; }
 
 const std::string& GradientBooster::devices() const noexcept { return devices_; }
+
+std::uint64_t GradientBooster::random_seed() const noexcept { return random_seed_; }
+
+std::uint64_t GradientBooster::rng_state() const noexcept { return rng_state_; }
 
 bool GradientBooster::verbose() const noexcept { return verbose_; }
 

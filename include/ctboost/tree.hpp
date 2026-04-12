@@ -33,16 +33,25 @@ struct LeafRowRange {
   std::size_t end{0};
 };
 
+struct TreeBuildOptions {
+  double alpha{0.05};
+  int max_depth{6};
+  double lambda_l2{1.0};
+  bool use_gpu{false};
+  int max_leaves{0};
+  int min_data_in_leaf{0};
+  double min_child_weight{0.0};
+  double min_split_gain{0.0};
+  const std::vector<int>* allowed_features{nullptr};
+};
+
 class Tree {
  public:
   void Build(const HistMatrix& hist,
              const std::vector<float>& gradients,
              const std::vector<float>& hessians,
              const std::vector<float>& weights,
-             double alpha,
-             int max_depth,
-             double lambda_l2,
-             bool use_gpu,
+             const TreeBuildOptions& options,
              GpuHistogramWorkspace* gpu_workspace = nullptr,
              const TrainingProfiler* profiler = nullptr,
              std::vector<std::size_t>* row_indices_out = nullptr,
@@ -80,16 +89,14 @@ class Tree {
                 std::size_t row_begin,
                 std::size_t row_end,
                 int depth,
-                double alpha,
-                int max_depth,
-                double lambda_l2,
-                bool use_gpu,
+                const TreeBuildOptions& options,
                 GpuHistogramWorkspace* gpu_workspace,
                 const NodeHistogramSet* precomputed_node_stats,
                 double precomputed_histogram_ms,
                 const TrainingProfiler* profiler,
                 const LinearStatistic& statistic_engine,
-                std::vector<LeafRowRange>* leaf_row_ranges_out);
+                std::vector<LeafRowRange>* leaf_row_ranges_out,
+                int* leaf_count);
 
   std::uint16_t BinValue(std::size_t feature_index, float value) const;
 

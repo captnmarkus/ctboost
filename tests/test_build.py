@@ -26,7 +26,18 @@ def test_pool_shell_preserves_constructor_shape():
 
 
 def test_estimators_expose_sklearn_params():
-    clf = ctboost.CTBoostClassifier(iterations=32, learning_rate=0.05, task_type="GPU", verbose=True)
+    clf = ctboost.CTBoostClassifier(
+        iterations=32,
+        learning_rate=0.05,
+        task_type="GPU",
+        verbose=True,
+        colsample_bytree=0.5,
+        max_leaves=8,
+        min_data_in_leaf=3,
+        min_child_weight=0.2,
+        gamma=0.1,
+        random_seed=13,
+    )
     reg = ctboost.CTBoostRegressor(iterations=12)
 
     clf_params = clf.get_params()
@@ -36,6 +47,12 @@ def test_estimators_expose_sklearn_params():
     assert clf_params["learning_rate"] == 0.05
     assert clf_params["task_type"] == "GPU"
     assert clf_params["verbose"] is True
+    assert clf_params["colsample_bytree"] == 0.5
+    assert clf_params["max_leaves"] == 8
+    assert clf_params["min_data_in_leaf"] == 3
+    assert clf_params["min_child_weight"] == 0.2
+    assert clf_params["gamma"] == 0.1
+    assert clf_params["random_seed"] == 13
     assert clf_params["loss_function"] == "Logloss"
     assert reg_params["iterations"] == 12
     assert reg_params["loss_function"] == "RMSE"
@@ -45,6 +62,25 @@ def test_native_booster_exports_verbose_flag():
     handle = ctboost._core.GradientBooster(verbose=True)
     state = handle.export_state()
     assert state["verbose"] is True
+
+
+def test_native_booster_exports_tree_control_state():
+    handle = ctboost._core.GradientBooster(
+        colsample_bytree=0.6,
+        max_leaves=7,
+        min_data_in_leaf=4,
+        min_child_weight=0.5,
+        gamma=0.2,
+        random_seed=17,
+    )
+    state = handle.export_state()
+
+    assert state["colsample_bytree"] == 0.6
+    assert state["max_leaves"] == 7
+    assert state["min_data_in_leaf"] == 4
+    assert state["min_child_weight"] == 0.5
+    assert state["gamma"] == 0.2
+    assert state["random_seed"] == 17
 
 
 def test_debug_build_histogram_reports_matrix_shape():
