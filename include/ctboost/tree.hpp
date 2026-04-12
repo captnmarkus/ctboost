@@ -13,6 +13,10 @@ namespace ctboost {
 
 inline constexpr std::size_t kMaxCategoricalRouteBins = 256;
 
+class TrainingProfiler;
+struct GpuHistogramWorkspace;
+struct NodeHistogramSet;
+
 struct Node {
   bool is_leaf{true};
   bool is_categorical_split{false};
@@ -33,7 +37,9 @@ class Tree {
              double alpha,
              int max_depth,
              double lambda_l2,
-             bool use_gpu);
+             bool use_gpu,
+             GpuHistogramWorkspace* gpu_workspace = nullptr,
+             const TrainingProfiler* profiler = nullptr);
 
   float PredictRow(const Pool& pool, std::size_t row) const;
   float PredictBinnedRow(const HistMatrix& hist, std::size_t row) const;
@@ -69,6 +75,10 @@ class Tree {
                 int max_depth,
                 double lambda_l2,
                 bool use_gpu,
+                GpuHistogramWorkspace* gpu_workspace,
+                const NodeHistogramSet* precomputed_node_stats,
+                double precomputed_histogram_ms,
+                const TrainingProfiler* profiler,
                 const LinearStatistic& statistic_engine);
 
   std::uint16_t BinValue(std::size_t feature_index, float value) const;

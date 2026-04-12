@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <cctype>
+#include <chrono>
 #include <cmath>
+#include <cstdint>
 #include <limits>
 #include <numeric>
 #include <stdexcept>
@@ -11,6 +13,7 @@
 #include <vector>
 
 #include "ctboost/cuda_backend.hpp"
+#include "ctboost/profiler.hpp"
 
 namespace ctboost {
 namespace {
@@ -87,6 +90,70 @@ std::string NormalizeTaskType(std::string task_type) {
   return NormalizeToken(std::move(task_type));
 }
 
+HistMatrix BuildPredictionHist(const Pool& pool, const Tree& reference_tree) {
+  const std::size_t model_num_features = reference_tree.num_bins_per_feature().size();
+  if (pool.num_cols() != model_num_features) {
+    throw std::invalid_argument(
+        "prediction pool must have the same number of columns as the fitted model");
+  }
+
+  HistMatrix hist;
+  hist.num_rows = pool.num_rows();
+  hist.num_cols = pool.num_cols();
+  hist.bin_indices.resize(hist.num_rows * hist.num_cols, 0);
+  hist.num_bins_per_feature = reference_tree.num_bins_per_feature();
+  hist.cut_offsets = reference_tree.cut_offsets();
+  hist.cut_values = reference_tree.cut_values();
+  hist.categorical_mask = reference_tree.categorical_mask();
+  hist.missing_value_mask = reference_tree.missing_value_mask();
+  hist.nan_mode = reference_tree.nan_mode();
+
+  for (std::size_t feature = 0; feature < hist.num_cols; ++feature) {
+    const std::size_t offset = feature * hist.num_rows;
+    for (std::size_t row = 0; row < hist.num_rows; ++row) {
+      hist.bin_indices[offset + row] = hist.bin_value(feature, pool.feature_value(row, feature));
+    }
+  }
+
+  return hist;
+}
+
+std::vector<GpuTreeNode> FlattenTreesForGpu(const std::vector<Tree>& trees,
+                                            std::size_t tree_limit,
+                                            std::vector<std::int32_t>& tree_offsets) {
+  std::size_t total_nodes = 0;
+  for (std::size_t tree_index = 0; tree_index < tree_limit; ++tree_index) {
+    total_nodes += trees[tree_index].nodes().size();
+  }
+
+  std::vector<GpuTreeNode> flattened_nodes;
+  flattened_nodes.reserve(total_nodes);
+  tree_offsets.clear();
+  tree_offsets.reserve(tree_limit);
+
+  for (std::size_t tree_index = 0; tree_index < tree_limit; ++tree_index) {
+    const auto& tree_nodes = trees[tree_index].nodes();
+    const std::int32_t tree_offset = static_cast<std::int32_t>(flattened_nodes.size());
+    tree_offsets.push_back(tree_offset);
+    for (const Node& node : tree_nodes) {
+      GpuTreeNode gpu_node;
+      gpu_node.is_leaf = node.is_leaf ? 1U : 0U;
+      gpu_node.is_categorical_split = node.is_categorical_split ? 1U : 0U;
+      gpu_node.split_bin_index = node.split_bin_index;
+      gpu_node.split_feature_id = static_cast<std::int32_t>(node.split_feature_id);
+      gpu_node.left_child =
+          node.left_child < 0 ? -1 : tree_offset + static_cast<std::int32_t>(node.left_child);
+      gpu_node.right_child =
+          node.right_child < 0 ? -1 : tree_offset + static_cast<std::int32_t>(node.right_child);
+      gpu_node.leaf_weight = node.leaf_weight;
+      std::copy(node.left_categories.begin(), node.left_categories.end(), gpu_node.left_categories);
+      flattened_nodes.push_back(std::move(gpu_node));
+    }
+  }
+
+  return flattened_nodes;
+}
+
 void UpdatePredictions(const Tree& tree,
                        const HistMatrix& hist,
                        double learning_rate,
@@ -156,7 +223,8 @@ GradientBooster::GradientBooster(std::string objective,
                                  double quantile_alpha,
                                  double huber_delta,
                                  std::string task_type,
-                                 std::string devices)
+                                 std::string devices,
+                                 bool verbose)
     : objective_name_(std::move(objective)),
       eval_metric_name_(std::move(eval_metric)),
       objective_config_{huber_delta, quantile_alpha},
@@ -170,6 +238,7 @@ GradientBooster::GradientBooster(std::string objective,
       num_classes_(num_classes),
       max_bins_(max_bins),
       devices_(std::move(devices)),
+      verbose_(TrainingProfiler::ResolveEnabled(verbose)),
       hist_builder_(max_bins_, std::move(nan_mode)) {
   if (eval_metric_name_.empty()) {
     eval_metric_name_ = objective_name_;
@@ -234,6 +303,10 @@ void GradientBooster::Fit(const Pool& pool,
                           const Pool* eval_pool,
                           int early_stopping_rounds,
                           bool continue_training) {
+  const auto fit_start = std::chrono::steady_clock::now();
+  const TrainingProfiler profiler(verbose_);
+  profiler.LogFitStart(
+      pool.num_rows(), pool.num_cols(), iterations_, use_gpu_, prediction_dimension_);
   if (early_stopping_rounds < 0) {
     early_stopping_rounds = 0;
   }
@@ -264,9 +337,17 @@ void GradientBooster::Fit(const Pool& pool,
         "warm-start training requires the same number of features as the initial model");
   }
 
-  const HistMatrix hist = hist_builder_.Build(pool);
+  const auto hist_build_start = std::chrono::steady_clock::now();
+  const HistMatrix hist = hist_builder_.Build(pool, &profiler);
+  const double hist_build_ms =
+      std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - hist_build_start)
+          .count();
   const auto& labels = pool.labels();
   const auto& weights = pool.weights();
+  GpuHistogramWorkspacePtr gpu_hist_workspace(nullptr, DestroyGpuHistogramWorkspace);
+  if (use_gpu_) {
+    gpu_hist_workspace = CreateGpuHistogramWorkspace(hist, weights);
+  }
   const std::vector<std::int64_t>* group_ids =
       pool.has_group_ids() ? &pool.group_ids() : nullptr;
   const double total_weight = std::accumulate(
@@ -284,7 +365,9 @@ void GradientBooster::Fit(const Pool& pool,
   if (!continue_training || feature_importance_sums_.empty()) {
     feature_importance_sums_.assign(pool.num_cols(), 0.0);
   }
-  int completed_iterations = static_cast<int>(num_iterations_trained());
+  const int initial_completed_iterations = static_cast<int>(num_iterations_trained());
+  int completed_iterations = initial_completed_iterations;
+  const int target_total_iterations = initial_completed_iterations + iterations_;
   bool early_stopped = false;
 
   const std::vector<float>* eval_labels = nullptr;
@@ -317,14 +400,40 @@ void GradientBooster::Fit(const Pool& pool,
   }
 
   for (int iteration = 0; iteration < iterations_; ++iteration) {
-    const int total_iteration = completed_iterations + iteration;
+    const auto iteration_start = std::chrono::steady_clock::now();
+    const int total_iteration = initial_completed_iterations + iteration;
     std::vector<float> gradients;
     std::vector<float> hessians;
+    const auto gradient_start = std::chrono::steady_clock::now();
     objective_->compute_gradients(predictions, labels, gradients, hessians, num_classes_, group_ids);
+    const double gradient_ms =
+        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - gradient_start)
+            .count();
+    double tree_ms = 0.0;
 
     if (prediction_dimension_ == 1) {
+      if (use_gpu_) {
+        UploadHistogramTargetsGpu(gpu_hist_workspace.get(), gradients, hessians);
+      }
       Tree tree;
-      tree.Build(hist, gradients, hessians, weights, alpha_, max_depth_, lambda_l2_, use_gpu_);
+      const auto tree_start = std::chrono::steady_clock::now();
+      tree.Build(
+          hist,
+          gradients,
+          hessians,
+          weights,
+          alpha_,
+          max_depth_,
+          lambda_l2_,
+          use_gpu_,
+          gpu_hist_workspace.get(),
+          &profiler);
+      const double single_tree_ms =
+          std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - tree_start)
+              .count();
+      tree_ms += single_tree_ms;
+      profiler.LogTreeBuild(
+          total_iteration + 1, target_total_iterations, 0, prediction_dimension_, single_tree_ms);
 
       UpdatePredictions(tree, hist, learning_rate_, prediction_dimension_, 0, predictions);
       if (eval_pool != nullptr) {
@@ -345,7 +454,11 @@ void GradientBooster::Fit(const Pool& pool,
           class_hessians[row] = hessians[offset];
         }
 
+        if (use_gpu_) {
+          UploadHistogramTargetsGpu(gpu_hist_workspace.get(), class_gradients, class_hessians);
+        }
         Tree tree;
+        const auto tree_start = std::chrono::steady_clock::now();
         tree.Build(hist,
                    class_gradients,
                    class_hessians,
@@ -353,7 +466,18 @@ void GradientBooster::Fit(const Pool& pool,
                    alpha_,
                    max_depth_,
                    lambda_l2_,
-                   use_gpu_);
+                   use_gpu_,
+                   gpu_hist_workspace.get(),
+                   &profiler);
+        const double single_tree_ms =
+            std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - tree_start)
+                .count();
+        tree_ms += single_tree_ms;
+        profiler.LogTreeBuild(total_iteration + 1,
+                              target_total_iterations,
+                              class_index,
+                              prediction_dimension_,
+                              single_tree_ms);
 
         UpdatePredictions(
             tree, hist, learning_rate_, prediction_dimension_, class_index, predictions);
@@ -372,17 +496,45 @@ void GradientBooster::Fit(const Pool& pool,
       }
     }
 
+    const auto metric_start = std::chrono::steady_clock::now();
     loss_history_.push_back(
         objective_metric_->Evaluate(predictions, labels, weights, num_classes_, group_ids));
+    const double metric_ms =
+        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - metric_start)
+            .count();
     completed_iterations = total_iteration + 1;
     if (eval_pool == nullptr) {
+      const double iteration_ms =
+          std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - iteration_start)
+              .count();
+      profiler.LogIteration(total_iteration + 1,
+                            target_total_iterations,
+                            gradient_ms,
+                            tree_ms,
+                            metric_ms,
+                            0.0,
+                            iteration_ms);
       continue;
     }
 
+    const auto eval_start = std::chrono::steady_clock::now();
     const double eval_score =
         eval_metric_->Evaluate(
             eval_predictions, *eval_labels, *eval_weights, num_classes_, eval_group_ids);
+    const double eval_ms =
+        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - eval_start)
+            .count();
     eval_loss_history_.push_back(eval_score);
+    const double iteration_ms =
+        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - iteration_start)
+            .count();
+    profiler.LogIteration(total_iteration + 1,
+                          target_total_iterations,
+                          gradient_ms,
+                          tree_ms,
+                          metric_ms,
+                          eval_ms,
+                          iteration_ms);
     const bool improved =
         best_iteration_ < 0 ||
         (maximize_eval_metric_ ? eval_score > best_score_ : eval_score < best_score_);
@@ -401,10 +553,18 @@ void GradientBooster::Fit(const Pool& pool,
 
   if (eval_pool == nullptr) {
     best_iteration_ = completed_iterations > 0 ? completed_iterations - 1 : -1;
+    const double total_fit_ms =
+        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - fit_start)
+            .count();
+    profiler.LogFitSummary(hist_build_ms, total_fit_ms);
     return;
   }
 
   if (!early_stopped || best_iteration_ < 0) {
+    const double total_fit_ms =
+        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - fit_start)
+            .count();
+    profiler.LogFitSummary(hist_build_ms, total_fit_ms);
     return;
   }
 
@@ -414,6 +574,10 @@ void GradientBooster::Fit(const Pool& pool,
   loss_history_.resize(retained_iterations);
   eval_loss_history_.resize(retained_iterations);
   RecomputeFeatureImportances(trees_, pool.num_cols(), feature_importance_sums_);
+  const double total_fit_ms =
+      std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - fit_start)
+          .count();
+  profiler.LogFitSummary(hist_build_ms, total_fit_ms);
 }
 
 std::vector<float> GradientBooster::Predict(const Pool& pool, int num_iteration) const {
@@ -426,6 +590,19 @@ std::vector<float> GradientBooster::Predict(const Pool& pool, int num_iteration)
 
   std::vector<float> predictions(
       pool.num_rows() * static_cast<std::size_t>(prediction_dimension_), 0.0F);
+  if (tree_limit == 0 || pool.num_rows() == 0) {
+    return predictions;
+  }
+
+  if (use_gpu_ && CudaBackendCompiled()) {
+    const HistMatrix hist = BuildPredictionHist(pool, trees_.front());
+    std::vector<std::int32_t> tree_offsets;
+    const std::vector<GpuTreeNode> flattened_nodes = FlattenTreesForGpu(trees_, tree_limit, tree_offsets);
+    PredictRawGpu(
+        hist, flattened_nodes, tree_offsets, static_cast<float>(learning_rate_), prediction_dimension_, predictions);
+    return predictions;
+  }
+
   if (prediction_dimension_ == 1) {
     for (std::size_t tree_index = 0; tree_index < tree_limit; ++tree_index) {
       const Tree& tree = trees_[tree_index];
@@ -575,6 +752,8 @@ double GradientBooster::huber_delta() const noexcept {
 bool GradientBooster::use_gpu() const noexcept { return use_gpu_; }
 
 const std::string& GradientBooster::devices() const noexcept { return devices_; }
+
+bool GradientBooster::verbose() const noexcept { return verbose_; }
 
 const std::vector<Tree>& GradientBooster::trees() const noexcept { return trees_; }
 

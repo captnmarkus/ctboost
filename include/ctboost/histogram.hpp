@@ -10,6 +10,8 @@
 
 namespace ctboost {
 
+class TrainingProfiler;
+
 enum class NanMode : std::uint8_t {
   Forbidden = 0,
   Min = 1,
@@ -41,7 +43,7 @@ class HistBuilder {
  public:
   explicit HistBuilder(std::size_t max_bins = 256, std::string nan_mode = "Min");
 
-  HistMatrix Build(const Pool& pool) const;
+  HistMatrix Build(const Pool& pool, const TrainingProfiler* profiler = nullptr) const;
   std::size_t max_bins() const noexcept;
   NanMode nan_mode() const noexcept;
   const std::string& nan_mode_name() const noexcept;

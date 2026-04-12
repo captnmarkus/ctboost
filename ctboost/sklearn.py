@@ -109,6 +109,7 @@ class _BaseCTBoost(BaseEstimator):
         warm_start: bool = False,
         task_type: str = "CPU",
         devices: str = "0",
+        verbose: bool = False,
     ) -> None:
         self.iterations = iterations
         self.learning_rate = learning_rate
@@ -121,6 +122,7 @@ class _BaseCTBoost(BaseEstimator):
         self.warm_start = warm_start
         self.task_type = task_type
         self.devices = devices
+        self.verbose = verbose
 
     def _fit_impl(
         self,
@@ -152,6 +154,7 @@ class _BaseCTBoost(BaseEstimator):
             "nan_mode": self.nan_mode,
             "task_type": self.task_type,
             "devices": self.devices,
+            "verbose": self.verbose,
         }
         if self.eval_metric is not None:
             train_params["eval_metric"] = self.eval_metric
@@ -276,6 +279,7 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
         warm_start: bool = False,
         task_type: str = "CPU",
         devices: str = "0",
+        verbose: bool = False,
     ) -> None:
         super().__init__(
             iterations=iterations,
@@ -289,6 +293,7 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
             warm_start=warm_start,
             task_type=task_type,
             devices=devices,
+            verbose=verbose,
         )
         self.class_weight = class_weight
         self.scale_pos_weight = scale_pos_weight
@@ -422,6 +427,7 @@ class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
         warm_start: bool = False,
         task_type: str = "CPU",
         devices: str = "0",
+        verbose: bool = False,
     ) -> None:
         super().__init__(
             iterations=iterations,
@@ -435,6 +441,7 @@ class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
             warm_start=warm_start,
             task_type=task_type,
             devices=devices,
+            verbose=verbose,
         )
 
     def fit(
@@ -481,6 +488,7 @@ class CTBoostRanker(_BaseCTBoost):
         warm_start: bool = False,
         task_type: str = "CPU",
         devices: str = "0",
+        verbose: bool = False,
     ) -> None:
         super().__init__(
             iterations=iterations,
@@ -494,6 +502,7 @@ class CTBoostRanker(_BaseCTBoost):
             warm_start=warm_start,
             task_type=task_type,
             devices=devices,
+            verbose=verbose,
         )
 
     def fit(

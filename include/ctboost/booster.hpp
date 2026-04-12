@@ -28,7 +28,8 @@ class GradientBooster {
                   double quantile_alpha = 0.5,
                   double huber_delta = 1.0,
                   std::string task_type = "CPU",
-                  std::string devices = "0");
+                  std::string devices = "0",
+                  bool verbose = false);
 
   void Fit(const Pool& pool,
            const Pool* eval_pool = nullptr,
@@ -66,6 +67,7 @@ class GradientBooster {
   double huber_delta() const noexcept;
   bool use_gpu() const noexcept;
   const std::string& devices() const noexcept;
+  bool verbose() const noexcept;
   const std::vector<Tree>& trees() const noexcept;
   std::vector<float> get_feature_importances() const;
 
@@ -86,6 +88,7 @@ class GradientBooster {
   std::size_t max_bins_{256};
   bool use_gpu_{false};
   std::string devices_{"0"};
+  bool verbose_{false};
   HistBuilder hist_builder_;
   std::vector<Tree> trees_;
   std::vector<double> loss_history_;
