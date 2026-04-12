@@ -39,6 +39,8 @@ The current codebase supports end-to-end training and prediction for regression,
 - Build metadata reporting through `ctboost.build_info()`
 - CPU builds on standard CI runners
 - Optional CUDA compilation when building from source with a suitable toolkit
+- GPU source builds now keep fit-scoped histogram data resident on device, support shared-memory histogram accumulation, and expose GPU raw-score prediction for regression, binary classification, and multiclass models
+- Training can emit native histogram/tree timing via `verbose=True` or `CTBOOST_PROFILE=1`
 
 ## Current Limitations
 
@@ -86,7 +88,7 @@ import subprocess
 import sys
 import urllib.request
 
-tag = "v0.1.8"
+tag = "v0.1.9"
 py_tag = f"cp{sys.version_info.major}{sys.version_info.minor}"
 api_url = f"https://api.github.com/repos/captnmarkus/ctboost/releases/tags/{tag}"
 
