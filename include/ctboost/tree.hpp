@@ -28,6 +28,11 @@ struct Node {
   std::array<std::uint8_t, kMaxCategoricalRouteBins> left_categories{};
 };
 
+struct LeafRowRange {
+  std::size_t begin{0};
+  std::size_t end{0};
+};
+
 class Tree {
  public:
   void Build(const HistMatrix& hist,
@@ -39,7 +44,9 @@ class Tree {
              double lambda_l2,
              bool use_gpu,
              GpuHistogramWorkspace* gpu_workspace = nullptr,
-             const TrainingProfiler* profiler = nullptr);
+             const TrainingProfiler* profiler = nullptr,
+             std::vector<std::size_t>* row_indices_out = nullptr,
+             std::vector<LeafRowRange>* leaf_row_ranges_out = nullptr);
 
   float PredictRow(const Pool& pool, std::size_t row) const;
   float PredictBinnedRow(const HistMatrix& hist, std::size_t row) const;
@@ -81,7 +88,8 @@ class Tree {
                 const NodeHistogramSet* precomputed_node_stats,
                 double precomputed_histogram_ms,
                 const TrainingProfiler* profiler,
-                const LinearStatistic& statistic_engine);
+                const LinearStatistic& statistic_engine,
+                std::vector<LeafRowRange>* leaf_row_ranges_out);
 
   std::uint16_t BinValue(std::size_t feature_index, float value) const;
 

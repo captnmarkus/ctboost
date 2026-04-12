@@ -106,6 +106,39 @@ void TrainingProfiler::LogNodeHistogram(int depth,
           elapsed_ms);
 }
 
+void TrainingProfiler::LogNodeSearch(int depth,
+                                     std::size_t rows,
+                                     int feature_id,
+                                     double p_value,
+                                     double chi_square,
+                                     bool split_valid,
+                                     bool is_categorical,
+                                     double gain,
+                                     std::size_t left_rows,
+                                     std::size_t right_rows,
+                                     double feature_ms,
+                                     double split_ms,
+                                     double partition_ms) const {
+  if (!enabled_) {
+    return;
+  }
+  LogLine(
+      "node_search depth=%d rows=%zu feature=%d p_value=%.6g chi_square=%.6g split_valid=%d categorical=%d gain=%.6g left_rows=%zu right_rows=%zu feature_ms=%.3f split_ms=%.3f partition_ms=%.3f",
+      depth,
+      rows,
+      feature_id,
+      p_value,
+      chi_square,
+      split_valid ? 1 : 0,
+      is_categorical ? 1 : 0,
+      gain,
+      left_rows,
+      right_rows,
+      feature_ms,
+      split_ms,
+      partition_ms);
+}
+
 void TrainingProfiler::LogTreeBuild(int iteration,
                                     int total_iterations,
                                     int class_index,
@@ -126,17 +159,19 @@ void TrainingProfiler::LogIteration(int iteration,
                                     int total_iterations,
                                     double gradient_ms,
                                     double tree_ms,
+                                    double prediction_ms,
                                     double metric_ms,
                                     double eval_ms,
                                     double total_ms) const {
   if (!enabled_) {
     return;
   }
-  LogLine("iteration iteration=%d/%d gradient_ms=%.3f tree_ms=%.3f metric_ms=%.3f eval_ms=%.3f total_ms=%.3f",
+  LogLine("iteration iteration=%d/%d gradient_ms=%.3f tree_ms=%.3f prediction_ms=%.3f metric_ms=%.3f eval_ms=%.3f total_ms=%.3f",
           iteration,
           total_iterations,
           gradient_ms,
           tree_ms,
+          prediction_ms,
           metric_ms,
           eval_ms,
           total_ms);

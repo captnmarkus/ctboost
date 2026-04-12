@@ -26,6 +26,19 @@ class TrainingProfiler {
                          std::size_t total_bins,
                          double elapsed_ms) const;
   void LogNodeHistogram(int depth, std::size_t rows, bool use_gpu, double elapsed_ms) const;
+  void LogNodeSearch(int depth,
+                     std::size_t rows,
+                     int feature_id,
+                     double p_value,
+                     double chi_square,
+                     bool split_valid,
+                     bool is_categorical,
+                     double gain,
+                     std::size_t left_rows,
+                     std::size_t right_rows,
+                     double feature_ms,
+                     double split_ms,
+                     double partition_ms) const;
   void LogTreeBuild(int iteration,
                     int total_iterations,
                     int class_index,
@@ -35,6 +48,7 @@ class TrainingProfiler {
                     int total_iterations,
                     double gradient_ms,
                     double tree_ms,
+                    double prediction_ms,
                     double metric_ms,
                     double eval_ms,
                     double total_ms) const;

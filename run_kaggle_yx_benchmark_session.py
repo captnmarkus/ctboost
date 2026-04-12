@@ -139,8 +139,10 @@ def _build_kernel_source(
                 self.global_prior_ = (
                     train[target_col].value_counts(normalize=True).sort_index().values
                 )
+                te_frames = []
 
                 for column in self.category_cols:
+                    column_te = {{}}
                     stats_list = []
                     for class_offset, class_index in enumerate(self.classes_):
                         y_binary = (train[target_col] == class_index).astype(int)
@@ -151,13 +153,14 @@ def _build_kernel_source(
                         df["cum_sum"] = df.groupby(column)["y"].cumsum() - df["y"]
                         smooth_prior = self.a * self.global_prior_[class_offset]
                         te_col = f"{{column}}_TE_cls{{class_index}}"
-                        df[te_col] = (df["cum_sum"] + smooth_prior) / (df["cum_cnt"] + self.a)
-                        df.loc[df["cum_cnt"] == -1, te_col] = self.global_prior_[class_offset]
-                        self.train[te_col] = df[te_col].values
+                        te_values = (df["cum_sum"] + smooth_prior) / (df["cum_cnt"] + self.a)
+                        te_values = te_values.mask(
+                            df["cum_cnt"] == -1, self.global_prior_[class_offset]
+                        )
+                        column_te[te_col] = te_values.astype(np.float32)
 
-                        stats_df = df.groupby(column)["y"].agg(["count", "sum"]).reset_index()
+                        stats_df = df.groupby(column)["y"].agg(["count", "sum"])
                         stats_df.columns = [
-                            column,
                             f"{{column}}_count_cls{{class_index}}",
                             f"{{column}}_sum_cls{{class_index}}",
                         ]
@@ -166,38 +169,41 @@ def _build_kernel_source(
                         ]
                         stats_list.append(stats_df)
 
-                    combined_stats = stats_list[0]
-                    for offset in range(1, len(stats_list)):
-                        combined_stats = combined_stats.merge(
-                            stats_list[offset], on=column, how="outer"
-                        )
-                    setattr(self, f"{{column}}_stats", combined_stats)
+                    te_frames.append(pd.DataFrame(column_te, index=train.index))
+                    setattr(self, f"{{column}}_stats", pd.concat(stats_list, axis=1))
+
+                if te_frames:
+                    self.train = pd.concat([self.train] + te_frames, axis=1, copy=False)
 
                 return self.train
 
             def transform(self, test):
-                transformed = test
+                te_frames = []
                 for column in self.category_cols:
                     stats_df = getattr(self, f"{{column}}_stats")
-                    transformed = transformed.merge(stats_df, on=column, how="left")
+                    lookup = test[[column]].join(stats_df, on=column)
+                    column_te = {{}}
                     for class_offset, class_index in enumerate(self.classes_):
                         te_col = f"{{column}}_TE_cls{{class_index}}"
                         count_col = f"{{column}}_count_cls{{class_index}}"
                         sum_col = f"{{column}}_sum_cls{{class_index}}"
                         prior_col = f"{{column}}_prior_cls{{class_index}}"
-                        if count_col in transformed.columns:
-                            transformed[te_col] = (
-                                transformed[sum_col] + self.a * transformed[prior_col]
-                            ) / (transformed[count_col] + self.a)
-                            transformed[te_col] = transformed[te_col].fillna(
-                                transformed[prior_col]
-                            )
-                            transformed.drop(
-                                [count_col, sum_col, prior_col], axis=1, inplace=True
-                            )
+                        if count_col in lookup.columns:
+                            te_values = (
+                                lookup[sum_col] + self.a * lookup[prior_col]
+                            ) / (lookup[count_col] + self.a)
+                            column_te[te_col] = te_values.fillna(
+                                lookup[prior_col]
+                            ).astype(np.float32)
                         else:
-                            transformed[te_col] = self.global_prior_[class_offset]
-                return transformed
+                            column_te[te_col] = np.full(
+                                len(test), self.global_prior_[class_offset], dtype=np.float32
+                            )
+                    te_frames.append(pd.DataFrame(column_te, index=test.index))
+
+                if not te_frames:
+                    return test
+                return pd.concat([test] + te_frames, axis=1, copy=False)
 
 
         def reduce_mem_usage(df, float16_as32=True):
