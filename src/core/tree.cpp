@@ -64,22 +64,12 @@ NodeHistogramSet ComputeNodeHistogramSet(const HistMatrix& hist,
                                          const std::vector<float>& hessians,
                                          const std::vector<float>& weights,
                                          const std::vector<std::size_t>& row_indices,
+                                         std::size_t row_begin,
+                                         std::size_t row_end,
                                          bool use_gpu,
                                          GpuHistogramWorkspace* gpu_workspace) {
   NodeHistogramSet stats;
   stats.by_feature.resize(hist.num_cols);
-
-  for (const std::size_t row : row_indices) {
-    const double gradient = gradients[row];
-    const double hessian = hessians[row];
-    const double sample_weight = weights[row];
-    stats.total_gradient += sample_weight * gradient;
-    stats.total_hessian += sample_weight * hessian;
-    stats.gradient_square_sum += sample_weight * gradient * gradient;
-    stats.sample_weight_sum += sample_weight;
-  }
-  stats.gradient_variance = ComputeGradientVariance(
-      stats.total_gradient, stats.gradient_square_sum, stats.sample_weight_sum);
 
   if (use_gpu) {
     if (gpu_workspace == nullptr) {
@@ -90,12 +80,22 @@ NodeHistogramSet ComputeNodeHistogramSet(const HistMatrix& hist,
     std::vector<float> flat_hessian_sums;
     std::vector<float> flat_weight_sums;
     std::vector<std::size_t> feature_offsets;
+    GpuNodeStatistics gpu_node_stats;
     BuildHistogramsGpu(gpu_workspace,
                        row_indices,
+                       row_begin,
+                       row_end,
                        flat_gradient_sums,
                        flat_hessian_sums,
                        flat_weight_sums,
-                       feature_offsets);
+                       feature_offsets,
+                       &gpu_node_stats);
+    stats.sample_weight_sum = gpu_node_stats.sample_weight_sum;
+    stats.total_gradient = gpu_node_stats.total_gradient;
+    stats.total_hessian = gpu_node_stats.total_hessian;
+    stats.gradient_square_sum = gpu_node_stats.gradient_square_sum;
+    stats.gradient_variance = ComputeGradientVariance(
+        stats.total_gradient, stats.gradient_square_sum, stats.sample_weight_sum);
 
     for (std::size_t feature = 0; feature < hist.num_cols; ++feature) {
       const std::size_t begin = feature_offsets[feature];
@@ -115,6 +115,19 @@ NodeHistogramSet ComputeNodeHistogramSet(const HistMatrix& hist,
     return stats;
   }
 
+  for (std::size_t index = row_begin; index < row_end; ++index) {
+    const std::size_t row = row_indices[index];
+    const double gradient = gradients[row];
+    const double hessian = hessians[row];
+    const double sample_weight = weights[row];
+    stats.total_gradient += sample_weight * gradient;
+    stats.total_hessian += sample_weight * hessian;
+    stats.gradient_square_sum += sample_weight * gradient * gradient;
+    stats.sample_weight_sum += sample_weight;
+  }
+  stats.gradient_variance = ComputeGradientVariance(
+      stats.total_gradient, stats.gradient_square_sum, stats.sample_weight_sum);
+
   for (std::size_t feature = 0; feature < hist.num_cols; ++feature) {
     const std::size_t feature_bins_count = hist.num_bins(feature);
     BinStatistics feature_stats;
@@ -123,7 +136,8 @@ NodeHistogramSet ComputeNodeHistogramSet(const HistMatrix& hist,
     feature_stats.weight_sums.assign(feature_bins_count, 0.0);
 
     const auto* feature_bins = hist.feature_bins(feature);
-    for (const std::size_t row : row_indices) {
+    for (std::size_t index = row_begin; index < row_end; ++index) {
+      const std::size_t row = row_indices[index];
       const std::size_t bin = feature_bins[row];
       const double sample_weight = static_cast<double>(weights[row]);
       feature_stats.gradient_sums[bin] += sample_weight * gradients[row];
@@ -191,7 +205,7 @@ FeatureChoice SelectBestFeature(const NodeHistogramSet& node_stats,
       continue;
     }
 
-    const LinearStatisticResult result = statistic_engine.EvaluateFromBinStatistics(
+    const auto result = statistic_engine.EvaluateScoreFromBinStatistics(
         feature_stats,
         node_stats.total_gradient,
         node_stats.sample_weight_sum,
@@ -341,8 +355,19 @@ void Tree::Build(const HistMatrix& hist,
                  bool use_gpu,
                  GpuHistogramWorkspace* gpu_workspace,
                  const TrainingProfiler* profiler) {
-  if (gradients.size() != hist.num_rows || hessians.size() != hist.num_rows ||
-      weights.size() != hist.num_rows) {
+  if (weights.size() != hist.num_rows) {
+    throw std::invalid_argument("weight size must match the histogram row count");
+  }
+  if (use_gpu) {
+    if (gpu_workspace == nullptr) {
+      throw std::invalid_argument("GPU histogram workspace must be provided when task_type='GPU'");
+    }
+    if ((!gradients.empty() && gradients.size() != hist.num_rows) ||
+        (!hessians.empty() && hessians.size() != hist.num_rows)) {
+      throw std::invalid_argument(
+          "non-empty gradient and hessian buffers must match the histogram row count");
+    }
+  } else if (gradients.size() != hist.num_rows || hessians.size() != hist.num_rows) {
     throw std::invalid_argument(
         "gradient, hessian, and weight sizes must match the histogram row count");
   }
@@ -366,6 +391,8 @@ void Tree::Build(const HistMatrix& hist,
             weights,
             row_indices,
             0,
+            row_indices.size(),
+            0,
             alpha,
             max_depth,
             lambda_l2,
@@ -381,7 +408,9 @@ int Tree::BuildNode(const HistMatrix& hist,
                     const std::vector<float>& gradients,
                     const std::vector<float>& hessians,
                     const std::vector<float>& weights,
-                    const std::vector<std::size_t>& row_indices,
+                    std::vector<std::size_t>& row_indices,
+                    std::size_t row_begin,
+                    std::size_t row_end,
                     int depth,
                     double alpha,
                     int max_depth,
@@ -392,20 +421,21 @@ int Tree::BuildNode(const HistMatrix& hist,
                     double precomputed_histogram_ms,
                     const TrainingProfiler* profiler,
                     const LinearStatistic& statistic_engine) {
+  const std::size_t row_count = row_end - row_begin;
   NodeHistogramSet node_stats;
   double histogram_ms = precomputed_histogram_ms;
   if (precomputed_node_stats != nullptr) {
     node_stats = *precomputed_node_stats;
   } else {
     const auto histogram_start = std::chrono::steady_clock::now();
-    node_stats =
-        ComputeNodeHistogramSet(hist, gradients, hessians, weights, row_indices, use_gpu, gpu_workspace);
+    node_stats = ComputeNodeHistogramSet(
+        hist, gradients, hessians, weights, row_indices, row_begin, row_end, use_gpu, gpu_workspace);
     histogram_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - histogram_start)
             .count();
   }
   if (profiler != nullptr && profiler->enabled()) {
-    profiler->LogNodeHistogram(depth, row_indices.size(), use_gpu, histogram_ms);
+    profiler->LogNodeHistogram(depth, row_count, use_gpu, histogram_ms);
   }
 
   Node node;
@@ -415,7 +445,7 @@ int Tree::BuildNode(const HistMatrix& hist,
   const int node_index = static_cast<int>(nodes_.size());
   nodes_.push_back(node);
 
-  if (row_indices.size() <= 1 || depth >= max_depth) {
+  if (row_count <= 1 || depth >= max_depth) {
     return node_index;
   }
 
@@ -435,36 +465,38 @@ int Tree::BuildNode(const HistMatrix& hist,
     return node_index;
   }
 
-  std::vector<std::size_t> left_rows;
-  std::vector<std::size_t> right_rows;
-  left_rows.reserve(row_indices.size());
-  right_rows.reserve(row_indices.size());
-
   const auto* feature_bins = hist.feature_bins(static_cast<std::size_t>(feature_choice.feature_id));
-  for (const std::size_t row : row_indices) {
+  const auto left_begin = row_indices.begin() + static_cast<std::ptrdiff_t>(row_begin);
+  const auto right_end = row_indices.begin() + static_cast<std::ptrdiff_t>(row_end);
+  const auto split_middle = std::partition(left_begin, right_end, [&](std::size_t row) {
     const std::uint16_t bin = feature_bins[row];
-    const bool goes_left = split_choice.is_categorical
-                               ? split_choice.left_categories[bin] != 0
-                               : bin <= split_choice.split_bin;
-    if (goes_left) {
-      left_rows.push_back(row);
-    } else {
-      right_rows.push_back(row);
-    }
-  }
-
-  if (left_rows.empty() || right_rows.empty()) {
+    return split_choice.is_categorical ? split_choice.left_categories[bin] != 0
+                                       : bin <= split_choice.split_bin;
+  });
+  const std::size_t left_end =
+      row_begin + static_cast<std::size_t>(std::distance(left_begin, split_middle));
+  if (left_end == row_begin || left_end == row_end) {
     return node_index;
   }
+  const std::size_t left_count = left_end - row_begin;
+  const std::size_t right_count = row_end - left_end;
 
   NodeHistogramSet left_child_stats;
   NodeHistogramSet right_child_stats;
   double left_child_histogram_ms = 0.0;
   double right_child_histogram_ms = 0.0;
-  if (left_rows.size() <= right_rows.size()) {
+  if (left_count <= right_count) {
     const auto direct_child_start = std::chrono::steady_clock::now();
     left_child_stats = ComputeNodeHistogramSet(
-        hist, gradients, hessians, weights, left_rows, use_gpu, gpu_workspace);
+        hist,
+        gradients,
+        hessians,
+        weights,
+        row_indices,
+        row_begin,
+        left_end,
+        use_gpu,
+        gpu_workspace);
     left_child_histogram_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - direct_child_start)
             .count();
@@ -476,7 +508,15 @@ int Tree::BuildNode(const HistMatrix& hist,
   } else {
     const auto direct_child_start = std::chrono::steady_clock::now();
     right_child_stats = ComputeNodeHistogramSet(
-        hist, gradients, hessians, weights, right_rows, use_gpu, gpu_workspace);
+        hist,
+        gradients,
+        hessians,
+        weights,
+        row_indices,
+        left_end,
+        row_end,
+        use_gpu,
+        gpu_workspace);
     right_child_histogram_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - direct_child_start)
             .count();
@@ -500,7 +540,9 @@ int Tree::BuildNode(const HistMatrix& hist,
                 gradients,
                 hessians,
                 weights,
-                left_rows,
+                row_indices,
+                row_begin,
+                left_end,
                 depth + 1,
                 alpha,
                 max_depth,
@@ -516,7 +558,9 @@ int Tree::BuildNode(const HistMatrix& hist,
                 gradients,
                 hessians,
                 weights,
-                right_rows,
+                row_indices,
+                left_end,
+                row_end,
                 depth + 1,
                 alpha,
                 max_depth,

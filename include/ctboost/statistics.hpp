@@ -22,6 +22,12 @@ struct LinearStatisticResult {
   double p_value{1.0};
 };
 
+struct LinearStatisticScore {
+  std::size_t degrees_of_freedom{0};
+  double chi_square{0.0};
+  double p_value{1.0};
+};
+
 class LinearStatistic {
  public:
   explicit LinearStatistic(double epsilon = 1e-7);
@@ -36,6 +42,10 @@ class LinearStatistic {
                                                   double total_gradient,
                                                   double sample_weight_sum,
                                                   double gradient_variance) const;
+  LinearStatisticScore EvaluateScoreFromBinStatistics(const BinStatistics& stats,
+                                                      double total_gradient,
+                                                      double sample_weight_sum,
+                                                      double gradient_variance) const;
 
   LinearStatisticResult Evaluate(const std::vector<float>& gradients,
                                  const std::vector<float>& hessians,

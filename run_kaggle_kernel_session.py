@@ -31,12 +31,14 @@ PATCHED_FILES = [
     "include/ctboost/cuda_backend.hpp",
     "include/ctboost/histogram.hpp",
     "include/ctboost/profiler.hpp",
+    "include/ctboost/statistics.hpp",
     "include/ctboost/tree.hpp",
     "src/bindings/module.cpp",
     "src/core/booster.cpp",
     "src/core/cuda_backend_stub.cpp",
     "src/core/histogram.cpp",
     "src/core/profiler.cpp",
+    "src/core/statistics.cpp",
     "src/core/tree.cpp",
 ]
 

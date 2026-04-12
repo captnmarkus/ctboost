@@ -443,32 +443,45 @@ void GradientBooster::Fit(const Pool& pool,
 
       trees_.push_back(std::move(tree));
     } else {
-      std::vector<float> class_gradients(pool.num_rows(), 0.0F);
-      std::vector<float> class_hessians(pool.num_rows(), 0.0F);
+      std::vector<float> class_gradients;
+      std::vector<float> class_hessians;
+      const std::vector<float> empty_targets;
+      if (use_gpu_) {
+        UploadHistogramTargetMatrixGpu(
+            gpu_hist_workspace.get(),
+            gradients,
+            hessians,
+            static_cast<std::size_t>(prediction_dimension_));
+      } else {
+        class_gradients.assign(pool.num_rows(), 0.0F);
+        class_hessians.assign(pool.num_rows(), 0.0F);
+      }
 
       for (int class_index = 0; class_index < prediction_dimension_; ++class_index) {
-        for (std::size_t row = 0; row < pool.num_rows(); ++row) {
-          const std::size_t offset =
-              row * static_cast<std::size_t>(prediction_dimension_) + class_index;
-          class_gradients[row] = gradients[offset];
-          class_hessians[row] = hessians[offset];
-        }
-
         if (use_gpu_) {
-          UploadHistogramTargetsGpu(gpu_hist_workspace.get(), class_gradients, class_hessians);
+          SelectHistogramTargetGpuClass(
+              gpu_hist_workspace.get(), static_cast<std::size_t>(class_index));
+        } else {
+          for (std::size_t row = 0; row < pool.num_rows(); ++row) {
+            const std::size_t offset =
+                row * static_cast<std::size_t>(prediction_dimension_) + class_index;
+            class_gradients[row] = gradients[offset];
+            class_hessians[row] = hessians[offset];
+          }
         }
         Tree tree;
         const auto tree_start = std::chrono::steady_clock::now();
-        tree.Build(hist,
-                   class_gradients,
-                   class_hessians,
-                   weights,
-                   alpha_,
-                   max_depth_,
-                   lambda_l2_,
-                   use_gpu_,
-                   gpu_hist_workspace.get(),
-                   &profiler);
+        tree.Build(
+            hist,
+            use_gpu_ ? empty_targets : class_gradients,
+            use_gpu_ ? empty_targets : class_hessians,
+            weights,
+            alpha_,
+            max_depth_,
+            lambda_l2_,
+            use_gpu_,
+            gpu_hist_workspace.get(),
+            &profiler);
         const double single_tree_ms =
             std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - tree_start)
                 .count();

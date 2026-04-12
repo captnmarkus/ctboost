@@ -16,17 +16,20 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 - The Python boundary preserves column-major input layout for dense pandas and SciPy-ingested matrices so large pools can be handed to the native layer without an extra full-table transpose.
 - CUDA source builds now keep the binned feature matrix and histogram buffers resident on device for the full fit instead of rebuilding node-local bin matrices on every split.
 - GPU histogram construction now uses shared-memory accumulation, with a chunked shared-memory path for larger per-feature bin counts.
+- GPU tree building now batches histogram work across feature chunks, computes node aggregate statistics on device, reuses a single row-index buffer with in-place partitioning, and avoids per-class gradient and hessian re-uploads in the multiclass GPU path.
 - Tree growth now uses histogram subtraction so one child histogram can be derived from `parent - sibling` instead of rescanning both children.
 - GPU raw-score prediction is implemented for regression, binary classification, and multiclass models built with `task_type="GPU"`.
 - Histogram building now parallelizes across features and uses a hybrid exact quantile strategy that chooses between full sort and order-statistic selection per feature; large-row approximation remains available through environment overrides.
+- Feature selection now has a fast score-only linear-statistic path for large tree builds, avoiding the full covariance solve on the hot path while preserving the conditional-inference split criterion.
 - Native profiling hooks are available through `verbose=True` and `CTBOOST_PROFILE=1`, including histogram build, per-node histogram, per-tree, and overall fit timing.
 - The repository now includes `run_kaggle_kernel_session.py` for source-build validation on Kaggle GPU environments.
+- The repository now also includes `run_kaggle_yx_benchmark_session.py` for replaying the heavy ordered-target-encoding Playground benchmark on Kaggle GPUs against the current source tree.
 - The native extension is built with `scikit-build-core` and CMake.
 - Release wheels are CPU-only by default.
 - CUDA remains an optional source-build capability rather than the default PyPI wheel path.
 - The release workflow publishes dedicated Linux `x86_64` CUDA wheels as GitHub release assets for CPython `3.10` through `3.14`.
 - The dedicated CUDA wheels are built in `manylinux2014`, require a detected CUDA toolkit via `CTBOOST_REQUIRE_CUDA=ON`, and run a dedicated GPU smoke test before upload.
-- As of April 12, 2026, PR `#1` (`Accelerate GPU histograms and add Kaggle validation`) is merged on `master`, and the repository version is bumped to `0.1.9` after the live `0.1.8` PyPI release.
+- As of April 12, 2026, PR `#1` (`Accelerate GPU histograms and add Kaggle validation`) is merged on `master`, and the repository version is bumped to `0.1.10` after the live `0.1.9` PyPI release.
 - The base wheel no longer hard-depends on `scikit-learn`; estimator and CV entry points are lazy-loaded and raise a clear import error if `scikit-learn` is absent.
 
 ## Release and Wheel Policy
@@ -49,6 +52,8 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 - The merged GPU histogram/prediction pass was validated locally with:
   `python -m pytest tests/test_build.py tests/test_data_and_loss.py tests/test_sparse_input.py -q`
   `python -m pytest tests/test_booster.py tests/test_multiclass.py tests/test_sklearn.py -q`
+- The post-`0.1.9` tree-build optimization pass was revalidated locally on April 12, 2026 with:
+  `python -m pytest tests/test_build.py tests/test_booster.py tests/test_multiclass.py tests/test_sklearn.py -q`
 - Kaggle source-build validation on `playground-series-s6e4` succeeded on April 12, 2026 using notebook `maiernator/ctboost-gpu-source-validate-s6e4` version `8`.
 - That Kaggle run reported `cuda_enabled=True`, `cuda_runtime="12.8"`, `630000` training rows, and `270000` test rows.
 - The latest merged Kaggle timings are:

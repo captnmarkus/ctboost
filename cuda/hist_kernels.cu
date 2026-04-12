@@ -2,34 +2,39 @@
 
 namespace {
 
-constexpr std::size_t kSharedHistogramBins = 256;
+constexpr std::size_t kHistogramChunkBins = 256;
 constexpr std::size_t kHistogramRowTileSize = 1024;
 
 }  // namespace
 
-__global__ void HistMatrixFeatureSumsKernel(const std::uint16_t* bins,
-                                            const std::size_t* row_indices,
-                                            const float* gradients,
-                                            const float* hessians,
-                                            const float* weights,
-                                            float* gradient_sums,
-                                            float* hessian_sums,
-                                            float* weight_sums,
-                                            std::size_t node_row_count,
-                                            std::size_t total_rows,
-                                            std::size_t feature_index,
-                                            std::size_t feature_offset,
-                                            std::size_t feature_bin_count) {
-  extern __shared__ float shared_storage[];
-  float* shared_gradient_sums = shared_storage;
-  float* shared_hessian_sums = shared_gradient_sums + feature_bin_count;
-  float* shared_weight_sums = shared_hessian_sums + feature_bin_count;
+__global__ void HistMatrixFeatureChunksKernel(const std::uint16_t* bins,
+                                              const std::size_t* row_indices,
+                                              const float* gradients,
+                                              const float* hessians,
+                                              const float* weights,
+                                              const std::uint32_t* chunk_feature_indices,
+                                              const std::uint32_t* chunk_bin_starts,
+                                              const std::uint32_t* chunk_bin_counts,
+                                              const std::uint32_t* chunk_output_offsets,
+                                              float* gradient_sums,
+                                              float* hessian_sums,
+                                              float* weight_sums,
+                                              std::size_t node_row_count,
+                                              std::size_t total_rows,
+                                              std::size_t target_stride,
+                                              std::size_t target_offset) {
+  __shared__ float shared_gradient_sums[kHistogramChunkBins];
+  __shared__ float shared_hessian_sums[kHistogramChunkBins];
+  __shared__ float shared_weight_sums[kHistogramChunkBins];
 
-  if (feature_bin_count == 0) {
+  const std::size_t chunk_index = static_cast<std::size_t>(blockIdx.y);
+  const std::size_t chunk_bin_start = static_cast<std::size_t>(chunk_bin_starts[chunk_index]);
+  const std::size_t chunk_bin_count = static_cast<std::size_t>(chunk_bin_counts[chunk_index]);
+  if (chunk_bin_count == 0) {
     return;
   }
 
-  for (std::size_t bin = threadIdx.x; bin < feature_bin_count; bin += blockDim.x) {
+  for (std::size_t bin = threadIdx.x; bin < chunk_bin_count; bin += blockDim.x) {
     shared_gradient_sums[bin] = 0.0F;
     shared_hessian_sums[bin] = 0.0F;
     shared_weight_sums[bin] = 0.0F;
@@ -41,92 +46,86 @@ __global__ void HistMatrixFeatureSumsKernel(const std::uint16_t* bins,
   const std::size_t tile_end = tile_start + kHistogramRowTileSize < node_row_count
                                    ? tile_start + kHistogramRowTileSize
                                    : node_row_count;
+  const std::size_t feature_index = static_cast<std::size_t>(chunk_feature_indices[chunk_index]);
   for (std::size_t row_index = tile_start + threadIdx.x;
        row_index < tile_end;
        row_index += blockDim.x) {
     const std::size_t row = row_indices[row_index];
     const std::size_t bin = static_cast<std::size_t>(bins[feature_index * total_rows + row]);
-    if (bin >= feature_bin_count) {
+    if (bin < chunk_bin_start || bin >= chunk_bin_start + chunk_bin_count) {
       continue;
     }
 
+    const std::size_t chunk_bin = bin - chunk_bin_start;
     const float sample_weight = weights[row];
-    atomicAdd(&shared_gradient_sums[bin], sample_weight * gradients[row]);
-    atomicAdd(&shared_hessian_sums[bin], sample_weight * hessians[row]);
-    atomicAdd(&shared_weight_sums[bin], sample_weight);
+    const std::size_t target_index = row * target_stride + target_offset;
+    atomicAdd(&shared_gradient_sums[chunk_bin], sample_weight * gradients[target_index]);
+    atomicAdd(&shared_hessian_sums[chunk_bin], sample_weight * hessians[target_index]);
+    atomicAdd(&shared_weight_sums[chunk_bin], sample_weight);
   }
   __syncthreads();
 
-  for (std::size_t bin = threadIdx.x; bin < feature_bin_count; bin += blockDim.x) {
-    const std::size_t output_index = feature_offset + bin;
+  const std::size_t feature_offset = static_cast<std::size_t>(chunk_output_offsets[chunk_index]);
+  for (std::size_t bin = threadIdx.x; bin < chunk_bin_count; bin += blockDim.x) {
+    const std::size_t output_index = feature_offset + chunk_bin_start + bin;
     atomicAdd(&gradient_sums[output_index], shared_gradient_sums[bin]);
     atomicAdd(&hessian_sums[output_index], shared_hessian_sums[bin]);
     atomicAdd(&weight_sums[output_index], shared_weight_sums[bin]);
   }
 }
 
-__global__ void ChunkedHistMatrixFeatureSumsKernel(const std::uint16_t* bins,
-                                                   const std::size_t* row_indices,
-                                                   const float* gradients,
-                                                   const float* hessians,
-                                                   const float* weights,
-                                                   float* gradient_sums,
-                                                   float* hessian_sums,
-                                                   float* weight_sums,
-                                                   std::size_t node_row_count,
-                                                   std::size_t total_rows,
-                                                   std::size_t feature_index,
-                                                   std::size_t feature_offset,
-                                                   std::size_t feature_bin_count) {
-  __shared__ float shared_gradient_sums[kSharedHistogramBins];
-  __shared__ float shared_hessian_sums[kSharedHistogramBins];
-  __shared__ float shared_weight_sums[kSharedHistogramBins];
+__global__ void NodeTargetStatisticsKernel(const std::size_t* row_indices,
+                                           const float* gradients,
+                                           const float* hessians,
+                                           const float* weights,
+                                           double* node_statistics,
+                                           std::size_t node_row_count,
+                                           std::size_t target_stride,
+                                           std::size_t target_offset) {
+  __shared__ double shared_gradient[256];
+  __shared__ double shared_hessian[256];
+  __shared__ double shared_weight[256];
+  __shared__ double shared_gradient_square[256];
 
-  if (feature_bin_count == 0) {
-    return;
+  double thread_gradient = 0.0;
+  double thread_hessian = 0.0;
+  double thread_weight = 0.0;
+  double thread_gradient_square = 0.0;
+  for (std::size_t row_index = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+       row_index < node_row_count;
+       row_index += static_cast<std::size_t>(blockDim.x) * gridDim.x) {
+    const std::size_t row = row_indices[row_index];
+    const double sample_weight = static_cast<double>(weights[row]);
+    const std::size_t target_index = row * target_stride + target_offset;
+    const double gradient = static_cast<double>(gradients[target_index]);
+    const double hessian = static_cast<double>(hessians[target_index]);
+    thread_gradient += sample_weight * gradient;
+    thread_hessian += sample_weight * hessian;
+    thread_weight += sample_weight;
+    thread_gradient_square += sample_weight * gradient * gradient;
   }
 
-  const std::size_t tile_index = static_cast<std::size_t>(blockIdx.x);
-  const std::size_t tile_start = tile_index * kHistogramRowTileSize;
-  const std::size_t tile_end = tile_start + kHistogramRowTileSize < node_row_count
-                                   ? tile_start + kHistogramRowTileSize
-                                   : node_row_count;
-  for (std::size_t chunk_start = 0; chunk_start < feature_bin_count;
-       chunk_start += kSharedHistogramBins) {
-    const std::size_t chunk_bins = feature_bin_count - chunk_start < kSharedHistogramBins
-                                       ? feature_bin_count - chunk_start
-                                       : kSharedHistogramBins;
-    for (std::size_t bin = threadIdx.x; bin < chunk_bins; bin += blockDim.x) {
-      shared_gradient_sums[bin] = 0.0F;
-      shared_hessian_sums[bin] = 0.0F;
-      shared_weight_sums[bin] = 0.0F;
+  shared_gradient[threadIdx.x] = thread_gradient;
+  shared_hessian[threadIdx.x] = thread_hessian;
+  shared_weight[threadIdx.x] = thread_weight;
+  shared_gradient_square[threadIdx.x] = thread_gradient_square;
+  __syncthreads();
+
+  for (unsigned int offset = blockDim.x / 2; offset > 0; offset >>= 1) {
+    if (threadIdx.x < offset) {
+      shared_gradient[threadIdx.x] += shared_gradient[threadIdx.x + offset];
+      shared_hessian[threadIdx.x] += shared_hessian[threadIdx.x + offset];
+      shared_weight[threadIdx.x] += shared_weight[threadIdx.x + offset];
+      shared_gradient_square[threadIdx.x] += shared_gradient_square[threadIdx.x + offset];
     }
     __syncthreads();
+  }
 
-    for (std::size_t row_index = tile_start + threadIdx.x;
-         row_index < tile_end;
-         row_index += blockDim.x) {
-      const std::size_t row = row_indices[row_index];
-      const std::size_t bin = static_cast<std::size_t>(bins[feature_index * total_rows + row]);
-      if (bin < chunk_start || bin >= chunk_start + chunk_bins) {
-        continue;
-      }
-
-      const std::size_t chunk_bin = bin - chunk_start;
-      const float sample_weight = weights[row];
-      atomicAdd(&shared_gradient_sums[chunk_bin], sample_weight * gradients[row]);
-      atomicAdd(&shared_hessian_sums[chunk_bin], sample_weight * hessians[row]);
-      atomicAdd(&shared_weight_sums[chunk_bin], sample_weight);
-    }
-    __syncthreads();
-
-    for (std::size_t bin = threadIdx.x; bin < chunk_bins; bin += blockDim.x) {
-      const std::size_t output_index = feature_offset + chunk_start + bin;
-      atomicAdd(&gradient_sums[output_index], shared_gradient_sums[bin]);
-      atomicAdd(&hessian_sums[output_index], shared_hessian_sums[bin]);
-      atomicAdd(&weight_sums[output_index], shared_weight_sums[bin]);
-    }
-    __syncthreads();
+  if (threadIdx.x == 0) {
+    atomicAdd(&node_statistics[0], shared_weight[0]);
+    atomicAdd(&node_statistics[1], shared_gradient[0]);
+    atomicAdd(&node_statistics[2], shared_hessian[0]);
+    atomicAdd(&node_statistics[3], shared_gradient_square[0]);
   }
 }
 

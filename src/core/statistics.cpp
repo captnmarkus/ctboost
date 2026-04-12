@@ -174,6 +174,75 @@ BinStatistics LinearStatistic::ComputeBinStatistics(const std::vector<float>& gr
   return stats;
 }
 
+LinearStatisticScore LinearStatistic::EvaluateScoreFromBinStatistics(const BinStatistics& stats,
+                                                                     double total_gradient,
+                                                                     double sample_weight_sum,
+                                                                     double gradient_variance) const {
+  LinearStatisticScore result;
+
+  const std::size_t num_bins = stats.gradient_sums.size();
+  if (stats.hessian_sums.size() != num_bins || stats.weight_sums.size() != num_bins) {
+    throw std::invalid_argument("bin statistics vectors must have the same size");
+  }
+
+  std::size_t active_bins = 0;
+  for (std::size_t bin = 0; bin < num_bins; ++bin) {
+    if (stats.weight_sums[bin] > 0.0) {
+      ++active_bins;
+    }
+  }
+
+  if (sample_weight_sum <= 1.0 || active_bins <= 1) {
+    result.degrees_of_freedom = 0;
+    result.p_value = 1.0;
+    return result;
+  }
+
+  result.degrees_of_freedom = active_bins - 1;
+  if (gradient_variance <= std::numeric_limits<double>::epsilon()) {
+    result.p_value = 1.0;
+    return result;
+  }
+
+  const double node_count = sample_weight_sum;
+  const double gradient_mean = total_gradient / node_count;
+  const double diagonal_scale = (node_count / (node_count - 1.0)) * gradient_variance;
+  const double outer_scale = gradient_variance / (node_count - 1.0);
+
+  double diff_quadratic = 0.0;
+  double weighted_projection = 0.0;
+  double diagonal_projection = 0.0;
+  std::size_t processed_bins = 0;
+  for (std::size_t bin = 0; bin < num_bins && processed_bins < result.degrees_of_freedom; ++bin) {
+    const double bin_weight = stats.weight_sums[bin];
+    if (bin_weight <= 0.0) {
+      continue;
+    }
+
+    const double diff = stats.gradient_sums[bin] - bin_weight * gradient_mean;
+    const double diagonal = diagonal_scale * bin_weight + epsilon_;
+    diff_quadratic += (diff * diff) / diagonal;
+    weighted_projection += (bin_weight * diff) / diagonal;
+    diagonal_projection += (bin_weight * bin_weight) / diagonal;
+    ++processed_bins;
+  }
+
+  const double denominator = 1.0 - outer_scale * diagonal_projection;
+  if (denominator <= epsilon_) {
+    const LinearStatisticResult fallback =
+        EvaluateFromBinStatistics(stats, total_gradient, sample_weight_sum, gradient_variance);
+    result.degrees_of_freedom = fallback.degrees_of_freedom;
+    result.chi_square = fallback.chi_square;
+    result.p_value = fallback.p_value;
+    return result;
+  }
+
+  result.chi_square =
+      diff_quadratic + outer_scale * weighted_projection * weighted_projection / denominator;
+  result.p_value = ChiSquareSurvival(result.chi_square, result.degrees_of_freedom);
+  return result;
+}
+
 LinearStatisticResult LinearStatistic::EvaluateFromBinStatistics(const BinStatistics& stats,
                                                                 double total_gradient,
                                                                 double sample_weight_sum,
