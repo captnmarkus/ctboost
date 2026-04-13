@@ -36,18 +36,18 @@ struct MatrixView {
 };
 
 py::module_& NumpyModule() {
-  static py::module_ numpy = py::module_::import("numpy");
-  return numpy;
+  static py::module_* numpy = new py::module_(py::module_::import("numpy"));
+  return *numpy;
 }
 
 py::module_& HashlibModule() {
-  static py::module_ hashlib = py::module_::import("hashlib");
-  return hashlib;
+  static py::module_* hashlib = new py::module_(py::module_::import("hashlib"));
+  return *hashlib;
 }
 
 py::object& NumpyFloatingType() {
-  static py::object numpy_floating = NumpyModule().attr("floating");
-  return numpy_floating;
+  static py::object* numpy_floating = new py::object(NumpyModule().attr("floating"));
+  return *numpy_floating;
 }
 
 py::array EnsureObjectMatrix(py::array raw_matrix) {
