@@ -4,6 +4,8 @@ import os
 import socket
 import subprocess
 import sys
+import threading
+import time
 import textwrap
 
 import numpy as np
@@ -12,12 +14,35 @@ from sklearn.datasets import make_classification, make_regression
 
 import ctboost
 import ctboost._core as _core
+from ctboost.distributed import (
+    DistributedCollectiveServer,
+    distributed_tcp_request,
+)
 
 
 def _find_free_tcp_port() -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.bind(("127.0.0.1", 0))
         return int(sock.getsockname()[1])
+
+
+def test_distributed_tcp_request_retries_until_coordinator_is_ready():
+    port = _find_free_tcp_port()
+    root = f"tcp://127.0.0.1:{port}"
+    server = DistributedCollectiveServer("127.0.0.1", port)
+
+    def delayed_start() -> None:
+        time.sleep(0.2)
+        server.start()
+
+    starter = threading.Thread(target=delayed_start, daemon=True)
+    starter.start()
+    try:
+        response = distributed_tcp_request(root, 5.0, "ping", "__health__", 0, 1, b"")
+        assert response == b""
+    finally:
+        starter.join(timeout=5.0)
+        server.stop()
 
 
 def test_booster_save_load_and_staged_predict_round_trip(tmp_path: Path):

@@ -76,22 +76,36 @@ def distributed_tcp_request(
     parsed = parse_distributed_root(root)
     if parsed.backend != "tcp" or parsed.host is None or parsed.port is None:
         raise ValueError("distributed tcp request requires a tcp://host:port root")
-
-    with socket.create_connection((parsed.host, parsed.port), timeout=timeout_seconds) as connection:
-        connection.settimeout(timeout_seconds)
-        stream = connection.makefile("rwb", buffering=0)
-        header = f"{op}\t{key}\t{rank}\t{world_size}\t{len(payload)}\n".encode("utf-8")
-        stream.write(header)
-        if payload:
-            stream.write(payload)
-        response_header = _read_line(stream).split("\t", 1)
-        if len(response_header) != 2:
-            raise RuntimeError("invalid distributed coordinator response")
-        status, raw_size = response_header
-        if status != "ok":
-            raise RuntimeError(raw_size)
-        response_size = int(raw_size)
-        return _read_exact(stream, response_size)
+    deadline = time.monotonic() + float(timeout_seconds)
+    last_error: Optional[BaseException] = None
+    while True:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0.0:
+            if last_error is None:
+                raise TimeoutError(f"timed out waiting for distributed tcp coordinator at {root}")
+            raise TimeoutError(
+                f"timed out waiting for distributed tcp coordinator at {root}"
+            ) from last_error
+        attempt_timeout = min(max(remaining, 0.05), 1.0)
+        try:
+            with socket.create_connection((parsed.host, parsed.port), timeout=attempt_timeout) as connection:
+                connection.settimeout(attempt_timeout)
+                stream = connection.makefile("rwb", buffering=0)
+                header = f"{op}\t{key}\t{rank}\t{world_size}\t{len(payload)}\n".encode("utf-8")
+                stream.write(header)
+                if payload:
+                    stream.write(payload)
+                response_header = _read_line(stream).split("\t", 1)
+                if len(response_header) != 2:
+                    raise RuntimeError("invalid distributed coordinator response")
+                status, raw_size = response_header
+                if status != "ok":
+                    raise RuntimeError(raw_size)
+                response_size = int(raw_size)
+                return _read_exact(stream, response_size)
+        except (ConnectionError, OSError) as exc:
+            last_error = exc
+            time.sleep(min(0.05, max(deadline - time.monotonic(), 0.0)))
 
 
 def wait_for_distributed_tcp_coordinator(root: str, timeout_seconds: float) -> None:
