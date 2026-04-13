@@ -40,7 +40,7 @@ jobs:
         shell: pwsh
         run: |
           python -m pip install --upgrade pip
-          python -m pip install "pybind11<3" numpy pandas scikit-learn pytest
+          python -m pip install "pybind11<3" numpy pandas scikit-learn scipy pytest
 
       - name: Export Python and pybind11 paths
         shell: pwsh
@@ -78,4 +78,19 @@ jobs:
 
       - name: Run tests
         shell: pwsh
-        run: pytest tests -q
+        run: |
+          $testRoot = Join-Path $env:RUNNER_TEMP "ctboost-installed-tests"
+          if (Test-Path $testRoot) {
+            Remove-Item -Recurse -Force $testRoot
+          }
+          New-Item -ItemType Directory -Force -Path $testRoot | Out-Null
+          Copy-Item -Path tests -Destination $testRoot -Recurse
+
+          Push-Location $testRoot
+          try {
+            python -c "import os, pathlib, ctboost; location = pathlib.Path(ctboost.__file__).resolve(); workspace = pathlib.Path(os.environ['GITHUB_WORKSPACE']).resolve(); print(f'ctboost imported from: {location}'); import sys; assert workspace != location and workspace not in location.parents, f'expected installed ctboost package outside workspace, got {location}'"
+
+            python -X faulthandler -m pytest tests -q
+          } finally {
+            Pop-Location
+          }

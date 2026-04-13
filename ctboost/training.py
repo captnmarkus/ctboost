@@ -9,8 +9,10 @@ from typing import Any, Dict, Iterable, List, Optional, Union
 import numpy as np
 
 from . import _core
-from ._serialization import load_booster, save_booster
-from .core import Pool
+from ._serialization import load_booster_document, save_booster
+from .core import Pool, _clone_pool
+from .feature_pipeline import FeaturePipeline
+from .prepared_data import prepare_pool, uses_feature_pipeline_params
 
 PathLike = Union[str, Path]
 
@@ -26,20 +28,27 @@ def _load_sklearn_splitters():
     return GroupKFold, KFold, StratifiedKFold
 
 
-def _pool_from_data_and_label(data: Any, label: Any, group_id: Any = None) -> Pool:
+def _pool_from_data_and_label(
+    data: Any,
+    label: Any,
+    group_id: Any = None,
+    *,
+    weight: Any = None,
+    feature_names: Optional[List[str]] = None,
+) -> Pool:
     if isinstance(data, Pool):
-        if label is None and group_id is None:
+        if label is None and group_id is None and weight is None and feature_names is None:
             return data
         resolved_label = data.label if label is None else label
+        resolved_weight = data.weight if weight is None else weight
         resolved_group_id = data.group_id if group_id is None else group_id
-        return Pool(
-            data=data.data,
+        return _clone_pool(
+            data,
             label=resolved_label,
-            cat_features=data.cat_features,
-            weight=data.weight,
+            weight=resolved_weight,
             group_id=resolved_group_id,
-            feature_names=data.feature_names,
-            _releasable_feature_storage=True,
+            feature_names=data.feature_names if feature_names is None else feature_names,
+            releasable_feature_storage=True,
         )
 
     if label is None:
@@ -47,7 +56,9 @@ def _pool_from_data_and_label(data: Any, label: Any, group_id: Any = None) -> Po
     return Pool(
         data=data,
         label=label,
+        weight=weight,
         group_id=group_id,
+        feature_names=feature_names,
         _releasable_feature_storage=True,
     )
 
@@ -82,6 +93,110 @@ def _resolve_eval_pool(eval_set: Any) -> Optional[Pool]:
 
     X_eval, y_eval, group_id = normalized
     return _pool_from_data_and_label(X_eval, y_eval, group_id=group_id)
+
+
+def _feature_pipeline_config_signature(config: Mapping[str, Any]) -> Dict[str, Any]:
+    return {
+        "cat_features": config.get("cat_features"),
+        "ordered_ctr": bool(config.get("ordered_ctr", False)),
+        "categorical_combinations": config.get("categorical_combinations"),
+        "pairwise_categorical_combinations": bool(config.get("pairwise_categorical_combinations", False)),
+        "text_features": config.get("text_features"),
+        "text_hash_dim": int(config.get("text_hash_dim", 64)),
+        "embedding_features": config.get("embedding_features"),
+        "embedding_stats": list(config.get("embedding_stats", ("mean", "std", "min", "max", "l2"))),
+        "ctr_prior_strength": float(config.get("ctr_prior_strength", 1.0)),
+        "random_seed": int(config.get("random_seed", 0)),
+    }
+
+
+def _normalize_pipeline_value(value: Any) -> Any:
+    if isinstance(value, tuple):
+        return [_normalize_pipeline_value(item) for item in value]
+    if isinstance(value, list):
+        return [_normalize_pipeline_value(item) for item in value]
+    return value
+
+
+def _assert_compatible_feature_pipeline(
+    feature_pipeline: FeaturePipeline,
+    config: Mapping[str, Any],
+) -> None:
+    pipeline_state = feature_pipeline.to_state()
+    current_signature = _feature_pipeline_config_signature(config)
+    saved_signature = {
+        "cat_features": pipeline_state.get("cat_features"),
+        "ordered_ctr": bool(pipeline_state.get("ordered_ctr", False)),
+        "categorical_combinations": pipeline_state.get("categorical_combinations"),
+        "pairwise_categorical_combinations": bool(
+            pipeline_state.get("pairwise_categorical_combinations", False)
+        ),
+        "text_features": pipeline_state.get("text_features"),
+        "text_hash_dim": int(pipeline_state.get("text_hash_dim", 64)),
+        "embedding_features": pipeline_state.get("embedding_features"),
+        "embedding_stats": list(pipeline_state.get("embedding_stats", ("mean", "std", "min", "max", "l2"))),
+        "ctr_prior_strength": float(pipeline_state.get("ctr_prior_strength", 1.0)),
+        "random_seed": int(pipeline_state.get("random_seed", 0)),
+    }
+    if _normalize_pipeline_value(saved_signature) != _normalize_pipeline_value(current_signature):
+        raise ValueError(
+            "raw-data warm start requires feature-pipeline parameters that match init_model"
+        )
+
+
+def _resolve_init_model_pipeline(init_model: Any) -> Optional[FeaturePipeline]:
+    if isinstance(init_model, Booster):
+        return init_model._feature_pipeline
+    booster = getattr(init_model, "_booster", None)
+    if isinstance(booster, Booster):
+        return booster._feature_pipeline
+    return None
+
+
+def _prepare_pool_from_raw(
+    data: Any,
+    label: Any,
+    *,
+    group_id: Any = None,
+    weight: Any = None,
+    feature_names: Optional[List[str]] = None,
+    params: Mapping[str, Any],
+    feature_pipeline: Optional[FeaturePipeline] = None,
+    fit_feature_pipeline: bool = True,
+    use_eval_external_memory: bool = False,
+) -> Pool:
+    external_memory_key = "eval_external_memory" if use_eval_external_memory else "external_memory"
+    external_memory_dir_key = (
+        "eval_external_memory_dir" if use_eval_external_memory else "external_memory_dir"
+    )
+    external_memory = bool(
+        params.get(external_memory_key, params.get("external_memory", False) if use_eval_external_memory else False)
+    )
+    external_memory_dir = params.get(external_memory_dir_key)
+    if use_eval_external_memory and external_memory_dir is None:
+        external_memory_dir = params.get("external_memory_dir")
+
+    return prepare_pool(
+        data,
+        label,
+        cat_features=params.get("cat_features"),
+        weight=weight,
+        group_id=group_id,
+        feature_names=feature_names,
+        external_memory=external_memory,
+        external_memory_dir=external_memory_dir,
+        ordered_ctr=bool(params.get("ordered_ctr", False)),
+        categorical_combinations=params.get("categorical_combinations"),
+        pairwise_categorical_combinations=bool(params.get("pairwise_categorical_combinations", False)),
+        text_features=params.get("text_features"),
+        text_hash_dim=int(params.get("text_hash_dim", 64)),
+        embedding_features=params.get("embedding_features"),
+        embedding_stats=params.get("embedding_stats", ("mean", "std", "min", "max", "l2")),
+        ctr_prior_strength=float(params.get("ctr_prior_strength", 1.0)),
+        random_seed=int(params.get("random_seed", 0)),
+        feature_pipeline=feature_pipeline,
+        fit_feature_pipeline=fit_feature_pipeline,
+    )
 
 
 def _prediction_pool(data: Any) -> Pool:
@@ -143,14 +258,10 @@ def _apply_sample_weight_to_pool(pool: Pool, sample_weight: Optional[Any]) -> Po
         raise ValueError("sample_weight size must match the number of rows")
 
     combined_weight = _combine_weight_arrays(pool.weight, resolved_weight)
-    return Pool(
-        data=pool.data,
-        label=pool.label,
-        cat_features=pool.cat_features,
+    return _clone_pool(
+        pool,
         weight=combined_weight,
-        group_id=pool.group_id,
-        feature_names=pool.feature_names,
-        _releasable_feature_storage=True,
+        releasable_feature_storage=True,
     )
 
 
@@ -256,14 +367,10 @@ def _apply_objective_weights(pool: Pool, params: Mapping[str, Any], objective_na
         return pool
 
     combined_weight = _combine_weight_arrays(pool.weight, objective_weight)
-    return Pool(
-        data=pool.data,
-        label=pool.label,
-        cat_features=pool.cat_features,
+    return _clone_pool(
+        pool,
         weight=combined_weight,
-        group_id=pool.group_id,
-        feature_names=pool.feature_names,
-        _releasable_feature_storage=True,
+        releasable_feature_storage=True,
     )
 
 
@@ -307,11 +414,26 @@ def _resolve_init_model_handle(init_model: Any) -> Optional[Any]:
 class Booster:
     """Small Python wrapper around the native gradient booster."""
 
-    def __init__(self, handle: Any) -> None:
+    def __init__(self, handle: Any, *, feature_pipeline: Optional[FeaturePipeline] = None) -> None:
         self._handle = handle
+        self._feature_pipeline = feature_pipeline
+
+    def _prediction_pool(self, data: Any) -> Pool:
+        if isinstance(data, Pool):
+            return data
+        if self._feature_pipeline is None:
+            return _prediction_pool(data)
+        num_rows = int(data.shape[0]) if hasattr(data, "shape") else len(data)
+        transformed, cat_features, feature_names = self._feature_pipeline.transform_array(data)
+        return Pool(
+            data=transformed,
+            label=np.zeros(num_rows, dtype=np.float32),
+            cat_features=cat_features,
+            feature_names=feature_names,
+        )
 
     def _predict_raw(self, data: Any, *, num_iteration: Optional[int] = None) -> np.ndarray:
-        pool = _prediction_pool(data)
+        pool = self._prediction_pool(data)
         raw = np.asarray(
             self._handle.predict(pool._handle, _resolve_num_iteration(num_iteration)),
             dtype=np.float32,
@@ -325,12 +447,12 @@ class Booster:
         return self._predict_raw(data, num_iteration=num_iteration)
 
     def staged_predict(self, data: Any) -> Iterable[np.ndarray]:
-        pool = _prediction_pool(data)
+        pool = self._prediction_pool(data)
         for iteration in range(1, self.num_iterations_trained + 1):
             yield self._predict_raw(pool, num_iteration=iteration)
 
     def predict_leaf_index(self, data: Any, *, num_iteration: Optional[int] = None) -> np.ndarray:
-        pool = _prediction_pool(data)
+        pool = self._prediction_pool(data)
         values = np.asarray(
             self._handle.predict_leaf_indices(pool._handle, _resolve_num_iteration(num_iteration)),
             dtype=np.int32,
@@ -339,7 +461,7 @@ class Booster:
         return values.reshape((pool.num_rows, tree_count))
 
     def predict_contrib(self, data: Any, *, num_iteration: Optional[int] = None) -> np.ndarray:
-        pool = _prediction_pool(data)
+        pool = self._prediction_pool(data)
         values = np.asarray(
             self._handle.predict_contributions(pool._handle, _resolve_num_iteration(num_iteration)),
             dtype=np.float32,
@@ -351,11 +473,23 @@ class Booster:
 
     def save_model(self, path: PathLike, *, model_format: Optional[str] = None) -> None:
         destination = Path(path)
-        save_booster(destination, self._handle, model_format=model_format)
+        save_booster(
+            destination,
+            self._handle,
+            model_format=model_format,
+            feature_pipeline_state=None
+            if self._feature_pipeline is None
+            else self._feature_pipeline.to_state(),
+        )
 
     @classmethod
     def load_model(cls, path: PathLike) -> "Booster":
-        return cls(load_booster(Path(path)))
+        document = load_booster_document(Path(path))
+        pipeline_state = document.get("feature_pipeline_state")
+        return cls(
+            _core.GradientBooster.from_state(document["booster_state"]),
+            feature_pipeline=None if pipeline_state is None else FeaturePipeline.from_state(pipeline_state),
+        )
 
     @property
     def loss_history(self) -> List[float]:
@@ -486,18 +620,85 @@ def cv(
 
 
 def train(
-    pool: Pool,
+    pool: Any,
     params: Mapping[str, Any],
     num_boost_round: Optional[int] = None,
     *,
+    label: Any = None,
+    weight: Any = None,
+    group_id: Any = None,
+    feature_names: Optional[List[str]] = None,
     eval_set: Any = None,
     early_stopping_rounds: Optional[int] = None,
     init_model: Any = None,
 ) -> Booster:
+    config = dict(params)
+    init_pipeline = _resolve_init_model_pipeline(init_model)
+    if isinstance(pool, Pool):
+        if label is not None or weight is not None or group_id is not None or feature_names is not None:
+            pool = _pool_from_data_and_label(
+                pool,
+                label,
+                group_id=group_id,
+                weight=weight,
+                feature_names=feature_names,
+            )
+    else:
+        if label is None:
+            raise ValueError("label must be provided when training data is not a Pool")
+        if init_pipeline is not None:
+            if uses_feature_pipeline_params(config):
+                _assert_compatible_feature_pipeline(init_pipeline, config)
+            pool = _prepare_pool_from_raw(
+                pool,
+                label,
+                group_id=group_id,
+                weight=weight,
+                feature_names=feature_names,
+                params=config,
+                feature_pipeline=init_pipeline,
+                fit_feature_pipeline=False,
+            )
+        else:
+            pool = _prepare_pool_from_raw(
+                pool,
+                label,
+                group_id=group_id,
+                weight=weight,
+                feature_names=feature_names,
+                params=config,
+            )
     if not isinstance(pool, Pool):
         raise TypeError("pool must be an instance of ctboost.Pool")
 
-    eval_pool = _resolve_eval_pool(eval_set)
+    feature_pipeline = getattr(pool, "_feature_pipeline", None)
+    normalized_eval_set = _normalize_eval_set(eval_set)
+    if isinstance(normalized_eval_set, Pool) or normalized_eval_set is None:
+        eval_pool = normalized_eval_set
+    else:
+        if len(normalized_eval_set) == 2:
+            X_eval, y_eval = normalized_eval_set
+            eval_group_id = None
+        else:
+            X_eval, y_eval, eval_group_id = normalized_eval_set
+        if feature_pipeline is not None:
+            eval_pool = _prepare_pool_from_raw(
+                X_eval,
+                y_eval,
+                group_id=eval_group_id,
+                params=config,
+                feature_pipeline=feature_pipeline,
+                fit_feature_pipeline=False,
+                use_eval_external_memory=True,
+            )
+        else:
+            eval_pool = _prepare_pool_from_raw(
+                X_eval,
+                y_eval,
+                group_id=eval_group_id,
+                params=config,
+                use_eval_external_memory=True,
+            )
     if early_stopping_rounds is not None:
         if early_stopping_rounds <= 0:
             raise ValueError("early_stopping_rounds must be a positive integer")
@@ -505,7 +706,6 @@ def train(
             raise ValueError("early_stopping_rounds requires eval_set")
     early_stopping = 0 if early_stopping_rounds is None else int(early_stopping_rounds)
 
-    config = dict(params)
     init_handle = _resolve_init_model_handle(init_model)
     init_state = None if init_handle is None else dict(init_handle.export_state())
     iterations = int(num_boost_round if num_boost_round is not None else config.get("iterations", 100))
@@ -528,6 +728,42 @@ def train(
             "lambda",
             config.get("lambda_l2", 1.0 if init_state is None else init_state["lambda_l2"]),
         )
+    )
+    subsample = float(
+        config.get("subsample", 1.0 if init_state is None else init_state.get("subsample", 1.0))
+    )
+    bootstrap_type = str(
+        config.get(
+            "bootstrap_type",
+            "No" if init_state is None else init_state.get("bootstrap_type", "No"),
+        )
+    )
+    boosting_type = str(
+        config.get(
+            "boosting_type",
+            "GradientBoosting" if init_state is None else init_state.get("boosting_type", "GradientBoosting"),
+        )
+    )
+    drop_rate = float(
+        config.get("drop_rate", 0.1 if init_state is None else init_state.get("drop_rate", 0.1))
+    )
+    skip_drop = float(
+        config.get("skip_drop", 0.5 if init_state is None else init_state.get("skip_drop", 0.5))
+    )
+    max_drop = int(
+        config.get("max_drop", 0 if init_state is None else init_state.get("max_drop", 0))
+    )
+    monotone_constraints_value = config.get(
+        "monotone_constraints",
+        [] if init_state is None else init_state.get("monotone_constraints", []),
+    )
+    monotone_constraints = [] if monotone_constraints_value is None else list(monotone_constraints_value)
+    interaction_constraints_value = config.get(
+        "interaction_constraints",
+        [] if init_state is None else init_state.get("interaction_constraints", []),
+    )
+    interaction_constraints = (
+        [] if interaction_constraints_value is None else list(interaction_constraints_value)
     )
     colsample_bytree = float(
         config.get(
@@ -568,6 +804,12 @@ def train(
         config.get("quantile_alpha", 0.5 if init_state is None else init_state["quantile_alpha"])
     )
     huber_delta = float(config.get("huber_delta", 1.0 if init_state is None else init_state["huber_delta"]))
+    tweedie_variance_power = float(
+        config.get(
+            "tweedie_variance_power",
+            1.5 if init_state is None else init_state.get("tweedie_variance_power", 1.5),
+        )
+    )
     task_type = str(config.get("task_type", "CPU" if init_state is None else init_state["task_type"]))
     devices = str(config.get("devices", "0" if init_state is None else init_state["devices"]))
     random_seed = int(
@@ -591,6 +833,14 @@ def train(
         max_depth=max_depth,
         alpha=alpha,
         lambda_l2=lambda_l2,
+        subsample=subsample,
+        bootstrap_type=bootstrap_type,
+        boosting_type=boosting_type,
+        drop_rate=drop_rate,
+        skip_drop=skip_drop,
+        max_drop=max_drop,
+        monotone_constraints=monotone_constraints,
+        interaction_constraints=interaction_constraints,
         colsample_bytree=colsample_bytree,
         max_leaves=max_leaves,
         min_data_in_leaf=min_data_in_leaf,
@@ -602,6 +852,7 @@ def train(
         eval_metric=eval_metric,
         quantile_alpha=quantile_alpha,
         huber_delta=huber_delta,
+        tweedie_variance_power=tweedie_variance_power,
         task_type=task_type,
         devices=devices,
         random_seed=random_seed,
@@ -615,4 +866,4 @@ def train(
         early_stopping,
         init_state is not None,
     )
-    return Booster(booster)
+    return Booster(booster, feature_pipeline=feature_pipeline)

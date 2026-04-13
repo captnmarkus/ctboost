@@ -101,3 +101,26 @@ def test_ranker_estimator_and_grouped_cv():
         nfold=3,
     )
     assert np.all(np.isfinite(cv_result["valid_loss_mean"]))
+
+
+def test_ranking_metrics_map_and_mrr_are_supported():
+    X, y, group_id = _make_ranking_data()
+    train_pool = ctboost.Pool(X, y, group_id=group_id)
+
+    for metric_name in ("MAP", "MRR"):
+        booster = ctboost.train(
+            train_pool,
+            {
+                "objective": "PairLogit",
+                "eval_metric": metric_name,
+                "learning_rate": 0.2,
+                "max_depth": 2,
+                "alpha": 1.0,
+                "lambda_l2": 1.0,
+            },
+            num_boost_round=6,
+            eval_set=train_pool,
+        )
+        assert booster.eval_metric_name == metric_name
+        assert booster.eval_loss_history
+        assert np.isfinite(booster.eval_loss_history[-1])

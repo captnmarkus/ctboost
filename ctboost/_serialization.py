@@ -35,12 +35,19 @@ def _looks_like_json(path: Path) -> bool:
     return prefix.startswith(b"{")
 
 
-def _booster_document(handle: Any) -> Dict[str, Any]:
-    return {
+def _booster_document(
+    handle: Any,
+    *,
+    feature_pipeline_state: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    document = {
         "schema_version": MODEL_SCHEMA_VERSION,
         "artifact_type": "ctboost.booster",
         "booster_state": dict(handle.export_state()),
     }
+    if feature_pipeline_state is not None:
+        document["feature_pipeline_state"] = feature_pipeline_state
+    return document
 
 
 def _booster_from_document(document: Dict[str, Any]) -> Any:
@@ -51,31 +58,51 @@ def _booster_from_document(document: Dict[str, Any]) -> Any:
     return _core.GradientBooster.from_state(document["booster_state"])
 
 
-def save_booster(path: Path, handle: Any, *, model_format: Optional[str] = None) -> None:
+def save_booster(
+    path: Path,
+    handle: Any,
+    *,
+    model_format: Optional[str] = None,
+    feature_pipeline_state: Optional[Dict[str, Any]] = None,
+) -> None:
     resolved_format = _normalize_model_format(path, model_format)
     path.parent.mkdir(parents=True, exist_ok=True)
+    document = _booster_document(handle, feature_pipeline_state=feature_pipeline_state)
     if resolved_format == "json":
         with path.open("w", encoding="utf-8") as stream:
-            json.dump(_booster_document(handle), stream, indent=2, sort_keys=True)
+            json.dump(document, stream, indent=2, sort_keys=True)
         return
 
     with path.open("wb") as stream:
-        pickle.dump(handle, stream, protocol=pickle.HIGHEST_PROTOCOL)
+        pickle.dump(document, stream, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-def load_booster(path: Path) -> Any:
+def load_booster_document(path: Path) -> Dict[str, Any]:
     use_json = path.suffix.lower() in JSON_MODEL_SUFFIXES or (
         path.suffix.lower() not in PICKLE_MODEL_SUFFIXES and _looks_like_json(path)
     )
     if use_json:
         with path.open("r", encoding="utf-8") as stream:
-            return _booster_from_document(json.load(stream))
+            document = json.load(stream)
+    else:
+        with path.open("rb") as stream:
+            loaded = pickle.load(stream)
+        if isinstance(loaded, _core.GradientBooster):
+            document = _booster_document(loaded)
+        elif isinstance(loaded, dict):
+            document = loaded
+        else:
+            raise TypeError("serialized model does not contain a CTBoost booster")
 
-    with path.open("rb") as stream:
-        handle = pickle.load(stream)
-    if not isinstance(handle, _core.GradientBooster):
-        raise TypeError("serialized model does not contain a CTBoost booster")
-    return handle
+    if document.get("schema_version") != MODEL_SCHEMA_VERSION:
+        raise ValueError("unsupported CTBoost model schema version")
+    if document.get("artifact_type") != "ctboost.booster":
+        raise ValueError("JSON model does not contain a CTBoost booster")
+    return document
+
+
+def load_booster(path: Path) -> Any:
+    return _booster_from_document(load_booster_document(path))
 
 
 def save_estimator(

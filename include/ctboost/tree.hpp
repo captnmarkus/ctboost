@@ -19,6 +19,12 @@ struct GpuHistogramWorkspace;
 struct GpuHistogramSnapshot;
 struct NodeHistogramSet;
 
+struct InteractionConstraintSet {
+  std::vector<std::vector<int>> groups;
+  std::vector<std::vector<int>> feature_to_groups;
+  std::vector<std::uint8_t> constrained_feature_mask;
+};
+
 struct Node {
   bool is_leaf{true};
   bool is_categorical_split{false};
@@ -45,6 +51,8 @@ struct TreeBuildOptions {
   double min_child_weight{0.0};
   double min_split_gain{0.0};
   const std::vector<int>* allowed_features{nullptr};
+  const std::vector<int>* monotone_constraints{nullptr};
+  const InteractionConstraintSet* interaction_constraints{nullptr};
 };
 
 class Tree {
@@ -105,6 +113,10 @@ class Tree {
                 bool precomputed_gpu_histogram_resident,
                 const NodeHistogramSet* precomputed_node_stats,
                 double precomputed_histogram_ms,
+                const std::vector<int>* node_allowed_features,
+                const std::vector<int>* active_interaction_groups,
+                double leaf_lower_bound,
+                double leaf_upper_bound,
                 const TrainingProfiler* profiler,
                 const LinearStatistic& statistic_engine,
                 std::vector<LeafRowRange>* leaf_row_ranges_out,

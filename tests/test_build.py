@@ -31,6 +31,17 @@ def test_estimators_expose_sklearn_params():
         learning_rate=0.05,
         task_type="GPU",
         verbose=True,
+        subsample=0.7,
+        bootstrap_type="Bernoulli",
+        boosting_type="DART",
+        drop_rate=0.2,
+        skip_drop=0.0,
+        max_drop=3,
+        cat_features=[0],
+        ordered_ctr=True,
+        categorical_combinations=[[0, 1]],
+        text_features=[2],
+        embedding_features=[3],
         colsample_bytree=0.5,
         max_leaves=8,
         min_data_in_leaf=3,
@@ -47,6 +58,17 @@ def test_estimators_expose_sklearn_params():
     assert clf_params["learning_rate"] == 0.05
     assert clf_params["task_type"] == "GPU"
     assert clf_params["verbose"] is True
+    assert clf_params["subsample"] == 0.7
+    assert clf_params["bootstrap_type"] == "Bernoulli"
+    assert clf_params["boosting_type"] == "DART"
+    assert clf_params["drop_rate"] == 0.2
+    assert clf_params["skip_drop"] == 0.0
+    assert clf_params["max_drop"] == 3
+    assert clf_params["cat_features"] == [0]
+    assert clf_params["ordered_ctr"] is True
+    assert clf_params["categorical_combinations"] == [[0, 1]]
+    assert clf_params["text_features"] == [2]
+    assert clf_params["embedding_features"] == [3]
     assert clf_params["colsample_bytree"] == 0.5
     assert clf_params["max_leaves"] == 8
     assert clf_params["min_data_in_leaf"] == 3
@@ -66,6 +88,14 @@ def test_native_booster_exports_verbose_flag():
 
 def test_native_booster_exports_tree_control_state():
     handle = ctboost._core.GradientBooster(
+        subsample=0.8,
+        bootstrap_type="Poisson",
+        boosting_type="DART",
+        drop_rate=0.25,
+        skip_drop=0.1,
+        max_drop=2,
+        monotone_constraints=[1, 0, -1],
+        interaction_constraints=[[0, 1], [2]],
         colsample_bytree=0.6,
         max_leaves=7,
         min_data_in_leaf=4,
@@ -75,6 +105,14 @@ def test_native_booster_exports_tree_control_state():
     )
     state = handle.export_state()
 
+    assert state["subsample"] == 0.8
+    assert state["bootstrap_type"] == "Poisson"
+    assert state["boosting_type"] == "DART"
+    assert state["drop_rate"] == 0.25
+    assert state["skip_drop"] == 0.1
+    assert state["max_drop"] == 2
+    assert state["monotone_constraints"] == [1, 0, -1]
+    assert state["interaction_constraints"] == [[0, 1], [2]]
     assert state["colsample_bytree"] == 0.6
     assert state["max_leaves"] == 7
     assert state["min_data_in_leaf"] == 4

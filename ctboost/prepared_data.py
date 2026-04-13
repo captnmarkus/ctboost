@@ -1,0 +1,270 @@
+"""Helpers for raw-data, feature-pipeline, and external-memory pool preparation."""
+
+from __future__ import annotations
+
+import tempfile
+from pathlib import Path
+from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
+
+import numpy as np
+
+from .core import Pool, _is_scipy_sparse_matrix, _normalize_categorical_features, _scipy_sparse_to_csc_components
+from .feature_pipeline import FeaturePipeline
+
+
+class ExternalMemoryBacking:
+    """Owns temporary disk-backed arrays for a Pool."""
+
+    def __init__(self, root: Path, arrays: Sequence[np.ndarray]) -> None:
+        self.root = Path(root)
+        self.arrays = list(arrays)
+
+    def cleanup(self) -> None:
+        for array in self.arrays:
+            flush = getattr(array, "flush", None)
+            if callable(flush):
+                flush()
+
+
+_FEATURE_PIPELINE_KEYS = {
+    "cat_features",
+    "ordered_ctr",
+    "categorical_combinations",
+    "pairwise_categorical_combinations",
+    "text_features",
+    "text_hash_dim",
+    "embedding_features",
+    "embedding_stats",
+    "ctr_prior_strength",
+    "random_seed",
+}
+
+_EXTERNAL_MEMORY_KEYS = {
+    "external_memory",
+    "external_memory_dir",
+    "eval_external_memory",
+    "eval_external_memory_dir",
+}
+
+
+def preparation_param_keys() -> Sequence[str]:
+    return tuple(sorted(_FEATURE_PIPELINE_KEYS | _EXTERNAL_MEMORY_KEYS))
+
+
+def preparation_params_from_mapping(params: Mapping[str, Any]) -> Dict[str, Any]:
+    return {key: params[key] for key in preparation_param_keys() if key in params}
+
+
+def uses_feature_pipeline_params(params: Mapping[str, Any]) -> bool:
+    return bool(
+        params.get("ordered_ctr")
+        or params.get("cat_features")
+        or params.get("categorical_combinations")
+        or params.get("pairwise_categorical_combinations")
+        or params.get("text_features")
+        or params.get("embedding_features")
+    )
+
+
+def _normalize_optional_array(values: Any, dtype: Any) -> Optional[np.ndarray]:
+    if values is None:
+        return None
+    return np.asarray(values, dtype=dtype)
+
+
+def _prepare_feature_pipeline(
+    data: Any,
+    label: Any,
+    *,
+    feature_names: Optional[Sequence[str]],
+    params: Dict[str, Any],
+    feature_pipeline: Optional[FeaturePipeline] = None,
+    fit_feature_pipeline: bool = True,
+) -> Tuple[Any, Any, Sequence[int], Optional[Sequence[str]], Optional[FeaturePipeline]]:
+    uses_pipeline = feature_pipeline is not None or uses_feature_pipeline_params(params)
+    if not uses_pipeline:
+        return data, label, _normalize_categorical_features(params.get("cat_features")), feature_names, None
+
+    pipeline = feature_pipeline
+    if pipeline is None:
+        pipeline = FeaturePipeline(
+            cat_features=params.get("cat_features"),
+            ordered_ctr=bool(params.get("ordered_ctr", False)),
+            categorical_combinations=params.get("categorical_combinations"),
+            pairwise_categorical_combinations=bool(params.get("pairwise_categorical_combinations", False)),
+            text_features=params.get("text_features"),
+            text_hash_dim=int(params.get("text_hash_dim", 64)),
+            embedding_features=params.get("embedding_features"),
+            embedding_stats=params.get("embedding_stats", ("mean", "std", "min", "max", "l2")),
+            ctr_prior_strength=float(params.get("ctr_prior_strength", 1.0)),
+            random_seed=int(params.get("random_seed", 0)),
+        )
+
+    if fit_feature_pipeline:
+        transformed_data, transformed_cat_features, transformed_feature_names = (
+            pipeline.fit_transform_array(data, label)
+        )
+    else:
+        transformed_data, transformed_cat_features, transformed_feature_names = (
+            pipeline.transform_array(data)
+        )
+    return transformed_data, label, transformed_cat_features, transformed_feature_names, pipeline
+
+
+def _open_memmap(path: Path, shape: Tuple[int, ...], *, dtype: Any, fortran_order: bool = False) -> np.memmap:
+    return np.lib.format.open_memmap(
+        path,
+        mode="w+",
+        dtype=np.dtype(dtype),
+        shape=shape,
+        fortran_order=fortran_order,
+    )
+
+
+def _dense_external_memory_pool(
+    data: Any,
+    label: Any,
+    *,
+    cat_features: Sequence[int],
+    weight: Any,
+    group_id: Any,
+    feature_names: Optional[Sequence[str]],
+    directory: Optional[Any],
+) -> Pool:
+    root = Path(directory) if directory is not None else Path(tempfile.mkdtemp(prefix="ctboost-ext-"))
+    root.mkdir(parents=True, exist_ok=True)
+    data_array = np.asarray(data, dtype=np.float32, order="F")
+    data_map = _open_memmap(root / "data.npy", data_array.shape, dtype=np.float32, fortran_order=True)
+    data_map[...] = data_array
+    data_map.flush()
+    weight_array = _normalize_optional_array(weight, np.float32)
+    group_array = _normalize_optional_array(group_id, np.int64)
+    pool = Pool(
+        data=np.load(root / "data.npy", mmap_mode="r"),
+        label=np.asarray(label, dtype=np.float32),
+        cat_features=list(cat_features),
+        weight=weight_array,
+        group_id=group_array,
+        feature_names=None if feature_names is None else list(feature_names),
+        _releasable_feature_storage=True,
+    )
+    pool._external_memory_backing = ExternalMemoryBacking(root, [data_map])
+    return pool
+
+
+def _sparse_external_memory_pool(
+    data: Any,
+    label: Any,
+    *,
+    cat_features: Sequence[int],
+    weight: Any,
+    group_id: Any,
+    feature_names: Optional[Sequence[str]],
+    directory: Optional[Any],
+) -> Pool:
+    root = Path(directory) if directory is not None else Path(tempfile.mkdtemp(prefix="ctboost-ext-"))
+    root.mkdir(parents=True, exist_ok=True)
+    sparse_data, sparse_indices, sparse_indptr, shape = _scipy_sparse_to_csc_components(data)
+    data_map = _open_memmap(root / "sparse_data.npy", sparse_data.shape, dtype=np.float32)
+    data_map[...] = sparse_data
+    data_map.flush()
+    indices_map = _open_memmap(root / "sparse_indices.npy", sparse_indices.shape, dtype=np.int64)
+    indices_map[...] = sparse_indices
+    indices_map.flush()
+    indptr_map = _open_memmap(root / "sparse_indptr.npy", sparse_indptr.shape, dtype=np.int64)
+    indptr_map[...] = sparse_indptr
+    indptr_map.flush()
+    weight_array = _normalize_optional_array(weight, np.float32)
+    group_array = _normalize_optional_array(group_id, np.int64)
+    pool = Pool.from_csc_components(
+        np.load(root / "sparse_data.npy", mmap_mode="r"),
+        np.load(root / "sparse_indices.npy", mmap_mode="r"),
+        np.load(root / "sparse_indptr.npy", mmap_mode="r"),
+        shape,
+        np.asarray(label, dtype=np.float32),
+        cat_features=list(cat_features),
+        weight=weight_array,
+        group_id=group_array,
+        feature_names=None if feature_names is None else list(feature_names),
+        _releasable_feature_storage=True,
+    )
+    pool._external_memory_backing = ExternalMemoryBacking(root, [data_map, indices_map, indptr_map])
+    return pool
+
+
+def prepare_pool(
+    data: Any,
+    label: Any,
+    *,
+    cat_features: Optional[Sequence[Any]] = None,
+    weight: Any = None,
+    group_id: Any = None,
+    feature_names: Optional[Sequence[str]] = None,
+    external_memory: bool = False,
+    external_memory_dir: Optional[Any] = None,
+    ordered_ctr: bool = False,
+    categorical_combinations: Optional[Any] = None,
+    pairwise_categorical_combinations: bool = False,
+    text_features: Optional[Any] = None,
+    text_hash_dim: int = 64,
+    embedding_features: Optional[Any] = None,
+    embedding_stats: Sequence[str] = ("mean", "std", "min", "max", "l2"),
+    ctr_prior_strength: float = 1.0,
+    random_seed: int = 0,
+    feature_pipeline: Optional[FeaturePipeline] = None,
+    fit_feature_pipeline: bool = True,
+) -> Pool:
+    prepared_data, prepared_label, prepared_cat_features, prepared_feature_names, pipeline = (
+        _prepare_feature_pipeline(
+            data,
+            label,
+            feature_names=feature_names,
+            params={
+                "cat_features": cat_features,
+                "ordered_ctr": ordered_ctr,
+                "categorical_combinations": categorical_combinations,
+                "pairwise_categorical_combinations": pairwise_categorical_combinations,
+                "text_features": text_features,
+                "text_hash_dim": text_hash_dim,
+                "embedding_features": embedding_features,
+                "embedding_stats": embedding_stats,
+                "ctr_prior_strength": ctr_prior_strength,
+                "random_seed": random_seed,
+            },
+            feature_pipeline=feature_pipeline,
+            fit_feature_pipeline=fit_feature_pipeline,
+        )
+    )
+    if external_memory:
+        if _is_scipy_sparse_matrix(prepared_data):
+            pool = _sparse_external_memory_pool(
+                prepared_data,
+                prepared_label,
+                cat_features=prepared_cat_features,
+                weight=weight,
+                group_id=group_id,
+                feature_names=prepared_feature_names,
+                directory=external_memory_dir,
+            )
+        else:
+            pool = _dense_external_memory_pool(
+                prepared_data,
+                prepared_label,
+                cat_features=prepared_cat_features,
+                weight=weight,
+                group_id=group_id,
+                feature_names=prepared_feature_names,
+                directory=external_memory_dir,
+            )
+    else:
+        pool = Pool(
+            data=prepared_data,
+            label=prepared_label,
+            cat_features=list(prepared_cat_features),
+            weight=weight,
+            group_id=group_id,
+            feature_names=None if prepared_feature_names is None else list(prepared_feature_names),
+            _releasable_feature_storage=True,
+        )
+    pool._feature_pipeline = pipeline
+    return pool

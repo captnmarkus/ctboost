@@ -82,6 +82,87 @@ def test_booster_json_save_load_round_trip(tmp_path: Path):
     assert restored.eval_metric_name == booster.eval_metric_name
 
 
+def test_low_level_train_accepts_raw_feature_pipeline_and_persists_it(tmp_path: Path):
+    rng = np.random.default_rng(17)
+    row_count = 96
+    X = np.empty((row_count, 4), dtype=object)
+    X[:, 0] = rng.choice(["red", "green", "blue"], size=row_count)
+    X[:, 1] = rng.normal(size=row_count).astype(np.float32)
+    X[:, 2] = np.where(X[:, 1].astype(np.float32) > 0.0, "warm fast fox", "cold slow fox")
+    X[:, 3] = [np.asarray([value, value * 0.5, -value], dtype=np.float32) for value in X[:, 1].astype(np.float32)]
+    y = (
+        0.8 * X[:, 1].astype(np.float32)
+        + (X[:, 0] == "red").astype(np.float32)
+        + 0.1 * (X[:, 1].astype(np.float32) > 0.0).astype(np.float32)
+    ).astype(np.float32)
+
+    booster = ctboost.train(
+        X,
+        {
+            "objective": "RMSE",
+            "learning_rate": 0.2,
+            "max_depth": 3,
+            "alpha": 1.0,
+            "lambda_l2": 1.0,
+            "cat_features": [0],
+            "ordered_ctr": True,
+            "text_features": [2],
+            "embedding_features": [3],
+        },
+        label=y,
+        num_boost_round=10,
+    )
+
+    prediction = booster.predict(X)
+    assert prediction.shape == (row_count,)
+    assert np.all(np.isfinite(prediction))
+
+    model_path = tmp_path / "raw_booster.json"
+    booster.save_model(model_path)
+    restored = ctboost.load_model(model_path)
+    np.testing.assert_allclose(restored.predict(X), prediction, rtol=1e-6, atol=1e-6)
+
+
+def test_prepare_pool_and_train_support_external_memory(tmp_path: Path):
+    X, y = make_regression(
+        n_samples=144,
+        n_features=6,
+        n_informative=4,
+        noise=0.2,
+        random_state=23,
+    )
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+
+    prepared = ctboost.prepare_pool(
+        X,
+        y,
+        external_memory=True,
+        external_memory_dir=tmp_path / "prepared_pool",
+    )
+    assert getattr(prepared, "_external_memory_backing", None) is not None
+    assert (tmp_path / "prepared_pool" / "data.npy").exists()
+
+    booster = ctboost.train(
+        X,
+        {
+            "objective": "RMSE",
+            "learning_rate": 0.2,
+            "max_depth": 2,
+            "alpha": 1.0,
+            "lambda_l2": 1.0,
+            "external_memory": True,
+            "external_memory_dir": str(tmp_path / "train_pool"),
+        },
+        label=y,
+        num_boost_round=8,
+    )
+    prediction = booster.predict(X)
+    assert prediction.shape == (X.shape[0],)
+    assert np.all(np.isfinite(prediction))
+    assert (tmp_path / "train_pool" / "data.npy").exists()
+
+
 def test_booster_state_stores_quantization_schema_once_and_loads_legacy_tree_schema():
     X, y = make_regression(
         n_samples=128,

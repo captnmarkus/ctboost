@@ -37,10 +37,12 @@ struct SplitChoice {
   std::uint16_t split_bin{0};
   std::array<std::uint8_t, kMaxCategoricalRouteBins> left_categories{};
   double gain{-std::numeric_limits<double>::infinity()};
+  double left_leaf_weight{0.0};
+  double right_leaf_weight{0.0};
 };
 
-float ComputeLeafWeight(double gradient_sum, double hessian_sum, double lambda_l2) {
-  return static_cast<float>(-gradient_sum / (hessian_sum + lambda_l2));
+double ComputeLeafWeight(double gradient_sum, double hessian_sum, double lambda_l2) {
+  return -gradient_sum / (hessian_sum + lambda_l2);
 }
 
 double ComputeGain(double gradient_sum, double hessian_sum, double lambda_l2) {
@@ -64,6 +66,121 @@ const QuantizationSchema& RequireQuantizationSchema(const QuantizationSchemaPtr&
     throw std::runtime_error("tree quantization schema is not initialized");
   }
   return *schema;
+}
+
+double ClampLeafWeight(double leaf_weight, double lower_bound, double upper_bound) {
+  return std::clamp(leaf_weight, lower_bound, upper_bound);
+}
+
+std::vector<FeatureChoice> RankFeaturesByStatistic(const NodeHistogramSet& node_stats,
+                                                   const LinearStatistic& statistic_engine,
+                                                   const std::vector<int>* allowed_features) {
+  std::vector<FeatureChoice> ranked_features;
+
+  const auto evaluate_feature = [&](std::size_t feature) {
+    const BinStatistics& feature_stats = node_stats.by_feature[feature];
+    if (feature_stats.weight_sums.size() <= 1) {
+      return;
+    }
+
+    const auto result = statistic_engine.EvaluateScoreFromBinStatistics(
+        feature_stats,
+        node_stats.total_gradient,
+        node_stats.sample_weight_sum,
+        node_stats.gradient_variance);
+    if (result.degrees_of_freedom == 0) {
+      return;
+    }
+
+    ranked_features.push_back(
+        FeatureChoice{
+            static_cast<int>(feature),
+            result.p_value,
+            result.chi_square,
+        });
+  };
+
+  if (allowed_features != nullptr && !allowed_features->empty()) {
+    for (int feature_id : *allowed_features) {
+      if (feature_id < 0 ||
+          static_cast<std::size_t>(feature_id) >= node_stats.by_feature.size()) {
+        continue;
+      }
+      evaluate_feature(static_cast<std::size_t>(feature_id));
+    }
+  } else {
+    for (std::size_t feature = 0; feature < node_stats.by_feature.size(); ++feature) {
+      evaluate_feature(feature);
+    }
+  }
+
+  std::sort(ranked_features.begin(),
+            ranked_features.end(),
+            [](const FeatureChoice& lhs, const FeatureChoice& rhs) {
+              if (std::abs(lhs.p_value - rhs.p_value) > 1e-12) {
+                return lhs.p_value < rhs.p_value;
+              }
+              return lhs.chi_square > rhs.chi_square;
+            });
+  return ranked_features;
+}
+
+bool FeatureAllowedByInteraction(int feature_id,
+                                 const InteractionConstraintSet& constraints,
+                                 const std::vector<int>* active_groups) {
+  if (feature_id < 0 ||
+      static_cast<std::size_t>(feature_id) >= constraints.feature_to_groups.size()) {
+    return false;
+  }
+  if (constraints.constrained_feature_mask[static_cast<std::size_t>(feature_id)] == 0U) {
+    return true;
+  }
+  if (active_groups == nullptr || active_groups->empty()) {
+    return true;
+  }
+  const auto& feature_groups = constraints.feature_to_groups[static_cast<std::size_t>(feature_id)];
+  for (const int group_id : feature_groups) {
+    if (std::find(active_groups->begin(), active_groups->end(), group_id) != active_groups->end()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+std::vector<int> FilterAllowedFeaturesForInteraction(
+    std::size_t num_features,
+    const std::vector<int>* parent_allowed_features,
+    const InteractionConstraintSet& constraints,
+    const std::vector<int>* active_groups) {
+  std::vector<int> filtered_features;
+  if (parent_allowed_features != nullptr && !parent_allowed_features->empty()) {
+    filtered_features.reserve(parent_allowed_features->size());
+    for (const int feature_id : *parent_allowed_features) {
+      if (FeatureAllowedByInteraction(feature_id, constraints, active_groups)) {
+        filtered_features.push_back(feature_id);
+      }
+    }
+    return filtered_features;
+  }
+
+  filtered_features.reserve(num_features);
+  for (std::size_t feature = 0; feature < num_features; ++feature) {
+    const int feature_id = static_cast<int>(feature);
+    if (FeatureAllowedByInteraction(feature_id, constraints, active_groups)) {
+      filtered_features.push_back(feature_id);
+    }
+  }
+  return filtered_features;
+}
+
+std::vector<int> IntersectSortedVectors(const std::vector<int>& lhs, const std::vector<int>& rhs) {
+  std::vector<int> intersection;
+  std::set_intersection(lhs.begin(),
+                        lhs.end(),
+                        rhs.begin(),
+                        rhs.end(),
+                        std::back_inserter(intersection));
+  return intersection;
 }
 
 GpuHistogramSnapshot SubtractGpuHistogramSnapshot(const GpuHistogramSnapshot& parent,
@@ -252,7 +369,10 @@ SplitChoice SelectBestSplit(const BinStatistics& feature_stats,
                             int min_data_in_leaf,
                             double min_child_weight,
                             double min_split_gain,
-                            bool is_categorical) {
+                            bool is_categorical,
+                            int monotone_sign,
+                            double leaf_lower_bound,
+                            double leaf_upper_bound) {
   SplitChoice best;
   const std::size_t feature_bins_count = feature_stats.gradient_sums.size();
   if (feature_bins_count <= 1) {
@@ -283,6 +403,14 @@ SplitChoice SelectBestSplit(const BinStatistics& feature_stats,
       if (left_hessian < min_child_weight || right_hessian < min_child_weight) {
         continue;
       }
+      const double left_leaf_weight = ClampLeafWeight(
+          ComputeLeafWeight(left_gradient, left_hessian, lambda_l2), leaf_lower_bound, leaf_upper_bound);
+      const double right_leaf_weight = ClampLeafWeight(
+          ComputeLeafWeight(right_gradient, right_hessian, lambda_l2), leaf_lower_bound, leaf_upper_bound);
+      if ((monotone_sign > 0 && left_leaf_weight > right_leaf_weight + 1e-12) ||
+          (monotone_sign < 0 && left_leaf_weight + 1e-12 < right_leaf_weight)) {
+        continue;
+      }
       const double gain = ComputeGain(left_gradient, left_hessian, lambda_l2) +
                           ComputeGain(right_gradient, right_hessian, lambda_l2) - parent_gain;
       if (gain <= min_split_gain) {
@@ -293,9 +421,15 @@ SplitChoice SelectBestSplit(const BinStatistics& feature_stats,
         best.valid = true;
         best.split_bin = static_cast<std::uint16_t>(split_bin);
         best.gain = gain;
+        best.left_leaf_weight = left_leaf_weight;
+        best.right_leaf_weight = right_leaf_weight;
       }
     }
 
+    return best;
+  }
+
+  if (monotone_sign != 0) {
     return best;
   }
 
@@ -360,6 +494,10 @@ SplitChoice SelectBestSplit(const BinStatistics& feature_stats,
     if (left_hessian < min_child_weight || right_hessian < min_child_weight) {
       continue;
     }
+    const double left_leaf_weight = ClampLeafWeight(
+        ComputeLeafWeight(left_gradient, left_hessian, lambda_l2), leaf_lower_bound, leaf_upper_bound);
+    const double right_leaf_weight = ClampLeafWeight(
+        ComputeLeafWeight(right_gradient, right_hessian, lambda_l2), leaf_lower_bound, leaf_upper_bound);
     const double gain = ComputeGain(left_gradient, left_hessian, lambda_l2) +
                         ComputeGain(right_gradient, right_hessian, lambda_l2) - parent_gain;
     if (gain <= min_split_gain) {
@@ -370,6 +508,8 @@ SplitChoice SelectBestSplit(const BinStatistics& feature_stats,
       best.valid = true;
       best.is_categorical = true;
       best.gain = gain;
+      best.left_leaf_weight = left_leaf_weight;
+      best.right_leaf_weight = right_leaf_weight;
       best.left_categories.fill(0);
       for (std::size_t left_index = 0; left_index <= split_index; ++left_index) {
         best.left_categories[active_bins[left_index].bin] = 1;
@@ -449,6 +589,10 @@ void Tree::Build(const HistMatrix& hist,
             false,
             nullptr,
             0.0,
+            options.allowed_features,
+            nullptr,
+            -std::numeric_limits<double>::infinity(),
+            std::numeric_limits<double>::infinity(),
             profiler,
             statistic_engine,
             leaf_row_ranges_out,
@@ -476,6 +620,10 @@ int Tree::BuildNode(const HistMatrix& hist,
                     bool precomputed_gpu_histogram_resident,
                     const NodeHistogramSet* precomputed_node_stats,
                     double precomputed_histogram_ms,
+                    const std::vector<int>* node_allowed_features,
+                    const std::vector<int>* active_interaction_groups,
+                    double leaf_lower_bound,
+                    double leaf_upper_bound,
                     const TrainingProfiler* profiler,
                     const LinearStatistic& statistic_engine,
                     std::vector<LeafRowRange>* leaf_row_ranges_out,
@@ -484,6 +632,7 @@ int Tree::BuildNode(const HistMatrix& hist,
   if (options.use_gpu) {
     (void)precomputed_node_stats;
     (void)statistic_engine;
+    (void)active_interaction_groups;
 
     GpuNodeStatistics gpu_node_stats;
     double histogram_ms = precomputed_histogram_ms;
@@ -502,8 +651,10 @@ int Tree::BuildNode(const HistMatrix& hist,
     }
 
     Node node;
-    node.leaf_weight =
-        ComputeLeafWeight(gpu_node_stats.total_gradient, gpu_node_stats.total_hessian, options.lambda_l2);
+    node.leaf_weight = static_cast<float>(ClampLeafWeight(
+        ComputeLeafWeight(gpu_node_stats.total_gradient, gpu_node_stats.total_hessian, options.lambda_l2),
+        leaf_lower_bound,
+        leaf_upper_bound));
 
     const int node_index = static_cast<int>(nodes_.size());
     nodes_.push_back(node);
@@ -525,7 +676,7 @@ int Tree::BuildNode(const HistMatrix& hist,
     }
     GpuNodeSearchResult node_search;
     SearchBestNodeSplitGpu(gpu_workspace,
-                           options.allowed_features,
+                           node_allowed_features,
                            options.lambda_l2,
                            options.min_data_in_leaf,
                            options.min_child_weight,
@@ -670,6 +821,10 @@ int Tree::BuildNode(const HistMatrix& hist,
                     true,
                     nullptr,
                     direct_child_histogram_ms,
+                    node_allowed_features,
+                    active_interaction_groups,
+                    leaf_lower_bound,
+                    leaf_upper_bound,
                     profiler,
                     statistic_engine,
                     leaf_row_ranges_out,
@@ -689,6 +844,10 @@ int Tree::BuildNode(const HistMatrix& hist,
                     false,
                     nullptr,
                     sibling_child_histogram_ms,
+                    node_allowed_features,
+                    active_interaction_groups,
+                    leaf_lower_bound,
+                    leaf_upper_bound,
                     profiler,
                     statistic_engine,
                     leaf_row_ranges_out,
@@ -709,6 +868,10 @@ int Tree::BuildNode(const HistMatrix& hist,
                     true,
                     nullptr,
                     direct_child_histogram_ms,
+                    node_allowed_features,
+                    active_interaction_groups,
+                    leaf_lower_bound,
+                    leaf_upper_bound,
                     profiler,
                     statistic_engine,
                     leaf_row_ranges_out,
@@ -728,6 +891,10 @@ int Tree::BuildNode(const HistMatrix& hist,
                     false,
                     nullptr,
                     sibling_child_histogram_ms,
+                    node_allowed_features,
+                    active_interaction_groups,
+                    leaf_lower_bound,
+                    leaf_upper_bound,
                     profiler,
                     statistic_engine,
                     leaf_row_ranges_out,
@@ -761,8 +928,10 @@ int Tree::BuildNode(const HistMatrix& hist,
   }
 
   Node node;
-  node.leaf_weight =
-      ComputeLeafWeight(node_stats.total_gradient, node_stats.total_hessian, options.lambda_l2);
+  node.leaf_weight = static_cast<float>(ClampLeafWeight(
+      ComputeLeafWeight(node_stats.total_gradient, node_stats.total_hessian, options.lambda_l2),
+      leaf_lower_bound,
+      leaf_upper_bound));
 
   const int node_index = static_cast<int>(nodes_.size());
   nodes_.push_back(node);
@@ -778,9 +947,20 @@ int Tree::BuildNode(const HistMatrix& hist,
     return node_index;
   }
 
+  const bool constrained_search =
+      (options.monotone_constraints != nullptr && !options.monotone_constraints->empty()) ||
+      options.interaction_constraints != nullptr;
   const auto feature_start = std::chrono::steady_clock::now();
-  const FeatureChoice feature_choice =
-      SelectBestFeature(node_stats, statistic_engine, options.allowed_features);
+  FeatureChoice feature_choice;
+  std::vector<FeatureChoice> ranked_features;
+  if (!constrained_search) {
+    feature_choice = SelectBestFeature(node_stats, statistic_engine, node_allowed_features);
+  } else {
+    ranked_features = RankFeaturesByStatistic(node_stats, statistic_engine, node_allowed_features);
+    if (!ranked_features.empty()) {
+      feature_choice = ranked_features.front();
+    }
+  }
   const double feature_ms =
       std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - feature_start)
           .count();
@@ -806,18 +986,54 @@ int Tree::BuildNode(const HistMatrix& hist,
     return node_index;
   }
 
+  SplitChoice split_choice;
   const auto split_start = std::chrono::steady_clock::now();
-  const SplitChoice split_choice = SelectBestSplit(
-      node_stats.by_feature[static_cast<std::size_t>(feature_choice.feature_id)],
-      node_stats.total_gradient,
-      node_stats.total_hessian,
-      node_stats.sample_weight_sum,
-      options.lambda_l2,
-      options.min_data_in_leaf,
-      options.min_child_weight,
-      options.min_split_gain,
-      hist.is_categorical(static_cast<std::size_t>(feature_choice.feature_id)));
-  const double split_ms =
+  double split_ms = 0.0;
+  if (!constrained_search) {
+    split_choice = SelectBestSplit(
+        node_stats.by_feature[static_cast<std::size_t>(feature_choice.feature_id)],
+        node_stats.total_gradient,
+        node_stats.total_hessian,
+        node_stats.sample_weight_sum,
+        options.lambda_l2,
+        options.min_data_in_leaf,
+        options.min_child_weight,
+        options.min_split_gain,
+        hist.is_categorical(static_cast<std::size_t>(feature_choice.feature_id)),
+        0,
+        leaf_lower_bound,
+        leaf_upper_bound);
+  } else {
+    for (const FeatureChoice& candidate : ranked_features) {
+      if (candidate.p_value > options.alpha) {
+        break;
+      }
+      const int monotone_sign =
+          options.monotone_constraints == nullptr ||
+                  static_cast<std::size_t>(candidate.feature_id) >= options.monotone_constraints->size()
+              ? 0
+              : (*options.monotone_constraints)[static_cast<std::size_t>(candidate.feature_id)];
+      const SplitChoice candidate_split = SelectBestSplit(
+          node_stats.by_feature[static_cast<std::size_t>(candidate.feature_id)],
+          node_stats.total_gradient,
+          node_stats.total_hessian,
+          node_stats.sample_weight_sum,
+          options.lambda_l2,
+          options.min_data_in_leaf,
+          options.min_child_weight,
+          options.min_split_gain,
+          hist.is_categorical(static_cast<std::size_t>(candidate.feature_id)),
+          monotone_sign,
+          leaf_lower_bound,
+          leaf_upper_bound);
+      if (candidate_split.valid && candidate_split.gain > 0.0) {
+        feature_choice = candidate;
+        split_choice = candidate_split;
+        break;
+      }
+    }
+  }
+  split_ms =
       std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - split_start)
           .count();
   if (!split_choice.valid || split_choice.gain <= 0.0) {
@@ -895,6 +1111,25 @@ int Tree::BuildNode(const HistMatrix& hist,
     return node_index;
   }
 
+  double left_child_lower_bound = leaf_lower_bound;
+  double left_child_upper_bound = leaf_upper_bound;
+  double right_child_lower_bound = leaf_lower_bound;
+  double right_child_upper_bound = leaf_upper_bound;
+  const int monotone_sign =
+      options.monotone_constraints == nullptr ||
+              static_cast<std::size_t>(feature_choice.feature_id) >= options.monotone_constraints->size()
+          ? 0
+          : (*options.monotone_constraints)[static_cast<std::size_t>(feature_choice.feature_id)];
+  if (monotone_sign > 0) {
+    const double midpoint = 0.5 * (split_choice.left_leaf_weight + split_choice.right_leaf_weight);
+    left_child_upper_bound = std::min(left_child_upper_bound, midpoint);
+    right_child_lower_bound = std::max(right_child_lower_bound, midpoint);
+  } else if (monotone_sign < 0) {
+    const double midpoint = 0.5 * (split_choice.left_leaf_weight + split_choice.right_leaf_weight);
+    left_child_lower_bound = std::max(left_child_lower_bound, midpoint);
+    right_child_upper_bound = std::min(right_child_upper_bound, midpoint);
+  }
+
   NodeHistogramSet left_child_stats;
   NodeHistogramSet right_child_stats;
   double left_child_histogram_ms = 0.0;
@@ -952,6 +1187,27 @@ int Tree::BuildNode(const HistMatrix& hist,
   if (leaf_count != nullptr) {
     ++(*leaf_count);
   }
+  std::vector<int> child_active_groups_storage;
+  std::vector<int> child_allowed_features_storage;
+  const std::vector<int>* child_active_groups = active_interaction_groups;
+  const std::vector<int>* child_allowed_features = node_allowed_features;
+  if (options.interaction_constraints != nullptr) {
+    const auto& constraints = *options.interaction_constraints;
+    const auto& feature_groups =
+        constraints.feature_to_groups[static_cast<std::size_t>(feature_choice.feature_id)];
+    if (!feature_groups.empty()) {
+      if (active_interaction_groups == nullptr || active_interaction_groups->empty()) {
+        child_active_groups_storage = feature_groups;
+      } else {
+        child_active_groups_storage =
+            IntersectSortedVectors(*active_interaction_groups, feature_groups);
+      }
+      child_active_groups = child_active_groups_storage.empty() ? nullptr : &child_active_groups_storage;
+      child_allowed_features_storage = FilterAllowedFeaturesForInteraction(
+          hist.num_cols, node_allowed_features, constraints, child_active_groups);
+      child_allowed_features = &child_allowed_features_storage;
+    }
+  }
   nodes_[node_index].left_child =
       BuildNode(hist,
                 gradients,
@@ -967,6 +1223,10 @@ int Tree::BuildNode(const HistMatrix& hist,
                 false,
                 &left_child_stats,
                 left_child_histogram_ms,
+                child_allowed_features,
+                child_active_groups,
+                left_child_lower_bound,
+                left_child_upper_bound,
                 profiler,
                 statistic_engine,
                 leaf_row_ranges_out,
@@ -986,6 +1246,10 @@ int Tree::BuildNode(const HistMatrix& hist,
                 false,
                 &right_child_stats,
                 right_child_histogram_ms,
+                child_allowed_features,
+                child_active_groups,
+                right_child_lower_bound,
+                right_child_upper_bound,
                 profiler,
                 statistic_engine,
                 leaf_row_ranges_out,

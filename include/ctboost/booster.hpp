@@ -22,6 +22,14 @@ class GradientBooster {
                   int max_depth = 6,
                   double alpha = 0.05,
                   double lambda_l2 = 1.0,
+                  double subsample = 1.0,
+                  std::string bootstrap_type = "No",
+                  std::string boosting_type = "GradientBoosting",
+                  double drop_rate = 0.1,
+                  double skip_drop = 0.5,
+                  int max_drop = 0,
+                  std::vector<int> monotone_constraints = {},
+                  std::vector<std::vector<int>> interaction_constraints = {},
                   double colsample_bytree = 1.0,
                   int max_leaves = 0,
                   int min_data_in_leaf = 0,
@@ -33,6 +41,7 @@ class GradientBooster {
                   std::string eval_metric = "",
                   double quantile_alpha = 0.5,
                   double huber_delta = 1.0,
+                  double tweedie_variance_power = 1.5,
                   std::string task_type = "CPU",
                   std::string devices = "0",
                   std::uint64_t random_seed = 0,
@@ -69,6 +78,14 @@ class GradientBooster {
   int max_depth() const noexcept;
   double alpha() const noexcept;
   double lambda_l2() const noexcept;
+  double subsample() const noexcept;
+  const std::string& bootstrap_type() const noexcept;
+  const std::string& boosting_type() const noexcept;
+  double drop_rate() const noexcept;
+  double skip_drop() const noexcept;
+  int max_drop() const noexcept;
+  const std::vector<int>& monotone_constraints() const noexcept;
+  const std::vector<std::vector<int>>& interaction_constraints() const noexcept;
   double colsample_bytree() const noexcept;
   int max_leaves() const noexcept;
   int min_data_in_leaf() const noexcept;
@@ -79,6 +96,7 @@ class GradientBooster {
   const std::string& eval_metric_name() const noexcept;
   double quantile_alpha() const noexcept;
   double huber_delta() const noexcept;
+  double tweedie_variance_power() const noexcept;
   bool use_gpu() const noexcept;
   const std::string& devices() const noexcept;
   std::uint64_t random_seed() const noexcept;
@@ -100,6 +118,14 @@ class GradientBooster {
   int max_depth_{6};
   double alpha_{0.05};
   double lambda_l2_{1.0};
+  double subsample_{1.0};
+  std::string bootstrap_type_{"No"};
+  std::string boosting_type_{"GradientBoosting"};
+  double drop_rate_{0.1};
+  double skip_drop_{0.5};
+  int max_drop_{0};
+  std::vector<int> monotone_constraints_;
+  std::vector<std::vector<int>> interaction_constraints_;
   double colsample_bytree_{1.0};
   int max_leaves_{0};
   int min_data_in_leaf_{0};

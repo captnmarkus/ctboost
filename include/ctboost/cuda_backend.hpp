@@ -64,11 +64,14 @@ bool CudaBackendCompiled() noexcept;
 std::string CudaRuntimeVersionString();
 
 GpuHistogramWorkspacePtr CreateGpuHistogramWorkspace(const HistMatrix& hist,
-                                                     const std::vector<float>& weights);
+                                                     const std::vector<float>& weights,
+                                                     const std::string& devices = "0");
 std::size_t EstimateGpuHistogramWorkspaceBytes(const GpuHistogramWorkspace* workspace) noexcept;
 void UploadHistogramTargetsGpu(GpuHistogramWorkspace* workspace,
                                const std::vector<float>& gradients,
                                const std::vector<float>& hessians);
+void UploadHistogramWeightsGpu(GpuHistogramWorkspace* workspace,
+                               const std::vector<float>& weights);
 void UploadHistogramTargetMatrixGpu(GpuHistogramWorkspace* workspace,
                                     const std::vector<float>& gradients,
                                     const std::vector<float>& hessians,
@@ -117,6 +120,7 @@ void PredictRawGpu(const HistMatrix& hist,
                    const std::vector<std::int32_t>& tree_offsets,
                    float learning_rate,
                    int prediction_dimension,
-                   std::vector<float>& out_predictions);
+                   std::vector<float>& out_predictions,
+                   const std::string& devices = "0");
 
 }  // namespace ctboost

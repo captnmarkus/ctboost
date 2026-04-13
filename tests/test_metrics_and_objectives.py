@@ -101,3 +101,32 @@ def test_binary_eval_metrics_are_exposed(eval_metric):
     metric_history = np.asarray(clf.evals_result_["validation"][eval_metric], dtype=np.float32)
     assert metric_history.shape[0] == len(clf._booster.eval_loss_history)
     assert np.all(np.isfinite(metric_history))
+
+
+@pytest.mark.parametrize("objective", ["Cox", "SurvivalExponential"])
+def test_survival_objectives_train_and_report_metrics(objective):
+    rng = np.random.default_rng(73)
+    X = rng.normal(size=(180, 5)).astype(np.float32)
+    linear = 0.6 * X[:, 0] - 0.35 * X[:, 1]
+    base_time = np.exp(1.5 - linear)
+    censor_threshold = np.quantile(base_time, 0.65)
+    observed = base_time <= censor_threshold
+    signed_time = np.where(observed, base_time, -np.minimum(base_time, censor_threshold)).astype(np.float32)
+
+    booster = ctboost.train(
+        ctboost.Pool(X, signed_time),
+        {
+            "objective": objective,
+            "eval_metric": "CIndex",
+            "learning_rate": 0.15,
+            "max_depth": 2,
+            "alpha": 1.0,
+            "lambda_l2": 1.0,
+        },
+        num_boost_round=16,
+    )
+
+    predictions = booster.predict(X)
+    assert predictions.shape == (X.shape[0],)
+    assert np.all(np.isfinite(predictions))
+    assert len(booster.loss_history) == 16
