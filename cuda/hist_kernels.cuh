@@ -40,6 +40,7 @@ __global__ void EvaluateFeatureSearchKernel(
     const std::uint32_t* feature_offsets,
     const std::uint16_t* num_bins_per_feature,
     const std::uint8_t* categorical_mask,
+    const int* monotone_constraints,
     double total_gradient,
     double total_hessian,
     double sample_weight_sum,
@@ -48,6 +49,8 @@ __global__ void EvaluateFeatureSearchKernel(
     int min_data_in_leaf,
     double min_child_weight,
     double min_split_gain,
+    double leaf_lower_bound,
+    double leaf_upper_bound,
     ctboost::GpuFeatureSearchResult* out_results,
     std::size_t num_features);
 
@@ -55,6 +58,21 @@ __global__ void SelectBestFeatureKernel(
     const ctboost::GpuFeatureSearchResult* feature_results,
     const std::uint32_t* candidate_feature_indices,
     std::size_t num_candidates,
+    ctboost::GpuBestFeatureResult* out_best_result);
+
+__global__ void SelectBestAdjustedFeatureKernel(
+    const ctboost::GpuFeatureSearchResult* feature_results,
+    const std::uint32_t* candidate_feature_indices,
+    std::size_t num_candidates,
+    double alpha,
+    int depth,
+    std::size_t row_begin,
+    std::size_t row_end,
+    std::uint64_t random_seed,
+    double random_strength,
+    const double* feature_weights,
+    const double* first_feature_use_penalties,
+    const std::uint8_t* model_feature_used_mask,
     ctboost::GpuBestFeatureResult* out_best_result);
 
 __global__ void PredictForestKernel(const std::uint8_t* bins_u8,

@@ -19,6 +19,7 @@ using GpuHistogramWorkspacePtr =
     std::unique_ptr<GpuHistogramWorkspace, void (*)(GpuHistogramWorkspace*)>;
 
 struct GpuNodeStatistics {
+  std::uint64_t sample_count{0};
   double sample_weight_sum{0.0};
   double total_gradient{0.0};
   double total_hessian{0.0};
@@ -40,11 +41,14 @@ struct GpuFeatureSearchResult {
   double chi_square{0.0};
   double p_value{1.0};
   double gain{0.0};
+  double left_leaf_weight{0.0};
+  double right_leaf_weight{0.0};
   std::uint8_t left_categories[kGpuCategoricalRouteBins]{};
 };
 
 struct GpuBestFeatureResult {
   std::int32_t feature_id{-1};
+  double adjusted_gain{0.0};
   GpuFeatureSearchResult search_result;
 };
 
@@ -56,6 +60,9 @@ struct GpuNodeSearchResult {
   bool is_categorical{false};
   std::uint16_t split_bin{0};
   double gain{0.0};
+  double adjusted_gain{0.0};
+  double left_leaf_weight{0.0};
+  double right_leaf_weight{0.0};
   std::array<std::uint8_t, kGpuCategoricalRouteBins> left_categories{};
   GpuNodeStatistics node_statistics;
 };
@@ -84,6 +91,11 @@ void DownloadHistogramSnapshotGpu(const GpuHistogramWorkspace* workspace,
                                   GpuHistogramSnapshot* out_snapshot);
 void UploadHistogramSnapshotGpu(GpuHistogramWorkspace* workspace,
                                 const GpuHistogramSnapshot& snapshot);
+void UploadFeatureControlsGpu(GpuHistogramWorkspace* workspace,
+                              const std::vector<double>* feature_weights,
+                              const std::vector<double>* first_feature_use_penalties,
+                              const std::vector<std::uint8_t>* model_feature_used_mask,
+                              const std::vector<int>* monotone_constraints);
 std::size_t PartitionHistogramRowsGpu(
     GpuHistogramWorkspace* workspace,
     std::size_t row_begin,
@@ -102,6 +114,14 @@ void SearchBestNodeSplitGpu(GpuHistogramWorkspace* workspace,
                             int min_data_in_leaf,
                             double min_child_weight,
                             double min_split_gain,
+                            double alpha,
+                            int depth,
+                            std::size_t row_begin,
+                            std::size_t row_end,
+                            double leaf_lower_bound,
+                            double leaf_upper_bound,
+                            std::uint64_t random_seed,
+                            double random_strength,
                             GpuNodeSearchResult* out_result);
 
 struct GpuTreeNode {

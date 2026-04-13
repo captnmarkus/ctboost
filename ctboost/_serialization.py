@@ -14,6 +14,38 @@ PICKLE_MODEL_SUFFIXES = {".pkl", ".pickle"}
 MODEL_SCHEMA_VERSION = 1
 
 
+def _serialize_json_value(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            "__ctboost_type__": "dict",
+            "items": [[_serialize_json_value(key), _serialize_json_value(item)] for key, item in value.items()],
+        }
+    if isinstance(value, tuple):
+        return {
+            "__ctboost_type__": "tuple",
+            "items": [_serialize_json_value(item) for item in value],
+        }
+    if isinstance(value, list):
+        return [_serialize_json_value(item) for item in value]
+    return value
+
+
+def _deserialize_json_value(value: Any) -> Any:
+    if isinstance(value, list):
+        return [_deserialize_json_value(item) for item in value]
+    if not isinstance(value, dict):
+        return value
+
+    if value.get("__ctboost_type__") == "dict":
+        return {
+            _deserialize_json_value(key): _deserialize_json_value(item)
+            for key, item in value["items"]
+        }
+    if value.get("__ctboost_type__") == "tuple":
+        return tuple(_deserialize_json_value(item) for item in value["items"])
+    return {key: _deserialize_json_value(item) for key, item in value.items()}
+
+
 def _normalize_model_format(path: Path, model_format: Optional[str]) -> str:
     if model_format is None or model_format == "auto":
         suffix = path.suffix.lower()
@@ -46,7 +78,7 @@ def _booster_document(
         "booster_state": dict(handle.export_state()),
     }
     if feature_pipeline_state is not None:
-        document["feature_pipeline_state"] = feature_pipeline_state
+        document["feature_pipeline_state"] = _serialize_json_value(feature_pipeline_state)
     return document
 
 
@@ -98,6 +130,8 @@ def load_booster_document(path: Path) -> Dict[str, Any]:
         raise ValueError("unsupported CTBoost model schema version")
     if document.get("artifact_type") != "ctboost.booster":
         raise ValueError("JSON model does not contain a CTBoost booster")
+    if "feature_pipeline_state" in document:
+        document["feature_pipeline_state"] = _deserialize_json_value(document["feature_pipeline_state"])
     return document
 
 

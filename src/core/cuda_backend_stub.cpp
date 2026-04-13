@@ -93,6 +93,19 @@ void UploadHistogramSnapshotGpu(GpuHistogramWorkspace* workspace,
   throw std::runtime_error("CUDA histogram builder requested but CTBoost was compiled without CUDA");
 }
 
+void UploadFeatureControlsGpu(GpuHistogramWorkspace* workspace,
+                              const std::vector<double>* feature_weights,
+                              const std::vector<double>* first_feature_use_penalties,
+                              const std::vector<std::uint8_t>* model_feature_used_mask,
+                              const std::vector<int>* monotone_constraints) {
+  (void)workspace;
+  (void)feature_weights;
+  (void)first_feature_use_penalties;
+  (void)model_feature_used_mask;
+  (void)monotone_constraints;
+  throw std::runtime_error("CUDA histogram builder requested but CTBoost was compiled without CUDA");
+}
+
 std::size_t PartitionHistogramRowsGpu(
     GpuHistogramWorkspace* workspace,
     std::size_t row_begin,
@@ -128,6 +141,14 @@ void SearchBestNodeSplitGpu(GpuHistogramWorkspace* workspace,
                             int min_data_in_leaf,
                             double min_child_weight,
                             double min_split_gain,
+                            double alpha,
+                            int depth,
+                            std::size_t row_begin,
+                            std::size_t row_end,
+                            double leaf_lower_bound,
+                            double leaf_upper_bound,
+                            std::uint64_t random_seed,
+                            double random_strength,
                             GpuNodeSearchResult* out_result) {
   (void)workspace;
   (void)allowed_features;
@@ -135,6 +156,14 @@ void SearchBestNodeSplitGpu(GpuHistogramWorkspace* workspace,
   (void)min_data_in_leaf;
   (void)min_child_weight;
   (void)min_split_gain;
+  (void)alpha;
+  (void)depth;
+  (void)row_begin;
+  (void)row_end;
+  (void)leaf_lower_bound;
+  (void)leaf_upper_bound;
+  (void)random_seed;
+  (void)random_strength;
   (void)out_result;
   throw std::runtime_error("CUDA histogram builder requested but CTBoost was compiled without CUDA");
 }

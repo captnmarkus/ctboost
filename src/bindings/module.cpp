@@ -93,6 +93,7 @@ py::dict QuantizationSchemaToStateDict(const ctboost::QuantizationSchema& quanti
   state["categorical_mask"] = quantization_schema.categorical_mask;
   state["missing_value_mask"] = quantization_schema.missing_value_mask;
   state["nan_mode"] = quantization_schema.nan_mode;
+  state["nan_modes"] = quantization_schema.nan_modes;
   return state;
 }
 
@@ -108,6 +109,12 @@ ctboost::QuantizationSchemaPtr QuantizationSchemaFromStateDict(const py::handle&
   quantization_schema->missing_value_mask =
       py::cast<std::vector<std::uint8_t>>(state["missing_value_mask"]);
   quantization_schema->nan_mode = py::cast<std::uint8_t>(state["nan_mode"]);
+  if (state.contains("nan_modes")) {
+    quantization_schema->nan_modes = py::cast<std::vector<std::uint8_t>>(state["nan_modes"]);
+  } else {
+    quantization_schema->nan_modes.assign(
+        quantization_schema->num_bins_per_feature.size(), quantization_schema->nan_mode);
+  }
   return quantization_schema;
 }
 
@@ -119,6 +126,9 @@ ctboost::QuantizationSchemaPtr QuantizationSchemaFromTreeStateDict(const py::dic
   quantization_schema_state["categorical_mask"] = state["categorical_mask"];
   quantization_schema_state["missing_value_mask"] = state["missing_value_mask"];
   quantization_schema_state["nan_mode"] = state["nan_mode"];
+  if (state.contains("nan_modes")) {
+    quantization_schema_state["nan_modes"] = state["nan_modes"];
+  }
   return QuantizationSchemaFromStateDict(quantization_schema_state);
 }
 
@@ -281,6 +291,7 @@ py::dict BoosterToStateDict(const ctboost::GradientBooster& booster) {
   state["lambda_l2"] = booster.lambda_l2();
   state["subsample"] = booster.subsample();
   state["bootstrap_type"] = booster.bootstrap_type();
+  state["bagging_temperature"] = booster.bagging_temperature();
   state["boosting_type"] = booster.boosting_type();
   state["drop_rate"] = booster.drop_rate();
   state["skip_drop"] = booster.skip_drop();
@@ -288,18 +299,35 @@ py::dict BoosterToStateDict(const ctboost::GradientBooster& booster) {
   state["monotone_constraints"] = booster.monotone_constraints();
   state["interaction_constraints"] = booster.interaction_constraints();
   state["colsample_bytree"] = booster.colsample_bytree();
+  state["feature_weights"] = booster.feature_weights();
+  state["first_feature_use_penalties"] = booster.first_feature_use_penalties();
+  state["random_strength"] = booster.random_strength();
+  state["grow_policy"] = booster.grow_policy();
   state["max_leaves"] = booster.max_leaves();
+  state["min_samples_split"] = booster.min_samples_split();
   state["min_data_in_leaf"] = booster.min_data_in_leaf();
   state["min_child_weight"] = booster.min_child_weight();
   state["gamma"] = booster.gamma();
+  state["max_leaf_weight"] = booster.max_leaf_weight();
   state["num_classes"] = booster.num_classes();
   state["max_bins"] = booster.max_bins();
   state["nan_mode"] = booster.nan_mode_name();
+  state["max_bin_by_feature"] = booster.max_bin_by_feature();
+  state["border_selection_method"] = booster.border_selection_method();
+  state["nan_mode_by_feature"] = booster.nan_mode_by_feature();
+  state["feature_borders"] = booster.feature_borders();
+  state["external_memory"] = booster.external_memory();
+  state["external_memory_dir"] = booster.external_memory_dir();
   state["eval_metric_name"] = booster.eval_metric_name();
   state["quantile_alpha"] = booster.quantile_alpha();
   state["huber_delta"] = booster.huber_delta();
   state["tweedie_variance_power"] = booster.tweedie_variance_power();
   state["devices"] = booster.devices();
+  state["distributed_world_size"] = booster.distributed_world_size();
+  state["distributed_rank"] = booster.distributed_rank();
+  state["distributed_root"] = booster.distributed_root();
+  state["distributed_run_id"] = booster.distributed_run_id();
+  state["distributed_timeout"] = booster.distributed_timeout();
   state["random_seed"] = booster.random_seed();
   state["rng_state"] = booster.rng_state();
   state["task_type"] = booster.use_gpu() ? "GPU" : "CPU";
@@ -349,6 +377,9 @@ ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
                                    state.contains("bootstrap_type")
                                        ? py::cast<std::string>(state["bootstrap_type"])
                                        : std::string("No"),
+                                   state.contains("bagging_temperature")
+                                       ? py::cast<double>(state["bagging_temperature"])
+                                       : 0.0,
                                    state.contains("boosting_type")
                                        ? py::cast<std::string>(state["boosting_type"])
                                        : std::string("GradientBoosting"),
@@ -371,9 +402,25 @@ ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
                                    state.contains("colsample_bytree")
                                        ? py::cast<double>(state["colsample_bytree"])
                                        : 1.0,
+                                   state.contains("feature_weights")
+                                       ? py::cast<std::vector<double>>(state["feature_weights"])
+                                       : std::vector<double>{},
+                                   state.contains("first_feature_use_penalties")
+                                       ? py::cast<std::vector<double>>(
+                                             state["first_feature_use_penalties"])
+                                       : std::vector<double>{},
+                                   state.contains("random_strength")
+                                       ? py::cast<double>(state["random_strength"])
+                                       : 0.0,
+                                   state.contains("grow_policy")
+                                       ? py::cast<std::string>(state["grow_policy"])
+                                       : std::string("DepthWise"),
                                    state.contains("max_leaves")
                                        ? py::cast<int>(state["max_leaves"])
                                        : 0,
+                                   state.contains("min_samples_split")
+                                       ? py::cast<int>(state["min_samples_split"])
+                                       : 2,
                                    state.contains("min_data_in_leaf")
                                        ? py::cast<int>(state["min_data_in_leaf"])
                                        : 0,
@@ -383,9 +430,33 @@ ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
                                    state.contains("gamma")
                                        ? py::cast<double>(state["gamma"])
                                        : 0.0,
+                                   state.contains("max_leaf_weight")
+                                       ? py::cast<double>(state["max_leaf_weight"])
+                                       : 0.0,
                                    py::cast<int>(state["num_classes"]),
                                    py::cast<std::size_t>(state["max_bins"]),
                                    py::cast<std::string>(state["nan_mode"]),
+                                   state.contains("max_bin_by_feature")
+                                       ? py::cast<std::vector<std::uint16_t>>(
+                                             state["max_bin_by_feature"])
+                                       : std::vector<std::uint16_t>{},
+                                   state.contains("border_selection_method")
+                                       ? py::cast<std::string>(state["border_selection_method"])
+                                       : std::string("Quantile"),
+                                   state.contains("nan_mode_by_feature")
+                                       ? py::cast<std::vector<std::string>>(
+                                             state["nan_mode_by_feature"])
+                                       : std::vector<std::string>{},
+                                   state.contains("feature_borders")
+                                       ? py::cast<std::vector<std::vector<float>>>(
+                                             state["feature_borders"])
+                                       : std::vector<std::vector<float>>{},
+                                   state.contains("external_memory")
+                                       ? py::cast<bool>(state["external_memory"])
+                                       : false,
+                                   state.contains("external_memory_dir")
+                                       ? py::cast<std::string>(state["external_memory_dir"])
+                                       : std::string(),
                                    py::cast<std::string>(state["eval_metric_name"]),
                                    py::cast<double>(state["quantile_alpha"]),
                                    py::cast<double>(state["huber_delta"]),
@@ -394,6 +465,21 @@ ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
                                        : 1.5,
                                    use_gpu ? "GPU" : "CPU",
                                    py::cast<std::string>(state["devices"]),
+                                   state.contains("distributed_world_size")
+                                       ? py::cast<int>(state["distributed_world_size"])
+                                       : 1,
+                                   state.contains("distributed_rank")
+                                       ? py::cast<int>(state["distributed_rank"])
+                                       : 0,
+                                   state.contains("distributed_root")
+                                       ? py::cast<std::string>(state["distributed_root"])
+                                       : std::string(),
+                                   state.contains("distributed_run_id")
+                                       ? py::cast<std::string>(state["distributed_run_id"])
+                                       : std::string("default"),
+                                   state.contains("distributed_timeout")
+                                       ? py::cast<double>(state["distributed_timeout"])
+                                       : 600.0,
                                    state.contains("random_seed")
                                        ? py::cast<std::uint64_t>(state["random_seed"])
                                        : 0U,
@@ -527,8 +613,13 @@ PYBIND11_MODULE(_core, m) {
   py::class_<ctboost::NativeFeaturePipeline>(m, "NativeFeaturePipeline")
       .def(py::init<py::object,
                     bool,
+                    int,
+                    int,
                     py::object,
                     bool,
+                    py::object,
+                    py::object,
+                    py::object,
                     py::object,
                     int,
                     py::object,
@@ -537,8 +628,13 @@ PYBIND11_MODULE(_core, m) {
                     int>(),
            py::arg("cat_features") = py::none(),
            py::arg("ordered_ctr") = false,
+           py::arg("one_hot_max_size") = 0,
+           py::arg("max_cat_threshold") = 0,
            py::arg("categorical_combinations") = py::none(),
            py::arg("pairwise_categorical_combinations") = false,
+           py::arg("simple_ctr") = py::none(),
+           py::arg("combinations_ctr") = py::none(),
+           py::arg("per_feature_ctr") = py::none(),
            py::arg("text_features") = py::none(),
            py::arg("text_hash_dim") = 64,
            py::arg("embedding_features") = py::none(),
@@ -571,6 +667,7 @@ PYBIND11_MODULE(_core, m) {
                     double,
                     double,
                     std::string,
+                    double,
                     std::string,
                     double,
                     double,
@@ -578,19 +675,36 @@ PYBIND11_MODULE(_core, m) {
                     std::vector<int>,
                     std::vector<std::vector<int>>,
                     double,
+                    std::vector<double>,
+                    std::vector<double>,
+                    double,
+                    std::string,
                     int,
                     int,
+                    int,
+                    double,
                     double,
                     double,
                     int,
                     std::size_t,
                     std::string,
+                    std::vector<std::uint16_t>,
+                    std::string,
+                    std::vector<std::string>,
+                    std::vector<std::vector<float>>,
+                    bool,
+                    std::string,
                     std::string,
                     double,
                     double,
                     double,
                     std::string,
                     std::string,
+                    int,
+                    int,
+                    std::string,
+                    std::string,
+                    double,
                     std::uint64_t,
                     bool>(),
            py::arg("objective") = "RMSE",
@@ -601,6 +715,7 @@ PYBIND11_MODULE(_core, m) {
            py::arg("lambda_l2") = 1.0,
            py::arg("subsample") = 1.0,
            py::arg("bootstrap_type") = "No",
+           py::arg("bagging_temperature") = 0.0,
            py::arg("boosting_type") = "GradientBoosting",
            py::arg("drop_rate") = 0.1,
            py::arg("skip_drop") = 0.5,
@@ -608,19 +723,36 @@ PYBIND11_MODULE(_core, m) {
            py::arg("monotone_constraints") = std::vector<int>{},
            py::arg("interaction_constraints") = std::vector<std::vector<int>>{},
            py::arg("colsample_bytree") = 1.0,
+           py::arg("feature_weights") = std::vector<double>{},
+           py::arg("first_feature_use_penalties") = std::vector<double>{},
+           py::arg("random_strength") = 0.0,
+           py::arg("grow_policy") = "DepthWise",
            py::arg("max_leaves") = 0,
+           py::arg("min_samples_split") = 2,
            py::arg("min_data_in_leaf") = 0,
            py::arg("min_child_weight") = 0.0,
            py::arg("gamma") = 0.0,
+           py::arg("max_leaf_weight") = 0.0,
            py::arg("num_classes") = 1,
            py::arg("max_bins") = 256,
            py::arg("nan_mode") = "Min",
+           py::arg("max_bin_by_feature") = std::vector<std::uint16_t>{},
+           py::arg("border_selection_method") = "Quantile",
+           py::arg("nan_mode_by_feature") = std::vector<std::string>{},
+           py::arg("feature_borders") = std::vector<std::vector<float>>{},
+           py::arg("external_memory") = false,
+           py::arg("external_memory_dir") = "",
            py::arg("eval_metric") = "",
            py::arg("quantile_alpha") = 0.5,
            py::arg("huber_delta") = 1.0,
            py::arg("tweedie_variance_power") = 1.5,
            py::arg("task_type") = "CPU",
            py::arg("devices") = "0",
+           py::arg("distributed_world_size") = 1,
+           py::arg("distributed_rank") = 0,
+           py::arg("distributed_root") = "",
+           py::arg("distributed_run_id") = "default",
+           py::arg("distributed_timeout") = 600.0,
            py::arg("random_seed") = 0,
            py::arg("verbose") = false)
       .def("fit",
@@ -688,6 +820,7 @@ PYBIND11_MODULE(_core, m) {
       .def("lambda_l2", &ctboost::GradientBooster::lambda_l2)
       .def("subsample", &ctboost::GradientBooster::subsample)
       .def("bootstrap_type", &ctboost::GradientBooster::bootstrap_type)
+      .def("bagging_temperature", &ctboost::GradientBooster::bagging_temperature)
       .def("boosting_type", &ctboost::GradientBooster::boosting_type)
       .def("drop_rate", &ctboost::GradientBooster::drop_rate)
       .def("skip_drop", &ctboost::GradientBooster::skip_drop)
@@ -695,17 +828,34 @@ PYBIND11_MODULE(_core, m) {
       .def("monotone_constraints", &ctboost::GradientBooster::monotone_constraints)
       .def("interaction_constraints", &ctboost::GradientBooster::interaction_constraints)
       .def("colsample_bytree", &ctboost::GradientBooster::colsample_bytree)
+      .def("feature_weights", &ctboost::GradientBooster::feature_weights)
+      .def("first_feature_use_penalties", &ctboost::GradientBooster::first_feature_use_penalties)
+      .def("random_strength", &ctboost::GradientBooster::random_strength)
+      .def("grow_policy", &ctboost::GradientBooster::grow_policy)
       .def("max_leaves", &ctboost::GradientBooster::max_leaves)
+      .def("min_samples_split", &ctboost::GradientBooster::min_samples_split)
       .def("min_data_in_leaf", &ctboost::GradientBooster::min_data_in_leaf)
       .def("min_child_weight", &ctboost::GradientBooster::min_child_weight)
       .def("gamma", &ctboost::GradientBooster::gamma)
+      .def("max_leaf_weight", &ctboost::GradientBooster::max_leaf_weight)
       .def("max_bins", &ctboost::GradientBooster::max_bins)
       .def("nan_mode_name", &ctboost::GradientBooster::nan_mode_name)
+      .def("max_bin_by_feature", &ctboost::GradientBooster::max_bin_by_feature)
+      .def("border_selection_method", &ctboost::GradientBooster::border_selection_method)
+      .def("nan_mode_by_feature", &ctboost::GradientBooster::nan_mode_by_feature)
+      .def("feature_borders", &ctboost::GradientBooster::feature_borders)
+      .def("external_memory", &ctboost::GradientBooster::external_memory)
+      .def("external_memory_dir", &ctboost::GradientBooster::external_memory_dir)
       .def("quantile_alpha", &ctboost::GradientBooster::quantile_alpha)
       .def("huber_delta", &ctboost::GradientBooster::huber_delta)
       .def("tweedie_variance_power", &ctboost::GradientBooster::tweedie_variance_power)
       .def("use_gpu", &ctboost::GradientBooster::use_gpu)
       .def("devices", &ctboost::GradientBooster::devices)
+      .def("distributed_world_size", &ctboost::GradientBooster::distributed_world_size)
+      .def("distributed_rank", &ctboost::GradientBooster::distributed_rank)
+      .def("distributed_root", &ctboost::GradientBooster::distributed_root)
+      .def("distributed_run_id", &ctboost::GradientBooster::distributed_run_id)
+      .def("distributed_timeout", &ctboost::GradientBooster::distributed_timeout)
       .def("random_seed", &ctboost::GradientBooster::random_seed)
       .def("rng_state", &ctboost::GradientBooster::rng_state)
       .def("verbose", &ctboost::GradientBooster::verbose)
@@ -749,8 +899,23 @@ PYBIND11_MODULE(_core, m) {
            },
            py::arg("state"),
            py::return_value_policy::reference_internal)
+      .def("load_quantization_schema",
+           [](ctboost::GradientBooster& booster, const py::dict& state)
+               -> ctboost::GradientBooster& {
+             booster.LoadQuantizationSchema(QuantizationSchemaFromStateDict(state));
+             return booster;
+           },
+           py::arg("state"),
+           py::return_value_policy::reference_internal)
       .def("feature_importances", [](const ctboost::GradientBooster& booster) {
         return VectorToArray(booster.get_feature_importances());
+      })
+      .def("quantization_schema_state", [](const ctboost::GradientBooster& booster) -> py::object {
+        if (const auto* quantization_schema = booster.quantization_schema();
+            quantization_schema != nullptr) {
+          return QuantizationSchemaToStateDict(*quantization_schema);
+        }
+        return py::none();
       })
       .def_static("from_state", [](const py::dict& state) {
         return BoosterFromStateDict(state);
@@ -897,10 +1062,25 @@ PYBIND11_MODULE(_core, m) {
         py::arg("binned_feature"));
 
   m.def("_debug_build_histogram",
-        [](const ctboost::Pool& pool, std::size_t max_bins, const std::string& nan_mode) {
+        [](const ctboost::Pool& pool,
+           std::size_t max_bins,
+           const std::string& nan_mode,
+           const std::vector<std::uint16_t>& max_bin_by_feature,
+           const std::string& border_selection_method,
+           const std::vector<std::string>& nan_mode_by_feature,
+           const std::vector<std::vector<float>>& feature_borders,
+           bool external_memory,
+           const std::string& external_memory_dir) {
           const auto started = std::chrono::steady_clock::now();
-          const ctboost::HistBuilder builder(max_bins, nan_mode);
-          const ctboost::HistMatrix hist = builder.Build(pool, nullptr);
+          const ctboost::HistBuilder builder(max_bins,
+                                             nan_mode,
+                                             max_bin_by_feature,
+                                             border_selection_method,
+                                             nan_mode_by_feature,
+                                             feature_borders,
+                                             external_memory,
+                                             external_memory_dir);
+          ctboost::HistMatrix hist = builder.Build(pool, nullptr);
           const double elapsed_ms =
               std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started)
                   .count();
@@ -912,11 +1092,25 @@ PYBIND11_MODULE(_core, m) {
           out["num_bins_per_feature"] = hist.num_bins_per_feature;
           out["cut_offsets"] = hist.cut_offsets;
           out["cut_values"] = hist.cut_values;
+          out["categorical_mask"] = hist.categorical_mask;
+          out["missing_value_mask"] = hist.missing_value_mask;
+          out["nan_mode"] = hist.nan_mode;
+          out["nan_modes"] = hist.nan_modes;
           out["cut_values_count"] = hist.cut_values.size();
+          out["uses_external_bin_storage"] = hist.uses_external_bin_storage();
+          out["external_bin_storage_dir"] = hist.external_bin_storage_dir;
+          out["storage_bytes"] = hist.storage_bytes();
+          hist.ReleaseStorage();
           return out;
         },
         py::arg("pool"),
         py::arg("max_bins") = 256,
-        py::arg("nan_mode") = "Min");
+        py::arg("nan_mode") = "Min",
+        py::arg("max_bin_by_feature") = std::vector<std::uint16_t>{},
+        py::arg("border_selection_method") = "Quantile",
+        py::arg("nan_mode_by_feature") = std::vector<std::string>{},
+        py::arg("feature_borders") = std::vector<std::vector<float>>{},
+        py::arg("external_memory") = false,
+        py::arg("external_memory_dir") = "");
 
 }

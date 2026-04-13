@@ -13,6 +13,7 @@
 #include <limits>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #include <thrust/copy.h>
@@ -63,6 +64,40 @@ void CopyHostVectorToDevice(const std::vector<T>& source, thrust::device_vector<
     return;
   }
   thrust::copy(source.begin(), source.end(), destination.begin());
+}
+
+void CopyHistogramBinsToDevice(const HistMatrix& hist,
+                               thrust::device_vector<std::uint8_t>& bins_u8,
+                               thrust::device_vector<std::uint16_t>& bins_u16) {
+  const std::size_t expected_bin_count = hist.num_rows * hist.num_cols;
+  if (hist.uses_compact_bin_storage()) {
+    bins_u8.resize(expected_bin_count);
+    bins_u16.clear();
+    if (!hist.uses_external_bin_storage()) {
+      thrust::copy(hist.compact_bin_indices.begin(), hist.compact_bin_indices.end(), bins_u8.begin());
+      return;
+    }
+    for (std::size_t feature = 0; feature < hist.num_cols; ++feature) {
+      const auto feature_view = hist.feature_bins(feature);
+      thrust::copy(feature_view.data_u8,
+                   feature_view.data_u8 + static_cast<std::ptrdiff_t>(hist.num_rows),
+                   bins_u8.begin() + static_cast<std::ptrdiff_t>(feature * hist.num_rows));
+    }
+    return;
+  }
+
+  bins_u16.resize(expected_bin_count);
+  bins_u8.clear();
+  if (!hist.uses_external_bin_storage()) {
+    thrust::copy(hist.bin_indices.begin(), hist.bin_indices.end(), bins_u16.begin());
+    return;
+  }
+  for (std::size_t feature = 0; feature < hist.num_cols; ++feature) {
+    const auto feature_view = hist.feature_bins(feature);
+    thrust::copy(feature_view.data_u16,
+                 feature_view.data_u16 + static_cast<std::ptrdiff_t>(hist.num_rows),
+                 bins_u16.begin() + static_cast<std::ptrdiff_t>(feature * hist.num_rows));
+  }
 }
 
 struct RowSplitPredicate {
@@ -118,6 +153,10 @@ struct DeviceWorkspace {
   thrust::device_vector<std::uint32_t> feature_offsets_u32;
   thrust::device_vector<std::uint16_t> num_bins_per_feature;
   thrust::device_vector<std::uint8_t> categorical_mask;
+  thrust::device_vector<double> feature_weights;
+  thrust::device_vector<double> first_feature_use_penalties;
+  thrust::device_vector<std::uint8_t> model_feature_used_mask;
+  thrust::device_vector<int> monotone_constraints;
   thrust::device_vector<GpuFeatureSearchResult> feature_search_results;
   thrust::device_vector<GpuBestFeatureResult> best_feature_result;
   thrust::device_vector<std::uint32_t> chunk_feature_indices;
@@ -252,6 +291,10 @@ std::size_t EstimateDeviceWorkspaceBytes(const DeviceWorkspace& workspace) noexc
          workspace.feature_offsets_u32.size() * sizeof(std::uint32_t) +
          workspace.num_bins_per_feature.size() * sizeof(std::uint16_t) +
          workspace.categorical_mask.size() * sizeof(std::uint8_t) +
+         workspace.feature_weights.size() * sizeof(double) +
+         workspace.first_feature_use_penalties.size() * sizeof(double) +
+         workspace.model_feature_used_mask.size() * sizeof(std::uint8_t) +
+         workspace.monotone_constraints.size() * sizeof(int) +
          workspace.feature_search_results.size() * sizeof(GpuFeatureSearchResult) +
          workspace.best_feature_result.size() * sizeof(GpuBestFeatureResult) +
          workspace.chunk_feature_indices.size() * sizeof(std::uint32_t) +
@@ -260,7 +303,7 @@ std::size_t EstimateDeviceWorkspaceBytes(const DeviceWorkspace& workspace) noexc
          workspace.chunk_output_offsets.size() * sizeof(std::uint32_t);
 }
 
-std::array<double, 4> DownloadNodeStatistics(const DeviceWorkspace& workspace) {
+std::array<double, 5> DownloadNodeStatistics(const DeviceWorkspace& workspace) {
   std::vector<double> host_node_stats(workspace.node_statistics.size(), 0.0);
   thrust::copy(workspace.node_statistics.begin(), workspace.node_statistics.end(), host_node_stats.begin());
   return {
@@ -268,10 +311,11 @@ std::array<double, 4> DownloadNodeStatistics(const DeviceWorkspace& workspace) {
       host_node_stats.size() > 1 ? host_node_stats[1] : 0.0,
       host_node_stats.size() > 2 ? host_node_stats[2] : 0.0,
       host_node_stats.size() > 3 ? host_node_stats[3] : 0.0,
+      host_node_stats.size() > 4 ? host_node_stats[4] : 0.0,
   };
 }
 
-void UploadNodeStatistics(DeviceWorkspace& workspace, const std::array<double, 4>& node_statistics) {
+void UploadNodeStatistics(DeviceWorkspace& workspace, const std::array<double, 5>& node_statistics) {
   std::vector<double> host_node_stats(node_statistics.begin(), node_statistics.end());
   thrust::copy(host_node_stats.begin(), host_node_stats.end(), workspace.node_statistics.begin());
 }
@@ -323,19 +367,41 @@ bool IsBetterHostFeatureResult(const GpuBestFeatureResult& candidate,
          candidate.feature_id < best.feature_id;
 }
 
+bool IsBetterAdjustedHostFeatureResult(const GpuBestFeatureResult& candidate,
+                                       const GpuBestFeatureResult& best) {
+  if (candidate.feature_id < 0 || candidate.search_result.degrees_of_freedom == 0U ||
+      candidate.search_result.split_valid == 0U || candidate.search_result.gain <= 0.0) {
+    return false;
+  }
+  if (best.feature_id < 0 || best.search_result.degrees_of_freedom == 0U ||
+      best.search_result.split_valid == 0U || best.search_result.gain <= 0.0) {
+    return true;
+  }
+  if (candidate.adjusted_gain > best.adjusted_gain) {
+    return true;
+  }
+  if (std::fabs(candidate.adjusted_gain - best.adjusted_gain) <= 1e-12 &&
+      candidate.search_result.p_value < best.search_result.p_value) {
+    return true;
+  }
+  if (std::fabs(candidate.adjusted_gain - best.adjusted_gain) <= 1e-12 &&
+      std::fabs(candidate.search_result.p_value - best.search_result.p_value) <= 1e-12 &&
+      candidate.search_result.chi_square > best.search_result.chi_square) {
+    return true;
+  }
+  return std::fabs(candidate.adjusted_gain - best.adjusted_gain) <= 1e-12 &&
+         std::fabs(candidate.search_result.p_value - best.search_result.p_value) <= 1e-12 &&
+         std::fabs(candidate.search_result.chi_square - best.search_result.chi_square) <= 1e-12 &&
+         candidate.feature_id < best.feature_id;
+}
+
 void InitializeDeviceWorkspace(DeviceWorkspace& device_workspace,
                                const HistMatrix& hist,
                                const std::vector<float>& weights,
                                const std::vector<std::uint32_t>& feature_offsets_u32,
                                const std::vector<std::size_t>& feature_offsets,
                                std::size_t histogram_chunk_bins) {
-  if (hist.uses_compact_bin_storage()) {
-    CopyHostVectorToDevice(hist.compact_bin_indices, device_workspace.bins_u8);
-    device_workspace.bins_u16.clear();
-  } else {
-    CopyHostVectorToDevice(hist.bin_indices, device_workspace.bins_u16);
-    device_workspace.bins_u8.clear();
-  }
+  CopyHistogramBinsToDevice(hist, device_workspace.bins_u8, device_workspace.bins_u16);
   CopyHostVectorToDevice(weights, device_workspace.weights);
   device_workspace.row_indices.resize(hist.num_rows);
   thrust::sequence(device_workspace.row_indices.begin(),
@@ -346,12 +412,16 @@ void InitializeDeviceWorkspace(DeviceWorkspace& device_workspace,
   device_workspace.gradient_sums.resize(feature_offsets.back(), 0.0F);
   device_workspace.hessian_sums.resize(feature_offsets.back(), 0.0F);
   device_workspace.weight_sums.resize(feature_offsets.back(), 0.0F);
-  device_workspace.node_statistics.resize(4, 0.0);
+  device_workspace.node_statistics.resize(5, 0.0);
   device_workspace.feature_search_results.resize(hist.num_cols);
   device_workspace.best_feature_result.resize(1);
   CopyHostVectorToDevice(feature_offsets_u32, device_workspace.feature_offsets_u32);
   CopyHostVectorToDevice(hist.num_bins_per_feature, device_workspace.num_bins_per_feature);
   CopyHostVectorToDevice(hist.categorical_mask, device_workspace.categorical_mask);
+  device_workspace.feature_weights.assign(hist.num_cols, 1.0);
+  device_workspace.first_feature_use_penalties.assign(hist.num_cols, 0.0);
+  device_workspace.model_feature_used_mask.assign(hist.num_cols, 0U);
+  device_workspace.monotone_constraints.assign(hist.num_cols, 0);
 
   std::vector<std::uint32_t> chunk_feature_indices;
   std::vector<std::uint32_t> chunk_bin_starts;
@@ -401,11 +471,12 @@ GpuHistogramWorkspacePtr CreateGpuHistogramWorkspace(const HistMatrix& hist,
     throw std::invalid_argument("GPU histogram weights must match the histogram row count");
   }
   const std::size_t expected_bin_count = hist.num_rows * hist.num_cols;
-  if (hist.uses_compact_bin_storage()) {
+  if (hist.uses_compact_bin_storage() && !hist.uses_external_bin_storage()) {
     if (hist.compact_bin_indices.size() != expected_bin_count) {
       throw std::invalid_argument("GPU histogram compact bins must have num_rows * num_cols elements");
     }
-  } else if (hist.bin_indices.size() != expected_bin_count) {
+  } else if (!hist.uses_compact_bin_storage() && !hist.uses_external_bin_storage() &&
+             hist.bin_indices.size() != expected_bin_count) {
     throw std::invalid_argument("GPU histogram bins must have num_rows * num_cols elements");
   }
 
@@ -636,11 +707,13 @@ void DownloadHistogramSnapshotGpu(const GpuHistogramWorkspace* workspace,
         out_snapshot->weight_sums[index] += device_weight_sums[index];
       }
       if (device_index == 0) {
-        const std::array<double, 4> host_node_stats = DownloadNodeStatistics(device_workspace);
+        const std::array<double, 5> host_node_stats = DownloadNodeStatistics(device_workspace);
         out_snapshot->node_statistics.sample_weight_sum = host_node_stats[0];
         out_snapshot->node_statistics.total_gradient = host_node_stats[1];
         out_snapshot->node_statistics.total_hessian = host_node_stats[2];
         out_snapshot->node_statistics.gradient_square_sum = host_node_stats[3];
+        out_snapshot->node_statistics.sample_count =
+            static_cast<std::uint64_t>(std::llround(host_node_stats[4]));
       }
     }
   } catch (const thrust::system_error& error) {
@@ -660,11 +733,12 @@ void UploadHistogramSnapshotGpu(GpuHistogramWorkspace* workspace,
   }
 
   try {
-    const std::array<double, 4> host_node_stats{
+    const std::array<double, 5> host_node_stats{
         snapshot.node_statistics.sample_weight_sum,
         snapshot.node_statistics.total_gradient,
         snapshot.node_statistics.total_hessian,
         snapshot.node_statistics.gradient_square_sum,
+        static_cast<double>(snapshot.node_statistics.sample_count),
     };
     for (DeviceWorkspace& device_workspace : workspace->devices) {
       DeviceGuard device_guard(device_workspace.device_id);
@@ -678,6 +752,70 @@ void UploadHistogramSnapshotGpu(GpuHistogramWorkspace* workspace,
                    snapshot.weight_sums.end(),
                    device_workspace.weight_sums.begin());
       UploadNodeStatistics(device_workspace, host_node_stats);
+    }
+  } catch (const thrust::system_error& error) {
+    throw std::runtime_error(std::string("CUDA thrust failure: ") + error.what());
+  }
+}
+
+void UploadFeatureControlsGpu(GpuHistogramWorkspace* workspace,
+                              const std::vector<double>* feature_weights,
+                              const std::vector<double>* first_feature_use_penalties,
+                              const std::vector<std::uint8_t>* model_feature_used_mask,
+                              const std::vector<int>* monotone_constraints) {
+  if (workspace == nullptr) {
+    throw std::invalid_argument("GPU histogram workspace must not be null");
+  }
+
+  const auto resolve_vector = [&](std::size_t expected_size,
+                                  const auto* values,
+                                  const auto& default_value) {
+    using ValueType = typename std::decay_t<decltype(default_value)>::value_type;
+    std::vector<ValueType> resolved(expected_size, ValueType{});
+    if (values == nullptr || values->empty()) {
+      resolved = default_value;
+      return resolved;
+    }
+    if (values->size() != expected_size) {
+      throw std::invalid_argument(
+          "GPU feature control vectors must match the histogram feature count");
+    }
+    resolved.assign(values->begin(), values->end());
+    return resolved;
+  };
+
+  try {
+    const std::vector<double> host_feature_weights = resolve_vector(
+        workspace->num_features,
+        feature_weights,
+        std::vector<double>(workspace->num_features, 1.0));
+    const std::vector<double> host_first_feature_use_penalties = resolve_vector(
+        workspace->num_features,
+        first_feature_use_penalties,
+        std::vector<double>(workspace->num_features, 0.0));
+    const std::vector<std::uint8_t> host_model_feature_used_mask = resolve_vector(
+        workspace->num_features,
+        model_feature_used_mask,
+        std::vector<std::uint8_t>(workspace->num_features, 0U));
+    const std::vector<int> host_monotone_constraints = resolve_vector(
+        workspace->num_features,
+        monotone_constraints,
+        std::vector<int>(workspace->num_features, 0));
+
+    for (DeviceWorkspace& device_workspace : workspace->devices) {
+      DeviceGuard device_guard(device_workspace.device_id);
+      thrust::copy(host_feature_weights.begin(),
+                   host_feature_weights.end(),
+                   device_workspace.feature_weights.begin());
+      thrust::copy(host_first_feature_use_penalties.begin(),
+                   host_first_feature_use_penalties.end(),
+                   device_workspace.first_feature_use_penalties.begin());
+      thrust::copy(host_model_feature_used_mask.begin(),
+                   host_model_feature_used_mask.end(),
+                   device_workspace.model_feature_used_mask.begin());
+      thrust::copy(host_monotone_constraints.begin(),
+                   host_monotone_constraints.end(),
+                   device_workspace.monotone_constraints.begin());
     }
   } catch (const thrust::system_error& error) {
     throw std::runtime_error(std::string("CUDA thrust failure: ") + error.what());
@@ -814,11 +952,13 @@ void BuildHistogramsGpu(GpuHistogramWorkspace* workspace,
       CTBOOST_CUDA_CHECK(cudaGetLastError());
       CTBOOST_CUDA_CHECK(cudaDeviceSynchronize());
       if (out_node_stats != nullptr && device_index == 0) {
-        const std::array<double, 4> host_node_stats = DownloadNodeStatistics(device_workspace);
+        const std::array<double, 5> host_node_stats = DownloadNodeStatistics(device_workspace);
         out_node_stats->sample_weight_sum = host_node_stats[0];
         out_node_stats->total_gradient = host_node_stats[1];
         out_node_stats->total_hessian = host_node_stats[2];
         out_node_stats->gradient_square_sum = host_node_stats[3];
+        out_node_stats->sample_count =
+            static_cast<std::uint64_t>(std::llround(host_node_stats[4]));
       }
     }
   } catch (const thrust::system_error& error) {
@@ -832,6 +972,14 @@ void SearchBestNodeSplitGpu(GpuHistogramWorkspace* workspace,
                             int min_data_in_leaf,
                             double min_child_weight,
                             double min_split_gain,
+                            double alpha,
+                            int depth,
+                            std::size_t row_begin,
+                            std::size_t row_end,
+                            double leaf_lower_bound,
+                            double leaf_upper_bound,
+                            std::uint64_t random_seed,
+                            double random_strength,
                             GpuNodeSearchResult* out_result) {
   if (workspace == nullptr) {
     throw std::invalid_argument("GPU histogram workspace must not be null");
@@ -846,7 +994,7 @@ void SearchBestNodeSplitGpu(GpuHistogramWorkspace* workspace,
       return;
     }
     const DeviceWorkspace& primary_workspace = PrimaryDeviceWorkspace(workspace);
-    std::array<double, 4> host_node_stats{};
+    std::array<double, 5> host_node_stats{};
     {
       DeviceGuard device_guard(primary_workspace.device_id);
       host_node_stats = DownloadNodeStatistics(primary_workspace);
@@ -864,6 +1012,11 @@ void SearchBestNodeSplitGpu(GpuHistogramWorkspace* workspace,
     host_best_result.feature_id = -1;
     host_best_result.search_result.p_value = 1.0;
     host_best_result.search_result.chi_square = -INFINITY;
+    GpuBestFeatureResult host_best_adjusted_result{};
+    host_best_adjusted_result.feature_id = -1;
+    host_best_adjusted_result.adjusted_gain = 0.0;
+    host_best_adjusted_result.search_result.p_value = 1.0;
+    host_best_adjusted_result.search_result.chi_square = -INFINITY;
 
     for (DeviceWorkspace& device_workspace : workspace->devices) {
       DeviceGuard device_guard(device_workspace.device_id);
@@ -876,6 +1029,7 @@ void SearchBestNodeSplitGpu(GpuHistogramWorkspace* workspace,
           thrust::raw_pointer_cast(device_workspace.feature_offsets_u32.data()),
           thrust::raw_pointer_cast(device_workspace.num_bins_per_feature.data()),
           thrust::raw_pointer_cast(device_workspace.categorical_mask.data()),
+          thrust::raw_pointer_cast(device_workspace.monotone_constraints.data()),
           host_node_stats[1],
           host_node_stats[2],
           host_node_stats[0],
@@ -884,6 +1038,8 @@ void SearchBestNodeSplitGpu(GpuHistogramWorkspace* workspace,
           min_data_in_leaf,
           min_child_weight,
           min_split_gain,
+          leaf_lower_bound,
+          leaf_upper_bound,
           thrust::raw_pointer_cast(device_workspace.feature_search_results.data()),
           workspace->num_features);
       CTBOOST_CUDA_CHECK(cudaGetLastError());
@@ -901,7 +1057,6 @@ void SearchBestNodeSplitGpu(GpuHistogramWorkspace* workspace,
           device_allowed_features.size(),
           thrust::raw_pointer_cast(device_workspace.best_feature_result.data()));
       CTBOOST_CUDA_CHECK(cudaGetLastError());
-      CTBOOST_CUDA_CHECK(cudaDeviceSynchronize());
 
       GpuBestFeatureResult device_best_result{};
       device_best_result.feature_id = -1;
@@ -912,22 +1067,62 @@ void SearchBestNodeSplitGpu(GpuHistogramWorkspace* workspace,
       if (IsBetterHostFeatureResult(device_best_result, host_best_result)) {
         host_best_result = device_best_result;
       }
+
+      SelectBestAdjustedFeatureKernel<<<1, kHistogramThreads>>>(
+          thrust::raw_pointer_cast(device_workspace.feature_search_results.data()),
+          thrust::raw_pointer_cast(device_allowed_features.data()),
+          device_allowed_features.size(),
+          alpha,
+          depth,
+          row_begin,
+          row_end,
+          random_seed,
+          random_strength,
+          thrust::raw_pointer_cast(device_workspace.feature_weights.data()),
+          thrust::raw_pointer_cast(device_workspace.first_feature_use_penalties.data()),
+          thrust::raw_pointer_cast(device_workspace.model_feature_used_mask.data()),
+          thrust::raw_pointer_cast(device_workspace.best_feature_result.data()));
+      CTBOOST_CUDA_CHECK(cudaGetLastError());
+      CTBOOST_CUDA_CHECK(cudaDeviceSynchronize());
+
+      GpuBestFeatureResult device_best_adjusted_result{};
+      device_best_adjusted_result.feature_id = -1;
+      CTBOOST_CUDA_CHECK(cudaMemcpy(&device_best_adjusted_result,
+                                    thrust::raw_pointer_cast(device_workspace.best_feature_result.data()),
+                                    sizeof(GpuBestFeatureResult),
+                                    cudaMemcpyDeviceToHost));
+      if (IsBetterAdjustedHostFeatureResult(device_best_adjusted_result,
+                                            host_best_adjusted_result)) {
+        host_best_adjusted_result = device_best_adjusted_result;
+      }
     }
 
-    out_result->feature_id = host_best_result.feature_id;
-    out_result->p_value = host_best_result.search_result.p_value;
-    out_result->chi_square = host_best_result.search_result.chi_square;
-    out_result->split_valid = host_best_result.search_result.split_valid != 0U;
-    out_result->is_categorical = host_best_result.search_result.is_categorical != 0U;
-    out_result->split_bin = host_best_result.search_result.split_bin;
-    out_result->gain = host_best_result.search_result.gain;
+    const GpuBestFeatureResult& resolved_result =
+        host_best_adjusted_result.feature_id >= 0 ? host_best_adjusted_result : host_best_result;
+    out_result->feature_id = resolved_result.feature_id;
+    out_result->p_value = resolved_result.search_result.p_value;
+    out_result->chi_square = resolved_result.search_result.chi_square;
+    out_result->split_valid = resolved_result.search_result.split_valid != 0U;
+    out_result->is_categorical = resolved_result.search_result.is_categorical != 0U;
+    out_result->split_bin = resolved_result.search_result.split_bin;
+    out_result->gain = resolved_result.search_result.gain;
+    out_result->adjusted_gain =
+        resolved_result.feature_id >= 0 && resolved_result.search_result.split_valid != 0U &&
+                resolved_result.search_result.gain > 0.0
+            ? (host_best_adjusted_result.feature_id >= 0 ? resolved_result.adjusted_gain
+                                                         : resolved_result.search_result.gain)
+            : -std::numeric_limits<double>::infinity();
+    out_result->left_leaf_weight = resolved_result.search_result.left_leaf_weight;
+    out_result->right_leaf_weight = resolved_result.search_result.right_leaf_weight;
     out_result->node_statistics.sample_weight_sum = host_node_stats[0];
     out_result->node_statistics.total_gradient = host_node_stats[1];
     out_result->node_statistics.total_hessian = host_node_stats[2];
     out_result->node_statistics.gradient_square_sum = host_node_stats[3];
+    out_result->node_statistics.sample_count =
+        static_cast<std::uint64_t>(std::llround(host_node_stats[4]));
     out_result->left_categories.fill(0);
-    std::copy(host_best_result.search_result.left_categories,
-              host_best_result.search_result.left_categories + kGpuCategoricalRouteBins,
+    std::copy(resolved_result.search_result.left_categories,
+              resolved_result.search_result.left_categories + kGpuCategoricalRouteBins,
               out_result->left_categories.begin());
   } catch (const thrust::system_error& error) {
     throw std::runtime_error(std::string("CUDA thrust failure: ") + error.what());
@@ -948,11 +1143,12 @@ void PredictRawGpu(const HistMatrix& hist,
     return;
   }
   const std::size_t expected_bin_count = hist.num_rows * hist.num_cols;
-  if (hist.uses_compact_bin_storage()) {
+  if (hist.uses_compact_bin_storage() && !hist.uses_external_bin_storage()) {
     if (hist.compact_bin_indices.size() != expected_bin_count) {
       throw std::invalid_argument("GPU prediction compact bins must have num_rows * num_cols elements");
     }
-  } else if (hist.bin_indices.size() != expected_bin_count) {
+  } else if (!hist.uses_compact_bin_storage() && !hist.uses_external_bin_storage() &&
+             hist.bin_indices.size() != expected_bin_count) {
     throw std::invalid_argument("GPU prediction bins must have num_rows * num_cols elements");
   }
   if (out_predictions.size() != hist.num_rows * static_cast<std::size_t>(prediction_dimension)) {
@@ -964,11 +1160,7 @@ void PredictRawGpu(const HistMatrix& hist,
     DeviceGuard device_guard(prediction_device);
     thrust::device_vector<std::uint8_t> device_bins_u8;
     thrust::device_vector<std::uint16_t> device_bins_u16;
-    if (hist.uses_compact_bin_storage()) {
-      device_bins_u8.assign(hist.compact_bin_indices.begin(), hist.compact_bin_indices.end());
-    } else {
-      device_bins_u16.assign(hist.bin_indices.begin(), hist.bin_indices.end());
-    }
+    CopyHistogramBinsToDevice(hist, device_bins_u8, device_bins_u16);
     thrust::device_vector<GpuTreeNode> device_nodes(nodes.begin(), nodes.end());
     thrust::device_vector<std::int32_t> device_tree_offsets(tree_offsets.begin(), tree_offsets.end());
     thrust::device_vector<float> device_predictions(out_predictions.size(), 0.0F);

@@ -3,7 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
+import contextlib
+import json
 from pathlib import Path
+import socket
+import subprocess
+import sys
+import time
 from typing import Any, Dict, Iterable, List, Optional, Union
 
 import numpy as np
@@ -11,6 +17,11 @@ import numpy as np
 from . import _core
 from ._serialization import load_booster_document, save_booster
 from .core import Pool, _clone_pool
+from .distributed import (
+    distributed_tcp_request,
+    parse_distributed_root,
+    pickle_payload,
+)
 from .feature_pipeline import FeaturePipeline
 from .prepared_data import prepare_pool, uses_feature_pipeline_params
 
@@ -99,8 +110,13 @@ def _feature_pipeline_config_signature(config: Mapping[str, Any]) -> Dict[str, A
     return {
         "cat_features": config.get("cat_features"),
         "ordered_ctr": bool(config.get("ordered_ctr", False)),
+        "one_hot_max_size": int(config.get("one_hot_max_size", config.get("max_cat_to_onehot", 0))),
+        "max_cat_threshold": int(config.get("max_cat_threshold", 0)),
         "categorical_combinations": config.get("categorical_combinations"),
         "pairwise_categorical_combinations": bool(config.get("pairwise_categorical_combinations", False)),
+        "simple_ctr": config.get("simple_ctr"),
+        "combinations_ctr": config.get("combinations_ctr"),
+        "per_feature_ctr": config.get("per_feature_ctr"),
         "text_features": config.get("text_features"),
         "text_hash_dim": int(config.get("text_hash_dim", 64)),
         "embedding_features": config.get("embedding_features"),
@@ -127,10 +143,15 @@ def _assert_compatible_feature_pipeline(
     saved_signature = {
         "cat_features": pipeline_state.get("cat_features"),
         "ordered_ctr": bool(pipeline_state.get("ordered_ctr", False)),
+        "one_hot_max_size": int(pipeline_state.get("one_hot_max_size", 0)),
+        "max_cat_threshold": int(pipeline_state.get("max_cat_threshold", 0)),
         "categorical_combinations": pipeline_state.get("categorical_combinations"),
         "pairwise_categorical_combinations": bool(
             pipeline_state.get("pairwise_categorical_combinations", False)
         ),
+        "simple_ctr": pipeline_state.get("simple_ctr"),
+        "combinations_ctr": pipeline_state.get("combinations_ctr"),
+        "per_feature_ctr": pipeline_state.get("per_feature_ctr"),
         "text_features": pipeline_state.get("text_features"),
         "text_hash_dim": int(pipeline_state.get("text_hash_dim", 64)),
         "embedding_features": pipeline_state.get("embedding_features"),
@@ -175,6 +196,14 @@ def _prepare_pool_from_raw(
     external_memory_dir = params.get(external_memory_dir_key)
     if use_eval_external_memory and external_memory_dir is None:
         external_memory_dir = params.get("external_memory_dir")
+    distributed = _normalize_distributed_config(params)
+    if external_memory and external_memory_dir is not None and distributed is not None:
+        shard_suffix = (
+            f"eval_rank_{distributed['rank']:05d}"
+            if use_eval_external_memory
+            else f"rank_{distributed['rank']:05d}"
+        )
+        external_memory_dir = Path(external_memory_dir) / shard_suffix
 
     return prepare_pool(
         data,
@@ -186,8 +215,13 @@ def _prepare_pool_from_raw(
         external_memory=external_memory,
         external_memory_dir=external_memory_dir,
         ordered_ctr=bool(params.get("ordered_ctr", False)),
+        one_hot_max_size=int(params.get("one_hot_max_size", params.get("max_cat_to_onehot", 0))),
+        max_cat_threshold=int(params.get("max_cat_threshold", 0)),
         categorical_combinations=params.get("categorical_combinations"),
         pairwise_categorical_combinations=bool(params.get("pairwise_categorical_combinations", False)),
+        simple_ctr=params.get("simple_ctr"),
+        combinations_ctr=params.get("combinations_ctr"),
+        per_feature_ctr=params.get("per_feature_ctr"),
         text_features=params.get("text_features"),
         text_hash_dim=int(params.get("text_hash_dim", 64)),
         embedding_features=params.get("embedding_features"),
@@ -212,6 +246,784 @@ def _resolve_num_iteration(num_iteration: Optional[int]) -> int:
     if num_iteration <= 0:
         raise ValueError("num_iteration must be a positive integer")
     return int(num_iteration)
+
+
+_DISTRIBUTED_PARAM_KEYS = {
+    "distributed_world_size",
+    "distributed_rank",
+    "distributed_root",
+    "distributed_run_id",
+    "distributed_timeout",
+}
+
+
+def _normalize_distributed_config(params: Mapping[str, Any]) -> Optional[Dict[str, Any]]:
+    world_size = int(params.get("distributed_world_size", 1) or 1)
+    if world_size <= 1:
+        return None
+
+    rank = int(params.get("distributed_rank", 0) or 0)
+    if rank < 0 or rank >= world_size:
+        raise ValueError("distributed_rank must be in [0, distributed_world_size)")
+
+    root_value = params.get("distributed_root")
+    if root_value is None:
+        raise ValueError("distributed_root is required when distributed_world_size > 1")
+    parsed_root = parse_distributed_root(root_value)
+    run_id = str(params.get("distributed_run_id", "default"))
+    timeout = float(params.get("distributed_timeout", 600.0))
+    if timeout <= 0.0:
+        raise ValueError("distributed_timeout must be positive")
+
+    return {
+        "world_size": world_size,
+        "rank": rank,
+        "root": parsed_root.root,
+        "backend": parsed_root.backend,
+        "host": parsed_root.host,
+        "port": parsed_root.port,
+        "run_id": run_id,
+        "timeout": timeout,
+    }
+
+
+def _strip_distributed_params(params: Mapping[str, Any]) -> Dict[str, Any]:
+    return {key: value for key, value in params.items() if key not in _DISTRIBUTED_PARAM_KEYS}
+
+
+def _open_memmap_array(
+    path: Path,
+    shape: tuple[int, ...],
+    *,
+    dtype: Any,
+    fortran_order: bool = False,
+) -> np.memmap:
+    return np.lib.format.open_memmap(
+        path,
+        mode="w+",
+        dtype=np.dtype(dtype),
+        shape=shape,
+        fortran_order=fortran_order,
+    )
+
+
+def _wait_for_path(path: Path, timeout: float) -> None:
+    deadline = time.monotonic() + timeout
+    while not path.exists():
+        if time.monotonic() >= deadline:
+            raise TimeoutError(f"timed out waiting for distributed artifact: {path}")
+        time.sleep(0.1)
+
+
+def _wait_for_manifests(run_root: Path, world_size: int, timeout: float) -> List[Path]:
+    deadline = time.monotonic() + timeout
+    manifest_paths = [run_root / f"rank_{rank:05d}" / "manifest.json" for rank in range(world_size)]
+    while True:
+        missing = [path for path in manifest_paths if not path.exists()]
+        if not missing:
+            return manifest_paths
+        if time.monotonic() >= deadline:
+            raise TimeoutError(
+                "timed out waiting for distributed shard manifests: "
+                + ", ".join(str(path) for path in missing)
+            )
+        time.sleep(0.1)
+
+
+def _write_distributed_shard(pool: Pool, config: Dict[str, Any]) -> Path:
+    run_root = Path(config["root"]) / config["run_id"]
+    shard_root = run_root / f"rank_{config['rank']:05d}"
+    shard_root.mkdir(parents=True, exist_ok=True)
+
+    sparse_components = getattr(pool, "_sparse_csc_components", None)
+    label = np.asarray(pool.label, dtype=np.float32)
+    weight = np.ones(pool.num_rows, dtype=np.float32) if pool.weight is None else np.asarray(pool.weight, dtype=np.float32)
+    group_id = None if pool.group_id is None else np.asarray(pool.group_id, dtype=np.int64)
+
+    label_map = _open_memmap_array(shard_root / "label.npy", label.shape, dtype=np.float32)
+    label_map[...] = label
+    label_map.flush()
+    weight_map = _open_memmap_array(shard_root / "weight.npy", weight.shape, dtype=np.float32)
+    weight_map[...] = weight
+    weight_map.flush()
+
+    group_path = None
+    if group_id is not None:
+        group_path = shard_root / "group_id.npy"
+        group_map = _open_memmap_array(group_path, group_id.shape, dtype=np.int64)
+        group_map[...] = group_id
+        group_map.flush()
+
+    manifest: Dict[str, Any] = {
+        "rank": int(config["rank"]),
+        "num_rows": int(pool.num_rows),
+        "num_cols": int(pool.num_cols),
+        "cat_features": list(pool.cat_features),
+        "feature_names": None if pool.feature_names is None else list(pool.feature_names),
+        "label_path": "label.npy",
+        "weight_path": "weight.npy",
+        "group_id_path": None if group_path is None else group_path.name,
+    }
+
+    if sparse_components is None:
+        dense_data = getattr(pool, "_dense_data_ref", None)
+        if dense_data is None:
+            dense_data = np.asfortranarray(pool.data, dtype=np.float32)
+        else:
+            dense_data = np.asfortranarray(dense_data, dtype=np.float32)
+        data_map = _open_memmap_array(
+            shard_root / "data.npy",
+            dense_data.shape,
+            dtype=np.float32,
+            fortran_order=True,
+        )
+        data_map[...] = dense_data
+        data_map.flush()
+        manifest["storage"] = "dense"
+        manifest["data_path"] = "data.npy"
+    else:
+        sparse_data, sparse_indices, sparse_indptr, shape = sparse_components
+        data_map = _open_memmap_array(
+            shard_root / "sparse_data.npy", sparse_data.shape, dtype=np.float32
+        )
+        data_map[...] = np.asarray(sparse_data, dtype=np.float32)
+        data_map.flush()
+        indices_map = _open_memmap_array(
+            shard_root / "sparse_indices.npy", sparse_indices.shape, dtype=np.int64
+        )
+        indices_map[...] = np.asarray(sparse_indices, dtype=np.int64)
+        indices_map.flush()
+        indptr_map = _open_memmap_array(
+            shard_root / "sparse_indptr.npy", sparse_indptr.shape, dtype=np.int64
+        )
+        indptr_map[...] = np.asarray(sparse_indptr, dtype=np.int64)
+        indptr_map.flush()
+        manifest["storage"] = "sparse"
+        manifest["shape"] = [int(shape[0]), int(shape[1])]
+        manifest["sparse_data_path"] = "sparse_data.npy"
+        manifest["sparse_indices_path"] = "sparse_indices.npy"
+        manifest["sparse_indptr_path"] = "sparse_indptr.npy"
+
+    manifest_path = shard_root / "manifest.json"
+    with manifest_path.open("w", encoding="utf-8") as stream:
+        json.dump(manifest, stream, indent=2, sort_keys=True)
+    return manifest_path
+
+
+def _load_manifest(path: Path) -> Dict[str, Any]:
+    with path.open("r", encoding="utf-8") as stream:
+        return json.load(stream)
+
+
+def _merge_dense_distributed_shards(
+    run_root: Path,
+    manifests: List[Dict[str, Any]],
+) -> Pool:
+    total_rows = sum(int(manifest["num_rows"]) for manifest in manifests)
+    num_cols = int(manifests[0]["num_cols"])
+    merged_root = run_root / "merged_dense"
+    merged_root.mkdir(parents=True, exist_ok=True)
+
+    data_map = _open_memmap_array(
+        merged_root / "data.npy",
+        (total_rows, num_cols),
+        dtype=np.float32,
+        fortran_order=True,
+    )
+    label_map = _open_memmap_array(merged_root / "label.npy", (total_rows,), dtype=np.float32)
+    weight_map = _open_memmap_array(merged_root / "weight.npy", (total_rows,), dtype=np.float32)
+
+    has_group_id = any(manifest.get("group_id_path") is not None for manifest in manifests)
+    group_map = (
+        _open_memmap_array(merged_root / "group_id.npy", (total_rows,), dtype=np.int64)
+        if has_group_id
+        else None
+    )
+    group_arrays = []
+
+    row_offset = 0
+    for manifest in manifests:
+        shard_root = run_root / f"rank_{int(manifest['rank']):05d}"
+        shard_rows = int(manifest["num_rows"])
+        next_offset = row_offset + shard_rows
+        shard_data = np.load(shard_root / manifest["data_path"], mmap_mode="r")
+        data_map[row_offset:next_offset, :] = np.asarray(shard_data, dtype=np.float32)
+        label_map[row_offset:next_offset] = np.load(shard_root / manifest["label_path"], mmap_mode="r")
+        weight_map[row_offset:next_offset] = np.load(shard_root / manifest["weight_path"], mmap_mode="r")
+        if group_map is not None:
+            group_path = manifest.get("group_id_path")
+            if group_path is None:
+                raise ValueError("distributed shards must either all include group_id or all omit it")
+            shard_groups = np.load(shard_root / group_path, mmap_mode="r")
+            group_arrays.append(np.asarray(shard_groups, dtype=np.int64))
+            group_map[row_offset:next_offset] = shard_groups
+        row_offset = next_offset
+
+    data_map.flush()
+    label_map.flush()
+    weight_map.flush()
+    if group_map is not None:
+        _validate_distributed_group_shards(group_arrays)
+        group_map.flush()
+
+    return Pool(
+        data=np.load(merged_root / "data.npy", mmap_mode="r"),
+        label=np.load(merged_root / "label.npy", mmap_mode="r"),
+        cat_features=list(manifests[0]["cat_features"]),
+        weight=np.load(merged_root / "weight.npy", mmap_mode="r"),
+        group_id=None
+        if group_map is None
+        else np.load(merged_root / "group_id.npy", mmap_mode="r"),
+        feature_names=manifests[0]["feature_names"],
+        _releasable_feature_storage=True,
+    )
+
+
+def _merge_sparse_distributed_shards(
+    run_root: Path,
+    manifests: List[Dict[str, Any]],
+) -> Pool:
+    total_rows = sum(int(manifest["num_rows"]) for manifest in manifests)
+    num_cols = int(manifests[0]["num_cols"])
+    merged_root = run_root / "merged_sparse"
+    merged_root.mkdir(parents=True, exist_ok=True)
+
+    total_nnz = 0
+    shard_payloads = []
+    for manifest in manifests:
+        shard_root = run_root / f"rank_{int(manifest['rank']):05d}"
+        sparse_data = np.load(shard_root / manifest["sparse_data_path"], mmap_mode="r")
+        sparse_indices = np.load(shard_root / manifest["sparse_indices_path"], mmap_mode="r")
+        sparse_indptr = np.load(shard_root / manifest["sparse_indptr_path"], mmap_mode="r")
+        total_nnz += int(sparse_data.shape[0])
+        shard_payloads.append((manifest, sparse_data, sparse_indices, sparse_indptr))
+
+    data_map = _open_memmap_array(merged_root / "sparse_data.npy", (total_nnz,), dtype=np.float32)
+    indices_map = _open_memmap_array(
+        merged_root / "sparse_indices.npy", (total_nnz,), dtype=np.int64
+    )
+    indptr_map = _open_memmap_array(
+        merged_root / "sparse_indptr.npy", (num_cols + 1,), dtype=np.int64
+    )
+    label_map = _open_memmap_array(merged_root / "label.npy", (total_rows,), dtype=np.float32)
+    weight_map = _open_memmap_array(merged_root / "weight.npy", (total_rows,), dtype=np.float32)
+
+    has_group_id = any(manifest.get("group_id_path") is not None for manifest in manifests)
+    group_map = (
+        _open_memmap_array(merged_root / "group_id.npy", (total_rows,), dtype=np.int64)
+        if has_group_id
+        else None
+    )
+    group_arrays = []
+
+    row_offset = 0
+    for manifest, _sparse_data, _sparse_indices, _sparse_indptr in shard_payloads:
+        shard_root = run_root / f"rank_{int(manifest['rank']):05d}"
+        shard_rows = int(manifest["num_rows"])
+        next_offset = row_offset + shard_rows
+        label_map[row_offset:next_offset] = np.load(shard_root / manifest["label_path"], mmap_mode="r")
+        weight_map[row_offset:next_offset] = np.load(shard_root / manifest["weight_path"], mmap_mode="r")
+        if group_map is not None:
+            group_path = manifest.get("group_id_path")
+            if group_path is None:
+                raise ValueError("distributed shards must either all include group_id or all omit it")
+            shard_groups = np.load(shard_root / group_path, mmap_mode="r")
+            group_arrays.append(np.asarray(shard_groups, dtype=np.int64))
+            group_map[row_offset:next_offset] = shard_groups
+        row_offset = next_offset
+
+    global_offset = 0
+    indptr_map[0] = 0
+    row_base = [0]
+    for manifest in manifests[:-1]:
+        row_base.append(row_base[-1] + int(manifest["num_rows"]))
+    for col in range(num_cols):
+        for shard_index, (_manifest, sparse_data, sparse_indices, sparse_indptr) in enumerate(shard_payloads):
+            begin = int(sparse_indptr[col])
+            end = int(sparse_indptr[col + 1])
+            nnz = end - begin
+            if nnz == 0:
+                continue
+            next_offset = global_offset + nnz
+            data_map[global_offset:next_offset] = sparse_data[begin:end]
+            indices_map[global_offset:next_offset] = sparse_indices[begin:end] + row_base[shard_index]
+            global_offset = next_offset
+        indptr_map[col + 1] = global_offset
+
+    data_map.flush()
+    indices_map.flush()
+    indptr_map.flush()
+    label_map.flush()
+    weight_map.flush()
+    if group_map is not None:
+        _validate_distributed_group_shards(group_arrays)
+        group_map.flush()
+
+    return Pool.from_csc_components(
+        np.load(merged_root / "sparse_data.npy", mmap_mode="r"),
+        np.load(merged_root / "sparse_indices.npy", mmap_mode="r"),
+        np.load(merged_root / "sparse_indptr.npy", mmap_mode="r"),
+        (total_rows, num_cols),
+        np.load(merged_root / "label.npy", mmap_mode="r"),
+        cat_features=list(manifests[0]["cat_features"]),
+        weight=np.load(merged_root / "weight.npy", mmap_mode="r"),
+        group_id=None
+        if group_map is None
+        else np.load(merged_root / "group_id.npy", mmap_mode="r"),
+        feature_names=manifests[0]["feature_names"],
+        _releasable_feature_storage=True,
+    )
+
+
+def _merge_distributed_shards(run_root: Path, manifests: List[Dict[str, Any]]) -> Pool:
+    if not manifests:
+        raise ValueError("distributed training requires at least one shard manifest")
+
+    storage_kinds = {str(manifest["storage"]) for manifest in manifests}
+    if len(storage_kinds) != 1:
+        raise ValueError("distributed training requires all shards to use the same storage kind")
+
+    num_cols = int(manifests[0]["num_cols"])
+    cat_features = list(manifests[0]["cat_features"])
+    feature_names = manifests[0]["feature_names"]
+    for manifest in manifests[1:]:
+        if int(manifest["num_cols"]) != num_cols:
+            raise ValueError("distributed shards must agree on num_cols")
+        if list(manifest["cat_features"]) != cat_features:
+            raise ValueError("distributed shards must agree on cat_features")
+        if manifest["feature_names"] != feature_names:
+            raise ValueError("distributed shards must agree on feature_names")
+
+    if storage_kinds == {"dense"}:
+        return _merge_dense_distributed_shards(run_root, manifests)
+    return _merge_sparse_distributed_shards(run_root, manifests)
+
+
+def _quantization_schema_from_debug_histogram(hist_state: Mapping[str, Any]) -> Dict[str, Any]:
+    return {
+        "num_bins_per_feature": list(hist_state["num_bins_per_feature"]),
+        "cut_offsets": list(hist_state["cut_offsets"]),
+        "cut_values": list(hist_state["cut_values"]),
+        "categorical_mask": list(hist_state["categorical_mask"]),
+        "missing_value_mask": list(hist_state["missing_value_mask"]),
+        "nan_mode": int(hist_state["nan_mode"]),
+        "nan_modes": list(hist_state["nan_modes"]),
+    }
+
+
+def _validate_distributed_group_shards(group_arrays: List[np.ndarray]) -> None:
+    if not group_arrays:
+        return
+    seen_groups = set()
+    for shard_groups in group_arrays:
+        unique_groups = {int(value) for value in np.unique(np.asarray(shard_groups, dtype=np.int64))}
+        overlap = seen_groups.intersection(unique_groups)
+        if overlap:
+            raise ValueError(
+                "distributed ranking/group training requires each group_id to live on exactly one rank"
+            )
+        seen_groups.update(unique_groups)
+
+
+def _serialize_distributed_pool_shard(pool: Pool) -> Dict[str, Any]:
+    sparse_components = getattr(pool, "_sparse_csc_components", None)
+    payload: Dict[str, Any] = {
+        "num_rows": int(pool.num_rows),
+        "num_cols": int(pool.num_cols),
+        "cat_features": list(pool.cat_features),
+        "feature_names": None if pool.feature_names is None else list(pool.feature_names),
+        "label": np.asarray(pool.label, dtype=np.float32),
+        "weight": np.ones(pool.num_rows, dtype=np.float32)
+        if pool.weight is None
+        else np.asarray(pool.weight, dtype=np.float32),
+        "group_id": None if pool.group_id is None else np.asarray(pool.group_id, dtype=np.int64),
+    }
+    if sparse_components is None:
+        dense_data = getattr(pool, "_dense_data_ref", None)
+        if dense_data is None:
+            dense_data = np.asfortranarray(pool.data, dtype=np.float32)
+        payload["storage"] = "dense"
+        payload["data"] = np.asfortranarray(dense_data, dtype=np.float32)
+    else:
+        sparse_data, sparse_indices, sparse_indptr, shape = sparse_components
+        payload["storage"] = "sparse"
+        payload["shape"] = (int(shape[0]), int(shape[1]))
+        payload["sparse_data"] = np.asarray(sparse_data, dtype=np.float32)
+        payload["sparse_indices"] = np.asarray(sparse_indices, dtype=np.int64)
+        payload["sparse_indptr"] = np.asarray(sparse_indptr, dtype=np.int64)
+    return payload
+
+
+def _merge_dense_distributed_payloads(shards: List[Dict[str, Any]]) -> Pool:
+    data = np.asfortranarray(
+        np.concatenate([np.asarray(shard["data"], dtype=np.float32) for shard in shards], axis=0),
+        dtype=np.float32,
+    )
+    label = np.concatenate([np.asarray(shard["label"], dtype=np.float32) for shard in shards], axis=0)
+    weight = np.concatenate([np.asarray(shard["weight"], dtype=np.float32) for shard in shards], axis=0)
+    has_group_id = any(shard["group_id"] is not None for shard in shards)
+    if has_group_id and any(shard["group_id"] is None for shard in shards):
+        raise ValueError("distributed shards must either all include group_id or all omit it")
+    group_id = None
+    if has_group_id:
+        group_arrays = [np.asarray(shard["group_id"], dtype=np.int64) for shard in shards]
+        _validate_distributed_group_shards(group_arrays)
+        group_id = np.concatenate(group_arrays, axis=0)
+    return Pool(
+        data=data,
+        label=label,
+        cat_features=list(shards[0]["cat_features"]),
+        weight=weight,
+        group_id=group_id,
+        feature_names=shards[0]["feature_names"],
+        _releasable_feature_storage=True,
+    )
+
+
+def _merge_sparse_distributed_payloads(shards: List[Dict[str, Any]]) -> Pool:
+    total_rows = sum(int(shard["num_rows"]) for shard in shards)
+    num_cols = int(shards[0]["num_cols"])
+    total_nnz = sum(int(np.asarray(shard["sparse_data"]).shape[0]) for shard in shards)
+    data = np.empty(total_nnz, dtype=np.float32)
+    indices = np.empty(total_nnz, dtype=np.int64)
+    indptr = np.empty(num_cols + 1, dtype=np.int64)
+    label = np.concatenate([np.asarray(shard["label"], dtype=np.float32) for shard in shards], axis=0)
+    weight = np.concatenate([np.asarray(shard["weight"], dtype=np.float32) for shard in shards], axis=0)
+    has_group_id = any(shard["group_id"] is not None for shard in shards)
+    if has_group_id and any(shard["group_id"] is None for shard in shards):
+        raise ValueError("distributed shards must either all include group_id or all omit it")
+    group_id = None
+    if has_group_id:
+        group_arrays = [np.asarray(shard["group_id"], dtype=np.int64) for shard in shards]
+        _validate_distributed_group_shards(group_arrays)
+        group_id = np.concatenate(group_arrays, axis=0)
+
+    row_bases = [0]
+    for shard in shards[:-1]:
+        row_bases.append(row_bases[-1] + int(shard["num_rows"]))
+
+    nnz_offset = 0
+    indptr[0] = 0
+    for col in range(num_cols):
+        for shard_index, shard in enumerate(shards):
+            sparse_data = np.asarray(shard["sparse_data"], dtype=np.float32)
+            sparse_indices = np.asarray(shard["sparse_indices"], dtype=np.int64)
+            sparse_indptr = np.asarray(shard["sparse_indptr"], dtype=np.int64)
+            begin = int(sparse_indptr[col])
+            end = int(sparse_indptr[col + 1])
+            nnz = end - begin
+            if nnz <= 0:
+                continue
+            next_offset = nnz_offset + nnz
+            data[nnz_offset:next_offset] = sparse_data[begin:end]
+            indices[nnz_offset:next_offset] = sparse_indices[begin:end] + row_bases[shard_index]
+            nnz_offset = next_offset
+        indptr[col + 1] = nnz_offset
+
+    return Pool.from_csc_components(
+        data,
+        indices,
+        indptr,
+        (total_rows, num_cols),
+        label,
+        cat_features=list(shards[0]["cat_features"]),
+        weight=weight,
+        group_id=group_id,
+        feature_names=shards[0]["feature_names"],
+        _releasable_feature_storage=True,
+    )
+
+
+def _merge_distributed_payloads(shards: List[Dict[str, Any]]) -> Pool:
+    if not shards:
+        raise ValueError("distributed training requires at least one shard payload")
+    storage_kinds = {str(shard["storage"]) for shard in shards}
+    if len(storage_kinds) != 1:
+        raise ValueError("distributed shards must agree on storage kind")
+    num_cols = int(shards[0]["num_cols"])
+    cat_features = list(shards[0]["cat_features"])
+    feature_names = shards[0]["feature_names"]
+    for shard in shards[1:]:
+        if int(shard["num_cols"]) != num_cols:
+            raise ValueError("distributed shards must agree on num_cols")
+        if list(shard["cat_features"]) != cat_features:
+            raise ValueError("distributed shards must agree on cat_features")
+        if shard["feature_names"] != feature_names:
+            raise ValueError("distributed shards must agree on feature_names")
+    if storage_kinds == {"dense"}:
+        return _merge_dense_distributed_payloads(shards)
+    return _merge_sparse_distributed_payloads(shards)
+
+
+def _wait_for_tcp_coordinator(host: str, port: int, timeout_seconds: float) -> None:
+    deadline = time.time() + timeout_seconds
+    while time.time() < deadline:
+        try:
+            with socket.create_connection((host, port), timeout=0.2):
+                return
+        except OSError:
+            time.sleep(0.05)
+    raise TimeoutError(f"timed out waiting for distributed tcp coordinator at {host}:{port}")
+
+
+@contextlib.contextmanager
+def _distributed_collective_context(distributed: Optional[Dict[str, Any]]):
+    server_process = None
+    if distributed is not None and distributed["backend"] == "tcp" and distributed["rank"] == 0:
+        if distributed["host"] is None or distributed["port"] is None:
+            raise ValueError("tcp distributed coordination requires a host and port")
+        server_process = subprocess.Popen(
+            [
+                sys.executable,
+                "-m",
+                "ctboost.distributed",
+                str(distributed["host"]),
+                str(distributed["port"]),
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        _wait_for_tcp_coordinator(
+            str(distributed["host"]),
+            int(distributed["port"]),
+            min(10.0, float(distributed["timeout"])),
+        )
+    try:
+        yield
+    finally:
+        if server_process is not None:
+            server_process.terminate()
+            try:
+                server_process.wait(timeout=5.0)
+            except subprocess.TimeoutExpired:
+                server_process.kill()
+                server_process.wait(timeout=5.0)
+
+
+def _resolve_distributed_quantization_schema(
+    pool: Pool,
+    distributed: Dict[str, Any],
+    *,
+    max_bins: int,
+    nan_mode: str,
+    max_bin_by_feature: List[int],
+    border_selection_method: str,
+    nan_mode_by_feature: List[str],
+    feature_borders: List[List[float]],
+    external_memory: bool,
+) -> Dict[str, Any]:
+    if distributed["backend"] == "tcp":
+        payload = pickle_payload(
+            {
+                "shard": _serialize_distributed_pool_shard(pool),
+                "schema_request": {
+                    "max_bins": int(max_bins),
+                    "nan_mode": str(nan_mode),
+                    "max_bin_by_feature": list(max_bin_by_feature),
+                    "border_selection_method": str(border_selection_method),
+                    "nan_mode_by_feature": list(nan_mode_by_feature),
+                    "feature_borders": list(feature_borders),
+                    "external_memory": bool(external_memory),
+                    "external_memory_dir": "",
+                },
+            }
+        )
+        response = distributed_tcp_request(
+            distributed["root"],
+            distributed["timeout"],
+            "schema_collect",
+            distributed["run_id"],
+            distributed["rank"],
+            distributed["world_size"],
+            payload,
+        )
+        return json.loads(response.decode("utf-8"))
+
+    run_root = Path(distributed["root"]) / distributed["run_id"]
+    run_root.mkdir(parents=True, exist_ok=True)
+    _write_distributed_shard(pool, distributed)
+    manifests = [
+        _load_manifest(path)
+        for path in _wait_for_manifests(
+            run_root, distributed["world_size"], distributed["timeout"]
+        )
+    ]
+
+    schema_path = run_root / "quantization_schema.json"
+    if distributed["rank"] == 0:
+        merged_pool = _merge_distributed_shards(run_root, manifests)
+        schema_hist_dir = run_root / "schema_hist"
+        hist_state = _core._debug_build_histogram(
+            merged_pool._handle,
+            max_bins=max_bins,
+            nan_mode=nan_mode,
+            max_bin_by_feature=max_bin_by_feature,
+            border_selection_method=border_selection_method,
+            nan_mode_by_feature=nan_mode_by_feature,
+            feature_borders=feature_borders,
+            external_memory=external_memory,
+            external_memory_dir=str(schema_hist_dir),
+        )
+        schema_state = _quantization_schema_from_debug_histogram(hist_state)
+        schema_temp_path = schema_path.with_suffix(".tmp")
+        with schema_temp_path.open("w", encoding="utf-8") as stream:
+            json.dump(schema_state, stream, indent=2, sort_keys=True)
+        schema_temp_path.replace(schema_path)
+
+    _wait_for_path(schema_path, distributed["timeout"])
+    return _load_manifest(schema_path)
+
+
+def _distributed_train(
+    pool: Pool,
+    config: Mapping[str, Any],
+    iterations: int,
+) -> "Booster":
+    distributed = _normalize_distributed_config(config)
+    if distributed is None:
+        raise ValueError("distributed training was requested without a valid distributed config")
+    if pool.group_id is not None:
+        raise ValueError("distributed multi-host training does not yet support group_id/ranking data")
+
+    run_root = distributed["root"] / distributed["run_id"]
+    run_root.mkdir(parents=True, exist_ok=True)
+    _write_distributed_shard(pool, distributed)
+    manifests = [_load_manifest(path) for path in _wait_for_manifests(run_root, distributed["world_size"], distributed["timeout"])]
+    model_path = run_root / "model.ctboost"
+    done_path = run_root / "done.txt"
+
+    if distributed["rank"] == 0:
+        merged_pool = _merge_distributed_shards(run_root, manifests)
+        merged_params = _strip_distributed_params(config)
+        booster = train(
+            merged_pool,
+            merged_params,
+            num_boost_round=iterations,
+            eval_set=None,
+            early_stopping_rounds=None,
+            init_model=None,
+        )
+        booster.save_model(model_path)
+        done_path.write_text("ok\n", encoding="utf-8")
+        return booster
+
+    _wait_for_path(done_path, distributed["timeout"])
+    _wait_for_path(model_path, distributed["timeout"])
+    return Booster.load_model(model_path)
+
+
+def _feature_name_to_index_map(pool: Pool) -> Optional[Dict[str, int]]:
+    if pool.feature_names is None:
+        return None
+    return {str(name): index for index, name in enumerate(pool.feature_names)}
+
+
+def _resolve_feature_index(
+    key: Any,
+    pool: Pool,
+    param_name: str,
+    feature_name_map: Optional[Dict[str, int]],
+) -> int:
+    if isinstance(key, (np.integer, int)):
+        feature_index = int(key)
+    elif isinstance(key, str):
+        if feature_name_map is None:
+            raise ValueError(
+                f"{param_name} uses feature names, but the training pool does not have feature_names"
+            )
+        if key not in feature_name_map:
+            raise ValueError(f"{param_name} references unknown feature name {key!r}")
+        feature_index = feature_name_map[key]
+    else:
+        raise TypeError(f"{param_name} keys must be feature indices or feature names")
+
+    if feature_index < 0 or feature_index >= pool.num_cols:
+        raise ValueError(f"{param_name} feature index {feature_index} is out of bounds")
+    return feature_index
+
+
+def _resolve_feature_int_config(value: Any, pool: Pool, param_name: str) -> List[int]:
+    if value is None:
+        return []
+
+    feature_name_map = _feature_name_to_index_map(pool)
+    if isinstance(value, Mapping):
+        resolved = [0] * pool.num_cols
+        for key, raw_entry in value.items():
+            feature_index = _resolve_feature_index(key, pool, param_name, feature_name_map)
+            entry = int(raw_entry)
+            if entry < 0:
+                raise ValueError(f"{param_name} entries must be non-negative")
+            resolved[feature_index] = entry
+        return resolved
+
+    entries = list(np.asarray(value).reshape(-1).tolist()) if isinstance(value, np.ndarray) else list(value)
+    if len(entries) > pool.num_cols:
+        raise ValueError(f"{param_name} cannot specify more entries than the number of features")
+    resolved = [int(entry) for entry in entries]
+    if any(entry < 0 for entry in resolved):
+        raise ValueError(f"{param_name} entries must be non-negative")
+    return resolved
+
+
+def _resolve_feature_string_config(value: Any, pool: Pool, param_name: str) -> List[str]:
+    if value is None:
+        return []
+
+    feature_name_map = _feature_name_to_index_map(pool)
+    if isinstance(value, Mapping):
+        resolved = [""] * pool.num_cols
+        for key, raw_entry in value.items():
+            feature_index = _resolve_feature_index(key, pool, param_name, feature_name_map)
+            resolved[feature_index] = "" if raw_entry is None else str(raw_entry)
+        return resolved
+
+    entries = list(value)
+    if len(entries) > pool.num_cols:
+        raise ValueError(f"{param_name} cannot specify more entries than the number of features")
+    return ["" if entry is None else str(entry) for entry in entries]
+
+
+def _resolve_feature_border_config(value: Any, pool: Pool, param_name: str) -> List[List[float]]:
+    if value is None:
+        return []
+
+    feature_name_map = _feature_name_to_index_map(pool)
+    if isinstance(value, Mapping):
+        resolved: List[List[float]] = [[] for _ in range(pool.num_cols)]
+        for key, raw_entry in value.items():
+            feature_index = _resolve_feature_index(key, pool, param_name, feature_name_map)
+            resolved[feature_index] = [float(border) for border in raw_entry]
+        return resolved
+
+    entries = list(value)
+    if len(entries) > pool.num_cols:
+        raise ValueError(f"{param_name} cannot specify more entries than the number of features")
+    return [[float(border) for border in borders] for borders in entries]
+
+
+def _resolve_feature_float_config(value: Any, pool: Pool, param_name: str) -> List[float]:
+    if value is None:
+        return []
+
+    feature_name_map = _feature_name_to_index_map(pool)
+    if isinstance(value, Mapping):
+        resolved = [0.0] * pool.num_cols
+        for key, raw_entry in value.items():
+            feature_index = _resolve_feature_index(key, pool, param_name, feature_name_map)
+            entry = float(raw_entry)
+            if entry < 0.0:
+                raise ValueError(f"{param_name} entries must be non-negative")
+            resolved[feature_index] = entry
+        return resolved
+
+    entries = list(np.asarray(value).reshape(-1).tolist()) if isinstance(value, np.ndarray) else list(value)
+    if len(entries) > pool.num_cols:
+        raise ValueError(f"{param_name} cannot specify more entries than the number of features")
+    resolved = [float(entry) for entry in entries]
+    if any(entry < 0.0 for entry in resolved):
+        raise ValueError(f"{param_name} entries must be non-negative")
+    return resolved
 
 
 def _objective_name(params: Mapping[str, Any]) -> str:
@@ -491,6 +1303,40 @@ class Booster:
             feature_pipeline=None if pipeline_state is None else FeaturePipeline.from_state(pipeline_state),
         )
 
+    def get_quantization_schema(self) -> Optional[Dict[str, Any]]:
+        state = self._handle.quantization_schema_state()
+        if state is None:
+            return None
+        return dict(state)
+
+    def get_borders(self) -> Optional[Dict[str, Any]]:
+        schema = self.get_quantization_schema()
+        if schema is None:
+            return None
+
+        cut_offsets = list(schema["cut_offsets"])
+        cut_values = list(schema["cut_values"])
+        feature_borders = [
+            cut_values[cut_offsets[index] : cut_offsets[index + 1]]
+            for index in range(len(cut_offsets) - 1)
+        ]
+        nan_mode_lookup = {0: "Forbidden", 1: "Min", 2: "Max"}
+        nan_modes = schema.get("nan_modes")
+        if nan_modes is None:
+            default_mode = nan_mode_lookup.get(int(schema["nan_mode"]), "Min")
+            nan_mode_by_feature = [default_mode] * len(feature_borders)
+        else:
+            nan_mode_by_feature = [
+                nan_mode_lookup.get(int(mode), "Min") for mode in nan_modes
+            ]
+        return {
+            "feature_borders": feature_borders,
+            "nan_mode_by_feature": nan_mode_by_feature,
+            "num_bins_per_feature": list(schema["num_bins_per_feature"]),
+            "categorical_mask": list(schema["categorical_mask"]),
+            "missing_value_mask": list(schema["missing_value_mask"]),
+        }
+
     @property
     def loss_history(self) -> List[float]:
         return list(self._handle.loss_history())
@@ -672,6 +1518,13 @@ def train(
         raise TypeError("pool must be an instance of ctboost.Pool")
 
     feature_pipeline = getattr(pool, "_feature_pipeline", None)
+    distributed_config = _normalize_distributed_config(config)
+    if distributed_config is not None:
+        if feature_pipeline is not None:
+            raise ValueError(
+                "distributed multi-host training currently requires already-prepared numeric features"
+            )
+
     normalized_eval_set = _normalize_eval_set(eval_set)
     if isinstance(normalized_eval_set, Pool) or normalized_eval_set is None:
         eval_pool = normalized_eval_set
@@ -738,6 +1591,12 @@ def train(
             "No" if init_state is None else init_state.get("bootstrap_type", "No"),
         )
     )
+    bagging_temperature = float(
+        config.get(
+            "bagging_temperature",
+            0.0 if init_state is None else init_state.get("bagging_temperature", 0.0),
+        )
+    )
     boosting_type = str(
         config.get(
             "boosting_type",
@@ -771,8 +1630,44 @@ def train(
             1.0 if init_state is None else init_state.get("colsample_bytree", 1.0),
         )
     )
+    feature_weights = _resolve_feature_float_config(
+        config.get(
+            "feature_weights",
+            [] if init_state is None else init_state.get("feature_weights", []),
+        ),
+        pool,
+        "feature_weights",
+    )
+    first_feature_use_penalties = _resolve_feature_float_config(
+        config.get(
+            "first_feature_use_penalties",
+            []
+            if init_state is None
+            else init_state.get("first_feature_use_penalties", []),
+        ),
+        pool,
+        "first_feature_use_penalties",
+    )
+    random_strength = float(
+        config.get(
+            "random_strength",
+            0.0 if init_state is None else init_state.get("random_strength", 0.0),
+        )
+    )
+    grow_policy = str(
+        config.get(
+            "grow_policy",
+            "DepthWise" if init_state is None else init_state.get("grow_policy", "DepthWise"),
+        )
+    )
     max_leaves = int(
         config.get("max_leaves", 0 if init_state is None else init_state.get("max_leaves", 0))
+    )
+    min_samples_split = int(
+        config.get(
+            "min_samples_split",
+            2 if init_state is None else init_state.get("min_samples_split", 2),
+        )
     )
     min_data_in_leaf = int(
         config.get(
@@ -789,6 +1684,12 @@ def train(
     gamma = float(
         config.get("gamma", 0.0 if init_state is None else init_state.get("gamma", 0.0))
     )
+    max_leaf_weight = float(
+        config.get(
+            "max_leaf_weight",
+            0.0 if init_state is None else init_state.get("max_leaf_weight", 0.0),
+        )
+    )
     if "num_classes" in config:
         num_classes = int(config["num_classes"])
     elif init_state is not None:
@@ -799,6 +1700,36 @@ def train(
         num_classes = 1
     max_bins = int(config.get("max_bins", 256 if init_state is None else init_state["max_bins"]))
     nan_mode = str(config.get("nan_mode", "Min" if init_state is None else init_state["nan_mode"]))
+    max_bin_by_feature = _resolve_feature_int_config(
+        config.get(
+            "max_bin_by_feature",
+            [] if init_state is None else init_state.get("max_bin_by_feature", []),
+        ),
+        pool,
+        "max_bin_by_feature",
+    )
+    border_selection_method = str(
+        config.get(
+            "border_selection_method",
+            "Quantile" if init_state is None else init_state.get("border_selection_method", "Quantile"),
+        )
+    )
+    nan_mode_by_feature = _resolve_feature_string_config(
+        config.get(
+            "nan_mode_by_feature",
+            [] if init_state is None else init_state.get("nan_mode_by_feature", []),
+        ),
+        pool,
+        "nan_mode_by_feature",
+    )
+    feature_borders = _resolve_feature_border_config(
+        config.get(
+            "feature_borders",
+            [] if init_state is None else init_state.get("feature_borders", []),
+        ),
+        pool,
+        "feature_borders",
+    )
     eval_metric = str(config.get("eval_metric", "" if init_state is None else init_state["eval_metric_name"]))
     quantile_alpha = float(
         config.get("quantile_alpha", 0.5 if init_state is None else init_state["quantile_alpha"])
@@ -812,58 +1743,141 @@ def train(
     )
     task_type = str(config.get("task_type", "CPU" if init_state is None else init_state["task_type"]))
     devices = str(config.get("devices", "0" if init_state is None else init_state["devices"]))
+    distributed_world_size = int(
+        config.get(
+            "distributed_world_size",
+            1 if init_state is None else init_state.get("distributed_world_size", 1),
+        )
+    )
+    distributed_rank = int(
+        config.get(
+            "distributed_rank",
+            0 if init_state is None else init_state.get("distributed_rank", 0),
+        )
+    )
+    distributed_root = str(
+        config.get(
+            "distributed_root",
+            "" if init_state is None else init_state.get("distributed_root", ""),
+        )
+        or ""
+    )
+    distributed_run_id = str(
+        config.get(
+            "distributed_run_id",
+            "default" if init_state is None else init_state.get("distributed_run_id", "default"),
+        )
+    )
+    distributed_timeout = float(
+        config.get(
+            "distributed_timeout",
+            600.0 if init_state is None else init_state.get("distributed_timeout", 600.0),
+        )
+    )
+    native_external_memory = bool(
+        config.get(
+            "external_memory",
+            False if init_state is None else init_state.get("external_memory", False),
+        )
+    )
+    native_external_memory_dir = str(
+        config.get(
+            "external_memory_dir",
+            "" if init_state is None else init_state.get("external_memory_dir", ""),
+        )
+        or ""
+    )
     random_seed = int(
         config.get("random_seed", 0 if init_state is None else init_state.get("random_seed", 0))
     )
     verbose = bool(config.get("verbose", False if init_state is None else init_state.get("verbose", False)))
-    if init_state is not None:
-        if objective.lower() != str(init_state["objective_name"]).lower():
-            raise ValueError("init_model objective must match the current training objective")
-        if num_classes != int(init_state["num_classes"]):
-            raise ValueError("init_model num_classes must match the current training configuration")
-    weighted_pool = _apply_objective_weights(pool, config, objective)
-    weighted_eval_pool = (
-        None if eval_pool is None else _apply_objective_weights(eval_pool, config, objective)
-    )
+    if distributed_config is not None:
+        if task_type.upper() == "GPU" and distributed_config["backend"] != "tcp":
+            raise ValueError("distributed GPU training requires distributed_root='tcp://host:port'")
+        if eval_pool is not None and distributed_config["backend"] != "tcp":
+            raise ValueError("distributed eval_set support requires distributed_root='tcp://host:port'")
+    with _distributed_collective_context(distributed_config):
+        distributed_quantization_schema = None
+        if distributed_config is not None and init_state is None:
+            distributed_quantization_schema = _resolve_distributed_quantization_schema(
+                pool,
+                distributed_config,
+                max_bins=max_bins,
+                nan_mode=nan_mode,
+                max_bin_by_feature=max_bin_by_feature,
+                border_selection_method=border_selection_method,
+                nan_mode_by_feature=nan_mode_by_feature,
+                feature_borders=feature_borders,
+                external_memory=native_external_memory,
+            )
+        if init_state is not None:
+            if objective.lower() != str(init_state["objective_name"]).lower():
+                raise ValueError("init_model objective must match the current training objective")
+            if num_classes != int(init_state["num_classes"]):
+                raise ValueError("init_model num_classes must match the current training configuration")
+        weighted_pool = _apply_objective_weights(pool, config, objective)
+        weighted_eval_pool = (
+            None if eval_pool is None else _apply_objective_weights(eval_pool, config, objective)
+        )
 
-    booster = _core.GradientBooster(
-        objective=objective,
-        iterations=iterations,
-        learning_rate=learning_rate,
-        max_depth=max_depth,
-        alpha=alpha,
-        lambda_l2=lambda_l2,
-        subsample=subsample,
-        bootstrap_type=bootstrap_type,
-        boosting_type=boosting_type,
-        drop_rate=drop_rate,
-        skip_drop=skip_drop,
-        max_drop=max_drop,
-        monotone_constraints=monotone_constraints,
-        interaction_constraints=interaction_constraints,
-        colsample_bytree=colsample_bytree,
-        max_leaves=max_leaves,
-        min_data_in_leaf=min_data_in_leaf,
-        min_child_weight=min_child_weight,
-        gamma=gamma,
-        num_classes=num_classes,
-        max_bins=max_bins,
-        nan_mode=nan_mode,
-        eval_metric=eval_metric,
-        quantile_alpha=quantile_alpha,
-        huber_delta=huber_delta,
-        tweedie_variance_power=tweedie_variance_power,
-        task_type=task_type,
-        devices=devices,
-        random_seed=random_seed,
-        verbose=verbose,
-    )
-    if init_state is not None:
-        booster.load_state(init_state)
-    booster.fit(
-        weighted_pool._handle,
-        None if weighted_eval_pool is None else weighted_eval_pool._handle,
-        early_stopping,
-        init_state is not None,
-    )
-    return Booster(booster, feature_pipeline=feature_pipeline)
+        booster = _core.GradientBooster(
+            objective=objective,
+            iterations=iterations,
+            learning_rate=learning_rate,
+            max_depth=max_depth,
+            alpha=alpha,
+            lambda_l2=lambda_l2,
+            subsample=subsample,
+            bootstrap_type=bootstrap_type,
+            bagging_temperature=bagging_temperature,
+            boosting_type=boosting_type,
+            drop_rate=drop_rate,
+            skip_drop=skip_drop,
+            max_drop=max_drop,
+            monotone_constraints=monotone_constraints,
+            interaction_constraints=interaction_constraints,
+            colsample_bytree=colsample_bytree,
+            feature_weights=feature_weights,
+            first_feature_use_penalties=first_feature_use_penalties,
+            random_strength=random_strength,
+            grow_policy=grow_policy,
+            max_leaves=max_leaves,
+            min_samples_split=min_samples_split,
+            min_data_in_leaf=min_data_in_leaf,
+            min_child_weight=min_child_weight,
+            gamma=gamma,
+            max_leaf_weight=max_leaf_weight,
+            num_classes=num_classes,
+            max_bins=max_bins,
+            nan_mode=nan_mode,
+            max_bin_by_feature=max_bin_by_feature,
+            border_selection_method=border_selection_method,
+            nan_mode_by_feature=nan_mode_by_feature,
+            feature_borders=feature_borders,
+            external_memory=native_external_memory,
+            external_memory_dir=native_external_memory_dir,
+            eval_metric=eval_metric,
+            quantile_alpha=quantile_alpha,
+            huber_delta=huber_delta,
+            tweedie_variance_power=tweedie_variance_power,
+            task_type=task_type,
+            devices=devices,
+            distributed_world_size=distributed_world_size,
+            distributed_rank=distributed_rank,
+            distributed_root=distributed_root,
+            distributed_run_id=distributed_run_id,
+            distributed_timeout=distributed_timeout,
+            random_seed=random_seed,
+            verbose=verbose,
+        )
+        if init_state is not None:
+            booster.load_state(init_state)
+        elif distributed_quantization_schema is not None:
+            booster.load_quantization_schema(distributed_quantization_schema)
+        booster.fit(
+            weighted_pool._handle,
+            None if weighted_eval_pool is None else weighted_eval_pool._handle,
+            early_stopping,
+            init_state is not None,
+        )
+        return Booster(booster, feature_pipeline=feature_pipeline)

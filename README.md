@@ -10,7 +10,7 @@ The current codebase supports end-to-end training and prediction for regression,
 - Python support: `3.8` through `3.14`
 - Packaging: `scikit-build-core`
 - CI/CD: GitHub Actions for CMake validation and `cibuildwheel` release builds
-- Repository version: `0.1.19`
+- Repository version: `0.1.20`
 - Status: actively evolving native + Python package
 
 ## What Works Today
@@ -26,11 +26,15 @@ The current codebase supports end-to-end training and prediction for regression,
 - Row weights through `Pool(..., weight=...)` and `sample_weight` on sklearn estimators
 - Class imbalance controls through `class_weight`, `class_weights`, `auto_class_weights="balanced"`, and `scale_pos_weight`
 - Explicit missing-value handling through `nan_mode`
+- Quantization controls through `max_bins`, `max_bin_by_feature`, `border_selection_method`, `feature_borders`, and `nan_mode_by_feature`
 - Row subsampling through `subsample` plus `bootstrap_type="No"|"Bernoulli"|"Poisson"`
+- Bayesian bagging through `bootstrap_type="Bayesian"` plus `bagging_temperature`
 - `boosting_type="RandomForest"` on top of the existing conditional-inference tree learner
 - `boosting_type="DART"` with dropout-style tree normalization on top of the existing conditional-inference tree learner
 - Monotonic constraints through `monotone_constraints`
 - Path-level interaction constraints through `interaction_constraints`
+- Additional generic regularization and tree-growth controls through `feature_weights`, `first_feature_use_penalties`, `random_strength`, `grow_policy`, `min_samples_split`, and `max_leaf_weight`
+- GPU tree growth now also supports monotonic constraints, interaction constraints, `feature_weights`, `first_feature_use_penalties`, `random_strength`, and `grow_policy="LeafWise"` without replacing the conditional-inference split gate
 - Survival objectives: `Cox`, `SurvivalExponential`
 - Survival evaluation through `CIndex`
 - Early stopping with `eval_set` and `early_stopping_rounds`
@@ -41,8 +45,13 @@ The current codebase supports end-to-end training and prediction for regression,
 - Cross-validation with `ctboost.cv(...)` when `scikit-learn` is installed
 - Regression objectives: `RMSE`, `MAE`, `Huber`, `Quantile`, `Poisson`, `Tweedie`
 - Generic eval metrics including `RMSE`, `MAE`, `Poisson`, `Tweedie`, `Accuracy`, `Precision`, `Recall`, `F1`, `AUC`, `NDCG`, `MAP`, `MRR`, and `CIndex`
-- Native `ctboost.FeaturePipeline` logic in `_core.NativeFeaturePipeline`, with low-level and sklearn integration for ordered CTRs, categorical crosses, text hashing, and embedding-stat expansion
+- Native `ctboost.FeaturePipeline` logic in `_core.NativeFeaturePipeline`, with low-level and sklearn integration for ordered CTRs, frequency-style CTRs, categorical crosses, low-cardinality one-hot expansion, rare-category bucketing, text hashing, and embedding-stat expansion
+- Generic categorical controls around the existing conditional tree learner: `one_hot_max_size` / `max_cat_to_onehot`, `max_cat_threshold`, `simple_ctr`, `combinations_ctr`, and `per_feature_ctr`
 - `ctboost.prepare_pool(...)` for low-level raw-data preparation, optional feature-pipeline fitting, and disk-backed external-memory pool staging
+- Native CPU out-of-core fit through `ctboost.train(..., external_memory=True)`, which now spills quantized feature-bin columns to disk instead of keeping the full histogram matrix resident in RAM
+- Multi-host distributed training through `distributed_world_size`, `distributed_rank`, `distributed_root`, and `distributed_run_id`, with a native per-node histogram reduction path and a TCP collective backend available through `distributed_root="tcp://host:port"`
+- Distributed `eval_set`, `early_stopping_rounds`, `init_model`, grouped ranking shards, and sklearn-estimator wrappers on the TCP collective backend
+- Distributed GPU training when CUDA is available and `distributed_root` uses the TCP collective backend
 - Feature importance reporting
 - Leaf-index introspection and path-based prediction contributions
 - Continued training through `init_model` and estimator `warm_start`
@@ -52,6 +61,7 @@ The current codebase supports end-to-end training and prediction for regression,
 - GPU source builds now keep fit-scoped histogram data resident on device, support shared-memory histogram accumulation, and expose GPU raw-score prediction for regression, binary classification, and multiclass models
 - Histogram building now writes directly into final-width compact storage when the fitted schema permits `<=256` bins, avoiding the old transient `uint16 -> uint8` duplication spike
 - Fitted models now store quantization metadata once per booster instead of duplicating the same schema in every tree
+- Low-level boosters can export reusable fitted borders through `Booster.get_borders()` and expose the full shared quantization schema through `Booster.get_quantization_schema()`
 - GPU fit now drops the host training histogram bin matrix immediately after the device histogram workspace has been created and warm-start predictions have been seeded
 - GPU tree building now uses histogram subtraction in the device path as well, so only one child histogram is built explicitly after each split
 - GPU node search now keeps best-feature selection on device and returns a compact winner instead of copying the full per-feature search buffer back to host each node
@@ -59,10 +69,11 @@ The current codebase supports end-to-end training and prediction for regression,
 
 ## Current Limitations
 
-- Ordered CTRs, categorical crosses, text hashing, and embedding expansion now run through a native C++ pipeline, while pandas extraction, raw-data routing, and Pool orchestration remain thin Python glue
-- There is now a native sparse training path plus a disk-backed external-memory pool path through `ctboost.prepare_pool(...)` and `ctboost.train(..., external_memory=True)`, but quantized histogram matrices are still materialized in-core during fit
-- Monotonic and interaction constraints currently run only on CPU training
-- Process-local multi-GPU training is now implemented for CUDA source builds through feature-parallel GPU histogram and split-search execution; distributed multi-host training is still not implemented
+- Ordered CTRs, frequency-style CTRs, categorical crosses, low-cardinality one-hot expansion, rare-category bucketing, text hashing, and embedding expansion now run through a native C++ pipeline, while pandas extraction, raw-data routing, and Pool orchestration remain thin Python glue
+- There is now a native sparse training path plus disk-backed quantized-bin staging through `ctboost.train(..., external_memory=True)` on both CPU and GPU, and distributed training can also use a standalone TCP collective coordinator through `distributed_root="tcp://host:port"`
+- The legacy filesystem-based distributed path still exists for basic CPU shard training, but distributed `eval_set` support and distributed GPU execution require the TCP backend
+- Distributed multi-host training still expects already-prepared numeric features when `distributed_world_size > 1`; fitting the raw feature pipeline itself is not yet coordinated across ranks
+- Distributed grouped/ranking training requires each `group_id` to live entirely on one worker shard; cross-rank query groups are rejected
 - Dedicated GPU wheel automation targets Linux `x86_64` CPython `3.10` through `3.14` release assets for Kaggle-style environments
 - CUDA wheel builds in CI depend on container-side toolkit provisioning
 
@@ -75,7 +86,7 @@ The older `v0.1.15` GPU fit-memory bottleneck list is now closed in the current 
 - GPU tree growth uses histogram subtraction, so only one child histogram is built explicitly after a split
 - GPU split search keeps best-feature selection on device and copies back only the winning feature summary
 
-That means the old per-node GPU bin-materialization issue is no longer the main resident-memory problem in the current codebase. The remaining generic backlog is now in deeper out-of-core execution beyond disk-backed pool staging, richer distributed execution, and production tooling.
+That means the old per-node GPU bin-materialization issue is no longer the main resident-memory problem in the current codebase. The remaining generic backlog is now in broader distributed runtime ergonomics, full GPU parity for every control surface, and production tooling.
 
 ## Benchmark Snapshot
 
@@ -130,7 +141,7 @@ import subprocess
 import sys
 import urllib.request
 
-tag = "v0.1.19"
+tag = "v0.1.20"
 py_tag = f"cp{sys.version_info.major}{sys.version_info.minor}"
 api_url = f"https://api.github.com/repos/captnmarkus/ctboost/releases/tags/{tag}"
 
@@ -264,7 +275,58 @@ booster = ctboost.train(
 predictions = booster.predict(pool)
 loss_history = booster.loss_history
 eval_loss_history = booster.eval_loss_history
+exported_borders = booster.get_borders()
 ```
+
+Per-feature quantization controls are available on the same low-level API:
+
+```python
+booster = ctboost.train(
+    pool,
+    {
+        "objective": "RMSE",
+        "learning_rate": 0.1,
+        "max_depth": 3,
+        "alpha": 1.0,
+        "lambda_l2": 1.0,
+        "max_bins": 128,
+        "max_bin_by_feature": {0: 16, 1: 8},
+        "border_selection_method": "Uniform",
+        "feature_borders": {1: [-0.5, 0.0, 0.5]},
+        "nan_mode_by_feature": {0: "Max"},
+    },
+    num_boost_round=32,
+)
+```
+
+`feature_borders` lets selected numeric features reuse explicit cut values, `max_bin_by_feature` overrides the global `max_bins` budget per column, `border_selection_method` currently supports `Quantile` and `Uniform`, and `Booster.get_borders()` returns an importable border bundle keyed by fitted feature index.
+
+The same low-level API also exposes generic regularization and growth controls around the existing conditional tree learner:
+
+```python
+booster = ctboost.train(
+    pool,
+    {
+        "objective": "RMSE",
+        "learning_rate": 0.1,
+        "max_depth": 4,
+        "alpha": 1.0,
+        "lambda_l2": 1.0,
+        "bootstrap_type": "Bayesian",
+        "bagging_temperature": 1.0,
+        "feature_weights": {0: 2.0, 3: 0.5},
+        "first_feature_use_penalties": {2: 1.5},
+        "random_strength": 0.2,
+        "grow_policy": "LeafWise",
+        "max_leaves": 16,
+        "min_samples_split": 8,
+        "max_leaf_weight": 2.0,
+    },
+    num_boost_round=64,
+)
+```
+
+`feature_weights` rescales feature preference without replacing the conditional test, `first_feature_use_penalties` discourages the first use of selected features at the model level, `random_strength` adds seeded noise to break near-ties in split gain after the conditional gate has already accepted a candidate, and `grow_policy="LeafWise"` currently means a best-child-first heuristic under the existing `max_leaves` budget rather than a separate split criterion.
 
 The same low-level API can now prepare raw categorical/text/embedding inputs directly:
 
@@ -293,7 +355,11 @@ booster = ctboost.train(
         "alpha": 1.0,
         "lambda_l2": 1.0,
         "ordered_ctr": True,
+        "one_hot_max_size": 4,
+        "max_cat_threshold": 16,
         "cat_features": [0],
+        "simple_ctr": ["Mean", "Frequency"],
+        "per_feature_ctr": {0: ["Mean"]},
         "text_features": [2],
         "embedding_features": [3],
     },
@@ -363,7 +429,7 @@ pool = ctboost.Pool(frame, label)
 assert pool.cat_features == [1, 2]
 ```
 
-For estimator-side ordered CTRs, categorical crosses, text hashing, and embedding expansion, use the Python feature pipeline parameters:
+For estimator-side ordered CTRs, categorical crosses, one-hot expansion, rare-category bucketing, text hashing, and embedding expansion, use the Python feature pipeline parameters:
 
 ```python
 import numpy as np
@@ -391,13 +457,19 @@ model = CTBoostRegressor(
     learning_rate=0.1,
     max_depth=3,
     ordered_ctr=True,
+    one_hot_max_size=8,
+    max_cat_threshold=32,
     cat_features=["city"],
     categorical_combinations=[["city", "headline"]],
+    simple_ctr=["Mean", "Frequency"],
+    per_feature_ctr={"city": ["Mean"]},
     text_features=["headline"],
     embedding_features=["embedding"],
 )
 model.fit(frame, label)
 ```
+
+`one_hot_max_size` keeps low-cardinality categoricals as explicit indicator columns, `max_cat_threshold` buckets higher-cardinality levels down to a capped native categorical domain before the conditional tree learner sees them, and `per_feature_ctr` lets specific base features or categorical combinations opt into CTR generation without changing the underlying conditional split logic.
 
 ### Model Persistence, Warm Start, And Cross-Validation
 
@@ -440,7 +512,9 @@ The scikit-learn compatible estimators also expose:
 - `evals_result_`
 - `best_score_`
 - `sample_weight` on `fit(...)`
-- `class_weight`, `scale_pos_weight`, `eval_metric`, `nan_mode`, and `warm_start`
+- `class_weight`, `scale_pos_weight`, `eval_metric`, `nan_mode`, `nan_mode_by_feature`, and `warm_start`
+- `max_bins`, `max_bin_by_feature`, `border_selection_method`, and `feature_borders`
+- `bagging_temperature`, `feature_weights`, `first_feature_use_penalties`, `random_strength`, `grow_policy`, `min_samples_split`, and `max_leaf_weight`
 
 ## Public Python API
 

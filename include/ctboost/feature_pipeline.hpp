@@ -15,8 +15,13 @@ class NativeFeaturePipeline {
  public:
   NativeFeaturePipeline(pybind11::object cat_features = pybind11::none(),
                         bool ordered_ctr = false,
+                        int one_hot_max_size = 0,
+                        int max_cat_threshold = 0,
                         pybind11::object categorical_combinations = pybind11::none(),
                         bool pairwise_categorical_combinations = false,
+                        pybind11::object simple_ctr = pybind11::none(),
+                        pybind11::object combinations_ctr = pybind11::none(),
+                        pybind11::object per_feature_ctr = pybind11::none(),
                         pybind11::object text_features = pybind11::none(),
                         int text_hash_dim = 64,
                         pybind11::object embedding_features = pybind11::none(),
@@ -42,14 +47,27 @@ class NativeFeaturePipeline {
     int source_index{-1};
     std::string output_name;
     std::unordered_map<std::string, float> mapping;
+    std::uint8_t has_other_bucket{0};
+    float other_value{0.0F};
+  };
+
+  struct OneHotEncoderState {
+    int source_index{-1};
+    std::string prefix;
+    std::vector<std::string> category_keys;
+    std::vector<std::string> output_names;
+    std::uint8_t has_other_bucket{0};
   };
 
   struct CtrState {
     std::vector<int> source_indices;
     std::vector<std::string> output_names;
+    std::string ctr_type;
     std::vector<float> prior_values;
     std::unordered_map<std::string, int> total_counts;
     std::unordered_map<std::string, std::vector<float>> total_sums;
+    float global_frequency_prior{0.0F};
+    std::size_t total_rows{0};
   };
 
   struct TextState {
@@ -75,8 +93,13 @@ class NativeFeaturePipeline {
 
   pybind11::object cat_features_;
   bool ordered_ctr_{false};
+  int one_hot_max_size_{0};
+  int max_cat_threshold_{0};
   pybind11::object categorical_combinations_;
   bool pairwise_categorical_combinations_{false};
+  pybind11::object simple_ctr_;
+  pybind11::object combinations_ctr_;
+  pybind11::object per_feature_ctr_;
   pybind11::object text_features_;
   int text_hash_dim_{64};
   pybind11::object embedding_features_;
@@ -88,6 +111,7 @@ class NativeFeaturePipeline {
   std::vector<int> cat_feature_indices_;
   std::vector<std::string> output_feature_names_;
   std::vector<int> numeric_indices_;
+  std::vector<OneHotEncoderState> one_hot_states_;
   std::vector<CategoricalEncoderState> categorical_states_;
   std::vector<CategoricalEncoderState> combination_states_;
   std::vector<std::vector<int>> combination_source_indices_;

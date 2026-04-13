@@ -87,8 +87,50 @@ __device__ double ComputeGainDevice(double gradient_sum, double hessian_sum, dou
   return (gradient_sum * gradient_sum) / (hessian_sum + lambda_l2);
 }
 
+__device__ double ComputeLeafWeightDevice(double gradient_sum,
+                                          double hessian_sum,
+                                          double lambda_l2) {
+  return -gradient_sum / (hessian_sum + lambda_l2);
+}
+
+__device__ double ClampLeafWeightDevice(double leaf_weight,
+                                        double lower_bound,
+                                        double upper_bound) {
+  return fmin(fmax(leaf_weight, lower_bound), upper_bound);
+}
+
+__device__ __forceinline__ std::uint64_t MixRandomKeyDevice(std::uint64_t value) {
+  value += 0x9E3779B97F4A7C15ULL;
+  value = (value ^ (value >> 30U)) * 0xBF58476D1CE4E5B9ULL;
+  value = (value ^ (value >> 27U)) * 0x94D049BB133111EBULL;
+  return value ^ (value >> 31U);
+}
+
+__device__ __forceinline__ double UniformFromKeyDevice(std::uint64_t key) {
+  constexpr double kScale = 1.0 / static_cast<double>(1ULL << 53U);
+  return static_cast<double>(MixRandomKeyDevice(key) >> 11U) * kScale;
+}
+
+__device__ double SymmetricNoiseDevice(std::uint64_t base_seed,
+                                       std::uint64_t key,
+                                       double scale) {
+  if (scale <= 0.0) {
+    return 0.0;
+  }
+  const double uniform = UniformFromKeyDevice(base_seed ^ key);
+  return (2.0 * uniform - 1.0) * scale;
+}
+
 struct FeatureRank {
   int feature_id{-1};
+  double p_value{1.0};
+  double chi_square{-INFINITY};
+  std::uint32_t degrees_of_freedom{0};
+};
+
+struct AdjustedFeatureRank {
+  int feature_id{-1};
+  double adjusted_gain{0.0};
   double p_value{1.0};
   double chi_square{-INFINITY};
   std::uint32_t degrees_of_freedom{0};
@@ -109,6 +151,32 @@ __device__ bool IsBetterFeatureRank(const FeatureRank& candidate, const FeatureR
     return true;
   }
   return fabs(candidate.p_value - best.p_value) <= kFeatureTieTolerance &&
+         fabs(candidate.chi_square - best.chi_square) <= kFeatureTieTolerance &&
+         candidate.feature_id < best.feature_id;
+}
+
+__device__ bool IsBetterAdjustedFeatureRank(const AdjustedFeatureRank& candidate,
+                                           const AdjustedFeatureRank& best) {
+  if (candidate.feature_id < 0 || candidate.degrees_of_freedom == 0U) {
+    return false;
+  }
+  if (best.feature_id < 0 || best.degrees_of_freedom == 0U) {
+    return true;
+  }
+  if (candidate.adjusted_gain > best.adjusted_gain) {
+    return true;
+  }
+  if (fabs(candidate.adjusted_gain - best.adjusted_gain) <= kFeatureTieTolerance &&
+      candidate.p_value < best.p_value) {
+    return true;
+  }
+  if (fabs(candidate.adjusted_gain - best.adjusted_gain) <= kFeatureTieTolerance &&
+      fabs(candidate.p_value - best.p_value) <= kFeatureTieTolerance &&
+      candidate.chi_square > best.chi_square) {
+    return true;
+  }
+  return fabs(candidate.adjusted_gain - best.adjusted_gain) <= kFeatureTieTolerance &&
+         fabs(candidate.p_value - best.p_value) <= kFeatureTieTolerance &&
          fabs(candidate.chi_square - best.chi_square) <= kFeatureTieTolerance &&
          candidate.feature_id < best.feature_id;
 }
@@ -197,11 +265,13 @@ __global__ void NodeTargetStatisticsKernel(const std::size_t* row_indices,
   __shared__ double shared_hessian[256];
   __shared__ double shared_weight[256];
   __shared__ double shared_gradient_square[256];
+  __shared__ double shared_count[256];
 
   double thread_gradient = 0.0;
   double thread_hessian = 0.0;
   double thread_weight = 0.0;
   double thread_gradient_square = 0.0;
+  double thread_count = 0.0;
   for (std::size_t row_index = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
        row_index < node_row_count;
        row_index += static_cast<std::size_t>(blockDim.x) * gridDim.x) {
@@ -214,12 +284,14 @@ __global__ void NodeTargetStatisticsKernel(const std::size_t* row_indices,
     thread_hessian += sample_weight * hessian;
     thread_weight += sample_weight;
     thread_gradient_square += sample_weight * gradient * gradient;
+    thread_count += 1.0;
   }
 
   shared_gradient[threadIdx.x] = thread_gradient;
   shared_hessian[threadIdx.x] = thread_hessian;
   shared_weight[threadIdx.x] = thread_weight;
   shared_gradient_square[threadIdx.x] = thread_gradient_square;
+  shared_count[threadIdx.x] = thread_count;
   __syncthreads();
 
   for (unsigned int offset = blockDim.x / 2; offset > 0; offset >>= 1) {
@@ -228,6 +300,7 @@ __global__ void NodeTargetStatisticsKernel(const std::size_t* row_indices,
       shared_hessian[threadIdx.x] += shared_hessian[threadIdx.x + offset];
       shared_weight[threadIdx.x] += shared_weight[threadIdx.x + offset];
       shared_gradient_square[threadIdx.x] += shared_gradient_square[threadIdx.x + offset];
+      shared_count[threadIdx.x] += shared_count[threadIdx.x + offset];
     }
     __syncthreads();
   }
@@ -237,6 +310,7 @@ __global__ void NodeTargetStatisticsKernel(const std::size_t* row_indices,
     atomicAdd(&node_statistics[1], shared_gradient[0]);
     atomicAdd(&node_statistics[2], shared_hessian[0]);
     atomicAdd(&node_statistics[3], shared_gradient_square[0]);
+    atomicAdd(&node_statistics[4], shared_count[0]);
   }
 }
 
@@ -247,6 +321,7 @@ __global__ void EvaluateFeatureSearchKernel(
     const std::uint32_t* feature_offsets,
     const std::uint16_t* num_bins_per_feature,
     const std::uint8_t* categorical_mask,
+    const int* monotone_constraints,
     double total_gradient,
     double total_hessian,
     double sample_weight_sum,
@@ -255,6 +330,8 @@ __global__ void EvaluateFeatureSearchKernel(
     int min_data_in_leaf,
     double min_child_weight,
     double min_split_gain,
+    double leaf_lower_bound,
+    double leaf_upper_bound,
     ctboost::GpuFeatureSearchResult* out_results,
     std::size_t num_features) {
   const std::size_t feature = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
@@ -316,6 +393,7 @@ __global__ void EvaluateFeatureSearchKernel(
 
   const double parent_gain = ComputeGainDevice(total_gradient, total_hessian, lambda_l2);
   const bool is_categorical = categorical_mask[feature] != 0U;
+  const int monotone_sign = monotone_constraints == nullptr ? 0 : monotone_constraints[feature];
   result.is_categorical = is_categorical ? 1U : 0U;
 
   if (!is_categorical) {
@@ -339,6 +417,18 @@ __global__ void EvaluateFeatureSearchKernel(
       if (left_hessian < min_child_weight || right_hessian < min_child_weight) {
         continue;
       }
+      const double left_leaf_weight = ClampLeafWeightDevice(
+          ComputeLeafWeightDevice(left_gradient, left_hessian, lambda_l2),
+          leaf_lower_bound,
+          leaf_upper_bound);
+      const double right_leaf_weight = ClampLeafWeightDevice(
+          ComputeLeafWeightDevice(right_gradient, right_hessian, lambda_l2),
+          leaf_lower_bound,
+          leaf_upper_bound);
+      if ((monotone_sign > 0 && left_leaf_weight > right_leaf_weight + kFeatureTieTolerance) ||
+          (monotone_sign < 0 && left_leaf_weight + kFeatureTieTolerance < right_leaf_weight)) {
+        continue;
+      }
 
       const double gain = ComputeGainDevice(left_gradient, left_hessian, lambda_l2) +
                           ComputeGainDevice(right_gradient, right_hessian, lambda_l2) - parent_gain;
@@ -350,8 +440,15 @@ __global__ void EvaluateFeatureSearchKernel(
         result.split_valid = 1U;
         result.split_bin = static_cast<std::uint16_t>(split_bin);
         result.gain = gain;
+        result.left_leaf_weight = left_leaf_weight;
+        result.right_leaf_weight = right_leaf_weight;
       }
     }
+    out_results[feature] = result;
+    return;
+  }
+
+  if (monotone_sign != 0) {
     out_results[feature] = result;
     return;
   }
@@ -427,6 +524,14 @@ __global__ void EvaluateFeatureSearchKernel(
     if (left_hessian < min_child_weight || right_hessian < min_child_weight) {
       continue;
     }
+    const double left_leaf_weight = ClampLeafWeightDevice(
+        ComputeLeafWeightDevice(left_gradient, left_hessian, lambda_l2),
+        leaf_lower_bound,
+        leaf_upper_bound);
+    const double right_leaf_weight = ClampLeafWeightDevice(
+        ComputeLeafWeightDevice(right_gradient, right_hessian, lambda_l2),
+        leaf_lower_bound,
+        leaf_upper_bound);
 
     const double gain = ComputeGainDevice(left_gradient, left_hessian, lambda_l2) +
                         ComputeGainDevice(right_gradient, right_hessian, lambda_l2) - parent_gain;
@@ -437,6 +542,8 @@ __global__ void EvaluateFeatureSearchKernel(
     if (result.split_valid == 0U || gain > result.gain) {
       result.split_valid = 1U;
       result.gain = gain;
+      result.left_leaf_weight = left_leaf_weight;
+      result.right_leaf_weight = right_leaf_weight;
       for (std::size_t i = 0; i < ctboost::kGpuCategoricalRouteBins; ++i) {
         result.left_categories[i] = 0U;
       }
@@ -488,6 +595,89 @@ __global__ void SelectBestFeatureKernel(
 
   ctboost::GpuBestFeatureResult best_result{};
   best_result.feature_id = shared_ranks[0].feature_id;
+  best_result.search_result.p_value = 1.0;
+  best_result.search_result.chi_square = -INFINITY;
+  if (shared_ranks[0].feature_id >= 0) {
+    best_result.search_result =
+        feature_results[static_cast<std::size_t>(shared_ranks[0].feature_id)];
+  }
+  out_best_result[0] = best_result;
+}
+
+__global__ void SelectBestAdjustedFeatureKernel(
+    const ctboost::GpuFeatureSearchResult* feature_results,
+    const std::uint32_t* candidate_feature_indices,
+    std::size_t num_candidates,
+    double alpha,
+    int depth,
+    std::size_t row_begin,
+    std::size_t row_end,
+    std::uint64_t random_seed,
+    double random_strength,
+    const double* feature_weights,
+    const double* first_feature_use_penalties,
+    const std::uint8_t* model_feature_used_mask,
+    ctboost::GpuBestFeatureResult* out_best_result) {
+  __shared__ AdjustedFeatureRank shared_ranks[256];
+
+  AdjustedFeatureRank best_rank;
+  for (std::size_t candidate = threadIdx.x; candidate < num_candidates; candidate += blockDim.x) {
+    const std::size_t feature_index = candidate_feature_indices == nullptr
+                                          ? candidate
+                                          : static_cast<std::size_t>(candidate_feature_indices[candidate]);
+    const ctboost::GpuFeatureSearchResult& feature_result = feature_results[feature_index];
+    if (feature_result.degrees_of_freedom == 0U || feature_result.p_value > alpha ||
+        feature_result.split_valid == 0U || feature_result.gain <= 0.0) {
+      continue;
+    }
+
+    const double feature_weight = feature_weights == nullptr ? 1.0 : feature_weights[feature_index];
+    if (feature_weight <= 0.0) {
+      continue;
+    }
+    const double penalty =
+        first_feature_use_penalties == nullptr || model_feature_used_mask == nullptr ||
+                model_feature_used_mask[feature_index] != 0U
+            ? 0.0
+            : first_feature_use_penalties[feature_index];
+    const double noise = SymmetricNoiseDevice(
+        random_seed,
+        static_cast<std::uint64_t>(feature_index + 1U) ^
+            (static_cast<std::uint64_t>(depth + 1) << 24U) ^
+            (static_cast<std::uint64_t>(row_begin + 1U) << 1U) ^
+            (static_cast<std::uint64_t>(row_end + 1U) << 33U),
+        random_strength);
+    const double adjusted_gain = feature_result.gain * feature_weight - penalty + noise;
+    const AdjustedFeatureRank candidate_rank{
+        static_cast<int>(feature_index),
+        adjusted_gain,
+        feature_result.p_value,
+        feature_result.chi_square,
+        feature_result.degrees_of_freedom,
+    };
+    if (IsBetterAdjustedFeatureRank(candidate_rank, best_rank)) {
+      best_rank = candidate_rank;
+    }
+  }
+
+  shared_ranks[threadIdx.x] = best_rank;
+  __syncthreads();
+
+  for (unsigned int offset = blockDim.x / 2; offset > 0; offset >>= 1) {
+    if (threadIdx.x < offset &&
+        IsBetterAdjustedFeatureRank(shared_ranks[threadIdx.x + offset], shared_ranks[threadIdx.x])) {
+      shared_ranks[threadIdx.x] = shared_ranks[threadIdx.x + offset];
+    }
+    __syncthreads();
+  }
+
+  if (threadIdx.x != 0) {
+    return;
+  }
+
+  ctboost::GpuBestFeatureResult best_result{};
+  best_result.feature_id = shared_ranks[0].feature_id;
+  best_result.adjusted_gain = shared_ranks[0].adjusted_gain;
   best_result.search_result.p_value = 1.0;
   best_result.search_result.chi_square = -INFINITY;
   if (shared_ranks[0].feature_id >= 0) {

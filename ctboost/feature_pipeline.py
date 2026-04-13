@@ -36,8 +36,13 @@ class FeaturePipeline:
         *,
         cat_features: Optional[Sequence[Any]] = None,
         ordered_ctr: bool = False,
+        one_hot_max_size: int = 0,
+        max_cat_threshold: int = 0,
         categorical_combinations: Optional[Sequence[Sequence[Any]]] = None,
         pairwise_categorical_combinations: bool = False,
+        simple_ctr: Optional[Sequence[str]] = None,
+        combinations_ctr: Optional[Sequence[str]] = None,
+        per_feature_ctr: Optional[Mapping[Any, Sequence[str]]] = None,
         text_features: Optional[Sequence[Any]] = None,
         text_hash_dim: int = 64,
         embedding_features: Optional[Sequence[Any]] = None,
@@ -47,10 +52,21 @@ class FeaturePipeline:
     ) -> None:
         self.cat_features = None if cat_features is None else list(cat_features)
         self.ordered_ctr = bool(ordered_ctr)
+        self.one_hot_max_size = int(one_hot_max_size)
+        self.max_cat_threshold = int(max_cat_threshold)
         self.categorical_combinations = (
             None if categorical_combinations is None else [list(values) for values in categorical_combinations]
         )
         self.pairwise_categorical_combinations = bool(pairwise_categorical_combinations)
+        self.simple_ctr = None if simple_ctr is None else [str(value) for value in simple_ctr]
+        self.combinations_ctr = (
+            None if combinations_ctr is None else [str(value) for value in combinations_ctr]
+        )
+        self.per_feature_ctr = (
+            None
+            if per_feature_ctr is None
+            else {key: [str(value) for value in values] for key, values in per_feature_ctr.items()}
+        )
         self.text_features = None if text_features is None else list(text_features)
         self.text_hash_dim = int(text_hash_dim)
         self.embedding_features = None if embedding_features is None else list(embedding_features)
@@ -66,8 +82,13 @@ class FeaturePipeline:
         self._native = _core.NativeFeaturePipeline(
             cat_features=self.cat_features,
             ordered_ctr=self.ordered_ctr,
+            one_hot_max_size=self.one_hot_max_size,
+            max_cat_threshold=self.max_cat_threshold,
             categorical_combinations=self.categorical_combinations,
             pairwise_categorical_combinations=self.pairwise_categorical_combinations,
+            simple_ctr=self.simple_ctr,
+            combinations_ctr=self.combinations_ctr,
+            per_feature_ctr=self.per_feature_ctr,
             text_features=self.text_features,
             text_hash_dim=self.text_hash_dim,
             embedding_features=self.embedding_features,
@@ -139,8 +160,13 @@ class FeaturePipeline:
         pipeline = cls(
             cat_features=state.get("cat_features"),
             ordered_ctr=state.get("ordered_ctr", False),
+            one_hot_max_size=state.get("one_hot_max_size", 0),
+            max_cat_threshold=state.get("max_cat_threshold", 0),
             categorical_combinations=state.get("categorical_combinations"),
             pairwise_categorical_combinations=state.get("pairwise_categorical_combinations", False),
+            simple_ctr=state.get("simple_ctr"),
+            combinations_ctr=state.get("combinations_ctr"),
+            per_feature_ctr=state.get("per_feature_ctr"),
             text_features=state.get("text_features"),
             text_hash_dim=state.get("text_hash_dim", 64),
             embedding_features=state.get("embedding_features"),

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24...4.3)
 
-project(CTBoost VERSION 0.1.19 LANGUAGES CXX)
+project(CTBoost VERSION 0.1.20 LANGUAGES CXX)
 
 if(DEFINED SKBUILD_PROJECT_VERSION_FULL)
   set(CTBOOST_PACKAGE_VERSION "${SKBUILD_PROJECT_VERSION_FULL}")
@@ -90,6 +90,10 @@ target_compile_definitions(ctboost_core
   PUBLIC
     CTBOOST_VERSION="${CTBOOST_PACKAGE_VERSION}"
 )
+
+if(WIN32)
+  target_link_libraries(ctboost_core PUBLIC ws2_32)
+endif()
 
 if(CTBOOST_WITH_CUDA)
   add_library(ctboost_cuda_backend STATIC

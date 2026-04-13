@@ -24,6 +24,7 @@ namespace ctboost {
 namespace {
 
 constexpr const char* kMissingKey = "__ctboost_missing__";
+constexpr const char* kOtherKey = "__ctboost_other__";
 
 struct MatrixView {
   py::array array;
@@ -143,6 +144,122 @@ py::object NormalizeOptionalCombinations(py::object values) {
     normalized.append(std::move(resolved));
   }
   return std::move(normalized);
+}
+
+std::string CanonicalCtrType(std::string ctr_type) {
+  std::transform(ctr_type.begin(), ctr_type.end(), ctr_type.begin(), [](unsigned char ch) {
+    return static_cast<char>(std::tolower(ch));
+  });
+  if (ctr_type == "mean" || ctr_type == "targetmean" || ctr_type == "target_mean") {
+    return "Mean";
+  }
+  if (ctr_type == "frequency" || ctr_type == "featurefreq" || ctr_type == "feature_freq" ||
+      ctr_type == "counter" || ctr_type == "count" || ctr_type == "freq") {
+    return "Frequency";
+  }
+  throw std::invalid_argument("unsupported CTR type: " + ctr_type);
+}
+
+py::object NormalizeOptionalCtrTypes(py::object values) {
+  if (values.is_none()) {
+    return py::none();
+  }
+  py::list normalized;
+  for (const py::handle value : values) {
+    normalized.append(CanonicalCtrType(py::str(value).cast<std::string>()));
+  }
+  return std::move(normalized);
+}
+
+std::string SanitizeNameToken(std::string token) {
+  if (token == kMissingKey) {
+    return "missing";
+  }
+  if (token == kOtherKey) {
+    return "other";
+  }
+  for (char& ch : token) {
+    const bool ascii_alnum = (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+                             (ch >= '0' && ch <= '9');
+    if (!ascii_alnum && ch != '_') {
+      ch = '_';
+    }
+  }
+  while (!token.empty() && token.front() == '_') {
+    token.erase(token.begin());
+  }
+  while (!token.empty() && token.back() == '_') {
+    token.pop_back();
+  }
+  if (token.empty()) {
+    return "value";
+  }
+  return token;
+}
+
+std::string OneHotOutputName(const std::string& prefix, const std::string& key) {
+  return prefix + "_is_" + SanitizeNameToken(key);
+}
+
+std::vector<std::string> ResolveCtrTypeList(const py::object& values, bool default_mean) {
+  std::vector<std::string> resolved;
+  if (!values.is_none()) {
+    for (const py::handle value : values) {
+      resolved.push_back(CanonicalCtrType(py::str(value).cast<std::string>()));
+    }
+  }
+  if (resolved.empty() && default_mean) {
+    resolved.push_back("Mean");
+  }
+  std::sort(resolved.begin(), resolved.end());
+  resolved.erase(std::unique(resolved.begin(), resolved.end()), resolved.end());
+  return resolved;
+}
+
+std::vector<std::string> BuildBucketKeys(const std::unordered_map<std::string, std::size_t>& key_counts,
+                                         int max_cat_threshold,
+                                         bool* out_has_other_bucket) {
+  if (out_has_other_bucket != nullptr) {
+    *out_has_other_bucket = false;
+  }
+  if (key_counts.empty()) {
+    return {};
+  }
+
+  if (max_cat_threshold <= 1 || key_counts.size() <= static_cast<std::size_t>(max_cat_threshold)) {
+    std::vector<std::string> keys;
+    keys.reserve(key_counts.size());
+    for (const auto& [key, _] : key_counts) {
+      (void)_;
+      keys.push_back(key);
+    }
+    std::sort(keys.begin(), keys.end());
+    return keys;
+  }
+
+  std::vector<std::pair<std::string, std::size_t>> ranked_keys(key_counts.begin(), key_counts.end());
+  std::sort(ranked_keys.begin(),
+            ranked_keys.end(),
+            [](const auto& lhs, const auto& rhs) {
+              if (lhs.second != rhs.second) {
+                return lhs.second > rhs.second;
+              }
+              return lhs.first < rhs.first;
+            });
+
+  const std::size_t keep_count =
+      static_cast<std::size_t>(std::max(1, max_cat_threshold - 1));
+  std::vector<std::string> keys;
+  keys.reserve(keep_count + 1U);
+  for (std::size_t index = 0; index < ranked_keys.size() && index < keep_count; ++index) {
+    keys.push_back(ranked_keys[index].first);
+  }
+  std::sort(keys.begin(), keys.end());
+  keys.push_back(kOtherKey);
+  if (out_has_other_bucket != nullptr) {
+    *out_has_other_bucket = true;
+  }
+  return keys;
 }
 
 std::vector<float> ArrayToFloatVector(py::array_t<float, py::array::forcecast> values,
@@ -294,8 +411,13 @@ py::list VectorToPyList(const std::vector<float>& values) {
 
 NativeFeaturePipeline::NativeFeaturePipeline(py::object cat_features,
                                              bool ordered_ctr,
+                                             int one_hot_max_size,
+                                             int max_cat_threshold,
                                              py::object categorical_combinations,
                                              bool pairwise_categorical_combinations,
+                                             py::object simple_ctr,
+                                             py::object combinations_ctr,
+                                             py::object per_feature_ctr,
                                              py::object text_features,
                                              int text_hash_dim,
                                              py::object embedding_features,
@@ -304,14 +426,26 @@ NativeFeaturePipeline::NativeFeaturePipeline(py::object cat_features,
                                              int random_seed)
     : cat_features_(NormalizeOptionalSequence(std::move(cat_features))),
       ordered_ctr_(ordered_ctr),
+      one_hot_max_size_(one_hot_max_size),
+      max_cat_threshold_(max_cat_threshold),
       categorical_combinations_(NormalizeOptionalCombinations(std::move(categorical_combinations))),
       pairwise_categorical_combinations_(pairwise_categorical_combinations),
+      simple_ctr_(NormalizeOptionalCtrTypes(std::move(simple_ctr))),
+      combinations_ctr_(NormalizeOptionalCtrTypes(std::move(combinations_ctr))),
+      per_feature_ctr_(per_feature_ctr.is_none() ? py::none() : std::move(per_feature_ctr)),
       text_features_(NormalizeOptionalSequence(std::move(text_features))),
       text_hash_dim_(text_hash_dim),
       embedding_features_(NormalizeOptionalSequence(std::move(embedding_features))),
       embedding_stats_(VectorToPyList(NormalizeEmbeddingStats(std::move(embedding_stats)))),
       ctr_prior_strength_(ctr_prior_strength),
-      random_seed_(random_seed) {}
+      random_seed_(random_seed) {
+  if (one_hot_max_size_ < 0) {
+    throw std::invalid_argument("one_hot_max_size must be non-negative");
+  }
+  if (max_cat_threshold_ < 0) {
+    throw std::invalid_argument("max_cat_threshold must be non-negative");
+  }
+}
 
 void NativeFeaturePipeline::fit_array(py::array raw_matrix,
                                       py::array_t<float, py::array::forcecast> labels,
@@ -450,6 +584,7 @@ void NativeFeaturePipeline::FitInternal(py::array raw_matrix,
 
   output_feature_names_.clear();
   cat_feature_indices_.clear();
+  one_hot_states_.clear();
   categorical_states_.clear();
   combination_states_.clear();
   ctr_states_.clear();
@@ -457,6 +592,27 @@ void NativeFeaturePipeline::FitInternal(py::array raw_matrix,
   embedding_states_.clear();
   training_ctr_columns_.clear();
   text_hash_cache_.clear();
+
+  const auto has_explicit_ctr_for_source = [this](const std::vector<int>& source_indices) {
+    if (per_feature_ctr_.is_none()) {
+      return false;
+    }
+    for (const auto& item : py::cast<py::dict>(per_feature_ctr_)) {
+      py::list selectors;
+      py::object key_object = py::reinterpret_borrow<py::object>(item.first);
+      if (py::isinstance<py::list>(key_object) || py::isinstance<py::tuple>(key_object)) {
+        for (const py::handle selector : key_object) {
+          selectors.append(py::reinterpret_borrow<py::object>(selector));
+        }
+      } else {
+        selectors.append(std::move(key_object));
+      }
+      if (ResolveIndices(std::move(selectors)) == source_indices) {
+        return true;
+      }
+    }
+    return false;
+  };
 
   const std::unordered_set<int> cat_index_set(cat_indices.begin(), cat_indices.end());
   for (int feature_index : numeric_indices_) {
@@ -466,18 +622,42 @@ void NativeFeaturePipeline::FitInternal(py::array raw_matrix,
       continue;
     }
 
-    std::vector<std::string> keys(matrix.rows);
+    std::unordered_map<std::string, std::size_t> key_counts;
+    key_counts.reserve(matrix.rows);
     for (std::size_t row = 0; row < matrix.rows; ++row) {
-      keys[row] = NormalizeKey(MatrixValue(matrix, row, static_cast<std::size_t>(feature_index)));
+      ++key_counts[NormalizeKey(MatrixValue(matrix, row, static_cast<std::size_t>(feature_index)))];
     }
-    std::sort(keys.begin(), keys.end());
-    keys.erase(std::unique(keys.begin(), keys.end()), keys.end());
+
+    bool has_other_bucket = false;
+    const std::vector<std::string> bucket_keys =
+        BuildBucketKeys(key_counts, max_cat_threshold_, &has_other_bucket);
+
+    if (one_hot_max_size_ > 0 &&
+        bucket_keys.size() <= static_cast<std::size_t>(one_hot_max_size_) &&
+        !has_explicit_ctr_for_source({feature_index})) {
+      OneHotEncoderState state;
+      state.source_index = feature_index;
+      state.prefix = name;
+      state.category_keys = bucket_keys;
+      state.has_other_bucket = has_other_bucket ? 1U : 0U;
+      state.output_names.reserve(bucket_keys.size());
+      for (const std::string& key : bucket_keys) {
+        state.output_names.push_back(OneHotOutputName(name, key));
+        output_feature_names_.push_back(state.output_names.back());
+      }
+      one_hot_states_.push_back(std::move(state));
+      continue;
+    }
 
     CategoricalEncoderState state;
     state.source_index = feature_index;
     state.output_name = name;
-    for (std::size_t code = 0; code < keys.size(); ++code) {
-      state.mapping.emplace(keys[code], static_cast<float>(code));
+    state.has_other_bucket = has_other_bucket ? 1U : 0U;
+    for (std::size_t code = 0; code < bucket_keys.size(); ++code) {
+      state.mapping.emplace(bucket_keys[code], static_cast<float>(code));
+      if (bucket_keys[code] == kOtherKey) {
+        state.other_value = static_cast<float>(code);
+      }
     }
     categorical_states_.push_back(std::move(state));
     cat_feature_indices_.push_back(static_cast<int>(output_feature_names_.size()));
@@ -486,12 +666,15 @@ void NativeFeaturePipeline::FitInternal(py::array raw_matrix,
 
   RefreshCombinationSourceIndices();
   for (const auto& source_indices : combination_source_indices_) {
-    std::vector<std::string> keys(matrix.rows);
+    std::unordered_map<std::string, std::size_t> key_counts;
+    key_counts.reserve(matrix.rows);
     for (std::size_t row = 0; row < matrix.rows; ++row) {
-      keys[row] = JoinNormalizedKey(matrix, row, source_indices);
+      ++key_counts[JoinNormalizedKey(matrix, row, source_indices)];
     }
-    std::sort(keys.begin(), keys.end());
-    keys.erase(std::unique(keys.begin(), keys.end()), keys.end());
+
+    bool has_other_bucket = false;
+    const std::vector<std::string> bucket_keys =
+        BuildBucketKeys(key_counts, max_cat_threshold_, &has_other_bucket);
 
     CategoricalEncoderState state;
     for (std::size_t index = 0; index < source_indices.size(); ++index) {
@@ -500,8 +683,12 @@ void NativeFeaturePipeline::FitInternal(py::array raw_matrix,
       }
       state.output_name += feature_name(source_indices[index]);
     }
-    for (std::size_t code = 0; code < keys.size(); ++code) {
-      state.mapping.emplace(keys[code], static_cast<float>(code));
+    state.has_other_bucket = has_other_bucket ? 1U : 0U;
+    for (std::size_t code = 0; code < bucket_keys.size(); ++code) {
+      state.mapping.emplace(bucket_keys[code], static_cast<float>(code));
+      if (bucket_keys[code] == kOtherKey) {
+        state.other_value = static_cast<float>(code);
+      }
     }
     combination_states_.push_back(std::move(state));
     cat_feature_indices_.push_back(static_cast<int>(output_feature_names_.size()));
@@ -509,81 +696,147 @@ void NativeFeaturePipeline::FitInternal(py::array raw_matrix,
   }
 
   const auto [target_width, target_prior] = FitTargetMode(label_values);
-  if (ordered_ctr_) {
+  const bool ctr_enabled =
+      ordered_ctr_ || !simple_ctr_.is_none() || !combinations_ctr_.is_none() || !per_feature_ctr_.is_none();
+  if (ctr_enabled) {
+    const auto resolve_ctr_types_for_source =
+        [this](const std::vector<int>& source_indices, bool is_combination) {
+          if (!per_feature_ctr_.is_none()) {
+            for (const auto& item : py::cast<py::dict>(per_feature_ctr_)) {
+              py::list selectors;
+              py::object key_object = py::reinterpret_borrow<py::object>(item.first);
+              if (py::isinstance<py::list>(key_object) || py::isinstance<py::tuple>(key_object)) {
+                for (const py::handle selector : key_object) {
+                  selectors.append(py::reinterpret_borrow<py::object>(selector));
+                }
+              } else {
+                selectors.append(std::move(key_object));
+              }
+              if (ResolveIndices(std::move(selectors)) == source_indices) {
+                return ResolveCtrTypeList(py::reinterpret_borrow<py::object>(item.second), false);
+              }
+            }
+          }
+          return ResolveCtrTypeList(is_combination ? combinations_ctr_ : simple_ctr_, ordered_ctr_);
+        };
+
     std::vector<std::size_t> permutation(matrix.rows);
     std::iota(permutation.begin(), permutation.end(), 0U);
     std::mt19937_64 rng(static_cast<std::uint64_t>(random_seed_));
     std::shuffle(permutation.begin(), permutation.end(), rng);
 
-    std::vector<std::pair<std::vector<int>, std::string>> ctr_sources;
+    struct CtrSourceSpec {
+      std::vector<int> source_indices;
+      std::string output_prefix;
+      bool is_combination{false};
+    };
+
+    std::vector<CtrSourceSpec> ctr_sources;
     for (const auto& state : categorical_states_) {
-      ctr_sources.push_back({{state.source_index}, state.output_name});
+      ctr_sources.push_back(CtrSourceSpec{{state.source_index}, state.output_name, false});
     }
     for (std::size_t index = 0; index < combination_states_.size(); ++index) {
-      ctr_sources.push_back({combination_source_indices_[index], combination_states_[index].output_name});
+      ctr_sources.push_back(
+          CtrSourceSpec{combination_source_indices_[index], combination_states_[index].output_name, true});
     }
 
     for (const auto& source : ctr_sources) {
-      std::vector<std::string> output_names;
-      if (target_width == 1) {
-        output_names.push_back(source.second + "_ctr");
-      } else {
-        for (int class_index = 0; class_index < target_width; ++class_index) {
-          output_names.push_back(source.second + "_ctr_class" + std::to_string(class_index));
-        }
+      const std::vector<std::string> ctr_types =
+          resolve_ctr_types_for_source(source.source_indices, source.is_combination);
+      if (ctr_types.empty()) {
+        continue;
       }
 
-      std::unordered_map<std::string, int> total_counts;
-      std::unordered_map<std::string, std::vector<float>> total_sums;
-      std::unordered_map<std::string, int> running_counts;
-      std::unordered_map<std::string, std::vector<float>> running_sums;
-      std::vector<std::vector<float>> training_columns(
-          output_names.size(), std::vector<float>(matrix.rows, 0.0F));
+      std::unordered_map<std::string, int> feature_counts;
+      feature_counts.reserve(matrix.rows);
+      for (std::size_t row = 0; row < matrix.rows; ++row) {
+        ++feature_counts[JoinNormalizedKey(matrix, row, source.source_indices)];
+      }
 
-      for (std::size_t row : permutation) {
-        const std::string key = JoinNormalizedKey(matrix, row, source.first);
-        const float current_count = static_cast<float>(running_counts[key]);
-        auto& current_sums = running_sums[key];
-        if (current_sums.empty()) {
-          current_sums.assign(static_cast<std::size_t>(target_width), 0.0F);
-        }
-
-        const float denominator = current_count + static_cast<float>(ctr_prior_strength_);
-        for (int output_index = 0; output_index < target_width; ++output_index) {
-          const float numerator = current_sums[static_cast<std::size_t>(output_index)] +
-                                  static_cast<float>(ctr_prior_strength_) *
-                                      target_prior[static_cast<std::size_t>(output_index)];
-          training_columns[static_cast<std::size_t>(output_index)][row] =
-              numerator / std::max(denominator, 1.0F);
-        }
-
-        total_counts[key] += 1;
-        auto& total_sum_values = total_sums[key];
-        if (total_sum_values.empty()) {
-          total_sum_values.assign(static_cast<std::size_t>(target_width), 0.0F);
-        }
-        if (target_width == 1) {
-          total_sum_values[0] += label_values[row];
-          current_sums[0] += label_values[row];
+      for (const std::string& ctr_type : ctr_types) {
+        std::vector<std::string> output_names;
+        if (ctr_type == "Mean") {
+          if (target_width == 1) {
+            output_names.push_back(source.output_prefix + "_ctr");
+          } else {
+            for (int class_index = 0; class_index < target_width; ++class_index) {
+              output_names.push_back(
+                  source.output_prefix + "_ctr_class" + std::to_string(class_index));
+            }
+          }
         } else {
-          const int class_index = static_cast<int>(std::llround(label_values[row]));
-          total_sum_values[static_cast<std::size_t>(class_index)] += 1.0F;
-          current_sums[static_cast<std::size_t>(class_index)] += 1.0F;
+          output_names.push_back(source.output_prefix + "_freq_ctr");
         }
-        running_counts[key] += 1;
-      }
 
-      CtrState state;
-      state.source_indices = source.first;
-      state.output_names = output_names;
-      state.prior_values = target_prior;
-      state.total_counts = std::move(total_counts);
-      state.total_sums = std::move(total_sums);
-      ctr_states_.push_back(std::move(state));
-      for (auto& column : training_columns) {
-        training_ctr_columns_.push_back(std::move(column));
+        std::unordered_map<std::string, int> total_counts;
+        std::unordered_map<std::string, std::vector<float>> total_sums;
+        std::unordered_map<std::string, int> running_counts;
+        std::unordered_map<std::string, std::vector<float>> running_sums;
+        std::vector<std::vector<float>> training_columns(
+            output_names.size(), std::vector<float>(matrix.rows, 0.0F));
+        std::size_t seen_rows = 0;
+
+        for (std::size_t row : permutation) {
+          const std::string key = JoinNormalizedKey(matrix, row, source.source_indices);
+          const float current_count = static_cast<float>(running_counts[key]);
+          auto& current_sums = running_sums[key];
+          if (ctr_type == "Mean" && current_sums.empty()) {
+            current_sums.assign(static_cast<std::size_t>(target_width), 0.0F);
+          }
+
+          if (ctr_type == "Mean") {
+            const float denominator = current_count + static_cast<float>(ctr_prior_strength_);
+            for (int output_index = 0; output_index < target_width; ++output_index) {
+              const float numerator = current_sums[static_cast<std::size_t>(output_index)] +
+                                      static_cast<float>(ctr_prior_strength_) *
+                                          target_prior[static_cast<std::size_t>(output_index)];
+              training_columns[static_cast<std::size_t>(output_index)][row] =
+                  numerator / std::max(denominator, 1.0F);
+            }
+          } else {
+            const float global_frequency =
+                matrix.rows == 0
+                    ? 0.0F
+                    : static_cast<float>(feature_counts[key]) / static_cast<float>(matrix.rows);
+            const float denominator = static_cast<float>(seen_rows) + static_cast<float>(ctr_prior_strength_);
+            const float numerator =
+                current_count + static_cast<float>(ctr_prior_strength_) * global_frequency;
+            training_columns[0][row] = numerator / std::max(denominator, 1.0F);
+          }
+
+          total_counts[key] += 1;
+          if (ctr_type == "Mean") {
+            auto& total_sum_values = total_sums[key];
+            if (total_sum_values.empty()) {
+              total_sum_values.assign(static_cast<std::size_t>(target_width), 0.0F);
+            }
+            if (target_width == 1) {
+              total_sum_values[0] += label_values[row];
+              current_sums[0] += label_values[row];
+            } else {
+              const int class_index = static_cast<int>(std::llround(label_values[row]));
+              total_sum_values[static_cast<std::size_t>(class_index)] += 1.0F;
+              current_sums[static_cast<std::size_t>(class_index)] += 1.0F;
+            }
+          }
+          running_counts[key] += 1;
+          ++seen_rows;
+        }
+
+        CtrState state;
+        state.source_indices = source.source_indices;
+        state.output_names = output_names;
+        state.ctr_type = ctr_type;
+        state.prior_values = target_prior;
+        state.total_counts = std::move(total_counts);
+        state.total_sums = std::move(total_sums);
+        state.total_rows = matrix.rows;
+        ctr_states_.push_back(std::move(state));
+        for (auto& column : training_columns) {
+          training_ctr_columns_.push_back(std::move(column));
+        }
+        output_feature_names_.insert(output_feature_names_.end(), output_names.begin(), output_names.end());
       }
-      output_feature_names_.insert(output_feature_names_.end(), output_names.begin(), output_names.end());
     }
   }
 
@@ -647,9 +900,33 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
   for (const auto& state : categorical_states_) {
     categorical_by_index.emplace(state.source_index, &state);
   }
+  std::unordered_map<int, const OneHotEncoderState*> one_hot_by_index;
+  for (const auto& state : one_hot_states_) {
+    one_hot_by_index.emplace(state.source_index, &state);
+  }
 
   std::size_t column_index = 0;
   for (int feature_index : numeric_indices_) {
+    const auto one_hot_it = one_hot_by_index.find(feature_index);
+    if (one_hot_it != one_hot_by_index.end()) {
+      const auto& category_keys = one_hot_it->second->category_keys;
+      const std::string other_key = one_hot_it->second->has_other_bucket != 0U ? kOtherKey : "";
+      for (std::size_t row = 0; row < row_count; ++row) {
+        const std::string raw_key =
+            NormalizeKey(MatrixValue(matrix, row, static_cast<std::size_t>(feature_index)));
+        std::string bucket_key = raw_key;
+        if (one_hot_it->second->has_other_bucket != 0U &&
+            std::find(category_keys.begin(), category_keys.end(), bucket_key) == category_keys.end()) {
+          bucket_key = other_key;
+        }
+        for (std::size_t offset = 0; offset < category_keys.size(); ++offset) {
+          write_column_value(row, column_index + offset, category_keys[offset] == bucket_key ? 1.0F : 0.0F);
+        }
+      }
+      column_index += category_keys.size();
+      continue;
+    }
+
     const auto categorical_it = categorical_by_index.find(feature_index);
     if (categorical_it == categorical_by_index.end()) {
       for (std::size_t row = 0; row < row_count; ++row) {
@@ -665,7 +942,11 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
         write_column_value(
             row,
             column_index,
-            code_it == mapping.end() ? std::numeric_limits<float>::quiet_NaN() : code_it->second);
+            code_it == mapping.end()
+                ? (categorical_it->second->has_other_bucket != 0U
+                       ? categorical_it->second->other_value
+                       : std::numeric_limits<float>::quiet_NaN())
+                : code_it->second);
       }
     }
     ++column_index;
@@ -680,7 +961,9 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
       write_column_value(
           row,
           column_index,
-          code_it == state.mapping.end() ? std::numeric_limits<float>::quiet_NaN() : code_it->second);
+          code_it == state.mapping.end()
+              ? (state.has_other_bucket != 0U ? state.other_value : std::numeric_limits<float>::quiet_NaN())
+              : code_it->second);
     }
     ++column_index;
   }
@@ -698,15 +981,26 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
         for (std::size_t row = 0; row < row_count; ++row) {
           const std::string key = JoinNormalizedKey(matrix, row, state.source_indices);
           const auto count_it = state.total_counts.find(key);
-          const auto sums_it = state.total_sums.find(key);
           const float count =
               count_it == state.total_counts.end() ? 0.0F : static_cast<float>(count_it->second);
-          const float summed =
-              sums_it == state.total_sums.end() ? 0.0F : sums_it->second[output_index];
-          const float denominator = count + static_cast<float>(ctr_prior_strength_);
-          const float numerator =
-              summed + static_cast<float>(ctr_prior_strength_) * state.prior_values[output_index];
-          write_column_value(row, column_index, numerator / std::max(denominator, 1.0F));
+          float value = 0.0F;
+          if (state.ctr_type == "Mean") {
+            const auto sums_it = state.total_sums.find(key);
+            const float summed =
+                sums_it == state.total_sums.end() ? 0.0F : sums_it->second[output_index];
+            const float denominator = count + static_cast<float>(ctr_prior_strength_);
+            const float numerator =
+                summed + static_cast<float>(ctr_prior_strength_) * state.prior_values[output_index];
+            value = numerator / std::max(denominator, 1.0F);
+          } else {
+            const float total_rows = static_cast<float>(std::max<std::size_t>(state.total_rows, 1U));
+            const float global_frequency = count / total_rows;
+            const float denominator = total_rows + static_cast<float>(ctr_prior_strength_);
+            const float numerator =
+                count + static_cast<float>(ctr_prior_strength_) * global_frequency;
+            value = numerator / std::max(denominator, 1.0F);
+          }
+          write_column_value(row, column_index, value);
         }
         ++column_index;
       }
@@ -794,8 +1088,13 @@ py::dict NativeFeaturePipeline::to_state() const {
   py::dict state;
   state["cat_features"] = cat_features_;
   state["ordered_ctr"] = ordered_ctr_;
+  state["one_hot_max_size"] = one_hot_max_size_;
+  state["max_cat_threshold"] = max_cat_threshold_;
   state["categorical_combinations"] = categorical_combinations_;
   state["pairwise_categorical_combinations"] = pairwise_categorical_combinations_;
+  state["simple_ctr"] = simple_ctr_;
+  state["combinations_ctr"] = combinations_ctr_;
+  state["per_feature_ctr"] = per_feature_ctr_;
   state["text_features"] = text_features_;
   state["text_hash_dim"] = text_hash_dim_;
   state["embedding_features"] = embedding_features_;
@@ -816,11 +1115,25 @@ py::dict NativeFeaturePipeline::to_state() const {
   state["output_feature_names_"] = VectorToPyList(output_feature_names_);
   state["numeric_indices"] = VectorToPyList(numeric_indices_);
 
+  py::list one_hot_states;
+  for (const auto& one_hot_state : one_hot_states_) {
+    py::dict item;
+    item["source_index"] = one_hot_state.source_index;
+    item["prefix"] = one_hot_state.prefix;
+    item["category_keys"] = VectorToPyList(one_hot_state.category_keys);
+    item["output_names"] = VectorToPyList(one_hot_state.output_names);
+    item["has_other_bucket"] = one_hot_state.has_other_bucket != 0U;
+    one_hot_states.append(std::move(item));
+  }
+  state["one_hot_states"] = std::move(one_hot_states);
+
   py::list categorical_states;
   for (const auto& categorical_state : categorical_states_) {
     py::dict item;
     item["source_index"] = categorical_state.source_index;
     item["output_name"] = categorical_state.output_name;
+    item["has_other_bucket"] = categorical_state.has_other_bucket != 0U;
+    item["other_value"] = categorical_state.other_value;
     py::dict mapping;
     for (const auto& [key, value] : categorical_state.mapping) {
       mapping[py::str(key)] = value;
@@ -834,6 +1147,8 @@ py::dict NativeFeaturePipeline::to_state() const {
   for (const auto& combination_state : combination_states_) {
     py::dict item;
     item["output_name"] = combination_state.output_name;
+    item["has_other_bucket"] = combination_state.has_other_bucket != 0U;
+    item["other_value"] = combination_state.other_value;
     py::dict mapping;
     for (const auto& [key, value] : combination_state.mapping) {
       mapping[py::str(key)] = value;
@@ -848,7 +1163,9 @@ py::dict NativeFeaturePipeline::to_state() const {
     py::dict item;
     item["source_indices"] = VectorToPyList(ctr_state.source_indices);
     item["output_names"] = VectorToPyList(ctr_state.output_names);
+    item["ctr_type"] = ctr_state.ctr_type;
     item["prior_values"] = VectorToPyList(ctr_state.prior_values);
+    item["total_rows"] = ctr_state.total_rows;
     py::dict total_counts;
     for (const auto& [key, value] : ctr_state.total_counts) {
       total_counts[py::str(key)] = value;
@@ -889,6 +1206,10 @@ void NativeFeaturePipeline::LoadState(const py::dict& state) {
       state.contains("cat_features") ? py::reinterpret_borrow<py::object>(state["cat_features"])
                                      : py::none());
   ordered_ctr_ = state.contains("ordered_ctr") ? py::cast<bool>(state["ordered_ctr"]) : false;
+  one_hot_max_size_ =
+      state.contains("one_hot_max_size") ? py::cast<int>(state["one_hot_max_size"]) : 0;
+  max_cat_threshold_ =
+      state.contains("max_cat_threshold") ? py::cast<int>(state["max_cat_threshold"]) : 0;
   categorical_combinations_ =
       NormalizeOptionalCombinations(state.contains("categorical_combinations")
                                         ? py::reinterpret_borrow<py::object>(
@@ -898,6 +1219,15 @@ void NativeFeaturePipeline::LoadState(const py::dict& state) {
       state.contains("pairwise_categorical_combinations")
           ? py::cast<bool>(state["pairwise_categorical_combinations"])
           : false;
+  simple_ctr_ = NormalizeOptionalCtrTypes(
+      state.contains("simple_ctr") ? py::reinterpret_borrow<py::object>(state["simple_ctr"]) : py::none());
+  combinations_ctr_ = NormalizeOptionalCtrTypes(state.contains("combinations_ctr")
+                                                    ? py::reinterpret_borrow<py::object>(
+                                                          state["combinations_ctr"])
+                                                    : py::none());
+  per_feature_ctr_ =
+      state.contains("per_feature_ctr") ? py::reinterpret_borrow<py::object>(state["per_feature_ctr"])
+                                        : py::none();
   text_features_ = NormalizeOptionalSequence(
       state.contains("text_features") ? py::reinterpret_borrow<py::object>(state["text_features"])
                                       : py::none());
@@ -932,6 +1262,21 @@ void NativeFeaturePipeline::LoadState(const py::dict& state) {
                          ? py::cast<std::vector<int>>(state["numeric_indices"])
                          : std::vector<int>{};
 
+  one_hot_states_.clear();
+  if (state.contains("one_hot_states")) {
+    for (const py::handle item_handle : py::cast<py::list>(state["one_hot_states"])) {
+      const py::dict item = item_handle.cast<py::dict>();
+      OneHotEncoderState one_hot_state;
+      one_hot_state.source_index = py::cast<int>(item["source_index"]);
+      one_hot_state.prefix = py::cast<std::string>(item["prefix"]);
+      one_hot_state.category_keys = py::cast<std::vector<std::string>>(item["category_keys"]);
+      one_hot_state.output_names = py::cast<std::vector<std::string>>(item["output_names"]);
+      one_hot_state.has_other_bucket =
+          item.contains("has_other_bucket") && py::cast<bool>(item["has_other_bucket"]) ? 1U : 0U;
+      one_hot_states_.push_back(std::move(one_hot_state));
+    }
+  }
+
   categorical_states_.clear();
   if (state.contains("categorical_states")) {
     for (const py::handle item_handle : py::cast<py::list>(state["categorical_states"])) {
@@ -939,6 +1284,10 @@ void NativeFeaturePipeline::LoadState(const py::dict& state) {
       CategoricalEncoderState categorical_state;
       categorical_state.source_index = py::cast<int>(item["source_index"]);
       categorical_state.output_name = py::cast<std::string>(item["output_name"]);
+      categorical_state.has_other_bucket =
+          item.contains("has_other_bucket") && py::cast<bool>(item["has_other_bucket"]) ? 1U : 0U;
+      categorical_state.other_value =
+          item.contains("other_value") ? py::cast<float>(item["other_value"]) : 0.0F;
       for (const auto& mapping_item : py::cast<py::dict>(item["mapping"])) {
         categorical_state.mapping.emplace(py::cast<std::string>(mapping_item.first),
                                           py::cast<float>(mapping_item.second));
@@ -953,6 +1302,10 @@ void NativeFeaturePipeline::LoadState(const py::dict& state) {
       const py::dict item = item_handle.cast<py::dict>();
       CategoricalEncoderState combination_state;
       combination_state.output_name = py::cast<std::string>(item["output_name"]);
+      combination_state.has_other_bucket =
+          item.contains("has_other_bucket") && py::cast<bool>(item["has_other_bucket"]) ? 1U : 0U;
+      combination_state.other_value =
+          item.contains("other_value") ? py::cast<float>(item["other_value"]) : 0.0F;
       for (const auto& mapping_item : py::cast<py::dict>(item["mapping"])) {
         combination_state.mapping.emplace(py::cast<std::string>(mapping_item.first),
                                           py::cast<float>(mapping_item.second));
@@ -969,7 +1322,11 @@ void NativeFeaturePipeline::LoadState(const py::dict& state) {
       CtrState ctr_state;
       ctr_state.source_indices = py::cast<std::vector<int>>(item["source_indices"]);
       ctr_state.output_names = py::cast<std::vector<std::string>>(item["output_names"]);
+      ctr_state.ctr_type =
+          item.contains("ctr_type") ? py::cast<std::string>(item["ctr_type"]) : std::string("Mean");
       ctr_state.prior_values = py::cast<std::vector<float>>(item["prior_values"]);
+      ctr_state.total_rows =
+          item.contains("total_rows") ? py::cast<std::size_t>(item["total_rows"]) : 0U;
       for (const auto& count_item : py::cast<py::dict>(item["total_counts"])) {
         ctr_state.total_counts.emplace(py::cast<std::string>(count_item.first),
                                        py::cast<int>(count_item.second));

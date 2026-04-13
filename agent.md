@@ -21,11 +21,12 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 - Native training now also supports survival objectives `Cox` and `SurvivalExponential`.
 - Native validation metrics now include regression metrics plus generic classification metrics such as `Accuracy`, `Precision`, `Recall`, `F1`, and `AUC`, ranking-oriented `NDCG`, `MAP`, and `MRR`, and survival-oriented `CIndex`.
 - `Pool` now accepts pandas inputs, SciPy sparse matrices, row weights, categorical feature indices, and optional `group_id` metadata.
-- The Python boundary preserves column-major input layout for dense pandas matrices, SciPy sparse input now stays sparse through the native pool boundary instead of being densified first, and disk-backed memmap pools can now be staged through `ctboost.prepare_pool(..., external_memory=True)`.
-- A native C++ `FeaturePipeline`, exposed through thin Python wrappers plus both low-level and sklearn-estimator integration, now provides ordered CTRs, categorical feature combinations, text hashing, and embedding-stat expansion around the existing learner without replacing the conditional split criterion.
+- The Python boundary preserves column-major input layout for dense pandas matrices, SciPy sparse input now stays sparse through the native pool boundary instead of being densified first, disk-backed memmap pools can now be staged through `ctboost.prepare_pool(..., external_memory=True)`, and the native CPU histogram path can now spill quantized feature-bin columns to disk during fit instead of keeping the full training histogram resident in RAM.
+- A native C++ `FeaturePipeline`, exposed through thin Python wrappers plus both low-level and sklearn-estimator integration, now provides ordered CTRs, frequency-style CTRs, per-source CTR selection, categorical feature combinations, low-cardinality one-hot expansion, rare-category bucketing through `max_cat_threshold`, text hashing, and embedding-stat expansion around the existing learner without replacing the conditional split criterion.
 - The low-level `ctboost.train(...)` path now accepts raw inputs with feature-pipeline parameters directly, persists the fitted preprocessing on low-level boosters, and exposes `ctboost.prepare_pool(...)` for explicit raw-data preparation.
 - Histogram storage now compacts to 1-byte bins when the fitted feature bin counts permit it, reducing resident fit memory while preserving the existing conditional-inference split logic.
 - Histogram building now writes directly into final-width compact storage when the fitted schema permits `<=256` bins, avoiding the old transient `uint16` plus compact-copy host-memory spike.
+- Quantization control surface now includes global and per-feature bin budgets, `border_selection_method`, explicit `feature_borders`, per-feature missing-value modes, and low-level border export through `Booster.get_borders()` / `Booster.get_quantization_schema()`.
 - Booster state now stores quantization metadata once per fitted model, with trees sharing that schema instead of duplicating it per tree.
 - CUDA source builds now keep the binned feature matrix and histogram buffers resident on device for the full fit instead of rebuilding node-local bin matrices on every split.
 - GPU histogram construction now uses shared-memory accumulation, with a chunked shared-memory path for larger per-feature bin counts.
@@ -40,6 +41,10 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 - Feature selection now has a fast score-only linear-statistic path for large tree builds, avoiding the full covariance solve on the hot path while preserving the conditional-inference split criterion.
 - Native training now supports row subsampling through `subsample`, `bootstrap_type="No"|"Bernoulli"|"Poisson"`, `boosting_type="RandomForest"` for bagged trees against a fixed gradient reference, and `boosting_type="DART"` for dropout-style tree normalization around the same conditional tree learner.
 - Native CPU training now also supports `monotone_constraints` and `interaction_constraints`, implemented as split-feasibility and path-level feature-filtering layers around the existing conditional split search rather than a replacement for it.
+- Native training now also supports `bootstrap_type="Bayesian"` with `bagging_temperature`, plus generic regularization and growth controls through `feature_weights`, `first_feature_use_penalties`, `random_strength`, `grow_policy`, `min_samples_split`, and `max_leaf_weight`, all layered around the same conditional feature gate instead of replacing it.
+- The GPU tree path now supports the same monotone, interaction, feature-weight, first-use-penalty, random-strength, and heuristic leafwise-growth controls around the existing conditional split gate; those are no longer CPU-only.
+- Multi-host training now supports a standalone TCP collective backend plus the older filesystem shard path, preserving the same conditional tree implementation while avoiding the old rank-`0` merged-fit coordinator.
+- The TCP distributed path now supports distributed `eval_set`, early stopping, `init_model`, grouped ranking shards with rank-local query groups, sklearn-estimator wrappers, and distributed GPU execution when CUDA is available.
 - Native profiling hooks are available through `verbose=True` and `CTBOOST_PROFILE=1`, including histogram build, per-node histogram, per-tree, and overall fit timing.
 - The repository now includes `run_kaggle_kernel_session.py` for source-build validation on Kaggle GPU environments.
 - The repository now also includes `run_kaggle_yx_benchmark_session.py` for replaying the heavy ordered-target-encoding Playground benchmark on Kaggle GPUs against the current source tree.
@@ -48,7 +53,7 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 - CUDA remains an optional source-build capability rather than the default PyPI wheel path.
 - The release workflow publishes dedicated Linux `x86_64` CUDA wheels as GitHub release assets for CPython `3.10` through `3.14`.
 - The dedicated CUDA wheels are built in `manylinux2014`, require a detected CUDA toolkit via `CTBOOST_REQUIRE_CUDA=ON`, and run a dedicated GPU smoke test before upload.
-- As of April 13, 2026, the repository version is bumped to `0.1.19`, following the `0.1.18` PyPI release and the merged CI and release follow-up work.
+- As of April 14, 2026, the repository version is bumped to `0.1.20`, following the `0.1.19` release and the distributed TCP collective follow-up work.
 - The base wheel no longer hard-depends on `scikit-learn`; estimator and CV entry points are lazy-loaded and raise a clear import error if `scikit-learn` is absent.
 
 ## Release and Wheel Policy
@@ -88,16 +93,24 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 - The heavier ordered-target-encoding Kaggle replay also succeeded on April 12, 2026 using notebook `maiernator/ps-s6e4-yx-ctb-src-bench-v0-1-11` version `1`.
 - That one-fold replay reported source build `55.41s`, fold preprocess `57.17s`, fold fit `2107.10s`, fold predict `5.89s`, fold total `2170.17s`, and validation score `0.9732134730`.
 - In this Windows environment, native local install/build verification still depends on manually setting the MSVC include/lib environment before rebuilding the extension.
+- The categorical control surface now includes `one_hot_max_size` / `max_cat_to_onehot`, `max_cat_threshold`, `simple_ctr`, `combinations_ctr`, and `per_feature_ctr`; these are implemented around the existing conditional tree learner rather than as a replacement for its split logic.
+- The quantization control surface now includes `max_bins`, `max_bin_by_feature`, `border_selection_method`, `feature_borders`, and `nan_mode_by_feature`; these are implemented in the native histogram/schema layer rather than by changing the conditional tree criterion.
+- The generic regularization and tree-growth control surface now also includes Bayesian bagging, feature/use penalties, seeded gain noise, heuristic leafwise growth under a leaf budget, minimum split sample counts, and bounded leaf weights on both CPU and GPU around the same conditional tree logic.
+- The distributed TCP collective follow-up was revalidated locally on April 14, 2026 with:
+  `python -m pytest -q`
+  resulting in `96 passed, 1 skipped` on this CPU-only local build.
 
 ## Local Plan
 
 - Preserve the current conditional-inference-tree learner and conditional feature-evaluation path as the non-negotiable core while closing generic usability gaps around it.
 - Treat the shared-schema and GPU fit-memory reduction pass as complete baseline behavior, not open roadmap work.
-- Treat the native feature pipeline for ordered CTRs, categorical crosses, text hashing, and embedding expansion as the current generic-data path around the existing learner; Python should stay limited to pandas extraction, Pool orchestration, and estimator-facing API glue rather than owning the transform logic itself.
-- Treat native sparse training plus disk-backed external-memory pool staging as present baseline behavior; fully streaming quantized fit beyond that staging layer remains open.
-- Keep extending tree-growth and constraint controls around the existing learner. Row subsampling, bootstrap controls, `max_leaves`, minimum leaf-size controls, minimum split-loss controls, a random-forest mode, monotonic constraints, and interaction constraints are now present; GPU support for the new constraints remains open.
-- Broaden booster and objective coverage only where it can reuse the existing conditional tree backbone. Count objectives, extra ranking metrics, DART-style dropout, survival objectives, low-level raw-data preprocessing, and local multi-GPU execution are now present; distributed multi-host execution remains open.
-- Add production tooling expected from mature libraries, including callbacks, snapshot or checkpoint resume, richer SHAP tooling, first-class export targets, and deeper distributed execution.
+- Treat the native feature pipeline for ordered CTRs, frequency-style CTRs, per-source CTR selection, categorical crosses, low-cardinality one-hot expansion, rare-category bucketing, text hashing, and embedding expansion as the current generic-data path around the existing learner; Python should stay limited to pandas extraction, Pool orchestration, and estimator-facing API glue rather than owning the transform logic itself.
+- Treat the quantization and border-control surface as present baseline behavior: per-feature bin budgets, `Quantile` / `Uniform` border selection, explicit border reuse, and per-feature missing-value modes are now implemented around the shared histogram/schema path.
+- Treat native sparse training plus disk-backed quantized-bin spilling through `external_memory=True` as present baseline behavior on both CPU and GPU; the remaining gap is no longer basic distributed GPU execution, but broader distributed runtime ergonomics around the new TCP backend.
+- Keep extending tree-growth and constraint controls around the existing learner. Row subsampling, bootstrap controls, `max_leaves`, minimum leaf-size controls, minimum split-loss controls, a random-forest mode, monotonic constraints, interaction constraints, feature/use penalties, seeded gain noise, and heuristic leafwise growth are now present on both CPU and GPU.
+- Treat the newer regularization and grow-policy surface as present baseline behavior too: Bayesian bagging, feature/use penalties, seeded gain noise, heuristic leafwise growth, minimum split sample counts, and max leaf-weight clamping are implemented around the same conditional tree logic.
+- Broaden booster and objective coverage only where it can reuse the existing conditional tree backbone. Count objectives, extra ranking metrics, DART-style dropout, survival objectives, low-level raw-data preprocessing, local multi-GPU execution, native out-of-core histogram spilling, and network-backed multi-host distributed compute are now present; the remaining distributed gap is mostly around feature-pipeline fitting across ranks, filesystem-backend parity for eval/GPU flows, and more production-grade coordination ergonomics.
+- Add production tooling expected from mature libraries, including callbacks, snapshot or checkpoint resume, richer SHAP tooling, first-class export targets, and stronger distributed runtime ergonomics beyond the current standalone TCP coordinator and legacy filesystem fallback.
 
 ## Repository Layout
 

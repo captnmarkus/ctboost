@@ -33,21 +33,43 @@ def test_estimators_expose_sklearn_params():
         verbose=True,
         subsample=0.7,
         bootstrap_type="Bernoulli",
+        bagging_temperature=0.7,
         boosting_type="DART",
         drop_rate=0.2,
         skip_drop=0.0,
         max_drop=3,
+        one_hot_max_size=4,
+        max_cat_threshold=8,
         cat_features=[0],
         ordered_ctr=True,
         categorical_combinations=[[0, 1]],
+        simple_ctr=["Mean", "Frequency"],
+        combinations_ctr=["Mean"],
+        per_feature_ctr={0: ["Frequency"]},
         text_features=[2],
         embedding_features=[3],
         colsample_bytree=0.5,
+        feature_weights={0: 2.0, 1: 0.5},
+        first_feature_use_penalties={2: 1.25},
+        random_strength=0.3,
+        grow_policy="LeafWise",
         max_leaves=8,
+        min_samples_split=5,
         min_data_in_leaf=3,
         min_child_weight=0.2,
         gamma=0.1,
+        max_leaf_weight=1.5,
+        max_bins=192,
+        max_bin_by_feature={0: 7, 2: 31},
+        border_selection_method="Uniform",
+        nan_mode_by_feature={1: "Max"},
+        feature_borders={3: [-0.25, 0.5]},
         random_seed=13,
+        distributed_world_size=2,
+        distributed_rank=1,
+        distributed_root="tcp://127.0.0.1:19091",
+        distributed_run_id="sk-unit",
+        distributed_timeout=75.0,
     )
     reg = ctboost.CTBoostRegressor(iterations=12)
 
@@ -60,21 +82,43 @@ def test_estimators_expose_sklearn_params():
     assert clf_params["verbose"] is True
     assert clf_params["subsample"] == 0.7
     assert clf_params["bootstrap_type"] == "Bernoulli"
+    assert clf_params["bagging_temperature"] == 0.7
     assert clf_params["boosting_type"] == "DART"
     assert clf_params["drop_rate"] == 0.2
     assert clf_params["skip_drop"] == 0.0
     assert clf_params["max_drop"] == 3
+    assert clf_params["one_hot_max_size"] == 4
+    assert clf_params["max_cat_threshold"] == 8
     assert clf_params["cat_features"] == [0]
     assert clf_params["ordered_ctr"] is True
     assert clf_params["categorical_combinations"] == [[0, 1]]
+    assert clf_params["simple_ctr"] == ["Mean", "Frequency"]
+    assert clf_params["combinations_ctr"] == ["Mean"]
+    assert clf_params["per_feature_ctr"] == {0: ["Frequency"]}
     assert clf_params["text_features"] == [2]
     assert clf_params["embedding_features"] == [3]
     assert clf_params["colsample_bytree"] == 0.5
+    assert clf_params["feature_weights"] == {0: 2.0, 1: 0.5}
+    assert clf_params["first_feature_use_penalties"] == {2: 1.25}
+    assert clf_params["random_strength"] == 0.3
+    assert clf_params["grow_policy"] == "LeafWise"
     assert clf_params["max_leaves"] == 8
+    assert clf_params["min_samples_split"] == 5
     assert clf_params["min_data_in_leaf"] == 3
     assert clf_params["min_child_weight"] == 0.2
     assert clf_params["gamma"] == 0.1
+    assert clf_params["max_leaf_weight"] == 1.5
+    assert clf_params["max_bins"] == 192
+    assert clf_params["max_bin_by_feature"] == {0: 7, 2: 31}
+    assert clf_params["border_selection_method"] == "Uniform"
+    assert clf_params["nan_mode_by_feature"] == {1: "Max"}
+    assert clf_params["feature_borders"] == {3: [-0.25, 0.5]}
     assert clf_params["random_seed"] == 13
+    assert clf_params["distributed_world_size"] == 2
+    assert clf_params["distributed_rank"] == 1
+    assert clf_params["distributed_root"] == "tcp://127.0.0.1:19091"
+    assert clf_params["distributed_run_id"] == "sk-unit"
+    assert clf_params["distributed_timeout"] == 75.0
     assert clf_params["loss_function"] == "Logloss"
     assert reg_params["iterations"] == 12
     assert reg_params["loss_function"] == "RMSE"
@@ -90,6 +134,7 @@ def test_native_booster_exports_tree_control_state():
     handle = ctboost._core.GradientBooster(
         subsample=0.8,
         bootstrap_type="Poisson",
+        bagging_temperature=0.4,
         boosting_type="DART",
         drop_rate=0.25,
         skip_drop=0.1,
@@ -97,16 +142,35 @@ def test_native_booster_exports_tree_control_state():
         monotone_constraints=[1, 0, -1],
         interaction_constraints=[[0, 1], [2]],
         colsample_bytree=0.6,
+        feature_weights=[1.0, 0.5, 2.0],
+        first_feature_use_penalties=[0.0, 0.0, 1.0],
+        random_strength=0.15,
+        grow_policy="LeafWise",
         max_leaves=7,
+        min_samples_split=6,
         min_data_in_leaf=4,
         min_child_weight=0.5,
         gamma=0.2,
+        max_leaf_weight=2.0,
+        max_bins=300,
+        max_bin_by_feature=[5, 0, 12],
+        border_selection_method="Uniform",
+        nan_mode_by_feature=["Min", "Max", "Forbidden"],
+        feature_borders=[[0.0], [], [-1.0, 1.0]],
+        external_memory=True,
+        external_memory_dir="ctboost-native-spill",
+        distributed_world_size=2,
+        distributed_rank=1,
+        distributed_root="ctboost-dist",
+        distributed_run_id="unit-case",
+        distributed_timeout=42.0,
         random_seed=17,
     )
     state = handle.export_state()
 
     assert state["subsample"] == 0.8
     assert state["bootstrap_type"] == "Poisson"
+    assert state["bagging_temperature"] == 0.4
     assert state["boosting_type"] == "DART"
     assert state["drop_rate"] == 0.25
     assert state["skip_drop"] == 0.1
@@ -114,10 +178,28 @@ def test_native_booster_exports_tree_control_state():
     assert state["monotone_constraints"] == [1, 0, -1]
     assert state["interaction_constraints"] == [[0, 1], [2]]
     assert state["colsample_bytree"] == 0.6
+    assert state["feature_weights"] == [1.0, 0.5, 2.0]
+    assert state["first_feature_use_penalties"] == [0.0, 0.0, 1.0]
+    assert state["random_strength"] == 0.15
+    assert state["grow_policy"] == "LeafWise"
     assert state["max_leaves"] == 7
+    assert state["min_samples_split"] == 6
     assert state["min_data_in_leaf"] == 4
     assert state["min_child_weight"] == 0.5
     assert state["gamma"] == 0.2
+    assert state["max_leaf_weight"] == 2.0
+    assert state["max_bins"] == 300
+    assert state["max_bin_by_feature"] == [5, 0, 12]
+    assert state["border_selection_method"] == "Uniform"
+    assert state["nan_mode_by_feature"] == ["Min", "Max", "Forbidden"]
+    assert state["feature_borders"] == [[0.0], [], [-1.0, 1.0]]
+    assert state["external_memory"] is True
+    assert state["external_memory_dir"] == "ctboost-native-spill"
+    assert state["distributed_world_size"] == 2
+    assert state["distributed_rank"] == 1
+    assert state["distributed_root"] == "ctboost-dist"
+    assert state["distributed_run_id"] == "unit-case"
+    assert state["distributed_timeout"] == 42.0
     assert state["random_seed"] == 17
 
 
@@ -158,6 +240,58 @@ def test_selection_quantile_builder_matches_sorted_cut_positions(monkeypatch):
 
     expected = np.sort(values)[[512, 1024, 1536, 2048, 2560, 3072, 3584]].astype(np.float32)
     np.testing.assert_allclose(np.asarray(summary["cut_values"], dtype=np.float32), expected)
+
+
+def test_debug_build_histogram_supports_per_feature_controls_and_custom_borders():
+    data = np.array(
+        [
+            [0.0, -1.0, np.nan],
+            [0.2, 0.0, 0.5],
+            [0.4, 1.0, 1.5],
+            [0.6, 2.0, 2.5],
+            [0.8, 3.0, np.nan],
+        ],
+        dtype=np.float32,
+    )
+    pool = ctboost.Pool(data, np.zeros(data.shape[0], dtype=np.float32))
+    summary = ctboost._core._debug_build_histogram(
+        pool._handle,
+        max_bins=16,
+        nan_mode="Min",
+        max_bin_by_feature=[3, 5, 0],
+        border_selection_method="Uniform",
+        nan_mode_by_feature=["", "Max", "Min"],
+        feature_borders=[[], [], [0.75, 1.25]],
+    )
+
+    assert summary["num_bins_per_feature"][0] == 3
+    np.testing.assert_allclose(
+        np.asarray(summary["cut_values"], dtype=np.float32)[
+            summary["cut_offsets"][2] : summary["cut_offsets"][3]
+        ],
+        np.array([0.75, 1.25], dtype=np.float32),
+    )
+    assert summary["nan_modes"] == [1, 2, 1]
+
+
+def test_debug_build_histogram_supports_native_external_memory(tmp_path):
+    rng = np.random.default_rng(5)
+    X = rng.normal(size=(256, 5)).astype(np.float32)
+    y = rng.normal(size=256).astype(np.float32)
+    pool = ctboost.Pool(X, y)
+
+    summary = ctboost._core._debug_build_histogram(
+        pool._handle,
+        max_bins=64,
+        nan_mode="Min",
+        external_memory=True,
+        external_memory_dir=str(tmp_path / "hist_spill"),
+    )
+
+    assert summary["uses_external_bin_storage"] is True
+    assert summary["num_rows"] == 256
+    assert summary["num_cols"] == 5
+    assert summary["storage_bytes"] < X.nbytes
 
 
 def test_large_histogram_build_paths_are_deterministic(monkeypatch):

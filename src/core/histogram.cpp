@@ -7,9 +7,12 @@
 #include <cmath>
 #include <cstdlib>
 #include <exception>
+#include <filesystem>
+#include <fstream>
 #include <limits>
 #include <map>
 #include <mutex>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -42,6 +45,60 @@ std::string NormalizeToken(std::string value) {
 }
 
 std::size_t ParseEnvUnsigned(const char* name, std::size_t default_value);
+
+std::filesystem::path MakeExternalStorageRoot(const std::string& directory) {
+  static std::atomic<std::uint64_t> counter{0};
+
+  std::filesystem::path root =
+      directory.empty() ? std::filesystem::temp_directory_path() : std::filesystem::path(directory);
+  std::error_code error;
+  std::filesystem::create_directories(root, error);
+  if (error) {
+    throw std::runtime_error(
+        "failed to create CTBoost external-memory directory: " + error.message());
+  }
+
+  const auto now = std::chrono::steady_clock::now().time_since_epoch().count();
+  const std::uint64_t token = counter.fetch_add(1, std::memory_order_relaxed);
+  root /= "ctboost-hist-" + std::to_string(static_cast<long long>(now)) + "-" +
+          std::to_string(static_cast<unsigned long long>(token));
+  std::filesystem::create_directories(root, error);
+  if (error) {
+    throw std::runtime_error(
+        "failed to create CTBoost external-memory spill root: " + error.message());
+  }
+  return root;
+}
+
+template <typename BinType>
+void WriteFeatureBinsToFile(const std::filesystem::path& path, const std::vector<BinType>& bins) {
+  std::ofstream out(path, std::ios::binary | std::ios::trunc);
+  if (!out) {
+    throw std::runtime_error("failed to open spill file for writing: " + path.string());
+  }
+  if (!bins.empty()) {
+    out.write(reinterpret_cast<const char*>(bins.data()),
+              static_cast<std::streamsize>(bins.size() * sizeof(BinType)));
+  }
+  if (!out) {
+    throw std::runtime_error("failed to write spill file: " + path.string());
+  }
+}
+
+template <typename BinType>
+void ReadFeatureBinsFromFile(const std::filesystem::path& path, std::vector<BinType>& bins) {
+  std::ifstream in(path, std::ios::binary);
+  if (!in) {
+    throw std::runtime_error("failed to open spill file for reading: " + path.string());
+  }
+  if (!bins.empty()) {
+    in.read(reinterpret_cast<char*>(bins.data()),
+            static_cast<std::streamsize>(bins.size() * sizeof(BinType)));
+  }
+  if (!in && !bins.empty()) {
+    throw std::runtime_error("failed to read spill file: " + path.string());
+  }
+}
 
 std::vector<std::size_t> BuildQuantileCutIndices(std::size_t value_count,
                                                  std::size_t max_bins) {
@@ -108,6 +165,34 @@ std::vector<float> ComputeSortedQuantileCuts(std::vector<float> values, std::siz
   return cuts;
 }
 
+std::vector<float> ComputeUniformCuts(const std::vector<float>& values, std::size_t max_bins) {
+  if (values.empty()) {
+    return {};
+  }
+
+  const auto minmax = std::minmax_element(values.begin(), values.end());
+  const float min_value = *minmax.first;
+  const float max_value = *minmax.second;
+  if (!(max_value > min_value)) {
+    return {};
+  }
+
+  const std::size_t desired_bins = std::min(max_bins, values.size());
+  std::vector<float> cuts;
+  cuts.reserve(desired_bins > 0 ? desired_bins - 1 : 0);
+  const double step =
+      (static_cast<double>(max_value) - static_cast<double>(min_value)) /
+      static_cast<double>(desired_bins);
+  for (std::size_t bin = 1; bin < desired_bins; ++bin) {
+    const float cut =
+        static_cast<float>(static_cast<double>(min_value) + step * static_cast<double>(bin));
+    if (cuts.empty() || cut > cuts.back()) {
+      cuts.push_back(cut);
+    }
+  }
+  return cuts;
+}
+
 std::vector<float> ComputeSelectedQuantileCuts(std::vector<float> values, std::size_t max_bins) {
   if (values.empty()) {
     return {};
@@ -168,6 +253,22 @@ std::vector<float> ComputeQuantileCuts(std::vector<float> values,
   return strategy == ExactQuantileStrategy::Selection
              ? ComputeSelectedQuantileCuts(std::move(values), max_bins)
              : ComputeSortedQuantileCuts(std::move(values), max_bins);
+}
+
+std::vector<float> NormalizeCustomBorders(std::vector<float> cuts) {
+  if (cuts.empty()) {
+    return {};
+  }
+
+  for (const float cut : cuts) {
+    if (std::isnan(cut)) {
+      throw std::invalid_argument("feature_borders cannot contain NaN cut values");
+    }
+  }
+
+  std::sort(cuts.begin(), cuts.end());
+  cuts.erase(std::unique(cuts.begin(), cuts.end()), cuts.end());
+  return cuts;
 }
 
 std::size_t ParseEnvUnsigned(const char* name, std::size_t default_value) {
@@ -260,6 +361,34 @@ std::uint16_t MissingBinIndex(std::size_t bins_for_feature,
                               bool has_missing_values,
                               NanMode nan_mode);
 
+NanMode ResolveFeatureNanMode(const std::vector<NanMode>& per_feature_modes,
+                              const std::vector<std::uint8_t>& per_feature_mode_mask,
+                              std::size_t feature_index,
+                              NanMode default_mode) {
+  if (feature_index < per_feature_mode_mask.size() && per_feature_mode_mask[feature_index] != 0U) {
+    return per_feature_modes[feature_index];
+  }
+  return default_mode;
+}
+
+std::size_t ResolveFeatureMaxBins(const std::vector<std::uint16_t>& max_bins_by_feature,
+                                  std::size_t feature_index,
+                                  std::size_t default_max_bins) {
+  if (feature_index < max_bins_by_feature.size() && max_bins_by_feature[feature_index] > 0U) {
+    return static_cast<std::size_t>(max_bins_by_feature[feature_index]);
+  }
+  return default_max_bins;
+}
+
+const std::vector<float>* ResolveFeatureBorders(
+    const std::vector<std::vector<float>>& feature_borders,
+    std::size_t feature_index) noexcept {
+  if (feature_index >= feature_borders.size() || feature_borders[feature_index].empty()) {
+    return nullptr;
+  }
+  return &feature_borders[feature_index];
+}
+
 std::size_t MaxFeatureBins(const std::vector<std::uint16_t>& num_bins_per_feature) noexcept {
   std::uint16_t max_feature_bins = 0;
   for (const std::uint16_t feature_bins_count : num_bins_per_feature) {
@@ -291,6 +420,7 @@ std::uint16_t BinValueFromSchema(const std::vector<std::uint16_t>& num_bins_per_
                                  const std::vector<std::uint8_t>& categorical_mask,
                                  const std::vector<std::uint8_t>& missing_value_mask,
                                  std::uint8_t nan_mode,
+                                 const std::vector<std::uint8_t>& nan_modes,
                                  std::size_t feature_index,
                                  float value) {
   const std::size_t bins_for_feature = NumBinsChecked(num_bins_per_feature, feature_index);
@@ -306,7 +436,10 @@ std::uint16_t BinValueFromSchema(const std::vector<std::uint16_t>& num_bins_per_
       MaskValueChecked(categorical_mask, feature_index, "categorical mask");
   const bool feature_has_missing_values =
       MaskValueChecked(missing_value_mask, feature_index, "missing value mask");
-  const NanMode resolved_nan_mode = static_cast<NanMode>(nan_mode);
+  const NanMode resolved_nan_mode =
+      nan_modes.empty()
+          ? static_cast<NanMode>(nan_mode)
+          : static_cast<NanMode>(nan_modes.at(feature_index));
 
   if (std::isnan(value)) {
     if (resolved_nan_mode == NanMode::Forbidden) {
@@ -350,18 +483,22 @@ struct FeatureHistogramResult {
   std::uint16_t num_bins{0};
   std::uint8_t missing_value_mask{0};
   bool is_categorical{false};
+  NanMode nan_mode{NanMode::Min};
   double elapsed_ms{0.0};
 };
 
 FeatureHistogramResult BuildFeatureHistogram(const Pool& pool,
-                                             std::size_t max_bins,
-                                             NanMode nan_mode,
+                                             std::size_t feature_max_bins,
+                                             NanMode feature_nan_mode,
+                                             BorderSelectionMethod border_selection_method,
                                              std::size_t feature,
                                              bool is_categorical,
-                                             const HistogramBuildContext& context) {
+                                             const HistogramBuildContext& context,
+                                             const std::vector<float>* custom_borders) {
   const auto feature_start = std::chrono::steady_clock::now();
   FeatureHistogramResult result;
   result.is_categorical = is_categorical;
+  result.nan_mode = feature_nan_mode;
   const std::size_t num_rows = pool.num_rows();
 
   const float* const contiguous_column = pool.is_sparse() ? nullptr : pool.feature_column_ptr(feature);
@@ -371,6 +508,11 @@ FeatureHistogramResult BuildFeatureHistogram(const Pool& pool,
   bool has_missing_values = false;
 
   if (result.is_categorical) {
+    if (custom_borders != nullptr && !custom_borders->empty()) {
+      throw std::invalid_argument(
+          "feature_borders can only be specified for numeric features");
+    }
+
     std::map<float, std::uint16_t> category_to_bin;
     for (std::size_t row = 0; row < num_rows; ++row) {
       const float value = feature_at(row);
@@ -385,12 +527,13 @@ FeatureHistogramResult BuildFeatureHistogram(const Pool& pool,
       }
     }
 
-    if (has_missing_values && nan_mode == NanMode::Forbidden) {
+    if (has_missing_values && feature_nan_mode == NanMode::Forbidden) {
       throw std::invalid_argument("NaN values are not allowed when nan_mode='Forbidden'");
     }
 
     result.missing_value_mask = has_missing_values ? 1U : 0U;
-    std::uint16_t next_bin = has_missing_values && nan_mode == NanMode::Min ? 1U : 0U;
+    std::uint16_t next_bin =
+        has_missing_values && feature_nan_mode == NanMode::Min ? 1U : 0U;
     result.cut_values.reserve(category_to_bin.size());
     for (auto& [category, mapped_bin] : category_to_bin) {
       mapped_bin = next_bin++;
@@ -408,7 +551,7 @@ FeatureHistogramResult BuildFeatureHistogram(const Pool& pool,
   std::size_t non_missing_count = 0;
   std::vector<float> approximate_quantile_values;
   approximate_quantile_values.reserve(context.approx_row_sample.size());
-  const std::size_t low_cardinality_limit = ResolveExactLowCardinalityLimit(max_bins);
+  const std::size_t low_cardinality_limit = ResolveExactLowCardinalityLimit(feature_max_bins);
   std::unordered_set<float> observed_unique_values;
   observed_unique_values.reserve(std::min<std::size_t>(low_cardinality_limit + 1U, 4096U));
   bool unique_count_capped = false;
@@ -437,17 +580,28 @@ FeatureHistogramResult BuildFeatureHistogram(const Pool& pool,
     }
   }
 
-  if (has_missing_values && nan_mode == NanMode::Forbidden) {
+  if (has_missing_values && feature_nan_mode == NanMode::Forbidden) {
     throw std::invalid_argument("NaN values are not allowed when nan_mode='Forbidden'");
   }
 
   result.missing_value_mask = has_missing_values ? 1U : 0U;
 
+  if (custom_borders != nullptr) {
+    result.cut_values = NormalizeCustomBorders(*custom_borders);
+    const std::size_t non_missing_bins = non_missing_count == 0 ? 0U : result.cut_values.size() + 1U;
+    const std::size_t total_bins = non_missing_bins + (has_missing_values ? 1U : 0U);
+    result.num_bins = static_cast<std::uint16_t>(total_bins == 0 ? 1U : total_bins);
+    result.elapsed_ms =
+        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - feature_start)
+            .count();
+    return result;
+  }
+
   std::vector<float> quantile_values;
   const bool use_approximate_quantiles =
       ShouldApproximateQuantiles(context, non_missing_count) &&
       HasSufficientApproximationValues(
-          approximate_quantile_values.size(), non_missing_count, max_bins);
+          approximate_quantile_values.size(), non_missing_count, feature_max_bins);
   if (use_approximate_quantiles) {
     quantile_values = std::move(approximate_quantile_values);
   } else {
@@ -464,15 +618,16 @@ FeatureHistogramResult BuildFeatureHistogram(const Pool& pool,
       use_approximate_quantiles
           ? ExactQuantileStrategy::Sort
           : ResolveExactQuantileStrategy(
-                non_missing_count, observed_unique_values.size(), unique_count_capped, max_bins);
-  const std::vector<float> cuts = ComputeQuantileCuts(
-      std::move(quantile_values),
-      max_bins,
-      quantile_strategy);
+                non_missing_count,
+                observed_unique_values.size(),
+                unique_count_capped,
+                feature_max_bins);
+  const std::vector<float> cuts =
+      border_selection_method == BorderSelectionMethod::Uniform
+          ? ComputeUniformCuts(quantile_values, feature_max_bins)
+          : ComputeQuantileCuts(std::move(quantile_values), feature_max_bins, quantile_strategy);
   result.cut_values = cuts;
   const std::size_t non_missing_bins = non_missing_count == 0 ? 0U : cuts.size() + 1U;
-  const std::uint16_t missing_offset =
-      has_missing_values && nan_mode == NanMode::Min && non_missing_bins > 0 ? 1U : 0U;
   const std::size_t total_bins = non_missing_bins + (has_missing_values ? 1U : 0U);
 
   result.num_bins = static_cast<std::uint16_t>(total_bins == 0 ? 1U : total_bins);
@@ -482,29 +637,34 @@ FeatureHistogramResult BuildFeatureHistogram(const Pool& pool,
   return result;
 }
 
-void MaterializeFeatureBins(const Pool& pool,
-                            std::size_t feature,
-                            const FeatureHistogramResult& feature_result,
-                            NanMode nan_mode,
-                            HistMatrix& hist) {
+template <typename BinType>
+void MaterializeFeatureBinsToBuffer(const Pool& pool,
+                                    std::size_t feature,
+                                    const FeatureHistogramResult& feature_result,
+                                    BinType* out_bins,
+                                    std::size_t out_size) {
   const float* const contiguous_column = pool.is_sparse() ? nullptr : pool.feature_column_ptr(feature);
   auto feature_at = [&](std::size_t row) -> float {
     return contiguous_column != nullptr ? contiguous_column[row] : pool.feature_value(row, feature);
   };
 
+  if (out_size < pool.num_rows()) {
+    throw std::invalid_argument("feature bin output buffer is smaller than the row count");
+  }
+
   const bool has_missing_values = feature_result.missing_value_mask != 0U;
   const std::size_t bins_for_feature =
       static_cast<std::size_t>(feature_result.num_bins == 0 ? 1U : feature_result.num_bins);
   const std::uint16_t missing_bin =
-      MissingBinIndex(bins_for_feature, has_missing_values, nan_mode);
+      MissingBinIndex(bins_for_feature, has_missing_values, feature_result.nan_mode);
 
   if (feature_result.is_categorical) {
     const std::uint16_t missing_offset =
-        has_missing_values && nan_mode == NanMode::Min ? 1U : 0U;
-    for (std::size_t row = 0; row < hist.num_rows; ++row) {
+        has_missing_values && feature_result.nan_mode == NanMode::Min ? 1U : 0U;
+    for (std::size_t row = 0; row < pool.num_rows(); ++row) {
       const float value = feature_at(row);
       if (std::isnan(value)) {
-        hist.set_bin_index(feature, row, missing_bin);
+        out_bins[row] = static_cast<BinType>(missing_bin);
         continue;
       }
 
@@ -512,28 +672,42 @@ void MaterializeFeatureBins(const Pool& pool,
           std::lower_bound(feature_result.cut_values.begin(), feature_result.cut_values.end(), value);
       const std::size_t insertion =
           static_cast<std::size_t>(std::distance(feature_result.cut_values.begin(), it));
-      hist.set_bin_index(feature, row, static_cast<std::uint16_t>(missing_offset + insertion));
+      out_bins[row] = static_cast<BinType>(missing_offset + insertion);
     }
     return;
   }
 
   const std::uint16_t missing_offset =
-      has_missing_values && nan_mode == NanMode::Min ? 1U : 0U;
-  for (std::size_t row = 0; row < hist.num_rows; ++row) {
+      has_missing_values && feature_result.nan_mode == NanMode::Min ? 1U : 0U;
+  for (std::size_t row = 0; row < pool.num_rows(); ++row) {
     const float value = feature_at(row);
     if (std::isnan(value)) {
-      hist.set_bin_index(feature, row, missing_bin);
+      out_bins[row] = static_cast<BinType>(missing_bin);
       continue;
     }
 
     const auto bin_it =
         std::upper_bound(feature_result.cut_values.begin(), feature_result.cut_values.end(), value);
-    hist.set_bin_index(feature,
-                       row,
-                       static_cast<std::uint16_t>(
-                           missing_offset +
-                           std::distance(feature_result.cut_values.begin(), bin_it)));
+    out_bins[row] = static_cast<BinType>(missing_offset +
+                                         std::distance(feature_result.cut_values.begin(), bin_it));
   }
+}
+
+void MaterializeFeatureBins(const Pool& pool,
+                            std::size_t feature,
+                            const FeatureHistogramResult& feature_result,
+                            HistMatrix& hist) {
+  const std::size_t offset = feature * hist.num_rows;
+  if (hist.bin_index_bytes == 1) {
+    MaterializeFeatureBinsToBuffer(pool,
+                                   feature,
+                                   feature_result,
+                                   hist.compact_bin_indices.data() + offset,
+                                   hist.num_rows);
+    return;
+  }
+  MaterializeFeatureBinsToBuffer(
+      pool, feature, feature_result, hist.bin_indices.data() + offset, hist.num_rows);
 }
 
 std::vector<std::uint8_t> BuildCategoricalMask(const Pool& pool) {
@@ -544,8 +718,12 @@ std::vector<std::uint8_t> BuildCategoricalMask(const Pool& pool) {
   return mask;
 }
 
-void ValidateForbiddenNanModeHasNoMissingValues(const Pool& pool) {
+void ValidateForbiddenNanModeHasNoMissingValues(const Pool& pool,
+                                                const std::vector<NanMode>& feature_nan_modes) {
   for (std::size_t feature = 0; feature < pool.num_cols(); ++feature) {
+    if (feature >= feature_nan_modes.size() || feature_nan_modes[feature] != NanMode::Forbidden) {
+      continue;
+    }
     const float* const contiguous_column = pool.is_sparse() ? nullptr : pool.feature_column_ptr(feature);
     for (std::size_t row = 0; row < pool.num_rows(); ++row) {
       const float value =
@@ -596,9 +774,54 @@ const char* NanModeName(NanMode nan_mode) noexcept {
   return "Min";
 }
 
+BorderSelectionMethod ParseBorderSelectionMethod(std::string_view name) {
+  const std::string normalized = NormalizeToken(std::string(name));
+  if (normalized.empty() || normalized == "quantile" || normalized == "median") {
+    return BorderSelectionMethod::Quantile;
+  }
+  if (normalized == "uniform") {
+    return BorderSelectionMethod::Uniform;
+  }
+  throw std::invalid_argument(
+      "border_selection_method must be one of 'Quantile' or 'Uniform'");
+}
+
+const char* BorderSelectionMethodName(BorderSelectionMethod method) noexcept {
+  switch (method) {
+    case BorderSelectionMethod::Quantile:
+      return "Quantile";
+    case BorderSelectionMethod::Uniform:
+      return "Uniform";
+  }
+  return "Quantile";
+}
+
 FeatureBinView HistMatrix::feature_bins(std::size_t feature_index) const {
   if (feature_index >= num_cols) {
     throw std::out_of_range("feature index is out of bounds");
+  }
+  if (uses_external_bin_storage_) {
+    if (feature_index >= external_feature_bin_paths.size()) {
+      throw std::runtime_error("external histogram spill metadata is incomplete");
+    }
+    if (external_cached_feature_index != feature_index) {
+      const std::filesystem::path feature_path(external_feature_bin_paths[feature_index]);
+      if (bin_index_bytes == 1) {
+        external_feature_cache_u8.resize(num_rows);
+        external_feature_cache_u16.clear();
+        external_feature_cache_u16.shrink_to_fit();
+        ReadFeatureBinsFromFile(feature_path, external_feature_cache_u8);
+      } else {
+        external_feature_cache_u16.resize(num_rows);
+        external_feature_cache_u8.clear();
+        external_feature_cache_u8.shrink_to_fit();
+        ReadFeatureBinsFromFile(feature_path, external_feature_cache_u16);
+      }
+      external_cached_feature_index = feature_index;
+    }
+    return bin_index_bytes == 1
+               ? FeatureBinView{external_feature_cache_u8.data(), nullptr}
+               : FeatureBinView{nullptr, external_feature_cache_u16.data()};
   }
   const std::size_t offset = feature_index * num_rows;
   if (bin_index_bytes == 1) {
@@ -624,6 +847,9 @@ void HistMatrix::set_bin_index(std::size_t feature_index, std::size_t row, std::
   if (feature_index >= num_cols || row >= num_rows) {
     throw std::out_of_range("feature index or row is out of bounds");
   }
+  if (uses_external_bin_storage_) {
+    throw std::runtime_error("cannot mutate external histogram bin storage in place");
+  }
 
   const std::size_t offset = feature_index * num_rows + row;
   if (bin_index_bytes == 1) {
@@ -634,6 +860,9 @@ void HistMatrix::set_bin_index(std::size_t feature_index, std::size_t row, std::
 }
 
 void HistMatrix::CompactBinStorage() {
+  if (uses_external_bin_storage_) {
+    return;
+  }
   if (bin_index_bytes == 1) {
     bin_indices.clear();
     bin_indices.shrink_to_fit();
@@ -661,6 +890,8 @@ void HistMatrix::CompactBinStorage() {
 
 bool HistMatrix::uses_compact_bin_storage() const noexcept { return bin_index_bytes == 1; }
 
+bool HistMatrix::uses_external_bin_storage() const noexcept { return uses_external_bin_storage_; }
+
 std::uint8_t HistMatrix::bin_storage_bytes() const noexcept { return bin_index_bytes; }
 
 std::size_t HistMatrix::num_bins(std::size_t feature_index) const {
@@ -675,6 +906,19 @@ bool HistMatrix::has_missing_values(std::size_t feature_index) const {
   return MaskValueChecked(missing_value_mask, feature_index, "missing value mask");
 }
 
+NanMode HistMatrix::nan_mode_for_feature(std::size_t feature_index) const {
+  if (nan_modes.empty()) {
+    if (feature_index >= num_cols) {
+      throw std::out_of_range("nan_mode feature index is out of bounds");
+    }
+    return static_cast<NanMode>(nan_mode);
+  }
+  if (feature_index >= nan_modes.size()) {
+    throw std::out_of_range("nan_mode feature index is out of bounds");
+  }
+  return static_cast<NanMode>(nan_modes[feature_index]);
+}
+
 std::uint16_t HistMatrix::bin_value(std::size_t feature_index, float value) const {
   return BinValueFromSchema(num_bins_per_feature,
                             cut_offsets,
@@ -682,6 +926,7 @@ std::uint16_t HistMatrix::bin_value(std::size_t feature_index, float value) cons
                             categorical_mask,
                             missing_value_mask,
                             nan_mode,
+                            nan_modes,
                             feature_index,
                             value);
 }
@@ -689,11 +934,59 @@ std::uint16_t HistMatrix::bin_value(std::size_t feature_index, float value) cons
 std::size_t HistMatrix::storage_bytes() const noexcept {
   return bin_indices.capacity() * sizeof(std::uint16_t) +
          compact_bin_indices.capacity() * sizeof(std::uint8_t) +
+         external_feature_cache_u16.capacity() * sizeof(std::uint16_t) +
+         external_feature_cache_u8.capacity() * sizeof(std::uint8_t) +
          num_bins_per_feature.capacity() * sizeof(std::uint16_t) +
          cut_offsets.capacity() * sizeof(std::size_t) +
          cut_values.capacity() * sizeof(float) +
          categorical_mask.capacity() * sizeof(std::uint8_t) +
-         missing_value_mask.capacity() * sizeof(std::uint8_t);
+         missing_value_mask.capacity() * sizeof(std::uint8_t) +
+         nan_modes.capacity() * sizeof(std::uint8_t) +
+         external_bin_storage_dir.capacity() * sizeof(char);
+}
+
+void HistMatrix::SpillBinStorage(const std::string& directory) {
+  if (uses_external_bin_storage_) {
+    return;
+  }
+  if (num_rows == 0 || num_cols == 0) {
+    return;
+  }
+  if (bin_index_bytes == 1 && compact_bin_indices.empty()) {
+    throw std::runtime_error("cannot spill released compact histogram bin storage");
+  }
+  if (bin_index_bytes != 1 && bin_indices.empty()) {
+    throw std::runtime_error("cannot spill released histogram bin storage");
+  }
+
+  const std::filesystem::path root = MakeExternalStorageRoot(directory);
+  external_feature_bin_paths.assign(num_cols, std::string());
+  for (std::size_t feature = 0; feature < num_cols; ++feature) {
+    const std::filesystem::path feature_path = root / ("feature_" + std::to_string(feature) + ".bin");
+    external_feature_bin_paths[feature] = feature_path.string();
+    const std::size_t offset = feature * num_rows;
+    if (bin_index_bytes == 1) {
+      std::vector<std::uint8_t> feature_bins(num_rows, 0);
+      std::copy_n(compact_bin_indices.begin() + static_cast<std::ptrdiff_t>(offset),
+                  static_cast<std::ptrdiff_t>(num_rows),
+                  feature_bins.begin());
+      WriteFeatureBinsToFile(feature_path, feature_bins);
+    } else {
+      std::vector<std::uint16_t> feature_bins(num_rows, 0);
+      std::copy_n(bin_indices.begin() + static_cast<std::ptrdiff_t>(offset),
+                  static_cast<std::ptrdiff_t>(num_rows),
+                  feature_bins.begin());
+      WriteFeatureBinsToFile(feature_path, feature_bins);
+    }
+  }
+
+  external_bin_storage_dir = root.string();
+  uses_external_bin_storage_ = true;
+  external_cached_feature_index = static_cast<std::size_t>(-1);
+  bin_indices.clear();
+  bin_indices.shrink_to_fit();
+  compact_bin_indices.clear();
+  compact_bin_indices.shrink_to_fit();
 }
 
 void HistMatrix::ReleaseBinStorage() noexcept {
@@ -701,6 +994,20 @@ void HistMatrix::ReleaseBinStorage() noexcept {
   bin_indices.shrink_to_fit();
   compact_bin_indices.clear();
   compact_bin_indices.shrink_to_fit();
+  external_feature_cache_u16.clear();
+  external_feature_cache_u16.shrink_to_fit();
+  external_feature_cache_u8.clear();
+  external_feature_cache_u8.shrink_to_fit();
+  external_cached_feature_index = static_cast<std::size_t>(-1);
+  if (uses_external_bin_storage_ && !external_bin_storage_dir.empty()) {
+    std::error_code error;
+    std::filesystem::remove_all(std::filesystem::path(external_bin_storage_dir), error);
+  }
+  external_feature_bin_paths.clear();
+  external_feature_bin_paths.shrink_to_fit();
+  external_bin_storage_dir.clear();
+  external_bin_storage_dir.shrink_to_fit();
+  uses_external_bin_storage_ = false;
 }
 
 void HistMatrix::ReleaseStorage() noexcept {
@@ -718,21 +1025,85 @@ void HistMatrix::ReleaseStorage() noexcept {
   categorical_mask.shrink_to_fit();
   missing_value_mask.clear();
   missing_value_mask.shrink_to_fit();
+  nan_modes.clear();
+  nan_modes.shrink_to_fit();
 }
 
-HistBuilder::HistBuilder(std::size_t max_bins, std::string nan_mode)
+HistBuilder::HistBuilder(std::size_t max_bins,
+                         std::string nan_mode,
+                         std::vector<std::uint16_t> max_bins_by_feature,
+                         std::string border_selection_method,
+                         std::vector<std::string> nan_mode_by_feature,
+                         std::vector<std::vector<float>> feature_borders,
+                         bool external_memory,
+                         std::string external_memory_dir)
     : max_bins_(max_bins),
+      max_bins_by_feature_(std::move(max_bins_by_feature)),
       nan_mode_(ParseNanMode(nan_mode)),
-      nan_mode_name_(NanModeName(nan_mode_)) {
+      nan_mode_name_(NanModeName(nan_mode_)),
+      external_memory_(external_memory),
+      external_memory_dir_(std::move(external_memory_dir)) {
   if (!ValidateMaxBins(max_bins_)) {
     throw std::invalid_argument("max_bins must be in the range [1, 65535]");
+  }
+  border_selection_method_ = ParseBorderSelectionMethod(border_selection_method);
+  border_selection_method_name_ = BorderSelectionMethodName(border_selection_method_);
+
+  nan_mode_by_feature_.reserve(nan_mode_by_feature.size());
+  nan_mode_by_feature_mask_.reserve(nan_mode_by_feature.size());
+  nan_mode_by_feature_names_.reserve(nan_mode_by_feature.size());
+  for (const std::string& raw_name : nan_mode_by_feature) {
+    if (raw_name.empty()) {
+      nan_mode_by_feature_.push_back(nan_mode_);
+      nan_mode_by_feature_mask_.push_back(0U);
+      nan_mode_by_feature_names_.push_back("");
+      continue;
+    }
+
+    const NanMode parsed_mode = ParseNanMode(raw_name);
+    nan_mode_by_feature_.push_back(parsed_mode);
+    nan_mode_by_feature_mask_.push_back(1U);
+    nan_mode_by_feature_names_.push_back(NanModeName(parsed_mode));
+  }
+
+  for (std::size_t feature = 0; feature < max_bins_by_feature_.size(); ++feature) {
+    if (max_bins_by_feature_[feature] == 0U) {
+      continue;
+    }
+    if (!ValidateMaxBins(max_bins_by_feature_[feature])) {
+      throw std::invalid_argument(
+          "max_bin_by_feature entries must be in the range [1, 65535] when provided");
+    }
+  }
+
+  feature_borders_.reserve(feature_borders.size());
+  for (auto& borders : feature_borders) {
+    feature_borders_.push_back(NormalizeCustomBorders(std::move(borders)));
   }
 }
 
 HistMatrix HistBuilder::Build(const Pool& pool, const TrainingProfiler* profiler) const {
   const auto hist_build_start = std::chrono::steady_clock::now();
-  if (nan_mode_ == NanMode::Forbidden) {
-    ValidateForbiddenNanModeHasNoMissingValues(pool);
+  if (!max_bins_by_feature_.empty() && max_bins_by_feature_.size() > pool.num_cols()) {
+    throw std::invalid_argument(
+        "max_bin_by_feature cannot specify more entries than the pool feature count");
+  }
+  if (!nan_mode_by_feature_names_.empty() && nan_mode_by_feature_names_.size() > pool.num_cols()) {
+    throw std::invalid_argument(
+        "nan_mode_by_feature cannot specify more entries than the pool feature count");
+  }
+  if (!feature_borders_.empty() && feature_borders_.size() > pool.num_cols()) {
+    throw std::invalid_argument(
+        "feature_borders cannot specify more entries than the pool feature count");
+  }
+
+  std::vector<NanMode> resolved_feature_nan_modes(pool.num_cols(), nan_mode_);
+  for (std::size_t feature = 0; feature < pool.num_cols(); ++feature) {
+    resolved_feature_nan_modes[feature] =
+        ResolveFeatureNanMode(nan_mode_by_feature_, nan_mode_by_feature_mask_, feature, nan_mode_);
+  }
+  if (!resolved_feature_nan_modes.empty()) {
+    ValidateForbiddenNanModeHasNoMissingValues(pool, resolved_feature_nan_modes);
   }
 
   HistMatrix hist;
@@ -744,6 +1115,7 @@ HistMatrix HistBuilder::Build(const Pool& pool, const TrainingProfiler* profiler
   hist.categorical_mask = BuildCategoricalMask(pool);
   hist.missing_value_mask.assign(hist.num_cols, 0);
   hist.nan_mode = static_cast<std::uint8_t>(nan_mode_);
+  hist.nan_modes.resize(hist.num_cols, static_cast<std::uint8_t>(nan_mode_));
   const HistogramBuildContext build_context = ResolveHistogramBuildContext(hist.num_rows);
 
   std::vector<FeatureHistogramResult> feature_results(hist.num_cols);
@@ -765,11 +1137,13 @@ HistMatrix HistBuilder::Build(const Pool& pool, const TrainingProfiler* profiler
       try {
         feature_results[feature] = BuildFeatureHistogram(
             pool,
-            max_bins_,
-            nan_mode_,
+            ResolveFeatureMaxBins(max_bins_by_feature_, feature, max_bins_),
+            resolved_feature_nan_modes[feature],
+            border_selection_method_,
             feature,
             hist.categorical_mask[feature] != 0U,
-            build_context);
+            build_context,
+            ResolveFeatureBorders(feature_borders_, feature));
       } catch (...) {
         failed.store(true, std::memory_order_relaxed);
         std::lock_guard<std::mutex> lock(error_mutex);
@@ -794,6 +1168,7 @@ HistMatrix HistBuilder::Build(const Pool& pool, const TrainingProfiler* profiler
   for (std::size_t feature = 0; feature < hist.num_cols; ++feature) {
     const FeatureHistogramResult& feature_result = feature_results[feature];
     hist.missing_value_mask[feature] = feature_result.missing_value_mask;
+    hist.nan_modes[feature] = static_cast<std::uint8_t>(feature_result.nan_mode);
     hist.num_bins_per_feature[feature] = feature_result.num_bins;
     hist.cut_values.insert(
         hist.cut_values.end(), feature_result.cut_values.begin(), feature_result.cut_values.end());
@@ -809,11 +1184,20 @@ HistMatrix HistBuilder::Build(const Pool& pool, const TrainingProfiler* profiler
 
   if (MaxFeatureBins(hist.num_bins_per_feature) <=
       static_cast<std::size_t>(std::numeric_limits<std::uint8_t>::max()) + 1U) {
-    hist.compact_bin_indices.resize(hist.num_rows * hist.num_cols, 0);
     hist.bin_index_bytes = 1;
   } else {
-    hist.bin_indices.resize(hist.num_rows * hist.num_cols, 0);
     hist.bin_index_bytes = 2;
+  }
+  const bool use_external_bin_storage = external_memory_ && hist.num_rows > 0 && hist.num_cols > 0;
+  std::filesystem::path external_storage_root;
+  if (use_external_bin_storage) {
+    external_storage_root = MakeExternalStorageRoot(external_memory_dir_);
+    hist.external_bin_storage_dir = external_storage_root.string();
+    hist.external_feature_bin_paths.resize(hist.num_cols);
+  } else if (hist.bin_index_bytes == 1) {
+    hist.compact_bin_indices.resize(hist.num_rows * hist.num_cols, 0);
+  } else {
+    hist.bin_indices.resize(hist.num_rows * hist.num_cols, 0);
   }
 
   failed.store(false, std::memory_order_relaxed);
@@ -829,7 +1213,30 @@ HistMatrix HistBuilder::Build(const Pool& pool, const TrainingProfiler* profiler
       }
 
       try {
-        MaterializeFeatureBins(pool, feature, feature_results[feature], nan_mode_, hist);
+        if (use_external_bin_storage) {
+          const std::filesystem::path feature_path =
+              external_storage_root / ("feature_" + std::to_string(feature) + ".bin");
+          if (hist.bin_index_bytes == 1) {
+            std::vector<std::uint8_t> feature_bins(hist.num_rows, 0);
+            MaterializeFeatureBinsToBuffer(pool,
+                                           feature,
+                                           feature_results[feature],
+                                           feature_bins.data(),
+                                           feature_bins.size());
+            WriteFeatureBinsToFile(feature_path, feature_bins);
+          } else {
+            std::vector<std::uint16_t> feature_bins(hist.num_rows, 0);
+            MaterializeFeatureBinsToBuffer(pool,
+                                           feature,
+                                           feature_results[feature],
+                                           feature_bins.data(),
+                                           feature_bins.size());
+            WriteFeatureBinsToFile(feature_path, feature_bins);
+          }
+          hist.external_feature_bin_paths[feature] = feature_path.string();
+        } else {
+          MaterializeFeatureBins(pool, feature, feature_results[feature], hist);
+        }
       } catch (...) {
         failed.store(true, std::memory_order_relaxed);
         std::lock_guard<std::mutex> lock(error_mutex);
@@ -862,7 +1269,12 @@ HistMatrix HistBuilder::Build(const Pool& pool, const TrainingProfiler* profiler
     profiler->LogHistogramBuild(hist.num_rows, hist.num_cols, total_bins, total_ms);
   }
 
-  hist.CompactBinStorage();
+  if (use_external_bin_storage) {
+    hist.uses_external_bin_storage_ = true;
+    hist.external_cached_feature_index = static_cast<std::size_t>(-1);
+  } else {
+    hist.CompactBinStorage();
+  }
   return hist;
 }
 
@@ -880,6 +1292,19 @@ bool QuantizationSchema::has_missing_values(std::size_t feature_index) const {
   return MaskValueChecked(missing_value_mask, feature_index, "missing value mask");
 }
 
+NanMode QuantizationSchema::nan_mode_for_feature(std::size_t feature_index) const {
+  if (nan_modes.empty()) {
+    if (feature_index >= num_bins_per_feature.size()) {
+      throw std::out_of_range("nan_mode feature index is out of bounds");
+    }
+    return static_cast<NanMode>(nan_mode);
+  }
+  if (feature_index >= nan_modes.size()) {
+    throw std::out_of_range("nan_mode feature index is out of bounds");
+  }
+  return static_cast<NanMode>(nan_modes[feature_index]);
+}
+
 std::uint16_t QuantizationSchema::bin_value(std::size_t feature_index, float value) const {
   return BinValueFromSchema(num_bins_per_feature,
                             cut_offsets,
@@ -887,6 +1312,7 @@ std::uint16_t QuantizationSchema::bin_value(std::size_t feature_index, float val
                             categorical_mask,
                             missing_value_mask,
                             nan_mode,
+                            nan_modes,
                             feature_index,
                             value);
 }
@@ -896,7 +1322,8 @@ std::size_t QuantizationSchema::storage_bytes() const noexcept {
          cut_offsets.capacity() * sizeof(std::size_t) +
          cut_values.capacity() * sizeof(float) +
          categorical_mask.capacity() * sizeof(std::uint8_t) +
-         missing_value_mask.capacity() * sizeof(std::uint8_t);
+         missing_value_mask.capacity() * sizeof(std::uint8_t) +
+         nan_modes.capacity() * sizeof(std::uint8_t);
 }
 
 QuantizationSchema MakeQuantizationSchema(const HistMatrix& hist) {
@@ -907,6 +1334,7 @@ QuantizationSchema MakeQuantizationSchema(const HistMatrix& hist) {
   schema.categorical_mask = hist.categorical_mask;
   schema.missing_value_mask = hist.missing_value_mask;
   schema.nan_mode = hist.nan_mode;
+  schema.nan_modes = hist.nan_modes;
   return schema;
 }
 
@@ -918,12 +1346,39 @@ void ApplyQuantizationSchema(const QuantizationSchema& schema, HistMatrix& hist)
   hist.categorical_mask = schema.categorical_mask;
   hist.missing_value_mask = schema.missing_value_mask;
   hist.nan_mode = schema.nan_mode;
+  hist.nan_modes = schema.nan_modes;
 }
 
 std::size_t HistBuilder::max_bins() const noexcept { return max_bins_; }
 
+const std::vector<std::uint16_t>& HistBuilder::max_bins_by_feature() const noexcept {
+  return max_bins_by_feature_;
+}
+
 NanMode HistBuilder::nan_mode() const noexcept { return nan_mode_; }
 
 const std::string& HistBuilder::nan_mode_name() const noexcept { return nan_mode_name_; }
+
+BorderSelectionMethod HistBuilder::border_selection_method() const noexcept {
+  return border_selection_method_;
+}
+
+const std::string& HistBuilder::border_selection_method_name() const noexcept {
+  return border_selection_method_name_;
+}
+
+const std::vector<std::string>& HistBuilder::nan_mode_by_feature_names() const noexcept {
+  return nan_mode_by_feature_names_;
+}
+
+const std::vector<std::vector<float>>& HistBuilder::feature_borders() const noexcept {
+  return feature_borders_;
+}
+
+bool HistBuilder::external_memory() const noexcept { return external_memory_; }
+
+const std::string& HistBuilder::external_memory_dir() const noexcept {
+  return external_memory_dir_;
+}
 
 }  // namespace ctboost

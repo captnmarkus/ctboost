@@ -29,8 +29,14 @@ class ExternalMemoryBacking:
 _FEATURE_PIPELINE_KEYS = {
     "cat_features",
     "ordered_ctr",
+    "one_hot_max_size",
+    "max_cat_to_onehot",
+    "max_cat_threshold",
     "categorical_combinations",
     "pairwise_categorical_combinations",
+    "simple_ctr",
+    "combinations_ctr",
+    "per_feature_ctr",
     "text_features",
     "text_hash_dim",
     "embedding_features",
@@ -59,8 +65,14 @@ def uses_feature_pipeline_params(params: Mapping[str, Any]) -> bool:
     return bool(
         params.get("ordered_ctr")
         or params.get("cat_features")
+        or params.get("one_hot_max_size")
+        or params.get("max_cat_to_onehot")
+        or params.get("max_cat_threshold")
         or params.get("categorical_combinations")
         or params.get("pairwise_categorical_combinations")
+        or params.get("simple_ctr")
+        or params.get("combinations_ctr")
+        or params.get("per_feature_ctr")
         or params.get("text_features")
         or params.get("embedding_features")
     )
@@ -90,8 +102,13 @@ def _prepare_feature_pipeline(
         pipeline = FeaturePipeline(
             cat_features=params.get("cat_features"),
             ordered_ctr=bool(params.get("ordered_ctr", False)),
+            one_hot_max_size=int(params.get("one_hot_max_size", params.get("max_cat_to_onehot", 0))),
+            max_cat_threshold=int(params.get("max_cat_threshold", 0)),
             categorical_combinations=params.get("categorical_combinations"),
             pairwise_categorical_combinations=bool(params.get("pairwise_categorical_combinations", False)),
+            simple_ctr=params.get("simple_ctr"),
+            combinations_ctr=params.get("combinations_ctr"),
+            per_feature_ctr=params.get("per_feature_ctr"),
             text_features=params.get("text_features"),
             text_hash_dim=int(params.get("text_hash_dim", 64)),
             embedding_features=params.get("embedding_features"),
@@ -203,8 +220,14 @@ def prepare_pool(
     external_memory: bool = False,
     external_memory_dir: Optional[Any] = None,
     ordered_ctr: bool = False,
+    one_hot_max_size: int = 0,
+    max_cat_to_onehot: int = 0,
+    max_cat_threshold: int = 0,
     categorical_combinations: Optional[Any] = None,
     pairwise_categorical_combinations: bool = False,
+    simple_ctr: Optional[Any] = None,
+    combinations_ctr: Optional[Any] = None,
+    per_feature_ctr: Optional[Any] = None,
     text_features: Optional[Any] = None,
     text_hash_dim: int = 64,
     embedding_features: Optional[Any] = None,
@@ -222,8 +245,13 @@ def prepare_pool(
             params={
                 "cat_features": cat_features,
                 "ordered_ctr": ordered_ctr,
+                "one_hot_max_size": one_hot_max_size if one_hot_max_size else max_cat_to_onehot,
+                "max_cat_threshold": max_cat_threshold,
                 "categorical_combinations": categorical_combinations,
                 "pairwise_categorical_combinations": pairwise_categorical_combinations,
+                "simple_ctr": simple_ctr,
+                "combinations_ctr": combinations_ctr,
+                "per_feature_ctr": per_feature_ctr,
                 "text_features": text_features,
                 "text_hash_dim": text_hash_dim,
                 "embedding_features": embedding_features,

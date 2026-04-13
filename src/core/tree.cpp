@@ -3,19 +3,28 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <cstring>
+#include <cstdint>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
 #include <limits>
 #include <numeric>
+#include <sstream>
 #include <stdexcept>
+#include <thread>
 #include <utility>
 #include <vector>
 
 #include "ctboost/cuda_backend.hpp"
+#include "ctboost/distributed_client.hpp"
 #include "ctboost/profiler.hpp"
 
 namespace ctboost {
 
 struct NodeHistogramSet {
   std::vector<BinStatistics> by_feature;
+  std::uint64_t sample_count{0};
   double sample_weight_sum{0.0};
   double total_gradient{0.0};
   double total_hessian{0.0};
@@ -39,6 +48,12 @@ struct SplitChoice {
   double gain{-std::numeric_limits<double>::infinity()};
   double left_leaf_weight{0.0};
   double right_leaf_weight{0.0};
+};
+
+struct CandidateSelectionResult {
+  FeatureChoice feature_choice;
+  SplitChoice split_choice;
+  double adjusted_gain{-std::numeric_limits<double>::infinity()};
 };
 
 double ComputeLeafWeight(double gradient_sum, double hessian_sum, double lambda_l2) {
@@ -70,6 +85,386 @@ const QuantizationSchema& RequireQuantizationSchema(const QuantizationSchemaPtr&
 
 double ClampLeafWeight(double leaf_weight, double lower_bound, double upper_bound) {
   return std::clamp(leaf_weight, lower_bound, upper_bound);
+}
+
+std::filesystem::path DistributedTreeRoot(const DistributedCoordinator& coordinator) {
+  return std::filesystem::path(coordinator.root) / coordinator.run_id /
+         ("tree_" + std::to_string(coordinator.tree_index));
+}
+
+std::filesystem::path DistributedOperationDir(DistributedCoordinator& coordinator,
+                                              const char* label) {
+  std::ostringstream stream;
+  stream << label << "_" << std::setw(10) << std::setfill('0') << coordinator.operation_counter++;
+  return DistributedTreeRoot(coordinator) / stream.str();
+}
+
+void WaitForDistributedPath(const std::filesystem::path& path, double timeout_seconds) {
+  const auto deadline =
+      std::chrono::steady_clock::now() + std::chrono::duration<double>(timeout_seconds);
+  while (!std::filesystem::exists(path)) {
+    if (std::chrono::steady_clock::now() >= deadline) {
+      throw std::runtime_error("timed out waiting for distributed artifact: " + path.string());
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+}
+
+template <typename T>
+void AppendBinary(std::vector<std::uint8_t>& buffer, const T& value) {
+  const auto* bytes = reinterpret_cast<const std::uint8_t*>(&value);
+  buffer.insert(buffer.end(), bytes, bytes + sizeof(T));
+}
+
+template <typename T>
+T ReadBinary(const std::vector<std::uint8_t>& buffer, std::size_t& offset) {
+  if (offset + sizeof(T) > buffer.size()) {
+    throw std::runtime_error("distributed binary payload is truncated");
+  }
+  T value{};
+  std::memcpy(&value, buffer.data() + offset, sizeof(T));
+  offset += sizeof(T);
+  return value;
+}
+
+std::vector<std::uint8_t> SerializeNodeHistogramSetBinary(const NodeHistogramSet& stats) {
+  std::vector<std::uint8_t> buffer;
+  const std::uint64_t feature_count = static_cast<std::uint64_t>(stats.by_feature.size());
+  AppendBinary(buffer, feature_count);
+  AppendBinary(buffer, stats.sample_count);
+  AppendBinary(buffer, stats.sample_weight_sum);
+  AppendBinary(buffer, stats.total_gradient);
+  AppendBinary(buffer, stats.total_hessian);
+  AppendBinary(buffer, stats.gradient_square_sum);
+  for (const BinStatistics& feature_stats : stats.by_feature) {
+    if (feature_stats.hessian_sums.size() != feature_stats.gradient_sums.size() ||
+        feature_stats.weight_sums.size() != feature_stats.gradient_sums.size()) {
+      throw std::invalid_argument(
+          "distributed node histogram bin-stat vectors must have matching sizes");
+    }
+    const std::uint64_t bin_count =
+        static_cast<std::uint64_t>(feature_stats.gradient_sums.size());
+    AppendBinary(buffer, bin_count);
+    const auto append_array = [&](const std::vector<double>& values) {
+      const auto* bytes = reinterpret_cast<const std::uint8_t*>(values.data());
+      buffer.insert(buffer.end(), bytes, bytes + values.size() * sizeof(double));
+    };
+    append_array(feature_stats.gradient_sums);
+    append_array(feature_stats.hessian_sums);
+    append_array(feature_stats.weight_sums);
+  }
+  return buffer;
+}
+
+NodeHistogramSet DeserializeNodeHistogramSetBinary(const std::vector<std::uint8_t>& buffer) {
+  std::size_t offset = 0;
+  NodeHistogramSet stats;
+  const std::uint64_t feature_count = ReadBinary<std::uint64_t>(buffer, offset);
+  stats.sample_count = ReadBinary<std::uint64_t>(buffer, offset);
+  stats.sample_weight_sum = ReadBinary<double>(buffer, offset);
+  stats.total_gradient = ReadBinary<double>(buffer, offset);
+  stats.total_hessian = ReadBinary<double>(buffer, offset);
+  stats.gradient_square_sum = ReadBinary<double>(buffer, offset);
+  stats.by_feature.resize(static_cast<std::size_t>(feature_count));
+  for (std::size_t feature = 0; feature < stats.by_feature.size(); ++feature) {
+    const std::uint64_t bin_count = ReadBinary<std::uint64_t>(buffer, offset);
+    BinStatistics feature_stats;
+    feature_stats.gradient_sums.resize(static_cast<std::size_t>(bin_count));
+    feature_stats.hessian_sums.resize(static_cast<std::size_t>(bin_count));
+    feature_stats.weight_sums.resize(static_cast<std::size_t>(bin_count));
+    const auto read_array = [&](std::vector<double>& values) {
+      const std::size_t byte_count = values.size() * sizeof(double);
+      if (offset + byte_count > buffer.size()) {
+        throw std::runtime_error("distributed node histogram payload is truncated");
+      }
+      std::memcpy(values.data(), buffer.data() + offset, byte_count);
+      offset += byte_count;
+    };
+    read_array(feature_stats.gradient_sums);
+    read_array(feature_stats.hessian_sums);
+    read_array(feature_stats.weight_sums);
+    stats.by_feature[feature] = std::move(feature_stats);
+  }
+  stats.gradient_variance = ComputeGradientVariance(
+      stats.total_gradient, stats.gradient_square_sum, stats.sample_weight_sum);
+  return stats;
+}
+
+void WriteNodeHistogramSetBinary(const std::filesystem::path& path,
+                                 const NodeHistogramSet& stats) {
+  std::error_code error;
+  std::filesystem::create_directories(path.parent_path(), error);
+  if (error) {
+    throw std::runtime_error(
+        "failed to create distributed tree directory: " + error.message());
+  }
+  const std::vector<std::uint8_t> buffer = SerializeNodeHistogramSetBinary(stats);
+  const std::filesystem::path temp_path = path.string() + ".tmp";
+  std::ofstream out(temp_path, std::ios::binary | std::ios::trunc);
+  if (!out) {
+    throw std::runtime_error("failed to open distributed histogram file for writing: " +
+                             temp_path.string());
+  }
+  if (!buffer.empty()) {
+    out.write(reinterpret_cast<const char*>(buffer.data()),
+              static_cast<std::streamsize>(buffer.size()));
+  }
+  if (!out) {
+    throw std::runtime_error("failed to write distributed histogram file: " + temp_path.string());
+  }
+  out.close();
+  std::filesystem::remove(path, error);
+  std::filesystem::rename(temp_path, path, error);
+  if (error) {
+    throw std::runtime_error("failed to publish distributed histogram file: " + error.message());
+  }
+}
+
+NodeHistogramSet ReadNodeHistogramSetBinary(const std::filesystem::path& path) {
+  std::ifstream in(path, std::ios::binary);
+  if (!in) {
+    throw std::runtime_error("failed to open distributed histogram file for reading: " +
+                             path.string());
+  }
+  const std::vector<std::uint8_t> buffer(
+      (std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+  return DeserializeNodeHistogramSetBinary(buffer);
+}
+
+void AddNodeHistogramSet(NodeHistogramSet& target, const NodeHistogramSet& source) {
+  if (target.by_feature.size() != source.by_feature.size()) {
+    throw std::invalid_argument("distributed histogram feature counts must match");
+  }
+  target.sample_count += source.sample_count;
+  target.sample_weight_sum += source.sample_weight_sum;
+  target.total_gradient += source.total_gradient;
+  target.total_hessian += source.total_hessian;
+  target.gradient_square_sum += source.gradient_square_sum;
+  for (std::size_t feature = 0; feature < target.by_feature.size(); ++feature) {
+    BinStatistics& target_feature = target.by_feature[feature];
+    const BinStatistics& source_feature = source.by_feature[feature];
+    if (target_feature.gradient_sums.size() != source_feature.gradient_sums.size()) {
+      throw std::invalid_argument("distributed histogram feature bin counts must match");
+    }
+    for (std::size_t bin = 0; bin < target_feature.gradient_sums.size(); ++bin) {
+      target_feature.gradient_sums[bin] += source_feature.gradient_sums[bin];
+      target_feature.hessian_sums[bin] += source_feature.hessian_sums[bin];
+      target_feature.weight_sums[bin] += source_feature.weight_sums[bin];
+    }
+  }
+}
+
+NodeHistogramSet AllReduceNodeHistogramSet(DistributedCoordinator* coordinator,
+                                           const NodeHistogramSet& local_stats) {
+  if (coordinator == nullptr || coordinator->world_size <= 1) {
+    return local_stats;
+  }
+
+  if (DistributedRootUsesTcp(coordinator->root)) {
+    const std::filesystem::path operation_dir = DistributedOperationDir(*coordinator, "node_hist");
+    const std::vector<std::uint8_t> response = DistributedTcpRequest(
+        coordinator->root,
+        coordinator->timeout_seconds,
+        "node_hist_reduce",
+        operation_dir.generic_string(),
+        coordinator->rank,
+        coordinator->world_size,
+        SerializeNodeHistogramSetBinary(local_stats));
+    NodeHistogramSet reduced = DeserializeNodeHistogramSetBinary(response);
+    reduced.total_hessian = std::max(0.0, reduced.total_hessian);
+    reduced.gradient_square_sum = std::max(0.0, reduced.gradient_square_sum);
+    reduced.gradient_variance = ComputeGradientVariance(
+        reduced.total_gradient, reduced.gradient_square_sum, reduced.sample_weight_sum);
+    return reduced;
+  }
+
+  const std::filesystem::path operation_dir = DistributedOperationDir(*coordinator, "node_hist");
+  const auto rank_file_name = [&](int rank) {
+    std::ostringstream stream;
+    stream << "rank_" << std::setw(5) << std::setfill('0') << rank << ".bin";
+    return stream.str();
+  };
+  const std::filesystem::path local_path = operation_dir / rank_file_name(coordinator->rank);
+  WriteNodeHistogramSetBinary(local_path, local_stats);
+  const std::filesystem::path result_path = operation_dir / "result.bin";
+
+  if (coordinator->rank == 0) {
+    NodeHistogramSet reduced;
+    bool initialized = false;
+    for (int rank = 0; rank < coordinator->world_size; ++rank) {
+      const std::filesystem::path rank_path = operation_dir / rank_file_name(rank);
+      WaitForDistributedPath(rank_path, coordinator->timeout_seconds);
+      const NodeHistogramSet rank_stats = ReadNodeHistogramSetBinary(rank_path);
+      if (!initialized) {
+        reduced = rank_stats;
+        initialized = true;
+      } else {
+        AddNodeHistogramSet(reduced, rank_stats);
+      }
+    }
+    reduced.total_hessian = std::max(0.0, reduced.total_hessian);
+    reduced.gradient_square_sum = std::max(0.0, reduced.gradient_square_sum);
+    reduced.gradient_variance = ComputeGradientVariance(
+        reduced.total_gradient, reduced.gradient_square_sum, reduced.sample_weight_sum);
+    WriteNodeHistogramSetBinary(result_path, reduced);
+    return reduced;
+  }
+
+  WaitForDistributedPath(result_path, coordinator->timeout_seconds);
+  return ReadNodeHistogramSetBinary(result_path);
+}
+
+std::vector<std::uint8_t> SerializeGpuHistogramSnapshotBinary(
+    const GpuHistogramSnapshot& snapshot) {
+  std::vector<std::uint8_t> buffer;
+  const std::uint64_t total_bins =
+      static_cast<std::uint64_t>(snapshot.gradient_sums.size());
+  if (snapshot.hessian_sums.size() != snapshot.gradient_sums.size() ||
+      snapshot.weight_sums.size() != snapshot.gradient_sums.size()) {
+    throw std::invalid_argument("gpu histogram snapshot buffers must have matching sizes");
+  }
+  AppendBinary(buffer, total_bins);
+  AppendBinary(buffer, snapshot.node_statistics.sample_count);
+  AppendBinary(buffer, snapshot.node_statistics.sample_weight_sum);
+  AppendBinary(buffer, snapshot.node_statistics.total_gradient);
+  AppendBinary(buffer, snapshot.node_statistics.total_hessian);
+  AppendBinary(buffer, snapshot.node_statistics.gradient_square_sum);
+  const auto append_float_array = [&](const std::vector<float>& values) {
+    const auto* bytes = reinterpret_cast<const std::uint8_t*>(values.data());
+    buffer.insert(buffer.end(), bytes, bytes + values.size() * sizeof(float));
+  };
+  append_float_array(snapshot.gradient_sums);
+  append_float_array(snapshot.hessian_sums);
+  append_float_array(snapshot.weight_sums);
+  return buffer;
+}
+
+GpuHistogramSnapshot DeserializeGpuHistogramSnapshotBinary(
+    const std::vector<std::uint8_t>& buffer) {
+  std::size_t offset = 0;
+  GpuHistogramSnapshot snapshot;
+  const std::uint64_t total_bins = ReadBinary<std::uint64_t>(buffer, offset);
+  snapshot.node_statistics.sample_count = ReadBinary<std::uint64_t>(buffer, offset);
+  snapshot.node_statistics.sample_weight_sum = ReadBinary<double>(buffer, offset);
+  snapshot.node_statistics.total_gradient = ReadBinary<double>(buffer, offset);
+  snapshot.node_statistics.total_hessian = ReadBinary<double>(buffer, offset);
+  snapshot.node_statistics.gradient_square_sum = ReadBinary<double>(buffer, offset);
+  snapshot.gradient_sums.resize(static_cast<std::size_t>(total_bins));
+  snapshot.hessian_sums.resize(static_cast<std::size_t>(total_bins));
+  snapshot.weight_sums.resize(static_cast<std::size_t>(total_bins));
+  const auto read_float_array = [&](std::vector<float>& values) {
+    const std::size_t byte_count = values.size() * sizeof(float);
+    if (offset + byte_count > buffer.size()) {
+      throw std::runtime_error("distributed gpu histogram payload is truncated");
+    }
+    std::memcpy(values.data(), buffer.data() + offset, byte_count);
+    offset += byte_count;
+  };
+  read_float_array(snapshot.gradient_sums);
+  read_float_array(snapshot.hessian_sums);
+  read_float_array(snapshot.weight_sums);
+  return snapshot;
+}
+
+GpuHistogramSnapshot SubtractGpuHistogramSnapshot(const GpuHistogramSnapshot& parent,
+                                                  const GpuHistogramSnapshot& child) {
+  if (parent.gradient_sums.size() != child.gradient_sums.size() ||
+      parent.hessian_sums.size() != child.hessian_sums.size() ||
+      parent.weight_sums.size() != child.weight_sums.size()) {
+    throw std::invalid_argument("gpu histogram snapshots must have matching sizes");
+  }
+  GpuHistogramSnapshot derived = parent;
+  derived.node_statistics.sample_count =
+      parent.node_statistics.sample_count >= child.node_statistics.sample_count
+          ? parent.node_statistics.sample_count - child.node_statistics.sample_count
+          : 0U;
+  derived.node_statistics.sample_weight_sum =
+      std::max(0.0, parent.node_statistics.sample_weight_sum - child.node_statistics.sample_weight_sum);
+  derived.node_statistics.total_gradient =
+      parent.node_statistics.total_gradient - child.node_statistics.total_gradient;
+  derived.node_statistics.total_hessian =
+      std::max(0.0, parent.node_statistics.total_hessian - child.node_statistics.total_hessian);
+  derived.node_statistics.gradient_square_sum =
+      std::max(0.0,
+               parent.node_statistics.gradient_square_sum - child.node_statistics.gradient_square_sum);
+  for (std::size_t index = 0; index < derived.gradient_sums.size(); ++index) {
+    derived.gradient_sums[index] -= child.gradient_sums[index];
+    derived.hessian_sums[index] =
+        std::max(0.0F, derived.hessian_sums[index] - child.hessian_sums[index]);
+    derived.weight_sums[index] =
+        std::max(0.0F, derived.weight_sums[index] - child.weight_sums[index]);
+  }
+  return derived;
+}
+
+GpuHistogramSnapshot AllReduceGpuHistogramSnapshot(DistributedCoordinator* coordinator,
+                                                   const GpuHistogramSnapshot& local_snapshot) {
+  if (coordinator == nullptr || coordinator->world_size <= 1) {
+    return local_snapshot;
+  }
+  if (!DistributedRootUsesTcp(coordinator->root)) {
+    throw std::invalid_argument(
+        "distributed gpu histogram reduction currently requires a tcp:// coordinator root");
+  }
+  const std::filesystem::path operation_dir = DistributedOperationDir(*coordinator, "gpu_hist");
+  const std::vector<std::uint8_t> response = DistributedTcpRequest(
+      coordinator->root,
+      coordinator->timeout_seconds,
+      "gpu_snapshot_reduce",
+      operation_dir.generic_string(),
+      coordinator->rank,
+      coordinator->world_size,
+      SerializeGpuHistogramSnapshotBinary(local_snapshot));
+  return DeserializeGpuHistogramSnapshotBinary(response);
+}
+
+std::uint64_t MixRandomKey(std::uint64_t value) {
+  value += 0x9E3779B97F4A7C15ULL;
+  value = (value ^ (value >> 30U)) * 0xBF58476D1CE4E5B9ULL;
+  value = (value ^ (value >> 27U)) * 0x94D049BB133111EBULL;
+  return value ^ (value >> 31U);
+}
+
+double UniformFromKey(std::uint64_t key) {
+  constexpr double kScale = 1.0 / static_cast<double>(1ULL << 53U);
+  return static_cast<double>(MixRandomKey(key) >> 11U) * kScale;
+}
+
+double SymmetricNoise(std::uint64_t base_seed, std::uint64_t key, double scale) {
+  if (scale <= 0.0) {
+    return 0.0;
+  }
+  const double uniform = UniformFromKey(base_seed ^ key);
+  return (2.0 * uniform - 1.0) * scale;
+}
+
+double FeatureWeightValue(const std::vector<double>* feature_weights, int feature_id) {
+  if (feature_weights == nullptr || feature_id < 0 ||
+      static_cast<std::size_t>(feature_id) >= feature_weights->size()) {
+    return 1.0;
+  }
+  return (*feature_weights)[static_cast<std::size_t>(feature_id)];
+}
+
+double FirstUsePenaltyValue(const std::vector<double>* first_feature_use_penalties,
+                            const std::vector<std::uint8_t>* model_feature_used_mask,
+                            int feature_id) {
+  if (first_feature_use_penalties == nullptr || model_feature_used_mask == nullptr ||
+      feature_id < 0) {
+    return 0.0;
+  }
+  const std::size_t index = static_cast<std::size_t>(feature_id);
+  if (index >= first_feature_use_penalties->size() || index >= model_feature_used_mask->size() ||
+      (*model_feature_used_mask)[index] != 0U) {
+    return 0.0;
+  }
+  return (*first_feature_use_penalties)[index];
+}
+
+bool UsesCandidateRegularization(const TreeBuildOptions& options) {
+  return options.random_strength > 0.0 ||
+         options.feature_weights != nullptr ||
+         options.first_feature_use_penalties != nullptr;
 }
 
 std::vector<FeatureChoice> RankFeaturesByStatistic(const NodeHistogramSet& node_stats,
@@ -183,39 +578,6 @@ std::vector<int> IntersectSortedVectors(const std::vector<int>& lhs, const std::
   return intersection;
 }
 
-GpuHistogramSnapshot SubtractGpuHistogramSnapshot(const GpuHistogramSnapshot& parent,
-                                                 const GpuHistogramSnapshot& child) {
-  if (parent.gradient_sums.size() != child.gradient_sums.size() ||
-      parent.hessian_sums.size() != child.hessian_sums.size() ||
-      parent.weight_sums.size() != child.weight_sums.size()) {
-    throw std::invalid_argument(
-        "GPU parent and child histogram snapshots must have matching buffer sizes");
-  }
-
-  GpuHistogramSnapshot derived;
-  derived.gradient_sums.resize(parent.gradient_sums.size(), 0.0F);
-  derived.hessian_sums.resize(parent.hessian_sums.size(), 0.0F);
-  derived.weight_sums.resize(parent.weight_sums.size(), 0.0F);
-  for (std::size_t index = 0; index < parent.gradient_sums.size(); ++index) {
-    derived.gradient_sums[index] = parent.gradient_sums[index] - child.gradient_sums[index];
-    derived.hessian_sums[index] =
-        std::max(0.0F, parent.hessian_sums[index] - child.hessian_sums[index]);
-    derived.weight_sums[index] =
-        std::max(0.0F, parent.weight_sums[index] - child.weight_sums[index]);
-  }
-
-  derived.node_statistics.sample_weight_sum = std::max(
-      0.0, parent.node_statistics.sample_weight_sum - child.node_statistics.sample_weight_sum);
-  derived.node_statistics.total_gradient =
-      parent.node_statistics.total_gradient - child.node_statistics.total_gradient;
-  derived.node_statistics.total_hessian =
-      std::max(0.0, parent.node_statistics.total_hessian - child.node_statistics.total_hessian);
-  derived.node_statistics.gradient_square_sum = std::max(
-      0.0,
-      parent.node_statistics.gradient_square_sum - child.node_statistics.gradient_square_sum);
-  return derived;
-}
-
 NodeHistogramSet ComputeNodeHistogramSet(const HistMatrix& hist,
                                          const std::vector<float>& gradients,
                                          const std::vector<float>& hessians,
@@ -239,6 +601,7 @@ NodeHistogramSet ComputeNodeHistogramSet(const HistMatrix& hist,
     const double gradient = gradients[row];
     const double hessian = hessians[row];
     const double sample_weight = weights[row];
+    ++stats.sample_count;
     stats.total_gradient += sample_weight * gradient;
     stats.total_hessian += sample_weight * hessian;
     stats.gradient_square_sum += sample_weight * gradient * gradient;
@@ -278,6 +641,8 @@ NodeHistogramSet SubtractNodeHistogramSet(const NodeHistogramSet& parent,
 
   NodeHistogramSet derived;
   derived.by_feature.resize(parent.by_feature.size());
+  derived.sample_count =
+      parent.sample_count >= child.sample_count ? parent.sample_count - child.sample_count : 0U;
   derived.sample_weight_sum = parent.sample_weight_sum - child.sample_weight_sum;
   derived.total_gradient = parent.total_gradient - child.total_gradient;
   derived.total_hessian = parent.total_hessian - child.total_hessian;
@@ -520,6 +885,122 @@ SplitChoice SelectBestSplit(const BinStatistics& feature_stats,
   return best;
 }
 
+double AdjustedCandidateGain(const TreeBuildOptions& options,
+                             int feature_id,
+                             double raw_gain,
+                             int depth,
+                             std::size_t row_begin,
+                             std::size_t row_end) {
+  const double feature_weight = FeatureWeightValue(options.feature_weights, feature_id);
+  if (feature_weight <= 0.0) {
+    return -std::numeric_limits<double>::infinity();
+  }
+
+  double adjusted_gain = raw_gain * feature_weight;
+  adjusted_gain -= FirstUsePenaltyValue(
+      options.first_feature_use_penalties, options.model_feature_used_mask, feature_id);
+  adjusted_gain += SymmetricNoise(
+      options.random_seed,
+      static_cast<std::uint64_t>(feature_id + 1) ^
+          (static_cast<std::uint64_t>(depth + 1) << 24U) ^
+          (static_cast<std::uint64_t>(row_begin + 1) << 1U) ^
+          (static_cast<std::uint64_t>(row_end + 1) << 33U),
+      options.random_strength);
+  return adjusted_gain;
+}
+
+CandidateSelectionResult SelectBestCandidateSplit(const HistMatrix& hist,
+                                                  const NodeHistogramSet& node_stats,
+                                                  const TreeBuildOptions& options,
+                                                  const LinearStatistic& statistic_engine,
+                                                  const std::vector<int>* node_allowed_features,
+                                                  double leaf_lower_bound,
+                                                  double leaf_upper_bound,
+                                                  int depth,
+                                                  std::size_t row_begin,
+                                                  std::size_t row_end) {
+  CandidateSelectionResult best;
+  const bool constrained_search =
+      (options.monotone_constraints != nullptr && !options.monotone_constraints->empty()) ||
+      options.interaction_constraints != nullptr;
+  const bool use_ranked_search = constrained_search || UsesCandidateRegularization(options);
+
+  if (!use_ranked_search) {
+    best.feature_choice = SelectBestFeature(node_stats, statistic_engine, node_allowed_features);
+    if (best.feature_choice.feature_id < 0 || best.feature_choice.p_value > options.alpha) {
+      return best;
+    }
+
+    best.split_choice = SelectBestSplit(
+        node_stats.by_feature[static_cast<std::size_t>(best.feature_choice.feature_id)],
+        node_stats.total_gradient,
+        node_stats.total_hessian,
+        node_stats.sample_weight_sum,
+        options.lambda_l2,
+        options.min_data_in_leaf,
+        options.min_child_weight,
+        options.min_split_gain,
+        hist.is_categorical(static_cast<std::size_t>(best.feature_choice.feature_id)),
+        0,
+        leaf_lower_bound,
+        leaf_upper_bound);
+    best.adjusted_gain = best.split_choice.gain;
+    return best;
+  }
+
+  const std::vector<FeatureChoice> ranked_features =
+      RankFeaturesByStatistic(node_stats, statistic_engine, node_allowed_features);
+  if (!ranked_features.empty()) {
+    best.feature_choice = ranked_features.front();
+  }
+
+  for (const FeatureChoice& candidate : ranked_features) {
+    if (candidate.p_value > options.alpha) {
+      break;
+    }
+
+    const int monotone_sign =
+        options.monotone_constraints == nullptr ||
+                static_cast<std::size_t>(candidate.feature_id) >= options.monotone_constraints->size()
+            ? 0
+            : (*options.monotone_constraints)[static_cast<std::size_t>(candidate.feature_id)];
+    const SplitChoice candidate_split = SelectBestSplit(
+        node_stats.by_feature[static_cast<std::size_t>(candidate.feature_id)],
+        node_stats.total_gradient,
+        node_stats.total_hessian,
+        node_stats.sample_weight_sum,
+        options.lambda_l2,
+        options.min_data_in_leaf,
+        options.min_child_weight,
+        options.min_split_gain,
+        hist.is_categorical(static_cast<std::size_t>(candidate.feature_id)),
+        monotone_sign,
+        leaf_lower_bound,
+        leaf_upper_bound);
+    if (!candidate_split.valid || candidate_split.gain <= 0.0) {
+      continue;
+    }
+
+    const std::size_t adjusted_row_begin = options.distributed == nullptr ? row_begin : 0U;
+    const std::size_t adjusted_row_end = options.distributed == nullptr
+                                             ? row_end
+                                             : static_cast<std::size_t>(node_stats.sample_count);
+    const double adjusted_gain = AdjustedCandidateGain(options,
+                                                       candidate.feature_id,
+                                                       candidate_split.gain,
+                                                       depth,
+                                                       adjusted_row_begin,
+                                                       adjusted_row_end);
+    if (!best.split_choice.valid || adjusted_gain > best.adjusted_gain) {
+      best.feature_choice = candidate;
+      best.split_choice = candidate_split;
+      best.adjusted_gain = adjusted_gain;
+    }
+  }
+
+  return best;
+}
+
 }  // namespace
 
 void Tree::Build(const HistMatrix& hist,
@@ -575,6 +1056,10 @@ void Tree::Build(const HistMatrix& hist,
 
   int leaf_count = 1;
   const LinearStatistic statistic_engine;
+  const double root_leaf_lower_bound =
+      options.max_leaf_weight > 0.0 ? -options.max_leaf_weight : -std::numeric_limits<double>::infinity();
+  const double root_leaf_upper_bound =
+      options.max_leaf_weight > 0.0 ? options.max_leaf_weight : std::numeric_limits<double>::infinity();
   BuildNode(hist,
             gradients,
             hessians,
@@ -591,8 +1076,8 @@ void Tree::Build(const HistMatrix& hist,
             0.0,
             options.allowed_features,
             nullptr,
-            -std::numeric_limits<double>::infinity(),
-            std::numeric_limits<double>::infinity(),
+            root_leaf_lower_bound,
+            root_leaf_upper_bound,
             profiler,
             statistic_engine,
             leaf_row_ranges_out,
@@ -632,22 +1117,38 @@ int Tree::BuildNode(const HistMatrix& hist,
   if (options.use_gpu) {
     (void)precomputed_node_stats;
     (void)statistic_engine;
-    (void)active_interaction_groups;
 
     GpuNodeStatistics gpu_node_stats;
+    GpuHistogramSnapshot parent_snapshot;
     double histogram_ms = precomputed_histogram_ms;
     if (precomputed_gpu_histogram != nullptr) {
       gpu_node_stats = precomputed_gpu_histogram->node_statistics;
+      parent_snapshot = *precomputed_gpu_histogram;
+      if (!precomputed_gpu_histogram_resident) {
+        UploadHistogramSnapshotGpu(gpu_workspace, parent_snapshot);
+      }
     } else {
       const auto histogram_start = std::chrono::steady_clock::now();
-      BuildHistogramsGpu(gpu_workspace, row_begin, row_end, &gpu_node_stats);
+      GpuHistogramSnapshot local_snapshot;
+      BuildHistogramsGpu(gpu_workspace, row_begin, row_end, &local_snapshot.node_statistics);
+      DownloadHistogramSnapshotGpu(gpu_workspace, &local_snapshot);
+      if (options.distributed != nullptr) {
+        parent_snapshot = AllReduceGpuHistogramSnapshot(options.distributed, local_snapshot);
+        UploadHistogramSnapshotGpu(gpu_workspace, parent_snapshot);
+      } else {
+        parent_snapshot = std::move(local_snapshot);
+      }
+      gpu_node_stats = parent_snapshot.node_statistics;
       histogram_ms =
           std::chrono::duration<double, std::milli>(
               std::chrono::steady_clock::now() - histogram_start)
               .count();
     }
+    const std::size_t effective_row_count =
+        options.distributed == nullptr ? row_count
+                                       : static_cast<std::size_t>(gpu_node_stats.sample_count);
     if (profiler != nullptr && profiler->enabled()) {
-      profiler->LogNodeHistogram(depth, row_count, true, histogram_ms);
+      profiler->LogNodeHistogram(depth, effective_row_count, true, histogram_ms);
     }
 
     Node node;
@@ -662,7 +1163,8 @@ int Tree::BuildNode(const HistMatrix& hist,
       leaf_row_ranges_out->resize(nodes_.size());
     }
 
-    if (row_count <= 1 || depth >= options.max_depth ||
+    if (effective_row_count < static_cast<std::size_t>(options.min_samples_split) ||
+        depth >= options.max_depth ||
         (options.max_leaves > 0 && leaf_count != nullptr && *leaf_count >= options.max_leaves)) {
       if (leaf_row_ranges_out != nullptr) {
         (*leaf_row_ranges_out)[node_index] = LeafRowRange{row_begin, row_end};
@@ -671,16 +1173,24 @@ int Tree::BuildNode(const HistMatrix& hist,
     }
 
     const auto search_start = std::chrono::steady_clock::now();
-    if (precomputed_gpu_histogram != nullptr && !precomputed_gpu_histogram_resident) {
-      UploadHistogramSnapshotGpu(gpu_workspace, *precomputed_gpu_histogram);
-    }
     GpuNodeSearchResult node_search;
+    const std::size_t adjusted_row_begin = options.distributed == nullptr ? row_begin : 0U;
+    const std::size_t adjusted_row_end =
+        options.distributed == nullptr ? row_end : effective_row_count;
     SearchBestNodeSplitGpu(gpu_workspace,
                            node_allowed_features,
                            options.lambda_l2,
                            options.min_data_in_leaf,
                            options.min_child_weight,
                            options.min_split_gain,
+                           options.alpha,
+                           depth,
+                           adjusted_row_begin,
+                           adjusted_row_end,
+                           leaf_lower_bound,
+                           leaf_upper_bound,
+                           options.random_seed,
+                           options.random_strength,
                            &node_search);
     node_search.node_statistics = gpu_node_stats;
     const double feature_ms =
@@ -690,7 +1200,7 @@ int Tree::BuildNode(const HistMatrix& hist,
     if (node_search.feature_id < 0 || node_search.p_value > options.alpha) {
       if (profiler != nullptr && profiler->enabled()) {
         profiler->LogNodeSearch(depth,
-                                row_count,
+                                effective_row_count,
                                 node_search.feature_id,
                                 node_search.p_value,
                                 node_search.chi_square,
@@ -712,7 +1222,7 @@ int Tree::BuildNode(const HistMatrix& hist,
     if (!node_search.split_valid || node_search.gain <= 0.0) {
       if (profiler != nullptr && profiler->enabled()) {
         profiler->LogNodeSearch(depth,
-                                row_count,
+                                effective_row_count,
                                 node_search.feature_id,
                                 node_search.p_value,
                                 node_search.chi_square,
@@ -730,15 +1240,6 @@ int Tree::BuildNode(const HistMatrix& hist,
       }
       return node_index;
     }
-
-    GpuHistogramSnapshot parent_snapshot;
-    if (precomputed_gpu_histogram != nullptr) {
-      parent_snapshot = *precomputed_gpu_histogram;
-    } else {
-      DownloadHistogramSnapshotGpu(gpu_workspace, &parent_snapshot);
-      parent_snapshot.node_statistics = gpu_node_stats;
-    }
-
     const auto partition_start = std::chrono::steady_clock::now();
     const std::size_t left_end = PartitionHistogramRowsGpu(gpu_workspace,
                                                            row_begin,
@@ -754,7 +1255,7 @@ int Tree::BuildNode(const HistMatrix& hist,
     const std::size_t right_count = row_end - left_end;
     if (profiler != nullptr && profiler->enabled()) {
       profiler->LogNodeSearch(depth,
-                              row_count,
+                              effective_row_count,
                               node_search.feature_id,
                               node_search.p_value,
                               node_search.chi_square,
@@ -767,21 +1268,49 @@ int Tree::BuildNode(const HistMatrix& hist,
                               split_ms,
                               partition_ms);
     }
-    if (left_end == row_begin || left_end == row_end) {
+    if (options.distributed == nullptr && (left_end == row_begin || left_end == row_end)) {
       if (leaf_row_ranges_out != nullptr) {
         (*leaf_row_ranges_out)[node_index] = LeafRowRange{row_begin, row_end};
       }
       return node_index;
     }
 
-    const bool build_left_direct = left_count <= right_count;
+    double left_child_lower_bound = leaf_lower_bound;
+    double left_child_upper_bound = leaf_upper_bound;
+    double right_child_lower_bound = leaf_lower_bound;
+    double right_child_upper_bound = leaf_upper_bound;
+    const int monotone_sign =
+        options.monotone_constraints == nullptr ||
+                static_cast<std::size_t>(node_search.feature_id) >= options.monotone_constraints->size()
+            ? 0
+            : (*options.monotone_constraints)[static_cast<std::size_t>(node_search.feature_id)];
+    if (monotone_sign > 0) {
+      const double midpoint =
+          0.5 * (node_search.left_leaf_weight + node_search.right_leaf_weight);
+      left_child_upper_bound = std::min(left_child_upper_bound, midpoint);
+      right_child_lower_bound = std::max(right_child_lower_bound, midpoint);
+    } else if (monotone_sign < 0) {
+      const double midpoint =
+          0.5 * (node_search.left_leaf_weight + node_search.right_leaf_weight);
+      left_child_lower_bound = std::max(left_child_lower_bound, midpoint);
+      right_child_upper_bound = std::min(right_child_upper_bound, midpoint);
+    }
+
+    const bool build_left_direct = options.distributed != nullptr || left_count <= right_count;
     const std::size_t direct_begin = build_left_direct ? row_begin : left_end;
     const std::size_t direct_end = build_left_direct ? left_end : row_end;
     const auto direct_child_start = std::chrono::steady_clock::now();
     GpuHistogramSnapshot direct_child_snapshot;
+    GpuHistogramSnapshot local_direct_child_snapshot;
     BuildHistogramsGpu(
-        gpu_workspace, direct_begin, direct_end, &direct_child_snapshot.node_statistics);
-    DownloadHistogramSnapshotGpu(gpu_workspace, &direct_child_snapshot);
+        gpu_workspace, direct_begin, direct_end, &local_direct_child_snapshot.node_statistics);
+    DownloadHistogramSnapshotGpu(gpu_workspace, &local_direct_child_snapshot);
+    if (options.distributed != nullptr) {
+      direct_child_snapshot =
+          AllReduceGpuHistogramSnapshot(options.distributed, local_direct_child_snapshot);
+    } else {
+      direct_child_snapshot = std::move(local_direct_child_snapshot);
+    }
     const double direct_child_histogram_ms =
         std::chrono::duration<double, std::milli>(
             std::chrono::steady_clock::now() - direct_child_start)
@@ -805,7 +1334,138 @@ int Tree::BuildNode(const HistMatrix& hist,
     if (leaf_count != nullptr) {
       ++(*leaf_count);
     }
-    if (build_left_direct) {
+    std::vector<int> child_active_groups_storage;
+    std::vector<int> child_allowed_features_storage;
+    const std::vector<int>* child_active_groups = active_interaction_groups;
+    const std::vector<int>* child_allowed_features = node_allowed_features;
+    if (options.interaction_constraints != nullptr) {
+      const auto& constraints = *options.interaction_constraints;
+      const auto& feature_groups =
+          constraints.feature_to_groups[static_cast<std::size_t>(node_search.feature_id)];
+      if (!feature_groups.empty()) {
+        if (active_interaction_groups == nullptr || active_interaction_groups->empty()) {
+          child_active_groups_storage = feature_groups;
+        } else {
+          child_active_groups_storage =
+              IntersectSortedVectors(*active_interaction_groups, feature_groups);
+        }
+        child_active_groups =
+            child_active_groups_storage.empty() ? nullptr : &child_active_groups_storage;
+        child_allowed_features_storage = FilterAllowedFeaturesForInteraction(
+            hist.num_cols, node_allowed_features, constraints, child_active_groups);
+        child_allowed_features = &child_allowed_features_storage;
+      }
+    }
+
+    bool build_left_first = true;
+    bool left_snapshot_resident = options.distributed == nullptr && build_left_direct;
+    bool right_snapshot_resident = options.distributed == nullptr && !build_left_direct;
+    if (options.grow_policy == GrowPolicy::LeafWise && options.max_leaves > 0) {
+      GpuNodeSearchResult left_selection;
+      GpuNodeSearchResult right_selection;
+      if (build_left_direct) {
+        UploadHistogramSnapshotGpu(gpu_workspace, direct_child_snapshot);
+        SearchBestNodeSplitGpu(gpu_workspace,
+                               child_allowed_features,
+                               options.lambda_l2,
+                               options.min_data_in_leaf,
+                               options.min_child_weight,
+                               options.min_split_gain,
+                               options.alpha,
+                               depth + 1,
+                               options.distributed == nullptr
+                                   ? row_begin
+                                   : 0U,
+                               options.distributed == nullptr
+                                   ? left_end
+                                   : static_cast<std::size_t>(
+                                         direct_child_snapshot.node_statistics.sample_count),
+                               left_child_lower_bound,
+                               left_child_upper_bound,
+                               options.random_seed,
+                               options.random_strength,
+                               &left_selection);
+        UploadHistogramSnapshotGpu(gpu_workspace, sibling_child_snapshot);
+        SearchBestNodeSplitGpu(gpu_workspace,
+                               child_allowed_features,
+                               options.lambda_l2,
+                               options.min_data_in_leaf,
+                               options.min_child_weight,
+                               options.min_split_gain,
+                               options.alpha,
+                               depth + 1,
+                               options.distributed == nullptr
+                                   ? left_end
+                                   : 0U,
+                               options.distributed == nullptr
+                                   ? row_end
+                                   : static_cast<std::size_t>(
+                                         sibling_child_snapshot.node_statistics.sample_count),
+                               right_child_lower_bound,
+                               right_child_upper_bound,
+                               options.random_seed,
+                               options.random_strength,
+                               &right_selection);
+      } else {
+        UploadHistogramSnapshotGpu(gpu_workspace, direct_child_snapshot);
+        SearchBestNodeSplitGpu(gpu_workspace,
+                               child_allowed_features,
+                               options.lambda_l2,
+                               options.min_data_in_leaf,
+                               options.min_child_weight,
+                               options.min_split_gain,
+                               options.alpha,
+                               depth + 1,
+                               options.distributed == nullptr
+                                   ? left_end
+                                   : 0U,
+                               options.distributed == nullptr
+                                   ? row_end
+                                   : static_cast<std::size_t>(
+                                         direct_child_snapshot.node_statistics.sample_count),
+                               right_child_lower_bound,
+                               right_child_upper_bound,
+                               options.random_seed,
+                               options.random_strength,
+                               &right_selection);
+        UploadHistogramSnapshotGpu(gpu_workspace, sibling_child_snapshot);
+        SearchBestNodeSplitGpu(gpu_workspace,
+                               child_allowed_features,
+                               options.lambda_l2,
+                               options.min_data_in_leaf,
+                               options.min_child_weight,
+                               options.min_split_gain,
+                               options.alpha,
+                               depth + 1,
+                               options.distributed == nullptr
+                                   ? row_begin
+                                   : 0U,
+                               options.distributed == nullptr
+                                   ? left_end
+                                   : static_cast<std::size_t>(
+                                         sibling_child_snapshot.node_statistics.sample_count),
+                               left_child_lower_bound,
+                               left_child_upper_bound,
+                               options.random_seed,
+                               options.random_strength,
+                               &left_selection);
+      }
+      if (right_selection.adjusted_gain > left_selection.adjusted_gain) {
+        build_left_first = false;
+      }
+      left_snapshot_resident = false;
+      right_snapshot_resident = false;
+    }
+    const GpuHistogramSnapshot* left_snapshot =
+        build_left_direct ? &direct_child_snapshot : &sibling_child_snapshot;
+    const GpuHistogramSnapshot* right_snapshot =
+        build_left_direct ? &sibling_child_snapshot : &direct_child_snapshot;
+    const double left_histogram_ms =
+        build_left_direct ? direct_child_histogram_ms : sibling_child_histogram_ms;
+    const double right_histogram_ms =
+        build_left_direct ? sibling_child_histogram_ms : direct_child_histogram_ms;
+
+    if (build_left_first) {
       nodes_[node_index].left_child =
           BuildNode(hist,
                     gradients,
@@ -817,14 +1477,14 @@ int Tree::BuildNode(const HistMatrix& hist,
                     depth + 1,
                     options,
                     gpu_workspace,
-                    &direct_child_snapshot,
-                    true,
+                    left_snapshot,
+                    left_snapshot_resident,
                     nullptr,
-                    direct_child_histogram_ms,
-                    node_allowed_features,
-                    active_interaction_groups,
-                    leaf_lower_bound,
-                    leaf_upper_bound,
+                    left_histogram_ms,
+                    child_allowed_features,
+                    child_active_groups,
+                    left_child_lower_bound,
+                    left_child_upper_bound,
                     profiler,
                     statistic_engine,
                     leaf_row_ranges_out,
@@ -840,14 +1500,14 @@ int Tree::BuildNode(const HistMatrix& hist,
                     depth + 1,
                     options,
                     gpu_workspace,
-                    &sibling_child_snapshot,
-                    false,
+                    right_snapshot,
+                    right_snapshot_resident,
                     nullptr,
-                    sibling_child_histogram_ms,
-                    node_allowed_features,
-                    active_interaction_groups,
-                    leaf_lower_bound,
-                    leaf_upper_bound,
+                    right_histogram_ms,
+                    child_allowed_features,
+                    child_active_groups,
+                    right_child_lower_bound,
+                    right_child_upper_bound,
                     profiler,
                     statistic_engine,
                     leaf_row_ranges_out,
@@ -864,14 +1524,14 @@ int Tree::BuildNode(const HistMatrix& hist,
                     depth + 1,
                     options,
                     gpu_workspace,
-                    &direct_child_snapshot,
-                    true,
+                    right_snapshot,
+                    right_snapshot_resident,
                     nullptr,
-                    direct_child_histogram_ms,
-                    node_allowed_features,
-                    active_interaction_groups,
-                    leaf_lower_bound,
-                    leaf_upper_bound,
+                    right_histogram_ms,
+                    child_allowed_features,
+                    child_active_groups,
+                    right_child_lower_bound,
+                    right_child_upper_bound,
                     profiler,
                     statistic_engine,
                     leaf_row_ranges_out,
@@ -887,14 +1547,14 @@ int Tree::BuildNode(const HistMatrix& hist,
                     depth + 1,
                     options,
                     gpu_workspace,
-                    &sibling_child_snapshot,
-                    false,
+                    left_snapshot,
+                    left_snapshot_resident,
                     nullptr,
-                    sibling_child_histogram_ms,
-                    node_allowed_features,
-                    active_interaction_groups,
-                    leaf_lower_bound,
-                    leaf_upper_bound,
+                    left_histogram_ms,
+                    child_allowed_features,
+                    child_active_groups,
+                    left_child_lower_bound,
+                    left_child_upper_bound,
                     profiler,
                     statistic_engine,
                     leaf_row_ranges_out,
@@ -909,7 +1569,7 @@ int Tree::BuildNode(const HistMatrix& hist,
     node_stats = *precomputed_node_stats;
   } else {
     const auto histogram_start = std::chrono::steady_clock::now();
-    node_stats = ComputeNodeHistogramSet(
+    NodeHistogramSet local_node_stats = ComputeNodeHistogramSet(
         hist,
         gradients,
         hessians,
@@ -919,12 +1579,15 @@ int Tree::BuildNode(const HistMatrix& hist,
         row_end,
         options.use_gpu,
         gpu_workspace);
+    node_stats = AllReduceNodeHistogramSet(options.distributed, local_node_stats);
     histogram_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - histogram_start)
             .count();
   }
+  const std::size_t effective_row_count =
+      options.distributed == nullptr ? row_count : static_cast<std::size_t>(node_stats.sample_count);
   if (profiler != nullptr && profiler->enabled()) {
-    profiler->LogNodeHistogram(depth, row_count, options.use_gpu, histogram_ms);
+    profiler->LogNodeHistogram(depth, effective_row_count, options.use_gpu, histogram_ms);
   }
 
   Node node;
@@ -939,7 +1602,8 @@ int Tree::BuildNode(const HistMatrix& hist,
     leaf_row_ranges_out->resize(nodes_.size());
   }
 
-  if (row_count <= 1 || depth >= options.max_depth ||
+  if (effective_row_count < static_cast<std::size_t>(options.min_samples_split) ||
+      depth >= options.max_depth ||
       (options.max_leaves > 0 && leaf_count != nullptr && *leaf_count >= options.max_leaves)) {
     if (leaf_row_ranges_out != nullptr) {
       (*leaf_row_ranges_out)[node_index] = LeafRowRange{row_begin, row_end};
@@ -947,27 +1611,25 @@ int Tree::BuildNode(const HistMatrix& hist,
     return node_index;
   }
 
-  const bool constrained_search =
-      (options.monotone_constraints != nullptr && !options.monotone_constraints->empty()) ||
-      options.interaction_constraints != nullptr;
   const auto feature_start = std::chrono::steady_clock::now();
-  FeatureChoice feature_choice;
-  std::vector<FeatureChoice> ranked_features;
-  if (!constrained_search) {
-    feature_choice = SelectBestFeature(node_stats, statistic_engine, node_allowed_features);
-  } else {
-    ranked_features = RankFeaturesByStatistic(node_stats, statistic_engine, node_allowed_features);
-    if (!ranked_features.empty()) {
-      feature_choice = ranked_features.front();
-    }
-  }
+  const CandidateSelectionResult selection = SelectBestCandidateSplit(hist,
+                                                                      node_stats,
+                                                                      options,
+                                                                      statistic_engine,
+                                                                      node_allowed_features,
+                                                                      leaf_lower_bound,
+                                                                      leaf_upper_bound,
+                                                                      depth,
+                                                                      row_begin,
+                                                                      row_end);
+  const FeatureChoice& feature_choice = selection.feature_choice;
   const double feature_ms =
       std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - feature_start)
           .count();
   if (feature_choice.feature_id < 0 || feature_choice.p_value > options.alpha) {
     if (profiler != nullptr && profiler->enabled()) {
       profiler->LogNodeSearch(depth,
-                              row_count,
+                              effective_row_count,
                               feature_choice.feature_id,
                               feature_choice.p_value,
                               feature_choice.chi_square,
@@ -986,60 +1648,15 @@ int Tree::BuildNode(const HistMatrix& hist,
     return node_index;
   }
 
-  SplitChoice split_choice;
   const auto split_start = std::chrono::steady_clock::now();
-  double split_ms = 0.0;
-  if (!constrained_search) {
-    split_choice = SelectBestSplit(
-        node_stats.by_feature[static_cast<std::size_t>(feature_choice.feature_id)],
-        node_stats.total_gradient,
-        node_stats.total_hessian,
-        node_stats.sample_weight_sum,
-        options.lambda_l2,
-        options.min_data_in_leaf,
-        options.min_child_weight,
-        options.min_split_gain,
-        hist.is_categorical(static_cast<std::size_t>(feature_choice.feature_id)),
-        0,
-        leaf_lower_bound,
-        leaf_upper_bound);
-  } else {
-    for (const FeatureChoice& candidate : ranked_features) {
-      if (candidate.p_value > options.alpha) {
-        break;
-      }
-      const int monotone_sign =
-          options.monotone_constraints == nullptr ||
-                  static_cast<std::size_t>(candidate.feature_id) >= options.monotone_constraints->size()
-              ? 0
-              : (*options.monotone_constraints)[static_cast<std::size_t>(candidate.feature_id)];
-      const SplitChoice candidate_split = SelectBestSplit(
-          node_stats.by_feature[static_cast<std::size_t>(candidate.feature_id)],
-          node_stats.total_gradient,
-          node_stats.total_hessian,
-          node_stats.sample_weight_sum,
-          options.lambda_l2,
-          options.min_data_in_leaf,
-          options.min_child_weight,
-          options.min_split_gain,
-          hist.is_categorical(static_cast<std::size_t>(candidate.feature_id)),
-          monotone_sign,
-          leaf_lower_bound,
-          leaf_upper_bound);
-      if (candidate_split.valid && candidate_split.gain > 0.0) {
-        feature_choice = candidate;
-        split_choice = candidate_split;
-        break;
-      }
-    }
-  }
-  split_ms =
+  const SplitChoice& split_choice = selection.split_choice;
+  const double split_ms =
       std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - split_start)
           .count();
   if (!split_choice.valid || split_choice.gain <= 0.0) {
     if (profiler != nullptr && profiler->enabled()) {
       profiler->LogNodeSearch(depth,
-                              row_count,
+                              effective_row_count,
                               feature_choice.feature_id,
                               feature_choice.p_value,
                               feature_choice.chi_square,
@@ -1091,7 +1708,7 @@ int Tree::BuildNode(const HistMatrix& hist,
   const std::size_t right_count = row_end - left_end;
   if (profiler != nullptr && profiler->enabled()) {
     profiler->LogNodeSearch(depth,
-                            row_count,
+                            effective_row_count,
                             feature_choice.feature_id,
                             feature_choice.p_value,
                             feature_choice.chi_square,
@@ -1104,7 +1721,7 @@ int Tree::BuildNode(const HistMatrix& hist,
                             split_ms,
                             partition_ms);
   }
-  if (left_end == row_begin || left_end == row_end) {
+  if (options.distributed == nullptr && (left_end == row_begin || left_end == row_end)) {
     if (leaf_row_ranges_out != nullptr) {
       (*leaf_row_ranges_out)[node_index] = LeafRowRange{row_begin, row_end};
     }
@@ -1134,9 +1751,10 @@ int Tree::BuildNode(const HistMatrix& hist,
   NodeHistogramSet right_child_stats;
   double left_child_histogram_ms = 0.0;
   double right_child_histogram_ms = 0.0;
-  if (left_count <= right_count) {
+  const bool build_left_direct = options.distributed != nullptr || left_count <= right_count;
+  if (build_left_direct) {
     const auto direct_child_start = std::chrono::steady_clock::now();
-    left_child_stats = ComputeNodeHistogramSet(
+    NodeHistogramSet local_left_child_stats = ComputeNodeHistogramSet(
         hist,
         gradients,
         hessians,
@@ -1146,6 +1764,7 @@ int Tree::BuildNode(const HistMatrix& hist,
         left_end,
         options.use_gpu,
         gpu_workspace);
+    left_child_stats = AllReduceNodeHistogramSet(options.distributed, local_left_child_stats);
     left_child_histogram_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - direct_child_start)
             .count();
@@ -1156,7 +1775,7 @@ int Tree::BuildNode(const HistMatrix& hist,
             .count();
   } else {
     const auto direct_child_start = std::chrono::steady_clock::now();
-    right_child_stats = ComputeNodeHistogramSet(
+    NodeHistogramSet local_right_child_stats = ComputeNodeHistogramSet(
         hist,
         gradients,
         hessians,
@@ -1166,6 +1785,7 @@ int Tree::BuildNode(const HistMatrix& hist,
         row_end,
         options.use_gpu,
         gpu_workspace);
+    right_child_stats = AllReduceNodeHistogramSet(options.distributed, local_right_child_stats);
     right_child_histogram_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - direct_child_start)
             .count();
@@ -1208,52 +1828,128 @@ int Tree::BuildNode(const HistMatrix& hist,
       child_allowed_features = &child_allowed_features_storage;
     }
   }
-  nodes_[node_index].left_child =
-      BuildNode(hist,
-                gradients,
-                hessians,
-                weights,
-                row_indices,
-                row_begin,
-                left_end,
-                depth + 1,
-                options,
-                gpu_workspace,
-                nullptr,
-                false,
-                &left_child_stats,
-                left_child_histogram_ms,
-                child_allowed_features,
-                child_active_groups,
-                left_child_lower_bound,
-                left_child_upper_bound,
-                profiler,
-                statistic_engine,
-                leaf_row_ranges_out,
-                leaf_count);
-  nodes_[node_index].right_child =
-      BuildNode(hist,
-                gradients,
-                hessians,
-                weights,
-                row_indices,
-                left_end,
-                row_end,
-                depth + 1,
-                options,
-                gpu_workspace,
-                nullptr,
-                false,
-                &right_child_stats,
-                right_child_histogram_ms,
-                child_allowed_features,
-                child_active_groups,
-                right_child_lower_bound,
-                right_child_upper_bound,
-                profiler,
-                statistic_engine,
-                leaf_row_ranges_out,
-                leaf_count);
+  bool build_left_first = true;
+  if (options.grow_policy == GrowPolicy::LeafWise && options.max_leaves > 0) {
+    const CandidateSelectionResult left_selection = SelectBestCandidateSplit(hist,
+                                                                             left_child_stats,
+                                                                             options,
+                                                                             statistic_engine,
+                                                                             child_allowed_features,
+                                                                             left_child_lower_bound,
+                                                                             left_child_upper_bound,
+                                                                             depth + 1,
+                                                                             row_begin,
+                                                                             left_end);
+    const CandidateSelectionResult right_selection = SelectBestCandidateSplit(hist,
+                                                                              right_child_stats,
+                                                                              options,
+                                                                              statistic_engine,
+                                                                              child_allowed_features,
+                                                                              right_child_lower_bound,
+                                                                              right_child_upper_bound,
+                                                                              depth + 1,
+                                                                              left_end,
+                                                                              row_end);
+    if (right_selection.adjusted_gain > left_selection.adjusted_gain) {
+      build_left_first = false;
+    }
+  }
+
+  if (build_left_first) {
+    nodes_[node_index].left_child =
+        BuildNode(hist,
+                  gradients,
+                  hessians,
+                  weights,
+                  row_indices,
+                  row_begin,
+                  left_end,
+                  depth + 1,
+                  options,
+                  gpu_workspace,
+                  nullptr,
+                  false,
+                  &left_child_stats,
+                  left_child_histogram_ms,
+                  child_allowed_features,
+                  child_active_groups,
+                  left_child_lower_bound,
+                  left_child_upper_bound,
+                  profiler,
+                  statistic_engine,
+                  leaf_row_ranges_out,
+                  leaf_count);
+    nodes_[node_index].right_child =
+        BuildNode(hist,
+                  gradients,
+                  hessians,
+                  weights,
+                  row_indices,
+                  left_end,
+                  row_end,
+                  depth + 1,
+                  options,
+                  gpu_workspace,
+                  nullptr,
+                  false,
+                  &right_child_stats,
+                  right_child_histogram_ms,
+                  child_allowed_features,
+                  child_active_groups,
+                  right_child_lower_bound,
+                  right_child_upper_bound,
+                  profiler,
+                  statistic_engine,
+                  leaf_row_ranges_out,
+                  leaf_count);
+  } else {
+    nodes_[node_index].right_child =
+        BuildNode(hist,
+                  gradients,
+                  hessians,
+                  weights,
+                  row_indices,
+                  left_end,
+                  row_end,
+                  depth + 1,
+                  options,
+                  gpu_workspace,
+                  nullptr,
+                  false,
+                  &right_child_stats,
+                  right_child_histogram_ms,
+                  child_allowed_features,
+                  child_active_groups,
+                  right_child_lower_bound,
+                  right_child_upper_bound,
+                  profiler,
+                  statistic_engine,
+                  leaf_row_ranges_out,
+                  leaf_count);
+    nodes_[node_index].left_child =
+        BuildNode(hist,
+                  gradients,
+                  hessians,
+                  weights,
+                  row_indices,
+                  row_begin,
+                  left_end,
+                  depth + 1,
+                  options,
+                  gpu_workspace,
+                  nullptr,
+                  false,
+                  &left_child_stats,
+                  left_child_histogram_ms,
+                  child_allowed_features,
+                  child_active_groups,
+                  left_child_lower_bound,
+                  left_child_upper_bound,
+                  profiler,
+                  statistic_engine,
+                  leaf_row_ranges_out,
+                  leaf_count);
+  }
 
   return node_index;
 }

@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "ctboost/data.hpp"
@@ -25,6 +26,11 @@ struct InteractionConstraintSet {
   std::vector<std::uint8_t> constrained_feature_mask;
 };
 
+enum class GrowPolicy : std::uint8_t {
+  DepthWise = 0,
+  LeafWise = 1,
+};
+
 struct Node {
   bool is_leaf{true};
   bool is_categorical_split{false};
@@ -41,18 +47,37 @@ struct LeafRowRange {
   std::size_t end{0};
 };
 
+struct DistributedCoordinator {
+  int world_size{1};
+  int rank{0};
+  std::string root;
+  std::string run_id;
+  double timeout_seconds{600.0};
+  std::size_t tree_index{0};
+  std::uint64_t operation_counter{0};
+};
+
 struct TreeBuildOptions {
   double alpha{0.05};
   int max_depth{6};
   double lambda_l2{1.0};
   bool use_gpu{false};
+  GrowPolicy grow_policy{GrowPolicy::DepthWise};
   int max_leaves{0};
+  int min_samples_split{2};
   int min_data_in_leaf{0};
   double min_child_weight{0.0};
   double min_split_gain{0.0};
+  double max_leaf_weight{0.0};
+  double random_strength{0.0};
+  std::uint64_t random_seed{0};
   const std::vector<int>* allowed_features{nullptr};
+  const std::vector<double>* feature_weights{nullptr};
+  const std::vector<double>* first_feature_use_penalties{nullptr};
+  const std::vector<std::uint8_t>* model_feature_used_mask{nullptr};
   const std::vector<int>* monotone_constraints{nullptr};
   const InteractionConstraintSet* interaction_constraints{nullptr};
+  DistributedCoordinator* distributed{nullptr};
 };
 
 class Tree {
