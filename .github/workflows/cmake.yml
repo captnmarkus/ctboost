@@ -88,17 +88,7 @@ jobs:
 
           Push-Location $testRoot
           try {
-            @'
-            import os
-            import pathlib
-            import ctboost
-
-            location = pathlib.Path(ctboost.__file__).resolve()
-            workspace = pathlib.Path(os.environ["GITHUB_WORKSPACE"]).resolve()
-            print(f"ctboost imported from: {location}")
-            if workspace == location or workspace in location.parents:
-                raise RuntimeError(f"expected installed ctboost package outside workspace, got {location}")
-            '@ | python -
+            python -c "import os, pathlib, ctboost; location = pathlib.Path(ctboost.__file__).resolve(); workspace = pathlib.Path(os.environ['GITHUB_WORKSPACE']).resolve(); print(f'ctboost imported from: {location}'); import sys; assert workspace != location and workspace not in location.parents, f'expected installed ctboost package outside workspace, got {location}'"
 
             python -X faulthandler -m pytest tests -q
           } finally {
