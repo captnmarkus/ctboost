@@ -98,7 +98,7 @@ jobs:
                 raise RuntimeError(f"expected installed ctboost package, got {location}")
             '@ | python -
 
-            pytest tests -q
+            python -X faulthandler -m pytest tests -q
           } finally {
             Pop-Location
           }
