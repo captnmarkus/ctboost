@@ -116,40 +116,31 @@ std::string NormalizeTaskType(std::string task_type) {
   return NormalizeToken(std::move(task_type));
 }
 
-HistMatrix BuildPredictionHist(const Pool& pool, const Tree& reference_tree) {
-  const std::size_t model_num_features = reference_tree.num_bins_per_feature().size();
-  if (pool.num_cols() != model_num_features) {
-    throw std::invalid_argument(
-        "prediction pool must have the same number of columns as the fitted model");
+const QuantizationSchema& RequireQuantizationSchema(const QuantizationSchemaPtr& quantization_schema) {
+  if (quantization_schema == nullptr) {
+    throw std::runtime_error("booster quantization schema is not initialized");
   }
-
-  HistMatrix hist;
-  hist.num_rows = pool.num_rows();
-  hist.num_cols = pool.num_cols();
-  hist.bin_indices.resize(hist.num_rows * hist.num_cols, 0);
-  hist.bin_index_bytes = 2;
-  hist.num_bins_per_feature = reference_tree.num_bins_per_feature();
-  hist.cut_offsets = reference_tree.cut_offsets();
-  hist.cut_values = reference_tree.cut_values();
-  hist.categorical_mask = reference_tree.categorical_mask();
-  hist.missing_value_mask = reference_tree.missing_value_mask();
-  hist.nan_mode = reference_tree.nan_mode();
-
-  for (std::size_t feature = 0; feature < hist.num_cols; ++feature) {
-    const float* const contiguous_column = pool.feature_column_ptr(feature);
-    for (std::size_t row = 0; row < hist.num_rows; ++row) {
-      const float value =
-          contiguous_column != nullptr ? contiguous_column[row] : pool.feature_value(row, feature);
-      hist.set_bin_index(feature, row, hist.bin_value(feature, value));
-    }
-  }
-
-  hist.CompactBinStorage();
-  return hist;
+  return *quantization_schema;
 }
 
-HistMatrix BuildPredictionHist(const Pool& pool, const HistMatrix& reference_hist) {
-  if (pool.num_cols() != reference_hist.num_cols) {
+HistMatrix BuildPredictionHist(const Pool& pool, const QuantizationSchema& quantization_schema);
+
+HistMatrix BuildPredictionHist(const Pool& pool, const Tree& reference_tree) {
+  return BuildPredictionHist(pool, RequireQuantizationSchema(reference_tree.shared_quantization_schema()));
+}
+
+bool CanUseCompactBins(const QuantizationSchema& quantization_schema) {
+  for (const std::uint16_t feature_bins_count : quantization_schema.num_bins_per_feature) {
+    if (feature_bins_count >
+        static_cast<std::uint16_t>(std::numeric_limits<std::uint8_t>::max()) + 1U) {
+      return false;
+    }
+  }
+  return true;
+}
+
+HistMatrix BuildPredictionHist(const Pool& pool, const QuantizationSchema& quantization_schema) {
+  if (pool.num_cols() != quantization_schema.num_cols()) {
     throw std::invalid_argument(
         "prediction pool must have the same number of columns as the fitted model");
   }
@@ -157,25 +148,24 @@ HistMatrix BuildPredictionHist(const Pool& pool, const HistMatrix& reference_his
   HistMatrix hist;
   hist.num_rows = pool.num_rows();
   hist.num_cols = pool.num_cols();
-  hist.bin_indices.resize(hist.num_rows * hist.num_cols, 0);
-  hist.bin_index_bytes = 2;
-  hist.num_bins_per_feature = reference_hist.num_bins_per_feature;
-  hist.cut_offsets = reference_hist.cut_offsets;
-  hist.cut_values = reference_hist.cut_values;
-  hist.categorical_mask = reference_hist.categorical_mask;
-  hist.missing_value_mask = reference_hist.missing_value_mask;
-  hist.nan_mode = reference_hist.nan_mode;
+  ApplyQuantizationSchema(quantization_schema, hist);
+  if (CanUseCompactBins(quantization_schema)) {
+    hist.compact_bin_indices.resize(hist.num_rows * hist.num_cols, 0);
+    hist.bin_index_bytes = 1;
+  } else {
+    hist.bin_indices.resize(hist.num_rows * hist.num_cols, 0);
+    hist.bin_index_bytes = 2;
+  }
 
   for (std::size_t feature = 0; feature < hist.num_cols; ++feature) {
     const float* const contiguous_column = pool.feature_column_ptr(feature);
     for (std::size_t row = 0; row < hist.num_rows; ++row) {
       const float value =
           contiguous_column != nullptr ? contiguous_column[row] : pool.feature_value(row, feature);
-      hist.set_bin_index(feature, row, hist.bin_value(feature, value));
+      hist.set_bin_index(feature, row, quantization_schema.bin_value(feature, value));
     }
   }
 
-  hist.CompactBinStorage();
   return hist;
 }
 
@@ -723,6 +713,7 @@ void GradientBooster::Fit(Pool& pool,
   const bool has_existing_state = continue_training && !trees_.empty();
   if (!continue_training) {
     trees_.clear();
+    quantization_schema_.reset();
     loss_history_.clear();
     eval_loss_history_.clear();
     best_iteration_ = -1;
@@ -737,7 +728,13 @@ void GradientBooster::Fit(Pool& pool,
   LogFitMemorySnapshot(profiler, "pre_quantize", pool, eval_pool, workspace);
 
   const auto hist_build_start = std::chrono::steady_clock::now();
-  workspace.train_hist = hist_builder_.Build(pool, &profiler);
+  if (has_existing_state) {
+    workspace.train_hist = BuildPredictionHist(pool, RequireQuantizationSchema(quantization_schema_));
+  } else {
+    workspace.train_hist = hist_builder_.Build(pool, &profiler);
+    quantization_schema_ =
+        std::make_shared<QuantizationSchema>(MakeQuantizationSchema(workspace.train_hist));
+  }
   const double hist_build_ms =
       std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - hist_build_start)
           .count();
@@ -768,6 +765,10 @@ void GradientBooster::Fit(Pool& pool,
                                     pool.num_rows() *
                                         static_cast<std::size_t>(prediction_dimension_),
                                     0.0F);
+  if (use_gpu_) {
+    workspace.train_hist.ReleaseBinStorage();
+    LogFitMemorySnapshot(profiler, "post_gpu_train_bin_release", pool, eval_pool, workspace);
+  }
   if (!continue_training || feature_importance_sums_.empty()) {
     feature_importance_sums_.assign(pool.num_cols(), 0.0);
   }
@@ -790,7 +791,7 @@ void GradientBooster::Fit(Pool& pool,
       throw std::invalid_argument("eval_pool must have a positive total sample weight");
     }
     const auto eval_hist_build_start = std::chrono::steady_clock::now();
-    workspace.eval_hist = BuildPredictionHist(*eval_pool, workspace.train_hist);
+    workspace.eval_hist = BuildPredictionHist(*eval_pool, RequireQuantizationSchema(quantization_schema_));
     const double eval_hist_build_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - eval_hist_build_start)
             .count();
@@ -865,7 +866,8 @@ void GradientBooster::Fit(Pool& pool,
           workspace.gpu_hist_workspace.get(),
           &profiler,
           &training_row_indices,
-          &training_leaf_ranges);
+          &training_leaf_ranges,
+          quantization_schema_);
       const double single_tree_ms =
           std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - tree_start)
               .count();
@@ -937,7 +939,8 @@ void GradientBooster::Fit(Pool& pool,
                            workspace.gpu_hist_workspace.get(),
                            &profiler,
                            &training_row_indices,
-                           &training_leaf_ranges);
+                           &training_leaf_ranges,
+                           quantization_schema_);
       const double shared_tree_ms =
           std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - tree_start)
               .count();
@@ -1104,7 +1107,7 @@ std::vector<float> GradientBooster::Predict(const Pool& pool, int num_iteration)
   }
 
   if (use_gpu_ && CudaBackendCompiled()) {
-    const HistMatrix hist = BuildPredictionHist(pool, trees_.front());
+    const HistMatrix hist = BuildPredictionHist(pool, RequireQuantizationSchema(quantization_schema_));
     std::vector<std::int32_t> tree_offsets;
     const std::vector<GpuTreeNode> flattened_nodes = FlattenTreesForGpu(trees_, tree_limit, tree_offsets);
     PredictRawGpu(
@@ -1180,6 +1183,7 @@ std::vector<float> GradientBooster::PredictContributions(const Pool& pool, int n
 }
 
 void GradientBooster::LoadState(std::vector<Tree> trees,
+                                QuantizationSchemaPtr quantization_schema,
                                 std::vector<double> loss_history,
                                 std::vector<double> eval_loss_history,
                                 std::vector<double> feature_importance_sums,
@@ -1188,11 +1192,27 @@ void GradientBooster::LoadState(std::vector<Tree> trees,
                                 bool use_gpu,
                                 std::uint64_t rng_state) {
   trees_ = std::move(trees);
+  if (quantization_schema == nullptr && !trees_.empty()) {
+    auto mutable_quantization_schema = std::make_shared<QuantizationSchema>();
+    mutable_quantization_schema->num_bins_per_feature = trees_.front().num_bins_per_feature();
+    mutable_quantization_schema->cut_offsets = trees_.front().cut_offsets();
+    mutable_quantization_schema->cut_values = trees_.front().cut_values();
+    mutable_quantization_schema->categorical_mask = trees_.front().categorical_mask();
+    mutable_quantization_schema->missing_value_mask = trees_.front().missing_value_mask();
+    mutable_quantization_schema->nan_mode = trees_.front().nan_mode();
+    quantization_schema = mutable_quantization_schema;
+  }
+  quantization_schema_ = quantization_schema;
+  if (quantization_schema_ != nullptr) {
+    for (Tree& tree : trees_) {
+      tree.SetQuantizationSchema(quantization_schema_);
+    }
+  }
   loss_history_ = std::move(loss_history);
   eval_loss_history_ = std::move(eval_loss_history);
   if (feature_importance_sums.empty()) {
     const std::size_t num_features =
-        trees_.empty() ? 0 : trees_.front().feature_importances().size();
+        quantization_schema_ == nullptr ? 0 : quantization_schema_->num_cols();
     RecomputeFeatureImportances(trees_, num_features, feature_importance_sums_);
   } else {
     feature_importance_sums_ = std::move(feature_importance_sums);
@@ -1281,6 +1301,10 @@ std::uint64_t GradientBooster::random_seed() const noexcept { return random_seed
 std::uint64_t GradientBooster::rng_state() const noexcept { return rng_state_; }
 
 bool GradientBooster::verbose() const noexcept { return verbose_; }
+
+const QuantizationSchema* GradientBooster::quantization_schema() const noexcept {
+  return quantization_schema_.get();
+}
 
 const std::vector<Tree>& GradientBooster::trees() const noexcept { return trees_; }
 

@@ -8,6 +8,7 @@ constexpr int kMaxGammaIterations = 200;
 constexpr double kGammaTolerance = 3e-14;
 constexpr double kGammaTiny = 1e-300;
 constexpr double kStatisticEpsilon = 1e-7;
+constexpr double kFeatureTieTolerance = 1e-12;
 
 __device__ __forceinline__ std::uint16_t ReadBin(const std::uint8_t* bins_u8,
                                                  const std::uint16_t* bins_u16,
@@ -84,6 +85,32 @@ __device__ double ChiSquareSurvivalDevice(double statistic, std::size_t degrees_
 
 __device__ double ComputeGainDevice(double gradient_sum, double hessian_sum, double lambda_l2) {
   return (gradient_sum * gradient_sum) / (hessian_sum + lambda_l2);
+}
+
+struct FeatureRank {
+  int feature_id{-1};
+  double p_value{1.0};
+  double chi_square{-INFINITY};
+  std::uint32_t degrees_of_freedom{0};
+};
+
+__device__ bool IsBetterFeatureRank(const FeatureRank& candidate, const FeatureRank& best) {
+  if (candidate.feature_id < 0 || candidate.degrees_of_freedom == 0U) {
+    return false;
+  }
+  if (best.feature_id < 0 || best.degrees_of_freedom == 0U) {
+    return true;
+  }
+  if (candidate.p_value < best.p_value) {
+    return true;
+  }
+  if (fabs(candidate.p_value - best.p_value) <= kFeatureTieTolerance &&
+      candidate.chi_square > best.chi_square) {
+    return true;
+  }
+  return fabs(candidate.p_value - best.p_value) <= kFeatureTieTolerance &&
+         fabs(candidate.chi_square - best.chi_square) <= kFeatureTieTolerance &&
+         candidate.feature_id < best.feature_id;
 }
 
 }  // namespace
@@ -420,6 +447,54 @@ __global__ void EvaluateFeatureSearchKernel(
   }
 
   out_results[feature] = result;
+}
+
+__global__ void SelectBestFeatureKernel(
+    const ctboost::GpuFeatureSearchResult* feature_results,
+    const std::uint32_t* candidate_feature_indices,
+    std::size_t num_candidates,
+    ctboost::GpuBestFeatureResult* out_best_result) {
+  __shared__ FeatureRank shared_ranks[256];
+
+  FeatureRank best_rank;
+  for (std::size_t candidate = threadIdx.x; candidate < num_candidates; candidate += blockDim.x) {
+    const std::size_t feature_index = candidate_feature_indices == nullptr
+                                          ? candidate
+                                          : static_cast<std::size_t>(candidate_feature_indices[candidate]);
+    const ctboost::GpuFeatureSearchResult& feature_result = feature_results[feature_index];
+    const FeatureRank candidate_rank{static_cast<int>(feature_index),
+                                     feature_result.p_value,
+                                     feature_result.chi_square,
+                                     feature_result.degrees_of_freedom};
+    if (IsBetterFeatureRank(candidate_rank, best_rank)) {
+      best_rank = candidate_rank;
+    }
+  }
+
+  shared_ranks[threadIdx.x] = best_rank;
+  __syncthreads();
+
+  for (unsigned int offset = blockDim.x / 2; offset > 0; offset >>= 1) {
+    if (threadIdx.x < offset &&
+        IsBetterFeatureRank(shared_ranks[threadIdx.x + offset], shared_ranks[threadIdx.x])) {
+      shared_ranks[threadIdx.x] = shared_ranks[threadIdx.x + offset];
+    }
+    __syncthreads();
+  }
+
+  if (threadIdx.x != 0) {
+    return;
+  }
+
+  ctboost::GpuBestFeatureResult best_result{};
+  best_result.feature_id = shared_ranks[0].feature_id;
+  best_result.search_result.p_value = 1.0;
+  best_result.search_result.chi_square = -INFINITY;
+  if (shared_ranks[0].feature_id >= 0) {
+    best_result.search_result =
+        feature_results[static_cast<std::size_t>(shared_ranks[0].feature_id)];
+  }
+  out_best_result[0] = best_result;
 }
 
 __global__ void PredictForestKernel(const std::uint8_t* bins_u8,

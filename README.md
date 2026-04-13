@@ -10,6 +10,7 @@ The current codebase supports end-to-end training and prediction for regression,
 - Python support: `3.8` through `3.14`
 - Packaging: `scikit-build-core`
 - CI/CD: GitHub Actions for CMake validation and `cibuildwheel` release builds
+- Repository version: `0.1.16`
 - Status: actively evolving native + Python package
 
 ## What Works Today
@@ -40,8 +41,11 @@ The current codebase supports end-to-end training and prediction for regression,
 - CPU builds on standard CI runners
 - Optional CUDA compilation when building from source with a suitable toolkit
 - GPU source builds now keep fit-scoped histogram data resident on device, support shared-memory histogram accumulation, and expose GPU raw-score prediction for regression, binary classification, and multiclass models
-- Histogram storage now compacts to 1-byte bins when a feature set fits in `<=256` bins, reducing resident fit memory without changing the conditional tree logic
-- GPU tree building now performs node-level feature scoring and split proposal on device, returning compact search summaries instead of copying full node histograms back to host
+- Histogram building now writes directly into final-width compact storage when the fitted schema permits `<=256` bins, avoiding the old transient `uint16 -> uint8` duplication spike
+- Fitted models now store quantization metadata once per booster instead of duplicating the same schema in every tree
+- GPU fit now drops the host training histogram bin matrix immediately after the device histogram workspace has been created and warm-start predictions have been seeded
+- GPU tree building now uses histogram subtraction in the device path as well, so only one child histogram is built explicitly after each split
+- GPU node search now keeps best-feature selection on device and returns a compact winner instead of copying the full per-feature search buffer back to host each node
 - Training can emit native histogram/tree timing via `verbose=True` or `CTBOOST_PROFILE=1`
 
 ## Current Limitations
@@ -52,7 +56,7 @@ The current codebase supports end-to-end training and prediction for regression,
 
 ## Benchmark Snapshot
 
-The current merged GPU path was replayed on the heavy ordered-target-encoding `playground-series-s6e4` benchmark with the `v0.1.11` source tree on April 12, 2026. The one-fold Kaggle source-build replay completed successfully with:
+The heavy ordered-target-encoding `playground-series-s6e4` replay was last measured on April 12, 2026 with the `v0.1.11` source tree. The one-fold Kaggle source-build replay completed successfully with:
 
 - build `55.41s`
 - fold preprocess `57.17s`
@@ -61,7 +65,7 @@ The current merged GPU path was replayed on the heavy ordered-target-encoding `p
 - fold total `2170.17s`
 - validation score `0.973213`
 
-That run confirms the major `0.1.10` GPU bottleneck was removed, even though CTBoost still trails the reference XGBoost notebook on absolute score.
+Since that replay, the source tree has removed additional fit-memory overhead by sharing quantization schema per model, building compact train bins without a second host copy, releasing host train-bin storage after GPU upload, and adding GPU histogram subtraction plus device-side best-feature reduction.
 
 ## Installation
 
@@ -103,7 +107,7 @@ import subprocess
 import sys
 import urllib.request
 
-tag = "v0.1.15"
+tag = "v0.1.16"
 py_tag = f"cp{sys.version_info.major}{sys.version_info.minor}"
 api_url = f"https://api.github.com/repos/captnmarkus/ctboost/releases/tags/{tag}"
 
@@ -338,6 +342,12 @@ Run the test suite:
 
 ```bash
 pytest tests
+```
+
+The latest local release-candidate validation on April 13, 2026 was:
+
+```bash
+python -m pytest -q
 ```
 
 Build an sdist:

@@ -5,6 +5,7 @@
 #include <cuda_runtime_api.h>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -109,6 +110,7 @@ struct GpuHistogramWorkspace {
   thrust::device_vector<std::uint16_t> num_bins_per_feature;
   thrust::device_vector<std::uint8_t> categorical_mask;
   thrust::device_vector<GpuFeatureSearchResult> feature_search_results;
+  thrust::device_vector<GpuBestFeatureResult> best_feature_result;
   thrust::device_vector<std::uint32_t> chunk_feature_indices;
   thrust::device_vector<std::uint32_t> chunk_bin_starts;
   thrust::device_vector<std::uint32_t> chunk_bin_counts;
@@ -200,6 +202,7 @@ GpuHistogramWorkspacePtr CreateGpuHistogramWorkspace(const HistMatrix& hist,
     workspace->weight_sums.resize(workspace->total_bins, 0.0F);
     workspace->node_statistics.resize(4, 0.0);
     workspace->feature_search_results.resize(hist.num_cols);
+    workspace->best_feature_result.resize(1);
 
     std::vector<std::uint32_t> feature_offsets_u32(workspace->feature_offsets.size(), 0U);
     for (std::size_t index = 0; index < workspace->feature_offsets.size(); ++index) {
@@ -262,6 +265,7 @@ std::size_t EstimateGpuHistogramWorkspaceBytes(const GpuHistogramWorkspace* work
          workspace->num_bins_per_feature.size() * sizeof(std::uint16_t) +
          workspace->categorical_mask.size() * sizeof(std::uint8_t) +
          workspace->feature_search_results.size() * sizeof(GpuFeatureSearchResult) +
+         workspace->best_feature_result.size() * sizeof(GpuBestFeatureResult) +
          workspace->chunk_feature_indices.size() * sizeof(std::uint32_t) +
          workspace->chunk_bin_starts.size() * sizeof(std::uint32_t) +
          workspace->chunk_bin_counts.size() * sizeof(std::uint32_t) +
@@ -359,6 +363,72 @@ void DownloadHistogramRowIndicesGpu(const GpuHistogramWorkspace* workspace,
     out_row_indices.resize(workspace->num_rows);
     thrust::copy(
         workspace->row_indices.begin(), workspace->row_indices.end(), out_row_indices.begin());
+  } catch (const thrust::system_error& error) {
+    throw std::runtime_error(std::string("CUDA thrust failure: ") + error.what());
+  }
+}
+
+void DownloadHistogramSnapshotGpu(const GpuHistogramWorkspace* workspace,
+                                  GpuHistogramSnapshot* out_snapshot) {
+  if (workspace == nullptr) {
+    throw std::invalid_argument("GPU histogram workspace must not be null");
+  }
+  if (out_snapshot == nullptr) {
+    throw std::invalid_argument("GPU histogram snapshot output must not be null");
+  }
+
+  try {
+    out_snapshot->gradient_sums.resize(workspace->gradient_sums.size(), 0.0F);
+    out_snapshot->hessian_sums.resize(workspace->hessian_sums.size(), 0.0F);
+    out_snapshot->weight_sums.resize(workspace->weight_sums.size(), 0.0F);
+    thrust::copy(workspace->gradient_sums.begin(),
+                 workspace->gradient_sums.end(),
+                 out_snapshot->gradient_sums.begin());
+    thrust::copy(workspace->hessian_sums.begin(),
+                 workspace->hessian_sums.end(),
+                 out_snapshot->hessian_sums.begin());
+    thrust::copy(workspace->weight_sums.begin(),
+                 workspace->weight_sums.end(),
+                 out_snapshot->weight_sums.begin());
+
+    std::vector<double> host_node_stats(workspace->node_statistics.size(), 0.0);
+    thrust::copy(
+        workspace->node_statistics.begin(), workspace->node_statistics.end(), host_node_stats.begin());
+    out_snapshot->node_statistics.sample_weight_sum = host_node_stats[0];
+    out_snapshot->node_statistics.total_gradient = host_node_stats[1];
+    out_snapshot->node_statistics.total_hessian = host_node_stats[2];
+    out_snapshot->node_statistics.gradient_square_sum = host_node_stats[3];
+  } catch (const thrust::system_error& error) {
+    throw std::runtime_error(std::string("CUDA thrust failure: ") + error.what());
+  }
+}
+
+void UploadHistogramSnapshotGpu(GpuHistogramWorkspace* workspace,
+                                const GpuHistogramSnapshot& snapshot) {
+  if (workspace == nullptr) {
+    throw std::invalid_argument("GPU histogram workspace must not be null");
+  }
+  if (snapshot.gradient_sums.size() != workspace->gradient_sums.size() ||
+      snapshot.hessian_sums.size() != workspace->hessian_sums.size() ||
+      snapshot.weight_sums.size() != workspace->weight_sums.size()) {
+    throw std::invalid_argument("GPU histogram snapshot buffer sizes do not match the workspace");
+  }
+
+  try {
+    thrust::copy(
+        snapshot.gradient_sums.begin(), snapshot.gradient_sums.end(), workspace->gradient_sums.begin());
+    thrust::copy(
+        snapshot.hessian_sums.begin(), snapshot.hessian_sums.end(), workspace->hessian_sums.begin());
+    thrust::copy(
+        snapshot.weight_sums.begin(), snapshot.weight_sums.end(), workspace->weight_sums.begin());
+    std::vector<double> host_node_stats{
+        snapshot.node_statistics.sample_weight_sum,
+        snapshot.node_statistics.total_gradient,
+        snapshot.node_statistics.total_hessian,
+        snapshot.node_statistics.gradient_square_sum,
+    };
+    thrust::copy(
+        host_node_stats.begin(), host_node_stats.end(), workspace->node_statistics.begin());
   } catch (const thrust::system_error& error) {
     throw std::runtime_error(std::string("CUDA thrust failure: ") + error.what());
   }
@@ -508,24 +578,17 @@ void SearchBestNodeSplitGpu(GpuHistogramWorkspace* workspace,
     }
     const int blocks = static_cast<int>(
         (workspace->num_features + kHistogramThreads - 1) / kHistogramThreads);
-    std::vector<double> host_node_stats(workspace->node_statistics.size(), 0.0);
+    std::array<double, 4> host_node_stats{};
     thrust::copy(
         workspace->node_statistics.begin(), workspace->node_statistics.end(), host_node_stats.begin());
-    out_result->node_statistics.sample_weight_sum = host_node_stats[0];
-    out_result->node_statistics.total_gradient = host_node_stats[1];
-    out_result->node_statistics.total_hessian = host_node_stats[2];
-    out_result->node_statistics.gradient_square_sum = host_node_stats[3];
-
-    const double sample_weight_sum = out_result->node_statistics.sample_weight_sum;
+    const double sample_weight_sum = host_node_stats[0];
     const double mean_gradient = sample_weight_sum <= 0.0
                                      ? 0.0
-                                     : out_result->node_statistics.total_gradient / sample_weight_sum;
+                                     : host_node_stats[1] / sample_weight_sum;
     const double gradient_variance =
         sample_weight_sum <= 0.0
             ? 0.0
-            : std::max(0.0,
-                       out_result->node_statistics.gradient_square_sum / sample_weight_sum -
-                           mean_gradient * mean_gradient);
+            : std::max(0.0, host_node_stats[3] / sample_weight_sum - mean_gradient * mean_gradient);
 
     EvaluateFeatureSearchKernel<<<blocks, kHistogramThreads>>>(
         thrust::raw_pointer_cast(workspace->gradient_sums.data()),
@@ -534,9 +597,9 @@ void SearchBestNodeSplitGpu(GpuHistogramWorkspace* workspace,
         thrust::raw_pointer_cast(workspace->feature_offsets_u32.data()),
         thrust::raw_pointer_cast(workspace->num_bins_per_feature.data()),
         thrust::raw_pointer_cast(workspace->categorical_mask.data()),
-        out_result->node_statistics.total_gradient,
-        out_result->node_statistics.total_hessian,
-        out_result->node_statistics.sample_weight_sum,
+        host_node_stats[1],
+        host_node_stats[2],
+        host_node_stats[0],
         gradient_variance,
         lambda_l2,
         min_data_in_leaf,
@@ -545,56 +608,54 @@ void SearchBestNodeSplitGpu(GpuHistogramWorkspace* workspace,
         thrust::raw_pointer_cast(workspace->feature_search_results.data()),
         workspace->num_features);
     CTBOOST_CUDA_CHECK(cudaGetLastError());
-    CTBOOST_CUDA_CHECK(cudaDeviceSynchronize());
-
-    std::vector<GpuFeatureSearchResult> host_results(workspace->num_features);
-    thrust::copy(workspace->feature_search_results.begin(),
-                 workspace->feature_search_results.end(),
-                 host_results.begin());
-
-    out_result->feature_id = -1;
-    out_result->p_value = 1.0;
-    out_result->chi_square = -std::numeric_limits<double>::infinity();
-    out_result->split_valid = false;
-    out_result->is_categorical = false;
-    out_result->split_bin = 0;
-    out_result->gain = 0.0;
-    out_result->left_categories.fill(0);
-
-    const auto consider_feature = [&](std::size_t feature_index) {
-      const GpuFeatureSearchResult& result = host_results[feature_index];
-      if (result.degrees_of_freedom == 0) {
-        return;
-      }
-      if (out_result->feature_id < 0 || result.p_value < out_result->p_value ||
-          (std::abs(result.p_value - out_result->p_value) <= 1e-12 &&
-           result.chi_square > out_result->chi_square)) {
-        out_result->feature_id = static_cast<int>(feature_index);
-        out_result->p_value = result.p_value;
-        out_result->chi_square = result.chi_square;
-        out_result->split_valid = result.split_valid != 0U;
-        out_result->is_categorical = result.is_categorical != 0U;
-        out_result->split_bin = result.split_bin;
-        out_result->gain = result.gain;
-        std::copy(result.left_categories,
-                  result.left_categories + kGpuCategoricalRouteBins,
-                  out_result->left_categories.begin());
-      }
-    };
-
+    thrust::device_vector<std::uint32_t> device_allowed_features;
+    const std::uint32_t* allowed_feature_ptr = nullptr;
+    std::size_t num_candidates = workspace->num_features;
     if (allowed_features != nullptr && !allowed_features->empty()) {
+      std::vector<std::uint32_t> host_allowed_features;
+      host_allowed_features.reserve(allowed_features->size());
       for (int feature_id : *allowed_features) {
         if (feature_id < 0 || static_cast<std::size_t>(feature_id) >= workspace->num_features) {
           continue;
         }
-        consider_feature(static_cast<std::size_t>(feature_id));
+        host_allowed_features.push_back(static_cast<std::uint32_t>(feature_id));
       }
-      return;
+      if (host_allowed_features.empty()) {
+        *out_result = GpuNodeSearchResult{};
+        return;
+      }
+      device_allowed_features = thrust::device_vector<std::uint32_t>(
+          host_allowed_features.begin(), host_allowed_features.end());
+      allowed_feature_ptr = thrust::raw_pointer_cast(device_allowed_features.data());
+      num_candidates = device_allowed_features.size();
     }
 
-    for (std::size_t feature = 0; feature < workspace->num_features; ++feature) {
-      consider_feature(feature);
-    }
+    SelectBestFeatureKernel<<<1, kHistogramThreads>>>(
+        thrust::raw_pointer_cast(workspace->feature_search_results.data()),
+        allowed_feature_ptr,
+        num_candidates,
+        thrust::raw_pointer_cast(workspace->best_feature_result.data()));
+    CTBOOST_CUDA_CHECK(cudaGetLastError());
+    CTBOOST_CUDA_CHECK(cudaDeviceSynchronize());
+
+    GpuBestFeatureResult host_best_result{};
+    host_best_result.feature_id = -1;
+    CTBOOST_CUDA_CHECK(cudaMemcpy(&host_best_result,
+                                  thrust::raw_pointer_cast(workspace->best_feature_result.data()),
+                                  sizeof(GpuBestFeatureResult),
+                                  cudaMemcpyDeviceToHost));
+
+    out_result->feature_id = host_best_result.feature_id;
+    out_result->p_value = host_best_result.search_result.p_value;
+    out_result->chi_square = host_best_result.search_result.chi_square;
+    out_result->split_valid = host_best_result.search_result.split_valid != 0U;
+    out_result->is_categorical = host_best_result.search_result.is_categorical != 0U;
+    out_result->split_bin = host_best_result.search_result.split_bin;
+    out_result->gain = host_best_result.search_result.gain;
+    out_result->left_categories.fill(0);
+    std::copy(host_best_result.search_result.left_categories,
+              host_best_result.search_result.left_categories + kGpuCategoricalRouteBins,
+              out_result->left_categories.begin());
   } catch (const thrust::system_error& error) {
     throw std::runtime_error(std::string("CUDA thrust failure: ") + error.what());
   }

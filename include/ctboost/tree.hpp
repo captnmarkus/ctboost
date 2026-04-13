@@ -3,6 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 #include "ctboost/data.hpp"
@@ -15,6 +16,7 @@ inline constexpr std::size_t kMaxCategoricalRouteBins = 256;
 
 class TrainingProfiler;
 struct GpuHistogramWorkspace;
+struct GpuHistogramSnapshot;
 struct NodeHistogramSet;
 
 struct Node {
@@ -55,7 +57,8 @@ class Tree {
              GpuHistogramWorkspace* gpu_workspace = nullptr,
              const TrainingProfiler* profiler = nullptr,
              std::vector<std::size_t>* row_indices_out = nullptr,
-             std::vector<LeafRowRange>* leaf_row_ranges_out = nullptr);
+             std::vector<LeafRowRange>* leaf_row_ranges_out = nullptr,
+             const QuantizationSchemaPtr& quantization_schema = nullptr);
 
   float PredictRow(const Pool& pool, std::size_t row) const;
   float PredictBinnedRow(const HistMatrix& hist, std::size_t row) const;
@@ -65,6 +68,11 @@ class Tree {
       const Pool& pool, std::size_t row, float scale, std::vector<float>& row_contributions) const;
   std::vector<float> Predict(const Pool& pool) const;
   void SetLeafWeight(std::size_t node_index, float leaf_weight);
+  void SetQuantizationSchema(const QuantizationSchemaPtr& quantization_schema);
+  const QuantizationSchemaPtr& shared_quantization_schema() const noexcept;
+  void LoadState(std::vector<Node> nodes,
+                 const QuantizationSchemaPtr& quantization_schema,
+                 std::vector<double> feature_importances);
   void LoadState(std::vector<Node> nodes,
                  std::vector<std::uint16_t> num_bins_per_feature,
                  std::vector<std::size_t> cut_offsets,
@@ -74,12 +82,12 @@ class Tree {
                  std::uint8_t nan_mode,
                  std::vector<double> feature_importances);
   const std::vector<Node>& nodes() const noexcept;
-  const std::vector<std::uint16_t>& num_bins_per_feature() const noexcept;
-  const std::vector<std::size_t>& cut_offsets() const noexcept;
-  const std::vector<float>& cut_values() const noexcept;
-  const std::vector<std::uint8_t>& categorical_mask() const noexcept;
-  const std::vector<std::uint8_t>& missing_value_mask() const noexcept;
-  std::uint8_t nan_mode() const noexcept;
+  const std::vector<std::uint16_t>& num_bins_per_feature() const;
+  const std::vector<std::size_t>& cut_offsets() const;
+  const std::vector<float>& cut_values() const;
+  const std::vector<std::uint8_t>& categorical_mask() const;
+  const std::vector<std::uint8_t>& missing_value_mask() const;
+  std::uint8_t nan_mode() const;
   const std::vector<double>& feature_importances() const noexcept;
 
  private:
@@ -93,6 +101,8 @@ class Tree {
                 int depth,
                 const TreeBuildOptions& options,
                 GpuHistogramWorkspace* gpu_workspace,
+                const GpuHistogramSnapshot* precomputed_gpu_histogram,
+                bool precomputed_gpu_histogram_resident,
                 const NodeHistogramSet* precomputed_node_stats,
                 double precomputed_histogram_ms,
                 const TrainingProfiler* profiler,
@@ -103,12 +113,7 @@ class Tree {
   std::uint16_t BinValue(std::size_t feature_index, float value) const;
 
   std::vector<Node> nodes_;
-  std::vector<std::uint16_t> num_bins_per_feature_;
-  std::vector<std::size_t> cut_offsets_;
-  std::vector<float> cut_values_;
-  std::vector<std::uint8_t> categorical_mask_;
-  std::vector<std::uint8_t> missing_value_mask_;
-  std::uint8_t nan_mode_{static_cast<std::uint8_t>(NanMode::Min)};
+  QuantizationSchemaPtr quantization_schema_;
   std::vector<double> feature_importances_;
 };
 

@@ -46,6 +46,7 @@ class GradientBooster {
   std::vector<std::int32_t> PredictLeafIndices(const Pool& pool, int num_iteration = -1) const;
   std::vector<float> PredictContributions(const Pool& pool, int num_iteration = -1) const;
   void LoadState(std::vector<Tree> trees,
+                 QuantizationSchemaPtr quantization_schema,
                  std::vector<double> loss_history,
                  std::vector<double> eval_loss_history,
                  std::vector<double> feature_importance_sums,
@@ -83,6 +84,7 @@ class GradientBooster {
   std::uint64_t random_seed() const noexcept;
   std::uint64_t rng_state() const noexcept;
   bool verbose() const noexcept;
+  const QuantizationSchema* quantization_schema() const noexcept;
   const std::vector<Tree>& trees() const noexcept;
   std::vector<float> get_feature_importances() const;
 
@@ -112,6 +114,7 @@ class GradientBooster {
   std::uint64_t rng_state_{0};
   bool verbose_{false};
   HistBuilder hist_builder_;
+  QuantizationSchemaPtr quantization_schema_;
   std::vector<Tree> trees_;
   std::vector<double> loss_history_;
   std::vector<double> eval_loss_history_;
