@@ -78,4 +78,27 @@ jobs:
 
       - name: Run tests
         shell: pwsh
-        run: pytest tests -q
+        run: |
+          $testRoot = Join-Path $env:RUNNER_TEMP "ctboost-installed-tests"
+          if (Test-Path $testRoot) {
+            Remove-Item -Recurse -Force $testRoot
+          }
+          New-Item -ItemType Directory -Force -Path $testRoot | Out-Null
+          Copy-Item -Path tests -Destination $testRoot -Recurse
+
+          Push-Location $testRoot
+          try {
+            @'
+            import pathlib
+            import ctboost
+
+            location = pathlib.Path(ctboost.__file__).resolve()
+            print(f"ctboost imported from: {location}")
+            if "site-packages" not in location.as_posix():
+                raise RuntimeError(f"expected installed ctboost package, got {location}")
+            '@ | python -
+
+            pytest tests -q
+          } finally {
+            Pop-Location
+          }
