@@ -94,6 +94,17 @@ def distributed_tcp_request(
         return _read_exact(stream, response_size)
 
 
+def wait_for_distributed_tcp_coordinator(root: str, timeout_seconds: float) -> None:
+    deadline = time.time() + timeout_seconds
+    while time.time() < deadline:
+        try:
+            distributed_tcp_request(root, min(0.5, timeout_seconds), "ping", "__health__", 0, 1, b"")
+            return
+        except (OSError, RuntimeError, ValueError):
+            time.sleep(0.05)
+    raise TimeoutError(f"timed out waiting for distributed tcp coordinator at {root}")
+
+
 def _parse_node_hist_payload(payload: bytes) -> Dict[str, Any]:
     view = memoryview(payload)
     offset = 0
@@ -413,6 +424,11 @@ class _CollectiveState:
         self.condition = threading.Condition()
 
 
+class _ThreadingCollectiveTcpServer(socketserver.ThreadingTCPServer):
+    allow_reuse_address = True
+    daemon_threads = True
+
+
 class DistributedCollectiveServer:
     def __init__(
         self,
@@ -426,8 +442,7 @@ class DistributedCollectiveServer:
         self._schema_builder = schema_builder
         self._states: Dict[tuple[str, str], _CollectiveState] = {}
         self._states_lock = threading.Lock()
-        self._server = socketserver.ThreadingTCPServer((host, port), self._make_handler())
-        self._server.daemon_threads = True
+        self._server = _ThreadingCollectiveTcpServer((host, port), self._make_handler())
         self._thread = threading.Thread(target=self._server.serve_forever, daemon=True)
 
     def _make_handler(self):
@@ -435,7 +450,10 @@ class DistributedCollectiveServer:
 
         class Handler(socketserver.StreamRequestHandler):
             def handle(self) -> None:
-                header = _read_line(self.rfile).split("\t")
+                try:
+                    header = _read_line(self.rfile).split("\t")
+                except ConnectionError:
+                    return
                 if len(header) != 5:
                     raise RuntimeError("invalid distributed coordinator request header")
                 op, key, raw_rank, raw_world, raw_payload_size = header
@@ -451,6 +469,8 @@ class DistributedCollectiveServer:
         return Handler
 
     def _dispatch(self, op: str, key: str, rank: int, world_size: int, payload: bytes) -> bytes:
+        if op == "ping":
+            return b""
         state_key = (op, key)
         with self._states_lock:
             state = self._states.get(state_key)

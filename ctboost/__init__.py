@@ -4,10 +4,16 @@ from typing import Any, Dict
 
 from ._core import build_info as _native_build_info
 from ._version import __version__
-from .core import Pool
-from .feature_pipeline import FeaturePipeline
-from .prepared_data import prepare_pool
-from .training import Booster, cv, load_model, train
+
+_CORE_EXPORT_NAMES = {
+    "Booster",
+    "FeaturePipeline",
+    "Pool",
+    "prepare_pool",
+    "cv",
+    "load_model",
+    "train",
+}
 
 _SKLEARN_EXPORT_NAMES = {
     "CBoostClassifier",
@@ -17,6 +23,25 @@ _SKLEARN_EXPORT_NAMES = {
     "CTBoostRanker",
     "CTBoostRegressor",
 }
+
+
+def _load_core_exports() -> Dict[str, Any]:
+    from .core import Pool
+    from .feature_pipeline import FeaturePipeline
+    from .prepared_data import prepare_pool
+    from .training import Booster, cv, load_model, train
+
+    exports = {
+        "Booster": Booster,
+        "FeaturePipeline": FeaturePipeline,
+        "Pool": Pool,
+        "prepare_pool": prepare_pool,
+        "cv": cv,
+        "load_model": load_model,
+        "train": train,
+    }
+    globals().update(exports)
+    return exports
 
 
 def _load_sklearn_exports() -> Dict[str, Any]:
@@ -56,13 +81,15 @@ def build_info() -> Dict[str, Any]:
 
 
 def __getattr__(name: str) -> Any:
+    if name in _CORE_EXPORT_NAMES:
+        return _load_core_exports()[name]
     if name in _SKLEARN_EXPORT_NAMES:
         return _load_sklearn_exports()[name]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def __dir__() -> Any:
-    return sorted(set(globals()) | _SKLEARN_EXPORT_NAMES)
+    return sorted(set(globals()) | _CORE_EXPORT_NAMES | _SKLEARN_EXPORT_NAMES)
 
 __all__ = [
     "__version__",

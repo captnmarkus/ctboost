@@ -6,7 +6,6 @@ from collections.abc import Mapping
 import contextlib
 import json
 from pathlib import Path
-import socket
 import subprocess
 import sys
 import time
@@ -21,6 +20,7 @@ from .distributed import (
     distributed_tcp_request,
     parse_distributed_root,
     pickle_payload,
+    wait_for_distributed_tcp_coordinator,
 )
 from .feature_pipeline import FeaturePipeline
 from .prepared_data import prepare_pool, uses_feature_pipeline_params
@@ -755,17 +755,6 @@ def _merge_distributed_payloads(shards: List[Dict[str, Any]]) -> Pool:
     return _merge_sparse_distributed_payloads(shards)
 
 
-def _wait_for_tcp_coordinator(host: str, port: int, timeout_seconds: float) -> None:
-    deadline = time.time() + timeout_seconds
-    while time.time() < deadline:
-        try:
-            with socket.create_connection((host, port), timeout=0.2):
-                return
-        except OSError:
-            time.sleep(0.05)
-    raise TimeoutError(f"timed out waiting for distributed tcp coordinator at {host}:{port}")
-
-
 @contextlib.contextmanager
 def _distributed_collective_context(distributed: Optional[Dict[str, Any]]):
     server_process = None
@@ -780,12 +769,12 @@ def _distributed_collective_context(distributed: Optional[Dict[str, Any]]):
                 str(distributed["host"]),
                 str(distributed["port"]),
             ],
+            stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-        _wait_for_tcp_coordinator(
-            str(distributed["host"]),
-            int(distributed["port"]),
+        wait_for_distributed_tcp_coordinator(
+            distributed["root"],
             min(10.0, float(distributed["timeout"])),
         )
     try:
