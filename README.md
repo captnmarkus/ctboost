@@ -10,7 +10,7 @@ The current codebase supports end-to-end training and prediction for regression,
 - Python support: `3.8` through `3.14`
 - Packaging: `scikit-build-core`
 - CI/CD: GitHub Actions for CMake validation and `cibuildwheel` release builds
-- Repository version: `0.1.21`
+- Repository version: `0.1.22`
 - Status: actively evolving native + Python package
 
 ## What Works Today
@@ -125,7 +125,7 @@ pip install -e .[sklearn]
 
 `pip install ctboost` works without a compiler only when PyPI has a prebuilt wheel for your exact Python/OS tag. If no matching wheel exists, `pip` falls back to the source distribution and has to compile the native extension locally.
 
-The release workflow is configured to publish CPU wheels for current CPython releases on Windows, Linux, and macOS so standard `pip install ctboost` usage does not depend on a local compiler.
+The release workflow is configured to publish CPU wheels for current CPython releases on Windows and Linux, plus macOS CPU wheels for CPython `3.10` through `3.14`, so standard `pip install ctboost` usage does not depend on a local compiler.
 
 Each tagged GitHub release also attaches the CPU wheels, the source distribution, and dedicated Linux `x86_64` CUDA wheels for CPython `3.10` through `3.14`. The GPU wheel filenames carry a `1gpu` build tag so the release can publish CPU and GPU artifacts for the same Python and platform tags without filename collisions.
 
@@ -141,7 +141,7 @@ import subprocess
 import sys
 import urllib.request
 
-tag = "v0.1.21"
+tag = "v0.1.22"
 py_tag = f"cp{sys.version_info.major}{sys.version_info.minor}"
 api_url = f"https://api.github.com/repos/captnmarkus/ctboost/releases/tags/{tag}"
 

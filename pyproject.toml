@@ -7,7 +7,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "ctboost"
-version = "0.1.21"
+version = "0.1.22"
 description = "A GPU-accelerated gradient boosting library using Conditional Inference Trees."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -80,6 +80,9 @@ test-command = "python -X faulthandler -m pytest {project}/tests/test_wheel_smok
 [tool.cibuildwheel.linux]
 manylinux-x86_64-image = "manylinux_2_28"
 manylinux-aarch64-image = "manylinux_2_28"
+
+[tool.cibuildwheel.macos]
+skip = ["cp38-*", "cp39-*"]
 
 [tool.pytest.ini_options]
 addopts = "-ra"
