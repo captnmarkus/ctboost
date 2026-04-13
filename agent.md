@@ -17,9 +17,13 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 - The high-level estimator API supports persistence, staged prediction, `evals_result_`, `best_score_`, `sample_weight`, `class_weight`, `scale_pos_weight`, `eval_metric`, `nan_mode`, `warm_start`, and grouped ranking through `CTBoostRanker` when `scikit-learn` is installed.
 - A Python-side `ctboost.cv(...)` helper is available for generic cross-validation workflows, including grouped ranking splits, when `scikit-learn` is installed.
 - Native training now supports generic regression objectives beyond RMSE: `MAE`, `Huber`, and `Quantile`.
-- Native validation metrics now include regression metrics plus generic classification metrics such as `Accuracy`, `Precision`, `Recall`, `F1`, and `AUC`, plus ranking-oriented `NDCG`.
+- Native training now also supports `Poisson` and `Tweedie` regression objectives with configurable `tweedie_variance_power`.
+- Native training now also supports survival objectives `Cox` and `SurvivalExponential`.
+- Native validation metrics now include regression metrics plus generic classification metrics such as `Accuracy`, `Precision`, `Recall`, `F1`, and `AUC`, ranking-oriented `NDCG`, `MAP`, and `MRR`, and survival-oriented `CIndex`.
 - `Pool` now accepts pandas inputs, SciPy sparse matrices, row weights, categorical feature indices, and optional `group_id` metadata.
-- The Python boundary preserves column-major input layout for dense pandas and SciPy-ingested matrices so large pools can be handed to the native layer without an extra full-table transpose.
+- The Python boundary preserves column-major input layout for dense pandas matrices, SciPy sparse input now stays sparse through the native pool boundary instead of being densified first, and disk-backed memmap pools can now be staged through `ctboost.prepare_pool(..., external_memory=True)`.
+- A native C++ `FeaturePipeline`, exposed through thin Python wrappers plus both low-level and sklearn-estimator integration, now provides ordered CTRs, categorical feature combinations, text hashing, and embedding-stat expansion around the existing learner without replacing the conditional split criterion.
+- The low-level `ctboost.train(...)` path now accepts raw inputs with feature-pipeline parameters directly, persists the fitted preprocessing on low-level boosters, and exposes `ctboost.prepare_pool(...)` for explicit raw-data preparation.
 - Histogram storage now compacts to 1-byte bins when the fitted feature bin counts permit it, reducing resident fit memory while preserving the existing conditional-inference split logic.
 - Histogram building now writes directly into final-width compact storage when the fitted schema permits `<=256` bins, avoiding the old transient `uint16` plus compact-copy host-memory spike.
 - Booster state now stores quantization metadata once per fitted model, with trees sharing that schema instead of duplicating it per tree.
@@ -29,9 +33,13 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 - GPU fit now releases the host training histogram bin matrix immediately after the device histogram workspace and any warm-start predictions are initialized.
 - Tree growth now uses histogram subtraction on both CPU and GPU so one child histogram can be derived from `parent - sibling` instead of rescanning both children.
 - GPU split search now keeps best-feature selection on device and copies back only the winning feature summary instead of the full per-feature search buffer per node.
+- CUDA source builds now also support process-local feature-parallel multi-GPU training by sharding histogram and split-search work across the requested `devices` list without changing the conditional tree logic itself.
+- The earlier `v0.1.15` fold-memory bottleneck list is therefore closed: shared-schema trees, post-upload host-bin release, GPU histogram subtraction, and device-side best-feature reduction are all in the live code path.
 - GPU raw-score prediction is implemented for regression, binary classification, and multiclass models built with `task_type="GPU"`.
 - Histogram building now parallelizes across features and uses a hybrid exact quantile strategy that chooses between full sort and order-statistic selection per feature; large-row approximation remains available through environment overrides.
 - Feature selection now has a fast score-only linear-statistic path for large tree builds, avoiding the full covariance solve on the hot path while preserving the conditional-inference split criterion.
+- Native training now supports row subsampling through `subsample`, `bootstrap_type="No"|"Bernoulli"|"Poisson"`, `boosting_type="RandomForest"` for bagged trees against a fixed gradient reference, and `boosting_type="DART"` for dropout-style tree normalization around the same conditional tree learner.
+- Native CPU training now also supports `monotone_constraints` and `interaction_constraints`, implemented as split-feasibility and path-level feature-filtering layers around the existing conditional split search rather than a replacement for it.
 - Native profiling hooks are available through `verbose=True` and `CTBOOST_PROFILE=1`, including histogram build, per-node histogram, per-tree, and overall fit timing.
 - The repository now includes `run_kaggle_kernel_session.py` for source-build validation on Kaggle GPU environments.
 - The repository now also includes `run_kaggle_yx_benchmark_session.py` for replaying the heavy ordered-target-encoding Playground benchmark on Kaggle GPUs against the current source tree.
@@ -40,7 +48,7 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 - CUDA remains an optional source-build capability rather than the default PyPI wheel path.
 - The release workflow publishes dedicated Linux `x86_64` CUDA wheels as GitHub release assets for CPython `3.10` through `3.14`.
 - The dedicated CUDA wheels are built in `manylinux2014`, require a detected CUDA toolkit via `CTBOOST_REQUIRE_CUDA=ON`, and run a dedicated GPU smoke test before upload.
-- As of April 13, 2026, the repository version is bumped to `0.1.16`, following the `0.1.15` PyPI release and the merged shared-schema and GPU fit-memory reduction pass.
+- As of April 13, 2026, the repository version is bumped to `0.1.17`, following the `0.1.16` PyPI release and the native feature-pipeline migration around the existing conditional-tree core.
 - The base wheel no longer hard-depends on `scikit-learn`; estimator and CV entry points are lazy-loaded and raise a clear import error if `scikit-learn` is absent.
 
 ## Release and Wheel Policy
@@ -69,6 +77,8 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
   `python -X faulthandler -m pytest tests/test_build.py tests/test_booster.py tests/test_multiclass.py -q`
 - The `0.1.16` shared-schema and GPU memory-reduction follow-up was validated locally on April 13, 2026 with:
   `python -m pytest -q`
+- The sparse-ingestion, survival, DART, and Python feature-pipeline follow-up was revalidated locally on April 13, 2026 with:
+  `python -m pytest -q`
 - Kaggle source-build validation on `playground-series-s6e4` succeeded on April 12, 2026 using notebook `maiernator/ctboost-gpu-source-validate-s6e4` version `8`.
 - That Kaggle run reported `cuda_enabled=True`, `cuda_runtime="12.8"`, `630000` training rows, and `270000` test rows.
 - The latest merged Kaggle timings are:
@@ -82,11 +92,12 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 ## Local Plan
 
 - Preserve the current conditional-inference-tree learner and conditional feature-evaluation path as the non-negotiable core while closing generic usability gaps around it.
-- Add native ordered categorical statistics, CTR-style feature generation, and categorical feature-combination support without replacing the conditional tree criterion.
-- Add native sparse and external-memory training so large sparse or disk-backed datasets no longer have to be densified before fitting.
-- Add richer tree-growth and constraint controls around the existing learner, including row and column subsampling, `max_leaves`, minimum leaf-size controls, minimum split-loss controls, monotonic constraints, and interaction constraints.
-- Broaden booster and objective coverage only where it can reuse the existing conditional tree backbone, such as DART-style dropout, random-forest modes, count objectives, survival objectives, and ranking objectives.
-- Add production tooling expected from mature libraries, including callbacks, snapshot or checkpoint resume, distributed or multi-GPU execution, richer SHAP tooling, and first-class export targets.
+- Treat the shared-schema and GPU fit-memory reduction pass as complete baseline behavior, not open roadmap work.
+- Treat the native feature pipeline for ordered CTRs, categorical crosses, text hashing, and embedding expansion as the current generic-data path around the existing learner; Python should stay limited to pandas extraction, Pool orchestration, and estimator-facing API glue rather than owning the transform logic itself.
+- Treat native sparse training plus disk-backed external-memory pool staging as present baseline behavior; fully streaming quantized fit beyond that staging layer remains open.
+- Keep extending tree-growth and constraint controls around the existing learner. Row subsampling, bootstrap controls, `max_leaves`, minimum leaf-size controls, minimum split-loss controls, a random-forest mode, monotonic constraints, and interaction constraints are now present; GPU support for the new constraints remains open.
+- Broaden booster and objective coverage only where it can reuse the existing conditional tree backbone. Count objectives, extra ranking metrics, DART-style dropout, survival objectives, low-level raw-data preprocessing, and local multi-GPU execution are now present; distributed multi-host execution remains open.
+- Add production tooling expected from mature libraries, including callbacks, snapshot or checkpoint resume, richer SHAP tooling, first-class export targets, and deeper distributed execution.
 
 ## Repository Layout
 

@@ -2,7 +2,7 @@
 
 CTBoost is a gradient boosting library built around Conditional Inference Trees, with a native C++17 core, Python bindings via `pybind11`, optional CUDA support for source builds, and an optional scikit-learn style API.
 
-The current codebase supports end-to-end training and prediction for regression, classification, and grouped ranking, plus pandas and SciPy sparse ingestion, row weights and class imbalance controls, explicit missing-value handling, configurable validation metrics, stable JSON model persistence, staged prediction, warm-start continuation, and a built-in cross-validation helper.
+The current codebase supports end-to-end training and prediction for regression, classification, grouped ranking, and survival, plus pandas and SciPy sparse ingestion without dense expansion, row weights and class imbalance controls, explicit missing-value handling, configurable validation metrics, stable JSON model persistence, staged prediction, warm-start continuation, a native C++ feature pipeline for categorical/text/embedding transforms with thin Python wrappers, and a built-in cross-validation helper.
 
 ## Current Status
 
@@ -10,7 +10,7 @@ The current codebase supports end-to-end training and prediction for regression,
 - Python support: `3.8` through `3.14`
 - Packaging: `scikit-build-core`
 - CI/CD: GitHub Actions for CMake validation and `cibuildwheel` release builds
-- Repository version: `0.1.16`
+- Repository version: `0.1.17`
 - Status: actively evolving native + Python package
 
 ## What Works Today
@@ -19,21 +19,30 @@ The current codebase supports end-to-end training and prediction for regression,
 - `Pool` abstraction for dense tabular data, SciPy sparse input, categorical feature indices, and optional `group_id`
 - Native pandas `DataFrame` and `Series` support
 - Automatic categorical detection for pandas `category` and `object` columns
-- Regression training with `ctboost.train(...)`
+- Regression training with `ctboost.train(...)`, including raw array/DataFrame inputs plus optional preprocessing and external-memory staging
 - scikit-learn compatible `CTBoostClassifier`, `CTBoostRegressor`, and `CTBoostRanker` when `scikit-learn` is installed
 - Binary and multiclass classification
 - Grouped ranking with `PairLogit` and `NDCG`
 - Row weights through `Pool(..., weight=...)` and `sample_weight` on sklearn estimators
 - Class imbalance controls through `class_weight`, `class_weights`, `auto_class_weights="balanced"`, and `scale_pos_weight`
 - Explicit missing-value handling through `nan_mode`
+- Row subsampling through `subsample` plus `bootstrap_type="No"|"Bernoulli"|"Poisson"`
+- `boosting_type="RandomForest"` on top of the existing conditional-inference tree learner
+- `boosting_type="DART"` with dropout-style tree normalization on top of the existing conditional-inference tree learner
+- Monotonic constraints through `monotone_constraints`
+- Path-level interaction constraints through `interaction_constraints`
+- Survival objectives: `Cox`, `SurvivalExponential`
+- Survival evaluation through `CIndex`
 - Early stopping with `eval_set` and `early_stopping_rounds`
 - Separate `eval_metric` support for validation history and early stopping
 - Validation loss/metric history and `evals_result_`
 - Per-iteration prediction through staged prediction and `num_iteration`
 - Stable JSON and pickle model persistence for low-level boosters and scikit-learn style estimators
 - Cross-validation with `ctboost.cv(...)` when `scikit-learn` is installed
-- Regression objectives: `RMSE`, `MAE`, `Huber`, `Quantile`
-- Generic eval metrics including `RMSE`, `MAE`, `Accuracy`, `Precision`, `Recall`, `F1`, `AUC`, and `NDCG`
+- Regression objectives: `RMSE`, `MAE`, `Huber`, `Quantile`, `Poisson`, `Tweedie`
+- Generic eval metrics including `RMSE`, `MAE`, `Poisson`, `Tweedie`, `Accuracy`, `Precision`, `Recall`, `F1`, `AUC`, `NDCG`, `MAP`, `MRR`, and `CIndex`
+- Native `ctboost.FeaturePipeline` logic in `_core.NativeFeaturePipeline`, with low-level and sklearn integration for ordered CTRs, categorical crosses, text hashing, and embedding-stat expansion
+- `ctboost.prepare_pool(...)` for low-level raw-data preparation, optional feature-pipeline fitting, and disk-backed external-memory pool staging
 - Feature importance reporting
 - Leaf-index introspection and path-based prediction contributions
 - Continued training through `init_model` and estimator `warm_start`
@@ -50,9 +59,23 @@ The current codebase supports end-to-end training and prediction for regression,
 
 ## Current Limitations
 
-- SciPy sparse matrices are currently densified at the Python boundary before native training
+- Ordered CTRs, categorical crosses, text hashing, and embedding expansion now run through a native C++ pipeline, while pandas extraction, raw-data routing, and Pool orchestration remain thin Python glue
+- There is now a native sparse training path plus a disk-backed external-memory pool path through `ctboost.prepare_pool(...)` and `ctboost.train(..., external_memory=True)`, but quantized histogram matrices are still materialized in-core during fit
+- Monotonic and interaction constraints currently run only on CPU training
+- Process-local multi-GPU training is now implemented for CUDA source builds through feature-parallel GPU histogram and split-search execution; distributed multi-host training is still not implemented
 - Dedicated GPU wheel automation targets Linux `x86_64` CPython `3.10` through `3.14` release assets for Kaggle-style environments
 - CUDA wheel builds in CI depend on container-side toolkit provisioning
+
+## Resolved Fold-Memory Hotspots
+
+The older `v0.1.15` GPU fit-memory bottleneck list is now closed in the current tree:
+
+- Quantization metadata is stored once per fitted booster and shared by all trees instead of being duplicated per tree
+- GPU fit releases the host training histogram bin matrix immediately after device workspace creation and warm-start seeding
+- GPU tree growth uses histogram subtraction, so only one child histogram is built explicitly after a split
+- GPU split search keeps best-feature selection on device and copies back only the winning feature summary
+
+That means the old per-node GPU bin-materialization issue is no longer the main resident-memory problem in the current codebase. The remaining generic backlog is now in deeper out-of-core execution beyond disk-backed pool staging, richer distributed execution, and production tooling.
 
 ## Benchmark Snapshot
 
@@ -107,7 +130,7 @@ import subprocess
 import sys
 import urllib.request
 
-tag = "v0.1.16"
+tag = "v0.1.17"
 py_tag = f"cp{sys.version_info.major}{sys.version_info.minor}"
 api_url = f"https://api.github.com/repos/captnmarkus/ctboost/releases/tags/{tag}"
 
@@ -243,6 +266,70 @@ loss_history = booster.loss_history
 eval_loss_history = booster.eval_loss_history
 ```
 
+The same low-level API can now prepare raw categorical/text/embedding inputs directly:
+
+```python
+import numpy as np
+import ctboost
+
+X = np.empty((4, 4), dtype=object)
+X[:, 0] = ["berlin", "paris", "berlin", "rome"]
+X[:, 1] = [1.0, 2.0, 1.5, 3.0]
+X[:, 2] = ["red fox", "blue fox", "red hare", "green fox"]
+X[:, 3] = [
+    np.array([0.1, 0.4, 0.2], dtype=np.float32),
+    np.array([0.7, 0.1, 0.3], dtype=np.float32),
+    np.array([0.2, 0.5, 0.6], dtype=np.float32),
+    np.array([0.9, 0.2, 0.4], dtype=np.float32),
+]
+y = np.array([0.5, 1.2, 0.7, 1.6], dtype=np.float32)
+
+booster = ctboost.train(
+    X,
+    {
+        "objective": "RMSE",
+        "learning_rate": 0.1,
+        "max_depth": 3,
+        "alpha": 1.0,
+        "lambda_l2": 1.0,
+        "ordered_ctr": True,
+        "cat_features": [0],
+        "text_features": [2],
+        "embedding_features": [3],
+    },
+    label=y,
+    num_boost_round=32,
+)
+
+raw_predictions = booster.predict(X)
+```
+
+For disk-backed pool staging on large folds:
+
+```python
+pool = ctboost.prepare_pool(
+    X_numeric,
+    y,
+    external_memory=True,
+    external_memory_dir="ctboost-cache",
+)
+
+booster = ctboost.train(
+    X_numeric,
+    {
+        "objective": "RMSE",
+        "learning_rate": 0.1,
+        "max_depth": 3,
+        "alpha": 1.0,
+        "lambda_l2": 1.0,
+        "external_memory": True,
+        "external_memory_dir": "ctboost-cache",
+    },
+    label=y,
+    num_boost_round=64,
+)
+```
+
 ### Working With Categorical Features
 
 Categorical columns can still be marked manually through the `Pool` API:
@@ -274,6 +361,42 @@ label = pd.Series([0.0, 1.0, 0.0, 1.0], dtype="float32")
 
 pool = ctboost.Pool(frame, label)
 assert pool.cat_features == [1, 2]
+```
+
+For estimator-side ordered CTRs, categorical crosses, text hashing, and embedding expansion, use the Python feature pipeline parameters:
+
+```python
+import numpy as np
+import pandas as pd
+
+from ctboost import CTBoostRegressor
+
+frame = pd.DataFrame(
+    {
+        "city": ["berlin", "paris", "berlin", "rome"],
+        "headline": ["red fox", "blue fox", "red hare", "green fox"],
+        "embedding": [
+            np.array([0.1, 0.4, 0.2], dtype=np.float32),
+            np.array([0.7, 0.1, 0.3], dtype=np.float32),
+            np.array([0.2, 0.5, 0.6], dtype=np.float32),
+            np.array([0.9, 0.2, 0.4], dtype=np.float32),
+        ],
+        "value": [1.0, 2.0, 1.5, 3.0],
+    }
+)
+label = np.array([0.5, 1.2, 0.7, 1.6], dtype=np.float32)
+
+model = CTBoostRegressor(
+    iterations=32,
+    learning_rate=0.1,
+    max_depth=3,
+    ordered_ctr=True,
+    cat_features=["city"],
+    categorical_combinations=[["city", "headline"]],
+    text_features=["headline"],
+    embedding_features=["embedding"],
+)
+model.fit(frame, label)
 ```
 
 ### Model Persistence, Warm Start, And Cross-Validation
@@ -324,6 +447,8 @@ The scikit-learn compatible estimators also expose:
 The main entry points are:
 
 - `ctboost.Pool`
+- `ctboost.FeaturePipeline`
+- `ctboost.prepare_pool`
 - `ctboost.train`
 - `ctboost.cv`
 - `ctboost.Booster`

@@ -10,6 +10,7 @@ namespace ctboost {
 struct ObjectiveConfig {
   double huber_delta{1.0};
   double quantile_alpha{0.5};
+  double tweedie_variance_power{1.5};
 };
 
 class ObjectiveFunction {
@@ -92,6 +93,51 @@ class QuantileLoss final : public ObjectiveFunction {
 
  private:
   double alpha_{0.5};
+};
+
+class PoissonLoss final : public ObjectiveFunction {
+ public:
+  void compute_gradients(const std::vector<float>& preds,
+                         const std::vector<float>& labels,
+                         std::vector<float>& out_g,
+                         std::vector<float>& out_h,
+                         int num_classes = 1,
+                         const std::vector<std::int64_t>* group_ids = nullptr) const override;
+};
+
+class TweedieLoss final : public ObjectiveFunction {
+ public:
+  explicit TweedieLoss(double variance_power);
+
+  void compute_gradients(const std::vector<float>& preds,
+                         const std::vector<float>& labels,
+                         std::vector<float>& out_g,
+                         std::vector<float>& out_h,
+                         int num_classes = 1,
+                         const std::vector<std::int64_t>* group_ids = nullptr) const override;
+
+ private:
+  double variance_power_{1.5};
+};
+
+class CoxLoss final : public ObjectiveFunction {
+ public:
+  void compute_gradients(const std::vector<float>& preds,
+                         const std::vector<float>& labels,
+                         std::vector<float>& out_g,
+                         std::vector<float>& out_h,
+                         int num_classes = 1,
+                         const std::vector<std::int64_t>* group_ids = nullptr) const override;
+};
+
+class SurvivalExponentialLoss final : public ObjectiveFunction {
+ public:
+  void compute_gradients(const std::vector<float>& preds,
+                         const std::vector<float>& labels,
+                         std::vector<float>& out_g,
+                         std::vector<float>& out_h,
+                         int num_classes = 1,
+                         const std::vector<std::int64_t>* group_ids = nullptr) const override;
 };
 
 class PairLogitLoss final : public ObjectiveFunction {

@@ -21,9 +21,11 @@ void DestroyGpuHistogramWorkspace(GpuHistogramWorkspace* workspace) noexcept {
 }
 
 GpuHistogramWorkspacePtr CreateGpuHistogramWorkspace(const HistMatrix& hist,
-                                                     const std::vector<float>& weights) {
+                                                     const std::vector<float>& weights,
+                                                     const std::string& devices) {
   (void)hist;
   (void)weights;
+  (void)devices;
   throw std::runtime_error("CUDA histogram builder requested but CTBoost was compiled without CUDA");
 }
 
@@ -38,6 +40,13 @@ void UploadHistogramTargetsGpu(GpuHistogramWorkspace* workspace,
   (void)workspace;
   (void)gradients;
   (void)hessians;
+  throw std::runtime_error("CUDA histogram builder requested but CTBoost was compiled without CUDA");
+}
+
+void UploadHistogramWeightsGpu(GpuHistogramWorkspace* workspace,
+                               const std::vector<float>& weights) {
+  (void)workspace;
+  (void)weights;
   throw std::runtime_error("CUDA histogram builder requested but CTBoost was compiled without CUDA");
 }
 
@@ -135,13 +144,15 @@ void PredictRawGpu(const HistMatrix& hist,
                    const std::vector<std::int32_t>& tree_offsets,
                    float learning_rate,
                    int prediction_dimension,
-                   std::vector<float>& out_predictions) {
+                   std::vector<float>& out_predictions,
+                   const std::string& devices) {
   (void)hist;
   (void)nodes;
   (void)tree_offsets;
   (void)learning_rate;
   (void)prediction_dimension;
   (void)out_predictions;
+  (void)devices;
   throw std::runtime_error("CUDA prediction requested but CTBoost was compiled without CUDA");
 }
 

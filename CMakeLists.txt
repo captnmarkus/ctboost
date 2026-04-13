@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24...4.3)
 
-project(CTBoost VERSION 0.1.15 LANGUAGES CXX)
+project(CTBoost VERSION 0.1.17 LANGUAGES CXX)
 
 if(DEFINED SKBUILD_PROJECT_VERSION_FULL)
   set(CTBOOST_PACKAGE_VERSION "${SKBUILD_PROJECT_VERSION_FULL}")
@@ -70,6 +70,7 @@ add_library(ctboost_core STATIC
   src/core/booster.cpp
   src/core/build_info.cpp
   src/core/data.cpp
+  src/core/feature_pipeline.cpp
   src/core/histogram.cpp
   src/core/metric.cpp
   src/core/objective.cpp

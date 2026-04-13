@@ -36,6 +36,40 @@ void ValidatePredictionLabelWeightSizes(const std::vector<float>& preds,
   }
 }
 
+void ValidateNonNegativeLabels(const std::vector<float>& labels, const char* metric_name) {
+  for (const float label : labels) {
+    if (!(label >= 0.0F) || !std::isfinite(label)) {
+      throw std::invalid_argument(std::string(metric_name) +
+                                  " requires finite non-negative labels");
+    }
+  }
+}
+
+struct SurvivalLabel {
+  double time{0.0};
+  bool event{false};
+};
+
+std::vector<SurvivalLabel> ParseSignedSurvivalLabels(const std::vector<float>& labels,
+                                                     const char* metric_name) {
+  std::vector<SurvivalLabel> parsed(labels.size());
+  bool saw_event = false;
+  for (std::size_t index = 0; index < labels.size(); ++index) {
+    const double signed_time = static_cast<double>(labels[index]);
+    const double absolute_time = std::fabs(signed_time);
+    if (!std::isfinite(signed_time) || absolute_time <= 0.0) {
+      throw std::invalid_argument(std::string(metric_name) +
+                                  " expects signed survival times with non-zero magnitude");
+    }
+    parsed[index] = SurvivalLabel{absolute_time, signed_time > 0.0};
+    saw_event = saw_event || parsed[index].event;
+  }
+  if (!saw_event) {
+    throw std::invalid_argument(std::string(metric_name) + " requires at least one observed event");
+  }
+  return parsed;
+}
+
 void ValidateMulticlassSizes(const std::vector<float>& preds,
                              const std::vector<float>& labels,
                              const std::vector<float>& weights,
@@ -207,6 +241,153 @@ class QuantileMetric final : public MetricFunction {
 
  private:
   double alpha_{0.5};
+};
+
+class PoissonMetric final : public MetricFunction {
+ public:
+  double Evaluate(const std::vector<float>& preds,
+                  const std::vector<float>& labels,
+                  const std::vector<float>& weights,
+                  int,
+                  const std::vector<std::int64_t>*) const override {
+    ValidatePredictionLabelWeightSizes(preds, labels, weights);
+    ValidateNonNegativeLabels(labels, "poisson metric");
+    double loss_sum = 0.0;
+    double weight_sum = 0.0;
+    for (std::size_t i = 0; i < preds.size(); ++i) {
+      const double label = static_cast<double>(labels[i]);
+      const double mean = std::exp(static_cast<double>(preds[i]));
+      const double sample_weight = static_cast<double>(weights[i]);
+      loss_sum += sample_weight * (mean - label * static_cast<double>(preds[i]) + std::lgamma(label + 1.0));
+      weight_sum += sample_weight;
+    }
+    return weight_sum <= 0.0 ? 0.0 : loss_sum / weight_sum;
+  }
+
+  bool HigherIsBetter() const noexcept override { return false; }
+};
+
+class TweedieMetric final : public MetricFunction {
+ public:
+  explicit TweedieMetric(double variance_power) : variance_power_(variance_power) {
+    if (!(variance_power_ > 1.0 && variance_power_ < 2.0)) {
+      throw std::invalid_argument("tweedie_variance_power must be in the open interval (1, 2)");
+    }
+  }
+
+  double Evaluate(const std::vector<float>& preds,
+                  const std::vector<float>& labels,
+                  const std::vector<float>& weights,
+                  int,
+                  const std::vector<std::int64_t>*) const override {
+    ValidatePredictionLabelWeightSizes(preds, labels, weights);
+    ValidateNonNegativeLabels(labels, "tweedie metric");
+    const double one_minus_power = 1.0 - variance_power_;
+    const double two_minus_power = 2.0 - variance_power_;
+    double loss_sum = 0.0;
+    double weight_sum = 0.0;
+    for (std::size_t i = 0; i < preds.size(); ++i) {
+      const double label = static_cast<double>(labels[i]);
+      const double prediction = static_cast<double>(preds[i]);
+      const double sample_weight = static_cast<double>(weights[i]);
+      const double part_one =
+          label <= 0.0 ? 0.0 : label * std::exp(one_minus_power * prediction) / one_minus_power;
+      const double part_two = std::exp(two_minus_power * prediction) / two_minus_power;
+      loss_sum += sample_weight * (-part_one + part_two);
+      weight_sum += sample_weight;
+    }
+    return weight_sum <= 0.0 ? 0.0 : loss_sum / weight_sum;
+  }
+
+  bool HigherIsBetter() const noexcept override { return false; }
+
+ private:
+  double variance_power_{1.5};
+};
+
+class CoxMetric final : public MetricFunction {
+ public:
+  double Evaluate(const std::vector<float>& preds,
+                  const std::vector<float>& labels,
+                  const std::vector<float>& weights,
+                  int,
+                  const std::vector<std::int64_t>*) const override {
+    ValidatePredictionLabelWeightSizes(preds, labels, weights);
+    const std::vector<SurvivalLabel> survival = ParseSignedSurvivalLabels(labels, "cox metric");
+
+    std::vector<std::size_t> order(preds.size());
+    std::iota(order.begin(), order.end(), 0);
+    std::sort(order.begin(), order.end(), [&](std::size_t lhs, std::size_t rhs) {
+      if (survival[lhs].time == survival[rhs].time) {
+        return survival[lhs].event && !survival[rhs].event;
+      }
+      return survival[lhs].time > survival[rhs].time;
+    });
+
+    std::vector<double> exp_preds(preds.size(), 0.0);
+    for (std::size_t index = 0; index < preds.size(); ++index) {
+      exp_preds[index] = std::exp(static_cast<double>(preds[index]));
+    }
+
+    double loss_sum = 0.0;
+    double weight_sum = 0.0;
+    double risk_sum = 0.0;
+    std::size_t position = 0;
+    while (position < order.size()) {
+      const double group_time = survival[order[position]].time;
+      std::size_t group_end = position;
+      double event_weight = 0.0;
+      while (group_end < order.size() && survival[order[group_end]].time == group_time) {
+        risk_sum += exp_preds[order[group_end]];
+        if (survival[order[group_end]].event) {
+          event_weight += static_cast<double>(weights[order[group_end]]);
+        }
+        ++group_end;
+      }
+      if (event_weight > 0.0) {
+        const double log_risk = std::log(std::max(risk_sum, 1e-12));
+        for (std::size_t group_position = position; group_position < group_end; ++group_position) {
+          const std::size_t row = order[group_position];
+          if (!survival[row].event) {
+            continue;
+          }
+          const double sample_weight = static_cast<double>(weights[row]);
+          loss_sum += sample_weight * (log_risk - static_cast<double>(preds[row]));
+          weight_sum += sample_weight;
+        }
+      }
+      position = group_end;
+    }
+    return weight_sum <= 0.0 ? 0.0 : loss_sum / weight_sum;
+  }
+
+  bool HigherIsBetter() const noexcept override { return false; }
+};
+
+class SurvivalExponentialMetric final : public MetricFunction {
+ public:
+  double Evaluate(const std::vector<float>& preds,
+                  const std::vector<float>& labels,
+                  const std::vector<float>& weights,
+                  int,
+                  const std::vector<std::int64_t>*) const override {
+    ValidatePredictionLabelWeightSizes(preds, labels, weights);
+    const std::vector<SurvivalLabel> survival =
+        ParseSignedSurvivalLabels(labels, "survival exponential metric");
+
+    double loss_sum = 0.0;
+    double weight_sum = 0.0;
+    for (std::size_t index = 0; index < preds.size(); ++index) {
+      const double hazard = std::exp(static_cast<double>(preds[index]));
+      const double event = survival[index].event ? 1.0 : 0.0;
+      const double sample_weight = static_cast<double>(weights[index]);
+      loss_sum += sample_weight * (hazard * survival[index].time - event * static_cast<double>(preds[index]));
+      weight_sum += sample_weight;
+    }
+    return weight_sum <= 0.0 ? 0.0 : loss_sum / weight_sum;
+  }
+
+  bool HigherIsBetter() const noexcept override { return false; }
 };
 
 class BinaryLoglossMetric final : public MetricFunction {
@@ -559,6 +740,149 @@ class NDCGMetric final : public MetricFunction {
   bool HigherIsBetter() const noexcept override { return true; }
 };
 
+class MAPMetric final : public MetricFunction {
+ public:
+  double Evaluate(const std::vector<float>& preds,
+                  const std::vector<float>& labels,
+                  const std::vector<float>& weights,
+                  int num_classes,
+                  const std::vector<std::int64_t>* group_ids) const override {
+    const auto& resolved_group_ids =
+        ValidateRankingMetricInputs(preds, labels, weights, num_classes, group_ids);
+    std::unordered_map<std::int64_t, std::vector<std::size_t>> group_rows;
+    group_rows.reserve(resolved_group_ids.size());
+    for (std::size_t row = 0; row < resolved_group_ids.size(); ++row) {
+      group_rows[resolved_group_ids[row]].push_back(row);
+    }
+
+    double map_sum = 0.0;
+    double group_weight_sum = 0.0;
+    for (const auto& entry : group_rows) {
+      std::vector<std::size_t> rows = entry.second;
+      std::sort(rows.begin(), rows.end(), [&](std::size_t lhs, std::size_t rhs) {
+        if (preds[lhs] == preds[rhs]) {
+          return lhs < rhs;
+        }
+        return preds[lhs] > preds[rhs];
+      });
+
+      double precision_sum = 0.0;
+      double hit_count = 0.0;
+      double relevant_weight = 0.0;
+      double group_weight = 0.0;
+      for (std::size_t rank = 0; rank < rows.size(); ++rank) {
+        const std::size_t row = rows[rank];
+        const double sample_weight = static_cast<double>(weights[row]);
+        group_weight += sample_weight;
+        if (labels[row] > 0.0F) {
+          hit_count += 1.0;
+          precision_sum += hit_count / static_cast<double>(rank + 1);
+          relevant_weight += sample_weight;
+        }
+      }
+      if (relevant_weight <= 0.0 || group_weight <= 0.0) {
+        continue;
+      }
+      map_sum += group_weight * (precision_sum / hit_count);
+      group_weight_sum += group_weight;
+    }
+    return group_weight_sum <= 0.0 ? 0.0 : map_sum / group_weight_sum;
+  }
+
+  bool HigherIsBetter() const noexcept override { return true; }
+};
+
+class MRRMetric final : public MetricFunction {
+ public:
+  double Evaluate(const std::vector<float>& preds,
+                  const std::vector<float>& labels,
+                  const std::vector<float>& weights,
+                  int num_classes,
+                  const std::vector<std::int64_t>* group_ids) const override {
+    const auto& resolved_group_ids =
+        ValidateRankingMetricInputs(preds, labels, weights, num_classes, group_ids);
+    std::unordered_map<std::int64_t, std::vector<std::size_t>> group_rows;
+    group_rows.reserve(resolved_group_ids.size());
+    for (std::size_t row = 0; row < resolved_group_ids.size(); ++row) {
+      group_rows[resolved_group_ids[row]].push_back(row);
+    }
+
+    double reciprocal_rank_sum = 0.0;
+    double group_weight_sum = 0.0;
+    for (const auto& entry : group_rows) {
+      std::vector<std::size_t> rows = entry.second;
+      std::sort(rows.begin(), rows.end(), [&](std::size_t lhs, std::size_t rhs) {
+        if (preds[lhs] == preds[rhs]) {
+          return lhs < rhs;
+        }
+        return preds[lhs] > preds[rhs];
+      });
+
+      double group_weight = 0.0;
+      for (const std::size_t row : rows) {
+        group_weight += static_cast<double>(weights[row]);
+      }
+      if (group_weight <= 0.0) {
+        continue;
+      }
+
+      for (std::size_t rank = 0; rank < rows.size(); ++rank) {
+        if (labels[rows[rank]] > 0.0F) {
+          reciprocal_rank_sum += group_weight / static_cast<double>(rank + 1);
+          group_weight_sum += group_weight;
+          break;
+        }
+      }
+    }
+
+    return group_weight_sum <= 0.0 ? 0.0 : reciprocal_rank_sum / group_weight_sum;
+  }
+
+  bool HigherIsBetter() const noexcept override { return true; }
+};
+
+class ConcordanceIndexMetric final : public MetricFunction {
+ public:
+  double Evaluate(const std::vector<float>& preds,
+                  const std::vector<float>& labels,
+                  const std::vector<float>& weights,
+                  int,
+                  const std::vector<std::int64_t>*) const override {
+    ValidatePredictionLabelWeightSizes(preds, labels, weights);
+    const std::vector<SurvivalLabel> survival = ParseSignedSurvivalLabels(labels, "cindex");
+
+    double concordant = 0.0;
+    double comparable = 0.0;
+    for (std::size_t i = 0; i < preds.size(); ++i) {
+      if (!survival[i].event) {
+        continue;
+      }
+      for (std::size_t j = 0; j < preds.size(); ++j) {
+        if (i == j) {
+          continue;
+        }
+        if (survival[j].time <= survival[i].time) {
+          continue;
+        }
+        const double pair_weight =
+            static_cast<double>(weights[i]) * static_cast<double>(weights[j]);
+        if (pair_weight <= 0.0) {
+          continue;
+        }
+        comparable += pair_weight;
+        if (preds[i] > preds[j]) {
+          concordant += pair_weight;
+        } else if (preds[i] == preds[j]) {
+          concordant += 0.5 * pair_weight;
+        }
+      }
+    }
+    return comparable <= 0.0 ? 0.0 : concordant / comparable;
+  }
+
+  bool HigherIsBetter() const noexcept override { return true; }
+};
+
 }  // namespace
 
 std::unique_ptr<MetricFunction> CreateMetricFunction(std::string_view name,
@@ -578,6 +902,20 @@ std::unique_ptr<MetricFunction> CreateMetricFunction(std::string_view name,
   }
   if (normalized == "quantile" || normalized == "quantileloss") {
     return std::make_unique<QuantileMetric>(config.quantile_alpha);
+  }
+  if (normalized == "poisson" || normalized == "poissonregression") {
+    return std::make_unique<PoissonMetric>();
+  }
+  if (normalized == "tweedie" || normalized == "tweedieloss" ||
+      normalized == "reg:tweedie") {
+    return std::make_unique<TweedieMetric>(config.tweedie_variance_power);
+  }
+  if (normalized == "cox" || normalized == "coxph" || normalized == "survival:cox") {
+    return std::make_unique<CoxMetric>();
+  }
+  if (normalized == "survivalexponential" || normalized == "survival_exp" ||
+      normalized == "survival:exponential") {
+    return std::make_unique<SurvivalExponentialMetric>();
   }
   if (normalized == "logloss" || normalized == "binary_logloss" ||
       normalized == "binary:logistic") {
@@ -608,6 +946,15 @@ std::unique_ptr<MetricFunction> CreateMetricFunction(std::string_view name,
   }
   if (normalized == "ndcg") {
     return std::make_unique<NDCGMetric>();
+  }
+  if (normalized == "map" || normalized == "map@all") {
+    return std::make_unique<MAPMetric>();
+  }
+  if (normalized == "mrr" || normalized == "mrr@all") {
+    return std::make_unique<MRRMetric>();
+  }
+  if (normalized == "cindex" || normalized == "concordance_index") {
+    return std::make_unique<ConcordanceIndexMetric>();
   }
 
   throw std::invalid_argument("unknown metric function: " + std::string(name));

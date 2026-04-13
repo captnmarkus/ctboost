@@ -11,6 +11,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
 from . import _core
 from ._serialization import load_estimator_document, save_estimator
 from .core import Pool
+from .feature_pipeline import FeaturePipeline
 from .training import (
     Booster,
     _apply_sample_weight_to_pool,
@@ -44,6 +45,16 @@ def _resolve_classifier_eval_pool(
     X_eval, y_eval = normalized
     encoded_labels = _encode_class_labels(y_eval, label_to_index, "eval_set")
     return _pool_from_data_and_label(X_eval, encoded_labels)
+
+
+def _encode_classifier_eval_set(eval_set: Any, label_to_index: Dict[Any, int]) -> Optional[Any]:
+    normalized = _normalize_eval_set(eval_set)
+    if normalized is None or isinstance(normalized, Pool):
+        return normalized
+
+    X_eval, y_eval = normalized
+    encoded_labels = _encode_class_labels(y_eval, label_to_index, "eval_set")
+    return (X_eval, encoded_labels)
 
 
 def _resolve_ranker_eval_pool(eval_set: Any) -> Optional[Pool]:
@@ -103,6 +114,23 @@ class _BaseCTBoost(BaseEstimator):
         max_depth: int = 6,
         alpha: float = 0.05,
         lambda_l2: float = 1.0,
+        subsample: float = 1.0,
+        bootstrap_type: str = "No",
+        boosting_type: str = "GradientBoosting",
+        drop_rate: float = 0.1,
+        skip_drop: float = 0.5,
+        max_drop: int = 0,
+        ordered_ctr: bool = False,
+        cat_features: Optional[Any] = None,
+        categorical_combinations: Optional[Any] = None,
+        pairwise_categorical_combinations: bool = False,
+        text_features: Optional[Any] = None,
+        text_hash_dim: int = 64,
+        embedding_features: Optional[Any] = None,
+        embedding_stats: Any = ("mean", "std", "min", "max", "l2"),
+        ctr_prior_strength: float = 1.0,
+        monotone_constraints: Optional[Any] = None,
+        interaction_constraints: Optional[Any] = None,
         colsample_bytree: float = 1.0,
         max_leaves: int = 0,
         min_data_in_leaf: int = 0,
@@ -111,6 +139,9 @@ class _BaseCTBoost(BaseEstimator):
         random_seed: int = 0,
         loss_function: Optional[str] = None,
         eval_metric: Optional[str] = None,
+        quantile_alpha: float = 0.5,
+        huber_delta: float = 1.0,
+        tweedie_variance_power: float = 1.5,
         nan_mode: str = "Min",
         warm_start: bool = False,
         task_type: str = "CPU",
@@ -122,6 +153,23 @@ class _BaseCTBoost(BaseEstimator):
         self.max_depth = max_depth
         self.alpha = alpha
         self.lambda_l2 = lambda_l2
+        self.subsample = subsample
+        self.bootstrap_type = bootstrap_type
+        self.boosting_type = boosting_type
+        self.drop_rate = drop_rate
+        self.skip_drop = skip_drop
+        self.max_drop = max_drop
+        self.ordered_ctr = ordered_ctr
+        self.cat_features = cat_features
+        self.categorical_combinations = categorical_combinations
+        self.pairwise_categorical_combinations = pairwise_categorical_combinations
+        self.text_features = text_features
+        self.text_hash_dim = text_hash_dim
+        self.embedding_features = embedding_features
+        self.embedding_stats = embedding_stats
+        self.ctr_prior_strength = ctr_prior_strength
+        self.monotone_constraints = monotone_constraints
+        self.interaction_constraints = interaction_constraints
         self.colsample_bytree = colsample_bytree
         self.max_leaves = max_leaves
         self.min_data_in_leaf = min_data_in_leaf
@@ -130,11 +178,39 @@ class _BaseCTBoost(BaseEstimator):
         self.random_seed = random_seed
         self.loss_function = loss_function
         self.eval_metric = eval_metric
+        self.quantile_alpha = quantile_alpha
+        self.huber_delta = huber_delta
+        self.tweedie_variance_power = tweedie_variance_power
         self.nan_mode = nan_mode
         self.warm_start = warm_start
         self.task_type = task_type
         self.devices = devices
         self.verbose = verbose
+        self._feature_pipeline: Optional[FeaturePipeline] = None
+
+    def _uses_feature_pipeline(self) -> bool:
+        return bool(
+            self.ordered_ctr
+            or self.cat_features
+            or self.categorical_combinations
+            or self.pairwise_categorical_combinations
+            or self.text_features
+            or self.embedding_features
+        )
+
+    def _build_feature_pipeline(self) -> FeaturePipeline:
+        return FeaturePipeline(
+            cat_features=self.cat_features,
+            ordered_ctr=self.ordered_ctr,
+            categorical_combinations=self.categorical_combinations,
+            pairwise_categorical_combinations=self.pairwise_categorical_combinations,
+            text_features=self.text_features,
+            text_hash_dim=self.text_hash_dim,
+            embedding_features=self.embedding_features,
+            embedding_stats=self.embedding_stats,
+            ctr_prior_strength=self.ctr_prior_strength,
+            random_seed=self.random_seed,
+        )
 
     def _fit_impl(
         self,
@@ -150,9 +226,55 @@ class _BaseCTBoost(BaseEstimator):
         num_classes: int = 1,
         extra_train_params: Optional[Dict[str, Any]] = None,
     ) -> "_BaseCTBoost":
-        train_pool = (
-            X if isinstance(X, Pool) and y is None and group_id is None else _pool_from_data_and_label(X, y, group_id=group_id)
-        )
+        resolved_eval_set = _normalize_eval_set(eval_set)
+        if self._uses_feature_pipeline():
+            if isinstance(X, Pool):
+                raise ValueError("feature pipeline parameters require raw array or DataFrame input")
+            if y is None:
+                raise ValueError("y must be provided when feature pipeline parameters are enabled")
+            if isinstance(resolved_eval_set, Pool):
+                raise ValueError("feature pipeline parameters require raw eval_set input, not a Pool")
+            self._feature_pipeline = self._build_feature_pipeline()
+            transformed_X, transformed_cat_features, transformed_feature_names = (
+                self._feature_pipeline.fit_transform_array(X, y)
+            )
+            train_pool = Pool(
+                data=transformed_X,
+                label=y,
+                cat_features=transformed_cat_features,
+                group_id=group_id,
+                feature_names=transformed_feature_names,
+                _releasable_feature_storage=True,
+            )
+            if resolved_eval_set is None:
+                eval_pool = None
+            else:
+                if len(resolved_eval_set) == 2:
+                    X_eval, y_eval = resolved_eval_set
+                    group_eval = None
+                else:
+                    X_eval, y_eval, group_eval = resolved_eval_set
+                eval_pool = self._feature_pipeline.transform_pool(
+                    X_eval,
+                    y_eval,
+                    group_id=group_eval,
+                )
+        else:
+            self._feature_pipeline = None
+            train_pool = (
+                X
+                if isinstance(X, Pool) and y is None and group_id is None
+                else _pool_from_data_and_label(X, y, group_id=group_id)
+            )
+            eval_pool = resolved_eval_set if isinstance(resolved_eval_set, Pool) else None
+            if eval_pool is None and resolved_eval_set is not None:
+                if len(resolved_eval_set) == 2:
+                    X_eval, y_eval = resolved_eval_set
+                    eval_pool = _pool_from_data_and_label(X_eval, y_eval)
+                else:
+                    X_eval, y_eval, group_eval = resolved_eval_set
+                    eval_pool = _pool_from_data_and_label(X_eval, y_eval, group_id=group_eval)
+
         train_pool = _apply_sample_weight_to_pool(train_pool, sample_weight)
         resolved_objective = objective if num_classes > 2 else (self.loss_function or objective)
         train_params = {
@@ -161,6 +283,14 @@ class _BaseCTBoost(BaseEstimator):
             "max_depth": self.max_depth,
             "alpha": self.alpha,
             "lambda_l2": self.lambda_l2,
+            "subsample": self.subsample,
+            "bootstrap_type": self.bootstrap_type,
+            "boosting_type": self.boosting_type,
+            "drop_rate": self.drop_rate,
+            "skip_drop": self.skip_drop,
+            "max_drop": self.max_drop,
+            "monotone_constraints": self.monotone_constraints,
+            "interaction_constraints": self.interaction_constraints,
             "colsample_bytree": self.colsample_bytree,
             "max_leaves": self.max_leaves,
             "min_data_in_leaf": self.min_data_in_leaf,
@@ -169,6 +299,9 @@ class _BaseCTBoost(BaseEstimator):
             "random_seed": self.random_seed,
             "objective": resolved_objective,
             "num_classes": num_classes,
+            "quantile_alpha": self.quantile_alpha,
+            "huber_delta": self.huber_delta,
+            "tweedie_variance_power": self.tweedie_variance_power,
             "nan_mode": self.nan_mode,
             "task_type": self.task_type,
             "devices": self.devices,
@@ -185,7 +318,7 @@ class _BaseCTBoost(BaseEstimator):
             train_pool,
             train_params,
             num_boost_round=self.iterations,
-            eval_set=eval_set,
+            eval_set=eval_pool,
             early_stopping_rounds=early_stopping_rounds,
             init_model=resolved_init_model,
         )
@@ -201,6 +334,20 @@ class _BaseCTBoost(BaseEstimator):
             return X
         num_rows = int(X.shape[0]) if hasattr(X, "shape") else len(X)
         return Pool(data=X, label=np.zeros(num_rows, dtype=np.float32))
+
+    def _transform_prediction_pool(self, X: Any) -> Pool:
+        if isinstance(X, Pool):
+            return X
+        if self._feature_pipeline is None:
+            return self._prediction_pool(X)
+        num_rows = int(X.shape[0]) if hasattr(X, "shape") else len(X)
+        transformed, cat_features, feature_names = self._feature_pipeline.transform_array(X)
+        return Pool(
+            data=transformed,
+            label=np.zeros(num_rows, dtype=np.float32),
+            cat_features=cat_features,
+            feature_names=feature_names,
+        )
 
     def _compute_best_score(self) -> Dict[str, float]:
         best_score: Dict[str, float] = {}
@@ -232,6 +379,8 @@ class _BaseCTBoost(BaseEstimator):
             "best_score_": _serialize_value(self.best_score_),
             "python_object": self,
         }
+        if self._feature_pipeline is not None:
+            fitted_state["feature_pipeline_state"] = self._feature_pipeline.to_state()
         fitted_state.update(self._extra_serialized_state())
         save_estimator(
             destination,
@@ -264,6 +413,8 @@ class _BaseCTBoost(BaseEstimator):
         model.best_iteration_ = int(fitted_state["best_iteration_"])
         model.evals_result_ = _deserialize_value(fitted_state["evals_result_"])
         model.best_score_ = _deserialize_value(fitted_state["best_score_"])
+        pipeline_state = fitted_state.get("feature_pipeline_state")
+        model._feature_pipeline = None if pipeline_state is None else FeaturePipeline.from_state(pipeline_state)
         model._load_extra_serialized_state(fitted_state)
         return model
 
@@ -272,11 +423,11 @@ class _BaseCTBoost(BaseEstimator):
         return np.asarray(self._booster.feature_importances_, dtype=np.float32)
 
     def predict_leaf_index(self, X: Any, *, num_iteration: Optional[int] = None) -> np.ndarray:
-        pool = self._prediction_pool(X)
+        pool = self._transform_prediction_pool(X)
         return self._booster.predict_leaf_index(pool, num_iteration=num_iteration)
 
     def predict_contrib(self, X: Any, *, num_iteration: Optional[int] = None) -> np.ndarray:
-        pool = self._prediction_pool(X)
+        pool = self._transform_prediction_pool(X)
         return self._booster.predict_contrib(pool, num_iteration=num_iteration)
 
 
@@ -289,6 +440,23 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
         max_depth: int = 6,
         alpha: float = 0.05,
         lambda_l2: float = 1.0,
+        subsample: float = 1.0,
+        bootstrap_type: str = "No",
+        boosting_type: str = "GradientBoosting",
+        drop_rate: float = 0.1,
+        skip_drop: float = 0.5,
+        max_drop: int = 0,
+        ordered_ctr: bool = False,
+        cat_features: Optional[Any] = None,
+        categorical_combinations: Optional[Any] = None,
+        pairwise_categorical_combinations: bool = False,
+        text_features: Optional[Any] = None,
+        text_hash_dim: int = 64,
+        embedding_features: Optional[Any] = None,
+        embedding_stats: Any = ("mean", "std", "min", "max", "l2"),
+        ctr_prior_strength: float = 1.0,
+        monotone_constraints: Optional[Any] = None,
+        interaction_constraints: Optional[Any] = None,
         colsample_bytree: float = 1.0,
         max_leaves: int = 0,
         min_data_in_leaf: int = 0,
@@ -299,6 +467,9 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
         class_weight: Optional[Any] = None,
         scale_pos_weight: Optional[float] = None,
         eval_metric: Optional[str] = None,
+        quantile_alpha: float = 0.5,
+        huber_delta: float = 1.0,
+        tweedie_variance_power: float = 1.5,
         nan_mode: str = "Min",
         warm_start: bool = False,
         task_type: str = "CPU",
@@ -311,6 +482,23 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
             max_depth=max_depth,
             alpha=alpha,
             lambda_l2=lambda_l2,
+            subsample=subsample,
+            bootstrap_type=bootstrap_type,
+            boosting_type=boosting_type,
+            drop_rate=drop_rate,
+            skip_drop=skip_drop,
+            max_drop=max_drop,
+            ordered_ctr=ordered_ctr,
+            cat_features=cat_features,
+            categorical_combinations=categorical_combinations,
+            pairwise_categorical_combinations=pairwise_categorical_combinations,
+            text_features=text_features,
+            text_hash_dim=text_hash_dim,
+            embedding_features=embedding_features,
+            embedding_stats=embedding_stats,
+            ctr_prior_strength=ctr_prior_strength,
+            monotone_constraints=monotone_constraints,
+            interaction_constraints=interaction_constraints,
             colsample_bytree=colsample_bytree,
             max_leaves=max_leaves,
             min_data_in_leaf=min_data_in_leaf,
@@ -319,6 +507,9 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
             random_seed=random_seed,
             loss_function=loss_function,
             eval_metric=eval_metric,
+            quantile_alpha=quantile_alpha,
+            huber_delta=huber_delta,
+            tweedie_variance_power=tweedie_variance_power,
             nan_mode=nan_mode,
             warm_start=warm_start,
             task_type=task_type,
@@ -349,7 +540,6 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
 
         classes, inverse = np.unique(raw_labels, return_inverse=True)
         encoded_labels = inverse.astype(np.float32, copy=False)
-        train_pool = _pool_from_data_and_label(X, encoded_labels)
 
         self.classes_ = classes
         self.n_classes_ = int(self.classes_.size)
@@ -357,7 +547,11 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
             raise ValueError("CTBoostClassifier requires at least two distinct classes.")
 
         label_to_index = {label: index for index, label in enumerate(self.classes_.tolist())}
-        eval_pool = _resolve_classifier_eval_pool(eval_set, label_to_index)
+        eval_pool = (
+            _encode_classifier_eval_set(eval_set, label_to_index)
+            if self._uses_feature_pipeline()
+            else _resolve_classifier_eval_pool(eval_set, label_to_index)
+        )
         objective = "MultiClass" if self.n_classes_ > 2 else "Logloss"
         train_params: Dict[str, Any] = {}
         if self.class_weight is not None:
@@ -374,8 +568,14 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
                 train_params["class_weights"] = self.class_weight
         if self.scale_pos_weight is not None:
             train_params["scale_pos_weight"] = self.scale_pos_weight
+        train_input = (
+            X
+            if self._uses_feature_pipeline() or isinstance(X, Pool)
+            else _pool_from_data_and_label(X, encoded_labels)
+        )
         fitted = self._fit_impl(
-            train_pool,
+            train_input,
+            None if isinstance(train_input, Pool) else encoded_labels,
             init_model=init_model,
             sample_weight=sample_weight,
             eval_set=eval_pool,
@@ -403,7 +603,7 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
         return exp_scores / exp_scores.sum(axis=1, keepdims=True)
 
     def predict(self, X: Any, *, num_iteration: Optional[int] = None) -> Any:
-        pool = self._prediction_pool(X)
+        pool = self._transform_prediction_pool(X)
         probabilities = self.predict_proba(pool, num_iteration=num_iteration)
         if self.n_classes_ > 2:
             indices = np.argmax(probabilities, axis=1)
@@ -412,7 +612,7 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
         return self.classes_[indices]
 
     def predict_proba(self, X: Any, *, num_iteration: Optional[int] = None) -> Any:
-        pool = self._prediction_pool(X)
+        pool = self._transform_prediction_pool(X)
         scores = np.asarray(self._booster.predict(pool, num_iteration=num_iteration), dtype=np.float32)
         if self.n_classes_ > 2:
             if scores.ndim == 1:
@@ -422,7 +622,7 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
         return np.column_stack([1.0 - probabilities, probabilities])
 
     def staged_predict_proba(self, X: Any) -> Iterable[Any]:
-        pool = self._prediction_pool(X)
+        pool = self._transform_prediction_pool(X)
         for scores in self._booster.staged_predict(pool):
             scores = np.asarray(scores, dtype=np.float32)
             if self.n_classes_ > 2:
@@ -451,6 +651,23 @@ class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
         max_depth: int = 6,
         alpha: float = 0.05,
         lambda_l2: float = 1.0,
+        subsample: float = 1.0,
+        bootstrap_type: str = "No",
+        boosting_type: str = "GradientBoosting",
+        drop_rate: float = 0.1,
+        skip_drop: float = 0.5,
+        max_drop: int = 0,
+        ordered_ctr: bool = False,
+        cat_features: Optional[Any] = None,
+        categorical_combinations: Optional[Any] = None,
+        pairwise_categorical_combinations: bool = False,
+        text_features: Optional[Any] = None,
+        text_hash_dim: int = 64,
+        embedding_features: Optional[Any] = None,
+        embedding_stats: Any = ("mean", "std", "min", "max", "l2"),
+        ctr_prior_strength: float = 1.0,
+        monotone_constraints: Optional[Any] = None,
+        interaction_constraints: Optional[Any] = None,
         colsample_bytree: float = 1.0,
         max_leaves: int = 0,
         min_data_in_leaf: int = 0,
@@ -459,6 +676,9 @@ class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
         random_seed: int = 0,
         loss_function: str = "RMSE",
         eval_metric: Optional[str] = None,
+        quantile_alpha: float = 0.5,
+        huber_delta: float = 1.0,
+        tweedie_variance_power: float = 1.5,
         nan_mode: str = "Min",
         warm_start: bool = False,
         task_type: str = "CPU",
@@ -471,6 +691,23 @@ class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
             max_depth=max_depth,
             alpha=alpha,
             lambda_l2=lambda_l2,
+            subsample=subsample,
+            bootstrap_type=bootstrap_type,
+            boosting_type=boosting_type,
+            drop_rate=drop_rate,
+            skip_drop=skip_drop,
+            max_drop=max_drop,
+            ordered_ctr=ordered_ctr,
+            cat_features=cat_features,
+            categorical_combinations=categorical_combinations,
+            pairwise_categorical_combinations=pairwise_categorical_combinations,
+            text_features=text_features,
+            text_hash_dim=text_hash_dim,
+            embedding_features=embedding_features,
+            embedding_stats=embedding_stats,
+            ctr_prior_strength=ctr_prior_strength,
+            monotone_constraints=monotone_constraints,
+            interaction_constraints=interaction_constraints,
             colsample_bytree=colsample_bytree,
             max_leaves=max_leaves,
             min_data_in_leaf=min_data_in_leaf,
@@ -479,6 +716,9 @@ class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
             random_seed=random_seed,
             loss_function=loss_function,
             eval_metric=eval_metric,
+            quantile_alpha=quantile_alpha,
+            huber_delta=huber_delta,
+            tweedie_variance_power=tweedie_variance_power,
             nan_mode=nan_mode,
             warm_start=warm_start,
             task_type=task_type,
@@ -507,11 +747,11 @@ class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
         )
 
     def predict(self, X: Any, *, num_iteration: Optional[int] = None) -> Any:
-        pool = self._prediction_pool(X)
+        pool = self._transform_prediction_pool(X)
         return np.asarray(self._booster.predict(pool, num_iteration=num_iteration), dtype=np.float32)
 
     def staged_predict(self, X: Any) -> Iterable[Any]:
-        pool = self._prediction_pool(X)
+        pool = self._transform_prediction_pool(X)
         yield from self._booster.staged_predict(pool)
 
 
@@ -524,6 +764,23 @@ class CTBoostRanker(_BaseCTBoost):
         max_depth: int = 6,
         alpha: float = 0.05,
         lambda_l2: float = 1.0,
+        subsample: float = 1.0,
+        bootstrap_type: str = "No",
+        boosting_type: str = "GradientBoosting",
+        drop_rate: float = 0.1,
+        skip_drop: float = 0.5,
+        max_drop: int = 0,
+        ordered_ctr: bool = False,
+        cat_features: Optional[Any] = None,
+        categorical_combinations: Optional[Any] = None,
+        pairwise_categorical_combinations: bool = False,
+        text_features: Optional[Any] = None,
+        text_hash_dim: int = 64,
+        embedding_features: Optional[Any] = None,
+        embedding_stats: Any = ("mean", "std", "min", "max", "l2"),
+        ctr_prior_strength: float = 1.0,
+        monotone_constraints: Optional[Any] = None,
+        interaction_constraints: Optional[Any] = None,
         colsample_bytree: float = 1.0,
         max_leaves: int = 0,
         min_data_in_leaf: int = 0,
@@ -532,6 +789,9 @@ class CTBoostRanker(_BaseCTBoost):
         random_seed: int = 0,
         loss_function: str = "PairLogit",
         eval_metric: Optional[str] = "NDCG",
+        quantile_alpha: float = 0.5,
+        huber_delta: float = 1.0,
+        tweedie_variance_power: float = 1.5,
         nan_mode: str = "Min",
         warm_start: bool = False,
         task_type: str = "CPU",
@@ -544,6 +804,23 @@ class CTBoostRanker(_BaseCTBoost):
             max_depth=max_depth,
             alpha=alpha,
             lambda_l2=lambda_l2,
+            subsample=subsample,
+            bootstrap_type=bootstrap_type,
+            boosting_type=boosting_type,
+            drop_rate=drop_rate,
+            skip_drop=skip_drop,
+            max_drop=max_drop,
+            ordered_ctr=ordered_ctr,
+            cat_features=cat_features,
+            categorical_combinations=categorical_combinations,
+            pairwise_categorical_combinations=pairwise_categorical_combinations,
+            text_features=text_features,
+            text_hash_dim=text_hash_dim,
+            embedding_features=embedding_features,
+            embedding_stats=embedding_stats,
+            ctr_prior_strength=ctr_prior_strength,
+            monotone_constraints=monotone_constraints,
+            interaction_constraints=interaction_constraints,
             colsample_bytree=colsample_bytree,
             max_leaves=max_leaves,
             min_data_in_leaf=min_data_in_leaf,
@@ -552,6 +829,9 @@ class CTBoostRanker(_BaseCTBoost):
             random_seed=random_seed,
             loss_function=loss_function,
             eval_metric=eval_metric,
+            quantile_alpha=quantile_alpha,
+            huber_delta=huber_delta,
+            tweedie_variance_power=tweedie_variance_power,
             nan_mode=nan_mode,
             warm_start=warm_start,
             task_type=task_type,
@@ -584,7 +864,7 @@ class CTBoostRanker(_BaseCTBoost):
         if resolved_group_id is None:
             raise ValueError("CTBoostRanker requires group_id")
 
-        eval_pool = _resolve_ranker_eval_pool(eval_set)
+        eval_pool = eval_set if self._uses_feature_pipeline() else _resolve_ranker_eval_pool(eval_set)
         fitted = self._fit_impl(
             train_pool,
             group_id=resolved_group_id,
@@ -598,11 +878,11 @@ class CTBoostRanker(_BaseCTBoost):
         return fitted
 
     def predict(self, X: Any, *, num_iteration: Optional[int] = None) -> Any:
-        pool = self._prediction_pool(X)
+        pool = self._transform_prediction_pool(X)
         return np.asarray(self._booster.predict(pool, num_iteration=num_iteration), dtype=np.float32)
 
     def staged_predict(self, X: Any) -> Iterable[Any]:
-        pool = self._prediction_pool(X)
+        pool = self._transform_prediction_pool(X)
         yield from self._booster.staged_predict(pool)
 
 

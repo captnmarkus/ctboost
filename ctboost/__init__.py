@@ -5,6 +5,8 @@ from typing import Any, Dict
 from ._core import build_info as _native_build_info
 from ._version import __version__
 from .core import Pool
+from .feature_pipeline import FeaturePipeline
+from .prepared_data import prepare_pool
 from .training import Booster, cv, load_model, train
 
 _SKLEARN_EXPORT_NAMES = {
@@ -71,7 +73,9 @@ __all__ = [
     "CTBoostClassifier",
     "CTBoostRanker",
     "CTBoostRegressor",
+    "FeaturePipeline",
     "Pool",
+    "prepare_pool",
     "build_info",
     "cv",
     "load_model",

@@ -364,7 +364,7 @@ FeatureHistogramResult BuildFeatureHistogram(const Pool& pool,
   result.is_categorical = is_categorical;
   const std::size_t num_rows = pool.num_rows();
 
-  const float* const contiguous_column = pool.feature_column_ptr(feature);
+  const float* const contiguous_column = pool.is_sparse() ? nullptr : pool.feature_column_ptr(feature);
   auto feature_at = [&](std::size_t row) -> float {
     return contiguous_column != nullptr ? contiguous_column[row] : pool.feature_value(row, feature);
   };
@@ -487,7 +487,7 @@ void MaterializeFeatureBins(const Pool& pool,
                             const FeatureHistogramResult& feature_result,
                             NanMode nan_mode,
                             HistMatrix& hist) {
-  const float* const contiguous_column = pool.feature_column_ptr(feature);
+  const float* const contiguous_column = pool.is_sparse() ? nullptr : pool.feature_column_ptr(feature);
   auto feature_at = [&](std::size_t row) -> float {
     return contiguous_column != nullptr ? contiguous_column[row] : pool.feature_value(row, feature);
   };
@@ -546,7 +546,7 @@ std::vector<std::uint8_t> BuildCategoricalMask(const Pool& pool) {
 
 void ValidateForbiddenNanModeHasNoMissingValues(const Pool& pool) {
   for (std::size_t feature = 0; feature < pool.num_cols(); ++feature) {
-    const float* const contiguous_column = pool.feature_column_ptr(feature);
+    const float* const contiguous_column = pool.is_sparse() ? nullptr : pool.feature_column_ptr(feature);
     for (std::size_t row = 0; row < pool.num_rows(); ++row) {
       const float value =
           contiguous_column != nullptr ? contiguous_column[row] : pool.feature_value(row, feature);

@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <limits>
 #include <numeric>
+#include <random>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -41,6 +42,23 @@ bool IsHuberObjective(const std::string& normalized_objective) {
 
 bool IsQuantileObjective(const std::string& normalized_objective) {
   return normalized_objective == "quantile" || normalized_objective == "quantileloss";
+}
+
+bool IsPoissonObjective(const std::string& normalized_objective) {
+  return normalized_objective == "poisson" || normalized_objective == "poissonregression";
+}
+
+bool IsTweedieObjective(const std::string& normalized_objective) {
+  return normalized_objective == "tweedie" || normalized_objective == "tweedieloss" ||
+         normalized_objective == "reg:tweedie";
+}
+
+bool IsSurvivalObjective(const std::string& normalized_objective) {
+  return normalized_objective == "cox" || normalized_objective == "coxph" ||
+         normalized_objective == "survival:cox" ||
+         normalized_objective == "survivalexponential" ||
+         normalized_objective == "survival_exp" ||
+         normalized_objective == "survival:exponential";
 }
 
 bool IsBinaryObjective(const std::string& normalized_objective) {
@@ -88,8 +106,23 @@ bool IsRegressionObjective(const std::string& normalized_objective) {
   return IsSquaredErrorObjective(normalized_objective) ||
          IsAbsoluteErrorObjective(normalized_objective) ||
          IsHuberObjective(normalized_objective) ||
-         IsQuantileObjective(normalized_objective);
+         IsQuantileObjective(normalized_objective) ||
+         IsPoissonObjective(normalized_objective) ||
+         IsTweedieObjective(normalized_objective) ||
+         IsSurvivalObjective(normalized_objective);
 }
+
+enum class BootstrapType {
+  kNone,
+  kBernoulli,
+  kPoisson,
+};
+
+enum class BoostingType {
+  kGradientBoosting,
+  kRandomForest,
+  kDart,
+};
 
 bool SameCategoricalFeatures(const Pool& lhs, const Pool& rhs) {
   const auto& lhs_features = lhs.cat_features();
@@ -116,11 +149,218 @@ std::string NormalizeTaskType(std::string task_type) {
   return NormalizeToken(std::move(task_type));
 }
 
+std::string CanonicalBootstrapType(std::string bootstrap_type) {
+  const std::string normalized = NormalizeToken(std::move(bootstrap_type));
+  if (normalized.empty() || normalized == "no" || normalized == "none") {
+    return "No";
+  }
+  if (normalized == "bernoulli") {
+    return "Bernoulli";
+  }
+  if (normalized == "poisson") {
+    return "Poisson";
+  }
+  throw std::invalid_argument("bootstrap_type must be one of: No, Bernoulli, Poisson");
+}
+
+BootstrapType ParseBootstrapType(const std::string& bootstrap_type) {
+  const std::string normalized = NormalizeToken(bootstrap_type);
+  if (normalized == "no" || normalized == "none") {
+    return BootstrapType::kNone;
+  }
+  if (normalized == "bernoulli") {
+    return BootstrapType::kBernoulli;
+  }
+  if (normalized == "poisson") {
+    return BootstrapType::kPoisson;
+  }
+  throw std::invalid_argument("bootstrap_type must be one of: No, Bernoulli, Poisson");
+}
+
+std::string CanonicalBoostingType(std::string boosting_type) {
+  const std::string normalized = NormalizeToken(std::move(boosting_type));
+  if (normalized.empty() || normalized == "plain" || normalized == "gradientboosting" ||
+      normalized == "gbdt") {
+    return "GradientBoosting";
+  }
+  if (normalized == "randomforest" || normalized == "rf") {
+    return "RandomForest";
+  }
+  if (normalized == "dart") {
+    return "DART";
+  }
+  throw std::invalid_argument("boosting_type must be one of: GradientBoosting, RandomForest, DART");
+}
+
+BoostingType ParseBoostingType(const std::string& boosting_type) {
+  const std::string normalized = NormalizeToken(boosting_type);
+  if (normalized == "gradientboosting" || normalized == "plain" || normalized == "gbdt") {
+    return BoostingType::kGradientBoosting;
+  }
+  if (normalized == "randomforest" || normalized == "rf") {
+    return BoostingType::kRandomForest;
+  }
+  if (normalized == "dart") {
+    return BoostingType::kDart;
+  }
+  throw std::invalid_argument("boosting_type must be one of: GradientBoosting, RandomForest, DART");
+}
+
 const QuantizationSchema& RequireQuantizationSchema(const QuantizationSchemaPtr& quantization_schema) {
   if (quantization_schema == nullptr) {
     throw std::runtime_error("booster quantization schema is not initialized");
   }
   return *quantization_schema;
+}
+
+double UniformUnit(std::uint64_t& state) {
+  constexpr double kScale = 1.0 / static_cast<double>(1ULL << 53U);
+  return static_cast<double>(NextRandom(state) >> 11U) * kScale;
+}
+
+std::uint32_t SamplePoisson(double lambda, std::uint64_t& state) {
+  if (lambda <= 0.0) {
+    return 0U;
+  }
+  const double threshold = std::exp(-lambda);
+  std::uint32_t count = 0U;
+  double product = 1.0;
+  do {
+    ++count;
+    product *= UniformUnit(state);
+  } while (product > threshold);
+  return count - 1U;
+}
+
+std::vector<float> SampleRowWeights(const std::vector<float>& base_weights,
+                                    double subsample,
+                                    BootstrapType bootstrap_type,
+                                    std::uint64_t& rng_state) {
+  if (base_weights.empty()) {
+    return {};
+  }
+
+  if (bootstrap_type == BootstrapType::kNone && subsample >= 1.0) {
+    return base_weights;
+  }
+
+  std::vector<float> sampled_weights(base_weights.size(), 0.0F);
+  double total_weight = 0.0;
+  for (std::size_t row = 0; row < base_weights.size(); ++row) {
+    const float base_weight = base_weights[row];
+    if (base_weight <= 0.0F) {
+      continue;
+    }
+
+    float row_weight = 0.0F;
+    if (bootstrap_type == BootstrapType::kPoisson) {
+      row_weight = base_weight * static_cast<float>(SamplePoisson(subsample, rng_state));
+    } else {
+      const double include_probability = subsample >= 1.0 ? 1.0 : subsample;
+      row_weight = UniformUnit(rng_state) < include_probability ? base_weight : 0.0F;
+    }
+    sampled_weights[row] = row_weight;
+    total_weight += static_cast<double>(row_weight);
+  }
+
+  if (total_weight > 0.0) {
+    return sampled_weights;
+  }
+
+  std::vector<std::size_t> positive_rows;
+  positive_rows.reserve(base_weights.size());
+  for (std::size_t row = 0; row < base_weights.size(); ++row) {
+    if (base_weights[row] > 0.0F) {
+      positive_rows.push_back(row);
+    }
+  }
+  if (!positive_rows.empty()) {
+    const std::size_t selected =
+        positive_rows[UniformIndex(rng_state, positive_rows.size())];
+    sampled_weights[selected] = base_weights[selected];
+  }
+  return sampled_weights;
+}
+
+void ScaleTreeLeafWeights(Tree& tree, double scale) {
+  if (scale == 1.0) {
+    return;
+  }
+  const auto& nodes = tree.nodes();
+  for (std::size_t node_index = 0; node_index < nodes.size(); ++node_index) {
+    if (!nodes[node_index].is_leaf) {
+      continue;
+    }
+    tree.SetLeafWeight(node_index, static_cast<float>(static_cast<double>(nodes[node_index].leaf_weight) * scale));
+  }
+}
+
+std::vector<std::size_t> SampleDroppedTreeGroups(std::size_t completed_iterations,
+                                                 double drop_rate,
+                                                 double skip_drop,
+                                                 int max_drop,
+                                                 std::uint64_t& rng_state) {
+  if (completed_iterations == 0 || drop_rate <= 0.0) {
+    return {};
+  }
+  if (skip_drop > 0.0 && UniformUnit(rng_state) < skip_drop) {
+    return {};
+  }
+
+  std::vector<std::size_t> dropped_groups;
+  dropped_groups.reserve(completed_iterations);
+  for (std::size_t iteration = 0; iteration < completed_iterations; ++iteration) {
+    if (UniformUnit(rng_state) < drop_rate) {
+      dropped_groups.push_back(iteration);
+    }
+  }
+
+  if (dropped_groups.empty()) {
+    dropped_groups.push_back(UniformIndex(rng_state, completed_iterations));
+  }
+  if (max_drop > 0 && dropped_groups.size() > static_cast<std::size_t>(max_drop)) {
+    std::shuffle(dropped_groups.begin(), dropped_groups.end(), std::mt19937_64(NextRandom(rng_state)));
+    dropped_groups.resize(static_cast<std::size_t>(max_drop));
+    std::sort(dropped_groups.begin(), dropped_groups.end());
+  }
+  return dropped_groups;
+}
+
+InteractionConstraintSet BuildInteractionConstraintSet(
+    const std::vector<std::vector<int>>& raw_constraints,
+    std::size_t num_features) {
+  InteractionConstraintSet constraints;
+  constraints.groups.reserve(raw_constraints.size());
+  constraints.feature_to_groups.resize(num_features);
+  constraints.constrained_feature_mask.assign(num_features, 0U);
+
+  for (std::size_t group_index = 0; group_index < raw_constraints.size(); ++group_index) {
+    std::vector<int> group = raw_constraints[group_index];
+    group.erase(std::remove_if(group.begin(),
+                               group.end(),
+                               [num_features](int feature_id) {
+                                 return feature_id < 0 ||
+                                        static_cast<std::size_t>(feature_id) >= num_features;
+                               }),
+                group.end());
+    std::sort(group.begin(), group.end());
+    group.erase(std::unique(group.begin(), group.end()), group.end());
+    if (group.empty()) {
+      continue;
+    }
+    const int stored_group_index = static_cast<int>(constraints.groups.size());
+    constraints.groups.push_back(group);
+    for (const int feature_id : group) {
+      constraints.feature_to_groups[static_cast<std::size_t>(feature_id)].push_back(stored_group_index);
+      constraints.constrained_feature_mask[static_cast<std::size_t>(feature_id)] = 1U;
+    }
+  }
+
+  for (auto& feature_groups : constraints.feature_to_groups) {
+    std::sort(feature_groups.begin(), feature_groups.end());
+    feature_groups.erase(std::unique(feature_groups.begin(), feature_groups.end()), feature_groups.end());
+  }
+  return constraints;
 }
 
 HistMatrix BuildPredictionHist(const Pool& pool, const QuantizationSchema& quantization_schema);
@@ -224,12 +464,32 @@ void UpdatePredictions(const Tree& tree,
   }
 }
 
+void AccumulateIterationPredictions(const std::vector<Tree>& trees,
+                                    std::size_t iteration_index,
+                                    const HistMatrix& hist,
+                                    double learning_rate,
+                                    int prediction_dimension,
+                                    std::vector<float>& predictions) {
+  const std::size_t tree_begin =
+      iteration_index * static_cast<std::size_t>(prediction_dimension);
+  const std::size_t tree_end = tree_begin + static_cast<std::size_t>(prediction_dimension);
+  for (std::size_t tree_index = tree_begin; tree_index < tree_end; ++tree_index) {
+    const int class_index =
+        prediction_dimension == 1 ? 0
+                                  : static_cast<int>(
+                                        tree_index % static_cast<std::size_t>(prediction_dimension));
+    UpdatePredictions(
+        trees[tree_index], hist, learning_rate, prediction_dimension, class_index, predictions);
+  }
+}
+
 std::vector<float> PredictFromHist(const std::vector<Tree>& trees,
                                    const HistMatrix& hist,
                                    std::size_t tree_limit,
                                    double learning_rate,
                                    bool use_gpu,
-                                   int prediction_dimension) {
+                                   int prediction_dimension,
+                                   const std::string& devices = "0") {
   std::vector<float> predictions(
       hist.num_rows * static_cast<std::size_t>(prediction_dimension), 0.0F);
   if (tree_limit == 0 || hist.num_rows == 0) {
@@ -241,7 +501,13 @@ std::vector<float> PredictFromHist(const std::vector<Tree>& trees,
     const std::vector<GpuTreeNode> flattened_nodes =
         FlattenTreesForGpu(trees, tree_limit, tree_offsets);
     PredictRawGpu(
-        hist, flattened_nodes, tree_offsets, static_cast<float>(learning_rate), prediction_dimension, predictions);
+        hist,
+        flattened_nodes,
+        tree_offsets,
+        static_cast<float>(learning_rate),
+        prediction_dimension,
+        predictions,
+        devices);
     return predictions;
   }
 
@@ -574,6 +840,14 @@ GradientBooster::GradientBooster(std::string objective,
                                  int max_depth,
                                  double alpha,
                                  double lambda_l2,
+                                 double subsample,
+                                 std::string bootstrap_type,
+                                 std::string boosting_type,
+                                 double drop_rate,
+                                 double skip_drop,
+                                 int max_drop,
+                                 std::vector<int> monotone_constraints,
+                                 std::vector<std::vector<int>> interaction_constraints,
                                  double colsample_bytree,
                                  int max_leaves,
                                  int min_data_in_leaf,
@@ -585,13 +859,14 @@ GradientBooster::GradientBooster(std::string objective,
                                  std::string eval_metric,
                                  double quantile_alpha,
                                  double huber_delta,
+                                 double tweedie_variance_power,
                                  std::string task_type,
                                  std::string devices,
                                  std::uint64_t random_seed,
                                  bool verbose)
     : objective_name_(std::move(objective)),
       eval_metric_name_(std::move(eval_metric)),
-      objective_config_{huber_delta, quantile_alpha},
+      objective_config_{huber_delta, quantile_alpha, tweedie_variance_power},
       objective_(CreateObjectiveFunction(objective_name_, objective_config_)),
       objective_metric_(CreateMetricFunctionForObjective(objective_name_, objective_config_)),
       iterations_(iterations),
@@ -599,6 +874,14 @@ GradientBooster::GradientBooster(std::string objective,
       max_depth_(max_depth),
       alpha_(alpha),
       lambda_l2_(lambda_l2),
+      subsample_(subsample),
+      bootstrap_type_(CanonicalBootstrapType(std::move(bootstrap_type))),
+      boosting_type_(CanonicalBoostingType(std::move(boosting_type))),
+      drop_rate_(drop_rate),
+      skip_drop_(skip_drop),
+      max_drop_(max_drop),
+      monotone_constraints_(std::move(monotone_constraints)),
+      interaction_constraints_(std::move(interaction_constraints)),
       colsample_bytree_(colsample_bytree),
       max_leaves_(max_leaves),
       min_data_in_leaf_(min_data_in_leaf),
@@ -629,6 +912,18 @@ GradientBooster::GradientBooster(std::string objective,
   if (lambda_l2_ < 0.0) {
     throw std::invalid_argument("lambda_l2 must be non-negative");
   }
+  if (subsample_ <= 0.0 || subsample_ > 1.0) {
+    throw std::invalid_argument("subsample must be in (0, 1]");
+  }
+  if (drop_rate_ < 0.0 || drop_rate_ > 1.0) {
+    throw std::invalid_argument("drop_rate must be in [0, 1]");
+  }
+  if (skip_drop_ < 0.0 || skip_drop_ > 1.0) {
+    throw std::invalid_argument("skip_drop must be in [0, 1]");
+  }
+  if (max_drop_ < 0) {
+    throw std::invalid_argument("max_drop must be non-negative");
+  }
   if (colsample_bytree_ <= 0.0 || colsample_bytree_ > 1.0) {
     throw std::invalid_argument("colsample_bytree must be in (0, 1]");
   }
@@ -644,6 +939,8 @@ GradientBooster::GradientBooster(std::string objective,
   if (gamma_ < 0.0) {
     throw std::invalid_argument("gamma must be non-negative");
   }
+  (void)ParseBootstrapType(bootstrap_type_);
+  (void)ParseBoostingType(boosting_type_);
   if (num_classes_ <= 0) {
     throw std::invalid_argument("num_classes must be positive");
   }
@@ -709,6 +1006,45 @@ void GradientBooster::Fit(Pool& pool,
           "eval_pool categorical feature indices must match the training pool");
     }
   }
+  if (!monotone_constraints_.empty()) {
+    if (monotone_constraints_.size() != pool.num_cols()) {
+      throw std::invalid_argument(
+          "monotone_constraints must have one entry per feature when provided");
+    }
+    for (const int feature_id : pool.cat_features()) {
+      if (feature_id >= 0 && static_cast<std::size_t>(feature_id) < monotone_constraints_.size() &&
+          monotone_constraints_[static_cast<std::size_t>(feature_id)] != 0) {
+        throw std::invalid_argument(
+            "monotone_constraints can only be applied to numeric features");
+      }
+    }
+    if (prediction_dimension_ != 1) {
+      throw std::invalid_argument(
+          "monotone_constraints are only supported for single-output objectives");
+    }
+  }
+  if (!interaction_constraints_.empty()) {
+    for (const auto& group : interaction_constraints_) {
+      if (group.empty()) {
+        continue;
+      }
+      for (const int feature_id : group) {
+        if (feature_id < 0 || static_cast<std::size_t>(feature_id) >= pool.num_cols()) {
+          throw std::invalid_argument(
+              "interaction_constraints feature index is out of bounds");
+        }
+      }
+    }
+  }
+  if (use_gpu_ && (!monotone_constraints_.empty() || !interaction_constraints_.empty())) {
+    throw std::invalid_argument(
+        "monotone_constraints and interaction_constraints are currently supported only for CPU training");
+  }
+
+  const InteractionConstraintSet interaction_constraint_set =
+      BuildInteractionConstraintSet(interaction_constraints_, pool.num_cols());
+  const InteractionConstraintSet* interaction_constraint_ptr =
+      interaction_constraint_set.groups.empty() ? nullptr : &interaction_constraint_set;
 
   const bool has_existing_state = continue_training && !trees_.empty();
   if (!continue_training) {
@@ -743,7 +1079,7 @@ void GradientBooster::Fit(Pool& pool,
   const auto& labels = pool.labels();
   const auto& weights = pool.weights();
   if (use_gpu_) {
-    workspace.gpu_hist_workspace = CreateGpuHistogramWorkspace(workspace.train_hist, weights);
+    workspace.gpu_hist_workspace = CreateGpuHistogramWorkspace(workspace.train_hist, weights, devices_);
   }
   LogFitMemorySnapshot(profiler, "post_workspace", pool, eval_pool, workspace);
   const std::vector<std::int64_t>* group_ids =
@@ -760,7 +1096,8 @@ void GradientBooster::Fit(Pool& pool,
                                                 trees_.size(),
                                                 learning_rate_,
                                                 use_gpu_,
-                                                prediction_dimension_)
+                                                prediction_dimension_,
+                                                devices_)
                               : std::vector<float>(
                                     pool.num_rows() *
                                         static_cast<std::size_t>(prediction_dimension_),
@@ -776,6 +1113,13 @@ void GradientBooster::Fit(Pool& pool,
   int completed_iterations = initial_completed_iterations;
   const int target_total_iterations = initial_completed_iterations + iterations_;
   bool early_stopped = false;
+  const BoostingType boosting_type = ParseBoostingType(boosting_type_);
+  const BootstrapType configured_bootstrap_type = ParseBootstrapType(bootstrap_type_);
+  std::vector<float> fixed_gradient_predictions;
+  if (boosting_type == BoostingType::kRandomForest) {
+    fixed_gradient_predictions.assign(workspace.predictions.size(), 0.0F);
+  }
+  const bool use_dart = boosting_type == BoostingType::kDart;
 
   const std::vector<float>* eval_labels = nullptr;
   const std::vector<float>* eval_weights = nullptr;
@@ -802,7 +1146,8 @@ void GradientBooster::Fit(Pool& pool,
                                                        trees_.size(),
                                                        learning_rate_,
                                                        use_gpu_,
-                                                       prediction_dimension_)
+                                                       prediction_dimension_,
+                                                       devices_)
                                      : std::vector<float>(
                                            eval_pool->num_rows() *
                                                static_cast<std::size_t>(prediction_dimension_),
@@ -826,19 +1171,80 @@ void GradientBooster::Fit(Pool& pool,
   for (int iteration = 0; iteration < iterations_; ++iteration) {
     const auto iteration_start = std::chrono::steady_clock::now();
     const int total_iteration = initial_completed_iterations + iteration;
+    BootstrapType iteration_bootstrap_type = configured_bootstrap_type;
+    if (boosting_type == BoostingType::kRandomForest &&
+        iteration_bootstrap_type == BootstrapType::kNone && subsample_ >= 1.0) {
+      iteration_bootstrap_type = BootstrapType::kPoisson;
+    } else if (iteration_bootstrap_type == BootstrapType::kNone && subsample_ < 1.0) {
+      iteration_bootstrap_type = BootstrapType::kBernoulli;
+    }
+    const std::vector<float> iteration_weights =
+        SampleRowWeights(weights, subsample_, iteration_bootstrap_type, rng_state_);
+    std::vector<float> dart_gradient_predictions;
+    std::vector<float> dropped_train_predictions;
+    std::vector<float> dropped_eval_predictions;
+    std::vector<std::size_t> dropped_iterations;
+    if (use_dart && !trees_.empty()) {
+      dropped_iterations = SampleDroppedTreeGroups(
+          num_iterations_trained(), drop_rate_, skip_drop_, max_drop_, rng_state_);
+      if (!dropped_iterations.empty()) {
+        dart_gradient_predictions = workspace.predictions;
+        dropped_train_predictions.assign(dart_gradient_predictions.size(), 0.0F);
+        if (eval_pool != nullptr) {
+          dropped_eval_predictions.assign(workspace.eval_predictions.size(), 0.0F);
+        }
+        for (const std::size_t dropped_iteration : dropped_iterations) {
+          AccumulateIterationPredictions(
+              trees_,
+              dropped_iteration,
+              workspace.train_hist,
+              learning_rate_,
+              prediction_dimension_,
+              dropped_train_predictions);
+          if (eval_pool != nullptr) {
+            AccumulateIterationPredictions(
+                trees_,
+                dropped_iteration,
+                workspace.eval_hist,
+                learning_rate_,
+                prediction_dimension_,
+                dropped_eval_predictions);
+          }
+        }
+        for (std::size_t index = 0; index < dart_gradient_predictions.size(); ++index) {
+          dart_gradient_predictions[index] -= dropped_train_predictions[index];
+        }
+      }
+    }
     const auto gradient_start = std::chrono::steady_clock::now();
-    objective_->compute_gradients(
-        workspace.predictions, labels, workspace.gradients, workspace.hessians, num_classes_, group_ids);
+    const std::vector<float>& gradient_predictions =
+        boosting_type == BoostingType::kRandomForest ? fixed_gradient_predictions
+        : (use_dart && !dart_gradient_predictions.empty()) ? dart_gradient_predictions
+                                                           : workspace.predictions;
+    objective_->compute_gradients(gradient_predictions,
+                                  labels,
+                                  workspace.gradients,
+                                  workspace.hessians,
+                                  num_classes_,
+                                  group_ids);
     const double gradient_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - gradient_start)
             .count();
     double tree_ms = 0.0;
     double prediction_ms = 0.0;
+    const double dropped_tree_scale =
+        dropped_iterations.empty() ? 1.0
+                                   : static_cast<double>(dropped_iterations.size()) /
+                                         static_cast<double>(dropped_iterations.size() + 1U);
+    const double new_tree_scale =
+        dropped_iterations.empty() ? 1.0
+                                   : 1.0 / static_cast<double>(dropped_iterations.size() + 1U);
 
     if (prediction_dimension_ == 1) {
       if (use_gpu_) {
         UploadHistogramTargetsGpu(
             workspace.gpu_hist_workspace.get(), workspace.gradients, workspace.hessians);
+        UploadHistogramWeightsGpu(workspace.gpu_hist_workspace.get(), iteration_weights);
       }
       Tree tree;
       const std::vector<int> allowed_features =
@@ -853,6 +1259,8 @@ void GradientBooster::Fit(Pool& pool,
           min_child_weight_,
           gamma_,
           allowed_features.empty() ? nullptr : &allowed_features,
+          monotone_constraints_.empty() ? nullptr : &monotone_constraints_,
+          interaction_constraint_ptr,
       };
       std::vector<std::size_t> training_row_indices;
       std::vector<LeafRowRange> training_leaf_ranges;
@@ -861,7 +1269,7 @@ void GradientBooster::Fit(Pool& pool,
           workspace.train_hist,
           workspace.gradients,
           workspace.hessians,
-          weights,
+          iteration_weights,
           build_options,
           workspace.gpu_hist_workspace.get(),
           &profiler,
@@ -876,11 +1284,29 @@ void GradientBooster::Fit(Pool& pool,
           total_iteration + 1, target_total_iterations, 0, prediction_dimension_, single_tree_ms);
 
       const auto prediction_start = std::chrono::steady_clock::now();
+      if (!dropped_iterations.empty()) {
+        for (const std::size_t dropped_iteration : dropped_iterations) {
+          ScaleTreeLeafWeights(trees_[dropped_iteration], dropped_tree_scale);
+        }
+        const float adjustment_scale = static_cast<float>(dropped_tree_scale - 1.0);
+        for (std::size_t index = 0; index < workspace.predictions.size(); ++index) {
+          workspace.predictions[index] += adjustment_scale * dropped_train_predictions[index];
+        }
+        if (eval_pool != nullptr) {
+          for (std::size_t index = 0; index < workspace.eval_predictions.size(); ++index) {
+            workspace.eval_predictions[index] +=
+                adjustment_scale * dropped_eval_predictions[index];
+          }
+        }
+      }
+      if (new_tree_scale != 1.0) {
+        ScaleTreeLeafWeights(tree, new_tree_scale);
+      }
       UpdatePredictionsFromLeafRanges(
           tree,
           training_row_indices,
           training_leaf_ranges,
-          learning_rate_,
+          learning_rate_ * new_tree_scale,
           prediction_dimension_,
           0,
           workspace.predictions);
@@ -888,7 +1314,7 @@ void GradientBooster::Fit(Pool& pool,
         UpdatePredictions(
             tree,
             workspace.eval_hist,
-            learning_rate_,
+            learning_rate_ * new_tree_scale,
             prediction_dimension_,
             0,
             workspace.eval_predictions);
@@ -904,7 +1330,7 @@ void GradientBooster::Fit(Pool& pool,
       std::vector<float> structure_hessians;
       BuildSharedMulticlassTargets(workspace.gradients,
                                    workspace.hessians,
-                                   weights,
+                                   iteration_weights,
                                    pool.num_rows(),
                                    prediction_dimension_,
                                    structure_gradients,
@@ -912,6 +1338,7 @@ void GradientBooster::Fit(Pool& pool,
       if (use_gpu_) {
         UploadHistogramTargetsGpu(
             workspace.gpu_hist_workspace.get(), structure_gradients, structure_hessians);
+        UploadHistogramWeightsGpu(workspace.gpu_hist_workspace.get(), iteration_weights);
       }
 
       Tree structure_tree;
@@ -927,6 +1354,8 @@ void GradientBooster::Fit(Pool& pool,
           min_child_weight_,
           gamma_,
           allowed_features.empty() ? nullptr : &allowed_features,
+          monotone_constraints_.empty() ? nullptr : &monotone_constraints_,
+          interaction_constraint_ptr,
       };
       std::vector<std::size_t> training_row_indices;
       std::vector<LeafRowRange> training_leaf_ranges;
@@ -934,7 +1363,7 @@ void GradientBooster::Fit(Pool& pool,
       structure_tree.Build(workspace.train_hist,
                            structure_gradients,
                            structure_hessians,
-                           weights,
+                           iteration_weights,
                            build_options,
                            workspace.gpu_hist_workspace.get(),
                            &profiler,
@@ -955,7 +1384,7 @@ void GradientBooster::Fit(Pool& pool,
           training_leaf_ranges,
           workspace.gradients,
           workspace.hessians,
-          weights,
+          iteration_weights,
           prediction_dimension_,
           lambda_l2_);
       tree_ms +=
@@ -968,12 +1397,35 @@ void GradientBooster::Fit(Pool& pool,
       }
 
       const auto prediction_start = std::chrono::steady_clock::now();
+      if (!dropped_iterations.empty()) {
+        for (const std::size_t dropped_iteration : dropped_iterations) {
+          for (int class_index = 0; class_index < prediction_dimension_; ++class_index) {
+            const std::size_t tree_index =
+                dropped_iteration * static_cast<std::size_t>(prediction_dimension_) +
+                static_cast<std::size_t>(class_index);
+            ScaleTreeLeafWeights(trees_[tree_index], dropped_tree_scale);
+          }
+        }
+        const float adjustment_scale = static_cast<float>(dropped_tree_scale - 1.0);
+        for (std::size_t index = 0; index < workspace.predictions.size(); ++index) {
+          workspace.predictions[index] += adjustment_scale * dropped_train_predictions[index];
+        }
+        if (eval_pool != nullptr) {
+          for (std::size_t index = 0; index < workspace.eval_predictions.size(); ++index) {
+            workspace.eval_predictions[index] +=
+                adjustment_scale * dropped_eval_predictions[index];
+          }
+        }
+      }
       for (int class_index = 0; class_index < prediction_dimension_; ++class_index) {
         Tree& tree = class_trees[static_cast<std::size_t>(class_index)];
+        if (new_tree_scale != 1.0) {
+          ScaleTreeLeafWeights(tree, new_tree_scale);
+        }
         UpdatePredictionsFromLeafRanges(tree,
                                         training_row_indices,
                                         training_leaf_ranges,
-                                        learning_rate_,
+                                        learning_rate_ * new_tree_scale,
                                         prediction_dimension_,
                                         class_index,
                                         workspace.predictions);
@@ -981,7 +1433,7 @@ void GradientBooster::Fit(Pool& pool,
           UpdatePredictionsFromLeafIndices(
               tree,
               eval_leaf_indices,
-              learning_rate_,
+              learning_rate_ * new_tree_scale,
               prediction_dimension_,
               class_index,
               workspace.eval_predictions);
@@ -1111,7 +1563,13 @@ std::vector<float> GradientBooster::Predict(const Pool& pool, int num_iteration)
     std::vector<std::int32_t> tree_offsets;
     const std::vector<GpuTreeNode> flattened_nodes = FlattenTreesForGpu(trees_, tree_limit, tree_offsets);
     PredictRawGpu(
-        hist, flattened_nodes, tree_offsets, static_cast<float>(learning_rate_), prediction_dimension_, predictions);
+        hist,
+        flattened_nodes,
+        tree_offsets,
+        static_cast<float>(learning_rate_),
+        prediction_dimension_,
+        predictions,
+        devices_);
     return predictions;
   }
 
@@ -1264,6 +1722,26 @@ double GradientBooster::alpha() const noexcept { return alpha_; }
 
 double GradientBooster::lambda_l2() const noexcept { return lambda_l2_; }
 
+double GradientBooster::subsample() const noexcept { return subsample_; }
+
+const std::string& GradientBooster::bootstrap_type() const noexcept { return bootstrap_type_; }
+
+const std::string& GradientBooster::boosting_type() const noexcept { return boosting_type_; }
+
+double GradientBooster::drop_rate() const noexcept { return drop_rate_; }
+
+double GradientBooster::skip_drop() const noexcept { return skip_drop_; }
+
+int GradientBooster::max_drop() const noexcept { return max_drop_; }
+
+const std::vector<int>& GradientBooster::monotone_constraints() const noexcept {
+  return monotone_constraints_;
+}
+
+const std::vector<std::vector<int>>& GradientBooster::interaction_constraints() const noexcept {
+  return interaction_constraints_;
+}
+
 double GradientBooster::colsample_bytree() const noexcept { return colsample_bytree_; }
 
 int GradientBooster::max_leaves() const noexcept { return max_leaves_; }
@@ -1290,6 +1768,10 @@ double GradientBooster::quantile_alpha() const noexcept {
 
 double GradientBooster::huber_delta() const noexcept {
   return objective_config_.huber_delta;
+}
+
+double GradientBooster::tweedie_variance_power() const noexcept {
+  return objective_config_.tweedie_variance_power;
 }
 
 bool GradientBooster::use_gpu() const noexcept { return use_gpu_; }

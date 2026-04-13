@@ -16,6 +16,7 @@
 #include "ctboost/booster.hpp"
 #include "ctboost/cuda_backend.hpp"
 #include "ctboost/data.hpp"
+#include "ctboost/feature_pipeline.hpp"
 #include "ctboost/histogram.hpp"
 #include "ctboost/objective.hpp"
 #include "ctboost/statistics.hpp"
@@ -278,6 +279,14 @@ py::dict BoosterToStateDict(const ctboost::GradientBooster& booster) {
   state["max_depth"] = booster.max_depth();
   state["alpha"] = booster.alpha();
   state["lambda_l2"] = booster.lambda_l2();
+  state["subsample"] = booster.subsample();
+  state["bootstrap_type"] = booster.bootstrap_type();
+  state["boosting_type"] = booster.boosting_type();
+  state["drop_rate"] = booster.drop_rate();
+  state["skip_drop"] = booster.skip_drop();
+  state["max_drop"] = booster.max_drop();
+  state["monotone_constraints"] = booster.monotone_constraints();
+  state["interaction_constraints"] = booster.interaction_constraints();
   state["colsample_bytree"] = booster.colsample_bytree();
   state["max_leaves"] = booster.max_leaves();
   state["min_data_in_leaf"] = booster.min_data_in_leaf();
@@ -289,6 +298,7 @@ py::dict BoosterToStateDict(const ctboost::GradientBooster& booster) {
   state["eval_metric_name"] = booster.eval_metric_name();
   state["quantile_alpha"] = booster.quantile_alpha();
   state["huber_delta"] = booster.huber_delta();
+  state["tweedie_variance_power"] = booster.tweedie_variance_power();
   state["devices"] = booster.devices();
   state["random_seed"] = booster.random_seed();
   state["rng_state"] = booster.rng_state();
@@ -333,6 +343,31 @@ ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
                                    py::cast<int>(state["max_depth"]),
                                    py::cast<double>(state["alpha"]),
                                    py::cast<double>(state["lambda_l2"]),
+                                   state.contains("subsample")
+                                       ? py::cast<double>(state["subsample"])
+                                       : 1.0,
+                                   state.contains("bootstrap_type")
+                                       ? py::cast<std::string>(state["bootstrap_type"])
+                                       : std::string("No"),
+                                   state.contains("boosting_type")
+                                       ? py::cast<std::string>(state["boosting_type"])
+                                       : std::string("GradientBoosting"),
+                                   state.contains("drop_rate")
+                                       ? py::cast<double>(state["drop_rate"])
+                                       : 0.1,
+                                   state.contains("skip_drop")
+                                       ? py::cast<double>(state["skip_drop"])
+                                       : 0.5,
+                                   state.contains("max_drop")
+                                       ? py::cast<int>(state["max_drop"])
+                                       : 0,
+                                   state.contains("monotone_constraints")
+                                       ? py::cast<std::vector<int>>(state["monotone_constraints"])
+                                       : std::vector<int>{},
+                                   state.contains("interaction_constraints")
+                                       ? py::cast<std::vector<std::vector<int>>>(
+                                             state["interaction_constraints"])
+                                       : std::vector<std::vector<int>>{},
                                    state.contains("colsample_bytree")
                                        ? py::cast<double>(state["colsample_bytree"])
                                        : 1.0,
@@ -354,6 +389,9 @@ ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
                                    py::cast<std::string>(state["eval_metric_name"]),
                                    py::cast<double>(state["quantile_alpha"]),
                                    py::cast<double>(state["huber_delta"]),
+                                   state.contains("tweedie_variance_power")
+                                       ? py::cast<double>(state["tweedie_variance_power"])
+                                       : 1.5,
                                    use_gpu ? "GPU" : "CPU",
                                    py::cast<std::string>(state["devices"]),
                                    state.contains("random_seed")
@@ -437,7 +475,92 @@ PYBIND11_MODULE(_core, m) {
       .def("cat_features", [](const ctboost::Pool& pool) {
         return pool.cat_features();
       })
+      .def("is_sparse", &ctboost::Pool::is_sparse)
+      .def_static("from_csc",
+                  [](py::array_t<float, py::array::forcecast> sparse_data,
+                     py::array_t<std::int64_t, py::array::forcecast> sparse_indices,
+                     py::array_t<std::int64_t, py::array::forcecast> sparse_indptr,
+                     std::size_t num_rows,
+                     std::size_t num_cols,
+                     py::array_t<float, py::array::forcecast> label,
+                     std::vector<int> cat_features,
+                     py::object weight,
+                     py::object group_id) {
+                    py::array_t<float, py::array::forcecast> resolved_weight;
+                    if (weight.is_none()) {
+                      const py::buffer_info label_info = label.request();
+                      py::array_t<float> ones(static_cast<py::ssize_t>(label_info.shape[0]));
+                      auto mutable_weights = ones.mutable_unchecked<1>();
+                      for (py::ssize_t index = 0; index < label_info.shape[0]; ++index) {
+                        mutable_weights(index) = 1.0F;
+                      }
+                      resolved_weight = std::move(ones);
+                    } else {
+                      resolved_weight = weight.cast<py::array_t<float, py::array::forcecast>>();
+                    }
+                    py::array_t<std::int64_t, py::array::forcecast> resolved_group_id;
+                    if (!group_id.is_none()) {
+                      resolved_group_id =
+                          group_id.cast<py::array_t<std::int64_t, py::array::forcecast>>();
+                    }
+                    return ctboost::Pool(sparse_data,
+                                         sparse_indices,
+                                         sparse_indptr,
+                                         num_rows,
+                                         num_cols,
+                                         label,
+                                         std::move(cat_features),
+                                         resolved_weight,
+                                         resolved_group_id);
+                  },
+                  py::arg("sparse_data"),
+                  py::arg("sparse_indices"),
+                  py::arg("sparse_indptr"),
+                  py::arg("num_rows"),
+                  py::arg("num_cols"),
+                  py::arg("label"),
+                  py::arg("cat_features") = std::vector<int>{},
+                  py::arg("weight") = py::none(),
+                  py::arg("group_id") = py::none())
       .def("set_feature_storage_releasable", &ctboost::Pool::SetFeatureStorageReleasable);
+
+  py::class_<ctboost::NativeFeaturePipeline>(m, "NativeFeaturePipeline")
+      .def(py::init<py::object,
+                    bool,
+                    py::object,
+                    bool,
+                    py::object,
+                    int,
+                    py::object,
+                    py::object,
+                    double,
+                    int>(),
+           py::arg("cat_features") = py::none(),
+           py::arg("ordered_ctr") = false,
+           py::arg("categorical_combinations") = py::none(),
+           py::arg("pairwise_categorical_combinations") = false,
+           py::arg("text_features") = py::none(),
+           py::arg("text_hash_dim") = 64,
+           py::arg("embedding_features") = py::none(),
+           py::arg("embedding_stats") = py::none(),
+           py::arg("ctr_prior_strength") = 1.0,
+           py::arg("random_seed") = 0)
+      .def("fit_array",
+           &ctboost::NativeFeaturePipeline::fit_array,
+           py::arg("raw_matrix"),
+           py::arg("labels"),
+           py::arg("feature_names") = py::none())
+      .def("fit_transform_array",
+           &ctboost::NativeFeaturePipeline::fit_transform_array,
+           py::arg("raw_matrix"),
+           py::arg("labels"),
+           py::arg("feature_names") = py::none())
+      .def("transform_array",
+           &ctboost::NativeFeaturePipeline::transform_array,
+           py::arg("raw_matrix"),
+           py::arg("feature_names") = py::none())
+      .def("to_state", &ctboost::NativeFeaturePipeline::to_state)
+      .def_static("from_state", &ctboost::NativeFeaturePipeline::FromState);
 
   py::class_<ctboost::GradientBooster>(m, "GradientBooster")
       .def(py::init<std::string,
@@ -447,6 +570,14 @@ PYBIND11_MODULE(_core, m) {
                     double,
                     double,
                     double,
+                    std::string,
+                    std::string,
+                    double,
+                    double,
+                    int,
+                    std::vector<int>,
+                    std::vector<std::vector<int>>,
+                    double,
                     int,
                     int,
                     double,
@@ -455,6 +586,7 @@ PYBIND11_MODULE(_core, m) {
                     std::size_t,
                     std::string,
                     std::string,
+                    double,
                     double,
                     double,
                     std::string,
@@ -467,6 +599,14 @@ PYBIND11_MODULE(_core, m) {
            py::arg("max_depth") = 6,
            py::arg("alpha") = 0.05,
            py::arg("lambda_l2") = 1.0,
+           py::arg("subsample") = 1.0,
+           py::arg("bootstrap_type") = "No",
+           py::arg("boosting_type") = "GradientBoosting",
+           py::arg("drop_rate") = 0.1,
+           py::arg("skip_drop") = 0.5,
+           py::arg("max_drop") = 0,
+           py::arg("monotone_constraints") = std::vector<int>{},
+           py::arg("interaction_constraints") = std::vector<std::vector<int>>{},
            py::arg("colsample_bytree") = 1.0,
            py::arg("max_leaves") = 0,
            py::arg("min_data_in_leaf") = 0,
@@ -478,6 +618,7 @@ PYBIND11_MODULE(_core, m) {
            py::arg("eval_metric") = "",
            py::arg("quantile_alpha") = 0.5,
            py::arg("huber_delta") = 1.0,
+           py::arg("tweedie_variance_power") = 1.5,
            py::arg("task_type") = "CPU",
            py::arg("devices") = "0",
            py::arg("random_seed") = 0,
@@ -545,6 +686,14 @@ PYBIND11_MODULE(_core, m) {
       .def("max_depth", &ctboost::GradientBooster::max_depth)
       .def("alpha", &ctboost::GradientBooster::alpha)
       .def("lambda_l2", &ctboost::GradientBooster::lambda_l2)
+      .def("subsample", &ctboost::GradientBooster::subsample)
+      .def("bootstrap_type", &ctboost::GradientBooster::bootstrap_type)
+      .def("boosting_type", &ctboost::GradientBooster::boosting_type)
+      .def("drop_rate", &ctboost::GradientBooster::drop_rate)
+      .def("skip_drop", &ctboost::GradientBooster::skip_drop)
+      .def("max_drop", &ctboost::GradientBooster::max_drop)
+      .def("monotone_constraints", &ctboost::GradientBooster::monotone_constraints)
+      .def("interaction_constraints", &ctboost::GradientBooster::interaction_constraints)
       .def("colsample_bytree", &ctboost::GradientBooster::colsample_bytree)
       .def("max_leaves", &ctboost::GradientBooster::max_leaves)
       .def("min_data_in_leaf", &ctboost::GradientBooster::min_data_in_leaf)
@@ -554,6 +703,7 @@ PYBIND11_MODULE(_core, m) {
       .def("nan_mode_name", &ctboost::GradientBooster::nan_mode_name)
       .def("quantile_alpha", &ctboost::GradientBooster::quantile_alpha)
       .def("huber_delta", &ctboost::GradientBooster::huber_delta)
+      .def("tweedie_variance_power", &ctboost::GradientBooster::tweedie_variance_power)
       .def("use_gpu", &ctboost::GradientBooster::use_gpu)
       .def("devices", &ctboost::GradientBooster::devices)
       .def("random_seed", &ctboost::GradientBooster::random_seed)
@@ -688,11 +838,20 @@ PYBIND11_MODULE(_core, m) {
         [](const std::string& objective_name,
            py::array_t<float, py::array::forcecast> preds,
            py::array_t<float, py::array::forcecast> labels,
-           int num_classes) {
+           int num_classes,
+           double quantile_alpha,
+           double huber_delta,
+           double tweedie_variance_power) {
           const auto pred_values = ArrayToVector(preds, "preds");
           const auto label_values = ArrayToVector(labels, "labels");
           std::unique_ptr<ctboost::ObjectiveFunction> objective =
-              ctboost::CreateObjectiveFunction(objective_name, ctboost::ObjectiveConfig{});
+              ctboost::CreateObjectiveFunction(
+                  objective_name,
+                  ctboost::ObjectiveConfig{
+                      huber_delta,
+                      quantile_alpha,
+                      tweedie_variance_power,
+                  });
 
           std::vector<float> gradients;
           std::vector<float> hessians;
@@ -703,7 +862,10 @@ PYBIND11_MODULE(_core, m) {
         py::arg("objective_name"),
         py::arg("preds"),
         py::arg("labels"),
-        py::arg("num_classes") = 1);
+        py::arg("num_classes") = 1,
+        py::arg("quantile_alpha") = 0.5,
+        py::arg("huber_delta") = 1.0,
+        py::arg("tweedie_variance_power") = 1.5);
 
   m.def("_debug_compute_pvalue",
         [](py::array_t<float, py::array::forcecast> gradients,
