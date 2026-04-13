@@ -25,6 +25,13 @@ struct GpuNodeStatistics {
   double gradient_square_sum{0.0};
 };
 
+struct GpuHistogramSnapshot {
+  std::vector<float> gradient_sums;
+  std::vector<float> hessian_sums;
+  std::vector<float> weight_sums;
+  GpuNodeStatistics node_statistics;
+};
+
 struct GpuFeatureSearchResult {
   std::uint32_t degrees_of_freedom{0};
   std::uint8_t split_valid{0};
@@ -34,6 +41,11 @@ struct GpuFeatureSearchResult {
   double p_value{1.0};
   double gain{0.0};
   std::uint8_t left_categories[kGpuCategoricalRouteBins]{};
+};
+
+struct GpuBestFeatureResult {
+  std::int32_t feature_id{-1};
+  GpuFeatureSearchResult search_result;
 };
 
 struct GpuNodeSearchResult {
@@ -65,6 +77,10 @@ void SelectHistogramTargetGpuClass(GpuHistogramWorkspace* workspace, std::size_t
 void ResetHistogramRowIndicesGpu(GpuHistogramWorkspace* workspace);
 void DownloadHistogramRowIndicesGpu(const GpuHistogramWorkspace* workspace,
                                     std::vector<std::size_t>& out_row_indices);
+void DownloadHistogramSnapshotGpu(const GpuHistogramWorkspace* workspace,
+                                  GpuHistogramSnapshot* out_snapshot);
+void UploadHistogramSnapshotGpu(GpuHistogramWorkspace* workspace,
+                                const GpuHistogramSnapshot& snapshot);
 std::size_t PartitionHistogramRowsGpu(
     GpuHistogramWorkspace* workspace,
     std::size_t row_begin,

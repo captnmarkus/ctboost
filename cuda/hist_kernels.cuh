@@ -51,6 +51,12 @@ __global__ void EvaluateFeatureSearchKernel(
     ctboost::GpuFeatureSearchResult* out_results,
     std::size_t num_features);
 
+__global__ void SelectBestFeatureKernel(
+    const ctboost::GpuFeatureSearchResult* feature_results,
+    const std::uint32_t* candidate_feature_indices,
+    std::size_t num_candidates,
+    ctboost::GpuBestFeatureResult* out_best_result);
+
 __global__ void PredictForestKernel(const std::uint8_t* bins_u8,
                                     const std::uint16_t* bins_u16,
                                     std::uint8_t bin_index_bytes,

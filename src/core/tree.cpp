@@ -59,6 +59,46 @@ double ComputeGradientVariance(double weighted_gradient_sum,
   return std::max(0.0, second_moment - mean_gradient * mean_gradient);
 }
 
+const QuantizationSchema& RequireQuantizationSchema(const QuantizationSchemaPtr& schema) {
+  if (schema == nullptr) {
+    throw std::runtime_error("tree quantization schema is not initialized");
+  }
+  return *schema;
+}
+
+GpuHistogramSnapshot SubtractGpuHistogramSnapshot(const GpuHistogramSnapshot& parent,
+                                                 const GpuHistogramSnapshot& child) {
+  if (parent.gradient_sums.size() != child.gradient_sums.size() ||
+      parent.hessian_sums.size() != child.hessian_sums.size() ||
+      parent.weight_sums.size() != child.weight_sums.size()) {
+    throw std::invalid_argument(
+        "GPU parent and child histogram snapshots must have matching buffer sizes");
+  }
+
+  GpuHistogramSnapshot derived;
+  derived.gradient_sums.resize(parent.gradient_sums.size(), 0.0F);
+  derived.hessian_sums.resize(parent.hessian_sums.size(), 0.0F);
+  derived.weight_sums.resize(parent.weight_sums.size(), 0.0F);
+  for (std::size_t index = 0; index < parent.gradient_sums.size(); ++index) {
+    derived.gradient_sums[index] = parent.gradient_sums[index] - child.gradient_sums[index];
+    derived.hessian_sums[index] =
+        std::max(0.0F, parent.hessian_sums[index] - child.hessian_sums[index]);
+    derived.weight_sums[index] =
+        std::max(0.0F, parent.weight_sums[index] - child.weight_sums[index]);
+  }
+
+  derived.node_statistics.sample_weight_sum = std::max(
+      0.0, parent.node_statistics.sample_weight_sum - child.node_statistics.sample_weight_sum);
+  derived.node_statistics.total_gradient =
+      parent.node_statistics.total_gradient - child.node_statistics.total_gradient;
+  derived.node_statistics.total_hessian =
+      std::max(0.0, parent.node_statistics.total_hessian - child.node_statistics.total_hessian);
+  derived.node_statistics.gradient_square_sum = std::max(
+      0.0,
+      parent.node_statistics.gradient_square_sum - child.node_statistics.gradient_square_sum);
+  return derived;
+}
+
 NodeHistogramSet ComputeNodeHistogramSet(const HistMatrix& hist,
                                          const std::vector<float>& gradients,
                                          const std::vector<float>& hessians,
@@ -350,7 +390,8 @@ void Tree::Build(const HistMatrix& hist,
                  GpuHistogramWorkspace* gpu_workspace,
                  const TrainingProfiler* profiler,
                  std::vector<std::size_t>* row_indices_out,
-                 std::vector<LeafRowRange>* leaf_row_ranges_out) {
+                 std::vector<LeafRowRange>* leaf_row_ranges_out,
+                 const QuantizationSchemaPtr& quantization_schema) {
   if (weights.size() != hist.num_rows) {
     throw std::invalid_argument("weight size must match the histogram row count");
   }
@@ -369,12 +410,15 @@ void Tree::Build(const HistMatrix& hist,
   }
 
   nodes_.clear();
-  num_bins_per_feature_ = hist.num_bins_per_feature;
-  cut_offsets_ = hist.cut_offsets;
-  cut_values_ = hist.cut_values;
-  categorical_mask_ = hist.categorical_mask;
-  missing_value_mask_ = hist.missing_value_mask;
-  nan_mode_ = hist.nan_mode;
+  if (quantization_schema != nullptr) {
+    if (quantization_schema->num_cols() != hist.num_cols) {
+      throw std::invalid_argument(
+          "tree quantization schema feature count must match the histogram feature count");
+    }
+    quantization_schema_ = quantization_schema;
+  } else {
+    quantization_schema_ = std::make_shared<QuantizationSchema>(MakeQuantizationSchema(hist));
+  }
   feature_importances_.assign(hist.num_cols, 0.0);
 
   std::vector<std::size_t> row_indices;
@@ -402,6 +446,8 @@ void Tree::Build(const HistMatrix& hist,
             options,
             gpu_workspace,
             nullptr,
+            false,
+            nullptr,
             0.0,
             profiler,
             statistic_engine,
@@ -426,6 +472,8 @@ int Tree::BuildNode(const HistMatrix& hist,
                     int depth,
                     const TreeBuildOptions& options,
                     GpuHistogramWorkspace* gpu_workspace,
+                    const GpuHistogramSnapshot* precomputed_gpu_histogram,
+                    bool precomputed_gpu_histogram_resident,
                     const NodeHistogramSet* precomputed_node_stats,
                     double precomputed_histogram_ms,
                     const TrainingProfiler* profiler,
@@ -435,15 +483,20 @@ int Tree::BuildNode(const HistMatrix& hist,
   const std::size_t row_count = row_end - row_begin;
   if (options.use_gpu) {
     (void)precomputed_node_stats;
-    (void)precomputed_histogram_ms;
     (void)statistic_engine;
 
     GpuNodeStatistics gpu_node_stats;
-    const auto histogram_start = std::chrono::steady_clock::now();
-    BuildHistogramsGpu(gpu_workspace, row_begin, row_end, &gpu_node_stats);
-    const double histogram_ms =
-        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - histogram_start)
-            .count();
+    double histogram_ms = precomputed_histogram_ms;
+    if (precomputed_gpu_histogram != nullptr) {
+      gpu_node_stats = precomputed_gpu_histogram->node_statistics;
+    } else {
+      const auto histogram_start = std::chrono::steady_clock::now();
+      BuildHistogramsGpu(gpu_workspace, row_begin, row_end, &gpu_node_stats);
+      histogram_ms =
+          std::chrono::duration<double, std::milli>(
+              std::chrono::steady_clock::now() - histogram_start)
+              .count();
+    }
     if (profiler != nullptr && profiler->enabled()) {
       profiler->LogNodeHistogram(depth, row_count, true, histogram_ms);
     }
@@ -467,6 +520,9 @@ int Tree::BuildNode(const HistMatrix& hist,
     }
 
     const auto search_start = std::chrono::steady_clock::now();
+    if (precomputed_gpu_histogram != nullptr && !precomputed_gpu_histogram_resident) {
+      UploadHistogramSnapshotGpu(gpu_workspace, *precomputed_gpu_histogram);
+    }
     GpuNodeSearchResult node_search;
     SearchBestNodeSplitGpu(gpu_workspace,
                            options.allowed_features,
@@ -475,6 +531,7 @@ int Tree::BuildNode(const HistMatrix& hist,
                            options.min_child_weight,
                            options.min_split_gain,
                            &node_search);
+    node_search.node_statistics = gpu_node_stats;
     const double feature_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - search_start)
             .count();
@@ -523,6 +580,14 @@ int Tree::BuildNode(const HistMatrix& hist,
       return node_index;
     }
 
+    GpuHistogramSnapshot parent_snapshot;
+    if (precomputed_gpu_histogram != nullptr) {
+      parent_snapshot = *precomputed_gpu_histogram;
+    } else {
+      DownloadHistogramSnapshotGpu(gpu_workspace, &parent_snapshot);
+      parent_snapshot.node_statistics = gpu_node_stats;
+    }
+
     const auto partition_start = std::chrono::steady_clock::now();
     const std::size_t left_end = PartitionHistogramRowsGpu(gpu_workspace,
                                                            row_begin,
@@ -558,6 +623,26 @@ int Tree::BuildNode(const HistMatrix& hist,
       return node_index;
     }
 
+    const bool build_left_direct = left_count <= right_count;
+    const std::size_t direct_begin = build_left_direct ? row_begin : left_end;
+    const std::size_t direct_end = build_left_direct ? left_end : row_end;
+    const auto direct_child_start = std::chrono::steady_clock::now();
+    GpuHistogramSnapshot direct_child_snapshot;
+    BuildHistogramsGpu(
+        gpu_workspace, direct_begin, direct_end, &direct_child_snapshot.node_statistics);
+    DownloadHistogramSnapshotGpu(gpu_workspace, &direct_child_snapshot);
+    const double direct_child_histogram_ms =
+        std::chrono::duration<double, std::milli>(
+            std::chrono::steady_clock::now() - direct_child_start)
+            .count();
+    const auto subtraction_start = std::chrono::steady_clock::now();
+    const GpuHistogramSnapshot sibling_child_snapshot =
+        SubtractGpuHistogramSnapshot(parent_snapshot, direct_child_snapshot);
+    const double sibling_child_histogram_ms =
+        std::chrono::duration<double, std::milli>(
+            std::chrono::steady_clock::now() - subtraction_start)
+            .count();
+
     nodes_[node_index].is_leaf = false;
     nodes_[node_index].split_feature_id = node_search.feature_id;
     nodes_[node_index].split_bin_index = node_search.split_bin;
@@ -569,40 +654,85 @@ int Tree::BuildNode(const HistMatrix& hist,
     if (leaf_count != nullptr) {
       ++(*leaf_count);
     }
-    nodes_[node_index].left_child =
-        BuildNode(hist,
-                  gradients,
-                  hessians,
-                  weights,
-                  row_indices,
-                  row_begin,
-                  left_end,
-                  depth + 1,
-                  options,
-                  gpu_workspace,
-                  nullptr,
-                  0.0,
-                  profiler,
-                  statistic_engine,
-                  leaf_row_ranges_out,
-                  leaf_count);
-    nodes_[node_index].right_child =
-        BuildNode(hist,
-                  gradients,
-                  hessians,
-                  weights,
-                  row_indices,
-                  left_end,
-                  row_end,
-                  depth + 1,
-                  options,
-                  gpu_workspace,
-                  nullptr,
-                  0.0,
-                  profiler,
-                  statistic_engine,
-                  leaf_row_ranges_out,
-                  leaf_count);
+    if (build_left_direct) {
+      nodes_[node_index].left_child =
+          BuildNode(hist,
+                    gradients,
+                    hessians,
+                    weights,
+                    row_indices,
+                    row_begin,
+                    left_end,
+                    depth + 1,
+                    options,
+                    gpu_workspace,
+                    &direct_child_snapshot,
+                    true,
+                    nullptr,
+                    direct_child_histogram_ms,
+                    profiler,
+                    statistic_engine,
+                    leaf_row_ranges_out,
+                    leaf_count);
+      nodes_[node_index].right_child =
+          BuildNode(hist,
+                    gradients,
+                    hessians,
+                    weights,
+                    row_indices,
+                    left_end,
+                    row_end,
+                    depth + 1,
+                    options,
+                    gpu_workspace,
+                    &sibling_child_snapshot,
+                    false,
+                    nullptr,
+                    sibling_child_histogram_ms,
+                    profiler,
+                    statistic_engine,
+                    leaf_row_ranges_out,
+                    leaf_count);
+    } else {
+      nodes_[node_index].right_child =
+          BuildNode(hist,
+                    gradients,
+                    hessians,
+                    weights,
+                    row_indices,
+                    left_end,
+                    row_end,
+                    depth + 1,
+                    options,
+                    gpu_workspace,
+                    &direct_child_snapshot,
+                    true,
+                    nullptr,
+                    direct_child_histogram_ms,
+                    profiler,
+                    statistic_engine,
+                    leaf_row_ranges_out,
+                    leaf_count);
+      nodes_[node_index].left_child =
+          BuildNode(hist,
+                    gradients,
+                    hessians,
+                    weights,
+                    row_indices,
+                    row_begin,
+                    left_end,
+                    depth + 1,
+                    options,
+                    gpu_workspace,
+                    &sibling_child_snapshot,
+                    false,
+                    nullptr,
+                    sibling_child_histogram_ms,
+                    profiler,
+                    statistic_engine,
+                    leaf_row_ranges_out,
+                    leaf_count);
+    }
     return node_index;
   }
 
@@ -833,6 +963,8 @@ int Tree::BuildNode(const HistMatrix& hist,
                 depth + 1,
                 options,
                 gpu_workspace,
+                nullptr,
+                false,
                 &left_child_stats,
                 left_child_histogram_ms,
                 profiler,
@@ -850,6 +982,8 @@ int Tree::BuildNode(const HistMatrix& hist,
                 depth + 1,
                 options,
                 gpu_workspace,
+                nullptr,
+                false,
                 &right_child_stats,
                 right_child_histogram_ms,
                 profiler,
@@ -960,6 +1094,22 @@ void Tree::SetLeafWeight(std::size_t node_index, float leaf_weight) {
   nodes_[node_index].leaf_weight = leaf_weight;
 }
 
+void Tree::SetQuantizationSchema(const QuantizationSchemaPtr& quantization_schema) {
+  quantization_schema_ = quantization_schema;
+}
+
+const QuantizationSchemaPtr& Tree::shared_quantization_schema() const noexcept {
+  return quantization_schema_;
+}
+
+void Tree::LoadState(std::vector<Node> nodes,
+                     const QuantizationSchemaPtr& quantization_schema,
+                     std::vector<double> feature_importances) {
+  nodes_ = std::move(nodes);
+  quantization_schema_ = quantization_schema;
+  feature_importances_ = std::move(feature_importances);
+}
+
 void Tree::LoadState(std::vector<Node> nodes,
                      std::vector<std::uint16_t> num_bins_per_feature,
                      std::vector<std::size_t> cut_offsets,
@@ -968,50 +1118,48 @@ void Tree::LoadState(std::vector<Node> nodes,
                      std::vector<std::uint8_t> missing_value_mask,
                      std::uint8_t nan_mode,
                      std::vector<double> feature_importances) {
-  nodes_ = std::move(nodes);
-  num_bins_per_feature_ = std::move(num_bins_per_feature);
-  cut_offsets_ = std::move(cut_offsets);
-  cut_values_ = std::move(cut_values);
-  categorical_mask_ = std::move(categorical_mask);
-  missing_value_mask_ = std::move(missing_value_mask);
-  nan_mode_ = nan_mode;
-  feature_importances_ = std::move(feature_importances);
+  auto quantization_schema = std::make_shared<QuantizationSchema>();
+  quantization_schema->num_bins_per_feature = std::move(num_bins_per_feature);
+  quantization_schema->cut_offsets = std::move(cut_offsets);
+  quantization_schema->cut_values = std::move(cut_values);
+  quantization_schema->categorical_mask = std::move(categorical_mask);
+  quantization_schema->missing_value_mask = std::move(missing_value_mask);
+  quantization_schema->nan_mode = nan_mode;
+  LoadState(std::move(nodes), quantization_schema, std::move(feature_importances));
 }
 
 const std::vector<Node>& Tree::nodes() const noexcept { return nodes_; }
 
-const std::vector<std::uint16_t>& Tree::num_bins_per_feature() const noexcept {
-  return num_bins_per_feature_;
+const std::vector<std::uint16_t>& Tree::num_bins_per_feature() const {
+  return RequireQuantizationSchema(quantization_schema_).num_bins_per_feature;
 }
 
-const std::vector<std::size_t>& Tree::cut_offsets() const noexcept { return cut_offsets_; }
-
-const std::vector<float>& Tree::cut_values() const noexcept { return cut_values_; }
-
-const std::vector<std::uint8_t>& Tree::categorical_mask() const noexcept {
-  return categorical_mask_;
+const std::vector<std::size_t>& Tree::cut_offsets() const {
+  return RequireQuantizationSchema(quantization_schema_).cut_offsets;
 }
 
-const std::vector<std::uint8_t>& Tree::missing_value_mask() const noexcept {
-  return missing_value_mask_;
+const std::vector<float>& Tree::cut_values() const {
+  return RequireQuantizationSchema(quantization_schema_).cut_values;
 }
 
-std::uint8_t Tree::nan_mode() const noexcept { return nan_mode_; }
+const std::vector<std::uint8_t>& Tree::categorical_mask() const {
+  return RequireQuantizationSchema(quantization_schema_).categorical_mask;
+}
+
+const std::vector<std::uint8_t>& Tree::missing_value_mask() const {
+  return RequireQuantizationSchema(quantization_schema_).missing_value_mask;
+}
+
+std::uint8_t Tree::nan_mode() const {
+  return RequireQuantizationSchema(quantization_schema_).nan_mode;
+}
 
 const std::vector<double>& Tree::feature_importances() const noexcept {
   return feature_importances_;
 }
 
 std::uint16_t Tree::BinValue(std::size_t feature_index, float value) const {
-  HistMatrix hist;
-  hist.num_cols = num_bins_per_feature_.size();
-  hist.num_bins_per_feature = num_bins_per_feature_;
-  hist.cut_offsets = cut_offsets_;
-  hist.cut_values = cut_values_;
-  hist.categorical_mask = categorical_mask_;
-  hist.missing_value_mask = missing_value_mask_;
-  hist.nan_mode = nan_mode_;
-  return hist.bin_value(feature_index, value);
+  return RequireQuantizationSchema(quantization_schema_).bin_value(feature_index, value);
 }
 
 }  // namespace ctboost

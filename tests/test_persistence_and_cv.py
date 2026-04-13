@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.datasets import make_classification, make_regression
 
 import ctboost
+import ctboost._core as _core
 
 
 def test_booster_save_load_and_staged_predict_round_trip(tmp_path: Path):
@@ -79,6 +80,53 @@ def test_booster_json_save_load_round_trip(tmp_path: Path):
     np.testing.assert_allclose(restored.predict(pool), booster.predict(pool), rtol=1e-6, atol=1e-6)
     assert restored.objective_name == booster.objective_name
     assert restored.eval_metric_name == booster.eval_metric_name
+
+
+def test_booster_state_stores_quantization_schema_once_and_loads_legacy_tree_schema():
+    X, y = make_regression(
+        n_samples=128,
+        n_features=6,
+        n_informative=4,
+        noise=0.1,
+        random_state=13,
+    )
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+
+    pool = ctboost.Pool(X, y)
+    booster = ctboost.train(
+        pool,
+        {
+            "objective": "RMSE",
+            "learning_rate": 0.2,
+            "max_depth": 3,
+            "alpha": 1.0,
+            "lambda_l2": 1.0,
+        },
+        num_boost_round=4,
+    )
+
+    state = dict(booster._handle.export_state())
+    assert "quantization_schema" in state
+    for tree_state in state["trees"]:
+        assert "num_bins_per_feature" not in tree_state
+        assert "cut_offsets" not in tree_state
+        assert "cut_values" not in tree_state
+        assert "categorical_mask" not in tree_state
+        assert "missing_value_mask" not in tree_state
+        assert "nan_mode" not in tree_state
+
+    legacy_state = dict(state)
+    quantization_schema = dict(legacy_state.pop("quantization_schema"))
+    legacy_tree_states = []
+    for tree_state in legacy_state["trees"]:
+        upgraded_tree_state = dict(tree_state)
+        upgraded_tree_state.update(quantization_schema)
+        legacy_tree_states.append(upgraded_tree_state)
+    legacy_state["trees"] = legacy_tree_states
+
+    restored = ctboost.Booster(_core.GradientBooster.from_state(legacy_state))
+    np.testing.assert_allclose(restored.predict(pool), booster.predict(pool), rtol=1e-6, atol=1e-6)
 
 
 def test_cv_returns_fold_aggregates():

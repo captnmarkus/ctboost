@@ -84,6 +84,43 @@ std::vector<std::uint16_t> ArrayToBinVector(py::array_t<std::int64_t, py::array:
   return out;
 }
 
+py::dict QuantizationSchemaToStateDict(const ctboost::QuantizationSchema& quantization_schema) {
+  py::dict state;
+  state["num_bins_per_feature"] = quantization_schema.num_bins_per_feature;
+  state["cut_offsets"] = quantization_schema.cut_offsets;
+  state["cut_values"] = quantization_schema.cut_values;
+  state["categorical_mask"] = quantization_schema.categorical_mask;
+  state["missing_value_mask"] = quantization_schema.missing_value_mask;
+  state["nan_mode"] = quantization_schema.nan_mode;
+  return state;
+}
+
+ctboost::QuantizationSchemaPtr QuantizationSchemaFromStateDict(const py::handle& handle) {
+  const py::dict state = handle.cast<py::dict>();
+  auto quantization_schema = std::make_shared<ctboost::QuantizationSchema>();
+  quantization_schema->num_bins_per_feature =
+      py::cast<std::vector<std::uint16_t>>(state["num_bins_per_feature"]);
+  quantization_schema->cut_offsets = py::cast<std::vector<std::size_t>>(state["cut_offsets"]);
+  quantization_schema->cut_values = py::cast<std::vector<float>>(state["cut_values"]);
+  quantization_schema->categorical_mask =
+      py::cast<std::vector<std::uint8_t>>(state["categorical_mask"]);
+  quantization_schema->missing_value_mask =
+      py::cast<std::vector<std::uint8_t>>(state["missing_value_mask"]);
+  quantization_schema->nan_mode = py::cast<std::uint8_t>(state["nan_mode"]);
+  return quantization_schema;
+}
+
+ctboost::QuantizationSchemaPtr QuantizationSchemaFromTreeStateDict(const py::dict& state) {
+  py::dict quantization_schema_state;
+  quantization_schema_state["num_bins_per_feature"] = state["num_bins_per_feature"];
+  quantization_schema_state["cut_offsets"] = state["cut_offsets"];
+  quantization_schema_state["cut_values"] = state["cut_values"];
+  quantization_schema_state["categorical_mask"] = state["categorical_mask"];
+  quantization_schema_state["missing_value_mask"] = state["missing_value_mask"];
+  quantization_schema_state["nan_mode"] = state["nan_mode"];
+  return QuantizationSchemaFromStateDict(quantization_schema_state);
+}
+
 py::tuple NodeToState(const ctboost::Node& node) {
   return py::make_tuple(node.is_leaf,
                         node.is_categorical_split,
@@ -200,17 +237,13 @@ py::dict TreeToStateDict(const ctboost::Tree& tree) {
 
   py::dict state;
   state["nodes"] = node_states;
-  state["num_bins_per_feature"] = tree.num_bins_per_feature();
-  state["cut_offsets"] = tree.cut_offsets();
-  state["cut_values"] = tree.cut_values();
-  state["categorical_mask"] = tree.categorical_mask();
-  state["missing_value_mask"] = tree.missing_value_mask();
-  state["nan_mode"] = tree.nan_mode();
   state["feature_importances"] = tree.feature_importances();
   return state;
 }
 
-ctboost::Tree TreeFromStateDict(const py::handle& handle) {
+ctboost::Tree TreeFromStateDict(const py::handle& handle,
+                                const ctboost::QuantizationSchemaPtr& shared_quantization_schema =
+                                    nullptr) {
   const py::dict state = handle.cast<py::dict>();
 
   std::vector<ctboost::Node> nodes;
@@ -218,15 +251,17 @@ ctboost::Tree TreeFromStateDict(const py::handle& handle) {
     nodes.push_back(NodeFromStateDict(node_handle));
   }
 
+  ctboost::QuantizationSchemaPtr quantization_schema = shared_quantization_schema;
+  if (quantization_schema == nullptr && state.contains("num_bins_per_feature")) {
+    quantization_schema = QuantizationSchemaFromTreeStateDict(state);
+  }
+  if (quantization_schema == nullptr) {
+    throw std::runtime_error("serialized tree state is missing quantization schema");
+  }
+
   ctboost::Tree tree;
-  tree.LoadState(std::move(nodes),
-                 py::cast<std::vector<std::uint16_t>>(state["num_bins_per_feature"]),
-                 py::cast<std::vector<std::size_t>>(state["cut_offsets"]),
-                 py::cast<std::vector<float>>(state["cut_values"]),
-                 py::cast<std::vector<std::uint8_t>>(state["categorical_mask"]),
-                 py::cast<std::vector<std::uint8_t>>(state["missing_value_mask"]),
-                 py::cast<std::uint8_t>(state["nan_mode"]),
-                 py::cast<std::vector<double>>(state["feature_importances"]));
+  tree.LoadState(
+      std::move(nodes), quantization_schema, py::cast<std::vector<double>>(state["feature_importances"]));
   return tree;
 }
 
@@ -259,6 +294,9 @@ py::dict BoosterToStateDict(const ctboost::GradientBooster& booster) {
   state["rng_state"] = booster.rng_state();
   state["task_type"] = booster.use_gpu() ? "GPU" : "CPU";
   state["verbose"] = booster.verbose();
+  if (const auto* quantization_schema = booster.quantization_schema(); quantization_schema != nullptr) {
+    state["quantization_schema"] = QuantizationSchemaToStateDict(*quantization_schema);
+  }
   state["trees"] = tree_states;
   state["loss_history"] = booster.loss_history();
   state["eval_loss_history"] = booster.eval_loss_history();
@@ -269,9 +307,20 @@ py::dict BoosterToStateDict(const ctboost::GradientBooster& booster) {
 }
 
 ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
+  const py::list tree_state_list = py::cast<py::list>(state["trees"]);
+  ctboost::QuantizationSchemaPtr quantization_schema;
+  if (state.contains("quantization_schema")) {
+    quantization_schema = QuantizationSchemaFromStateDict(state["quantization_schema"]);
+  } else if (!tree_state_list.empty()) {
+    const py::dict first_tree_state = tree_state_list[0].cast<py::dict>();
+    if (first_tree_state.contains("num_bins_per_feature")) {
+      quantization_schema = QuantizationSchemaFromTreeStateDict(first_tree_state);
+    }
+  }
+
   std::vector<ctboost::Tree> trees;
-  for (const py::handle tree_handle : py::cast<py::list>(state["trees"])) {
-    trees.push_back(TreeFromStateDict(tree_handle));
+  for (const py::handle tree_handle : tree_state_list) {
+    trees.push_back(TreeFromStateDict(tree_handle, quantization_schema));
   }
 
   const std::string task_type = py::cast<std::string>(state["task_type"]);
@@ -313,6 +362,7 @@ ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
                                    state.contains("verbose") ? py::cast<bool>(state["verbose"]) : false);
 
   booster.LoadState(std::move(trees),
+                    quantization_schema,
                     py::cast<std::vector<double>>(state["loss_history"]),
                     py::cast<std::vector<double>>(state["eval_loss_history"]),
                     std::vector<double>{},
@@ -521,10 +571,21 @@ PYBIND11_MODULE(_core, m) {
              const bool use_gpu = requested_gpu && ctboost::CudaBackendCompiled();
 
              std::vector<ctboost::Tree> trees;
-             for (const py::handle tree_handle : py::cast<py::list>(state["trees"])) {
-               trees.push_back(TreeFromStateDict(tree_handle));
+             const py::list tree_state_list = py::cast<py::list>(state["trees"]);
+             ctboost::QuantizationSchemaPtr quantization_schema;
+             if (state.contains("quantization_schema")) {
+               quantization_schema = QuantizationSchemaFromStateDict(state["quantization_schema"]);
+             } else if (!tree_state_list.empty()) {
+               const py::dict first_tree_state = tree_state_list[0].cast<py::dict>();
+               if (first_tree_state.contains("num_bins_per_feature")) {
+                 quantization_schema = QuantizationSchemaFromTreeStateDict(first_tree_state);
+               }
+             }
+             for (const py::handle tree_handle : tree_state_list) {
+               trees.push_back(TreeFromStateDict(tree_handle, quantization_schema));
              }
              booster.LoadState(std::move(trees),
+                               quantization_schema,
                                py::cast<std::vector<double>>(state["loss_history"]),
                                py::cast<std::vector<double>>(state["eval_loss_history"]),
                                std::vector<double>{},
@@ -577,8 +638,19 @@ PYBIND11_MODULE(_core, m) {
             upgraded_state["verbose"] = py::bool_(false);
 
             py::list tree_states;
+            py::dict quantization_schema_state;
+            bool quantization_schema_initialized = false;
             for (const py::handle tree_handle : state[14].cast<py::list>()) {
-              tree_states.append(TreeToStateDict(TreeFromState(tree_handle)));
+              const ctboost::Tree tree = TreeFromState(tree_handle);
+              if (!quantization_schema_initialized) {
+                quantization_schema_state =
+                    QuantizationSchemaToStateDict(*tree.shared_quantization_schema());
+                quantization_schema_initialized = true;
+              }
+              tree_states.append(TreeToStateDict(tree));
+            }
+            if (quantization_schema_initialized) {
+              upgraded_state["quantization_schema"] = quantization_schema_state;
             }
             upgraded_state["trees"] = tree_states;
             upgraded_state["loss_history"] = state[15];

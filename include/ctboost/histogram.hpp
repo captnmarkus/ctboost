@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -54,8 +55,29 @@ struct HistMatrix {
   std::uint8_t bin_storage_bytes() const noexcept;
   std::uint16_t bin_value(std::size_t feature_index, float value) const;
   std::size_t storage_bytes() const noexcept;
+  void ReleaseBinStorage() noexcept;
   void ReleaseStorage() noexcept;
 };
+
+struct QuantizationSchema {
+  std::vector<std::uint16_t> num_bins_per_feature;
+  std::vector<std::size_t> cut_offsets;
+  std::vector<float> cut_values;
+  std::vector<std::uint8_t> categorical_mask;
+  std::vector<std::uint8_t> missing_value_mask;
+  std::uint8_t nan_mode{static_cast<std::uint8_t>(NanMode::Min)};
+
+  std::size_t num_cols() const noexcept;
+  std::size_t num_bins(std::size_t feature_index) const;
+  bool is_categorical(std::size_t feature_index) const;
+  bool has_missing_values(std::size_t feature_index) const;
+  std::uint16_t bin_value(std::size_t feature_index, float value) const;
+  std::size_t storage_bytes() const noexcept;
+};
+
+QuantizationSchema MakeQuantizationSchema(const HistMatrix& hist);
+void ApplyQuantizationSchema(const QuantizationSchema& schema, HistMatrix& hist);
+using QuantizationSchemaPtr = std::shared_ptr<const QuantizationSchema>;
 
 class HistBuilder {
  public:

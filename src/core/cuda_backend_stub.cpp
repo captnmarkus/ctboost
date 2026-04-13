@@ -70,6 +70,20 @@ void DownloadHistogramRowIndicesGpu(const GpuHistogramWorkspace* workspace,
   throw std::runtime_error("CUDA histogram builder requested but CTBoost was compiled without CUDA");
 }
 
+void DownloadHistogramSnapshotGpu(const GpuHistogramWorkspace* workspace,
+                                  GpuHistogramSnapshot* out_snapshot) {
+  (void)workspace;
+  (void)out_snapshot;
+  throw std::runtime_error("CUDA histogram builder requested but CTBoost was compiled without CUDA");
+}
+
+void UploadHistogramSnapshotGpu(GpuHistogramWorkspace* workspace,
+                                const GpuHistogramSnapshot& snapshot) {
+  (void)workspace;
+  (void)snapshot;
+  throw std::runtime_error("CUDA histogram builder requested but CTBoost was compiled without CUDA");
+}
+
 std::size_t PartitionHistogramRowsGpu(
     GpuHistogramWorkspace* workspace,
     std::size_t row_begin,
