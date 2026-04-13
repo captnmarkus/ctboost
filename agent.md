@@ -53,13 +53,13 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 - CUDA remains an optional source-build capability rather than the default PyPI wheel path.
 - The release workflow publishes dedicated Linux `x86_64` CUDA wheels as GitHub release assets for CPython `3.10` through `3.14`.
 - The dedicated CUDA wheels are built in `manylinux2014`, require a detected CUDA toolkit via `CTBOOST_REQUIRE_CUDA=ON`, and run a dedicated GPU smoke test before upload.
-- As of April 14, 2026, the repository version is bumped to `0.1.22`, following the `0.1.19` release and the distributed TCP collective follow-up work.
+- As of April 14, 2026, the repository version is bumped to `0.1.23`, following the `0.1.19` release and the distributed TCP collective follow-up work.
 - The base wheel no longer hard-depends on `scikit-learn`; estimator and CV entry points are lazy-loaded and raise a clear import error if `scikit-learn` is absent.
 
 ## Release and Wheel Policy
 
 - Wheel builds are driven by `cibuildwheel`.
-- CPU wheel coverage targets Windows `amd64`, Linux `x86_64` and `aarch64`, and macOS `universal2`.
+- CPU wheel coverage targets Windows `amd64`, Linux `x86_64` and `aarch64`, and macOS `x86_64`.
 - Wheel coverage targets current supported CPython releases declared in project metadata.
 - Linux CPU wheels target the current `cibuildwheel` manylinux baseline (`manylinux_2_28`).
 - Linux GPU wheels target `manylinux2014` `x86_64` because the CUDA toolchain is provisioned inside that container.

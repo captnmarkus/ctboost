@@ -32,10 +32,10 @@ jobs:
             runner: windows-latest
             artifact: wheelhouse-windows-amd64
             cibw_archs: AMD64
-          - name: macos-universal2
+          - name: macos-x86_64
             runner: macos-latest
-            artifact: wheelhouse-macos-universal2
-            cibw_archs: universal2
+            artifact: wheelhouse-macos-x86_64
+            cibw_archs: x86_64
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -193,7 +193,7 @@ jobs:
       - name: Download macOS CPU wheel artifacts
         uses: actions/download-artifact@v5
         with:
-          name: wheelhouse-macos-universal2
+          name: wheelhouse-macos-x86_64
           path: dist
 
       - name: Download sdist artifact
