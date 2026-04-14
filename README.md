@@ -2,7 +2,7 @@
 
 CTBoost is a gradient boosting library built around Conditional Inference Trees, with a native C++17 core, Python bindings via `pybind11`, optional CUDA support for source builds, and an optional scikit-learn style API.
 
-The current codebase supports end-to-end training and prediction for regression, classification, grouped ranking, and survival, plus pandas and SciPy sparse ingestion without dense expansion, row weights and class imbalance controls, explicit missing-value handling, configurable validation metrics, stable JSON model persistence, staged prediction, warm-start continuation, a native C++ feature pipeline for categorical/text/embedding transforms with thin Python wrappers, and a built-in cross-validation helper.
+The current codebase supports end-to-end training and prediction for regression, classification, grouped ranking, and survival, plus pandas and SciPy sparse ingestion without dense expansion, row weights and class imbalance controls, explicit missing-value handling, configurable validation metrics, stable JSON model persistence, standalone Python export for prepared numeric models, staged prediction, warm-start continuation, a native C++ feature pipeline for categorical/text/embedding transforms with thin Python wrappers, reusable prepared training-data bundles, and a built-in cross-validation helper.
 
 ## Current Status
 
@@ -10,7 +10,7 @@ The current codebase supports end-to-end training and prediction for regression,
 - Python support: `3.8` through `3.14`
 - Packaging: `scikit-build-core`
 - CI/CD: GitHub Actions for CMake validation and `cibuildwheel` release builds
-- Repository version: `0.1.26`
+- Repository version: `0.1.27`
 - Status: actively evolving native + Python package
 
 ## What Works Today
@@ -50,14 +50,17 @@ The current codebase supports end-to-end training and prediction for regression,
 - Native `ctboost.FeaturePipeline` logic in `_core.NativeFeaturePipeline`, with low-level and sklearn integration for ordered CTRs, frequency-style CTRs, categorical crosses, low-cardinality one-hot expansion, rare-category bucketing, text hashing, and embedding-stat expansion
 - Generic categorical controls around the existing conditional tree learner: `one_hot_max_size` / `max_cat_to_onehot`, `max_cat_threshold`, `simple_ctr`, `combinations_ctr`, and `per_feature_ctr`
 - `ctboost.prepare_pool(...)` for low-level raw-data preparation, optional feature-pipeline fitting, and disk-backed external-memory pool staging
+- `ctboost.prepare_training_data(...)` plus `PreparedTrainingData` for one-time raw train/eval preparation that can be reused across repeated fits
 - Native CPU out-of-core fit through `ctboost.train(..., external_memory=True)`, which now spills quantized feature-bin columns to disk instead of keeping the full histogram matrix resident in RAM
 - Multi-host distributed training through `distributed_world_size`, `distributed_rank`, `distributed_root`, and `distributed_run_id`, with a native per-node histogram reduction path and a TCP collective backend available through `distributed_root="tcp://host:port"`
 - Distributed `eval_set`, multi-watchlist or multi-metric evaluation, callbacks, `early_stopping_rounds`, `init_model`, grouped ranking shards, and sklearn-estimator wrappers on the TCP collective backend
+- Filesystem-backed distributed runs now also fall back to a rank-0 coordinator path for advanced eval, callback, ranking, and GPU compatibility flows when TCP is not configured
 - Distributed GPU training when CUDA is available and `distributed_root` uses the TCP collective backend
 - Distributed raw-data feature-pipeline fitting across ranks for native categorical, text, and embedding preprocessing
 - Feature importance reporting
 - Leaf-index introspection and path-based prediction contributions
 - Continued training through `init_model` and estimator `warm_start`
+- Standalone pure-Python deployment export through `Booster.export_model(..., export_format="python")` and matching sklearn-estimator wrappers for numeric or already-prepared features
 - Build metadata reporting through `ctboost.build_info()`
 - CPU builds on standard CI runners
 - Optional CUDA compilation when building from source with a suitable toolkit
@@ -72,11 +75,11 @@ The current codebase supports end-to-end training and prediction for regression,
 
 ## Current Limitations
 
-- Ordered CTRs, frequency-style CTRs, categorical crosses, low-cardinality one-hot expansion, rare-category bucketing, text hashing, and embedding expansion now run through a native C++ pipeline, while pandas extraction, raw-data routing, and Pool orchestration remain thin Python glue
+- Ordered CTRs, frequency-style CTRs, categorical crosses, low-cardinality one-hot expansion, rare-category bucketing, text hashing, and embedding expansion now run through a native C++ pipeline, while pandas extraction, raw-data routing, and Pool orchestration remain thin Python glue; `ctboost.prepare_training_data(...)` reduces that repeated Python work when you need to fit multiple times on the same raw train/eval split
 - There is now a native sparse training path plus disk-backed quantized-bin staging through `ctboost.train(..., external_memory=True)` on both CPU and GPU, and distributed training can also use a standalone TCP collective coordinator through `distributed_root="tcp://host:port"`
-- The legacy filesystem-based distributed path still exists for basic CPU shard training, but distributed `eval_set` support and distributed GPU execution require the TCP backend
+- The legacy filesystem-based distributed path still exists for the native shard-reduction path; advanced eval, callback, ranking, and GPU compatibility workflows now fall back to a rank-0 coordinator path, while the TCP backend remains the true multi-rank path for those features
 - Distributed grouped/ranking training requires each `group_id` to live entirely on one worker shard; cross-rank query groups are rejected
-- Dedicated GPU wheel automation targets Linux `x86_64` CPython `3.10` through `3.14` release assets for Kaggle-style environments
+- Dedicated GPU wheel automation now targets Linux `x86_64` and Windows `amd64` CPython `3.10` through `3.14` release assets
 - CUDA wheel builds in CI depend on container-side toolkit provisioning
 
 ## Resolved Fold-Memory Hotspots
@@ -129,9 +132,9 @@ pip install -e .[sklearn]
 
 The release workflow is configured to publish CPU wheels for current CPython releases on Windows and Linux, plus macOS `x86_64` CPU wheels for CPython `3.10` through `3.14`, so standard `pip install ctboost` usage does not depend on a local compiler.
 
-Each tagged GitHub release also attaches the CPU wheels, the source distribution, and dedicated Linux `x86_64` CUDA wheels for CPython `3.10` through `3.14`. The GPU wheel filenames carry a `1gpu` build tag so the release can publish CPU and GPU artifacts for the same Python and platform tags without filename collisions.
+Each tagged GitHub release also attaches the CPU wheels, the source distribution, and dedicated Linux `x86_64` plus Windows `amd64` CUDA wheels for CPython `3.10` through `3.14`. The GPU wheel filenames carry a `1gpu` build tag so the release can publish CPU and GPU artifacts for the same Python and platform tags without filename collisions.
 
-The GPU release job installs the CUDA compiler plus the CUDA runtime development package, exports the toolkit paths into the build environment, and sets `CTBOOST_REQUIRE_CUDA=ON` so the wheel build fails instead of silently degrading to a CPU-only artifact. The release smoke test also checks that `ctboost.build_info()["cuda_enabled"]` is `True` before the GPU wheel is uploaded.
+The GPU release jobs install the CUDA toolkit in CI, export the toolkit paths into the build environment, and set `CTBOOST_REQUIRE_CUDA=ON` so the wheel build fails instead of silently degrading to a CPU-only artifact. The release smoke test also checks that `ctboost.build_info()["cuda_enabled"]` is `True` before the GPU wheel is uploaded.
 
 ### Kaggle GPU Install
 
@@ -143,7 +146,7 @@ import subprocess
 import sys
 import urllib.request
 
-tag = "v0.1.26"
+tag = "v0.1.27"
 py_tag = f"cp{sys.version_info.major}{sys.version_info.minor}"
 api_url = f"https://api.github.com/repos/captnmarkus/ctboost/releases/tags/{tag}"
 
@@ -372,6 +375,39 @@ booster = ctboost.train(
 raw_predictions = booster.predict(X)
 ```
 
+If you want to reuse the raw-data preparation work across repeated fits on the same split, prepare it once and then train against the prepared bundle:
+
+```python
+prepared = ctboost.prepare_training_data(
+    X_train,
+    {
+        "objective": "RMSE",
+        "ordered_ctr": True,
+        "cat_features": [0],
+        "text_features": [2],
+    },
+    label=y_train,
+    eval_set=[(X_valid, y_valid)],
+    eval_names=["holdout"],
+)
+
+booster = ctboost.train(
+    prepared,
+    {
+        "objective": "RMSE",
+        "learning_rate": 0.1,
+        "max_depth": 3,
+        "alpha": 1.0,
+        "lambda_l2": 1.0,
+        "ordered_ctr": True,
+        "cat_features": [0],
+        "text_features": [2],
+    },
+    num_boost_round=64,
+    early_stopping_rounds=10,
+)
+```
+
 For disk-backed pool staging on large folds:
 
 ```python
@@ -481,6 +517,7 @@ import ctboost
 booster.save_model("regression-model.json")
 restored = ctboost.load_model("regression-model.json")
 restored_predictions = restored.predict(pool)
+booster.export_model("standalone_predictor.py", export_format="python")
 
 continued = ctboost.train(
     pool,
@@ -506,6 +543,7 @@ cv_result = ctboost.cv(
 The scikit-learn compatible estimators also expose:
 
 - `save_model(...)`
+- `export_model(..., export_format="python")` for standalone numeric or already-prepared deployment scoring
 - `load_model(...)`
 - `staged_predict(...)`
 - `staged_predict_proba(...)` for classifiers
@@ -524,7 +562,9 @@ The main entry points are:
 
 - `ctboost.Pool`
 - `ctboost.FeaturePipeline`
+- `ctboost.PreparedTrainingData`
 - `ctboost.prepare_pool`
+- `ctboost.prepare_training_data`
 - `ctboost.train`
 - `ctboost.cv`
 - `ctboost.Booster`
@@ -575,7 +615,7 @@ Wheel builds are configured through `cibuildwheel` for:
 GitHub Actions workflows:
 
 - `.github/workflows/cmake.yml`: configures, builds, installs, and tests CPU builds on Ubuntu, Windows, and macOS for pushes and pull requests
-- `.github/workflows/publish.yml`: builds release wheels and the sdist, runs wheel smoke tests on built artifacts, publishes CPU wheels to PyPI, and attaches both CPU and Linux GPU wheels to tagged GitHub releases
+- `.github/workflows/publish.yml`: builds release wheels and the sdist, runs wheel smoke tests on built artifacts, publishes CPU wheels to PyPI, and attaches both CPU and Linux/Windows GPU wheels to tagged GitHub releases
 
 The standard PyPI release wheel workflow builds CPU-only wheels by setting:
 
@@ -583,7 +623,7 @@ The standard PyPI release wheel workflow builds CPU-only wheels by setting:
 cmake.define.CTBOOST_ENABLE_CUDA=OFF
 ```
 
-The Linux GPU release-wheel matrix enables CUDA separately with:
+The GPU release-wheel matrices enable CUDA separately with:
 
 ```text
 cmake.define.CTBOOST_ENABLE_CUDA=ON

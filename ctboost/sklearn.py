@@ -520,6 +520,19 @@ class _BaseCTBoost(BaseEstimator):
             model_format=model_format,
         )
 
+    def export_model(
+        self,
+        path: PathLike,
+        *,
+        export_format: Optional[str] = None,
+        prepared_features: bool = False,
+    ) -> None:
+        self._booster.export_model(
+            path,
+            export_format=export_format,
+            prepared_features=prepared_features,
+        )
+
     @classmethod
     def load_model(cls, path: PathLike) -> "_BaseCTBoost":
         destination = Path(path)

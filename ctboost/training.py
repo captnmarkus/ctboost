@@ -17,6 +17,7 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 import numpy as np
 
 from . import _core
+from ._export import export_model as _export_model
 from ._serialization import load_booster_document, save_booster
 from .core import Pool, _clone_pool
 from .distributed import (
@@ -41,6 +42,14 @@ class TrainingCallbackEnv:
     history: Dict[str, Dict[str, List[float]]]
     best_iteration: int
     best_score: Optional[float]
+
+
+@dataclass
+class PreparedTrainingData:
+    pool: Pool
+    eval_pools: List[Pool]
+    eval_names: List[str]
+    feature_pipeline: Optional[FeaturePipeline] = None
 
 
 def log_evaluation(period: int = 1) -> Callable[[TrainingCallbackEnv], bool]:
@@ -1217,6 +1226,104 @@ def _distributed_train(
     return Booster.load_model(model_path)
 
 
+def _filesystem_distributed_phase_config(
+    distributed: Dict[str, Any],
+    phase_name: str,
+) -> Dict[str, Any]:
+    return {
+        **distributed,
+        "root": str(Path(distributed["root"]) / distributed["run_id"]),
+        "run_id": phase_name,
+    }
+
+
+def _stage_filesystem_distributed_phase(
+    pool: Pool,
+    distributed: Dict[str, Any],
+    phase_name: str,
+) -> tuple[Path, List[Dict[str, Any]]]:
+    phase_config = _filesystem_distributed_phase_config(distributed, phase_name)
+    _write_distributed_shard(pool, phase_config)
+    phase_root = Path(phase_config["root"]) / phase_config["run_id"]
+    manifests = [
+        _load_manifest(path)
+        for path in _wait_for_manifests(
+            phase_root,
+            distributed["world_size"],
+            distributed["timeout"],
+        )
+    ]
+    return phase_root, manifests
+
+
+def _distributed_train_filesystem_compat(
+    pool: Pool,
+    config: Mapping[str, Any],
+    *,
+    distributed: Dict[str, Any],
+    iterations: int,
+    eval_pools: List[Pool],
+    eval_names: List[str],
+    feature_pipeline: Optional[FeaturePipeline],
+    early_stopping_rounds: Optional[int],
+    early_stopping_metric: Optional[str],
+    early_stopping_name: Optional[str],
+    callbacks: List[Callable[[TrainingCallbackEnv], Any]],
+    init_model: Any,
+) -> "Booster":
+    train_phase_root, train_manifests = _stage_filesystem_distributed_phase(
+        pool,
+        distributed,
+        "filesystem_compat_train",
+    )
+    eval_phase_roots: List[Path] = []
+    eval_phase_manifests: List[List[Dict[str, Any]]] = []
+    for eval_index, eval_pool in enumerate(eval_pools):
+        phase_root, manifests = _stage_filesystem_distributed_phase(
+            eval_pool,
+            distributed,
+            f"filesystem_compat_eval_{eval_index:02d}",
+        )
+        eval_phase_roots.append(phase_root)
+        eval_phase_manifests.append(manifests)
+
+    compat_root = Path(distributed["root"]) / distributed["run_id"] / "filesystem_compat"
+    compat_root.mkdir(parents=True, exist_ok=True)
+    model_path = compat_root / "model.ctboost"
+    done_path = compat_root / "done.txt"
+
+    if distributed["rank"] == 0:
+        merged_pool = _merge_distributed_shards(train_phase_root, train_manifests)
+        merged_eval_pools = [
+            _merge_distributed_shards(phase_root, manifests)
+            for phase_root, manifests in zip(eval_phase_roots, eval_phase_manifests)
+        ]
+        merged_params = _strip_distributed_params(config)
+        prepared = PreparedTrainingData(
+            pool=merged_pool,
+            eval_pools=merged_eval_pools,
+            eval_names=list(eval_names),
+            feature_pipeline=feature_pipeline,
+        )
+        booster = train(
+            prepared,
+            merged_params,
+            num_boost_round=iterations,
+            early_stopping_rounds=early_stopping_rounds,
+            early_stopping_metric=early_stopping_metric,
+            early_stopping_name=early_stopping_name,
+            callbacks=callbacks,
+            init_model=init_model,
+        )
+        booster.save_model(model_path)
+        done_path.write_text("ok\n", encoding="utf-8")
+        return booster
+
+    _wait_for_path(done_path, distributed["timeout"])
+    _wait_for_path(model_path, distributed["timeout"])
+    return Booster.load_model(model_path)
+
+
 def _feature_name_to_index_map(pool: Pool) -> Optional[Dict[str, int]]:
     if pool.feature_names is None:
         return None
@@ -1697,6 +1804,136 @@ def _distributed_is_root(distributed: Optional[Dict[str, Any]]) -> bool:
     return distributed is None or int(distributed["rank"]) == 0
 
 
+def prepare_training_data(
+    pool: Any,
+    params: Mapping[str, Any],
+    *,
+    label: Any = None,
+    weight: Any = None,
+    group_id: Any = None,
+    feature_names: Optional[List[str]] = None,
+    eval_set: Any = None,
+    eval_names: Any = None,
+    init_model: Any = None,
+) -> PreparedTrainingData:
+    if isinstance(pool, PreparedTrainingData):
+        if label is not None or weight is not None or group_id is not None or feature_names is not None:
+            raise ValueError(
+                "label, weight, group_id, and feature_names cannot be passed when pool is PreparedTrainingData"
+            )
+        if eval_set is not None or eval_names is not None:
+            raise ValueError("eval_set and eval_names cannot be passed when pool is PreparedTrainingData")
+        return pool
+
+    config = dict(params)
+    distributed_config = _normalize_distributed_config(config)
+    init_pipeline = _resolve_init_model_pipeline(init_model)
+    shared_feature_pipeline = init_pipeline
+
+    if isinstance(pool, Pool):
+        if label is not None or weight is not None or group_id is not None or feature_names is not None:
+            pool = _pool_from_data_and_label(
+                pool,
+                label,
+                group_id=group_id,
+                weight=weight,
+                feature_names=feature_names,
+            )
+    else:
+        if label is None:
+            raise ValueError("label must be provided when training data is not a Pool")
+        if init_pipeline is not None:
+            if uses_feature_pipeline_params(config):
+                _assert_compatible_feature_pipeline(init_pipeline, config)
+            shared_feature_pipeline = init_pipeline
+            pool = _prepare_pool_from_raw(
+                pool,
+                label,
+                group_id=group_id,
+                weight=weight,
+                feature_names=feature_names,
+                params=config,
+                feature_pipeline=shared_feature_pipeline,
+                fit_feature_pipeline=False,
+            )
+        elif distributed_config is not None and uses_feature_pipeline_params(config):
+            if distributed_config["backend"] == "tcp":
+                with _distributed_collective_context(distributed_config):
+                    pool, shared_feature_pipeline = _prepare_distributed_feature_pipeline_pool(
+                        pool,
+                        label,
+                        group_id=group_id,
+                        weight=weight,
+                        feature_names=feature_names,
+                        params=config,
+                        distributed=distributed_config,
+                    )
+            else:
+                pool, shared_feature_pipeline = _prepare_distributed_feature_pipeline_pool(
+                    pool,
+                    label,
+                    group_id=group_id,
+                    weight=weight,
+                    feature_names=feature_names,
+                    params=config,
+                    distributed=distributed_config,
+                )
+        else:
+            pool = _prepare_pool_from_raw(
+                pool,
+                label,
+                group_id=group_id,
+                weight=weight,
+                feature_names=feature_names,
+                params=config,
+            )
+    if not isinstance(pool, Pool):
+        raise TypeError("pool must be an instance of ctboost.Pool")
+
+    feature_pipeline = getattr(pool, "_feature_pipeline", None) or shared_feature_pipeline
+    normalized_eval_sets = _normalize_eval_sets(eval_set)
+    resolved_eval_names = _normalize_eval_names(eval_names, len(normalized_eval_sets))
+    eval_pools: List[Pool] = []
+    for normalized_eval_set in normalized_eval_sets:
+        if isinstance(normalized_eval_set, Pool):
+            eval_pools.append(normalized_eval_set)
+            continue
+        if len(normalized_eval_set) == 2:
+            X_eval, y_eval = normalized_eval_set
+            eval_group_id = None
+        else:
+            X_eval, y_eval, eval_group_id = normalized_eval_set
+        if feature_pipeline is not None:
+            eval_pools.append(
+                _prepare_pool_from_raw(
+                    X_eval,
+                    y_eval,
+                    group_id=eval_group_id,
+                    params=config,
+                    feature_pipeline=feature_pipeline,
+                    fit_feature_pipeline=False,
+                    use_eval_external_memory=True,
+                )
+            )
+        else:
+            eval_pools.append(
+                _prepare_pool_from_raw(
+                    X_eval,
+                    y_eval,
+                    group_id=eval_group_id,
+                    params=config,
+                    use_eval_external_memory=True,
+                )
+            )
+
+    return PreparedTrainingData(
+        pool=pool,
+        eval_pools=eval_pools,
+        eval_names=resolved_eval_names,
+        feature_pipeline=feature_pipeline,
+    )
+
+
 class Booster:
     """Small Python wrapper around the native gradient booster."""
 
@@ -1799,6 +2036,21 @@ class Booster:
             if self._feature_pipeline is None
             else self._feature_pipeline.to_state(),
             training_state=self._training_metadata,
+        )
+
+    def export_model(
+        self,
+        path: PathLike,
+        *,
+        export_format: Optional[str] = None,
+        prepared_features: bool = False,
+    ) -> None:
+        _export_model(
+            path,
+            self._handle,
+            export_format=export_format,
+            feature_pipeline=self._feature_pipeline,
+            prepared_features=prepared_features,
         )
 
     @classmethod
@@ -1999,38 +2251,65 @@ def train(
     init_model: Any = None,
 ) -> Booster:
     config = dict(params)
+    prepared_inputs = pool if isinstance(pool, PreparedTrainingData) else None
     distributed_config = _normalize_distributed_config(config)
-    init_pipeline = _resolve_init_model_pipeline(init_model)
-    shared_feature_pipeline = init_pipeline
-    if isinstance(pool, Pool):
+    if prepared_inputs is not None:
         if label is not None or weight is not None or group_id is not None or feature_names is not None:
-            pool = _pool_from_data_and_label(
-                pool,
-                label,
-                group_id=group_id,
-                weight=weight,
-                feature_names=feature_names,
+            raise ValueError(
+                "label, weight, group_id, and feature_names cannot be passed when pool is PreparedTrainingData"
             )
+        if eval_set is not None or eval_names is not None:
+            raise ValueError("eval_set and eval_names cannot be passed when pool is PreparedTrainingData")
+        prepared_pool = prepared_inputs.pool
+        if not isinstance(prepared_pool, Pool):
+            raise TypeError("PreparedTrainingData.pool must be an instance of ctboost.Pool")
+        pool = prepared_pool
+        feature_pipeline = prepared_inputs.feature_pipeline or getattr(pool, "_feature_pipeline", None)
+        eval_pools = list(prepared_inputs.eval_pools)
+        resolved_eval_names = list(prepared_inputs.eval_names)
+        default_eval_names = _normalize_eval_names(None, len(eval_pools))
     else:
-        if label is None:
-            raise ValueError("label must be provided when training data is not a Pool")
-        if init_pipeline is not None:
-            if uses_feature_pipeline_params(config):
-                _assert_compatible_feature_pipeline(init_pipeline, config)
-            shared_feature_pipeline = init_pipeline
-            pool = _prepare_pool_from_raw(
-                pool,
-                label,
-                group_id=group_id,
-                weight=weight,
-                feature_names=feature_names,
-                params=config,
-                feature_pipeline=shared_feature_pipeline,
-                fit_feature_pipeline=False,
-            )
-        elif distributed_config is not None and uses_feature_pipeline_params(config):
-            if distributed_config["backend"] == "tcp":
-                with _distributed_collective_context(distributed_config):
+        init_pipeline = _resolve_init_model_pipeline(init_model)
+        shared_feature_pipeline = init_pipeline
+        if isinstance(pool, Pool):
+            if label is not None or weight is not None or group_id is not None or feature_names is not None:
+                pool = _pool_from_data_and_label(
+                    pool,
+                    label,
+                    group_id=group_id,
+                    weight=weight,
+                    feature_names=feature_names,
+                )
+        else:
+            if label is None:
+                raise ValueError("label must be provided when training data is not a Pool")
+            if init_pipeline is not None:
+                if uses_feature_pipeline_params(config):
+                    _assert_compatible_feature_pipeline(init_pipeline, config)
+                shared_feature_pipeline = init_pipeline
+                pool = _prepare_pool_from_raw(
+                    pool,
+                    label,
+                    group_id=group_id,
+                    weight=weight,
+                    feature_names=feature_names,
+                    params=config,
+                    feature_pipeline=shared_feature_pipeline,
+                    fit_feature_pipeline=False,
+                )
+            elif distributed_config is not None and uses_feature_pipeline_params(config):
+                if distributed_config["backend"] == "tcp":
+                    with _distributed_collective_context(distributed_config):
+                        pool, shared_feature_pipeline = _prepare_distributed_feature_pipeline_pool(
+                            pool,
+                            label,
+                            group_id=group_id,
+                            weight=weight,
+                            feature_names=feature_names,
+                            params=config,
+                            distributed=distributed_config,
+                        )
+                else:
                     pool, shared_feature_pipeline = _prepare_distributed_feature_pipeline_pool(
                         pool,
                         label,
@@ -2041,64 +2320,54 @@ def train(
                         distributed=distributed_config,
                     )
             else:
-                pool, shared_feature_pipeline = _prepare_distributed_feature_pipeline_pool(
+                pool = _prepare_pool_from_raw(
                     pool,
                     label,
                     group_id=group_id,
                     weight=weight,
                     feature_names=feature_names,
                     params=config,
-                    distributed=distributed_config,
                 )
-        else:
-            pool = _prepare_pool_from_raw(
-                pool,
-                label,
-                group_id=group_id,
-                weight=weight,
-                feature_names=feature_names,
-                params=config,
-            )
-    if not isinstance(pool, Pool):
-        raise TypeError("pool must be an instance of ctboost.Pool")
+        if not isinstance(pool, Pool):
+            raise TypeError("pool must be an instance of ctboost.Pool")
 
-    feature_pipeline = getattr(pool, "_feature_pipeline", None) or shared_feature_pipeline
+        feature_pipeline = getattr(pool, "_feature_pipeline", None) or shared_feature_pipeline
 
-    normalized_eval_sets = _normalize_eval_sets(eval_set)
-    resolved_eval_names = _normalize_eval_names(eval_names, len(normalized_eval_sets))
-    default_eval_names = _normalize_eval_names(None, len(normalized_eval_sets))
-    eval_pools: List[Pool] = []
-    for normalized_eval_set in normalized_eval_sets:
-        if isinstance(normalized_eval_set, Pool):
-            eval_pools.append(normalized_eval_set)
-            continue
-        if len(normalized_eval_set) == 2:
-            X_eval, y_eval = normalized_eval_set
-            eval_group_id = None
-        else:
-            X_eval, y_eval, eval_group_id = normalized_eval_set
-        if feature_pipeline is not None:
-            eval_pools.append(
-                _prepare_pool_from_raw(
-                    X_eval,
-                    y_eval,
-                    group_id=eval_group_id,
-                    params=config,
-                    feature_pipeline=feature_pipeline,
-                    fit_feature_pipeline=False,
-                    use_eval_external_memory=True,
+        normalized_eval_sets = _normalize_eval_sets(eval_set)
+        resolved_eval_names = _normalize_eval_names(eval_names, len(normalized_eval_sets))
+        default_eval_names = _normalize_eval_names(None, len(normalized_eval_sets))
+        eval_pools = []
+        for normalized_eval_set in normalized_eval_sets:
+            if isinstance(normalized_eval_set, Pool):
+                eval_pools.append(normalized_eval_set)
+                continue
+            if len(normalized_eval_set) == 2:
+                X_eval, y_eval = normalized_eval_set
+                eval_group_id = None
+            else:
+                X_eval, y_eval, eval_group_id = normalized_eval_set
+            if feature_pipeline is not None:
+                eval_pools.append(
+                    _prepare_pool_from_raw(
+                        X_eval,
+                        y_eval,
+                        group_id=eval_group_id,
+                        params=config,
+                        feature_pipeline=feature_pipeline,
+                        fit_feature_pipeline=False,
+                        use_eval_external_memory=True,
+                    )
                 )
-            )
-        else:
-            eval_pools.append(
-                _prepare_pool_from_raw(
-                    X_eval,
-                    y_eval,
-                    group_id=eval_group_id,
-                    params=config,
-                    use_eval_external_memory=True,
+            else:
+                eval_pools.append(
+                    _prepare_pool_from_raw(
+                        X_eval,
+                        y_eval,
+                        group_id=eval_group_id,
+                        params=config,
+                        use_eval_external_memory=True,
+                    )
                 )
-            )
 
     if callbacks is None:
         callback_list: List[Callable[[TrainingCallbackEnv], Any]] = []
@@ -2388,6 +2657,32 @@ def train(
         or len(eval_metric_names) > 1
         or resolved_eval_names != default_eval_names
     )
+
+    filesystem_compat_required = (
+        distributed_config is not None
+        and distributed_config["backend"] != "tcp"
+        and (
+            task_type.upper() == "GPU"
+            or bool(eval_pools)
+            or use_python_eval_surface
+            or pool.group_id is not None
+        )
+    )
+    if filesystem_compat_required:
+        return _distributed_train_filesystem_compat(
+            pool,
+            config,
+            distributed=distributed_config,
+            iterations=iterations,
+            eval_pools=eval_pools,
+            eval_names=resolved_eval_names,
+            feature_pipeline=feature_pipeline,
+            early_stopping_rounds=early_stopping_rounds,
+            early_stopping_metric=early_stopping_metric,
+            early_stopping_name=early_stopping_name,
+            callbacks=callback_list,
+            init_model=init_model,
+        )
 
     if distributed_config is not None:
         if task_type.upper() == "GPU" and distributed_config["backend"] != "tcp":

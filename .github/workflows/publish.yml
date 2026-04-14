@@ -171,12 +171,82 @@ jobs:
           name: ${{ matrix.artifact }}
           path: wheelhouse/*.whl
 
+  build_gpu_windows_wheels:
+    name: Build GPU Windows wheel (${{ matrix.python_abi }})
+    if: |
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
+      (github.event_name == 'workflow_dispatch' && startsWith(github.ref_name, 'v'))
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python_abi: cp310
+            cibw_build: cp310-win_amd64
+            artifact: wheelhouse-gpu-windows-cp310
+          - python_abi: cp311
+            cibw_build: cp311-win_amd64
+            artifact: wheelhouse-gpu-windows-cp311
+          - python_abi: cp312
+            cibw_build: cp312-win_amd64
+            artifact: wheelhouse-gpu-windows-cp312
+          - python_abi: cp313
+            cibw_build: cp313-win_amd64
+            artifact: wheelhouse-gpu-windows-cp313
+          - python_abi: cp314
+            cibw_build: cp314-win_amd64
+            artifact: wheelhouse-gpu-windows-cp314
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+
+      - name: Install CUDA toolkit
+        id: cuda-toolkit
+        uses: Jimver/cuda-toolkit@v0.2.29
+        with:
+          cuda: "12.0.0"
+
+      - name: Install cibuildwheel
+        run: python -m pip install --upgrade pip "cibuildwheel==3.4.1"
+
+      - name: Build GPU Windows wheel
+        env:
+          CIBW_BUILD: ${{ matrix.cibw_build }}
+          CIBW_ARCHS: AMD64
+          CIBW_BUILD_VERBOSITY: 3
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: >-
+            python -X faulthandler -m pytest {project}/tests/test_gpu_wheel_smoke.py -q
+          CIBW_CONFIG_SETTINGS: >-
+            cmake.define.CTBOOST_ENABLE_CUDA=ON
+            cmake.define.CTBOOST_REQUIRE_CUDA=ON
+            wheel.build-tag=1gpu
+          CIBW_ENVIRONMENT_WINDOWS: >-
+            CTBOOST_EXPECT_CUDA=1
+            CUDA_PATH=${{ steps.cuda-toolkit.outputs.CUDA_PATH }}
+            CUDAToolkit_ROOT=${{ steps.cuda-toolkit.outputs.CUDA_PATH }}
+            CUDACXX=${{ steps.cuda-toolkit.outputs.CUDA_PATH }}\\bin\\nvcc.exe
+            PATH=${{ steps.cuda-toolkit.outputs.CUDA_PATH }}\\bin;$PATH
+        run: python -m cibuildwheel --output-dir wheelhouse
+
+      - name: Upload GPU Windows wheel artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ matrix.artifact }}
+          path: wheelhouse/*.whl
+
   publish_pypi:
     name: Publish to PyPI
     needs:
       - build_wheels
       - build_sdist
       - build_gpu_linux_wheels
+      - build_gpu_windows_wheels
     if: |
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
       (github.event_name == 'workflow_dispatch' && startsWith(github.ref_name, 'v'))
@@ -225,6 +295,7 @@ jobs:
       - build_wheels
       - build_sdist
       - build_gpu_linux_wheels
+      - build_gpu_windows_wheels
     if: |
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
       (github.event_name == 'workflow_dispatch' && startsWith(github.ref_name, 'v'))
