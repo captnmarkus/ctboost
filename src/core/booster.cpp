@@ -2105,6 +2105,13 @@ void GradientBooster::Fit(Pool& pool,
   finish_fit(total_fit_ms);
 }
 
+void GradientBooster::SetIterations(int iterations) {
+  if (iterations <= 0) {
+    throw std::invalid_argument("iterations must be positive");
+  }
+  iterations_ = iterations;
+}
+
 std::vector<float> GradientBooster::Predict(const Pool& pool, int num_iteration) const {
   std::size_t tree_limit = trees_.size();
   if (num_iteration >= 0) {

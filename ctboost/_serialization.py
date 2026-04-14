@@ -71,6 +71,7 @@ def _booster_document(
     handle: Any,
     *,
     feature_pipeline_state: Optional[Dict[str, Any]] = None,
+    training_state: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     document = {
         "schema_version": MODEL_SCHEMA_VERSION,
@@ -79,6 +80,8 @@ def _booster_document(
     }
     if feature_pipeline_state is not None:
         document["feature_pipeline_state"] = _serialize_json_value(feature_pipeline_state)
+    if training_state is not None:
+        document["training_state"] = _serialize_json_value(training_state)
     return document
 
 
@@ -96,10 +99,15 @@ def save_booster(
     *,
     model_format: Optional[str] = None,
     feature_pipeline_state: Optional[Dict[str, Any]] = None,
+    training_state: Optional[Dict[str, Any]] = None,
 ) -> None:
     resolved_format = _normalize_model_format(path, model_format)
     path.parent.mkdir(parents=True, exist_ok=True)
-    document = _booster_document(handle, feature_pipeline_state=feature_pipeline_state)
+    document = _booster_document(
+        handle,
+        feature_pipeline_state=feature_pipeline_state,
+        training_state=training_state,
+    )
     if resolved_format == "json":
         with path.open("w", encoding="utf-8") as stream:
             json.dump(document, stream, indent=2, sort_keys=True)
@@ -132,6 +140,8 @@ def load_booster_document(path: Path) -> Dict[str, Any]:
         raise ValueError("JSON model does not contain a CTBoost booster")
     if "feature_pipeline_state" in document:
         document["feature_pipeline_state"] = _deserialize_json_value(document["feature_pipeline_state"])
+    if "training_state" in document:
+        document["training_state"] = _deserialize_json_value(document["training_state"])
     return document
 
 

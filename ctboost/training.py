@@ -4,12 +4,15 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 import contextlib
+from dataclasses import dataclass
 import json
+import pickle
 from pathlib import Path
+import struct
 import subprocess
 import sys
 import time
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Union
 
 import numpy as np
 
@@ -26,6 +29,60 @@ from .feature_pipeline import FeaturePipeline
 from .prepared_data import prepare_pool, uses_feature_pipeline_params
 
 PathLike = Union[str, Path]
+
+
+@dataclass
+class TrainingCallbackEnv:
+    model: "Booster"
+    iteration: int
+    begin_iteration: int
+    end_iteration: int
+    evaluation_result_list: List[tuple[str, str, float, bool]]
+    history: Dict[str, Dict[str, List[float]]]
+    best_iteration: int
+    best_score: Optional[float]
+
+
+def log_evaluation(period: int = 1) -> Callable[[TrainingCallbackEnv], bool]:
+    resolved_period = int(period)
+    if resolved_period <= 0:
+        raise ValueError("log_evaluation period must be positive")
+
+    def _callback(env: TrainingCallbackEnv) -> bool:
+        if (env.iteration + 1) % resolved_period != 0 and env.iteration + 1 != env.end_iteration:
+            return False
+        metrics = " ".join(
+            f"{dataset_name}-{metric_name}:{metric_value:.6f}"
+            for dataset_name, metric_name, metric_value, _ in env.evaluation_result_list
+        )
+        print(f"[{env.iteration + 1}] {metrics}")
+        return False
+
+    return _callback
+
+
+def checkpoint_callback(
+    path: PathLike,
+    *,
+    interval: int = 1,
+    model_format: Optional[str] = None,
+    save_best_only: bool = False,
+) -> Callable[[TrainingCallbackEnv], bool]:
+    resolved_interval = int(interval)
+    if resolved_interval <= 0:
+        raise ValueError("checkpoint interval must be positive")
+    destination = Path(path)
+
+    def _callback(env: TrainingCallbackEnv) -> bool:
+        if save_best_only:
+            if env.best_iteration != env.iteration:
+                return False
+        elif (env.iteration + 1) % resolved_interval != 0 and env.iteration + 1 != env.end_iteration:
+            return False
+        env.model.save_model(destination, model_format=model_format)
+        return False
+
+    return _callback
 
 
 def _load_sklearn_splitters():
@@ -74,23 +131,130 @@ def _pool_from_data_and_label(
     )
 
 
-def _normalize_eval_set(eval_set: Any) -> Optional[Any]:
+def _is_eval_set_entry(value: Any) -> bool:
+    return isinstance(value, Pool) or (isinstance(value, tuple) and len(value) in {2, 3})
+
+
+def _normalize_eval_sets(eval_set: Any) -> List[Any]:
     if eval_set is None:
-        return None
-    if isinstance(eval_set, Pool):
-        return eval_set
-    if isinstance(eval_set, tuple) and len(eval_set) in {2, 3}:
-        return eval_set
-    if (
-        isinstance(eval_set, list)
-        and len(eval_set) == 1
-        and isinstance(eval_set[0], tuple)
-        and len(eval_set[0]) in {2, 3}
-    ):
-        return eval_set[0]
+        return []
+    if _is_eval_set_entry(eval_set):
+        return [eval_set]
+    if isinstance(eval_set, list) and all(_is_eval_set_entry(item) for item in eval_set):
+        return list(eval_set)
     raise TypeError(
-        "eval_set must be a Pool, a single (X, y) or (X, y, group_id) tuple, or a list containing one such tuple"
+        "eval_set must be a Pool, a single (X, y) or (X, y, group_id) tuple, "
+        "or a list of such entries"
     )
+
+
+def _normalize_eval_set(eval_set: Any) -> Optional[Any]:
+    normalized = _normalize_eval_sets(eval_set)
+    if not normalized:
+        return None
+    if len(normalized) != 1:
+        raise TypeError("expected a single eval_set entry")
+    return normalized[0]
+
+
+def _normalize_eval_names(eval_names: Any, eval_count: int) -> List[str]:
+    if eval_count == 0:
+        if eval_names is not None and eval_names != [] and eval_names != ():
+            raise ValueError("eval_names requires at least one eval_set")
+        return []
+    if eval_names is None:
+        if eval_count == 1:
+            return ["validation"]
+        return [f"validation_{index}" for index in range(eval_count)]
+    if isinstance(eval_names, str):
+        if eval_count != 1:
+            raise ValueError("eval_names must provide one name per eval_set")
+        names = [eval_names]
+    elif isinstance(eval_names, (list, tuple)):
+        if len(eval_names) != eval_count:
+            raise ValueError("eval_names must provide one name per eval_set")
+        names = [str(name) for name in eval_names]
+    else:
+        raise TypeError("eval_names must be a string or a sequence of strings")
+    if len(set(names)) != len(names):
+        raise ValueError("eval_names entries must be unique")
+    return names
+
+
+def _normalize_eval_metrics(eval_metric: Any) -> List[str]:
+    if eval_metric is None:
+        return []
+    if isinstance(eval_metric, str):
+        metric_name = eval_metric.strip()
+        return [] if not metric_name else [metric_name]
+    if isinstance(eval_metric, (list, tuple)):
+        metrics = [str(metric).strip() for metric in eval_metric]
+        if not metrics or any(not metric for metric in metrics):
+            raise ValueError("eval_metric sequences must contain non-empty metric names")
+        return metrics
+    raise TypeError("eval_metric must be a string or a sequence of strings")
+
+
+def _copy_evals_result(result: Mapping[str, Mapping[str, Iterable[float]]]) -> Dict[str, Dict[str, List[float]]]:
+    return {
+        str(dataset_name): {
+            str(metric_name): [float(value) for value in metric_history]
+            for metric_name, metric_history in dataset_metrics.items()
+        }
+        for dataset_name, dataset_metrics in result.items()
+    }
+
+
+def _unpack_gathered_payloads(payload: bytes) -> List[bytes]:
+    view = memoryview(payload)
+    if len(view) < 8:
+        raise RuntimeError("distributed allgather payload is truncated")
+    (count,) = struct.unpack_from("<Q", view, 0)
+    offset = 8
+    payloads: List[bytes] = []
+    for _ in range(int(count)):
+        if offset + 8 > len(view):
+            raise RuntimeError("distributed allgather payload is truncated")
+        (payload_size,) = struct.unpack_from("<Q", view, offset)
+        offset += 8
+        next_offset = offset + int(payload_size)
+        if next_offset > len(view):
+            raise RuntimeError("distributed allgather payload is truncated")
+        payloads.append(bytes(view[offset:next_offset]))
+        offset = next_offset
+    return payloads
+
+
+def _distributed_allgather_value(distributed: Dict[str, Any], key: str, value: Any) -> List[Any]:
+    response = distributed_tcp_request(
+        distributed["root"],
+        distributed["timeout"],
+        "allgather",
+        key,
+        distributed["rank"],
+        distributed["world_size"],
+        pickle_payload(value),
+    )
+    return [pickle.loads(item) for item in _unpack_gathered_payloads(response)]
+
+
+def _distributed_broadcast_value(
+    distributed: Dict[str, Any],
+    key: str,
+    *,
+    value: Any = None,
+) -> Any:
+    payload = pickle_payload(value) if distributed["rank"] == 0 else b""
+    response = distributed_tcp_request(
+        distributed["root"],
+        distributed["timeout"],
+        "broadcast",
+        key,
+        distributed["rank"],
+        distributed["world_size"],
+        payload,
+    )
+    return pickle.loads(response) if response else None
 
 
 def _resolve_eval_pool(eval_set: Any) -> Optional[Pool]:
@@ -289,6 +453,144 @@ def _normalize_distributed_config(params: Mapping[str, Any]) -> Optional[Dict[st
 
 def _strip_distributed_params(params: Mapping[str, Any]) -> Dict[str, Any]:
     return {key: value for key, value in params.items() if key not in _DISTRIBUTED_PARAM_KEYS}
+
+
+def _feature_pipeline_from_params(params: Mapping[str, Any]) -> FeaturePipeline:
+    return FeaturePipeline(
+        cat_features=params.get("cat_features"),
+        ordered_ctr=bool(params.get("ordered_ctr", False)),
+        one_hot_max_size=int(params.get("one_hot_max_size", params.get("max_cat_to_onehot", 0))),
+        max_cat_threshold=int(params.get("max_cat_threshold", 0)),
+        categorical_combinations=params.get("categorical_combinations"),
+        pairwise_categorical_combinations=bool(params.get("pairwise_categorical_combinations", False)),
+        simple_ctr=params.get("simple_ctr"),
+        combinations_ctr=params.get("combinations_ctr"),
+        per_feature_ctr=params.get("per_feature_ctr"),
+        text_features=params.get("text_features"),
+        text_hash_dim=int(params.get("text_hash_dim", 64)),
+        embedding_features=params.get("embedding_features"),
+        embedding_stats=params.get("embedding_stats", ("mean", "std", "min", "max", "l2")),
+        ctr_prior_strength=float(params.get("ctr_prior_strength", 1.0)),
+        random_seed=int(params.get("random_seed", 0)),
+    )
+
+
+def _serialize_raw_feature_pipeline_shard(
+    data: Any,
+    label: Any,
+    feature_names: Optional[List[str]],
+) -> Dict[str, Any]:
+    raw_matrix, resolved_feature_names = FeaturePipeline._extract_frame(data, feature_names)
+    return {
+        "data": np.asarray(raw_matrix, dtype=object),
+        "label": np.asarray(label, dtype=np.float32).reshape(-1),
+        "feature_names": None if resolved_feature_names is None else list(resolved_feature_names),
+    }
+
+
+def _merge_raw_feature_pipeline_shards(shards: List[Dict[str, Any]]) -> Dict[str, Any]:
+    if not shards:
+        raise ValueError("distributed feature-pipeline fitting requires at least one shard")
+    feature_names = shards[0]["feature_names"]
+    num_cols = int(np.asarray(shards[0]["data"], dtype=object).shape[1])
+    for shard in shards[1:]:
+        shard_data = np.asarray(shard["data"], dtype=object)
+        if int(shard_data.shape[1]) != num_cols:
+            raise ValueError("distributed feature-pipeline shards must agree on column count")
+        if shard["feature_names"] != feature_names:
+            raise ValueError("distributed feature-pipeline shards must agree on feature_names")
+    return {
+        "data": np.concatenate([np.asarray(shard["data"], dtype=object) for shard in shards], axis=0),
+        "label": np.concatenate(
+            [np.asarray(shard["label"], dtype=np.float32).reshape(-1) for shard in shards],
+            axis=0,
+        ),
+        "feature_names": feature_names,
+    }
+
+
+def _prepare_transformed_training_pool(
+    data: Any,
+    label: Any,
+    *,
+    cat_features: List[int],
+    weight: Any,
+    group_id: Any,
+    feature_names: Optional[List[str]],
+    params: Mapping[str, Any],
+) -> Pool:
+    del params
+    return Pool(
+        data=np.asarray(data, dtype=np.float32),
+        label=np.asarray(label, dtype=np.float32).reshape(-1),
+        cat_features=list(cat_features),
+        weight=weight,
+        group_id=group_id,
+        feature_names=None if feature_names is None else list(feature_names),
+        _releasable_feature_storage=True,
+    )
+
+
+def _prepare_distributed_feature_pipeline_pool(
+    data: Any,
+    label: Any,
+    *,
+    group_id: Any,
+    weight: Any,
+    feature_names: Optional[List[str]],
+    params: Mapping[str, Any],
+    distributed: Dict[str, Any],
+) -> tuple[Pool, FeaturePipeline]:
+    local_shard = _serialize_raw_feature_pipeline_shard(data, label, feature_names)
+    if distributed["backend"] == "tcp":
+        shard_payloads = _distributed_allgather_value(
+            distributed,
+            f"{distributed['run_id']}/feature_pipeline/fit",
+            local_shard,
+        )
+    else:
+        run_root = Path(distributed["root"]) / distributed["run_id"]
+        run_root.mkdir(parents=True, exist_ok=True)
+        shard_path = run_root / f"feature_pipeline_rank_{distributed['rank']:05d}.pkl"
+        with shard_path.open("wb") as stream:
+            pickle.dump(local_shard, stream, protocol=pickle.HIGHEST_PROTOCOL)
+
+        shard_paths = [
+            run_root / f"feature_pipeline_rank_{rank:05d}.pkl"
+            for rank in range(distributed["world_size"])
+        ]
+        deadline = time.monotonic() + float(distributed["timeout"])
+        while any(not path.exists() for path in shard_paths):
+            if time.monotonic() >= deadline:
+                raise TimeoutError("timed out waiting for distributed feature-pipeline shards")
+            time.sleep(0.1)
+        shard_payloads = []
+        for path in shard_paths:
+            with path.open("rb") as stream:
+                shard_payloads.append(pickle.load(stream))
+
+    merged = _merge_raw_feature_pipeline_shards(shard_payloads)
+    row_counts = [int(np.asarray(shard["data"], dtype=object).shape[0]) for shard in shard_payloads]
+    row_offsets = np.cumsum([0, *row_counts])
+    pipeline = _feature_pipeline_from_params(params)
+    transformed_data, transformed_cat_features, transformed_feature_names = pipeline.fit_transform_array(
+        merged["data"],
+        merged["label"],
+        feature_names=merged["feature_names"],
+    )
+    row_begin = int(row_offsets[distributed["rank"]])
+    row_end = int(row_offsets[distributed["rank"] + 1])
+    local_pool = _prepare_transformed_training_pool(
+        transformed_data[row_begin:row_end],
+        np.asarray(label, dtype=np.float32).reshape(-1),
+        cat_features=list(transformed_cat_features),
+        weight=weight,
+        group_id=group_id,
+        feature_names=list(transformed_feature_names),
+        params=params,
+    )
+    local_pool._feature_pipeline = pipeline
+    return local_pool, pipeline
 
 
 def _open_memmap_array(
@@ -1226,12 +1528,213 @@ def _resolve_init_model_handle(init_model: Any) -> Optional[Any]:
     raise TypeError("init_model must be a ctboost.Booster, native GradientBooster, or CTBoost estimator")
 
 
+def _metric_config(params: Mapping[str, Any]) -> Dict[str, float]:
+    return {
+        "quantile_alpha": float(params.get("quantile_alpha", 0.5)),
+        "huber_delta": float(params.get("huber_delta", 1.0)),
+        "tweedie_variance_power": float(params.get("tweedie_variance_power", 1.5)),
+    }
+
+
+def _metric_higher_is_better(metric_name: str, params: Mapping[str, Any]) -> bool:
+    config = _metric_config(params)
+    return bool(
+        _core._metric_higher_is_better(
+            metric_name,
+            quantile_alpha=config["quantile_alpha"],
+            huber_delta=config["huber_delta"],
+            tweedie_variance_power=config["tweedie_variance_power"],
+        )
+    )
+
+
+def _evaluate_metric_on_pool(
+    metric_name: str,
+    predictions: np.ndarray,
+    pool: Pool,
+    *,
+    num_classes: int,
+    params: Mapping[str, Any],
+) -> float:
+    config = _metric_config(params)
+    weights = (
+        np.asarray(pool.weight, dtype=np.float32)
+        if pool.weight is not None
+        else np.ones(pool.num_rows, dtype=np.float32)
+    )
+    group_ids = None if pool.group_id is None else np.asarray(pool.group_id, dtype=np.int64)
+    return float(
+        _core._evaluate_metric(
+            np.asarray(predictions, dtype=np.float32),
+            np.asarray(pool.label, dtype=np.float32),
+            weights,
+            metric_name,
+            num_classes,
+            group_ids,
+            quantile_alpha=config["quantile_alpha"],
+            huber_delta=config["huber_delta"],
+            tweedie_variance_power=config["tweedie_variance_power"],
+        )
+    )
+
+
+def _collect_prediction_metric_inputs(predictions: np.ndarray, pool: Pool) -> Dict[str, Any]:
+    return {
+        "predictions": np.asarray(predictions, dtype=np.float32),
+        "label": np.asarray(pool.label, dtype=np.float32),
+        "weight": (
+            np.asarray(pool.weight, dtype=np.float32)
+            if pool.weight is not None
+            else np.ones(pool.num_rows, dtype=np.float32)
+        ),
+        "group_id": None if pool.group_id is None else np.asarray(pool.group_id, dtype=np.int64),
+    }
+
+
+def _evaluate_metric_from_inputs(
+    metric_name: str,
+    inputs: Mapping[str, Any],
+    *,
+    num_classes: int,
+    params: Mapping[str, Any],
+) -> float:
+    config = _metric_config(params)
+    return float(
+        _core._evaluate_metric(
+            np.asarray(inputs["predictions"], dtype=np.float32),
+            np.asarray(inputs["label"], dtype=np.float32),
+            np.asarray(inputs["weight"], dtype=np.float32),
+            metric_name,
+            num_classes,
+            None if inputs.get("group_id") is None else np.asarray(inputs["group_id"], dtype=np.int64),
+            quantile_alpha=config["quantile_alpha"],
+            huber_delta=config["huber_delta"],
+            tweedie_variance_power=config["tweedie_variance_power"],
+        )
+    )
+
+
+def _merge_prediction_metric_inputs(shards: List[Dict[str, Any]]) -> Dict[str, Any]:
+    merged = {
+        "predictions": np.concatenate([np.asarray(shard["predictions"]) for shard in shards], axis=0),
+        "label": np.concatenate([np.asarray(shard["label"], dtype=np.float32) for shard in shards], axis=0),
+        "weight": np.concatenate([np.asarray(shard["weight"], dtype=np.float32) for shard in shards], axis=0),
+    }
+    has_group_id = any(shard["group_id"] is not None for shard in shards)
+    if has_group_id:
+        if any(shard["group_id"] is None for shard in shards):
+            raise ValueError("distributed metric shards must either all include group_id or all omit it")
+        merged["group_id"] = np.concatenate(
+            [np.asarray(shard["group_id"], dtype=np.int64) for shard in shards],
+            axis=0,
+        )
+    else:
+        merged["group_id"] = None
+    return merged
+
+
+def _evaluate_metric_distributed(
+    distributed: Optional[Dict[str, Any]],
+    *,
+    key: str,
+    metric_name: str,
+    predictions: np.ndarray,
+    pool: Pool,
+    num_classes: int,
+    params: Mapping[str, Any],
+) -> float:
+    if distributed is None:
+        return _evaluate_metric_from_inputs(
+            metric_name,
+            _collect_prediction_metric_inputs(predictions, pool),
+            num_classes=num_classes,
+            params=params,
+        )
+    shards = _distributed_allgather_value(
+        distributed,
+        key,
+        _collect_prediction_metric_inputs(predictions, pool),
+    )
+    return _evaluate_metric_from_inputs(
+        metric_name,
+        _merge_prediction_metric_inputs(shards),
+        num_classes=num_classes,
+        params=params,
+    )
+
+
+def _prune_booster_to_best_iteration(handle: Any, best_iteration: int) -> None:
+    state = dict(handle.export_state())
+    retained_iterations = int(best_iteration) + 1
+    prediction_dimension = int(handle.prediction_dimension())
+    state["trees"] = state["trees"][: retained_iterations * prediction_dimension]
+    state["loss_history"] = state["loss_history"][:retained_iterations]
+    state["eval_loss_history"] = state["eval_loss_history"][:retained_iterations]
+    state["best_iteration"] = int(best_iteration)
+    if retained_iterations > 0:
+        eval_history = state["eval_loss_history"]
+        if eval_history:
+            state["best_score"] = float(eval_history[retained_iterations - 1])
+        else:
+            state["best_score"] = float(state["loss_history"][retained_iterations - 1])
+    handle.load_state(state)
+
+
+def _initial_evals_result_from_model(init_model: Any) -> Optional[Dict[str, Dict[str, List[float]]]]:
+    if isinstance(init_model, Booster):
+        metadata = getattr(init_model, "_training_metadata", None)
+        if metadata is not None and "evals_result" in metadata:
+            return _copy_evals_result(metadata["evals_result"])
+    booster = getattr(init_model, "_booster", None)
+    if isinstance(booster, Booster):
+        metadata = getattr(booster, "_training_metadata", None)
+        if metadata is not None and "evals_result" in metadata:
+            return _copy_evals_result(metadata["evals_result"])
+    return None
+
+
+def _distributed_is_root(distributed: Optional[Dict[str, Any]]) -> bool:
+    return distributed is None or int(distributed["rank"]) == 0
+
+
 class Booster:
     """Small Python wrapper around the native gradient booster."""
 
-    def __init__(self, handle: Any, *, feature_pipeline: Optional[FeaturePipeline] = None) -> None:
+    def __init__(
+        self,
+        handle: Any,
+        *,
+        feature_pipeline: Optional[FeaturePipeline] = None,
+        training_metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
         self._handle = handle
         self._feature_pipeline = feature_pipeline
+        self._training_metadata = None if training_metadata is None else dict(training_metadata)
+
+    def _set_training_metadata(
+        self,
+        *,
+        evals_result: Optional[Mapping[str, Mapping[str, Iterable[float]]]] = None,
+        eval_loss_history: Optional[Iterable[float]] = None,
+        best_iteration: Optional[int] = None,
+        best_score: Optional[float] = None,
+        eval_metric_name: Optional[str] = None,
+    ) -> None:
+        if evals_result is None and eval_loss_history is None and best_iteration is None and best_score is None and eval_metric_name is None:
+            self._training_metadata = None
+            return
+        metadata = {} if self._training_metadata is None else dict(self._training_metadata)
+        if evals_result is not None:
+            metadata["evals_result"] = _copy_evals_result(evals_result)
+        if eval_loss_history is not None:
+            metadata["eval_loss_history"] = [float(value) for value in eval_loss_history]
+        if best_iteration is not None:
+            metadata["best_iteration"] = int(best_iteration)
+        if best_score is not None:
+            metadata["best_score"] = float(best_score)
+        if eval_metric_name is not None:
+            metadata["eval_metric_name"] = str(eval_metric_name)
+        self._training_metadata = metadata
 
     def _prediction_pool(self, data: Any) -> Pool:
         if isinstance(data, Pool):
@@ -1295,6 +1798,7 @@ class Booster:
             feature_pipeline_state=None
             if self._feature_pipeline is None
             else self._feature_pipeline.to_state(),
+            training_state=self._training_metadata,
         )
 
     @classmethod
@@ -1304,6 +1808,7 @@ class Booster:
         return cls(
             _core.GradientBooster.from_state(document["booster_state"]),
             feature_pipeline=None if pipeline_state is None else FeaturePipeline.from_state(pipeline_state),
+            training_metadata=document.get("training_state"),
         )
 
     def get_quantization_schema(self) -> Optional[Dict[str, Any]]:
@@ -1346,6 +1851,8 @@ class Booster:
 
     @property
     def eval_loss_history(self) -> List[float]:
+        if self._training_metadata is not None and "eval_loss_history" in self._training_metadata:
+            return list(self._training_metadata["eval_loss_history"])
         return list(self._handle.eval_loss_history())
 
     @property
@@ -1354,6 +1861,8 @@ class Booster:
 
     @property
     def evals_result_(self) -> Dict[str, Dict[str, List[float]]]:
+        if self._training_metadata is not None and "evals_result" in self._training_metadata:
+            return _copy_evals_result(self._training_metadata["evals_result"])
         result = {"learn": {"loss": self.loss_history}}
         if self.eval_loss_history:
             metric_name = "loss" if self.eval_metric_name.lower() == self.objective_name.lower() else self.eval_metric_name
@@ -1374,6 +1883,8 @@ class Booster:
 
     @property
     def best_iteration(self) -> int:
+        if self._training_metadata is not None and "best_iteration" in self._training_metadata:
+            return int(self._training_metadata["best_iteration"])
         return int(self._handle.best_iteration())
 
     @property
@@ -1382,6 +1893,8 @@ class Booster:
 
     @property
     def eval_metric_name(self) -> str:
+        if self._training_metadata is not None and "eval_metric_name" in self._training_metadata:
+            return str(self._training_metadata["eval_metric_name"])
         return str(self._handle.eval_metric_name())
 
 
@@ -1478,11 +1991,17 @@ def train(
     group_id: Any = None,
     feature_names: Optional[List[str]] = None,
     eval_set: Any = None,
+    eval_names: Any = None,
     early_stopping_rounds: Optional[int] = None,
+    early_stopping_metric: Optional[str] = None,
+    early_stopping_name: Optional[str] = None,
+    callbacks: Optional[Iterable[Callable[[TrainingCallbackEnv], Any]]] = None,
     init_model: Any = None,
 ) -> Booster:
     config = dict(params)
+    distributed_config = _normalize_distributed_config(config)
     init_pipeline = _resolve_init_model_pipeline(init_model)
+    shared_feature_pipeline = init_pipeline
     if isinstance(pool, Pool):
         if label is not None or weight is not None or group_id is not None or feature_names is not None:
             pool = _pool_from_data_and_label(
@@ -1498,6 +2017,7 @@ def train(
         if init_pipeline is not None:
             if uses_feature_pipeline_params(config):
                 _assert_compatible_feature_pipeline(init_pipeline, config)
+            shared_feature_pipeline = init_pipeline
             pool = _prepare_pool_from_raw(
                 pool,
                 label,
@@ -1505,9 +2025,31 @@ def train(
                 weight=weight,
                 feature_names=feature_names,
                 params=config,
-                feature_pipeline=init_pipeline,
+                feature_pipeline=shared_feature_pipeline,
                 fit_feature_pipeline=False,
             )
+        elif distributed_config is not None and uses_feature_pipeline_params(config):
+            if distributed_config["backend"] == "tcp":
+                with _distributed_collective_context(distributed_config):
+                    pool, shared_feature_pipeline = _prepare_distributed_feature_pipeline_pool(
+                        pool,
+                        label,
+                        group_id=group_id,
+                        weight=weight,
+                        feature_names=feature_names,
+                        params=config,
+                        distributed=distributed_config,
+                    )
+            else:
+                pool, shared_feature_pipeline = _prepare_distributed_feature_pipeline_pool(
+                    pool,
+                    label,
+                    group_id=group_id,
+                    weight=weight,
+                    feature_names=feature_names,
+                    params=config,
+                    distributed=distributed_config,
+                )
         else:
             pool = _prepare_pool_from_raw(
                 pool,
@@ -1520,45 +2062,59 @@ def train(
     if not isinstance(pool, Pool):
         raise TypeError("pool must be an instance of ctboost.Pool")
 
-    feature_pipeline = getattr(pool, "_feature_pipeline", None)
-    distributed_config = _normalize_distributed_config(config)
-    if distributed_config is not None:
-        if feature_pipeline is not None:
-            raise ValueError(
-                "distributed multi-host training currently requires already-prepared numeric features"
-            )
+    feature_pipeline = getattr(pool, "_feature_pipeline", None) or shared_feature_pipeline
 
-    normalized_eval_set = _normalize_eval_set(eval_set)
-    if isinstance(normalized_eval_set, Pool) or normalized_eval_set is None:
-        eval_pool = normalized_eval_set
-    else:
+    normalized_eval_sets = _normalize_eval_sets(eval_set)
+    resolved_eval_names = _normalize_eval_names(eval_names, len(normalized_eval_sets))
+    default_eval_names = _normalize_eval_names(None, len(normalized_eval_sets))
+    eval_pools: List[Pool] = []
+    for normalized_eval_set in normalized_eval_sets:
+        if isinstance(normalized_eval_set, Pool):
+            eval_pools.append(normalized_eval_set)
+            continue
         if len(normalized_eval_set) == 2:
             X_eval, y_eval = normalized_eval_set
             eval_group_id = None
         else:
             X_eval, y_eval, eval_group_id = normalized_eval_set
         if feature_pipeline is not None:
-            eval_pool = _prepare_pool_from_raw(
-                X_eval,
-                y_eval,
-                group_id=eval_group_id,
-                params=config,
-                feature_pipeline=feature_pipeline,
-                fit_feature_pipeline=False,
-                use_eval_external_memory=True,
+            eval_pools.append(
+                _prepare_pool_from_raw(
+                    X_eval,
+                    y_eval,
+                    group_id=eval_group_id,
+                    params=config,
+                    feature_pipeline=feature_pipeline,
+                    fit_feature_pipeline=False,
+                    use_eval_external_memory=True,
+                )
             )
         else:
-            eval_pool = _prepare_pool_from_raw(
-                X_eval,
-                y_eval,
-                group_id=eval_group_id,
-                params=config,
-                use_eval_external_memory=True,
+            eval_pools.append(
+                _prepare_pool_from_raw(
+                    X_eval,
+                    y_eval,
+                    group_id=eval_group_id,
+                    params=config,
+                    use_eval_external_memory=True,
+                )
             )
+
+    if callbacks is None:
+        callback_list: List[Callable[[TrainingCallbackEnv], Any]] = []
+    else:
+        try:
+            callback_list = list(callbacks)
+        except TypeError as exc:
+            raise TypeError("callbacks must be an iterable of callables") from exc
+        for callback in callback_list:
+            if not callable(callback):
+                raise TypeError("callbacks must contain only callables")
+
     if early_stopping_rounds is not None:
         if early_stopping_rounds <= 0:
             raise ValueError("early_stopping_rounds must be a positive integer")
-        if eval_pool is None:
+        if not eval_pools:
             raise ValueError("early_stopping_rounds requires eval_set")
     early_stopping = 0 if early_stopping_rounds is None else int(early_stopping_rounds)
 
@@ -1733,7 +2289,6 @@ def train(
         pool,
         "feature_borders",
     )
-    eval_metric = str(config.get("eval_metric", "" if init_state is None else init_state["eval_metric_name"]))
     quantile_alpha = float(
         config.get("quantile_alpha", 0.5 if init_state is None else init_state["quantile_alpha"])
     )
@@ -1794,10 +2349,55 @@ def train(
         config.get("random_seed", 0 if init_state is None else init_state.get("random_seed", 0))
     )
     verbose = bool(config.get("verbose", False if init_state is None else init_state.get("verbose", False)))
+
+    eval_metric_names = _normalize_eval_metrics(
+        config.get("eval_metric", "" if init_state is None else init_state["eval_metric_name"])
+    )
+    if not eval_metric_names:
+        eval_metric_names = [objective if init_state is None else str(init_state["eval_metric_name"])]
+    if early_stopping_metric is not None:
+        requested_metric = str(early_stopping_metric)
+        matching_metric = next(
+            (metric for metric in eval_metric_names if metric.lower() == requested_metric.lower()),
+            None,
+        )
+        if matching_metric is None:
+            eval_metric_names = [requested_metric] + eval_metric_names
+            primary_eval_metric = requested_metric
+        else:
+            primary_eval_metric = matching_metric
+    else:
+        primary_eval_metric = eval_metric_names[0]
+
+    if early_stopping_name is not None:
+        if not resolved_eval_names:
+            raise ValueError("early_stopping_name requires eval_set")
+        primary_eval_name = str(early_stopping_name)
+        if primary_eval_name not in resolved_eval_names:
+            raise ValueError("early_stopping_name must match one of the provided eval_names")
+    else:
+        primary_eval_name = resolved_eval_names[0] if resolved_eval_names else None
+
+    metric_directions = {
+        metric_name: _metric_higher_is_better(metric_name, config)
+        for metric_name in eval_metric_names
+    }
+    use_python_eval_surface = (
+        bool(callback_list)
+        or len(eval_pools) > 1
+        or len(eval_metric_names) > 1
+        or resolved_eval_names != default_eval_names
+    )
+
     if distributed_config is not None:
         if task_type.upper() == "GPU" and distributed_config["backend"] != "tcp":
             raise ValueError("distributed GPU training requires distributed_root='tcp://host:port'")
-        if eval_pool is not None and distributed_config["backend"] != "tcp":
+        if use_python_eval_surface and distributed_config["backend"] != "tcp":
+            raise ValueError(
+                "distributed multi-metric, multi-watchlist, and callback workflows require "
+                "distributed_root='tcp://host:port'"
+            )
+        if eval_pools and not use_python_eval_surface and distributed_config["backend"] != "tcp":
             raise ValueError("distributed eval_set support requires distributed_root='tcp://host:port'")
     with _distributed_collective_context(distributed_config):
         distributed_quantization_schema = None
@@ -1819,9 +2419,9 @@ def train(
             if num_classes != int(init_state["num_classes"]):
                 raise ValueError("init_model num_classes must match the current training configuration")
         weighted_pool = _apply_objective_weights(pool, config, objective)
-        weighted_eval_pool = (
-            None if eval_pool is None else _apply_objective_weights(eval_pool, config, objective)
-        )
+        weighted_eval_pools = [
+            _apply_objective_weights(eval_pool, config, objective) for eval_pool in eval_pools
+        ]
 
         booster = _core.GradientBooster(
             objective=objective,
@@ -1859,7 +2459,7 @@ def train(
             feature_borders=feature_borders,
             external_memory=native_external_memory,
             external_memory_dir=native_external_memory_dir,
-            eval_metric=eval_metric,
+            eval_metric=primary_eval_metric,
             quantile_alpha=quantile_alpha,
             huber_delta=huber_delta,
             tweedie_variance_power=tweedie_variance_power,
@@ -1877,10 +2477,210 @@ def train(
             booster.load_state(init_state)
         elif distributed_quantization_schema is not None:
             booster.load_quantization_schema(distributed_quantization_schema)
-        booster.fit(
-            weighted_pool._handle,
-            None if weighted_eval_pool is None else weighted_eval_pool._handle,
-            early_stopping,
-            init_state is not None,
+        if not use_python_eval_surface:
+            native_eval_pool = weighted_eval_pools[0] if weighted_eval_pools else None
+            booster.fit(
+                weighted_pool._handle,
+                None if native_eval_pool is None else native_eval_pool._handle,
+                early_stopping,
+                init_state is not None,
+            )
+            return Booster(booster, feature_pipeline=feature_pipeline)
+
+        wrapped_booster = Booster(booster, feature_pipeline=feature_pipeline)
+        train_pool_template = _clone_pool(weighted_pool, releasable_feature_storage=True)
+        seeded_evals_result = _initial_evals_result_from_model(init_model)
+        evals_result: Dict[str, Dict[str, List[float]]] = {
+            "learn": {"loss": [float(value) for value in booster.loss_history()]}
+        }
+        for eval_name in resolved_eval_names:
+            evals_result[eval_name] = {}
+            for metric_name in eval_metric_names:
+                if (
+                    seeded_evals_result is not None
+                    and eval_name in seeded_evals_result
+                    and metric_name in seeded_evals_result[eval_name]
+                ):
+                    history = seeded_evals_result[eval_name][metric_name]
+                elif (
+                    len(weighted_eval_pools) == 1
+                    and eval_name == "validation"
+                    and metric_name.lower() == primary_eval_metric.lower()
+                    and booster.eval_loss_history()
+                ):
+                    history = booster.eval_loss_history()
+                else:
+                    history = []
+                evals_result[eval_name][metric_name] = [float(value) for value in history]
+
+        begin_iteration = int(booster.num_iterations_trained())
+        end_iteration = begin_iteration + iterations
+        if primary_eval_name is not None:
+            monitor_history = evals_result[primary_eval_name][primary_eval_metric]
+            best_iteration = -1
+            best_score = float("-inf") if metric_directions[primary_eval_metric] else float("inf")
+            for history_index, history_value in enumerate(monitor_history):
+                improved = (
+                    best_iteration < 0
+                    or (
+                        metric_directions[primary_eval_metric]
+                        and history_value > best_score
+                    )
+                    or (
+                        not metric_directions[primary_eval_metric]
+                        and history_value < best_score
+                    )
+                )
+                if improved:
+                    best_iteration = history_index
+                    best_score = float(history_value)
+        else:
+            monitor_history = []
+            best_iteration = begin_iteration - 1 if begin_iteration > 0 else -1
+            best_score = (
+                float(evals_result["learn"]["loss"][best_iteration])
+                if best_iteration >= 0 and evals_result["learn"]["loss"]
+                else None
+            )
+
+        wrapped_booster._set_training_metadata(
+            evals_result=evals_result,
+            eval_loss_history=monitor_history,
+            best_iteration=best_iteration,
+            best_score=best_score,
+            eval_metric_name=primary_eval_metric,
         )
-        return Booster(booster, feature_pipeline=feature_pipeline)
+
+        stopped_by_early_stopping = False
+        callback_stop_requested = False
+        for _ in range(iterations):
+            iteration_train_pool = _clone_pool(train_pool_template, releasable_feature_storage=True)
+            booster.set_iterations(1)
+            booster.fit(
+                iteration_train_pool._handle,
+                None,
+                0,
+                booster.num_iterations_trained() > 0,
+            )
+            booster.set_iterations(iterations)
+            evals_result["learn"]["loss"] = [float(value) for value in booster.loss_history()]
+            current_iteration = int(booster.num_iterations_trained()) - 1
+            evaluation_result_list: List[tuple[str, str, float, bool]] = [
+                ("learn", "loss", float(evals_result["learn"]["loss"][-1]), False)
+            ]
+
+            for eval_name, weighted_eval_pool in zip(resolved_eval_names, weighted_eval_pools):
+                prediction_inputs = _collect_prediction_metric_inputs(
+                    wrapped_booster.predict(weighted_eval_pool),
+                    weighted_eval_pool,
+                )
+                if distributed_config is not None:
+                    prediction_inputs = _merge_prediction_metric_inputs(
+                        _distributed_allgather_value(
+                            distributed_config,
+                            f"{distributed_run_id}/py_eval/{current_iteration}/{eval_name}",
+                            prediction_inputs,
+                        )
+                    )
+                for metric_name in eval_metric_names:
+                    metric_value = _evaluate_metric_from_inputs(
+                        metric_name,
+                        prediction_inputs,
+                        num_classes=num_classes,
+                        params=config,
+                    )
+                    evals_result[eval_name][metric_name].append(metric_value)
+                    evaluation_result_list.append(
+                        (
+                            eval_name,
+                            metric_name,
+                            float(metric_value),
+                            bool(metric_directions[metric_name]),
+                        )
+                    )
+
+            if primary_eval_name is not None:
+                current_score = float(evals_result[primary_eval_name][primary_eval_metric][-1])
+                improved = (
+                    best_iteration < 0
+                    or (
+                        metric_directions[primary_eval_metric]
+                        and current_score > float(best_score)
+                    )
+                    or (
+                        not metric_directions[primary_eval_metric]
+                        and current_score < float(best_score)
+                    )
+                )
+                if improved:
+                    best_iteration = current_iteration
+                    best_score = current_score
+                elif early_stopping > 0 and current_iteration - best_iteration >= early_stopping:
+                    stopped_by_early_stopping = True
+            else:
+                best_iteration = current_iteration
+                best_score = float(evals_result["learn"]["loss"][-1])
+
+            wrapped_booster._set_training_metadata(
+                evals_result=evals_result,
+                eval_loss_history=(
+                    evals_result[primary_eval_name][primary_eval_metric]
+                    if primary_eval_name is not None
+                    else []
+                ),
+                best_iteration=best_iteration,
+                best_score=best_score,
+                eval_metric_name=primary_eval_metric,
+            )
+
+            if callback_list:
+                env = TrainingCallbackEnv(
+                    model=wrapped_booster,
+                    iteration=current_iteration,
+                    begin_iteration=begin_iteration,
+                    end_iteration=end_iteration,
+                    evaluation_result_list=evaluation_result_list,
+                    history=wrapped_booster.evals_result_,
+                    best_iteration=best_iteration,
+                    best_score=None if best_score is None else float(best_score),
+                )
+                if _distributed_is_root(distributed_config):
+                    for callback in callback_list:
+                        if callback(env):
+                            callback_stop_requested = True
+                            break
+                if distributed_config is not None:
+                    callback_stop_requested = bool(
+                        _distributed_broadcast_value(
+                            distributed_config,
+                            f"{distributed_run_id}/py_callback_stop/{current_iteration}",
+                            value=callback_stop_requested,
+                        )
+                    )
+
+            if stopped_by_early_stopping or callback_stop_requested:
+                break
+
+        booster.set_iterations(iterations)
+        if stopped_by_early_stopping and best_iteration >= 0 and best_iteration + 1 < booster.num_iterations_trained():
+            _prune_booster_to_best_iteration(booster, best_iteration)
+            retained_iterations = best_iteration + 1
+            evals_result["learn"]["loss"] = evals_result["learn"]["loss"][:retained_iterations]
+            for eval_name in resolved_eval_names:
+                for metric_name in eval_metric_names:
+                    evals_result[eval_name][metric_name] = evals_result[eval_name][metric_name][
+                        :retained_iterations
+                    ]
+
+        wrapped_booster._set_training_metadata(
+            evals_result=evals_result,
+            eval_loss_history=(
+                evals_result[primary_eval_name][primary_eval_metric]
+                if primary_eval_name is not None
+                else []
+            ),
+            best_iteration=best_iteration,
+            best_score=best_score,
+            eval_metric_name=primary_eval_metric,
+        )
+        return wrapped_booster

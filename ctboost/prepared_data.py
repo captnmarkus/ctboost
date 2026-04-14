@@ -119,11 +119,11 @@ def _prepare_feature_pipeline(
 
     if fit_feature_pipeline:
         transformed_data, transformed_cat_features, transformed_feature_names = (
-            pipeline.fit_transform_array(data, label)
+            pipeline.fit_transform_array(data, label, feature_names=feature_names)
         )
     else:
         transformed_data, transformed_cat_features, transformed_feature_names = (
-            pipeline.transform_array(data)
+            pipeline.transform_array(data, feature_names=feature_names)
         )
     return transformed_data, label, transformed_cat_features, transformed_feature_names, pipeline
 

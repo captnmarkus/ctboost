@@ -98,13 +98,17 @@ class FeaturePipeline:
         )
 
     @staticmethod
-    def _extract_frame(data: Any) -> Tuple[np.ndarray, Optional[List[str]]]:
+    def _extract_frame(
+        data: Any,
+        feature_names: Optional[Sequence[str]] = None,
+    ) -> Tuple[np.ndarray, Optional[List[str]]]:
         if _is_pandas_dataframe(data):
             return data.to_numpy(dtype=object, copy=False), [str(name) for name in data.columns]
         array = np.asarray(data, dtype=object)
         if array.ndim != 2:
             raise ValueError("feature pipelines expect a 2D array-like input")
-        return array, None
+        resolved_feature_names = None if feature_names is None else [str(name) for name in feature_names]
+        return array, resolved_feature_names
 
     def _refresh_metadata(self) -> None:
         state = dict(self._native.to_state())
@@ -113,42 +117,70 @@ class FeaturePipeline:
         self.cat_feature_indices_ = list(state.get("cat_feature_indices_", []))
         self.output_feature_names_ = list(state.get("output_feature_names_", []))
 
-    def fit(self, data: Any, label: Any) -> "FeaturePipeline":
-        raw_matrix, feature_names = self._extract_frame(data)
+    def fit(
+        self,
+        data: Any,
+        label: Any,
+        *,
+        feature_names: Optional[Sequence[str]] = None,
+    ) -> "FeaturePipeline":
+        raw_matrix, resolved_feature_names = self._extract_frame(data, feature_names)
         labels = np.asarray(label, dtype=np.float32).reshape(-1)
-        self._native.fit_array(raw_matrix, labels, feature_names)
+        self._native.fit_array(raw_matrix, labels, resolved_feature_names)
         self._refresh_metadata()
         return self
 
-    def transform_array(self, data: Any) -> Tuple[np.ndarray, List[int], List[str]]:
-        raw_matrix, feature_names = self._extract_frame(data)
+    def transform_array(
+        self,
+        data: Any,
+        *,
+        feature_names: Optional[Sequence[str]] = None,
+    ) -> Tuple[np.ndarray, List[int], List[str]]:
+        raw_matrix, resolved_feature_names = self._extract_frame(data, feature_names)
         transformed, cat_features, output_feature_names = self._native.transform_array(
             raw_matrix,
-            feature_names,
+            resolved_feature_names,
         )
         self._refresh_metadata()
         return transformed, list(cat_features), list(output_feature_names)
 
-    def fit_transform_array(self, data: Any, label: Any) -> Tuple[np.ndarray, List[int], List[str]]:
-        raw_matrix, feature_names = self._extract_frame(data)
+    def fit_transform_array(
+        self,
+        data: Any,
+        label: Any,
+        *,
+        feature_names: Optional[Sequence[str]] = None,
+    ) -> Tuple[np.ndarray, List[int], List[str]]:
+        raw_matrix, resolved_feature_names = self._extract_frame(data, feature_names)
         labels = np.asarray(label, dtype=np.float32).reshape(-1)
         transformed, cat_features, output_feature_names = self._native.fit_transform_array(
             raw_matrix,
             labels,
-            feature_names,
+            resolved_feature_names,
         )
         self._refresh_metadata()
         return transformed, list(cat_features), list(output_feature_names)
 
-    def transform_pool(self, data: Any, label: Any, *, weight: Any = None, group_id: Any = None) -> Pool:
-        transformed, cat_features, feature_names = self.transform_array(data)
+    def transform_pool(
+        self,
+        data: Any,
+        label: Any,
+        *,
+        weight: Any = None,
+        group_id: Any = None,
+        feature_names: Optional[Sequence[str]] = None,
+    ) -> Pool:
+        transformed, cat_features, output_feature_names = self.transform_array(
+            data,
+            feature_names=feature_names,
+        )
         return Pool(
             data=transformed,
             label=label,
             cat_features=cat_features,
             weight=weight,
             group_id=group_id,
-            feature_names=feature_names,
+            feature_names=output_feature_names,
             _releasable_feature_storage=True,
         )
 

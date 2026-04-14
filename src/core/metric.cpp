@@ -496,6 +496,82 @@ class AccuracyMetric final : public MetricFunction {
   bool HigherIsBetter() const noexcept override { return true; }
 };
 
+class BalancedAccuracyMetric final : public MetricFunction {
+ public:
+  double Evaluate(const std::vector<float>& preds,
+                  const std::vector<float>& labels,
+                  const std::vector<float>& weights,
+                  int num_classes,
+                  const std::vector<std::int64_t>*) const override {
+    if (num_classes > 2) {
+      ValidateMulticlassSizes(preds, labels, weights, num_classes);
+      std::vector<double> class_weight_sum(static_cast<std::size_t>(num_classes), 0.0);
+      std::vector<double> class_correct_weight(static_cast<std::size_t>(num_classes), 0.0);
+      for (std::size_t row = 0; row < labels.size(); ++row) {
+        const std::size_t row_offset = row * static_cast<std::size_t>(num_classes);
+        int best_class = 0;
+        float best_score = preds[row_offset];
+        for (int class_index = 1; class_index < num_classes; ++class_index) {
+          const float score = preds[row_offset + class_index];
+          if (score > best_score) {
+            best_score = score;
+            best_class = class_index;
+          }
+        }
+        const int target_class = LabelToClassIndex(labels[row], num_classes);
+        const double sample_weight = static_cast<double>(weights[row]);
+        class_weight_sum[static_cast<std::size_t>(target_class)] += sample_weight;
+        if (best_class == target_class) {
+          class_correct_weight[static_cast<std::size_t>(target_class)] += sample_weight;
+        }
+      }
+
+      double recall_sum = 0.0;
+      int present_class_count = 0;
+      for (int class_index = 0; class_index < num_classes; ++class_index) {
+        const double total_weight = class_weight_sum[static_cast<std::size_t>(class_index)];
+        if (total_weight <= 0.0) {
+          continue;
+        }
+        recall_sum +=
+            class_correct_weight[static_cast<std::size_t>(class_index)] / total_weight;
+        ++present_class_count;
+      }
+      return present_class_count == 0 ? 0.0 : recall_sum / present_class_count;
+    }
+
+    ValidatePredictionLabelWeightSizes(preds, labels, weights);
+    double class_weight_sum[2] = {0.0, 0.0};
+    double class_correct_weight[2] = {0.0, 0.0};
+    for (std::size_t index = 0; index < preds.size(); ++index) {
+      const int label = static_cast<int>(std::round(labels[index]));
+      if (label < 0 || label > 1) {
+        throw std::invalid_argument(
+            "balanced accuracy expects binary labels encoded as 0/1");
+      }
+      const int predicted = preds[index] >= 0.0F ? 1 : 0;
+      const double sample_weight = static_cast<double>(weights[index]);
+      class_weight_sum[label] += sample_weight;
+      if (predicted == label) {
+        class_correct_weight[label] += sample_weight;
+      }
+    }
+
+    double recall_sum = 0.0;
+    int present_class_count = 0;
+    for (int class_index = 0; class_index < 2; ++class_index) {
+      if (class_weight_sum[class_index] <= 0.0) {
+        continue;
+      }
+      recall_sum += class_correct_weight[class_index] / class_weight_sum[class_index];
+      ++present_class_count;
+    }
+    return present_class_count == 0 ? 0.0 : recall_sum / present_class_count;
+  }
+
+  bool HigherIsBetter() const noexcept override { return true; }
+};
+
 class PrecisionMetric final : public MetricFunction {
  public:
   double Evaluate(const std::vector<float>& preds,
@@ -927,6 +1003,10 @@ std::unique_ptr<MetricFunction> CreateMetricFunction(std::string_view name,
   }
   if (normalized == "accuracy") {
     return std::make_unique<AccuracyMetric>();
+  }
+  if (normalized == "balancedaccuracy" || normalized == "balanced_accuracy" ||
+      normalized == "balanced-accuracy") {
+    return std::make_unique<BalancedAccuracyMetric>();
   }
   if (normalized == "precision") {
     return std::make_unique<PrecisionMetric>();

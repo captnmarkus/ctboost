@@ -220,15 +220,30 @@ void WriteNodeHistogramSetBinary(const std::filesystem::path& path,
   }
 }
 
-NodeHistogramSet ReadNodeHistogramSetBinary(const std::filesystem::path& path) {
-  std::ifstream in(path, std::ios::binary);
-  if (!in) {
-    throw std::runtime_error("failed to open distributed histogram file for reading: " +
-                             path.string());
+NodeHistogramSet ReadNodeHistogramSetBinary(const std::filesystem::path& path,
+                                            double timeout_seconds = 0.0) {
+  const auto deadline = timeout_seconds > 0.0
+                            ? std::chrono::steady_clock::now() +
+                                  std::chrono::duration<double>(timeout_seconds)
+                            : std::chrono::steady_clock::time_point::min();
+  std::string last_error =
+      "failed to open distributed histogram file for reading: " + path.string();
+  while (true) {
+    std::ifstream in(path, std::ios::binary);
+    if (in) {
+      try {
+        const std::vector<std::uint8_t> buffer(
+            (std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+        return DeserializeNodeHistogramSetBinary(buffer);
+      } catch (const std::exception& error) {
+        last_error = error.what();
+      }
+    }
+    if (timeout_seconds <= 0.0 || std::chrono::steady_clock::now() >= deadline) {
+      throw std::runtime_error(last_error);
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
   }
-  const std::vector<std::uint8_t> buffer(
-      (std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
-  return DeserializeNodeHistogramSetBinary(buffer);
 }
 
 void AddNodeHistogramSet(NodeHistogramSet& target, const NodeHistogramSet& source) {
@@ -294,7 +309,8 @@ NodeHistogramSet AllReduceNodeHistogramSet(DistributedCoordinator* coordinator,
     for (int rank = 0; rank < coordinator->world_size; ++rank) {
       const std::filesystem::path rank_path = operation_dir / rank_file_name(rank);
       WaitForDistributedPath(rank_path, coordinator->timeout_seconds);
-      const NodeHistogramSet rank_stats = ReadNodeHistogramSetBinary(rank_path);
+      const NodeHistogramSet rank_stats =
+          ReadNodeHistogramSetBinary(rank_path, coordinator->timeout_seconds);
       if (!initialized) {
         reduced = rank_stats;
         initialized = true;
@@ -311,7 +327,7 @@ NodeHistogramSet AllReduceNodeHistogramSet(DistributedCoordinator* coordinator,
   }
 
   WaitForDistributedPath(result_path, coordinator->timeout_seconds);
-  return ReadNodeHistogramSetBinary(result_path);
+  return ReadNodeHistogramSetBinary(result_path, coordinator->timeout_seconds);
 }
 
 std::vector<std::uint8_t> SerializeGpuHistogramSnapshotBinary(

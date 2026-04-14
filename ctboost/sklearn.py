@@ -15,7 +15,7 @@ from .feature_pipeline import FeaturePipeline
 from .training import (
     Booster,
     _apply_sample_weight_to_pool,
-    _normalize_eval_set,
+    _normalize_eval_sets,
     _pool_from_data_and_label,
     train,
 )
@@ -38,34 +38,67 @@ def _encode_class_labels(raw_labels: Any, label_to_index: Dict[Any, int], label_
 def _resolve_classifier_eval_pool(
     eval_set: Any, label_to_index: Dict[Any, int]
 ) -> Optional[Pool]:
-    normalized = _normalize_eval_set(eval_set)
-    if normalized is None or isinstance(normalized, Pool):
-        return normalized
-
-    X_eval, y_eval = normalized
-    encoded_labels = _encode_class_labels(y_eval, label_to_index, "eval_set")
-    return _pool_from_data_and_label(X_eval, encoded_labels)
+    normalized = _normalize_eval_sets(eval_set)
+    if not normalized:
+        return None
+    resolved = []
+    for entry in normalized:
+        if isinstance(entry, Pool):
+            encoded_labels = _encode_class_labels(entry.label, label_to_index, "eval_set")
+            resolved.append(_pool_from_data_and_label(entry, encoded_labels))
+            continue
+        if len(entry) == 2:
+            X_eval, y_eval = entry
+            resolved.append(
+                _pool_from_data_and_label(
+                    X_eval,
+                    _encode_class_labels(y_eval, label_to_index, "eval_set"),
+                )
+            )
+        else:
+            X_eval, y_eval, group_id = entry
+            resolved.append(
+                _pool_from_data_and_label(
+                    X_eval,
+                    _encode_class_labels(y_eval, label_to_index, "eval_set"),
+                    group_id=group_id,
+                )
+            )
+    return resolved[0] if len(resolved) == 1 else resolved
 
 
 def _encode_classifier_eval_set(eval_set: Any, label_to_index: Dict[Any, int]) -> Optional[Any]:
-    normalized = _normalize_eval_set(eval_set)
-    if normalized is None or isinstance(normalized, Pool):
-        return normalized
-
-    X_eval, y_eval = normalized
-    encoded_labels = _encode_class_labels(y_eval, label_to_index, "eval_set")
-    return (X_eval, encoded_labels)
+    normalized = _normalize_eval_sets(eval_set)
+    if not normalized:
+        return None
+    resolved = []
+    for entry in normalized:
+        if isinstance(entry, Pool):
+            resolved.append(entry)
+            continue
+        if len(entry) == 2:
+            X_eval, y_eval = entry
+            resolved.append((X_eval, _encode_class_labels(y_eval, label_to_index, "eval_set")))
+        else:
+            X_eval, y_eval, group_id = entry
+            resolved.append((X_eval, _encode_class_labels(y_eval, label_to_index, "eval_set"), group_id))
+    return resolved[0] if len(resolved) == 1 else resolved
 
 
 def _resolve_ranker_eval_pool(eval_set: Any) -> Optional[Pool]:
-    normalized = _normalize_eval_set(eval_set)
-    if normalized is None or isinstance(normalized, Pool):
-        return normalized
-    if len(normalized) != 3:
-        raise TypeError("ranking eval_set must be a Pool or a single (X, y, group_id) tuple")
-
-    X_eval, y_eval, group_id = normalized
-    return _pool_from_data_and_label(X_eval, y_eval, group_id=group_id)
+    normalized = _normalize_eval_sets(eval_set)
+    if not normalized:
+        return None
+    resolved = []
+    for entry in normalized:
+        if isinstance(entry, Pool):
+            resolved.append(entry)
+            continue
+        if len(entry) != 3:
+            raise TypeError("ranking eval_set entries must be Pools or (X, y, group_id) tuples")
+        X_eval, y_eval, group_id = entry
+        resolved.append(_pool_from_data_and_label(X_eval, y_eval, group_id=group_id))
+    return resolved[0] if len(resolved) == 1 else resolved
 
 
 def _serialize_value(value: Any) -> Any:
@@ -275,18 +308,22 @@ class _BaseCTBoost(BaseEstimator):
         init_model: Any = None,
         sample_weight: Any = None,
         eval_set: Any = None,
+        eval_names: Any = None,
         early_stopping_rounds: Optional[int] = None,
+        early_stopping_metric: Optional[str] = None,
+        early_stopping_name: Optional[str] = None,
+        callbacks: Optional[Iterable[Any]] = None,
         objective: str,
         num_classes: int = 1,
         extra_train_params: Optional[Dict[str, Any]] = None,
     ) -> "_BaseCTBoost":
-        resolved_eval_set = _normalize_eval_set(eval_set)
+        resolved_eval_sets = _normalize_eval_sets(eval_set)
         if self._uses_feature_pipeline():
             if isinstance(X, Pool):
                 raise ValueError("feature pipeline parameters require raw array or DataFrame input")
             if y is None:
                 raise ValueError("y must be provided when feature pipeline parameters are enabled")
-            if isinstance(resolved_eval_set, Pool):
+            if any(isinstance(entry, Pool) for entry in resolved_eval_sets):
                 raise ValueError("feature pipeline parameters require raw eval_set input, not a Pool")
             self._feature_pipeline = self._build_feature_pipeline()
             transformed_X, transformed_cat_features, transformed_feature_names = (
@@ -300,18 +337,19 @@ class _BaseCTBoost(BaseEstimator):
                 feature_names=transformed_feature_names,
                 _releasable_feature_storage=True,
             )
-            if resolved_eval_set is None:
-                eval_pool = None
-            else:
+            eval_pools = []
+            for resolved_eval_set in resolved_eval_sets:
                 if len(resolved_eval_set) == 2:
                     X_eval, y_eval = resolved_eval_set
                     group_eval = None
                 else:
                     X_eval, y_eval, group_eval = resolved_eval_set
-                eval_pool = self._feature_pipeline.transform_pool(
-                    X_eval,
-                    y_eval,
-                    group_id=group_eval,
+                eval_pools.append(
+                    self._feature_pipeline.transform_pool(
+                        X_eval,
+                        y_eval,
+                        group_id=group_eval,
+                    )
                 )
         else:
             self._feature_pipeline = None
@@ -320,16 +358,24 @@ class _BaseCTBoost(BaseEstimator):
                 if isinstance(X, Pool) and y is None and group_id is None
                 else _pool_from_data_and_label(X, y, group_id=group_id)
             )
-            eval_pool = resolved_eval_set if isinstance(resolved_eval_set, Pool) else None
-            if eval_pool is None and resolved_eval_set is not None:
-                if len(resolved_eval_set) == 2:
+            eval_pools = []
+            for resolved_eval_set in resolved_eval_sets:
+                if isinstance(resolved_eval_set, Pool):
+                    eval_pools.append(resolved_eval_set)
+                elif len(resolved_eval_set) == 2:
                     X_eval, y_eval = resolved_eval_set
-                    eval_pool = _pool_from_data_and_label(X_eval, y_eval)
+                    eval_pools.append(_pool_from_data_and_label(X_eval, y_eval))
                 else:
                     X_eval, y_eval, group_eval = resolved_eval_set
-                    eval_pool = _pool_from_data_and_label(X_eval, y_eval, group_id=group_eval)
+                    eval_pools.append(_pool_from_data_and_label(X_eval, y_eval, group_id=group_eval))
 
         train_pool = _apply_sample_weight_to_pool(train_pool, sample_weight)
+        if not eval_pools:
+            eval_arg = None
+        elif len(eval_pools) == 1:
+            eval_arg = eval_pools[0]
+        else:
+            eval_arg = eval_pools
         resolved_objective = objective if num_classes > 2 else (self.loss_function or objective)
         train_params = {
             "iterations": self.iterations,
@@ -389,8 +435,12 @@ class _BaseCTBoost(BaseEstimator):
             train_pool,
             train_params,
             num_boost_round=self.iterations,
-            eval_set=eval_pool,
+            eval_set=eval_arg,
+            eval_names=eval_names,
             early_stopping_rounds=early_stopping_rounds,
+            early_stopping_metric=early_stopping_metric,
+            early_stopping_name=early_stopping_name,
+            callbacks=callbacks,
             init_model=resolved_init_model,
         )
         self.n_features_in_ = train_pool.num_cols
@@ -420,19 +470,28 @@ class _BaseCTBoost(BaseEstimator):
             feature_names=feature_names,
         )
 
-    def _compute_best_score(self) -> Dict[str, float]:
-        best_score: Dict[str, float] = {}
-        if self._booster.loss_history:
-            best_index = self.best_iteration_ if self.best_iteration_ >= 0 else len(self._booster.loss_history) - 1
-            best_index = min(best_index, len(self._booster.loss_history) - 1)
-            best_score["learn"] = float(self._booster.loss_history[best_index])
-        if self._booster.eval_loss_history:
-            best_index = (
-                self.best_iteration_ if self.best_iteration_ >= 0 else len(self._booster.eval_loss_history) - 1
-            )
-            best_index = min(best_index, len(self._booster.eval_loss_history) - 1)
-            best_score["validation"] = float(self._booster.eval_loss_history[best_index])
-        return best_score
+    def _compute_best_score(self) -> Dict[str, Any]:
+        result: Dict[str, Any] = {}
+        evals_result = self._booster.evals_result_
+        best_index = self.best_iteration_ if self.best_iteration_ >= 0 else len(self._booster.loss_history) - 1
+        if best_index < 0:
+            return result
+        for dataset_name, metric_histories in evals_result.items():
+            dataset_scores = {}
+            for metric_name, history in metric_histories.items():
+                if not history:
+                    continue
+                resolved_index = min(best_index, len(history) - 1)
+                dataset_scores[metric_name] = float(history[resolved_index])
+            if not dataset_scores:
+                continue
+            if dataset_name == "learn" and list(dataset_scores) == ["loss"]:
+                result[dataset_name] = dataset_scores["loss"]
+            elif len(dataset_scores) == 1 and list(dataset_scores) == [self._booster.eval_metric_name]:
+                result[dataset_name] = dataset_scores[self._booster.eval_metric_name]
+            else:
+                result[dataset_name] = dataset_scores
+        return result
 
     def _extra_serialized_state(self) -> Dict[str, Any]:
         return {}
@@ -642,7 +701,11 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
         init_model: Any = None,
         sample_weight: Any = None,
         eval_set: Any = None,
+        eval_names: Any = None,
         early_stopping_rounds: Optional[int] = None,
+        early_stopping_metric: Optional[str] = None,
+        early_stopping_name: Optional[str] = None,
+        callbacks: Optional[Iterable[Any]] = None,
     ) -> "CTBoostClassifier":
         if isinstance(X, Pool):
             raw_labels = np.asarray(X.label if y is None else y)
@@ -694,7 +757,11 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
             init_model=init_model,
             sample_weight=sample_weight,
             eval_set=eval_pool,
+            eval_names=eval_names,
             early_stopping_rounds=early_stopping_rounds,
+            early_stopping_metric=early_stopping_metric,
+            early_stopping_name=early_stopping_name,
+            callbacks=callbacks,
             objective=objective,
             num_classes=self.n_classes_,
             extra_train_params=train_params,
@@ -893,7 +960,11 @@ class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
         init_model: Any = None,
         sample_weight: Any = None,
         eval_set: Any = None,
+        eval_names: Any = None,
         early_stopping_rounds: Optional[int] = None,
+        early_stopping_metric: Optional[str] = None,
+        early_stopping_name: Optional[str] = None,
+        callbacks: Optional[Iterable[Any]] = None,
     ) -> "CTBoostRegressor":
         return self._fit_impl(
             X,
@@ -901,7 +972,11 @@ class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
             init_model=init_model,
             sample_weight=sample_weight,
             eval_set=eval_set,
+            eval_names=eval_names,
             early_stopping_rounds=early_stopping_rounds,
+            early_stopping_metric=early_stopping_metric,
+            early_stopping_name=early_stopping_name,
+            callbacks=callbacks,
             objective="SquaredError",
         )
 
@@ -1051,7 +1126,11 @@ class CTBoostRanker(_BaseCTBoost):
         init_model: Any = None,
         sample_weight: Any = None,
         eval_set: Any = None,
+        eval_names: Any = None,
         early_stopping_rounds: Optional[int] = None,
+        early_stopping_metric: Optional[str] = None,
+        early_stopping_name: Optional[str] = None,
+        callbacks: Optional[Iterable[Any]] = None,
     ) -> "CTBoostRanker":
         if isinstance(X, Pool):
             if group_id is not None:
@@ -1074,7 +1153,11 @@ class CTBoostRanker(_BaseCTBoost):
             init_model=init_model,
             sample_weight=sample_weight,
             eval_set=eval_pool,
+            eval_names=eval_names,
             early_stopping_rounds=early_stopping_rounds,
+            early_stopping_metric=early_stopping_metric,
+            early_stopping_name=early_stopping_name,
+            callbacks=callbacks,
             objective="PairLogit",
             num_classes=1,
         )

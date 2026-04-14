@@ -61,6 +61,68 @@ std::vector<float> ArrayToVector(py::array_t<float, py::array::forcecast> values
   return out;
 }
 
+std::vector<float> ArrayToFlatFloatVector(py::array_t<float, py::array::forcecast> values,
+                                          const char* name) {
+  const py::buffer_info info = values.request();
+  if (info.ndim != 1 && info.ndim != 2) {
+    throw std::invalid_argument(std::string(name) + " must be a 1D or 2D NumPy array");
+  }
+  if (info.itemsize != static_cast<py::ssize_t>(sizeof(float))) {
+    throw std::invalid_argument(std::string(name) + " must have float32-compatible items");
+  }
+
+  const auto* ptr = static_cast<const float*>(info.ptr);
+  std::vector<float> out(static_cast<std::size_t>(info.size));
+  if (info.size > 0) {
+    if (info.ndim == 1) {
+      if (info.strides[0] % static_cast<py::ssize_t>(sizeof(float)) != 0) {
+        throw std::invalid_argument(std::string(name) + " must have float-compatible strides");
+      }
+      const py::ssize_t stride =
+          info.strides[0] / static_cast<py::ssize_t>(sizeof(float));
+      for (std::size_t index = 0; index < out.size(); ++index) {
+        out[index] = *(ptr + static_cast<py::ssize_t>(index) * stride);
+      }
+    } else {
+      if (info.strides[0] % static_cast<py::ssize_t>(sizeof(float)) != 0 ||
+          info.strides[1] % static_cast<py::ssize_t>(sizeof(float)) != 0) {
+        throw std::invalid_argument(std::string(name) + " must have float-compatible strides");
+      }
+      const py::ssize_t row_stride =
+          info.strides[0] / static_cast<py::ssize_t>(sizeof(float));
+      const py::ssize_t col_stride =
+          info.strides[1] / static_cast<py::ssize_t>(sizeof(float));
+      std::size_t offset = 0;
+      for (py::ssize_t row = 0; row < info.shape[0]; ++row) {
+        for (py::ssize_t col = 0; col < info.shape[1]; ++col) {
+          out[offset++] = *(ptr + row * row_stride + col * col_stride);
+        }
+      }
+    }
+  }
+  return out;
+}
+
+std::vector<std::int64_t> ArrayToInt64Vector(py::array_t<std::int64_t, py::array::forcecast> values,
+                                             const char* name) {
+  const py::buffer_info info = values.request();
+  if (info.ndim != 1) {
+    throw std::invalid_argument(std::string(name) + " must be a 1D NumPy array");
+  }
+  if (info.strides[0] % static_cast<py::ssize_t>(sizeof(std::int64_t)) != 0) {
+    throw std::invalid_argument(std::string(name) + " must have integer-compatible strides");
+  }
+
+  const auto* ptr = static_cast<const std::int64_t*>(info.ptr);
+  const py::ssize_t stride =
+      info.strides[0] / static_cast<py::ssize_t>(sizeof(std::int64_t));
+  std::vector<std::int64_t> out(static_cast<std::size_t>(info.shape[0]));
+  for (std::size_t index = 0; index < out.size(); ++index) {
+    out[index] = *(ptr + static_cast<py::ssize_t>(index) * stride);
+  }
+  return out;
+}
+
 std::vector<std::uint16_t> ArrayToBinVector(py::array_t<std::int64_t, py::array::forcecast> values,
                                             const char* name) {
   const py::buffer_info info = values.request();
@@ -502,6 +564,58 @@ ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
 PYBIND11_MODULE(_core, m) {
   m.doc() = "Native backend scaffolding for CTBoost";
 
+  m.def("_evaluate_metric",
+        [](py::array_t<float, py::array::forcecast> predictions,
+           py::array_t<float, py::array::forcecast> labels,
+           py::array_t<float, py::array::forcecast> weights,
+           std::string metric_name,
+           int num_classes,
+           py::object group_ids,
+           double quantile_alpha,
+           double huber_delta,
+           double tweedie_variance_power) {
+          ctboost::ObjectiveConfig config;
+          config.quantile_alpha = quantile_alpha;
+          config.huber_delta = huber_delta;
+          config.tweedie_variance_power = tweedie_variance_power;
+          auto metric = ctboost::CreateMetricFunction(metric_name, config);
+          const std::vector<std::int64_t> resolved_group_ids =
+              group_ids.is_none()
+                  ? std::vector<std::int64_t>{}
+                  : ArrayToInt64Vector(
+                        group_ids.cast<py::array_t<std::int64_t, py::array::forcecast>>(),
+                        "group_ids");
+          return metric->Evaluate(ArrayToFlatFloatVector(predictions, "predictions"),
+                                  ArrayToVector(labels, "labels"),
+                                  ArrayToVector(weights, "weights"),
+                                  num_classes,
+                                  group_ids.is_none() ? nullptr : &resolved_group_ids);
+        },
+        py::arg("predictions"),
+        py::arg("labels"),
+        py::arg("weights"),
+        py::arg("metric_name"),
+        py::arg("num_classes") = 1,
+        py::arg("group_ids") = py::none(),
+        py::arg("quantile_alpha") = 0.5,
+        py::arg("huber_delta") = 1.0,
+        py::arg("tweedie_variance_power") = 1.5);
+  m.def("_metric_higher_is_better",
+        [](std::string metric_name,
+           double quantile_alpha,
+           double huber_delta,
+           double tweedie_variance_power) {
+          ctboost::ObjectiveConfig config;
+          config.quantile_alpha = quantile_alpha;
+          config.huber_delta = huber_delta;
+          config.tweedie_variance_power = tweedie_variance_power;
+          return ctboost::CreateMetricFunction(metric_name, config)->HigherIsBetter();
+        },
+        py::arg("metric_name"),
+        py::arg("quantile_alpha") = 0.5,
+        py::arg("huber_delta") = 1.0,
+        py::arg("tweedie_variance_power") = 1.5);
+
   py::class_<ctboost::Pool>(m, "Pool")
       .def(py::init([](py::array_t<float, py::array::forcecast> data,
                        py::array_t<float, py::array::forcecast> label,
@@ -859,6 +973,9 @@ PYBIND11_MODULE(_core, m) {
       .def("random_seed", &ctboost::GradientBooster::random_seed)
       .def("rng_state", &ctboost::GradientBooster::rng_state)
       .def("verbose", &ctboost::GradientBooster::verbose)
+      .def("set_iterations",
+           &ctboost::GradientBooster::SetIterations,
+           py::arg("iterations"))
       .def("export_state", [](const ctboost::GradientBooster& booster) {
         return BoosterToStateDict(booster);
       })

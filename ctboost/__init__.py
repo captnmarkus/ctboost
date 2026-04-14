@@ -9,8 +9,11 @@ _CORE_EXPORT_NAMES = {
     "Booster",
     "FeaturePipeline",
     "Pool",
+    "TrainingCallbackEnv",
+    "checkpoint_callback",
     "prepare_pool",
     "cv",
+    "log_evaluation",
     "load_model",
     "train",
 }
@@ -29,14 +32,25 @@ def _load_core_exports() -> Dict[str, Any]:
     from .core import Pool
     from .feature_pipeline import FeaturePipeline
     from .prepared_data import prepare_pool
-    from .training import Booster, cv, load_model, train
+    from .training import (
+        Booster,
+        TrainingCallbackEnv,
+        checkpoint_callback,
+        cv,
+        load_model,
+        log_evaluation,
+        train,
+    )
 
     exports = {
         "Booster": Booster,
         "FeaturePipeline": FeaturePipeline,
         "Pool": Pool,
+        "TrainingCallbackEnv": TrainingCallbackEnv,
+        "checkpoint_callback": checkpoint_callback,
         "prepare_pool": prepare_pool,
         "cv": cv,
+        "log_evaluation": log_evaluation,
         "load_model": load_model,
         "train": train,
     }
@@ -102,9 +116,12 @@ __all__ = [
     "CTBoostRegressor",
     "FeaturePipeline",
     "Pool",
+    "TrainingCallbackEnv",
     "prepare_pool",
     "build_info",
+    "checkpoint_callback",
     "cv",
     "load_model",
+    "log_evaluation",
     "train",
 ]

@@ -10,7 +10,7 @@ The current codebase supports end-to-end training and prediction for regression,
 - Python support: `3.8` through `3.14`
 - Packaging: `scikit-build-core`
 - CI/CD: GitHub Actions for CMake validation and `cibuildwheel` release builds
-- Repository version: `0.1.25`
+- Repository version: `0.1.26`
 - Status: actively evolving native + Python package
 
 ## What Works Today
@@ -37,21 +37,24 @@ The current codebase supports end-to-end training and prediction for regression,
 - GPU tree growth now also supports monotonic constraints, interaction constraints, `feature_weights`, `first_feature_use_penalties`, `random_strength`, and `grow_policy="LeafWise"` without replacing the conditional-inference split gate
 - Survival objectives: `Cox`, `SurvivalExponential`
 - Survival evaluation through `CIndex`
-- Early stopping with `eval_set` and `early_stopping_rounds`
-- Separate `eval_metric` support for validation history and early stopping
+- Early stopping with `eval_set`, `eval_names`, `early_stopping_rounds`, `early_stopping_metric`, and `early_stopping_name`
+- Single- and multi-watchlist evaluation through one or many `eval_set` entries
+- Single- and multi-metric evaluation through string or sequence `eval_metric` values
+- Per-iteration callback hooks through `callbacks`, plus built-in `ctboost.log_evaluation(...)` and `ctboost.checkpoint_callback(...)`
 - Validation loss/metric history and `evals_result_`
 - Per-iteration prediction through staged prediction and `num_iteration`
 - Stable JSON and pickle model persistence for low-level boosters and scikit-learn style estimators
 - Cross-validation with `ctboost.cv(...)` when `scikit-learn` is installed
 - Regression objectives: `RMSE`, `MAE`, `Huber`, `Quantile`, `Poisson`, `Tweedie`
-- Generic eval metrics including `RMSE`, `MAE`, `Poisson`, `Tweedie`, `Accuracy`, `Precision`, `Recall`, `F1`, `AUC`, `NDCG`, `MAP`, `MRR`, and `CIndex`
+- Generic eval metrics including `RMSE`, `MAE`, `Poisson`, `Tweedie`, `Accuracy`, `BalancedAccuracy`, `Precision`, `Recall`, `F1`, `AUC`, `NDCG`, `MAP`, `MRR`, and `CIndex`
 - Native `ctboost.FeaturePipeline` logic in `_core.NativeFeaturePipeline`, with low-level and sklearn integration for ordered CTRs, frequency-style CTRs, categorical crosses, low-cardinality one-hot expansion, rare-category bucketing, text hashing, and embedding-stat expansion
 - Generic categorical controls around the existing conditional tree learner: `one_hot_max_size` / `max_cat_to_onehot`, `max_cat_threshold`, `simple_ctr`, `combinations_ctr`, and `per_feature_ctr`
 - `ctboost.prepare_pool(...)` for low-level raw-data preparation, optional feature-pipeline fitting, and disk-backed external-memory pool staging
 - Native CPU out-of-core fit through `ctboost.train(..., external_memory=True)`, which now spills quantized feature-bin columns to disk instead of keeping the full histogram matrix resident in RAM
 - Multi-host distributed training through `distributed_world_size`, `distributed_rank`, `distributed_root`, and `distributed_run_id`, with a native per-node histogram reduction path and a TCP collective backend available through `distributed_root="tcp://host:port"`
-- Distributed `eval_set`, `early_stopping_rounds`, `init_model`, grouped ranking shards, and sklearn-estimator wrappers on the TCP collective backend
+- Distributed `eval_set`, multi-watchlist or multi-metric evaluation, callbacks, `early_stopping_rounds`, `init_model`, grouped ranking shards, and sklearn-estimator wrappers on the TCP collective backend
 - Distributed GPU training when CUDA is available and `distributed_root` uses the TCP collective backend
+- Distributed raw-data feature-pipeline fitting across ranks for native categorical, text, and embedding preprocessing
 - Feature importance reporting
 - Leaf-index introspection and path-based prediction contributions
 - Continued training through `init_model` and estimator `warm_start`
@@ -72,7 +75,6 @@ The current codebase supports end-to-end training and prediction for regression,
 - Ordered CTRs, frequency-style CTRs, categorical crosses, low-cardinality one-hot expansion, rare-category bucketing, text hashing, and embedding expansion now run through a native C++ pipeline, while pandas extraction, raw-data routing, and Pool orchestration remain thin Python glue
 - There is now a native sparse training path plus disk-backed quantized-bin staging through `ctboost.train(..., external_memory=True)` on both CPU and GPU, and distributed training can also use a standalone TCP collective coordinator through `distributed_root="tcp://host:port"`
 - The legacy filesystem-based distributed path still exists for basic CPU shard training, but distributed `eval_set` support and distributed GPU execution require the TCP backend
-- Distributed multi-host training still expects already-prepared numeric features when `distributed_world_size > 1`; fitting the raw feature pipeline itself is not yet coordinated across ranks
 - Distributed grouped/ranking training requires each `group_id` to live entirely on one worker shard; cross-rank query groups are rejected
 - Dedicated GPU wheel automation targets Linux `x86_64` CPython `3.10` through `3.14` release assets for Kaggle-style environments
 - CUDA wheel builds in CI depend on container-side toolkit provisioning
@@ -86,7 +88,7 @@ The older `v0.1.15` GPU fit-memory bottleneck list is now closed in the current 
 - GPU tree growth uses histogram subtraction, so only one child histogram is built explicitly after a split
 - GPU split search keeps best-feature selection on device and copies back only the winning feature summary
 
-That means the old per-node GPU bin-materialization issue is no longer the main resident-memory problem in the current codebase. The remaining generic backlog is now in broader distributed runtime ergonomics, full GPU parity for every control surface, and production tooling.
+That means the old per-node GPU bin-materialization issue is no longer the main resident-memory problem in the current codebase. The remaining generic backlog is now in broader distributed runtime ergonomics and additional export or deployment tooling.
 
 ## Benchmark Snapshot
 
@@ -141,7 +143,7 @@ import subprocess
 import sys
 import urllib.request
 
-tag = "v0.1.25"
+tag = "v0.1.26"
 py_tag = f"cp{sys.version_info.major}{sys.version_info.minor}"
 api_url = f"https://api.github.com/repos/captnmarkus/ctboost/releases/tags/{tag}"
 

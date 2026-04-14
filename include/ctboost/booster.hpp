@@ -69,6 +69,7 @@ class GradientBooster {
            Pool* eval_pool = nullptr,
            int early_stopping_rounds = 0,
            bool continue_training = false);
+  void SetIterations(int iterations);
   std::vector<float> Predict(const Pool& pool, int num_iteration = -1) const;
   std::vector<std::int32_t> PredictLeafIndices(const Pool& pool, int num_iteration = -1) const;
   std::vector<float> PredictContributions(const Pool& pool, int num_iteration = -1) const;
