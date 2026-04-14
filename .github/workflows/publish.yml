@@ -230,6 +230,11 @@ jobs:
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: >-
             python -X faulthandler -m pytest {project}/tests/test_gpu_wheel_smoke.py -q
+          CIBW_TEST_ENVIRONMENT_WINDOWS: >-
+            CTBOOST_EXPECT_CUDA=1
+            CUDA_PATH="C:\cuda"
+            CUDAToolkit_ROOT="C:\cuda"
+            PATH="C:\cuda\bin;$PATH"
           CIBW_CONFIG_SETTINGS: >-
             cmake.define.CTBOOST_ENABLE_CUDA=ON
             cmake.define.CTBOOST_REQUIRE_CUDA=ON
