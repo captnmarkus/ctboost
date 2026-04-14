@@ -505,6 +505,8 @@ class DistributedCollectiveServer:
                     state.response = state.payloads.get(0, b"")
                 elif op == "allgather":
                     state.response = gather_payloads(ordered_payloads)
+                elif op == "barrier":
+                    state.response = b""
                 elif op == "schema_collect":
                     if self._schema_builder is None:
                         raise RuntimeError("schema_collect requested without a schema builder")

@@ -45,6 +45,64 @@ def test_distributed_tcp_request_retries_until_coordinator_is_ready():
         server.stop()
 
 
+def test_distributed_collective_context_waits_for_all_ranks_before_shutdown(tmp_path: Path):
+    port = _find_free_tcp_port()
+    worker_script = tmp_path / "distributed_barrier_worker.py"
+    worker_script.write_text(
+        textwrap.dedent(
+            """
+            import json
+            import sys
+            import time
+
+            from ctboost.distributed import distributed_tcp_request
+            from ctboost.training import _distributed_collective_context
+
+            rank = int(sys.argv[1])
+            port = int(sys.argv[2])
+            delay = float(sys.argv[3])
+            distributed = {
+                "backend": "tcp",
+                "root": f"tcp://127.0.0.1:{port}",
+                "host": "127.0.0.1",
+                "port": port,
+                "rank": rank,
+                "world_size": 2,
+                "run_id": "barrier-case",
+                "timeout": 30.0,
+            }
+            with _distributed_collective_context(distributed):
+                if delay > 0.0:
+                    time.sleep(delay)
+                distributed_tcp_request(
+                    distributed["root"],
+                    distributed["timeout"],
+                    "ping",
+                    "__health__",
+                    rank,
+                    1,
+                    b"",
+                )
+            print(json.dumps({"rank": rank, "ok": True}))
+            """
+        ),
+        encoding="utf-8",
+    )
+
+    worker_env = os.environ.copy()
+    worker_env["PYTHONPATH"] = str(Path.cwd()) + os.pathsep + worker_env.get("PYTHONPATH", "")
+    worker_one = subprocess.Popen(
+        [sys.executable, str(worker_script), "1", str(port), "0.5"],
+        env=worker_env,
+    )
+    worker_zero = subprocess.Popen(
+        [sys.executable, str(worker_script), "0", str(port), "0.0"],
+        env=worker_env,
+    )
+    assert worker_one.wait(timeout=60) == 0
+    assert worker_zero.wait(timeout=60) == 0
+
+
 def test_booster_save_load_and_staged_predict_round_trip(tmp_path: Path):
     X, y = make_regression(
         n_samples=160,

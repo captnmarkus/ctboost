@@ -780,6 +780,20 @@ def _distributed_collective_context(distributed: Optional[Dict[str, Any]]):
     try:
         yield
     finally:
+        if distributed is not None and distributed["backend"] == "tcp":
+            try:
+                distributed_tcp_request(
+                    distributed["root"],
+                    distributed["timeout"],
+                    "barrier",
+                    f"{distributed['run_id']}/__shutdown__",
+                    distributed["rank"],
+                    distributed["world_size"],
+                    b"",
+                )
+            except Exception:
+                if server_process is None:
+                    raise
         if server_process is not None:
             server_process.terminate()
             try:
