@@ -211,6 +211,14 @@ jobs:
         with:
           cuda: "12.0.0"
 
+      - name: Normalize CUDA path
+        run: |
+          if (Test-Path -LiteralPath C:\cuda) {
+            Remove-Item -LiteralPath C:\cuda -Recurse -Force
+          }
+          New-Item -ItemType Junction -Path C:\cuda -Target "${{ steps.cuda-toolkit.outputs.CUDA_PATH }}" | Out-Null
+          & C:\cuda\bin\nvcc.exe --version
+
       - name: Install cibuildwheel
         run: python -m pip install --upgrade pip "cibuildwheel==3.4.1"
 
@@ -225,14 +233,16 @@ jobs:
           CIBW_CONFIG_SETTINGS: >-
             cmake.define.CTBOOST_ENABLE_CUDA=ON
             cmake.define.CTBOOST_REQUIRE_CUDA=ON
+            cmake.define.CMAKE_CUDA_COMPILER=C:\cuda\bin\nvcc.exe
+            cmake.define.CUDAToolkit_ROOT=C:\cuda
             cmake.define.CMAKE_CUDA_ARCHITECTURES=60\;70\;75\;80\;86\;89
             wheel.build-tag=1gpu
           CIBW_ENVIRONMENT_WINDOWS: >-
             CTBOOST_EXPECT_CUDA=1
-            CUDA_PATH="${{ steps.cuda-toolkit.outputs.CUDA_PATH }}"
-            CUDAToolkit_ROOT="${{ steps.cuda-toolkit.outputs.CUDA_PATH }}"
-            CUDACXX="${{ steps.cuda-toolkit.outputs.CUDA_PATH }}\bin\nvcc.exe"
-            PATH="${{ steps.cuda-toolkit.outputs.CUDA_PATH }}\bin;$PATH"
+            CUDA_PATH=C:\cuda
+            CUDAToolkit_ROOT=C:\cuda
+            CUDACXX=C:\cuda\bin\nvcc.exe
+            PATH=C:\cuda\bin;$PATH
         run: python -m cibuildwheel --output-dir wheelhouse
 
       - name: Upload GPU Windows wheel artifact
