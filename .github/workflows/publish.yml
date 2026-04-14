@@ -24,18 +24,28 @@ jobs:
             runner: ubuntu-latest
             artifact: wheelhouse-linux-x86_64
             cibw_archs: x86_64
+            cibw_environment: ""
+            cibw_config_settings: ""
           - name: linux-aarch64
             runner: ubuntu-24.04-arm
             artifact: wheelhouse-linux-aarch64
             cibw_archs: aarch64
+            cibw_environment: ""
+            cibw_config_settings: ""
           - name: windows-amd64
             runner: windows-latest
             artifact: wheelhouse-windows-amd64
             cibw_archs: AMD64
+            cibw_environment: ""
+            cibw_config_settings: ""
           - name: macos-x86_64
             runner: macos-15-intel
             artifact: wheelhouse-macos-x86_64
             cibw_archs: x86_64
+            cibw_environment: MACOSX_DEPLOYMENT_TARGET=10.15
+            cibw_config_settings: >-
+              cmake.define.CTBOOST_ENABLE_CUDA=OFF
+              cmake.define.CMAKE_OSX_DEPLOYMENT_TARGET=10.15
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -51,6 +61,8 @@ jobs:
       - name: Build wheels
         env:
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
+          CIBW_ENVIRONMENT: ${{ matrix.cibw_environment }}
+          CIBW_CONFIG_SETTINGS: ${{ matrix.cibw_config_settings }}
         run: python -m cibuildwheel --output-dir wheelhouse
 
       - name: Upload wheel artifacts
