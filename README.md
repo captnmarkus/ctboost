@@ -10,7 +10,7 @@ The current codebase supports end-to-end training and prediction for regression,
 - Python support: `3.8` through `3.14`
 - Packaging: `scikit-build-core`
 - CI/CD: GitHub Actions for CMake validation and `cibuildwheel` release builds
-- Repository version: `0.1.23`
+- Repository version: `0.1.24`
 - Status: actively evolving native + Python package
 
 ## What Works Today
@@ -141,7 +141,7 @@ import subprocess
 import sys
 import urllib.request
 
-tag = "v0.1.23"
+tag = "v0.1.24"
 py_tag = f"cp{sys.version_info.major}{sys.version_info.minor}"
 api_url = f"https://api.github.com/repos/captnmarkus/ctboost/releases/tags/{tag}"
 
