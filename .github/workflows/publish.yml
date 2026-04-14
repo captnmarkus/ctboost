@@ -225,6 +225,7 @@ jobs:
           CIBW_CONFIG_SETTINGS: >-
             cmake.define.CTBOOST_ENABLE_CUDA=ON
             cmake.define.CTBOOST_REQUIRE_CUDA=ON
+            cmake.define.CMAKE_CUDA_ARCHITECTURES=60\;70\;75\;80\;86\;89
             wheel.build-tag=1gpu
           CIBW_ENVIRONMENT_WINDOWS: >-
             CTBOOST_EXPECT_CUDA=1
