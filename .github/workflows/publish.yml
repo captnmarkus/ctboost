@@ -239,10 +239,10 @@ jobs:
             wheel.build-tag=1gpu
           CIBW_ENVIRONMENT_WINDOWS: >-
             CTBOOST_EXPECT_CUDA=1
-            CUDA_PATH=C:\cuda
-            CUDAToolkit_ROOT=C:\cuda
-            CUDACXX=C:\cuda\bin\nvcc.exe
-            PATH=C:\cuda\bin;$PATH
+            CUDA_PATH="C:\cuda"
+            CUDAToolkit_ROOT="C:\cuda"
+            CUDACXX="C:\cuda\bin\nvcc.exe"
+            PATH="C:\cuda\bin;$PATH"
         run: python -m cibuildwheel --output-dir wheelhouse
 
       - name: Upload GPU Windows wheel artifact
