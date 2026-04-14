@@ -236,7 +236,7 @@ jobs:
             CUDAToolkit_ROOT="C:/cuda"
             PATH="C:/cuda/bin;$PATH"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: >-
-            delvewheel repair --add-path C:/cuda/bin -w {dest_dir} {wheel}
+            python -m delvewheel repair --add-path C:/cuda/bin -w {dest_dir} {wheel}
           CIBW_CONFIG_SETTINGS: >-
             cmake.define.CTBOOST_ENABLE_CUDA=ON
             cmake.define.CTBOOST_REQUIRE_CUDA=ON
