@@ -55,12 +55,49 @@ def test_pool_accepts_pandas_dataframe_with_categorical_columns():
     assert set(np.unique(pool.data[:, 2]).tolist()) == {0.0, 1.0}
 
 
+def test_pool_preserves_ranking_metadata_and_baseline():
+    data = np.asarray(
+        [
+            [1.0, 0.0],
+            [0.5, 1.0],
+            [-0.5, 0.0],
+            [-1.0, 1.0],
+        ],
+        dtype=np.float32,
+    )
+    label = np.zeros(4, dtype=np.float32)
+    group_id = np.asarray([0, 0, 1, 1], dtype=np.int64)
+    group_weight = np.asarray([1.0, 1.0, 2.5, 2.5], dtype=np.float32)
+    subgroup_id = np.asarray([0, 1, 0, 1], dtype=np.int64)
+    baseline = np.asarray([0.25, -0.1, 0.4, -0.3], dtype=np.float32)
+    pairs = np.asarray([[0, 1], [2, 3]], dtype=np.int64)
+    pairs_weight = np.asarray([1.5, 0.75], dtype=np.float32)
+
+    pool = ctboost.Pool(
+        data,
+        label,
+        group_id=group_id,
+        group_weight=group_weight,
+        subgroup_id=subgroup_id,
+        baseline=baseline,
+        pairs=pairs,
+        pairs_weight=pairs_weight,
+    )
+
+    np.testing.assert_array_equal(pool.group_id, group_id)
+    np.testing.assert_allclose(pool.group_weight, group_weight, rtol=0.0, atol=0.0)
+    np.testing.assert_array_equal(pool.subgroup_id, subgroup_id)
+    np.testing.assert_allclose(pool.baseline, baseline, rtol=0.0, atol=0.0)
+    np.testing.assert_array_equal(pool.pairs, pairs)
+    np.testing.assert_allclose(pool.pairs_weight, pairs_weight, rtol=0.0, atol=0.0)
+
+
 def test_pool_passes_fortran_ordered_matrix_to_native(monkeypatch):
     captured = {}
     original_pool = ctcore._core.Pool
 
     class FakePoolHandle:
-        def __init__(self, data, label, cat_features, weight, group_id):
+        def __init__(self, data, label, cat_features, weight, group_id, *metadata):
             captured["data"] = data
             captured["label"] = label
             captured["cat_features"] = cat_features
@@ -108,7 +145,7 @@ def test_dataframe_pool_preserves_fortran_layout_to_native(monkeypatch):
     original_pool = ctcore._core.Pool
 
     class FakePoolHandle:
-        def __init__(self, data, label, cat_features, weight, group_id):
+        def __init__(self, data, label, cat_features, weight, group_id, *metadata):
             captured["data"] = data
             captured["cat_features"] = cat_features
 

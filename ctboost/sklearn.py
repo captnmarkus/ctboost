@@ -305,6 +305,11 @@ class _BaseCTBoost(BaseEstimator):
         y: Any = None,
         *,
         group_id: Any = None,
+        group_weight: Any = None,
+        subgroup_id: Any = None,
+        baseline: Any = None,
+        pairs: Any = None,
+        pairs_weight: Any = None,
         init_model: Any = None,
         sample_weight: Any = None,
         eval_set: Any = None,
@@ -334,6 +339,11 @@ class _BaseCTBoost(BaseEstimator):
                 label=y,
                 cat_features=transformed_cat_features,
                 group_id=group_id,
+                group_weight=group_weight,
+                subgroup_id=subgroup_id,
+                baseline=baseline,
+                pairs=pairs,
+                pairs_weight=pairs_weight,
                 feature_names=transformed_feature_names,
                 _releasable_feature_storage=True,
             )
@@ -355,8 +365,26 @@ class _BaseCTBoost(BaseEstimator):
             self._feature_pipeline = None
             train_pool = (
                 X
-                if isinstance(X, Pool) and y is None and group_id is None
-                else _pool_from_data_and_label(X, y, group_id=group_id)
+                if (
+                    isinstance(X, Pool)
+                    and y is None
+                    and group_id is None
+                    and group_weight is None
+                    and subgroup_id is None
+                    and baseline is None
+                    and pairs is None
+                    and pairs_weight is None
+                )
+                else _pool_from_data_and_label(
+                    X,
+                    y,
+                    group_id=group_id,
+                    group_weight=group_weight,
+                    subgroup_id=subgroup_id,
+                    baseline=baseline,
+                    pairs=pairs,
+                    pairs_weight=pairs_weight,
+                )
             )
             eval_pools = []
             for resolved_eval_set in resolved_eval_sets:
@@ -711,6 +739,7 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
         X: Any,
         y: Any = None,
         *,
+        baseline: Any = None,
         init_model: Any = None,
         sample_weight: Any = None,
         eval_set: Any = None,
@@ -762,11 +791,12 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
         train_input = (
             X
             if self._uses_feature_pipeline() or isinstance(X, Pool)
-            else _pool_from_data_and_label(X, encoded_labels)
+            else _pool_from_data_and_label(X, encoded_labels, baseline=baseline)
         )
         fitted = self._fit_impl(
             train_input,
             None if isinstance(train_input, Pool) else encoded_labels,
+            baseline=baseline,
             init_model=init_model,
             sample_weight=sample_weight,
             eval_set=eval_pool,
@@ -970,6 +1000,7 @@ class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
         X: Any,
         y: Any = None,
         *,
+        baseline: Any = None,
         init_model: Any = None,
         sample_weight: Any = None,
         eval_set: Any = None,
@@ -982,6 +1013,7 @@ class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
         return self._fit_impl(
             X,
             y,
+            baseline=baseline,
             init_model=init_model,
             sample_weight=sample_weight,
             eval_set=eval_set,
@@ -1136,6 +1168,11 @@ class CTBoostRanker(_BaseCTBoost):
         y: Any = None,
         *,
         group_id: Any = None,
+        group_weight: Any = None,
+        subgroup_id: Any = None,
+        baseline: Any = None,
+        pairs: Any = None,
+        pairs_weight: Any = None,
         init_model: Any = None,
         sample_weight: Any = None,
         eval_set: Any = None,
@@ -1146,15 +1183,34 @@ class CTBoostRanker(_BaseCTBoost):
         callbacks: Optional[Iterable[Any]] = None,
     ) -> "CTBoostRanker":
         if isinstance(X, Pool):
-            if group_id is not None:
-                raise ValueError("group_id should be provided through the Pool when X is already a Pool")
+            if (
+                group_id is not None
+                or group_weight is not None
+                or subgroup_id is not None
+                or baseline is not None
+                or pairs is not None
+                or pairs_weight is not None
+            ):
+                raise ValueError(
+                    "group_id, group_weight, subgroup_id, baseline, pairs, and pairs_weight "
+                    "should be provided through the Pool when X is already a Pool"
+                )
             train_pool = X if y is None else _pool_from_data_and_label(X, y)
             resolved_group_id = train_pool.group_id
         else:
             if y is None:
                 raise ValueError("y must be provided when X is not a Pool")
             resolved_group_id = group_id
-            train_pool = _pool_from_data_and_label(X, y, group_id=group_id)
+            train_pool = _pool_from_data_and_label(
+                X,
+                y,
+                group_id=group_id,
+                group_weight=group_weight,
+                subgroup_id=subgroup_id,
+                baseline=baseline,
+                pairs=pairs,
+                pairs_weight=pairs_weight,
+            )
 
         if resolved_group_id is None:
             raise ValueError("CTBoostRanker requires group_id")
@@ -1163,6 +1219,11 @@ class CTBoostRanker(_BaseCTBoost):
         fitted = self._fit_impl(
             train_pool,
             group_id=resolved_group_id,
+            group_weight=group_weight,
+            subgroup_id=subgroup_id,
+            baseline=baseline,
+            pairs=pairs,
+            pairs_weight=pairs_weight,
             init_model=init_model,
             sample_weight=sample_weight,
             eval_set=eval_pool,

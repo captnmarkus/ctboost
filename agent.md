@@ -14,13 +14,13 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 
 - The public Python package exposes low-level training primitives plus optional scikit-learn compatible estimators.
 - The low-level `Booster` API now supports stable JSON persistence, staged prediction, validation metric history, iteration-limited prediction, configurable `eval_metric`, row weights, explicit missing-value handling through `nan_mode`, warm-start continuation via `init_model`, leaf-index prediction, and path-based contribution output.
-- The high-level estimator API supports persistence, staged prediction, `evals_result_`, `best_score_`, `sample_weight`, `class_weight`, `scale_pos_weight`, `eval_metric`, `nan_mode`, `warm_start`, and grouped ranking through `CTBoostRanker` when `scikit-learn` is installed.
+- The high-level estimator API supports persistence, staged prediction, `evals_result_`, `best_score_`, `sample_weight`, `baseline`, `class_weight`, `scale_pos_weight`, `eval_metric`, `nan_mode`, `warm_start`, and grouped ranking through `CTBoostRanker` when `scikit-learn` is installed, including `group_weight`, `subgroup_id`, `pairs`, and `pairs_weight` on ranker fits.
 - A Python-side `ctboost.cv(...)` helper is available for generic cross-validation workflows, including grouped ranking splits, when `scikit-learn` is installed.
 - Native training now supports generic regression objectives beyond RMSE: `MAE`, `Huber`, and `Quantile`.
 - Native training now also supports `Poisson` and `Tweedie` regression objectives with configurable `tweedie_variance_power`.
 - Native training now also supports survival objectives `Cox` and `SurvivalExponential`.
 - Native validation metrics now include regression metrics plus generic classification metrics such as `Accuracy`, `BalancedAccuracy`, `Precision`, `Recall`, `F1`, and `AUC`, ranking-oriented `NDCG`, `MAP`, and `MRR`, and survival-oriented `CIndex`.
-- `Pool` now accepts pandas inputs, SciPy sparse matrices, row weights, categorical feature indices, and optional `group_id` metadata.
+- `Pool` now accepts pandas inputs, SciPy sparse matrices, row weights, categorical feature indices, optional ranking metadata (`group_id`, `group_weight`, `subgroup_id`), explicit ranking pairs plus `pairs_weight`, and optional baseline raw-score inputs.
 - The Python boundary preserves column-major input layout for dense pandas matrices, SciPy sparse input now stays sparse through the native pool boundary instead of being densified first, disk-backed memmap pools can now be staged through `ctboost.prepare_pool(..., external_memory=True)`, and the native CPU histogram path can now spill quantized feature-bin columns to disk during fit instead of keeping the full training histogram resident in RAM.
 - A native C++ `FeaturePipeline`, exposed through thin Python wrappers plus both low-level and sklearn-estimator integration, now provides ordered CTRs, frequency-style CTRs, per-source CTR selection, categorical feature combinations, low-cardinality one-hot expansion, rare-category bucketing through `max_cat_threshold`, text hashing, and embedding-stat expansion around the existing learner without replacing the conditional split criterion.
 - The low-level `ctboost.train(...)` path now accepts raw inputs with feature-pipeline parameters directly, persists the fitted preprocessing on low-level boosters, exposes `ctboost.prepare_pool(...)` and `ctboost.prepare_training_data(...)` for explicit raw-data preparation, supports multi-watchlist or multi-metric evaluation plus per-iteration callbacks through Python-side orchestration layered on the same native booster, and can export standalone pure-Python scorers for numeric or already-prepared features.
@@ -45,6 +45,7 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 - The GPU tree path now supports the same monotone, interaction, feature-weight, first-use-penalty, random-strength, and heuristic leafwise-growth controls around the existing conditional split gate; those are no longer CPU-only.
 - Multi-host training now supports a standalone TCP collective backend plus the older filesystem shard path, preserving the same conditional tree implementation while avoiding the old rank-`0` merged-fit coordinator on the native path.
 - The TCP distributed path now supports distributed `eval_set`, multi-watchlist or multi-metric evaluation, per-iteration callbacks, early stopping, `init_model`, grouped ranking shards with rank-local query groups, sklearn-estimator wrappers, distributed GPU execution when CUDA is available, and coordinated raw feature-pipeline fitting across ranks.
+- Distributed multi-host training still does not accept `group_weight`, `subgroup_id`, or explicit `pairs` / `pairs_weight` metadata on shard-local pools; those richer ranking inputs are currently single-host only.
 - Filesystem-backed distributed runs now also have a compatibility fallback that stages shard pools to rank `0` for advanced eval, callback, ranking, and GPU workflows when TCP coordination is not configured.
 - Native profiling hooks are available through `verbose=True` and `CTBOOST_PROFILE=1`, including histogram build, per-node histogram, per-tree, and overall fit timing.
 - The repository now includes `run_kaggle_kernel_session.py` for source-build validation on Kaggle GPU environments.
@@ -54,7 +55,7 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 - CUDA remains an optional source-build capability rather than the default PyPI wheel path.
 - The release workflow publishes dedicated Linux `x86_64` and Windows `amd64` CUDA wheels as GitHub release assets for CPython `3.10` through `3.14`.
 - The dedicated CUDA wheels require a detected CUDA toolkit via `CTBOOST_REQUIRE_CUDA=ON` and run a dedicated GPU smoke test before upload.
-- As of April 14, 2026, the repository version is bumped to `0.1.38`, following the `0.1.19` release and the distributed TCP collective follow-up work.
+- As of April 18, 2026, the repository version is bumped to `0.1.39`, following the richer ranking-metadata and baseline-input follow-up.
 - The base wheel no longer hard-depends on `scikit-learn`; estimator and CV entry points are lazy-loaded and raise a clear import error if `scikit-learn` is absent.
 
 ## Release and Wheel Policy
@@ -106,6 +107,10 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 - The standalone export, prepared-training-data, and filesystem distributed compatibility follow-up was revalidated locally on April 14, 2026 with:
   `python -m pytest tests/test_persistence_and_cv.py tests/test_sklearn.py tests/test_metrics_and_objectives.py -q`
   resulting in `42 passed` on this CPU-only local build before the final full-suite rerun.
+- The richer ranking-metadata and baseline-input follow-up was revalidated locally on April 18, 2026 with:
+  `python -m pytest tests/test_data_and_loss.py tests/test_ranking.py tests/test_explainability_and_warm_start.py -q`
+  `python -m pytest tests/test_sklearn.py tests/test_metrics_and_objectives.py tests/test_persistence_and_cv.py -q --basetemp=.pytest-tmp`
+  resulting in `66 passed` on this CPU-only local build.
 
 ## Local Plan
 

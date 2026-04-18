@@ -98,18 +98,32 @@ const std::vector<std::int64_t>& ValidateRankingInputs(
     const std::vector<float>& preds,
     const std::vector<float>& labels,
     int num_classes,
-    const std::vector<std::int64_t>* group_ids) {
+    const RankingMetadataView* ranking) {
   if (num_classes != 1) {
     throw std::invalid_argument("ranking objectives expect num_classes equal to one");
   }
   ValidatePredictionLabelSizes(preds, labels);
-  if (group_ids == nullptr || group_ids->empty()) {
+  if (ranking == nullptr || ranking->group_ids == nullptr || ranking->group_ids->empty()) {
     throw std::invalid_argument("ranking objectives require group_id values");
   }
-  if (group_ids->size() != labels.size()) {
+  if (ranking->group_ids->size() != labels.size()) {
     throw std::invalid_argument("group_id size must match the number of labels");
   }
-  return *group_ids;
+  return *ranking->group_ids;
+}
+
+float ResolveGroupWeight(const RankingMetadataView* ranking, std::size_t row) {
+  if (ranking == nullptr || ranking->group_weights == nullptr || ranking->group_weights->empty()) {
+    return 1.0F;
+  }
+  return (*ranking->group_weights)[row];
+}
+
+bool SameSubgroup(const RankingMetadataView* ranking, std::size_t left, std::size_t right) {
+  if (ranking == nullptr || ranking->subgroup_ids == nullptr || ranking->subgroup_ids->empty()) {
+    return false;
+  }
+  return (*ranking->subgroup_ids)[left] == (*ranking->subgroup_ids)[right];
 }
 
 std::string NormalizeName(std::string_view name) {
@@ -129,7 +143,7 @@ void SquaredError::compute_gradients(const std::vector<float>& preds,
                                      std::vector<float>& out_g,
                                      std::vector<float>& out_h,
                                      int num_classes,
-                                     const std::vector<std::int64_t>*) const {
+                                     const RankingMetadataView*) const {
   if (num_classes != 1) {
     throw std::invalid_argument("squared error expects num_classes equal to one");
   }
@@ -148,7 +162,7 @@ void LogLoss::compute_gradients(const std::vector<float>& preds,
                                 std::vector<float>& out_g,
                                 std::vector<float>& out_h,
                                 int num_classes,
-                                const std::vector<std::int64_t>*) const {
+                                const RankingMetadataView*) const {
   if (num_classes != 1 && num_classes != 2) {
     throw std::invalid_argument("logloss expects num_classes equal to one or two");
   }
@@ -169,7 +183,7 @@ void SoftmaxLoss::compute_gradients(const std::vector<float>& preds,
                                     std::vector<float>& out_g,
                                     std::vector<float>& out_h,
                                     int num_classes,
-                                    const std::vector<std::int64_t>*) const {
+                                    const RankingMetadataView*) const {
   ValidateMulticlassSizes(preds, labels, num_classes);
 
   out_g.resize(preds.size());
@@ -205,7 +219,7 @@ void AbsoluteError::compute_gradients(const std::vector<float>& preds,
                                       std::vector<float>& out_g,
                                       std::vector<float>& out_h,
                                       int num_classes,
-                                      const std::vector<std::int64_t>*) const {
+                                      const RankingMetadataView*) const {
   if (num_classes != 1) {
     throw std::invalid_argument("absolute error expects num_classes equal to one");
   }
@@ -237,7 +251,7 @@ void HuberLoss::compute_gradients(const std::vector<float>& preds,
                                   std::vector<float>& out_g,
                                   std::vector<float>& out_h,
                                   int num_classes,
-                                  const std::vector<std::int64_t>*) const {
+                                  const RankingMetadataView*) const {
   if (num_classes != 1) {
     throw std::invalid_argument("huber loss expects num_classes equal to one");
   }
@@ -270,7 +284,7 @@ void QuantileLoss::compute_gradients(const std::vector<float>& preds,
                                      std::vector<float>& out_g,
                                      std::vector<float>& out_h,
                                      int num_classes,
-                                     const std::vector<std::int64_t>*) const {
+                                     const RankingMetadataView*) const {
   if (num_classes != 1) {
     throw std::invalid_argument("quantile loss expects num_classes equal to one");
   }
@@ -290,7 +304,7 @@ void PoissonLoss::compute_gradients(const std::vector<float>& preds,
                                     std::vector<float>& out_g,
                                     std::vector<float>& out_h,
                                     int num_classes,
-                                    const std::vector<std::int64_t>*) const {
+                                    const RankingMetadataView*) const {
   if (num_classes != 1) {
     throw std::invalid_argument("poisson loss expects num_classes equal to one");
   }
@@ -317,7 +331,7 @@ void TweedieLoss::compute_gradients(const std::vector<float>& preds,
                                     std::vector<float>& out_g,
                                     std::vector<float>& out_h,
                                     int num_classes,
-                                    const std::vector<std::int64_t>*) const {
+                                    const RankingMetadataView*) const {
   if (num_classes != 1) {
     throw std::invalid_argument("tweedie loss expects num_classes equal to one");
   }
@@ -346,7 +360,7 @@ void CoxLoss::compute_gradients(const std::vector<float>& preds,
                                 std::vector<float>& out_g,
                                 std::vector<float>& out_h,
                                 int num_classes,
-                                const std::vector<std::int64_t>*) const {
+                                const RankingMetadataView*) const {
   if (num_classes != 1) {
     throw std::invalid_argument("cox loss expects num_classes equal to one");
   }
@@ -431,7 +445,7 @@ void SurvivalExponentialLoss::compute_gradients(const std::vector<float>& preds,
                                                 std::vector<float>& out_g,
                                                 std::vector<float>& out_h,
                                                 int num_classes,
-                                                const std::vector<std::int64_t>*) const {
+                                                const RankingMetadataView*) const {
   if (num_classes != 1) {
     throw std::invalid_argument("survival exponential loss expects num_classes equal to one");
   }
@@ -455,42 +469,57 @@ void PairLogitLoss::compute_gradients(const std::vector<float>& preds,
                                       std::vector<float>& out_g,
                                       std::vector<float>& out_h,
                                       int num_classes,
-                                      const std::vector<std::int64_t>* group_ids) const {
+                                      const RankingMetadataView* ranking) const {
   const auto& resolved_group_ids =
-      ValidateRankingInputs(preds, labels, num_classes, group_ids);
+      ValidateRankingInputs(preds, labels, num_classes, ranking);
 
   out_g.assign(preds.size(), 0.0F);
   out_h.assign(preds.size(), 0.0F);
 
-  std::unordered_map<std::int64_t, std::vector<std::size_t>> group_rows;
-  group_rows.reserve(resolved_group_ids.size());
-  for (std::size_t row = 0; row < resolved_group_ids.size(); ++row) {
-    group_rows[resolved_group_ids[row]].push_back(row);
-  }
-
   std::size_t pair_count = 0;
-  for (const auto& entry : group_rows) {
-    const auto& rows = entry.second;
-    for (std::size_t left = 0; left < rows.size(); ++left) {
-      for (std::size_t right = left + 1; right < rows.size(); ++right) {
-        const std::size_t i = rows[left];
-        const std::size_t j = rows[right];
-        if (labels[i] == labels[j]) {
-          continue;
+  auto apply_pair = [&](std::size_t winner, std::size_t loser, float pair_weight) {
+    if (!(pair_weight > 0.0F)) {
+      return;
+    }
+    const float margin = preds[winner] - preds[loser];
+    const float probability = Sigmoid(margin);
+    const float gradient = (probability - 1.0F) * pair_weight;
+    const float hessian = probability * (1.0F - probability) * pair_weight;
+
+    out_g[winner] += gradient;
+    out_g[loser] -= gradient;
+    out_h[winner] += hessian;
+    out_h[loser] += hessian;
+    ++pair_count;
+  };
+
+  if (ranking != nullptr && ranking->pairs != nullptr && !ranking->pairs->empty()) {
+    for (const RankingPair& pair : *ranking->pairs) {
+      const std::size_t winner = static_cast<std::size_t>(pair.winner);
+      const std::size_t loser = static_cast<std::size_t>(pair.loser);
+      apply_pair(winner, loser, pair.weight * ResolveGroupWeight(ranking, winner));
+    }
+  } else {
+    std::unordered_map<std::int64_t, std::vector<std::size_t>> group_rows;
+    group_rows.reserve(resolved_group_ids.size());
+    for (std::size_t row = 0; row < resolved_group_ids.size(); ++row) {
+      group_rows[resolved_group_ids[row]].push_back(row);
+    }
+
+    for (const auto& entry : group_rows) {
+      const auto& rows = entry.second;
+      for (std::size_t left = 0; left < rows.size(); ++left) {
+        for (std::size_t right = left + 1; right < rows.size(); ++right) {
+          const std::size_t i = rows[left];
+          const std::size_t j = rows[right];
+          if (labels[i] == labels[j] || SameSubgroup(ranking, i, j)) {
+            continue;
+          }
+
+          const std::size_t winner = labels[i] > labels[j] ? i : j;
+          const std::size_t loser = labels[i] > labels[j] ? j : i;
+          apply_pair(winner, loser, ResolveGroupWeight(ranking, winner));
         }
-
-        const std::size_t positive = labels[i] > labels[j] ? i : j;
-        const std::size_t negative = labels[i] > labels[j] ? j : i;
-        const float margin = preds[positive] - preds[negative];
-        const float probability = Sigmoid(margin);
-        const float gradient = probability - 1.0F;
-        const float hessian = probability * (1.0F - probability);
-
-        out_g[positive] += gradient;
-        out_g[negative] -= gradient;
-        out_h[positive] += hessian;
-        out_h[negative] += hessian;
-        ++pair_count;
       }
     }
   }

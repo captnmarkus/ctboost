@@ -134,6 +134,23 @@ bool SameCategoricalFeatures(const Pool& lhs, const Pool& rhs) {
          std::is_permutation(lhs_features.begin(), lhs_features.end(), rhs_features.begin());
 }
 
+void AddPoolBaselineToPredictions(const Pool& pool,
+                                  int prediction_dimension,
+                                  std::vector<float>& predictions) {
+  if (!pool.has_baseline()) {
+    return;
+  }
+  if (pool.baseline_dimension() != prediction_dimension) {
+    throw std::invalid_argument("baseline dimension must match the model prediction dimension");
+  }
+  if (pool.baseline().size() != predictions.size()) {
+    throw std::invalid_argument("baseline size must match the flattened prediction size");
+  }
+  for (std::size_t index = 0; index < predictions.size(); ++index) {
+    predictions[index] += pool.baseline()[index];
+  }
+}
+
 int LabelToClassIndex(float label, int num_classes) {
   const float rounded = std::round(label);
   if (std::fabs(label - rounded) > 1e-6F) {
@@ -1492,8 +1509,12 @@ void GradientBooster::Fit(Pool& pool,
     workspace.gpu_hist_workspace = CreateGpuHistogramWorkspace(workspace.train_hist, weights, devices_);
   }
   LogFitMemorySnapshot(profiler, "post_workspace", pool, eval_pool, workspace);
-  const std::vector<std::int64_t>* group_ids =
-      pool.has_group_ids() ? &pool.group_ids() : nullptr;
+  const RankingMetadataView ranking = pool.ranking_metadata();
+  const RankingMetadataView* ranking_ptr =
+      ranking.group_ids == nullptr && ranking.subgroup_ids == nullptr &&
+              ranking.group_weights == nullptr && ranking.pairs == nullptr
+          ? nullptr
+          : &ranking;
   const double total_weight = std::accumulate(
       weights.begin(), weights.end(), 0.0,
       [](double acc, float value) { return acc + static_cast<double>(value); });
@@ -1512,6 +1533,7 @@ void GradientBooster::Fit(Pool& pool,
                                     pool.num_rows() *
                                         static_cast<std::size_t>(prediction_dimension_),
                                     0.0F);
+  AddPoolBaselineToPredictions(pool, prediction_dimension_, workspace.predictions);
   if (use_gpu_) {
     workspace.train_hist.ReleaseBinStorage();
     LogFitMemorySnapshot(profiler, "post_gpu_train_bin_release", pool, eval_pool, workspace);
@@ -1533,17 +1555,23 @@ void GradientBooster::Fit(Pool& pool,
   const BootstrapType configured_bootstrap_type = ParseBootstrapType(bootstrap_type_);
   std::vector<float> fixed_gradient_predictions;
   if (boosting_type == BoostingType::kRandomForest) {
-    fixed_gradient_predictions.assign(workspace.predictions.size(), 0.0F);
+    fixed_gradient_predictions = workspace.predictions;
   }
   const bool use_dart = boosting_type == BoostingType::kDart;
 
   const std::vector<float>* eval_labels = nullptr;
   const std::vector<float>* eval_weights = nullptr;
-  const std::vector<std::int64_t>* eval_group_ids = nullptr;
+  RankingMetadataView eval_ranking;
+  const RankingMetadataView* eval_ranking_ptr = nullptr;
   if (eval_pool != nullptr) {
     eval_labels = &eval_pool->labels();
     eval_weights = &eval_pool->weights();
-    eval_group_ids = eval_pool->has_group_ids() ? &eval_pool->group_ids() : nullptr;
+    eval_ranking = eval_pool->ranking_metadata();
+    eval_ranking_ptr =
+        eval_ranking.group_ids == nullptr && eval_ranking.subgroup_ids == nullptr &&
+                eval_ranking.group_weights == nullptr && eval_ranking.pairs == nullptr
+            ? nullptr
+            : &eval_ranking;
     const double eval_total_weight = std::accumulate(
         eval_weights->begin(), eval_weights->end(), 0.0,
         [](double acc, float value) { return acc + static_cast<double>(value); });
@@ -1571,6 +1599,7 @@ void GradientBooster::Fit(Pool& pool,
                                            eval_pool->num_rows() *
                                                static_cast<std::size_t>(prediction_dimension_),
                                            0.0F);
+    AddPoolBaselineToPredictions(*eval_pool, prediction_dimension_, workspace.eval_predictions);
     LogFitMemorySnapshot(profiler, "post_eval_quantize", pool, eval_pool, workspace);
     if (!continue_training || eval_loss_history_.empty()) {
       best_score_ = maximize_eval_metric_ ? -std::numeric_limits<double>::infinity()
@@ -1579,6 +1608,15 @@ void GradientBooster::Fit(Pool& pool,
         best_iteration_ = -1;
       }
     }
+  }
+  if (distributed_world_size_ > 1 &&
+      ((ranking_ptr != nullptr &&
+        (ranking.subgroup_ids != nullptr || ranking.group_weights != nullptr || ranking.pairs != nullptr)) ||
+       (eval_ranking_ptr != nullptr &&
+        (eval_ranking.subgroup_ids != nullptr || eval_ranking.group_weights != nullptr ||
+         eval_ranking.pairs != nullptr)))) {
+    throw std::invalid_argument(
+        "distributed training does not yet support subgroup_id, group_weight, or pairs metadata");
   }
 
   pool.ReleaseFeatureStorage();
@@ -1656,7 +1694,7 @@ void GradientBooster::Fit(Pool& pool,
                                   workspace.gradients,
                                   workspace.hessians,
                                   num_classes_,
-                                  group_ids);
+                                  ranking_ptr);
     const double gradient_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - gradient_start)
             .count();
@@ -1923,22 +1961,28 @@ void GradientBooster::Fit(Pool& pool,
       local_train_inputs.predictions = workspace.predictions;
       local_train_inputs.labels = labels;
       local_train_inputs.weights = weights;
-      local_train_inputs.has_group_ids = group_ids != nullptr;
-      if (group_ids != nullptr) {
-        local_train_inputs.group_ids = *group_ids;
+      local_train_inputs.has_group_ids = ranking_ptr != nullptr && ranking_ptr->group_ids != nullptr;
+      if (local_train_inputs.has_group_ids) {
+        local_train_inputs.group_ids = *ranking_ptr->group_ids;
       }
       const DistributedMetricInputs gathered_train_inputs = AllGatherDistributedMetricInputs(
           &distributed_coordinator, "train_metric", local_train_inputs);
+      const RankingMetadataView gathered_train_ranking{
+          gathered_train_inputs.has_group_ids ? &gathered_train_inputs.group_ids : nullptr,
+          nullptr,
+          nullptr,
+          nullptr,
+      };
       local_train_loss = objective_metric_->Evaluate(
           gathered_train_inputs.predictions,
           gathered_train_inputs.labels,
           gathered_train_inputs.weights,
           num_classes_,
-          gathered_train_inputs.has_group_ids ? &gathered_train_inputs.group_ids : nullptr);
+          gathered_train_inputs.has_group_ids ? &gathered_train_ranking : nullptr);
     } else {
       local_train_loss =
           objective_metric_->Evaluate(
-              workspace.predictions, labels, weights, num_classes_, group_ids);
+              workspace.predictions, labels, weights, num_classes_, ranking_ptr);
     }
     const double metric_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - metric_start)
@@ -1977,22 +2021,28 @@ void GradientBooster::Fit(Pool& pool,
       local_eval_inputs.predictions = workspace.eval_predictions;
       local_eval_inputs.labels = *eval_labels;
       local_eval_inputs.weights = *eval_weights;
-      local_eval_inputs.has_group_ids = eval_group_ids != nullptr;
-      if (eval_group_ids != nullptr) {
-        local_eval_inputs.group_ids = *eval_group_ids;
+      local_eval_inputs.has_group_ids = eval_ranking_ptr != nullptr && eval_ranking_ptr->group_ids != nullptr;
+      if (local_eval_inputs.has_group_ids) {
+        local_eval_inputs.group_ids = *eval_ranking_ptr->group_ids;
       }
       const DistributedMetricInputs gathered_eval_inputs = AllGatherDistributedMetricInputs(
           &distributed_coordinator, "eval_metric", local_eval_inputs);
+      const RankingMetadataView gathered_eval_ranking{
+          gathered_eval_inputs.has_group_ids ? &gathered_eval_inputs.group_ids : nullptr,
+          nullptr,
+          nullptr,
+          nullptr,
+      };
       local_eval_score = eval_metric_->Evaluate(
           gathered_eval_inputs.predictions,
           gathered_eval_inputs.labels,
           gathered_eval_inputs.weights,
           num_classes_,
-          gathered_eval_inputs.has_group_ids ? &gathered_eval_inputs.group_ids : nullptr);
+          gathered_eval_inputs.has_group_ids ? &gathered_eval_ranking : nullptr);
     } else {
       local_eval_score =
           eval_metric_->Evaluate(
-              workspace.eval_predictions, *eval_labels, *eval_weights, num_classes_, eval_group_ids);
+              workspace.eval_predictions, *eval_labels, *eval_weights, num_classes_, eval_ranking_ptr);
     }
     const double eval_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - eval_start)
@@ -2123,6 +2173,7 @@ std::vector<float> GradientBooster::Predict(const Pool& pool, int num_iteration)
   std::vector<float> predictions(
       pool.num_rows() * static_cast<std::size_t>(prediction_dimension_), 0.0F);
   if (tree_limit == 0 || pool.num_rows() == 0) {
+    AddPoolBaselineToPredictions(pool, prediction_dimension_, predictions);
     return predictions;
   }
 
@@ -2138,6 +2189,7 @@ std::vector<float> GradientBooster::Predict(const Pool& pool, int num_iteration)
         prediction_dimension_,
         predictions,
         devices_);
+    AddPoolBaselineToPredictions(pool, prediction_dimension_, predictions);
     return predictions;
   }
 
@@ -2148,6 +2200,7 @@ std::vector<float> GradientBooster::Predict(const Pool& pool, int num_iteration)
         predictions[row] += learning_rate_ * tree.PredictRow(pool, row);
       }
     }
+    AddPoolBaselineToPredictions(pool, prediction_dimension_, predictions);
     return predictions;
   }
 
@@ -2159,6 +2212,7 @@ std::vector<float> GradientBooster::Predict(const Pool& pool, int num_iteration)
           learning_rate_ * trees_[tree_index].PredictRow(pool, row);
     }
   }
+  AddPoolBaselineToPredictions(pool, prediction_dimension_, predictions);
   return predictions;
 }
 

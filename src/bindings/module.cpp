@@ -123,6 +123,52 @@ std::vector<std::int64_t> ArrayToInt64Vector(py::array_t<std::int64_t, py::array
   return out;
 }
 
+std::vector<ctboost::RankingPair> ArrayToRankingPairs(
+    py::array_t<std::int64_t, py::array::forcecast> pairs,
+    py::object pairs_weight,
+    std::size_t num_rows) {
+  const py::buffer_info pair_info = pairs.request();
+  if (pair_info.ndim != 2 || pair_info.shape[1] != 2) {
+    throw std::invalid_argument("pairs must be a 2D NumPy array with shape (n_pairs, 2)");
+  }
+  if (pair_info.strides[0] % static_cast<py::ssize_t>(sizeof(std::int64_t)) != 0 ||
+      pair_info.strides[1] % static_cast<py::ssize_t>(sizeof(std::int64_t)) != 0) {
+    throw std::invalid_argument("pairs must have integer-compatible strides");
+  }
+  std::vector<float> resolved_weights;
+  if (!pairs_weight.is_none()) {
+    resolved_weights = ArrayToVector(
+        pairs_weight.cast<py::array_t<float, py::array::forcecast>>(), "pairs_weight");
+  }
+
+  const std::size_t pair_count = static_cast<std::size_t>(pair_info.shape[0]);
+  if (!resolved_weights.empty() && resolved_weights.size() != pair_count) {
+    throw std::invalid_argument("pairs_weight size must match the number of pairs");
+  }
+
+  const auto* pair_ptr = static_cast<const std::int64_t*>(pair_info.ptr);
+  const py::ssize_t row_stride =
+      pair_info.strides[0] / static_cast<py::ssize_t>(sizeof(std::int64_t));
+  const py::ssize_t col_stride =
+      pair_info.strides[1] / static_cast<py::ssize_t>(sizeof(std::int64_t));
+  std::vector<ctboost::RankingPair> out(pair_count);
+  for (std::size_t index = 0; index < pair_count; ++index) {
+    const py::ssize_t row_offset = static_cast<py::ssize_t>(index) * row_stride;
+    const std::int64_t winner = *(pair_ptr + row_offset);
+    const std::int64_t loser = *(pair_ptr + row_offset + col_stride);
+    if (winner < 0 || loser < 0 || static_cast<std::size_t>(winner) >= num_rows ||
+        static_cast<std::size_t>(loser) >= num_rows) {
+      throw std::invalid_argument("pairs must reference valid row indices");
+    }
+    out[index] = ctboost::RankingPair{
+        winner,
+        loser,
+        resolved_weights.empty() ? 1.0F : resolved_weights[index],
+    };
+  }
+  return out;
+}
+
 std::vector<std::uint16_t> ArrayToBinVector(py::array_t<std::int64_t, py::array::forcecast> values,
                                             const char* name) {
   const py::buffer_info info = values.request();
@@ -571,6 +617,10 @@ PYBIND11_MODULE(_core, m) {
            std::string metric_name,
            int num_classes,
            py::object group_ids,
+           py::object group_weights,
+           py::object subgroup_ids,
+           py::object pairs,
+           py::object pairs_weight,
            double quantile_alpha,
            double huber_delta,
            double tweedie_variance_power) {
@@ -585,11 +635,39 @@ PYBIND11_MODULE(_core, m) {
                   : ArrayToInt64Vector(
                         group_ids.cast<py::array_t<std::int64_t, py::array::forcecast>>(),
                         "group_ids");
+          const std::vector<float> resolved_group_weights =
+              group_weights.is_none()
+                  ? std::vector<float>{}
+                  : ArrayToVector(
+                        group_weights.cast<py::array_t<float, py::array::forcecast>>(),
+                        "group_weight");
+          const std::vector<std::int64_t> resolved_subgroup_ids =
+              subgroup_ids.is_none()
+                  ? std::vector<std::int64_t>{}
+                  : ArrayToInt64Vector(
+                        subgroup_ids.cast<py::array_t<std::int64_t, py::array::forcecast>>(),
+                        "subgroup_id");
+          const std::vector<ctboost::RankingPair> resolved_pairs =
+              pairs.is_none()
+                  ? std::vector<ctboost::RankingPair>{}
+                  : ArrayToRankingPairs(
+                        pairs.cast<py::array_t<std::int64_t, py::array::forcecast>>(),
+                        pairs_weight,
+                        static_cast<std::size_t>(labels.request().shape[0]));
+          const ctboost::RankingMetadataView ranking{
+              group_ids.is_none() ? nullptr : &resolved_group_ids,
+              subgroup_ids.is_none() ? nullptr : &resolved_subgroup_ids,
+              group_weights.is_none() ? nullptr : &resolved_group_weights,
+              pairs.is_none() ? nullptr : &resolved_pairs,
+          };
           return metric->Evaluate(ArrayToFlatFloatVector(predictions, "predictions"),
                                   ArrayToVector(labels, "labels"),
                                   ArrayToVector(weights, "weights"),
                                   num_classes,
-                                  group_ids.is_none() ? nullptr : &resolved_group_ids);
+                                  group_ids.is_none() && group_weights.is_none() &&
+                                          subgroup_ids.is_none() && pairs.is_none()
+                                      ? nullptr
+                                      : &ranking);
         },
         py::arg("predictions"),
         py::arg("labels"),
@@ -597,6 +675,10 @@ PYBIND11_MODULE(_core, m) {
         py::arg("metric_name"),
         py::arg("num_classes") = 1,
         py::arg("group_ids") = py::none(),
+        py::arg("group_weight") = py::none(),
+        py::arg("subgroup_id") = py::none(),
+        py::arg("pairs") = py::none(),
+        py::arg("pairs_weight") = py::none(),
         py::arg("quantile_alpha") = 0.5,
         py::arg("huber_delta") = 1.0,
         py::arg("tweedie_variance_power") = 1.5);
@@ -621,7 +703,12 @@ PYBIND11_MODULE(_core, m) {
                        py::array_t<float, py::array::forcecast> label,
                        std::vector<int> cat_features,
                        py::object weight,
-                       py::object group_id) {
+                       py::object group_id,
+                       py::object group_weight,
+                       py::object subgroup_id,
+                       py::object baseline,
+                       py::object pairs,
+                       py::object pairs_weight) {
              py::array_t<float, py::array::forcecast> resolved_weight;
              if (weight.is_none()) {
                const py::buffer_info label_info = label.request();
@@ -638,18 +725,50 @@ PYBIND11_MODULE(_core, m) {
              if (!group_id.is_none()) {
                resolved_group_id = group_id.cast<py::array_t<std::int64_t, py::array::forcecast>>();
              }
+             py::array_t<float, py::array::forcecast> resolved_group_weight;
+             if (!group_weight.is_none()) {
+               resolved_group_weight = group_weight.cast<py::array_t<float, py::array::forcecast>>();
+             }
+             py::array_t<std::int64_t, py::array::forcecast> resolved_subgroup_id;
+             if (!subgroup_id.is_none()) {
+               resolved_subgroup_id =
+                   subgroup_id.cast<py::array_t<std::int64_t, py::array::forcecast>>();
+             }
+             py::array_t<float, py::array::forcecast> resolved_baseline;
+             if (!baseline.is_none()) {
+               resolved_baseline = baseline.cast<py::array_t<float, py::array::forcecast>>();
+             }
+             py::array_t<std::int64_t, py::array::forcecast> resolved_pairs;
+             if (!pairs.is_none()) {
+               resolved_pairs = pairs.cast<py::array_t<std::int64_t, py::array::forcecast>>();
+             }
+             py::array_t<float, py::array::forcecast> resolved_pairs_weight;
+             if (!pairs_weight.is_none()) {
+               resolved_pairs_weight =
+                   pairs_weight.cast<py::array_t<float, py::array::forcecast>>();
+             }
              return ctboost::Pool(
                  data,
                  label,
                  std::move(cat_features),
                  resolved_weight,
-                 resolved_group_id);
+                 resolved_group_id,
+                 resolved_group_weight,
+                 resolved_subgroup_id,
+                 resolved_baseline,
+                 resolved_pairs,
+                 resolved_pairs_weight);
            }),
            py::arg("data"),
            py::arg("label"),
            py::arg("cat_features") = std::vector<int>{},
            py::arg("weight") = py::none(),
-           py::arg("group_id") = py::none())
+           py::arg("group_id") = py::none(),
+           py::arg("group_weight") = py::none(),
+           py::arg("subgroup_id") = py::none(),
+           py::arg("baseline") = py::none(),
+           py::arg("pairs") = py::none(),
+           py::arg("pairs_weight") = py::none())
       .def("num_rows", &ctboost::Pool::num_rows)
       .def("num_cols", &ctboost::Pool::num_cols)
       .def("feature_data", [](const ctboost::Pool& pool) {
@@ -685,7 +804,12 @@ PYBIND11_MODULE(_core, m) {
                      py::array_t<float, py::array::forcecast> label,
                      std::vector<int> cat_features,
                      py::object weight,
-                     py::object group_id) {
+                     py::object group_id,
+                     py::object group_weight,
+                     py::object subgroup_id,
+                     py::object baseline,
+                     py::object pairs,
+                     py::object pairs_weight) {
                     py::array_t<float, py::array::forcecast> resolved_weight;
                     if (weight.is_none()) {
                       const py::buffer_info label_info = label.request();
@@ -703,6 +827,29 @@ PYBIND11_MODULE(_core, m) {
                       resolved_group_id =
                           group_id.cast<py::array_t<std::int64_t, py::array::forcecast>>();
                     }
+                    py::array_t<float, py::array::forcecast> resolved_group_weight;
+                    if (!group_weight.is_none()) {
+                      resolved_group_weight =
+                          group_weight.cast<py::array_t<float, py::array::forcecast>>();
+                    }
+                    py::array_t<std::int64_t, py::array::forcecast> resolved_subgroup_id;
+                    if (!subgroup_id.is_none()) {
+                      resolved_subgroup_id =
+                          subgroup_id.cast<py::array_t<std::int64_t, py::array::forcecast>>();
+                    }
+                    py::array_t<float, py::array::forcecast> resolved_baseline;
+                    if (!baseline.is_none()) {
+                      resolved_baseline = baseline.cast<py::array_t<float, py::array::forcecast>>();
+                    }
+                    py::array_t<std::int64_t, py::array::forcecast> resolved_pairs;
+                    if (!pairs.is_none()) {
+                      resolved_pairs = pairs.cast<py::array_t<std::int64_t, py::array::forcecast>>();
+                    }
+                    py::array_t<float, py::array::forcecast> resolved_pairs_weight;
+                    if (!pairs_weight.is_none()) {
+                      resolved_pairs_weight =
+                          pairs_weight.cast<py::array_t<float, py::array::forcecast>>();
+                    }
                     return ctboost::Pool(sparse_data,
                                          sparse_indices,
                                          sparse_indptr,
@@ -711,7 +858,12 @@ PYBIND11_MODULE(_core, m) {
                                          label,
                                          std::move(cat_features),
                                          resolved_weight,
-                                         resolved_group_id);
+                                         resolved_group_id,
+                                         resolved_group_weight,
+                                         resolved_subgroup_id,
+                                         resolved_baseline,
+                                         resolved_pairs,
+                                         resolved_pairs_weight);
                   },
                   py::arg("sparse_data"),
                   py::arg("sparse_indices"),
@@ -721,7 +873,12 @@ PYBIND11_MODULE(_core, m) {
                   py::arg("label"),
                   py::arg("cat_features") = std::vector<int>{},
                   py::arg("weight") = py::none(),
-                  py::arg("group_id") = py::none())
+                  py::arg("group_id") = py::none(),
+                  py::arg("group_weight") = py::none(),
+                  py::arg("subgroup_id") = py::none(),
+                  py::arg("baseline") = py::none(),
+                  py::arg("pairs") = py::none(),
+                  py::arg("pairs_weight") = py::none())
       .def("set_feature_storage_releasable", &ctboost::Pool::SetFeatureStorageReleasable);
 
   py::class_<ctboost::NativeFeaturePipeline>(m, "NativeFeaturePipeline")

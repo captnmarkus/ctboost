@@ -58,19 +58,92 @@ def _series_to_float32(series: Any) -> np.ndarray:
 
 
 def _normalize_group_id(group_id: Any) -> Optional[np.ndarray]:
-    if group_id is None:
-        return None
-    if _is_pandas_series(group_id):
-        group_id = group_id.to_numpy(copy=False)
+    return _normalize_identifier_array(group_id, name="group_id")
 
-    group_array = np.asarray(group_id)
+
+def _normalize_identifier_array(values: Any, *, name: str) -> Optional[np.ndarray]:
+    if values is None:
+        return None
+    if _is_pandas_series(values):
+        values = values.to_numpy(copy=False)
+
+    group_array = np.asarray(values)
     if group_array.ndim != 1:
-        raise ValueError("group_id must be a 1D array")
+        raise ValueError(f"{name} must be a 1D array")
     if np.issubdtype(group_array.dtype, np.integer):
         return np.ascontiguousarray(group_array, dtype=np.int64)
 
     _, inverse = np.unique(group_array, return_inverse=True)
     return np.ascontiguousarray(inverse, dtype=np.int64)
+
+
+def _normalize_group_weight(
+    group_weight: Any,
+    *,
+    group_id: Optional[np.ndarray],
+    num_rows: int,
+) -> Optional[np.ndarray]:
+    if group_weight is None:
+        return None
+    if group_id is None:
+        raise ValueError("group_weight requires group_id")
+    if _is_pandas_series(group_weight):
+        group_weight = group_weight.to_numpy(copy=False)
+    weight_array = np.asarray(group_weight, dtype=np.float32)
+    if weight_array.ndim != 1:
+        raise ValueError("group_weight must be a 1D array")
+    if weight_array.shape[0] != num_rows:
+        raise ValueError("group_weight size must match the number of data rows")
+    return np.ascontiguousarray(weight_array, dtype=np.float32)
+
+
+def _normalize_baseline(baseline: Any, *, num_rows: int) -> Optional[np.ndarray]:
+    if baseline is None:
+        return None
+    if _is_pandas_series(baseline):
+        baseline = baseline.to_numpy(copy=False)
+    baseline_array = np.asarray(baseline, dtype=np.float32)
+    if baseline_array.ndim == 1:
+        if baseline_array.shape[0] != num_rows:
+            raise ValueError("baseline size must match the number of data rows")
+        return np.ascontiguousarray(baseline_array, dtype=np.float32)
+    if baseline_array.ndim == 2:
+        if baseline_array.shape[0] != num_rows:
+            raise ValueError("baseline row count must match the number of data rows")
+        if baseline_array.shape[1] <= 0:
+            raise ValueError("baseline must have at least one prediction column")
+        return np.ascontiguousarray(baseline_array, dtype=np.float32)
+    raise ValueError("baseline must be a 1D or 2D array")
+
+
+def _normalize_pairs(
+    pairs: Any,
+    *,
+    pairs_weight: Any = None,
+    group_id: Optional[np.ndarray],
+    num_rows: int,
+) -> Tuple[Optional[np.ndarray], Optional[np.ndarray]]:
+    if pairs is None:
+        if pairs_weight is not None:
+            raise ValueError("pairs_weight requires pairs")
+        return None, None
+    if group_id is None:
+        raise ValueError("pairs requires group_id")
+    pairs_array = np.asarray(pairs, dtype=np.int64)
+    if pairs_array.ndim != 2 or pairs_array.shape[1] != 2:
+        raise ValueError("pairs must be a 2D array with shape (n_pairs, 2)")
+    if pairs_array.size:
+        if np.any(pairs_array < 0) or np.any(pairs_array >= num_rows):
+            raise ValueError("pairs must reference valid row indices")
+    resolved_pairs = np.ascontiguousarray(pairs_array, dtype=np.int64)
+    if pairs_weight is None:
+        return resolved_pairs, None
+    weight_array = np.asarray(pairs_weight, dtype=np.float32)
+    if weight_array.ndim != 1:
+        raise ValueError("pairs_weight must be a 1D array")
+    if weight_array.shape[0] != resolved_pairs.shape[0]:
+        raise ValueError("pairs_weight size must match the number of pairs")
+    return resolved_pairs, np.ascontiguousarray(weight_array, dtype=np.float32)
 
 
 def _scipy_sparse_to_csc_components(matrix: Any) -> Tuple[np.ndarray, np.ndarray, np.ndarray, Tuple[int, int]]:
@@ -119,6 +192,11 @@ class Pool:
         cat_features: Optional[List[int]] = None,
         weight: Any = None,
         group_id: Any = None,
+        group_weight: Any = None,
+        subgroup_id: Any = None,
+        baseline: Any = None,
+        pairs: Any = None,
+        pairs_weight: Any = None,
         feature_names: Optional[List[str]] = None,
         _releasable_feature_storage: bool = False,
     ) -> "Pool":
@@ -126,6 +204,19 @@ class Pool:
         if _is_pandas_series(label):
             label = label.to_numpy(copy=False)
         resolved_group_id = _normalize_group_id(group_id)
+        resolved_subgroup_id = _normalize_identifier_array(subgroup_id, name="subgroup_id")
+        resolved_group_weight = _normalize_group_weight(
+            group_weight,
+            group_id=resolved_group_id,
+            num_rows=int(shape[0]),
+        )
+        resolved_baseline = _normalize_baseline(baseline, num_rows=int(shape[0]))
+        resolved_pairs, resolved_pairs_weight = _normalize_pairs(
+            pairs,
+            pairs_weight=pairs_weight,
+            group_id=resolved_group_id,
+            num_rows=int(shape[0]),
+        )
         label_array = np.ascontiguousarray(label, dtype=np.float32)
         if weight is None:
             native_weight = np.ones(int(shape[0]), dtype=np.float32)
@@ -135,6 +226,25 @@ class Pool:
             resolved_weight = native_weight
         native_group_id = (
             None if resolved_group_id is None else np.ascontiguousarray(resolved_group_id, dtype=np.int64)
+        )
+        native_group_weight = (
+            None
+            if resolved_group_weight is None
+            else np.ascontiguousarray(resolved_group_weight, dtype=np.float32)
+        )
+        native_subgroup_id = (
+            None
+            if resolved_subgroup_id is None
+            else np.ascontiguousarray(resolved_subgroup_id, dtype=np.int64)
+        )
+        native_baseline = (
+            None if resolved_baseline is None else np.ascontiguousarray(resolved_baseline, dtype=np.float32)
+        )
+        native_pairs = None if resolved_pairs is None else np.ascontiguousarray(resolved_pairs, dtype=np.int64)
+        native_pairs_weight = (
+            None
+            if resolved_pairs_weight is None
+            else np.ascontiguousarray(resolved_pairs_weight, dtype=np.float32)
         )
 
         handle = _core.Pool.from_csc(
@@ -147,11 +257,21 @@ class Pool:
             resolved_cat_features,
             native_weight,
             native_group_id,
+            native_group_weight,
+            native_subgroup_id,
+            native_baseline,
+            native_pairs,
+            native_pairs_weight,
         )
         return cls._from_handle(
             handle,
             weight=resolved_weight,
             group_id=native_group_id,
+            group_weight=native_group_weight,
+            subgroup_id=native_subgroup_id,
+            baseline=native_baseline,
+            pairs=native_pairs,
+            pairs_weight=native_pairs_weight,
             feature_names=feature_names,
             releasable_feature_storage=_releasable_feature_storage,
             dense_data=None,
@@ -170,6 +290,11 @@ class Pool:
         *,
         weight: Optional[np.ndarray],
         group_id: Optional[np.ndarray],
+        group_weight: Optional[np.ndarray],
+        subgroup_id: Optional[np.ndarray],
+        baseline: Optional[np.ndarray],
+        pairs: Optional[np.ndarray],
+        pairs_weight: Optional[np.ndarray],
         feature_names: Optional[List[str]],
         releasable_feature_storage: bool,
         dense_data: Optional[np.ndarray],
@@ -185,6 +310,17 @@ class Pool:
         self.feature_names = None if feature_names is None else list(feature_names)
         self.group_id = None if group_id is None else np.asarray(group_id, dtype=np.int64).copy()
         self.weight = None if weight is None else np.asarray(weight, dtype=np.float32)
+        self.group_weight = (
+            None if group_weight is None else np.asarray(group_weight, dtype=np.float32).copy()
+        )
+        self.subgroup_id = (
+            None if subgroup_id is None else np.asarray(subgroup_id, dtype=np.int64).copy()
+        )
+        self.baseline = None if baseline is None else np.asarray(baseline, dtype=np.float32).copy()
+        self.pairs = None if pairs is None else np.asarray(pairs, dtype=np.int64).copy()
+        self.pairs_weight = (
+            None if pairs_weight is None else np.asarray(pairs_weight, dtype=np.float32).copy()
+        )
         self._releasable_feature_storage = bool(releasable_feature_storage)
         self._dense_data_ref = dense_data
         self._sparse_csc_components = sparse_components
@@ -198,6 +334,22 @@ class Pool:
                 raise ValueError("weight size must match the number of data rows")
         if self.group_id is not None and self.group_id.shape[0] != self.num_rows:
             raise ValueError("group_id size must match the number of data rows")
+        if self.group_weight is not None and self.group_weight.shape[0] != self.num_rows:
+            raise ValueError("group_weight size must match the number of data rows")
+        if self.subgroup_id is not None and self.subgroup_id.shape[0] != self.num_rows:
+            raise ValueError("subgroup_id size must match the number of data rows")
+        if self.baseline is not None:
+            if self.baseline.ndim == 1 and self.baseline.shape[0] != self.num_rows:
+                raise ValueError("baseline size must match the number of data rows")
+            if self.baseline.ndim == 2 and self.baseline.shape[0] != self.num_rows:
+                raise ValueError("baseline row count must match the number of data rows")
+            if self.baseline.ndim not in {1, 2}:
+                raise ValueError("baseline must be a 1D or 2D NumPy array")
+        if self.pairs is not None:
+            if self.pairs.ndim != 2 or self.pairs.shape[1] != 2:
+                raise ValueError("pairs must be a 2D NumPy array with shape (n_pairs, 2)")
+            if self.pairs_weight is not None and self.pairs_weight.shape[0] != self.pairs.shape[0]:
+                raise ValueError("pairs_weight size must match the number of pairs")
         if self.feature_names is not None:
             if len(self.feature_names) != self.num_cols:
                 raise ValueError("feature_names size must match the number of data columns")
@@ -210,6 +362,11 @@ class Pool:
         cat_features: Optional[List[int]] = None,
         weight: Any = None,
         group_id: Any = None,
+        group_weight: Any = None,
+        subgroup_id: Any = None,
+        baseline: Any = None,
+        pairs: Any = None,
+        pairs_weight: Any = None,
         feature_names: Optional[List[str]] = None,
         _releasable_feature_storage: bool = False,
     ) -> None:
@@ -224,6 +381,7 @@ class Pool:
         if _is_pandas_series(label):
             label = label.to_numpy(copy=False)
         resolved_group_id = _normalize_group_id(group_id)
+        resolved_subgroup_id = _normalize_identifier_array(subgroup_id, name="subgroup_id")
 
         # The native pool stores features column-major and can memcpy Fortran-ordered
         # matrices directly, avoiding an extra full-table transpose on large datasets.
@@ -239,7 +397,29 @@ class Pool:
         else:
             native_weight = np.ascontiguousarray(weight, dtype=np.float32)
             self.weight = native_weight
+        num_rows = (
+            sparse_components[3][0]
+            if sparse_components is not None
+            else int(np.asarray(data).shape[0])
+        )
         native_group_id = None if resolved_group_id is None else np.ascontiguousarray(resolved_group_id, dtype=np.int64)
+        native_group_weight = _normalize_group_weight(
+            group_weight,
+            group_id=resolved_group_id,
+            num_rows=num_rows,
+        )
+        native_subgroup_id = (
+            None
+            if resolved_subgroup_id is None
+            else np.ascontiguousarray(resolved_subgroup_id, dtype=np.int64)
+        )
+        native_baseline = _normalize_baseline(baseline, num_rows=num_rows)
+        native_pairs, native_pairs_weight = _normalize_pairs(
+            pairs,
+            pairs_weight=pairs_weight,
+            group_id=resolved_group_id,
+            num_rows=num_rows,
+        )
 
         if sparse_components is None:
             data_array = np.asfortranarray(data, dtype=np.float32)
@@ -249,6 +429,11 @@ class Pool:
                 resolved_cat_features,
                 native_weight,
                 native_group_id,
+                native_group_weight,
+                native_subgroup_id,
+                native_baseline,
+                native_pairs,
+                native_pairs_weight,
             )
         else:
             sparse_data, sparse_indices, sparse_indptr, shape = sparse_components
@@ -262,11 +447,21 @@ class Pool:
                 resolved_cat_features,
                 native_weight,
                 native_group_id,
+                native_group_weight,
+                native_subgroup_id,
+                native_baseline,
+                native_pairs,
+                native_pairs_weight,
             )
         initialized = self._from_handle(
             handle,
             weight=self.weight,
             group_id=native_group_id,
+            group_weight=native_group_weight,
+            subgroup_id=native_subgroup_id,
+            baseline=native_baseline,
+            pairs=native_pairs,
+            pairs_weight=native_pairs_weight,
             feature_names=feature_names,
             releasable_feature_storage=_releasable_feature_storage,
             dense_data=None if sparse_components is not None else data_array,
@@ -296,12 +491,22 @@ def _clone_pool(
     label: Any = None,
     weight: Any = None,
     group_id: Any = None,
+    group_weight: Any = None,
+    subgroup_id: Any = None,
+    baseline: Any = None,
+    pairs: Any = None,
+    pairs_weight: Any = None,
     feature_names: Optional[List[str]] = None,
     releasable_feature_storage: bool = True,
 ) -> Pool:
     resolved_label = pool.label if label is None else label
     resolved_weight = pool.weight if weight is None else weight
     resolved_group_id = pool.group_id if group_id is None else group_id
+    resolved_group_weight = pool.group_weight if group_weight is None else group_weight
+    resolved_subgroup_id = pool.subgroup_id if subgroup_id is None else subgroup_id
+    resolved_baseline = pool.baseline if baseline is None else baseline
+    resolved_pairs = pool.pairs if pairs is None else pairs
+    resolved_pairs_weight = pool.pairs_weight if pairs_weight is None else pairs_weight
     resolved_feature_names = pool.feature_names if feature_names is None else feature_names
 
     sparse_components = getattr(pool, "_sparse_csc_components", None)
@@ -316,6 +521,11 @@ def _clone_pool(
             cat_features=pool.cat_features,
             weight=resolved_weight,
             group_id=resolved_group_id,
+            group_weight=resolved_group_weight,
+            subgroup_id=resolved_subgroup_id,
+            baseline=resolved_baseline,
+            pairs=resolved_pairs,
+            pairs_weight=resolved_pairs_weight,
             feature_names=resolved_feature_names,
             _releasable_feature_storage=releasable_feature_storage,
         )
@@ -329,6 +539,11 @@ def _clone_pool(
             cat_features=pool.cat_features,
             weight=resolved_weight,
             group_id=resolved_group_id,
+            group_weight=resolved_group_weight,
+            subgroup_id=resolved_subgroup_id,
+            baseline=resolved_baseline,
+            pairs=resolved_pairs,
+            pairs_weight=resolved_pairs_weight,
             feature_names=resolved_feature_names,
             _releasable_feature_storage=releasable_feature_storage,
         )

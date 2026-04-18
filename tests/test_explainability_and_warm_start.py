@@ -64,6 +64,40 @@ def test_predict_leaf_index_and_contrib_sum_to_prediction():
     np.testing.assert_allclose(contributions.sum(axis=1), predictions, rtol=1e-6, atol=1e-6)
 
 
+def test_prediction_baseline_is_reflected_in_predictions_and_contributions():
+    X, y = make_regression(
+        n_samples=96,
+        n_features=5,
+        n_informative=4,
+        noise=0.1,
+        random_state=47,
+    )
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+
+    train_pool = ctboost.Pool(X, y)
+    booster = ctboost.train(
+        train_pool,
+        {
+            "objective": "RMSE",
+            "learning_rate": 0.2,
+            "max_depth": 2,
+            "alpha": 1.0,
+            "lambda_l2": 1.0,
+        },
+        num_boost_round=6,
+    )
+
+    baseline = np.linspace(-0.4, 0.4, X.shape[0], dtype=np.float32)
+    prediction_pool = ctboost.Pool(X, y, baseline=baseline)
+    raw_prediction = booster.predict(train_pool)
+    shifted_prediction = booster.predict(prediction_pool)
+    contributions = booster.predict_contrib(prediction_pool)
+
+    np.testing.assert_allclose(shifted_prediction, raw_prediction + baseline, rtol=1e-6, atol=1e-6)
+    np.testing.assert_allclose(contributions.sum(axis=1), shifted_prediction, rtol=1e-6, atol=1e-6)
+
+
 def test_regressor_warm_start_adds_iterations():
     X, y = make_regression(
         n_samples=120,

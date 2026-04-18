@@ -2,7 +2,7 @@
 
 CTBoost is a gradient boosting library built around Conditional Inference Trees, with a native C++17 core, Python bindings via `pybind11`, optional CUDA support for source builds, and an optional scikit-learn style API.
 
-The current codebase supports end-to-end training and prediction for regression, classification, grouped ranking, and survival, plus pandas and SciPy sparse ingestion without dense expansion, row weights and class imbalance controls, explicit missing-value handling, configurable validation metrics, stable JSON model persistence, standalone Python export for prepared numeric models, staged prediction, warm-start continuation, a native C++ feature pipeline for categorical/text/embedding transforms with thin Python wrappers, reusable prepared training-data bundles, and a built-in cross-validation helper.
+The current codebase supports end-to-end training and prediction for regression, classification, grouped ranking, and survival, plus pandas and SciPy sparse ingestion without dense expansion, richer ranking metadata (`group_weight`, `subgroup_id`, explicit `pairs`, and `pairs_weight`), baseline raw-score inputs, row weights and class imbalance controls, explicit missing-value handling, configurable validation metrics, stable JSON model persistence, standalone Python export for prepared numeric models, staged prediction, warm-start continuation, a native C++ feature pipeline for categorical/text/embedding transforms with thin Python wrappers, reusable prepared training-data bundles, and a built-in cross-validation helper.
 
 ## Current Status
 
@@ -10,19 +10,19 @@ The current codebase supports end-to-end training and prediction for regression,
 - Python support: `3.8` through `3.14`
 - Packaging: `scikit-build-core`
 - CI/CD: GitHub Actions for CMake validation and `cibuildwheel` release builds
-- Repository version: `0.1.38`
+- Repository version: `0.1.39`
 - Status: actively evolving native + Python package
 
 ## What Works Today
 
 - Native gradient boosting backend exposed as `ctboost._core`
-- `Pool` abstraction for dense tabular data, SciPy sparse input, categorical feature indices, and optional `group_id`
+- `Pool` abstraction for dense tabular data, SciPy sparse input, categorical feature indices, optional ranking/query metadata (`group_id`, `group_weight`, `subgroup_id`), explicit ranking pairs plus `pairs_weight`, and optional baseline raw scores
 - Native pandas `DataFrame` and `Series` support
 - Automatic categorical detection for pandas `category` and `object` columns
 - Regression training with `ctboost.train(...)`, including raw array/DataFrame inputs plus optional preprocessing and external-memory staging
 - scikit-learn compatible `CTBoostClassifier`, `CTBoostRegressor`, and `CTBoostRanker` when `scikit-learn` is installed
 - Binary and multiclass classification
-- Grouped ranking with `PairLogit` and `NDCG`
+- Grouped ranking with `PairLogit`, `NDCG`, `MAP`, `MRR`, explicit ranking pairs, subgroup-aware auto-pair generation, and query-level weights
 - Row weights through `Pool(..., weight=...)` and `sample_weight` on sklearn estimators
 - Class imbalance controls through `class_weight`, `class_weights`, `auto_class_weights="balanced"`, and `scale_pos_weight`
 - Explicit missing-value handling through `nan_mode`
@@ -79,6 +79,7 @@ The current codebase supports end-to-end training and prediction for regression,
 - There is now a native sparse training path plus disk-backed quantized-bin staging through `ctboost.train(..., external_memory=True)` on both CPU and GPU, and distributed training can also use a standalone TCP collective coordinator through `distributed_root="tcp://host:port"`
 - The legacy filesystem-based distributed path still exists for the native shard-reduction path; advanced eval, callback, ranking, and GPU compatibility workflows now fall back to a rank-0 coordinator path, while the TCP backend remains the true multi-rank path for those features
 - Distributed grouped/ranking training requires each `group_id` to live entirely on one worker shard; cross-rank query groups are rejected
+- Distributed multi-host training does not yet accept `group_weight`, `subgroup_id`, or explicit `pairs` / `pairs_weight` metadata on rank-local pools
 - Dedicated GPU wheel automation now targets Linux `x86_64` and Windows `amd64` CPython `3.10` through `3.14` release assets
 - CUDA wheel builds in CI depend on container-side toolkit provisioning
 
@@ -146,7 +147,7 @@ import subprocess
 import sys
 import urllib.request
 
-tag = "v0.1.38"
+tag = "v0.1.39"
 py_tag = f"cp{sys.version_info.major}{sys.version_info.minor}"
 api_url = f"https://api.github.com/repos/captnmarkus/ctboost/releases/tags/{tag}"
 
@@ -434,6 +435,28 @@ booster = ctboost.train(
 )
 ```
 
+Ranking pools can also carry richer query metadata without changing the underlying conditional tree learner:
+
+```python
+group_id = np.array([0, 0, 0, 1, 1, 1], dtype=np.int64)
+subgroup_id = np.array([0, 0, 1, 0, 1, 2], dtype=np.int64)
+group_weight = np.array([2.0, 2.0, 2.0, 1.0, 1.0, 1.0], dtype=np.float32)
+pairs = np.array([[0, 2], [3, 5]], dtype=np.int64)
+pairs_weight = np.array([1.5, 0.5], dtype=np.float32)
+baseline = np.zeros(group_id.shape[0], dtype=np.float32)
+
+rank_pool = ctboost.Pool(
+    X_rank,
+    y_rank,
+    group_id=group_id,
+    group_weight=group_weight,
+    subgroup_id=subgroup_id,
+    pairs=pairs,
+    pairs_weight=pairs_weight,
+    baseline=baseline,
+)
+```
+
 ### Working With Categorical Features
 
 Categorical columns can still be marked manually through the `Pool` API:
@@ -551,7 +574,8 @@ The scikit-learn compatible estimators also expose:
 - `predict_contrib(...)`
 - `evals_result_`
 - `best_score_`
-- `sample_weight` on `fit(...)`
+- `sample_weight` and `baseline` on `fit(...)`
+- `group_weight`, `subgroup_id`, `pairs`, and `pairs_weight` on `CTBoostRanker.fit(...)`
 - `class_weight`, `scale_pos_weight`, `eval_metric`, `nan_mode`, `nan_mode_by_feature`, and `warm_start`
 - `max_bins`, `max_bin_by_feature`, `border_selection_method`, and `feature_borders`
 - `bagging_temperature`, `feature_weights`, `first_feature_use_penalties`, `random_strength`, `grow_policy`, `min_samples_split`, and `max_leaf_weight`
@@ -585,10 +609,11 @@ Run the test suite:
 pytest tests
 ```
 
-The latest local release-candidate validation on April 13, 2026 was:
+The latest local release-candidate validation on April 18, 2026 was:
 
 ```bash
-python -m pytest -q
+python -m pytest tests/test_data_and_loss.py tests/test_ranking.py tests/test_explainability_and_warm_start.py -q
+python -m pytest tests/test_sklearn.py tests/test_metrics_and_objectives.py tests/test_persistence_and_cv.py -q --basetemp=.pytest-tmp
 ```
 
 Build an sdist:

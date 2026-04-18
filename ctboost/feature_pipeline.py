@@ -168,6 +168,11 @@ class FeaturePipeline:
         *,
         weight: Any = None,
         group_id: Any = None,
+        group_weight: Any = None,
+        subgroup_id: Any = None,
+        baseline: Any = None,
+        pairs: Any = None,
+        pairs_weight: Any = None,
         feature_names: Optional[Sequence[str]] = None,
     ) -> Pool:
         transformed, cat_features, output_feature_names = self.transform_array(
@@ -180,6 +185,11 @@ class FeaturePipeline:
             cat_features=cat_features,
             weight=weight,
             group_id=group_id,
+            group_weight=group_weight,
+            subgroup_id=subgroup_id,
+            baseline=baseline,
+            pairs=pairs,
+            pairs_weight=pairs_weight,
             feature_names=output_feature_names,
             _releasable_feature_storage=True,
         )

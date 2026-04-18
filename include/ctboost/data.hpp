@@ -6,6 +6,8 @@
 
 #include <pybind11/numpy.h>
 
+#include "ctboost/ranking.hpp"
+
 namespace ctboost {
 
 class Pool {
@@ -15,7 +17,17 @@ class Pool {
        std::vector<int> cat_features = {},
        pybind11::array_t<float, pybind11::array::forcecast> weight = pybind11::array_t<float>(),
        pybind11::array_t<std::int64_t, pybind11::array::forcecast> group_id =
-           pybind11::array_t<std::int64_t>());
+           pybind11::array_t<std::int64_t>(),
+       pybind11::array_t<float, pybind11::array::forcecast> group_weight =
+           pybind11::array_t<float>(),
+       pybind11::array_t<std::int64_t, pybind11::array::forcecast> subgroup_id =
+           pybind11::array_t<std::int64_t>(),
+       pybind11::array_t<float, pybind11::array::forcecast> baseline =
+           pybind11::array_t<float>(),
+       pybind11::array_t<std::int64_t, pybind11::array::forcecast> pairs =
+           pybind11::array_t<std::int64_t>(),
+       pybind11::array_t<float, pybind11::array::forcecast> pairs_weight =
+           pybind11::array_t<float>());
   Pool(pybind11::array_t<float, pybind11::array::forcecast> sparse_data,
        pybind11::array_t<std::int64_t, pybind11::array::forcecast> sparse_indices,
        pybind11::array_t<std::int64_t, pybind11::array::forcecast> sparse_indptr,
@@ -25,7 +37,17 @@ class Pool {
        std::vector<int> cat_features = {},
        pybind11::array_t<float, pybind11::array::forcecast> weight = pybind11::array_t<float>(),
        pybind11::array_t<std::int64_t, pybind11::array::forcecast> group_id =
-           pybind11::array_t<std::int64_t>());
+           pybind11::array_t<std::int64_t>(),
+       pybind11::array_t<float, pybind11::array::forcecast> group_weight =
+           pybind11::array_t<float>(),
+       pybind11::array_t<std::int64_t, pybind11::array::forcecast> subgroup_id =
+           pybind11::array_t<std::int64_t>(),
+       pybind11::array_t<float, pybind11::array::forcecast> baseline =
+           pybind11::array_t<float>(),
+       pybind11::array_t<std::int64_t, pybind11::array::forcecast> pairs =
+           pybind11::array_t<std::int64_t>(),
+       pybind11::array_t<float, pybind11::array::forcecast> pairs_weight =
+           pybind11::array_t<float>());
 
   std::size_t num_rows() const noexcept;
   std::size_t num_cols() const noexcept;
@@ -34,6 +56,16 @@ class Pool {
   const std::vector<float>& weights() const noexcept;
   const std::vector<std::int64_t>& group_ids() const noexcept;
   bool has_group_ids() const noexcept;
+  const std::vector<float>& group_weights() const noexcept;
+  bool has_group_weights() const noexcept;
+  const std::vector<std::int64_t>& subgroup_ids() const noexcept;
+  bool has_subgroup_ids() const noexcept;
+  const std::vector<RankingPair>& pairs() const noexcept;
+  bool has_pairs() const noexcept;
+  const std::vector<float>& baseline() const noexcept;
+  bool has_baseline() const noexcept;
+  int baseline_dimension() const noexcept;
+  RankingMetadataView ranking_metadata() const noexcept;
   const std::vector<int>& cat_features() const noexcept;
   float feature_value(std::size_t row, std::size_t col) const;
   bool is_sparse() const noexcept;
@@ -64,10 +96,19 @@ class Pool {
   std::vector<float> labels_;
   std::vector<float> weights_;
   std::vector<std::int64_t> group_ids_;
+  std::vector<float> group_weights_;
+  std::vector<std::int64_t> subgroup_ids_;
+  std::vector<RankingPair> pairs_;
+  std::vector<float> baseline_;
   std::vector<int> cat_features_;
   bool has_group_ids_{false};
+  bool has_group_weights_{false};
+  bool has_subgroup_ids_{false};
+  bool has_pairs_{false};
+  bool has_baseline_{false};
   bool is_sparse_{false};
   bool feature_storage_releasable_{false};
+  int baseline_dimension_{0};
 };
 
 }  // namespace ctboost

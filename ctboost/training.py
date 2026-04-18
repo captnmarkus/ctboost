@@ -111,19 +111,44 @@ def _pool_from_data_and_label(
     group_id: Any = None,
     *,
     weight: Any = None,
+    group_weight: Any = None,
+    subgroup_id: Any = None,
+    baseline: Any = None,
+    pairs: Any = None,
+    pairs_weight: Any = None,
     feature_names: Optional[List[str]] = None,
 ) -> Pool:
     if isinstance(data, Pool):
-        if label is None and group_id is None and weight is None and feature_names is None:
+        if (
+            label is None
+            and group_id is None
+            and weight is None
+            and group_weight is None
+            and subgroup_id is None
+            and baseline is None
+            and pairs is None
+            and pairs_weight is None
+            and feature_names is None
+        ):
             return data
         resolved_label = data.label if label is None else label
         resolved_weight = data.weight if weight is None else weight
         resolved_group_id = data.group_id if group_id is None else group_id
+        resolved_group_weight = data.group_weight if group_weight is None else group_weight
+        resolved_subgroup_id = data.subgroup_id if subgroup_id is None else subgroup_id
+        resolved_baseline = data.baseline if baseline is None else baseline
+        resolved_pairs = data.pairs if pairs is None else pairs
+        resolved_pairs_weight = data.pairs_weight if pairs_weight is None else pairs_weight
         return _clone_pool(
             data,
             label=resolved_label,
             weight=resolved_weight,
             group_id=resolved_group_id,
+            group_weight=resolved_group_weight,
+            subgroup_id=resolved_subgroup_id,
+            baseline=resolved_baseline,
+            pairs=resolved_pairs,
+            pairs_weight=resolved_pairs_weight,
             feature_names=data.feature_names if feature_names is None else feature_names,
             releasable_feature_storage=True,
         )
@@ -135,6 +160,11 @@ def _pool_from_data_and_label(
         label=label,
         weight=weight,
         group_id=group_id,
+        group_weight=group_weight,
+        subgroup_id=subgroup_id,
+        baseline=baseline,
+        pairs=pairs,
+        pairs_weight=pairs_weight,
         feature_names=feature_names,
         _releasable_feature_storage=True,
     )
@@ -353,6 +383,11 @@ def _prepare_pool_from_raw(
     *,
     group_id: Any = None,
     weight: Any = None,
+    group_weight: Any = None,
+    subgroup_id: Any = None,
+    baseline: Any = None,
+    pairs: Any = None,
+    pairs_weight: Any = None,
     feature_names: Optional[List[str]] = None,
     params: Mapping[str, Any],
     feature_pipeline: Optional[FeaturePipeline] = None,
@@ -384,6 +419,11 @@ def _prepare_pool_from_raw(
         cat_features=params.get("cat_features"),
         weight=weight,
         group_id=group_id,
+        group_weight=group_weight,
+        subgroup_id=subgroup_id,
+        baseline=baseline,
+        pairs=pairs,
+        pairs_weight=pairs_weight,
         feature_names=feature_names,
         external_memory=external_memory,
         external_memory_dir=external_memory_dir,
@@ -525,6 +565,11 @@ def _prepare_transformed_training_pool(
     cat_features: List[int],
     weight: Any,
     group_id: Any,
+    group_weight: Any,
+    subgroup_id: Any,
+    baseline: Any,
+    pairs: Any,
+    pairs_weight: Any,
     feature_names: Optional[List[str]],
     params: Mapping[str, Any],
 ) -> Pool:
@@ -535,6 +580,11 @@ def _prepare_transformed_training_pool(
         cat_features=list(cat_features),
         weight=weight,
         group_id=group_id,
+        group_weight=group_weight,
+        subgroup_id=subgroup_id,
+        baseline=baseline,
+        pairs=pairs,
+        pairs_weight=pairs_weight,
         feature_names=None if feature_names is None else list(feature_names),
         _releasable_feature_storage=True,
     )
@@ -546,6 +596,11 @@ def _prepare_distributed_feature_pipeline_pool(
     *,
     group_id: Any,
     weight: Any,
+    group_weight: Any,
+    subgroup_id: Any,
+    baseline: Any,
+    pairs: Any,
+    pairs_weight: Any,
     feature_names: Optional[List[str]],
     params: Mapping[str, Any],
     distributed: Dict[str, Any],
@@ -595,6 +650,11 @@ def _prepare_distributed_feature_pipeline_pool(
         cat_features=list(transformed_cat_features),
         weight=weight,
         group_id=group_id,
+        group_weight=group_weight,
+        subgroup_id=subgroup_id,
+        baseline=baseline,
+        pairs=pairs,
+        pairs_weight=pairs_weight,
         feature_names=list(transformed_feature_names),
         params=params,
     )
@@ -650,6 +710,7 @@ def _write_distributed_shard(pool: Pool, config: Dict[str, Any]) -> Path:
     label = np.asarray(pool.label, dtype=np.float32)
     weight = np.ones(pool.num_rows, dtype=np.float32) if pool.weight is None else np.asarray(pool.weight, dtype=np.float32)
     group_id = None if pool.group_id is None else np.asarray(pool.group_id, dtype=np.int64)
+    baseline = None if pool.baseline is None else np.asarray(pool.baseline, dtype=np.float32)
 
     label_map = _open_memmap_array(shard_root / "label.npy", label.shape, dtype=np.float32)
     label_map[...] = label
@@ -665,6 +726,13 @@ def _write_distributed_shard(pool: Pool, config: Dict[str, Any]) -> Path:
         group_map[...] = group_id
         group_map.flush()
 
+    baseline_path = None
+    if baseline is not None:
+        baseline_path = shard_root / "baseline.npy"
+        baseline_map = _open_memmap_array(baseline_path, baseline.shape, dtype=np.float32)
+        baseline_map[...] = baseline
+        baseline_map.flush()
+
     manifest: Dict[str, Any] = {
         "rank": int(config["rank"]),
         "num_rows": int(pool.num_rows),
@@ -674,6 +742,7 @@ def _write_distributed_shard(pool: Pool, config: Dict[str, Any]) -> Path:
         "label_path": "label.npy",
         "weight_path": "weight.npy",
         "group_id_path": None if group_path is None else group_path.name,
+        "baseline_path": None if baseline_path is None else baseline_path.name,
     }
 
     if sparse_components is None:
@@ -745,11 +814,29 @@ def _merge_dense_distributed_shards(
     weight_map = _open_memmap_array(merged_root / "weight.npy", (total_rows,), dtype=np.float32)
 
     has_group_id = any(manifest.get("group_id_path") is not None for manifest in manifests)
+    has_baseline = any(manifest.get("baseline_path") is not None for manifest in manifests)
     group_map = (
         _open_memmap_array(merged_root / "group_id.npy", (total_rows,), dtype=np.int64)
         if has_group_id
         else None
     )
+    baseline_map = None
+    if has_baseline:
+        baseline_shapes = []
+        for manifest in manifests:
+            baseline_path = manifest.get("baseline_path")
+            if baseline_path is None:
+                raise ValueError("distributed shards must either all include baseline or all omit it")
+            shard_root = run_root / f"rank_{int(manifest['rank']):05d}"
+            baseline_shapes.append(np.load(shard_root / baseline_path, mmap_mode="r").shape)
+        baseline_suffixes = {tuple(shape[1:]) for shape in baseline_shapes}
+        if len(baseline_suffixes) != 1:
+            raise ValueError("distributed baseline shards must agree on prediction dimensions")
+        baseline_map = _open_memmap_array(
+            merged_root / "baseline.npy",
+            (total_rows, *next(iter(baseline_suffixes))),
+            dtype=np.float32,
+        )
     group_arrays = []
 
     row_offset = 0
@@ -768,6 +855,11 @@ def _merge_dense_distributed_shards(
             shard_groups = np.load(shard_root / group_path, mmap_mode="r")
             group_arrays.append(np.asarray(shard_groups, dtype=np.int64))
             group_map[row_offset:next_offset] = shard_groups
+        if baseline_map is not None:
+            baseline_path = manifest.get("baseline_path")
+            if baseline_path is None:
+                raise ValueError("distributed shards must either all include baseline or all omit it")
+            baseline_map[row_offset:next_offset, ...] = np.load(shard_root / baseline_path, mmap_mode="r")
         row_offset = next_offset
 
     data_map.flush()
@@ -776,6 +868,8 @@ def _merge_dense_distributed_shards(
     if group_map is not None:
         _validate_distributed_group_shards(group_arrays)
         group_map.flush()
+    if baseline_map is not None:
+        baseline_map.flush()
 
     return Pool(
         data=np.load(merged_root / "data.npy", mmap_mode="r"),
@@ -785,6 +879,9 @@ def _merge_dense_distributed_shards(
         group_id=None
         if group_map is None
         else np.load(merged_root / "group_id.npy", mmap_mode="r"),
+        baseline=None
+        if baseline_map is None
+        else np.load(merged_root / "baseline.npy", mmap_mode="r"),
         feature_names=manifests[0]["feature_names"],
         _releasable_feature_storage=True,
     )
@@ -820,11 +917,29 @@ def _merge_sparse_distributed_shards(
     weight_map = _open_memmap_array(merged_root / "weight.npy", (total_rows,), dtype=np.float32)
 
     has_group_id = any(manifest.get("group_id_path") is not None for manifest in manifests)
+    has_baseline = any(manifest.get("baseline_path") is not None for manifest in manifests)
     group_map = (
         _open_memmap_array(merged_root / "group_id.npy", (total_rows,), dtype=np.int64)
         if has_group_id
         else None
     )
+    baseline_map = None
+    if has_baseline:
+        baseline_shapes = []
+        for manifest in manifests:
+            baseline_path = manifest.get("baseline_path")
+            if baseline_path is None:
+                raise ValueError("distributed shards must either all include baseline or all omit it")
+            shard_root = run_root / f"rank_{int(manifest['rank']):05d}"
+            baseline_shapes.append(np.load(shard_root / baseline_path, mmap_mode="r").shape)
+        baseline_suffixes = {tuple(shape[1:]) for shape in baseline_shapes}
+        if len(baseline_suffixes) != 1:
+            raise ValueError("distributed baseline shards must agree on prediction dimensions")
+        baseline_map = _open_memmap_array(
+            merged_root / "baseline.npy",
+            (total_rows, *next(iter(baseline_suffixes))),
+            dtype=np.float32,
+        )
     group_arrays = []
 
     row_offset = 0
@@ -841,6 +956,11 @@ def _merge_sparse_distributed_shards(
             shard_groups = np.load(shard_root / group_path, mmap_mode="r")
             group_arrays.append(np.asarray(shard_groups, dtype=np.int64))
             group_map[row_offset:next_offset] = shard_groups
+        if baseline_map is not None:
+            baseline_path = manifest.get("baseline_path")
+            if baseline_path is None:
+                raise ValueError("distributed shards must either all include baseline or all omit it")
+            baseline_map[row_offset:next_offset, ...] = np.load(shard_root / baseline_path, mmap_mode="r")
         row_offset = next_offset
 
     global_offset = 0
@@ -869,6 +989,8 @@ def _merge_sparse_distributed_shards(
     if group_map is not None:
         _validate_distributed_group_shards(group_arrays)
         group_map.flush()
+    if baseline_map is not None:
+        baseline_map.flush()
 
     return Pool.from_csc_components(
         np.load(merged_root / "sparse_data.npy", mmap_mode="r"),
@@ -881,6 +1003,9 @@ def _merge_sparse_distributed_shards(
         group_id=None
         if group_map is None
         else np.load(merged_root / "group_id.npy", mmap_mode="r"),
+        baseline=None
+        if baseline_map is None
+        else np.load(merged_root / "baseline.npy", mmap_mode="r"),
         feature_names=manifests[0]["feature_names"],
         _releasable_feature_storage=True,
     )
@@ -948,6 +1073,7 @@ def _serialize_distributed_pool_shard(pool: Pool) -> Dict[str, Any]:
         if pool.weight is None
         else np.asarray(pool.weight, dtype=np.float32),
         "group_id": None if pool.group_id is None else np.asarray(pool.group_id, dtype=np.int64),
+        "baseline": None if pool.baseline is None else np.asarray(pool.baseline, dtype=np.float32),
     }
     if sparse_components is None:
         dense_data = getattr(pool, "_dense_data_ref", None)
@@ -972,6 +1098,15 @@ def _merge_dense_distributed_payloads(shards: List[Dict[str, Any]]) -> Pool:
     )
     label = np.concatenate([np.asarray(shard["label"], dtype=np.float32) for shard in shards], axis=0)
     weight = np.concatenate([np.asarray(shard["weight"], dtype=np.float32) for shard in shards], axis=0)
+    has_baseline = any(shard["baseline"] is not None for shard in shards)
+    if has_baseline and any(shard["baseline"] is None for shard in shards):
+        raise ValueError("distributed shards must either all include baseline or all omit it")
+    baseline = None
+    if has_baseline:
+        baseline = np.concatenate(
+            [np.asarray(shard["baseline"], dtype=np.float32) for shard in shards],
+            axis=0,
+        )
     has_group_id = any(shard["group_id"] is not None for shard in shards)
     if has_group_id and any(shard["group_id"] is None for shard in shards):
         raise ValueError("distributed shards must either all include group_id or all omit it")
@@ -986,6 +1121,7 @@ def _merge_dense_distributed_payloads(shards: List[Dict[str, Any]]) -> Pool:
         cat_features=list(shards[0]["cat_features"]),
         weight=weight,
         group_id=group_id,
+        baseline=baseline,
         feature_names=shards[0]["feature_names"],
         _releasable_feature_storage=True,
     )
@@ -1000,6 +1136,15 @@ def _merge_sparse_distributed_payloads(shards: List[Dict[str, Any]]) -> Pool:
     indptr = np.empty(num_cols + 1, dtype=np.int64)
     label = np.concatenate([np.asarray(shard["label"], dtype=np.float32) for shard in shards], axis=0)
     weight = np.concatenate([np.asarray(shard["weight"], dtype=np.float32) for shard in shards], axis=0)
+    has_baseline = any(shard["baseline"] is not None for shard in shards)
+    if has_baseline and any(shard["baseline"] is None for shard in shards):
+        raise ValueError("distributed shards must either all include baseline or all omit it")
+    baseline = None
+    if has_baseline:
+        baseline = np.concatenate(
+            [np.asarray(shard["baseline"], dtype=np.float32) for shard in shards],
+            axis=0,
+        )
     has_group_id = any(shard["group_id"] is not None for shard in shards)
     if has_group_id and any(shard["group_id"] is None for shard in shards):
         raise ValueError("distributed shards must either all include group_id or all omit it")
@@ -1040,6 +1185,7 @@ def _merge_sparse_distributed_payloads(shards: List[Dict[str, Any]]) -> Pool:
         cat_features=list(shards[0]["cat_features"]),
         weight=weight,
         group_id=group_id,
+        baseline=baseline,
         feature_names=shards[0]["feature_names"],
         _releasable_feature_storage=True,
     )
@@ -1598,15 +1744,67 @@ def _apply_objective_weights(pool: Pool, params: Mapping[str, Any], objective_na
     )
 
 
+def _slice_baseline(baseline: Optional[np.ndarray], index_array: np.ndarray) -> Optional[np.ndarray]:
+    if baseline is None:
+        return None
+    resolved = np.asarray(baseline, dtype=np.float32)
+    if resolved.ndim == 1:
+        return resolved[index_array]
+    return resolved[index_array, :]
+
+
+def _slice_pairs(
+    pairs: Optional[np.ndarray],
+    pairs_weight: Optional[np.ndarray],
+    index_array: np.ndarray,
+    *,
+    original_num_rows: int,
+) -> tuple[Optional[np.ndarray], Optional[np.ndarray]]:
+    if pairs is None:
+        return None, None
+
+    resolved_pairs = np.asarray(pairs, dtype=np.int64)
+    if resolved_pairs.size == 0:
+        empty_pairs = np.empty((0, 2), dtype=np.int64)
+        empty_pairs_weight = None
+        if pairs_weight is not None:
+            empty_pairs_weight = np.empty((0,), dtype=np.float32)
+        return empty_pairs, empty_pairs_weight
+
+    remap = np.full(original_num_rows, -1, dtype=np.int64)
+    remap[index_array] = np.arange(index_array.shape[0], dtype=np.int64)
+    remapped_pairs = remap[resolved_pairs]
+    keep_mask = np.all(remapped_pairs >= 0, axis=1)
+    kept_pairs = np.ascontiguousarray(remapped_pairs[keep_mask], dtype=np.int64)
+    if pairs_weight is None:
+        return kept_pairs, None
+    resolved_pairs_weight = np.asarray(pairs_weight, dtype=np.float32)
+    return kept_pairs, np.ascontiguousarray(resolved_pairs_weight[keep_mask], dtype=np.float32)
+
+
 def _slice_pool(pool: Pool, indices: Iterable[int]) -> Pool:
     index_array = np.asarray(list(indices), dtype=np.int64)
     weight = None if pool.weight is None else pool.weight[index_array]
+    group_weight = None if pool.group_weight is None else np.asarray(pool.group_weight, dtype=np.float32)[index_array]
+    subgroup_id = None if pool.subgroup_id is None else np.asarray(pool.subgroup_id, dtype=np.int64)[index_array]
+    baseline = _slice_baseline(pool.baseline, index_array)
+    pairs, pairs_weight = _slice_pairs(
+        pool.pairs,
+        pool.pairs_weight,
+        index_array,
+        original_num_rows=pool.num_rows,
+    )
     return Pool(
         data=pool.data[index_array],
         label=pool.label[index_array],
         cat_features=pool.cat_features,
         weight=weight,
         group_id=None if pool.group_id is None else pool.group_id[index_array],
+        group_weight=group_weight,
+        subgroup_id=subgroup_id,
+        baseline=baseline,
+        pairs=pairs,
+        pairs_weight=pairs_weight,
         feature_names=pool.feature_names,
         _releasable_feature_storage=True,
     )
@@ -1670,6 +1868,10 @@ def _evaluate_metric_on_pool(
         else np.ones(pool.num_rows, dtype=np.float32)
     )
     group_ids = None if pool.group_id is None else np.asarray(pool.group_id, dtype=np.int64)
+    group_weight = None if pool.group_weight is None else np.asarray(pool.group_weight, dtype=np.float32)
+    subgroup_id = None if pool.subgroup_id is None else np.asarray(pool.subgroup_id, dtype=np.int64)
+    pairs = None if pool.pairs is None else np.asarray(pool.pairs, dtype=np.int64)
+    pairs_weight = None if pool.pairs_weight is None else np.asarray(pool.pairs_weight, dtype=np.float32)
     return float(
         _core._evaluate_metric(
             np.asarray(predictions, dtype=np.float32),
@@ -1678,6 +1880,10 @@ def _evaluate_metric_on_pool(
             metric_name,
             num_classes,
             group_ids,
+            group_weight,
+            subgroup_id,
+            pairs,
+            pairs_weight,
             quantile_alpha=config["quantile_alpha"],
             huber_delta=config["huber_delta"],
             tweedie_variance_power=config["tweedie_variance_power"],
@@ -1695,6 +1901,16 @@ def _collect_prediction_metric_inputs(predictions: np.ndarray, pool: Pool) -> Di
             else np.ones(pool.num_rows, dtype=np.float32)
         ),
         "group_id": None if pool.group_id is None else np.asarray(pool.group_id, dtype=np.int64),
+        "group_weight": None
+        if pool.group_weight is None
+        else np.asarray(pool.group_weight, dtype=np.float32),
+        "subgroup_id": None
+        if pool.subgroup_id is None
+        else np.asarray(pool.subgroup_id, dtype=np.int64),
+        "pairs": None if pool.pairs is None else np.asarray(pool.pairs, dtype=np.int64),
+        "pairs_weight": None
+        if pool.pairs_weight is None
+        else np.asarray(pool.pairs_weight, dtype=np.float32),
     }
 
 
@@ -1714,6 +1930,16 @@ def _evaluate_metric_from_inputs(
             metric_name,
             num_classes,
             None if inputs.get("group_id") is None else np.asarray(inputs["group_id"], dtype=np.int64),
+            None
+            if inputs.get("group_weight") is None
+            else np.asarray(inputs["group_weight"], dtype=np.float32),
+            None
+            if inputs.get("subgroup_id") is None
+            else np.asarray(inputs["subgroup_id"], dtype=np.int64),
+            None if inputs.get("pairs") is None else np.asarray(inputs["pairs"], dtype=np.int64),
+            None
+            if inputs.get("pairs_weight") is None
+            else np.asarray(inputs["pairs_weight"], dtype=np.float32),
             quantile_alpha=config["quantile_alpha"],
             huber_delta=config["huber_delta"],
             tweedie_variance_power=config["tweedie_variance_power"],
@@ -1737,7 +1963,79 @@ def _merge_prediction_metric_inputs(shards: List[Dict[str, Any]]) -> Dict[str, A
         )
     else:
         merged["group_id"] = None
+    has_group_weight = any(shard.get("group_weight") is not None for shard in shards)
+    if has_group_weight:
+        if any(shard.get("group_weight") is None for shard in shards):
+            raise ValueError("distributed metric shards must either all include group_weight or all omit it")
+        merged["group_weight"] = np.concatenate(
+            [np.asarray(shard["group_weight"], dtype=np.float32) for shard in shards],
+            axis=0,
+        )
+    else:
+        merged["group_weight"] = None
+    has_subgroup_id = any(shard.get("subgroup_id") is not None for shard in shards)
+    if has_subgroup_id:
+        if any(shard.get("subgroup_id") is None for shard in shards):
+            raise ValueError("distributed metric shards must either all include subgroup_id or all omit it")
+        merged["subgroup_id"] = np.concatenate(
+            [np.asarray(shard["subgroup_id"], dtype=np.int64) for shard in shards],
+            axis=0,
+        )
+    else:
+        merged["subgroup_id"] = None
+    pair_arrays = []
+    pair_weight_arrays = []
+    use_pair_weight = False
+    row_offset = 0
+    for shard in shards:
+        shard_pairs = shard.get("pairs")
+        if shard_pairs is not None:
+            resolved_pairs = np.asarray(shard_pairs, dtype=np.int64)
+            pair_arrays.append(resolved_pairs + np.int64(row_offset))
+            shard_pairs_weight = shard.get("pairs_weight")
+            if shard_pairs_weight is not None:
+                use_pair_weight = True
+                pair_weight_arrays.append(np.asarray(shard_pairs_weight, dtype=np.float32))
+            elif resolved_pairs.shape[0] > 0:
+                pair_weight_arrays.append(np.ones(resolved_pairs.shape[0], dtype=np.float32))
+        row_offset += int(np.asarray(shard["predictions"]).shape[0])
+    if pair_arrays:
+        merged["pairs"] = np.concatenate(pair_arrays, axis=0)
+        merged["pairs_weight"] = (
+            np.concatenate(pair_weight_arrays, axis=0) if use_pair_weight else None
+        )
+    else:
+        merged["pairs"] = None
+        merged["pairs_weight"] = None
     return merged
+
+
+def _pool_has_extended_ranking_metadata(pool: Pool) -> bool:
+    return pool.group_weight is not None or pool.subgroup_id is not None or pool.pairs is not None
+
+
+def _validate_distributed_pool_metadata(pool: Pool, *, context: str) -> None:
+    if _pool_has_extended_ranking_metadata(pool):
+        raise ValueError(
+            f"distributed training does not yet support subgroup_id, group_weight, or pairs metadata on {context}"
+        )
+
+
+def _baseline_matrix_for_prediction(pool: Pool, prediction_dimension: int) -> Optional[np.ndarray]:
+    if pool.baseline is None:
+        return None
+    baseline = np.asarray(pool.baseline, dtype=np.float32)
+    if baseline.ndim == 1:
+        if prediction_dimension != 1:
+            raise ValueError("pool baseline dimension does not match the model prediction dimension")
+        return baseline.reshape((pool.num_rows, 1))
+    if baseline.ndim != 2:
+        raise ValueError("baseline must be a 1D or 2D array")
+    if baseline.shape[1] != prediction_dimension:
+        if prediction_dimension == 1 and baseline.shape[1] == 1:
+            return baseline
+        raise ValueError("pool baseline dimension does not match the model prediction dimension")
+    return baseline
 
 
 def _evaluate_metric_distributed(
@@ -1811,15 +2109,31 @@ def prepare_training_data(
     label: Any = None,
     weight: Any = None,
     group_id: Any = None,
+    group_weight: Any = None,
+    subgroup_id: Any = None,
+    baseline: Any = None,
+    pairs: Any = None,
+    pairs_weight: Any = None,
     feature_names: Optional[List[str]] = None,
     eval_set: Any = None,
     eval_names: Any = None,
     init_model: Any = None,
 ) -> PreparedTrainingData:
     if isinstance(pool, PreparedTrainingData):
-        if label is not None or weight is not None or group_id is not None or feature_names is not None:
+        if (
+            label is not None
+            or weight is not None
+            or group_id is not None
+            or group_weight is not None
+            or subgroup_id is not None
+            or baseline is not None
+            or pairs is not None
+            or pairs_weight is not None
+            or feature_names is not None
+        ):
             raise ValueError(
-                "label, weight, group_id, and feature_names cannot be passed when pool is PreparedTrainingData"
+                "label, weight, group_id, group_weight, subgroup_id, baseline, pairs, pairs_weight, "
+                "and feature_names cannot be passed when pool is PreparedTrainingData"
             )
         if eval_set is not None or eval_names is not None:
             raise ValueError("eval_set and eval_names cannot be passed when pool is PreparedTrainingData")
@@ -1831,12 +2145,27 @@ def prepare_training_data(
     shared_feature_pipeline = init_pipeline
 
     if isinstance(pool, Pool):
-        if label is not None or weight is not None or group_id is not None or feature_names is not None:
+        if (
+            label is not None
+            or weight is not None
+            or group_id is not None
+            or group_weight is not None
+            or subgroup_id is not None
+            or baseline is not None
+            or pairs is not None
+            or pairs_weight is not None
+            or feature_names is not None
+        ):
             pool = _pool_from_data_and_label(
                 pool,
                 label,
                 group_id=group_id,
                 weight=weight,
+                group_weight=group_weight,
+                subgroup_id=subgroup_id,
+                baseline=baseline,
+                pairs=pairs,
+                pairs_weight=pairs_weight,
                 feature_names=feature_names,
             )
     else:
@@ -1851,6 +2180,11 @@ def prepare_training_data(
                 label,
                 group_id=group_id,
                 weight=weight,
+                group_weight=group_weight,
+                subgroup_id=subgroup_id,
+                baseline=baseline,
+                pairs=pairs,
+                pairs_weight=pairs_weight,
                 feature_names=feature_names,
                 params=config,
                 feature_pipeline=shared_feature_pipeline,
@@ -1864,6 +2198,11 @@ def prepare_training_data(
                         label,
                         group_id=group_id,
                         weight=weight,
+                        group_weight=group_weight,
+                        subgroup_id=subgroup_id,
+                        baseline=baseline,
+                        pairs=pairs,
+                        pairs_weight=pairs_weight,
                         feature_names=feature_names,
                         params=config,
                         distributed=distributed_config,
@@ -1874,6 +2213,11 @@ def prepare_training_data(
                     label,
                     group_id=group_id,
                     weight=weight,
+                    group_weight=group_weight,
+                    subgroup_id=subgroup_id,
+                    baseline=baseline,
+                    pairs=pairs,
+                    pairs_weight=pairs_weight,
                     feature_names=feature_names,
                     params=config,
                     distributed=distributed_config,
@@ -1884,6 +2228,11 @@ def prepare_training_data(
                 label,
                 group_id=group_id,
                 weight=weight,
+                group_weight=group_weight,
+                subgroup_id=subgroup_id,
+                baseline=baseline,
+                pairs=pairs,
+                pairs_weight=pairs_weight,
                 feature_names=feature_names,
                 params=config,
             )
@@ -2023,8 +2372,16 @@ class Booster:
         )
         width = pool.num_cols + 1
         if self.prediction_dimension > 1:
-            return values.reshape((pool.num_rows, self.prediction_dimension, width))
-        return values.reshape((pool.num_rows, width))
+            contributions = values.reshape((pool.num_rows, self.prediction_dimension, width))
+            baseline = _baseline_matrix_for_prediction(pool, self.prediction_dimension)
+            if baseline is not None:
+                contributions[:, :, -1] += baseline
+            return contributions
+        contributions = values.reshape((pool.num_rows, width))
+        baseline = _baseline_matrix_for_prediction(pool, 1)
+        if baseline is not None:
+            contributions[:, -1] += baseline[:, 0]
+        return contributions
 
     def save_model(self, path: PathLike, *, model_format: Optional[str] = None) -> None:
         destination = Path(path)
@@ -2241,6 +2598,11 @@ def train(
     label: Any = None,
     weight: Any = None,
     group_id: Any = None,
+    group_weight: Any = None,
+    subgroup_id: Any = None,
+    baseline: Any = None,
+    pairs: Any = None,
+    pairs_weight: Any = None,
     feature_names: Optional[List[str]] = None,
     eval_set: Any = None,
     eval_names: Any = None,
@@ -2254,9 +2616,20 @@ def train(
     prepared_inputs = pool if isinstance(pool, PreparedTrainingData) else None
     distributed_config = _normalize_distributed_config(config)
     if prepared_inputs is not None:
-        if label is not None or weight is not None or group_id is not None or feature_names is not None:
+        if (
+            label is not None
+            or weight is not None
+            or group_id is not None
+            or group_weight is not None
+            or subgroup_id is not None
+            or baseline is not None
+            or pairs is not None
+            or pairs_weight is not None
+            or feature_names is not None
+        ):
             raise ValueError(
-                "label, weight, group_id, and feature_names cannot be passed when pool is PreparedTrainingData"
+                "label, weight, group_id, group_weight, subgroup_id, baseline, pairs, pairs_weight, "
+                "and feature_names cannot be passed when pool is PreparedTrainingData"
             )
         if eval_set is not None or eval_names is not None:
             raise ValueError("eval_set and eval_names cannot be passed when pool is PreparedTrainingData")
@@ -2272,12 +2645,27 @@ def train(
         init_pipeline = _resolve_init_model_pipeline(init_model)
         shared_feature_pipeline = init_pipeline
         if isinstance(pool, Pool):
-            if label is not None or weight is not None or group_id is not None or feature_names is not None:
+            if (
+                label is not None
+                or weight is not None
+                or group_id is not None
+                or group_weight is not None
+                or subgroup_id is not None
+                or baseline is not None
+                or pairs is not None
+                or pairs_weight is not None
+                or feature_names is not None
+            ):
                 pool = _pool_from_data_and_label(
                     pool,
                     label,
                     group_id=group_id,
                     weight=weight,
+                    group_weight=group_weight,
+                    subgroup_id=subgroup_id,
+                    baseline=baseline,
+                    pairs=pairs,
+                    pairs_weight=pairs_weight,
                     feature_names=feature_names,
                 )
         else:
@@ -2292,6 +2680,11 @@ def train(
                     label,
                     group_id=group_id,
                     weight=weight,
+                    group_weight=group_weight,
+                    subgroup_id=subgroup_id,
+                    baseline=baseline,
+                    pairs=pairs,
+                    pairs_weight=pairs_weight,
                     feature_names=feature_names,
                     params=config,
                     feature_pipeline=shared_feature_pipeline,
@@ -2305,6 +2698,11 @@ def train(
                             label,
                             group_id=group_id,
                             weight=weight,
+                            group_weight=group_weight,
+                            subgroup_id=subgroup_id,
+                            baseline=baseline,
+                            pairs=pairs,
+                            pairs_weight=pairs_weight,
                             feature_names=feature_names,
                             params=config,
                             distributed=distributed_config,
@@ -2315,6 +2713,11 @@ def train(
                         label,
                         group_id=group_id,
                         weight=weight,
+                        group_weight=group_weight,
+                        subgroup_id=subgroup_id,
+                        baseline=baseline,
+                        pairs=pairs,
+                        pairs_weight=pairs_weight,
                         feature_names=feature_names,
                         params=config,
                         distributed=distributed_config,
@@ -2325,6 +2728,11 @@ def train(
                     label,
                     group_id=group_id,
                     weight=weight,
+                    group_weight=group_weight,
+                    subgroup_id=subgroup_id,
+                    baseline=baseline,
+                    pairs=pairs,
+                    pairs_weight=pairs_weight,
                     feature_names=feature_names,
                     params=config,
                 )
@@ -2368,6 +2776,11 @@ def train(
                         use_eval_external_memory=True,
                     )
                 )
+
+    if distributed_config is not None:
+        _validate_distributed_pool_metadata(pool, context="the training pool")
+        for eval_index, eval_pool in enumerate(eval_pools):
+            _validate_distributed_pool_metadata(eval_pool, context=f"eval_set[{eval_index}]")
 
     if callbacks is None:
         callback_list: List[Callable[[TrainingCallbackEnv], Any]] = []

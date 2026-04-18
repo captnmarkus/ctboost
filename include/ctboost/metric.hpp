@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "ctboost/objective.hpp"
+#include "ctboost/ranking.hpp"
 
 namespace ctboost {
 
@@ -17,7 +18,7 @@ class MetricFunction {
                           const std::vector<float>& labels,
                           const std::vector<float>& weights,
                           int num_classes = 1,
-                          const std::vector<std::int64_t>* group_ids = nullptr) const = 0;
+                          const RankingMetadataView* ranking = nullptr) const = 0;
   virtual bool HigherIsBetter() const noexcept = 0;
 };
 

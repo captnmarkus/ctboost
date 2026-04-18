@@ -91,18 +91,32 @@ const std::vector<std::int64_t>& ValidateRankingMetricInputs(
     const std::vector<float>& labels,
     const std::vector<float>& weights,
     int num_classes,
-    const std::vector<std::int64_t>* group_ids) {
+    const RankingMetadataView* ranking) {
   if (num_classes != 1) {
     throw std::invalid_argument("ranking metrics expect num_classes equal to one");
   }
   ValidatePredictionLabelWeightSizes(preds, labels, weights);
-  if (group_ids == nullptr || group_ids->empty()) {
+  if (ranking == nullptr || ranking->group_ids == nullptr || ranking->group_ids->empty()) {
     throw std::invalid_argument("ranking metrics require group_id values");
   }
-  if (group_ids->size() != labels.size()) {
+  if (ranking->group_ids->size() != labels.size()) {
     throw std::invalid_argument("group_id size must match the number of labels");
   }
-  return *group_ids;
+  return *ranking->group_ids;
+}
+
+double ResolveGroupWeight(const RankingMetadataView* ranking, std::size_t row) {
+  if (ranking == nullptr || ranking->group_weights == nullptr || ranking->group_weights->empty()) {
+    return 1.0;
+  }
+  return static_cast<double>((*ranking->group_weights)[row]);
+}
+
+bool SameSubgroup(const RankingMetadataView* ranking, std::size_t left, std::size_t right) {
+  if (ranking == nullptr || ranking->subgroup_ids == nullptr || ranking->subgroup_ids->empty()) {
+    return false;
+  }
+  return (*ranking->subgroup_ids)[left] == (*ranking->subgroup_ids)[right];
 }
 
 double WeightSum(const std::vector<float>& weights) {
@@ -138,7 +152,7 @@ class RMSEMetric final : public MetricFunction {
                   const std::vector<float>& labels,
                   const std::vector<float>& weights,
                   int,
-                  const std::vector<std::int64_t>*) const override {
+                  const RankingMetadataView*) const override {
     ValidatePredictionLabelWeightSizes(preds, labels, weights);
     double squared_error_sum = 0.0;
     double weight_sum = 0.0;
@@ -160,7 +174,7 @@ class MAEMetric final : public MetricFunction {
                   const std::vector<float>& labels,
                   const std::vector<float>& weights,
                   int,
-                  const std::vector<std::int64_t>*) const override {
+                  const RankingMetadataView*) const override {
     ValidatePredictionLabelWeightSizes(preds, labels, weights);
     double absolute_error_sum = 0.0;
     double weight_sum = 0.0;
@@ -187,7 +201,7 @@ class HuberMetric final : public MetricFunction {
                   const std::vector<float>& labels,
                   const std::vector<float>& weights,
                   int,
-                  const std::vector<std::int64_t>*) const override {
+                  const RankingMetadataView*) const override {
     ValidatePredictionLabelWeightSizes(preds, labels, weights);
     double loss_sum = 0.0;
     double weight_sum = 0.0;
@@ -223,7 +237,7 @@ class QuantileMetric final : public MetricFunction {
                   const std::vector<float>& labels,
                   const std::vector<float>& weights,
                   int,
-                  const std::vector<std::int64_t>*) const override {
+                  const RankingMetadataView*) const override {
     ValidatePredictionLabelWeightSizes(preds, labels, weights);
     double loss_sum = 0.0;
     double weight_sum = 0.0;
@@ -249,7 +263,7 @@ class PoissonMetric final : public MetricFunction {
                   const std::vector<float>& labels,
                   const std::vector<float>& weights,
                   int,
-                  const std::vector<std::int64_t>*) const override {
+                  const RankingMetadataView*) const override {
     ValidatePredictionLabelWeightSizes(preds, labels, weights);
     ValidateNonNegativeLabels(labels, "poisson metric");
     double loss_sum = 0.0;
@@ -279,7 +293,7 @@ class TweedieMetric final : public MetricFunction {
                   const std::vector<float>& labels,
                   const std::vector<float>& weights,
                   int,
-                  const std::vector<std::int64_t>*) const override {
+                  const RankingMetadataView*) const override {
     ValidatePredictionLabelWeightSizes(preds, labels, weights);
     ValidateNonNegativeLabels(labels, "tweedie metric");
     const double one_minus_power = 1.0 - variance_power_;
@@ -311,7 +325,7 @@ class CoxMetric final : public MetricFunction {
                   const std::vector<float>& labels,
                   const std::vector<float>& weights,
                   int,
-                  const std::vector<std::int64_t>*) const override {
+                  const RankingMetadataView*) const override {
     ValidatePredictionLabelWeightSizes(preds, labels, weights);
     const std::vector<SurvivalLabel> survival = ParseSignedSurvivalLabels(labels, "cox metric");
 
@@ -370,7 +384,7 @@ class SurvivalExponentialMetric final : public MetricFunction {
                   const std::vector<float>& labels,
                   const std::vector<float>& weights,
                   int,
-                  const std::vector<std::int64_t>*) const override {
+                  const RankingMetadataView*) const override {
     ValidatePredictionLabelWeightSizes(preds, labels, weights);
     const std::vector<SurvivalLabel> survival =
         ParseSignedSurvivalLabels(labels, "survival exponential metric");
@@ -396,7 +410,7 @@ class BinaryLoglossMetric final : public MetricFunction {
                   const std::vector<float>& labels,
                   const std::vector<float>& weights,
                   int,
-                  const std::vector<std::int64_t>*) const override {
+                  const RankingMetadataView*) const override {
     ValidatePredictionLabelWeightSizes(preds, labels, weights);
     constexpr double kEpsilon = 1e-12;
     double loss_sum = 0.0;
@@ -421,7 +435,7 @@ class MulticlassLoglossMetric final : public MetricFunction {
                   const std::vector<float>& labels,
                   const std::vector<float>& weights,
                   int num_classes,
-                  const std::vector<std::int64_t>*) const override {
+                  const RankingMetadataView*) const override {
     ValidateMulticlassSizes(preds, labels, weights, num_classes);
     constexpr double kEpsilon = 1e-12;
     double loss_sum = 0.0;
@@ -457,7 +471,7 @@ class AccuracyMetric final : public MetricFunction {
                   const std::vector<float>& labels,
                   const std::vector<float>& weights,
                   int num_classes,
-                  const std::vector<std::int64_t>*) const override {
+                  const RankingMetadataView*) const override {
     if (num_classes > 2) {
       ValidateMulticlassSizes(preds, labels, weights, num_classes);
       double correct_weight = 0.0;
@@ -502,7 +516,7 @@ class BalancedAccuracyMetric final : public MetricFunction {
                   const std::vector<float>& labels,
                   const std::vector<float>& weights,
                   int num_classes,
-                  const std::vector<std::int64_t>*) const override {
+                  const RankingMetadataView*) const override {
     if (num_classes > 2) {
       ValidateMulticlassSizes(preds, labels, weights, num_classes);
       std::vector<double> class_weight_sum(static_cast<std::size_t>(num_classes), 0.0);
@@ -578,7 +592,7 @@ class PrecisionMetric final : public MetricFunction {
                   const std::vector<float>& labels,
                   const std::vector<float>& weights,
                   int,
-                  const std::vector<std::int64_t>*) const override {
+                  const RankingMetadataView*) const override {
     ValidatePredictionLabelWeightSizes(preds, labels, weights);
     double true_positive = 0.0;
     double false_positive = 0.0;
@@ -604,7 +618,7 @@ class RecallMetric final : public MetricFunction {
                   const std::vector<float>& labels,
                   const std::vector<float>& weights,
                   int,
-                  const std::vector<std::int64_t>*) const override {
+                  const RankingMetadataView*) const override {
     ValidatePredictionLabelWeightSizes(preds, labels, weights);
     double true_positive = 0.0;
     double false_negative = 0.0;
@@ -630,9 +644,9 @@ class F1Metric final : public MetricFunction {
                   const std::vector<float>& labels,
                   const std::vector<float>& weights,
                   int num_classes,
-                  const std::vector<std::int64_t>* group_ids) const override {
-    const double precision = precision_.Evaluate(preds, labels, weights, num_classes, group_ids);
-    const double recall = recall_.Evaluate(preds, labels, weights, num_classes, group_ids);
+                  const RankingMetadataView* ranking) const override {
+    const double precision = precision_.Evaluate(preds, labels, weights, num_classes, ranking);
+    const double recall = recall_.Evaluate(preds, labels, weights, num_classes, ranking);
     const double denominator = precision + recall;
     return denominator <= 0.0 ? 0.0 : 2.0 * precision * recall / denominator;
   }
@@ -650,7 +664,7 @@ class AUCMetric final : public MetricFunction {
                   const std::vector<float>& labels,
                   const std::vector<float>& weights,
                   int,
-                  const std::vector<std::int64_t>*) const override {
+                  const RankingMetadataView*) const override {
     ValidatePredictionLabelWeightSizes(preds, labels, weights);
     std::vector<std::size_t> order(preds.size());
     std::iota(order.begin(), order.end(), 0);
@@ -712,33 +726,55 @@ class PairLogitMetric final : public MetricFunction {
                   const std::vector<float>& labels,
                   const std::vector<float>& weights,
                   int num_classes,
-                  const std::vector<std::int64_t>* group_ids) const override {
+                  const RankingMetadataView* ranking) const override {
     const auto& resolved_group_ids =
-        ValidateRankingMetricInputs(preds, labels, weights, num_classes, group_ids);
-    std::unordered_map<std::int64_t, std::vector<std::size_t>> group_rows;
-    group_rows.reserve(resolved_group_ids.size());
-    for (std::size_t row = 0; row < resolved_group_ids.size(); ++row) {
-      group_rows[resolved_group_ids[row]].push_back(row);
-    }
-
+        ValidateRankingMetricInputs(preds, labels, weights, num_classes, ranking);
     double loss_sum = 0.0;
     double weight_sum = 0.0;
-    for (const auto& entry : group_rows) {
-      const auto& rows = entry.second;
-      for (std::size_t left = 0; left < rows.size(); ++left) {
-        for (std::size_t right = left + 1; right < rows.size(); ++right) {
-          const std::size_t i = rows[left];
-          const std::size_t j = rows[right];
-          if (labels[i] == labels[j]) {
-            continue;
-          }
+    auto accumulate_pair = [&](std::size_t winner, std::size_t loser, double pair_weight) {
+      if (!(pair_weight > 0.0)) {
+        return;
+      }
+      const double margin = static_cast<double>(preds[winner]) - preds[loser];
+      loss_sum += pair_weight * std::log1p(std::exp(-margin));
+      weight_sum += pair_weight;
+    };
 
-          const std::size_t positive = labels[i] > labels[j] ? i : j;
-          const std::size_t negative = labels[i] > labels[j] ? j : i;
-          const double pair_weight = static_cast<double>(weights[positive]) * weights[negative];
-          const double margin = static_cast<double>(preds[positive]) - preds[negative];
-          loss_sum += pair_weight * std::log1p(std::exp(-margin));
-          weight_sum += pair_weight;
+    if (ranking != nullptr && ranking->pairs != nullptr && !ranking->pairs->empty()) {
+      for (const RankingPair& pair : *ranking->pairs) {
+        const std::size_t winner = static_cast<std::size_t>(pair.winner);
+        const std::size_t loser = static_cast<std::size_t>(pair.loser);
+        accumulate_pair(
+            winner,
+            loser,
+            static_cast<double>(pair.weight) * ResolveGroupWeight(ranking, winner) *
+                static_cast<double>(weights[winner]) * static_cast<double>(weights[loser]));
+      }
+    } else {
+      std::unordered_map<std::int64_t, std::vector<std::size_t>> group_rows;
+      group_rows.reserve(resolved_group_ids.size());
+      for (std::size_t row = 0; row < resolved_group_ids.size(); ++row) {
+        group_rows[resolved_group_ids[row]].push_back(row);
+      }
+
+      for (const auto& entry : group_rows) {
+        const auto& rows = entry.second;
+        for (std::size_t left = 0; left < rows.size(); ++left) {
+          for (std::size_t right = left + 1; right < rows.size(); ++right) {
+            const std::size_t i = rows[left];
+            const std::size_t j = rows[right];
+            if (labels[i] == labels[j] || SameSubgroup(ranking, i, j)) {
+              continue;
+            }
+
+            const std::size_t winner = labels[i] > labels[j] ? i : j;
+            const std::size_t loser = labels[i] > labels[j] ? j : i;
+            accumulate_pair(
+                winner,
+                loser,
+                ResolveGroupWeight(ranking, winner) * static_cast<double>(weights[winner]) *
+                    static_cast<double>(weights[loser]));
+          }
         }
       }
     }
@@ -755,9 +791,9 @@ class NDCGMetric final : public MetricFunction {
                   const std::vector<float>& labels,
                   const std::vector<float>& weights,
                   int num_classes,
-                  const std::vector<std::int64_t>* group_ids) const override {
+                  const RankingMetadataView* ranking) const override {
     const auto& resolved_group_ids =
-        ValidateRankingMetricInputs(preds, labels, weights, num_classes, group_ids);
+        ValidateRankingMetricInputs(preds, labels, weights, num_classes, ranking);
     std::unordered_map<std::int64_t, std::vector<std::size_t>> group_rows;
     group_rows.reserve(resolved_group_ids.size());
     for (std::size_t row = 0; row < resolved_group_ids.size(); ++row) {
@@ -795,12 +831,11 @@ class NDCGMetric final : public MetricFunction {
 
       double dcg = 0.0;
       double ideal_dcg = 0.0;
-      double group_weight = 0.0;
+      double group_weight = ResolveGroupWeight(ranking, rows.front());
       for (std::size_t rank = 0; rank < rows.size(); ++rank) {
         const double discount = 1.0 / std::log2(static_cast<double>(rank) + 2.0);
         dcg += gain(prediction_order[rank]) * discount;
         ideal_dcg += gain(ideal_order[rank]) * discount;
-        group_weight += weights[rows[rank]];
       }
       if (ideal_dcg <= 0.0 || group_weight <= 0.0) {
         continue;
@@ -822,9 +857,9 @@ class MAPMetric final : public MetricFunction {
                   const std::vector<float>& labels,
                   const std::vector<float>& weights,
                   int num_classes,
-                  const std::vector<std::int64_t>* group_ids) const override {
+                  const RankingMetadataView* ranking) const override {
     const auto& resolved_group_ids =
-        ValidateRankingMetricInputs(preds, labels, weights, num_classes, group_ids);
+        ValidateRankingMetricInputs(preds, labels, weights, num_classes, ranking);
     std::unordered_map<std::int64_t, std::vector<std::size_t>> group_rows;
     group_rows.reserve(resolved_group_ids.size());
     for (std::size_t row = 0; row < resolved_group_ids.size(); ++row) {
@@ -845,11 +880,10 @@ class MAPMetric final : public MetricFunction {
       double precision_sum = 0.0;
       double hit_count = 0.0;
       double relevant_weight = 0.0;
-      double group_weight = 0.0;
+      double group_weight = ResolveGroupWeight(ranking, rows.front());
       for (std::size_t rank = 0; rank < rows.size(); ++rank) {
         const std::size_t row = rows[rank];
         const double sample_weight = static_cast<double>(weights[row]);
-        group_weight += sample_weight;
         if (labels[row] > 0.0F) {
           hit_count += 1.0;
           precision_sum += hit_count / static_cast<double>(rank + 1);
@@ -874,9 +908,9 @@ class MRRMetric final : public MetricFunction {
                   const std::vector<float>& labels,
                   const std::vector<float>& weights,
                   int num_classes,
-                  const std::vector<std::int64_t>* group_ids) const override {
+                  const RankingMetadataView* ranking) const override {
     const auto& resolved_group_ids =
-        ValidateRankingMetricInputs(preds, labels, weights, num_classes, group_ids);
+        ValidateRankingMetricInputs(preds, labels, weights, num_classes, ranking);
     std::unordered_map<std::int64_t, std::vector<std::size_t>> group_rows;
     group_rows.reserve(resolved_group_ids.size());
     for (std::size_t row = 0; row < resolved_group_ids.size(); ++row) {
@@ -894,10 +928,7 @@ class MRRMetric final : public MetricFunction {
         return preds[lhs] > preds[rhs];
       });
 
-      double group_weight = 0.0;
-      for (const std::size_t row : rows) {
-        group_weight += static_cast<double>(weights[row]);
-      }
+      const double group_weight = ResolveGroupWeight(ranking, rows.front());
       if (group_weight <= 0.0) {
         continue;
       }
@@ -923,7 +954,7 @@ class ConcordanceIndexMetric final : public MetricFunction {
                   const std::vector<float>& labels,
                   const std::vector<float>& weights,
                   int,
-                  const std::vector<std::int64_t>*) const override {
+                  const RankingMetadataView*) const override {
     ValidatePredictionLabelWeightSizes(preds, labels, weights);
     const std::vector<SurvivalLabel> survival = ParseSignedSurvivalLabels(labels, "cindex");
 

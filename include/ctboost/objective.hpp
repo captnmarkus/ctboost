@@ -5,6 +5,8 @@
 #include <string_view>
 #include <vector>
 
+#include "ctboost/ranking.hpp"
+
 namespace ctboost {
 
 struct ObjectiveConfig {
@@ -22,7 +24,7 @@ class ObjectiveFunction {
                                  std::vector<float>& out_g,
                                  std::vector<float>& out_h,
                                  int num_classes = 1,
-                                 const std::vector<std::int64_t>* group_ids = nullptr) const = 0;
+                                 const RankingMetadataView* ranking = nullptr) const = 0;
 };
 
 class SquaredError final : public ObjectiveFunction {
@@ -32,7 +34,7 @@ class SquaredError final : public ObjectiveFunction {
                          std::vector<float>& out_g,
                          std::vector<float>& out_h,
                          int num_classes = 1,
-                         const std::vector<std::int64_t>* group_ids = nullptr) const override;
+                         const RankingMetadataView* ranking = nullptr) const override;
 };
 
 class LogLoss final : public ObjectiveFunction {
@@ -42,7 +44,7 @@ class LogLoss final : public ObjectiveFunction {
                          std::vector<float>& out_g,
                          std::vector<float>& out_h,
                          int num_classes = 1,
-                         const std::vector<std::int64_t>* group_ids = nullptr) const override;
+                         const RankingMetadataView* ranking = nullptr) const override;
 };
 
 class SoftmaxLoss final : public ObjectiveFunction {
@@ -52,7 +54,7 @@ class SoftmaxLoss final : public ObjectiveFunction {
                          std::vector<float>& out_g,
                          std::vector<float>& out_h,
                          int num_classes = 1,
-                         const std::vector<std::int64_t>* group_ids = nullptr) const override;
+                         const RankingMetadataView* ranking = nullptr) const override;
 };
 
 class AbsoluteError final : public ObjectiveFunction {
@@ -62,7 +64,7 @@ class AbsoluteError final : public ObjectiveFunction {
                          std::vector<float>& out_g,
                          std::vector<float>& out_h,
                          int num_classes = 1,
-                         const std::vector<std::int64_t>* group_ids = nullptr) const override;
+                         const RankingMetadataView* ranking = nullptr) const override;
 };
 
 class HuberLoss final : public ObjectiveFunction {
@@ -74,7 +76,7 @@ class HuberLoss final : public ObjectiveFunction {
                          std::vector<float>& out_g,
                          std::vector<float>& out_h,
                          int num_classes = 1,
-                         const std::vector<std::int64_t>* group_ids = nullptr) const override;
+                         const RankingMetadataView* ranking = nullptr) const override;
 
  private:
   double delta_{1.0};
@@ -89,7 +91,7 @@ class QuantileLoss final : public ObjectiveFunction {
                          std::vector<float>& out_g,
                          std::vector<float>& out_h,
                          int num_classes = 1,
-                         const std::vector<std::int64_t>* group_ids = nullptr) const override;
+                         const RankingMetadataView* ranking = nullptr) const override;
 
  private:
   double alpha_{0.5};
@@ -102,7 +104,7 @@ class PoissonLoss final : public ObjectiveFunction {
                          std::vector<float>& out_g,
                          std::vector<float>& out_h,
                          int num_classes = 1,
-                         const std::vector<std::int64_t>* group_ids = nullptr) const override;
+                         const RankingMetadataView* ranking = nullptr) const override;
 };
 
 class TweedieLoss final : public ObjectiveFunction {
@@ -114,7 +116,7 @@ class TweedieLoss final : public ObjectiveFunction {
                          std::vector<float>& out_g,
                          std::vector<float>& out_h,
                          int num_classes = 1,
-                         const std::vector<std::int64_t>* group_ids = nullptr) const override;
+                         const RankingMetadataView* ranking = nullptr) const override;
 
  private:
   double variance_power_{1.5};
@@ -127,7 +129,7 @@ class CoxLoss final : public ObjectiveFunction {
                          std::vector<float>& out_g,
                          std::vector<float>& out_h,
                          int num_classes = 1,
-                         const std::vector<std::int64_t>* group_ids = nullptr) const override;
+                         const RankingMetadataView* ranking = nullptr) const override;
 };
 
 class SurvivalExponentialLoss final : public ObjectiveFunction {
@@ -137,7 +139,7 @@ class SurvivalExponentialLoss final : public ObjectiveFunction {
                          std::vector<float>& out_g,
                          std::vector<float>& out_h,
                          int num_classes = 1,
-                         const std::vector<std::int64_t>* group_ids = nullptr) const override;
+                         const RankingMetadataView* ranking = nullptr) const override;
 };
 
 class PairLogitLoss final : public ObjectiveFunction {
@@ -147,7 +149,7 @@ class PairLogitLoss final : public ObjectiveFunction {
                          std::vector<float>& out_g,
                          std::vector<float>& out_h,
                          int num_classes = 1,
-                         const std::vector<std::int64_t>* group_ids = nullptr) const override;
+                         const RankingMetadataView* ranking = nullptr) const override;
 };
 
 std::unique_ptr<ObjectiveFunction> CreateObjectiveFunction(
