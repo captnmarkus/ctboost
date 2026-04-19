@@ -188,7 +188,7 @@ class _BaseCTBoost(BaseEstimator):
         feature_borders: Optional[Any] = None,
         random_seed: int = 0,
         loss_function: Optional[str] = None,
-        eval_metric: Optional[str] = None,
+        eval_metric: Optional[Any] = None,
         quantile_alpha: float = 0.5,
         huber_delta: float = 1.0,
         tweedie_variance_power: float = 1.5,
@@ -315,9 +315,14 @@ class _BaseCTBoost(BaseEstimator):
         eval_set: Any = None,
         eval_names: Any = None,
         early_stopping_rounds: Optional[int] = None,
-        early_stopping_metric: Optional[str] = None,
+        early_stopping_metric: Optional[Any] = None,
         early_stopping_name: Optional[str] = None,
         callbacks: Optional[Iterable[Any]] = None,
+        snapshot_path: Optional[PathLike] = None,
+        snapshot_interval: int = 1,
+        snapshot_save_best_only: bool = False,
+        snapshot_model_format: Optional[str] = None,
+        resume_from_snapshot: Any = None,
         objective: str,
         num_classes: int = 1,
         extra_train_params: Optional[Dict[str, Any]] = None,
@@ -469,6 +474,11 @@ class _BaseCTBoost(BaseEstimator):
             early_stopping_metric=early_stopping_metric,
             early_stopping_name=early_stopping_name,
             callbacks=callbacks,
+            snapshot_path=snapshot_path,
+            snapshot_interval=snapshot_interval,
+            snapshot_save_best_only=snapshot_save_best_only,
+            snapshot_model_format=snapshot_model_format,
+            resume_from_snapshot=resume_from_snapshot,
             init_model=resolved_init_model,
         )
         self.n_features_in_ = train_pool.num_cols
@@ -476,6 +486,10 @@ class _BaseCTBoost(BaseEstimator):
         self.evals_result_ = self._booster.evals_result_
         self.best_score_ = self._compute_best_score()
         return self
+
+    @property
+    def data_schema_(self) -> Dict[str, Any]:
+        return self._booster.data_schema
 
     @staticmethod
     def _prediction_pool(X: Any) -> Pool:
@@ -531,6 +545,7 @@ class _BaseCTBoost(BaseEstimator):
         destination = Path(path)
         fitted_state = {
             "booster_state": dict(self._booster._handle.export_state()),
+            "booster_training_metadata": _serialize_value(getattr(self._booster, "_training_metadata", None)),
             "n_features_in_": int(self.n_features_in_),
             "best_iteration_": int(self.best_iteration_),
             "evals_result_": _serialize_value(self.evals_result_),
@@ -579,7 +594,10 @@ class _BaseCTBoost(BaseEstimator):
 
         model = cls(**{key: _deserialize_value(value) for key, value in document["init_params"].items()})
         fitted_state = document["fitted_state"]
-        model._booster = Booster(_core.GradientBooster.from_state(fitted_state["booster_state"]))
+        model._booster = Booster(
+            _core.GradientBooster.from_state(fitted_state["booster_state"]),
+            training_metadata=_deserialize_value(fitted_state.get("booster_training_metadata")),
+        )
         model.n_features_in_ = int(fitted_state["n_features_in_"])
         model.best_iteration_ = int(fitted_state["best_iteration_"])
         model.evals_result_ = _deserialize_value(fitted_state["evals_result_"])
@@ -654,7 +672,7 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
         loss_function: str = "Logloss",
         class_weight: Optional[Any] = None,
         scale_pos_weight: Optional[float] = None,
-        eval_metric: Optional[str] = None,
+        eval_metric: Optional[Any] = None,
         quantile_alpha: float = 0.5,
         huber_delta: float = 1.0,
         tweedie_variance_power: float = 1.5,
@@ -745,9 +763,14 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
         eval_set: Any = None,
         eval_names: Any = None,
         early_stopping_rounds: Optional[int] = None,
-        early_stopping_metric: Optional[str] = None,
+        early_stopping_metric: Optional[Any] = None,
         early_stopping_name: Optional[str] = None,
         callbacks: Optional[Iterable[Any]] = None,
+        snapshot_path: Optional[PathLike] = None,
+        snapshot_interval: int = 1,
+        snapshot_save_best_only: bool = False,
+        snapshot_model_format: Optional[str] = None,
+        resume_from_snapshot: Any = None,
     ) -> "CTBoostClassifier":
         if isinstance(X, Pool):
             raw_labels = np.asarray(X.label if y is None else y)
@@ -805,6 +828,11 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
             early_stopping_metric=early_stopping_metric,
             early_stopping_name=early_stopping_name,
             callbacks=callbacks,
+            snapshot_path=snapshot_path,
+            snapshot_interval=snapshot_interval,
+            snapshot_save_best_only=snapshot_save_best_only,
+            snapshot_model_format=snapshot_model_format,
+            resume_from_snapshot=resume_from_snapshot,
             objective=objective,
             num_classes=self.n_classes_,
             extra_train_params=train_params,
@@ -917,7 +945,7 @@ class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
         feature_borders: Optional[Any] = None,
         random_seed: int = 0,
         loss_function: str = "RMSE",
-        eval_metric: Optional[str] = None,
+        eval_metric: Optional[Any] = None,
         quantile_alpha: float = 0.5,
         huber_delta: float = 1.0,
         tweedie_variance_power: float = 1.5,
@@ -1006,9 +1034,14 @@ class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
         eval_set: Any = None,
         eval_names: Any = None,
         early_stopping_rounds: Optional[int] = None,
-        early_stopping_metric: Optional[str] = None,
+        early_stopping_metric: Optional[Any] = None,
         early_stopping_name: Optional[str] = None,
         callbacks: Optional[Iterable[Any]] = None,
+        snapshot_path: Optional[PathLike] = None,
+        snapshot_interval: int = 1,
+        snapshot_save_best_only: bool = False,
+        snapshot_model_format: Optional[str] = None,
+        resume_from_snapshot: Any = None,
     ) -> "CTBoostRegressor":
         return self._fit_impl(
             X,
@@ -1022,6 +1055,11 @@ class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
             early_stopping_metric=early_stopping_metric,
             early_stopping_name=early_stopping_name,
             callbacks=callbacks,
+            snapshot_path=snapshot_path,
+            snapshot_interval=snapshot_interval,
+            snapshot_save_best_only=snapshot_save_best_only,
+            snapshot_model_format=snapshot_model_format,
+            resume_from_snapshot=resume_from_snapshot,
             objective="SquaredError",
         )
 
@@ -1084,7 +1122,7 @@ class CTBoostRanker(_BaseCTBoost):
         feature_borders: Optional[Any] = None,
         random_seed: int = 0,
         loss_function: str = "PairLogit",
-        eval_metric: Optional[str] = "NDCG",
+        eval_metric: Optional[Any] = "NDCG",
         quantile_alpha: float = 0.5,
         huber_delta: float = 1.0,
         tweedie_variance_power: float = 1.5,
@@ -1178,9 +1216,14 @@ class CTBoostRanker(_BaseCTBoost):
         eval_set: Any = None,
         eval_names: Any = None,
         early_stopping_rounds: Optional[int] = None,
-        early_stopping_metric: Optional[str] = None,
+        early_stopping_metric: Optional[Any] = None,
         early_stopping_name: Optional[str] = None,
         callbacks: Optional[Iterable[Any]] = None,
+        snapshot_path: Optional[PathLike] = None,
+        snapshot_interval: int = 1,
+        snapshot_save_best_only: bool = False,
+        snapshot_model_format: Optional[str] = None,
+        resume_from_snapshot: Any = None,
     ) -> "CTBoostRanker":
         if isinstance(X, Pool):
             if (
@@ -1232,6 +1275,11 @@ class CTBoostRanker(_BaseCTBoost):
             early_stopping_metric=early_stopping_metric,
             early_stopping_name=early_stopping_name,
             callbacks=callbacks,
+            snapshot_path=snapshot_path,
+            snapshot_interval=snapshot_interval,
+            snapshot_save_best_only=snapshot_save_best_only,
+            snapshot_model_format=snapshot_model_format,
+            resume_from_snapshot=resume_from_snapshot,
             objective="PairLogit",
             num_classes=1,
         )

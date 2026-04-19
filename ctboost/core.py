@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, List, Optional, Tuple
+from typing import Any, List, Mapping, Optional, Tuple
 
 import numpy as np
 
@@ -35,6 +35,61 @@ def _normalize_categorical_features(cat_features: Optional[List[int]]) -> List[i
     if cat_features is None:
         return []
     return sorted({int(feature_index) for feature_index in cat_features})
+
+
+def _normalize_json_metadata(value: Any, *, name: str) -> Any:
+    if value is None:
+        return None
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, dict):
+        return {
+            str(key): _normalize_json_metadata(item, name=name)
+            for key, item in value.items()
+        }
+    if isinstance(value, tuple):
+        return [_normalize_json_metadata(item, name=name) for item in value]
+    if isinstance(value, list):
+        return [_normalize_json_metadata(item, name=name) for item in value]
+    if isinstance(value, (str, int, float, bool)):
+        return value
+    raise TypeError(f"{name} must contain JSON-serializable values")
+
+
+def _normalize_column_roles(
+    column_roles: Any,
+    *,
+    num_cols: int,
+    feature_names: Optional[List[str]],
+) -> Optional[List[Optional[str]]]:
+    if column_roles is None:
+        return None
+    if isinstance(column_roles, Mapping):
+        feature_name_map = None if feature_names is None else {
+            str(feature_name): index for index, feature_name in enumerate(feature_names)
+        }
+        resolved_roles: List[Optional[str]] = [None] * num_cols
+        for key, value in column_roles.items():
+            if isinstance(key, (np.integer, int)):
+                feature_index = int(key)
+            elif isinstance(key, str):
+                if feature_name_map is None:
+                    raise ValueError("column_roles cannot use feature names without feature_names")
+                if key not in feature_name_map:
+                    raise ValueError(f"column_roles references unknown feature name {key!r}")
+                feature_index = feature_name_map[key]
+            else:
+                raise TypeError("column_roles keys must be feature indices or feature names")
+            if feature_index < 0 or feature_index >= num_cols:
+                raise ValueError("column_roles feature index is out of bounds")
+            resolved_roles[feature_index] = None if value is None else str(value)
+        return resolved_roles
+    resolved_roles = [None if value is None else str(value) for value in list(column_roles)]
+    if len(resolved_roles) != num_cols:
+        raise ValueError("column_roles size must match the number of data columns")
+    return resolved_roles
 
 
 def _is_pandas_categorical_series(series: Any) -> bool:
@@ -198,9 +253,20 @@ class Pool:
         pairs: Any = None,
         pairs_weight: Any = None,
         feature_names: Optional[List[str]] = None,
+        column_roles: Any = None,
+        feature_metadata: Optional[Mapping[str, Any]] = None,
+        categorical_schema: Optional[Mapping[str, Any]] = None,
         _releasable_feature_storage: bool = False,
     ) -> "Pool":
         resolved_cat_features = _normalize_categorical_features(cat_features)
+        resolved_feature_names = None if feature_names is None else [str(name) for name in feature_names]
+        resolved_column_roles = _normalize_column_roles(
+            column_roles,
+            num_cols=int(shape[1]),
+            feature_names=resolved_feature_names,
+        )
+        resolved_feature_metadata = _normalize_json_metadata(feature_metadata, name="feature_metadata")
+        resolved_categorical_schema = _normalize_json_metadata(categorical_schema, name="categorical_schema")
         if _is_pandas_series(label):
             label = label.to_numpy(copy=False)
         resolved_group_id = _normalize_group_id(group_id)
@@ -272,7 +338,10 @@ class Pool:
             baseline=native_baseline,
             pairs=native_pairs,
             pairs_weight=native_pairs_weight,
-            feature_names=feature_names,
+            feature_names=resolved_feature_names,
+            column_roles=resolved_column_roles,
+            feature_metadata=resolved_feature_metadata,
+            categorical_schema=resolved_categorical_schema,
             releasable_feature_storage=_releasable_feature_storage,
             dense_data=None,
             sparse_components=(
@@ -296,6 +365,9 @@ class Pool:
         pairs: Optional[np.ndarray],
         pairs_weight: Optional[np.ndarray],
         feature_names: Optional[List[str]],
+        column_roles: Optional[List[Optional[str]]],
+        feature_metadata: Any,
+        categorical_schema: Any,
         releasable_feature_storage: bool,
         dense_data: Optional[np.ndarray],
         sparse_components: Optional[Tuple[np.ndarray, np.ndarray, np.ndarray, Tuple[int, int]]],
@@ -321,6 +393,9 @@ class Pool:
         self.pairs_weight = (
             None if pairs_weight is None else np.asarray(pairs_weight, dtype=np.float32).copy()
         )
+        self.column_roles = None if column_roles is None else list(column_roles)
+        self.feature_metadata = _normalize_json_metadata(feature_metadata, name="feature_metadata")
+        self.categorical_schema = _normalize_json_metadata(categorical_schema, name="categorical_schema")
         self._releasable_feature_storage = bool(releasable_feature_storage)
         self._dense_data_ref = dense_data
         self._sparse_csc_components = sparse_components
@@ -353,6 +428,8 @@ class Pool:
         if self.feature_names is not None:
             if len(self.feature_names) != self.num_cols:
                 raise ValueError("feature_names size must match the number of data columns")
+        if self.column_roles is not None and len(self.column_roles) != self.num_cols:
+            raise ValueError("column_roles size must match the number of data columns")
         return self
 
     def __init__(
@@ -368,6 +445,9 @@ class Pool:
         pairs: Any = None,
         pairs_weight: Any = None,
         feature_names: Optional[List[str]] = None,
+        column_roles: Any = None,
+        feature_metadata: Optional[Mapping[str, Any]] = None,
+        categorical_schema: Optional[Mapping[str, Any]] = None,
         _releasable_feature_storage: bool = False,
     ) -> None:
         resolved_cat_features = _normalize_categorical_features(cat_features)
@@ -378,6 +458,7 @@ class Pool:
             data, resolved_cat_features = _dataframe_to_numpy(data, resolved_cat_features)
         elif _is_scipy_sparse_matrix(data):
             sparse_components = _scipy_sparse_to_csc_components(data)
+        resolved_feature_names = None if feature_names is None else [str(name) for name in feature_names]
         if _is_pandas_series(label):
             label = label.to_numpy(copy=False)
         resolved_group_id = _normalize_group_id(group_id)
@@ -402,6 +483,18 @@ class Pool:
             if sparse_components is not None
             else int(np.asarray(data).shape[0])
         )
+        num_cols = (
+            sparse_components[3][1]
+            if sparse_components is not None
+            else int(np.asarray(data).shape[1])
+        )
+        resolved_column_roles = _normalize_column_roles(
+            column_roles,
+            num_cols=num_cols,
+            feature_names=resolved_feature_names,
+        )
+        resolved_feature_metadata = _normalize_json_metadata(feature_metadata, name="feature_metadata")
+        resolved_categorical_schema = _normalize_json_metadata(categorical_schema, name="categorical_schema")
         native_group_id = None if resolved_group_id is None else np.ascontiguousarray(resolved_group_id, dtype=np.int64)
         native_group_weight = _normalize_group_weight(
             group_weight,
@@ -462,7 +555,10 @@ class Pool:
             baseline=native_baseline,
             pairs=native_pairs,
             pairs_weight=native_pairs_weight,
-            feature_names=feature_names,
+            feature_names=resolved_feature_names,
+            column_roles=resolved_column_roles,
+            feature_metadata=resolved_feature_metadata,
+            categorical_schema=resolved_categorical_schema,
             releasable_feature_storage=_releasable_feature_storage,
             dense_data=None if sparse_components is not None else data_array,
             sparse_components=sparse_components,
@@ -497,6 +593,9 @@ def _clone_pool(
     pairs: Any = None,
     pairs_weight: Any = None,
     feature_names: Optional[List[str]] = None,
+    column_roles: Any = None,
+    feature_metadata: Any = None,
+    categorical_schema: Any = None,
     releasable_feature_storage: bool = True,
 ) -> Pool:
     resolved_label = pool.label if label is None else label
@@ -508,6 +607,9 @@ def _clone_pool(
     resolved_pairs = pool.pairs if pairs is None else pairs
     resolved_pairs_weight = pool.pairs_weight if pairs_weight is None else pairs_weight
     resolved_feature_names = pool.feature_names if feature_names is None else feature_names
+    resolved_column_roles = pool.column_roles if column_roles is None else column_roles
+    resolved_feature_metadata = pool.feature_metadata if feature_metadata is None else feature_metadata
+    resolved_categorical_schema = pool.categorical_schema if categorical_schema is None else categorical_schema
 
     sparse_components = getattr(pool, "_sparse_csc_components", None)
     if sparse_components is not None:
@@ -527,6 +629,9 @@ def _clone_pool(
             pairs=resolved_pairs,
             pairs_weight=resolved_pairs_weight,
             feature_names=resolved_feature_names,
+            column_roles=resolved_column_roles,
+            feature_metadata=resolved_feature_metadata,
+            categorical_schema=resolved_categorical_schema,
             _releasable_feature_storage=releasable_feature_storage,
         )
     else:
@@ -545,6 +650,9 @@ def _clone_pool(
             pairs=resolved_pairs,
             pairs_weight=resolved_pairs_weight,
             feature_names=resolved_feature_names,
+            column_roles=resolved_column_roles,
+            feature_metadata=resolved_feature_metadata,
+            categorical_schema=resolved_categorical_schema,
             _releasable_feature_storage=releasable_feature_storage,
         )
 

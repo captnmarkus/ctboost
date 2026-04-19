@@ -151,6 +151,9 @@ def _dense_external_memory_pool(
     pairs: Any,
     pairs_weight: Any,
     feature_names: Optional[Sequence[str]],
+    column_roles: Any,
+    feature_metadata: Optional[Mapping[str, Any]],
+    categorical_schema: Optional[Mapping[str, Any]],
     directory: Optional[Any],
 ) -> Pool:
     root = Path(directory) if directory is not None else Path(tempfile.mkdtemp(prefix="ctboost-ext-"))
@@ -173,6 +176,9 @@ def _dense_external_memory_pool(
         pairs=pairs,
         pairs_weight=pairs_weight,
         feature_names=None if feature_names is None else list(feature_names),
+        column_roles=column_roles,
+        feature_metadata=feature_metadata,
+        categorical_schema=categorical_schema,
         _releasable_feature_storage=True,
     )
     pool._external_memory_backing = ExternalMemoryBacking(root, [data_map])
@@ -192,6 +198,9 @@ def _sparse_external_memory_pool(
     pairs: Any,
     pairs_weight: Any,
     feature_names: Optional[Sequence[str]],
+    column_roles: Any,
+    feature_metadata: Optional[Mapping[str, Any]],
+    categorical_schema: Optional[Mapping[str, Any]],
     directory: Optional[Any],
 ) -> Pool:
     root = Path(directory) if directory is not None else Path(tempfile.mkdtemp(prefix="ctboost-ext-"))
@@ -223,6 +232,9 @@ def _sparse_external_memory_pool(
         pairs=pairs,
         pairs_weight=pairs_weight,
         feature_names=None if feature_names is None else list(feature_names),
+        column_roles=column_roles,
+        feature_metadata=feature_metadata,
+        categorical_schema=categorical_schema,
         _releasable_feature_storage=True,
     )
     pool._external_memory_backing = ExternalMemoryBacking(root, [data_map, indices_map, indptr_map])
@@ -242,6 +254,9 @@ def prepare_pool(
     pairs: Any = None,
     pairs_weight: Any = None,
     feature_names: Optional[Sequence[str]] = None,
+    column_roles: Any = None,
+    feature_metadata: Optional[Mapping[str, Any]] = None,
+    categorical_schema: Optional[Mapping[str, Any]] = None,
     external_memory: bool = False,
     external_memory_dir: Optional[Any] = None,
     ordered_ctr: bool = False,
@@ -302,6 +317,9 @@ def prepare_pool(
                 pairs=pairs,
                 pairs_weight=pairs_weight,
                 feature_names=prepared_feature_names,
+                column_roles=column_roles,
+                feature_metadata=feature_metadata,
+                categorical_schema=categorical_schema,
                 directory=external_memory_dir,
             )
         else:
@@ -317,6 +335,9 @@ def prepare_pool(
                 pairs=pairs,
                 pairs_weight=pairs_weight,
                 feature_names=prepared_feature_names,
+                column_roles=column_roles,
+                feature_metadata=feature_metadata,
+                categorical_schema=categorical_schema,
                 directory=external_memory_dir,
             )
     else:
@@ -332,6 +353,9 @@ def prepare_pool(
             pairs=pairs,
             pairs_weight=pairs_weight,
             feature_names=None if prepared_feature_names is None else list(prepared_feature_names),
+            column_roles=column_roles,
+            feature_metadata=feature_metadata,
+            categorical_schema=categorical_schema,
             _releasable_feature_storage=True,
         )
     pool._feature_pipeline = pipeline

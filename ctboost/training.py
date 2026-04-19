@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping
 import contextlib
 from dataclasses import dataclass
+import inspect
 import json
 import pickle
 from pathlib import Path
@@ -52,6 +53,33 @@ class PreparedTrainingData:
     feature_pipeline: Optional[FeaturePipeline] = None
 
 
+@dataclass(frozen=True)
+class EvalMetricSpec:
+    func: Callable[..., Any]
+    name: Optional[str] = None
+    higher_is_better: Optional[bool] = None
+    allow_early_stopping: bool = False
+
+
+def make_eval_metric(
+    func: Callable[..., Any],
+    *,
+    name: Optional[str] = None,
+    higher_is_better: Optional[bool] = None,
+    allow_early_stopping: bool = False,
+) -> EvalMetricSpec:
+    if not callable(func):
+        raise TypeError("func must be callable")
+    if higher_is_better is not None and not isinstance(higher_is_better, bool):
+        raise TypeError("higher_is_better must be a boolean or None")
+    return EvalMetricSpec(
+        func=func,
+        name=name,
+        higher_is_better=higher_is_better,
+        allow_early_stopping=bool(allow_early_stopping),
+    )
+
+
 def log_evaluation(period: int = 1) -> Callable[[TrainingCallbackEnv], bool]:
     resolved_period = int(period)
     if resolved_period <= 0:
@@ -94,6 +122,32 @@ def checkpoint_callback(
     return _callback
 
 
+def _normalize_snapshot_interval(snapshot_interval: int) -> int:
+    resolved_interval = int(snapshot_interval)
+    if resolved_interval <= 0:
+        raise ValueError("snapshot_interval must be positive")
+    return resolved_interval
+
+
+def _resolve_snapshot_path(snapshot_path: Optional[PathLike]) -> Optional[Path]:
+    if snapshot_path is None:
+        return None
+    return Path(snapshot_path)
+
+
+def _resolve_resume_snapshot_path(
+    resume_from_snapshot: Any,
+    snapshot_path: Optional[Path],
+) -> Optional[Path]:
+    if resume_from_snapshot in {None, False}:
+        return None
+    if resume_from_snapshot is True:
+        if snapshot_path is None:
+            raise ValueError("resume_from_snapshot=True requires snapshot_path")
+        return snapshot_path
+    return Path(resume_from_snapshot)
+
+
 def _load_sklearn_splitters():
     try:
         from sklearn.model_selection import GroupKFold, KFold, StratifiedKFold
@@ -117,6 +171,9 @@ def _pool_from_data_and_label(
     pairs: Any = None,
     pairs_weight: Any = None,
     feature_names: Optional[List[str]] = None,
+    column_roles: Any = None,
+    feature_metadata: Optional[Mapping[str, Any]] = None,
+    categorical_schema: Optional[Mapping[str, Any]] = None,
 ) -> Pool:
     if isinstance(data, Pool):
         if (
@@ -129,6 +186,9 @@ def _pool_from_data_and_label(
             and pairs is None
             and pairs_weight is None
             and feature_names is None
+            and column_roles is None
+            and feature_metadata is None
+            and categorical_schema is None
         ):
             return data
         resolved_label = data.label if label is None else label
@@ -150,6 +210,9 @@ def _pool_from_data_and_label(
             pairs=resolved_pairs,
             pairs_weight=resolved_pairs_weight,
             feature_names=data.feature_names if feature_names is None else feature_names,
+            column_roles=data.column_roles if column_roles is None else column_roles,
+            feature_metadata=data.feature_metadata if feature_metadata is None else feature_metadata,
+            categorical_schema=data.categorical_schema if categorical_schema is None else categorical_schema,
             releasable_feature_storage=True,
         )
 
@@ -166,6 +229,9 @@ def _pool_from_data_and_label(
         pairs=pairs,
         pairs_weight=pairs_weight,
         feature_names=feature_names,
+        column_roles=column_roles,
+        feature_metadata=feature_metadata,
+        categorical_schema=categorical_schema,
         _releasable_feature_storage=True,
     )
 
@@ -220,18 +286,71 @@ def _normalize_eval_names(eval_names: Any, eval_count: int) -> List[str]:
     return names
 
 
-def _normalize_eval_metrics(eval_metric: Any) -> List[str]:
+def _normalize_eval_metric_name(metric: Any, *, default_name: str) -> str:
+    if isinstance(metric, EvalMetricSpec):
+        raw_name = metric.name
+    elif isinstance(metric, str):
+        raw_name = metric
+    else:
+        raw_name = getattr(metric, "name", None) or getattr(metric, "__name__", None)
+    metric_name = default_name if raw_name is None else str(raw_name).strip()
+    if not metric_name:
+        raise ValueError("custom eval metrics must define a non-empty name")
+    return metric_name
+
+
+def _normalize_single_eval_metric(metric: Any, *, default_name: str) -> Dict[str, Any]:
+    if isinstance(metric, str):
+        metric_name = metric.strip()
+        if not metric_name:
+            raise ValueError("eval_metric names must be non-empty")
+        return {
+            "kind": "native",
+            "name": metric_name,
+            "callable": None,
+            "higher_is_better": None,
+            "allow_early_stopping": True,
+        }
+    if isinstance(metric, EvalMetricSpec):
+        metric_name = _normalize_eval_metric_name(metric, default_name=default_name)
+        return {
+            "kind": "callable",
+            "name": metric_name,
+            "callable": metric.func,
+            "higher_is_better": metric.higher_is_better,
+            "allow_early_stopping": bool(metric.allow_early_stopping),
+        }
+    if callable(metric):
+        metric_name = _normalize_eval_metric_name(metric, default_name=default_name)
+        return {
+            "kind": "callable",
+            "name": metric_name,
+            "callable": metric,
+            "higher_is_better": getattr(metric, "higher_is_better", None),
+            "allow_early_stopping": bool(getattr(metric, "allow_early_stopping", False)),
+        }
+    raise TypeError("eval_metric must be a string, callable, EvalMetricSpec, or a sequence of them")
+
+
+def _normalize_eval_metrics(eval_metric: Any) -> List[Dict[str, Any]]:
     if eval_metric is None:
         return []
-    if isinstance(eval_metric, str):
-        metric_name = eval_metric.strip()
-        return [] if not metric_name else [metric_name]
-    if isinstance(eval_metric, (list, tuple)):
-        metrics = [str(metric).strip() for metric in eval_metric]
-        if not metrics or any(not metric for metric in metrics):
-            raise ValueError("eval_metric sequences must contain non-empty metric names")
-        return metrics
-    raise TypeError("eval_metric must be a string or a sequence of strings")
+    if isinstance(eval_metric, str) and not eval_metric.strip():
+        return []
+    raw_metrics = [eval_metric] if not isinstance(eval_metric, (list, tuple)) else list(eval_metric)
+    if not raw_metrics:
+        return []
+    normalized = [
+        _normalize_single_eval_metric(metric, default_name=f"custom_metric_{index}")
+        for index, metric in enumerate(raw_metrics)
+    ]
+    seen_names = set()
+    for metric in normalized:
+        lowered = metric["name"].lower()
+        if lowered in seen_names:
+            raise ValueError("eval_metric entries must have unique names")
+        seen_names.add(lowered)
+    return normalized
 
 
 def _copy_evals_result(result: Mapping[str, Mapping[str, Iterable[float]]]) -> Dict[str, Dict[str, List[float]]]:
@@ -389,6 +508,9 @@ def _prepare_pool_from_raw(
     pairs: Any = None,
     pairs_weight: Any = None,
     feature_names: Optional[List[str]] = None,
+    column_roles: Any = None,
+    feature_metadata: Optional[Mapping[str, Any]] = None,
+    categorical_schema: Optional[Mapping[str, Any]] = None,
     params: Mapping[str, Any],
     feature_pipeline: Optional[FeaturePipeline] = None,
     fit_feature_pipeline: bool = True,
@@ -425,6 +547,9 @@ def _prepare_pool_from_raw(
         pairs=pairs,
         pairs_weight=pairs_weight,
         feature_names=feature_names,
+        column_roles=column_roles,
+        feature_metadata=feature_metadata,
+        categorical_schema=categorical_schema,
         external_memory=external_memory,
         external_memory_dir=external_memory_dir,
         ordered_ctr=bool(params.get("ordered_ctr", False)),
@@ -571,6 +696,9 @@ def _prepare_transformed_training_pool(
     pairs: Any,
     pairs_weight: Any,
     feature_names: Optional[List[str]],
+    column_roles: Any,
+    feature_metadata: Optional[Mapping[str, Any]],
+    categorical_schema: Optional[Mapping[str, Any]],
     params: Mapping[str, Any],
 ) -> Pool:
     del params
@@ -586,6 +714,9 @@ def _prepare_transformed_training_pool(
         pairs=pairs,
         pairs_weight=pairs_weight,
         feature_names=None if feature_names is None else list(feature_names),
+        column_roles=column_roles,
+        feature_metadata=feature_metadata,
+        categorical_schema=categorical_schema,
         _releasable_feature_storage=True,
     )
 
@@ -602,6 +733,9 @@ def _prepare_distributed_feature_pipeline_pool(
     pairs: Any,
     pairs_weight: Any,
     feature_names: Optional[List[str]],
+    column_roles: Any,
+    feature_metadata: Optional[Mapping[str, Any]],
+    categorical_schema: Optional[Mapping[str, Any]],
     params: Mapping[str, Any],
     distributed: Dict[str, Any],
 ) -> tuple[Pool, FeaturePipeline]:
@@ -656,6 +790,9 @@ def _prepare_distributed_feature_pipeline_pool(
         pairs=pairs,
         pairs_weight=pairs_weight,
         feature_names=list(transformed_feature_names),
+        column_roles=column_roles,
+        feature_metadata=feature_metadata,
+        categorical_schema=categorical_schema,
         params=params,
     )
     local_pool._feature_pipeline = pipeline
@@ -1412,7 +1549,7 @@ def _distributed_train_filesystem_compat(
     eval_names: List[str],
     feature_pipeline: Optional[FeaturePipeline],
     early_stopping_rounds: Optional[int],
-    early_stopping_metric: Optional[str],
+    early_stopping_metric: Optional[Any],
     early_stopping_name: Optional[str],
     callbacks: List[Callable[[TrainingCallbackEnv], Any]],
     init_model: Any,
@@ -1806,6 +1943,9 @@ def _slice_pool(pool: Pool, indices: Iterable[int]) -> Pool:
         pairs=pairs,
         pairs_weight=pairs_weight,
         feature_names=pool.feature_names,
+        column_roles=pool.column_roles,
+        feature_metadata=pool.feature_metadata,
+        categorical_schema=pool.categorical_schema,
         _releasable_feature_storage=True,
     )
 
@@ -1851,6 +1991,77 @@ def _metric_higher_is_better(metric_name: str, params: Mapping[str, Any]) -> boo
             tweedie_variance_power=config["tweedie_variance_power"],
         )
     )
+
+
+def _eval_metric_direction(metric_spec: Mapping[str, Any], params: Mapping[str, Any]) -> Optional[bool]:
+    if metric_spec["kind"] == "native":
+        return _metric_higher_is_better(str(metric_spec["name"]), params)
+    direction = metric_spec.get("higher_is_better")
+    if direction is None:
+        return None
+    return bool(direction)
+
+
+def _call_metric_with_supported_kwargs(
+    func: Callable[..., Any],
+    predictions: np.ndarray,
+    label: np.ndarray,
+    keyword_arguments: Mapping[str, Any],
+) -> Any:
+    try:
+        signature = inspect.signature(func)
+    except (TypeError, ValueError):
+        return func(predictions, label, **dict(keyword_arguments))
+
+    accepts_kwargs = any(
+        parameter.kind == inspect.Parameter.VAR_KEYWORD
+        for parameter in signature.parameters.values()
+    )
+    if accepts_kwargs:
+        return func(predictions, label, **dict(keyword_arguments))
+    filtered_kwargs = {
+        key: value
+        for key, value in keyword_arguments.items()
+        if key in signature.parameters
+    }
+    return func(predictions, label, **filtered_kwargs)
+
+
+def _evaluate_custom_metric_from_inputs(
+    metric_spec: Mapping[str, Any],
+    inputs: Mapping[str, Any],
+    *,
+    num_classes: int,
+    params: Mapping[str, Any],
+) -> float:
+    predictions = np.asarray(inputs["predictions"], dtype=np.float32)
+    label = np.asarray(inputs["label"], dtype=np.float32)
+    keyword_arguments = {
+        "weight": np.asarray(inputs["weight"], dtype=np.float32),
+        "group_id": None if inputs.get("group_id") is None else np.asarray(inputs["group_id"], dtype=np.int64),
+        "group_weight": None
+        if inputs.get("group_weight") is None
+        else np.asarray(inputs["group_weight"], dtype=np.float32),
+        "subgroup_id": None
+        if inputs.get("subgroup_id") is None
+        else np.asarray(inputs["subgroup_id"], dtype=np.int64),
+        "pairs": None if inputs.get("pairs") is None else np.asarray(inputs["pairs"], dtype=np.int64),
+        "pairs_weight": None
+        if inputs.get("pairs_weight") is None
+        else np.asarray(inputs["pairs_weight"], dtype=np.float32),
+        "num_classes": int(num_classes),
+        "params": dict(params),
+    }
+    result = _call_metric_with_supported_kwargs(
+        metric_spec["callable"],
+        predictions,
+        label,
+        keyword_arguments,
+    )
+    result_array = np.asarray(result, dtype=np.float32)
+    if result_array.ndim != 0:
+        raise TypeError("custom eval metrics must return a scalar float value")
+    return float(result_array)
 
 
 def _evaluate_metric_on_pool(
@@ -1915,19 +2126,31 @@ def _collect_prediction_metric_inputs(predictions: np.ndarray, pool: Pool) -> Di
 
 
 def _evaluate_metric_from_inputs(
-    metric_name: str,
+    metric_name: Any,
     inputs: Mapping[str, Any],
     *,
     num_classes: int,
     params: Mapping[str, Any],
 ) -> float:
+    if isinstance(metric_name, Mapping):
+        metric_spec = metric_name
+        if metric_spec["kind"] == "callable":
+            return _evaluate_custom_metric_from_inputs(
+                metric_spec,
+                inputs,
+                num_classes=num_classes,
+                params=params,
+            )
+        resolved_metric_name = str(metric_spec["name"])
+    else:
+        resolved_metric_name = str(metric_name)
     config = _metric_config(params)
     return float(
         _core._evaluate_metric(
             np.asarray(inputs["predictions"], dtype=np.float32),
             np.asarray(inputs["label"], dtype=np.float32),
             np.asarray(inputs["weight"], dtype=np.float32),
-            metric_name,
+            resolved_metric_name,
             num_classes,
             None if inputs.get("group_id") is None else np.asarray(inputs["group_id"], dtype=np.int64),
             None
@@ -2038,11 +2261,22 @@ def _baseline_matrix_for_prediction(pool: Pool, prediction_dimension: int) -> Op
     return baseline
 
 
+def _pool_schema_metadata(pool: Pool) -> Dict[str, Any]:
+    return {
+        "num_features": int(pool.num_cols),
+        "cat_features": [int(feature_index) for feature_index in pool.cat_features],
+        "feature_names": None if pool.feature_names is None else [str(name) for name in pool.feature_names],
+        "column_roles": None if getattr(pool, "column_roles", None) is None else list(pool.column_roles),
+        "feature_metadata": getattr(pool, "feature_metadata", None),
+        "categorical_schema": getattr(pool, "categorical_schema", None),
+    }
+
+
 def _evaluate_metric_distributed(
     distributed: Optional[Dict[str, Any]],
     *,
     key: str,
-    metric_name: str,
+    metric_name: Any,
     predictions: np.ndarray,
     pool: Pool,
     num_classes: int,
@@ -2115,6 +2349,9 @@ def prepare_training_data(
     pairs: Any = None,
     pairs_weight: Any = None,
     feature_names: Optional[List[str]] = None,
+    column_roles: Any = None,
+    feature_metadata: Optional[Mapping[str, Any]] = None,
+    categorical_schema: Optional[Mapping[str, Any]] = None,
     eval_set: Any = None,
     eval_names: Any = None,
     init_model: Any = None,
@@ -2130,10 +2367,14 @@ def prepare_training_data(
             or pairs is not None
             or pairs_weight is not None
             or feature_names is not None
+            or column_roles is not None
+            or feature_metadata is not None
+            or categorical_schema is not None
         ):
             raise ValueError(
                 "label, weight, group_id, group_weight, subgroup_id, baseline, pairs, pairs_weight, "
-                "and feature_names cannot be passed when pool is PreparedTrainingData"
+                "feature_names, column_roles, feature_metadata, and categorical_schema cannot be passed "
+                "when pool is PreparedTrainingData"
             )
         if eval_set is not None or eval_names is not None:
             raise ValueError("eval_set and eval_names cannot be passed when pool is PreparedTrainingData")
@@ -2155,6 +2396,9 @@ def prepare_training_data(
             or pairs is not None
             or pairs_weight is not None
             or feature_names is not None
+            or column_roles is not None
+            or feature_metadata is not None
+            or categorical_schema is not None
         ):
             pool = _pool_from_data_and_label(
                 pool,
@@ -2167,6 +2411,9 @@ def prepare_training_data(
                 pairs=pairs,
                 pairs_weight=pairs_weight,
                 feature_names=feature_names,
+                column_roles=column_roles,
+                feature_metadata=feature_metadata,
+                categorical_schema=categorical_schema,
             )
     else:
         if label is None:
@@ -2186,6 +2433,9 @@ def prepare_training_data(
                 pairs=pairs,
                 pairs_weight=pairs_weight,
                 feature_names=feature_names,
+                column_roles=column_roles,
+                feature_metadata=feature_metadata,
+                categorical_schema=categorical_schema,
                 params=config,
                 feature_pipeline=shared_feature_pipeline,
                 fit_feature_pipeline=False,
@@ -2204,6 +2454,9 @@ def prepare_training_data(
                         pairs=pairs,
                         pairs_weight=pairs_weight,
                         feature_names=feature_names,
+                        column_roles=column_roles,
+                        feature_metadata=feature_metadata,
+                        categorical_schema=categorical_schema,
                         params=config,
                         distributed=distributed_config,
                     )
@@ -2219,6 +2472,9 @@ def prepare_training_data(
                     pairs=pairs,
                     pairs_weight=pairs_weight,
                     feature_names=feature_names,
+                    column_roles=column_roles,
+                    feature_metadata=feature_metadata,
+                    categorical_schema=categorical_schema,
                     params=config,
                     distributed=distributed_config,
                 )
@@ -2234,6 +2490,9 @@ def prepare_training_data(
                 pairs=pairs,
                 pairs_weight=pairs_weight,
                 feature_names=feature_names,
+                column_roles=column_roles,
+                feature_metadata=feature_metadata,
+                categorical_schema=categorical_schema,
                 params=config,
             )
     if not isinstance(pool, Pool):
@@ -2305,8 +2564,16 @@ class Booster:
         best_iteration: Optional[int] = None,
         best_score: Optional[float] = None,
         eval_metric_name: Optional[str] = None,
+        data_schema: Optional[Mapping[str, Any]] = None,
     ) -> None:
-        if evals_result is None and eval_loss_history is None and best_iteration is None and best_score is None and eval_metric_name is None:
+        if (
+            evals_result is None
+            and eval_loss_history is None
+            and best_iteration is None
+            and best_score is None
+            and eval_metric_name is None
+            and data_schema is None
+        ):
             self._training_metadata = None
             return
         metadata = {} if self._training_metadata is None else dict(self._training_metadata)
@@ -2320,6 +2587,8 @@ class Booster:
             metadata["best_score"] = float(best_score)
         if eval_metric_name is not None:
             metadata["eval_metric_name"] = str(eval_metric_name)
+        if data_schema is not None:
+            metadata["data_schema"] = dict(data_schema)
         self._training_metadata = metadata
 
     def _prediction_pool(self, data: Any) -> Pool:
@@ -2506,6 +2775,18 @@ class Booster:
             return str(self._training_metadata["eval_metric_name"])
         return str(self._handle.eval_metric_name())
 
+    @property
+    def data_schema(self) -> Dict[str, Any]:
+        if self._training_metadata is None or "data_schema" not in self._training_metadata:
+            return {}
+        return dict(self._training_metadata["data_schema"])
+
+    @property
+    def feature_names(self) -> Optional[List[str]]:
+        schema = self.data_schema
+        feature_names = schema.get("feature_names")
+        return None if feature_names is None else list(feature_names)
+
 
 def load_model(path: PathLike) -> Booster:
     return Booster.load_model(path)
@@ -2604,17 +2885,37 @@ def train(
     pairs: Any = None,
     pairs_weight: Any = None,
     feature_names: Optional[List[str]] = None,
+    column_roles: Any = None,
+    feature_metadata: Optional[Mapping[str, Any]] = None,
+    categorical_schema: Optional[Mapping[str, Any]] = None,
     eval_set: Any = None,
     eval_names: Any = None,
     early_stopping_rounds: Optional[int] = None,
-    early_stopping_metric: Optional[str] = None,
+    early_stopping_metric: Optional[Any] = None,
     early_stopping_name: Optional[str] = None,
     callbacks: Optional[Iterable[Callable[[TrainingCallbackEnv], Any]]] = None,
+    snapshot_path: Optional[PathLike] = None,
+    snapshot_interval: int = 1,
+    snapshot_save_best_only: bool = False,
+    snapshot_model_format: Optional[str] = None,
+    resume_from_snapshot: Any = None,
     init_model: Any = None,
 ) -> Booster:
     config = dict(params)
     prepared_inputs = pool if isinstance(pool, PreparedTrainingData) else None
     distributed_config = _normalize_distributed_config(config)
+    resolved_snapshot_path = _resolve_snapshot_path(snapshot_path)
+    resolved_resume_snapshot_path = _resolve_resume_snapshot_path(
+        resume_from_snapshot,
+        resolved_snapshot_path,
+    )
+    resolved_init_model = init_model
+    if resolved_resume_snapshot_path is not None:
+        if resolved_init_model is not None:
+            raise ValueError("resume_from_snapshot cannot be combined with init_model")
+        if not resolved_resume_snapshot_path.exists():
+            raise FileNotFoundError(f"snapshot file does not exist: {resolved_resume_snapshot_path}")
+        resolved_init_model = Booster.load_model(resolved_resume_snapshot_path)
     if prepared_inputs is not None:
         if (
             label is not None
@@ -2626,10 +2927,14 @@ def train(
             or pairs is not None
             or pairs_weight is not None
             or feature_names is not None
+            or column_roles is not None
+            or feature_metadata is not None
+            or categorical_schema is not None
         ):
             raise ValueError(
                 "label, weight, group_id, group_weight, subgroup_id, baseline, pairs, pairs_weight, "
-                "and feature_names cannot be passed when pool is PreparedTrainingData"
+                "feature_names, column_roles, feature_metadata, and categorical_schema cannot be passed "
+                "when pool is PreparedTrainingData"
             )
         if eval_set is not None or eval_names is not None:
             raise ValueError("eval_set and eval_names cannot be passed when pool is PreparedTrainingData")
@@ -2642,7 +2947,7 @@ def train(
         resolved_eval_names = list(prepared_inputs.eval_names)
         default_eval_names = _normalize_eval_names(None, len(eval_pools))
     else:
-        init_pipeline = _resolve_init_model_pipeline(init_model)
+        init_pipeline = _resolve_init_model_pipeline(resolved_init_model)
         shared_feature_pipeline = init_pipeline
         if isinstance(pool, Pool):
             if (
@@ -2667,6 +2972,9 @@ def train(
                     pairs=pairs,
                     pairs_weight=pairs_weight,
                     feature_names=feature_names,
+                    column_roles=column_roles,
+                    feature_metadata=feature_metadata,
+                    categorical_schema=categorical_schema,
                 )
         else:
             if label is None:
@@ -2686,6 +2994,9 @@ def train(
                     pairs=pairs,
                     pairs_weight=pairs_weight,
                     feature_names=feature_names,
+                    column_roles=column_roles,
+                    feature_metadata=feature_metadata,
+                    categorical_schema=categorical_schema,
                     params=config,
                     feature_pipeline=shared_feature_pipeline,
                     fit_feature_pipeline=False,
@@ -2704,6 +3015,9 @@ def train(
                             pairs=pairs,
                             pairs_weight=pairs_weight,
                             feature_names=feature_names,
+                            column_roles=column_roles,
+                            feature_metadata=feature_metadata,
+                            categorical_schema=categorical_schema,
                             params=config,
                             distributed=distributed_config,
                         )
@@ -2719,6 +3033,9 @@ def train(
                         pairs=pairs,
                         pairs_weight=pairs_weight,
                         feature_names=feature_names,
+                        column_roles=column_roles,
+                        feature_metadata=feature_metadata,
+                        categorical_schema=categorical_schema,
                         params=config,
                         distributed=distributed_config,
                     )
@@ -2734,6 +3051,9 @@ def train(
                     pairs=pairs,
                     pairs_weight=pairs_weight,
                     feature_names=feature_names,
+                    column_roles=column_roles,
+                    feature_metadata=feature_metadata,
+                    categorical_schema=categorical_schema,
                     params=config,
                 )
         if not isinstance(pool, Pool):
@@ -2783,15 +3103,26 @@ def train(
             _validate_distributed_pool_metadata(eval_pool, context=f"eval_set[{eval_index}]")
 
     if callbacks is None:
-        callback_list: List[Callable[[TrainingCallbackEnv], Any]] = []
+        user_callback_list: List[Callable[[TrainingCallbackEnv], Any]] = []
     else:
         try:
-            callback_list = list(callbacks)
+            user_callback_list = list(callbacks)
         except TypeError as exc:
             raise TypeError("callbacks must be an iterable of callables") from exc
-        for callback in callback_list:
+        for callback in user_callback_list:
             if not callable(callback):
                 raise TypeError("callbacks must contain only callables")
+    callback_list = list(user_callback_list)
+
+    resolved_snapshot_interval = _normalize_snapshot_interval(snapshot_interval)
+    snapshot_callback = None
+    if resolved_snapshot_path is not None:
+        snapshot_callback = checkpoint_callback(
+            resolved_snapshot_path,
+            interval=resolved_snapshot_interval,
+            model_format=snapshot_model_format,
+            save_best_only=bool(snapshot_save_best_only),
+        )
 
     if early_stopping_rounds is not None:
         if early_stopping_rounds <= 0:
@@ -2800,9 +3131,21 @@ def train(
             raise ValueError("early_stopping_rounds requires eval_set")
     early_stopping = 0 if early_stopping_rounds is None else int(early_stopping_rounds)
 
-    init_handle = _resolve_init_model_handle(init_model)
+    requested_iterations = int(num_boost_round if num_boost_round is not None else config.get("iterations", 100))
+    init_handle = _resolve_init_model_handle(resolved_init_model)
     init_state = None if init_handle is None else dict(init_handle.export_state())
-    iterations = int(num_boost_round if num_boost_round is not None else config.get("iterations", 100))
+    iterations = requested_iterations
+    if resolved_resume_snapshot_path is not None:
+        trained_iterations = int(init_handle.num_iterations_trained())
+        if requested_iterations < trained_iterations:
+            raise ValueError("requested num_boost_round is smaller than the snapshot iteration count")
+        iterations = requested_iterations - trained_iterations
+        if iterations == 0:
+            return Booster(
+                init_handle,
+                feature_pipeline=_resolve_init_model_pipeline(resolved_init_model),
+                training_metadata=getattr(resolved_init_model, "_training_metadata", None),
+            )
     objective = str(
         config.get(
             "objective",
@@ -3032,24 +3375,34 @@ def train(
     )
     verbose = bool(config.get("verbose", False if init_state is None else init_state.get("verbose", False)))
 
-    eval_metric_names = _normalize_eval_metrics(
+    eval_metric_specs = _normalize_eval_metrics(
         config.get("eval_metric", "" if init_state is None else init_state["eval_metric_name"])
     )
-    if not eval_metric_names:
-        eval_metric_names = [objective if init_state is None else str(init_state["eval_metric_name"])]
+    if not eval_metric_specs:
+        eval_metric_specs = _normalize_eval_metrics(
+            objective if init_state is None else str(init_state["eval_metric_name"])
+        )
     if early_stopping_metric is not None:
-        requested_metric = str(early_stopping_metric)
+        requested_metric = _normalize_single_eval_metric(
+            early_stopping_metric,
+            default_name="custom_early_stopping_metric",
+        )
         matching_metric = next(
-            (metric for metric in eval_metric_names if metric.lower() == requested_metric.lower()),
+            (
+                metric
+                for metric in eval_metric_specs
+                if str(metric["name"]).lower() == str(requested_metric["name"]).lower()
+            ),
             None,
         )
         if matching_metric is None:
-            eval_metric_names = [requested_metric] + eval_metric_names
-            primary_eval_metric = requested_metric
+            eval_metric_specs = [requested_metric] + eval_metric_specs
+            primary_eval_metric_spec = requested_metric
         else:
-            primary_eval_metric = matching_metric
+            primary_eval_metric_spec = matching_metric
     else:
-        primary_eval_metric = eval_metric_names[0]
+        primary_eval_metric_spec = eval_metric_specs[0]
+    primary_eval_metric = str(primary_eval_metric_spec["name"])
 
     if early_stopping_name is not None:
         if not resolved_eval_names:
@@ -3061,15 +3414,43 @@ def train(
         primary_eval_name = resolved_eval_names[0] if resolved_eval_names else None
 
     metric_directions = {
-        metric_name: _metric_higher_is_better(metric_name, config)
-        for metric_name in eval_metric_names
+        str(metric_spec["name"]): _eval_metric_direction(metric_spec, config)
+        for metric_spec in eval_metric_specs
     }
-    use_python_eval_surface = (
-        bool(callback_list)
-        or len(eval_pools) > 1
-        or len(eval_metric_names) > 1
-        or resolved_eval_names != default_eval_names
+    primary_metric_direction = metric_directions[primary_eval_metric]
+    if primary_metric_direction is None:
+        raise ValueError(
+            "the primary eval metric must declare higher_is_better when using a callable metric"
+        )
+    if (
+        early_stopping_rounds is not None
+        and primary_eval_metric_spec["kind"] == "callable"
+        and not primary_eval_metric_spec["allow_early_stopping"]
+    ):
+        raise ValueError(
+            "custom early_stopping_metric must be created with allow_early_stopping=True"
+        )
+    native_eval_metric = next(
+        (
+            str(metric_spec["name"])
+            for metric_spec in eval_metric_specs
+            if metric_spec["kind"] == "native"
+        ),
+        objective if init_state is None else str(init_state["eval_metric_name"]),
     )
+    snapshot_requires_python_surface = (
+        resolved_snapshot_path is not None and distributed_config is not None
+    )
+    use_python_eval_surface = (
+        bool(user_callback_list)
+        or len(eval_pools) > 1
+        or len(eval_metric_specs) > 1
+        or resolved_eval_names != default_eval_names
+        or any(metric_spec["kind"] == "callable" for metric_spec in eval_metric_specs)
+        or snapshot_requires_python_surface
+    )
+    if snapshot_callback is not None and use_python_eval_surface:
+        callback_list.append(snapshot_callback)
 
     filesystem_compat_required = (
         distributed_config is not None
@@ -3094,7 +3475,7 @@ def train(
             early_stopping_metric=early_stopping_metric,
             early_stopping_name=early_stopping_name,
             callbacks=callback_list,
-            init_model=init_model,
+            init_model=resolved_init_model,
         )
 
     if distributed_config is not None:
@@ -3131,60 +3512,68 @@ def train(
             _apply_objective_weights(eval_pool, config, objective) for eval_pool in eval_pools
         ]
 
-        booster = _core.GradientBooster(
-            objective=objective,
-            iterations=iterations,
-            learning_rate=learning_rate,
-            max_depth=max_depth,
-            alpha=alpha,
-            lambda_l2=lambda_l2,
-            subsample=subsample,
-            bootstrap_type=bootstrap_type,
-            bagging_temperature=bagging_temperature,
-            boosting_type=boosting_type,
-            drop_rate=drop_rate,
-            skip_drop=skip_drop,
-            max_drop=max_drop,
-            monotone_constraints=monotone_constraints,
-            interaction_constraints=interaction_constraints,
-            colsample_bytree=colsample_bytree,
-            feature_weights=feature_weights,
-            first_feature_use_penalties=first_feature_use_penalties,
-            random_strength=random_strength,
-            grow_policy=grow_policy,
-            max_leaves=max_leaves,
-            min_samples_split=min_samples_split,
-            min_data_in_leaf=min_data_in_leaf,
-            min_child_weight=min_child_weight,
-            gamma=gamma,
-            max_leaf_weight=max_leaf_weight,
-            num_classes=num_classes,
-            max_bins=max_bins,
-            nan_mode=nan_mode,
-            max_bin_by_feature=max_bin_by_feature,
-            border_selection_method=border_selection_method,
-            nan_mode_by_feature=nan_mode_by_feature,
-            feature_borders=feature_borders,
-            external_memory=native_external_memory,
-            external_memory_dir=native_external_memory_dir,
-            eval_metric=primary_eval_metric,
-            quantile_alpha=quantile_alpha,
-            huber_delta=huber_delta,
-            tweedie_variance_power=tweedie_variance_power,
-            task_type=task_type,
-            devices=devices,
-            distributed_world_size=distributed_world_size,
-            distributed_rank=distributed_rank,
-            distributed_root=distributed_root,
-            distributed_run_id=distributed_run_id,
-            distributed_timeout=distributed_timeout,
-            random_seed=random_seed,
-            verbose=verbose,
-        )
-        if init_state is not None:
-            booster.load_state(init_state)
-        elif distributed_quantization_schema is not None:
-            booster.load_quantization_schema(distributed_quantization_schema)
+        def _make_native_booster(
+            chunk_iterations: int,
+            *,
+            state: Optional[Dict[str, Any]] = None,
+        ) -> Any:
+            native_booster = _core.GradientBooster(
+                objective=objective,
+                iterations=chunk_iterations,
+                learning_rate=learning_rate,
+                max_depth=max_depth,
+                alpha=alpha,
+                lambda_l2=lambda_l2,
+                subsample=subsample,
+                bootstrap_type=bootstrap_type,
+                bagging_temperature=bagging_temperature,
+                boosting_type=boosting_type,
+                drop_rate=drop_rate,
+                skip_drop=skip_drop,
+                max_drop=max_drop,
+                monotone_constraints=monotone_constraints,
+                interaction_constraints=interaction_constraints,
+                colsample_bytree=colsample_bytree,
+                feature_weights=feature_weights,
+                first_feature_use_penalties=first_feature_use_penalties,
+                random_strength=random_strength,
+                grow_policy=grow_policy,
+                max_leaves=max_leaves,
+                min_samples_split=min_samples_split,
+                min_data_in_leaf=min_data_in_leaf,
+                min_child_weight=min_child_weight,
+                gamma=gamma,
+                max_leaf_weight=max_leaf_weight,
+                num_classes=num_classes,
+                max_bins=max_bins,
+                nan_mode=nan_mode,
+                max_bin_by_feature=max_bin_by_feature,
+                border_selection_method=border_selection_method,
+                nan_mode_by_feature=nan_mode_by_feature,
+                feature_borders=feature_borders,
+                external_memory=native_external_memory,
+                external_memory_dir=native_external_memory_dir,
+                eval_metric=native_eval_metric,
+                quantile_alpha=quantile_alpha,
+                huber_delta=huber_delta,
+                tweedie_variance_power=tweedie_variance_power,
+                task_type=task_type,
+                devices=devices,
+                distributed_world_size=distributed_world_size,
+                distributed_rank=distributed_rank,
+                distributed_root=distributed_root,
+                distributed_run_id=distributed_run_id,
+                distributed_timeout=distributed_timeout,
+                random_seed=random_seed,
+                verbose=verbose,
+            )
+            if state is not None:
+                native_booster.load_state(state)
+            elif distributed_quantization_schema is not None:
+                native_booster.load_quantization_schema(distributed_quantization_schema)
+            return native_booster
+
+        booster = _make_native_booster(iterations, state=init_state)
         if not use_python_eval_surface:
             native_eval_pool = weighted_eval_pools[0] if weighted_eval_pools else None
             booster.fit(
@@ -3193,11 +3582,27 @@ def train(
                 early_stopping,
                 init_state is not None,
             )
-            return Booster(booster, feature_pipeline=feature_pipeline)
+            trained_booster = Booster(
+                booster,
+                feature_pipeline=feature_pipeline,
+                training_metadata=getattr(resolved_init_model, "_training_metadata", None),
+            )
+            trained_booster._set_training_metadata(data_schema=_pool_schema_metadata(weighted_pool))
+            if resolved_snapshot_path is not None:
+                trained_booster.save_model(
+                    resolved_snapshot_path,
+                    model_format=snapshot_model_format,
+                )
+            return trained_booster
 
-        wrapped_booster = Booster(booster, feature_pipeline=feature_pipeline)
+        wrapped_booster = Booster(
+            booster,
+            feature_pipeline=feature_pipeline,
+            training_metadata=getattr(resolved_init_model, "_training_metadata", None),
+        )
         train_pool_template = _clone_pool(weighted_pool, releasable_feature_storage=True)
-        seeded_evals_result = _initial_evals_result_from_model(init_model)
+        seeded_evals_result = _initial_evals_result_from_model(resolved_init_model)
+        eval_metric_names = [str(metric_spec["name"]) for metric_spec in eval_metric_specs]
         evals_result: Dict[str, Dict[str, List[float]]] = {
             "learn": {"loss": [float(value) for value in booster.loss_history()]}
         }
@@ -3226,16 +3631,16 @@ def train(
         if primary_eval_name is not None:
             monitor_history = evals_result[primary_eval_name][primary_eval_metric]
             best_iteration = -1
-            best_score = float("-inf") if metric_directions[primary_eval_metric] else float("inf")
+            best_score = float("-inf") if primary_metric_direction else float("inf")
             for history_index, history_value in enumerate(monitor_history):
                 improved = (
                     best_iteration < 0
                     or (
-                        metric_directions[primary_eval_metric]
+                        primary_metric_direction
                         and history_value > best_score
                     )
                     or (
-                        not metric_directions[primary_eval_metric]
+                        not primary_metric_direction
                         and history_value < best_score
                     )
                 )
@@ -3257,6 +3662,7 @@ def train(
             best_iteration=best_iteration,
             best_score=best_score,
             eval_metric_name=primary_eval_metric,
+            data_schema=_pool_schema_metadata(weighted_pool),
         )
 
         stopped_by_early_stopping = False
@@ -3290,9 +3696,10 @@ def train(
                             prediction_inputs,
                         )
                     )
-                for metric_name in eval_metric_names:
+                for metric_spec in eval_metric_specs:
+                    metric_name = str(metric_spec["name"])
                     metric_value = _evaluate_metric_from_inputs(
-                        metric_name,
+                        metric_spec,
                         prediction_inputs,
                         num_classes=num_classes,
                         params=config,
@@ -3312,11 +3719,11 @@ def train(
                 improved = (
                     best_iteration < 0
                     or (
-                        metric_directions[primary_eval_metric]
+                        primary_metric_direction
                         and current_score > float(best_score)
                     )
                     or (
-                        not metric_directions[primary_eval_metric]
+                        not primary_metric_direction
                         and current_score < float(best_score)
                     )
                 )
@@ -3339,6 +3746,7 @@ def train(
                 best_iteration=best_iteration,
                 best_score=best_score,
                 eval_metric_name=primary_eval_metric,
+                data_schema=_pool_schema_metadata(weighted_pool),
             )
 
             if callback_list:
@@ -3390,5 +3798,6 @@ def train(
             best_iteration=best_iteration,
             best_score=best_score,
             eval_metric_name=primary_eval_metric,
+            data_schema=_pool_schema_metadata(weighted_pool),
         )
         return wrapped_booster

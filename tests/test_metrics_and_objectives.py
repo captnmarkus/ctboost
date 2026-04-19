@@ -6,6 +6,13 @@ from sklearn.metrics import balanced_accuracy_score
 import ctboost
 
 
+def _signed_accuracy_metric(predictions, label, **kwargs):
+    del kwargs
+    resolved_predictions = np.asarray(predictions, dtype=np.float32)
+    resolved_label = np.asarray(label, dtype=np.float32)
+    return float(np.mean((resolved_predictions >= 0.0).astype(np.float32) == resolved_label))
+
+
 def test_eval_metric_auc_is_used_for_validation_history_and_early_stopping():
     X, y = make_classification(
         n_samples=260,
@@ -203,6 +210,111 @@ def test_train_supports_multi_eval_sets_metrics_callbacks_and_custom_eval_names(
         rtol=1e-6,
         atol=1e-6,
     )
+
+
+def test_train_supports_callable_eval_metrics_and_custom_early_stopping():
+    X, y = make_classification(
+        n_samples=240,
+        n_features=8,
+        n_informative=5,
+        n_redundant=0,
+        random_state=79,
+    )
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+    y_eval = 1.0 - y[120:]
+
+    metric = ctboost.make_eval_metric(
+        _signed_accuracy_metric,
+        name="SignedAccuracy",
+        higher_is_better=True,
+        allow_early_stopping=True,
+    )
+
+    booster = ctboost.train(
+        ctboost.Pool(X[:120], y[:120]),
+        {
+            "objective": "Logloss",
+            "learning_rate": 0.2,
+            "max_depth": 2,
+            "alpha": 1.0,
+            "lambda_l2": 1.0,
+            "eval_metric": [metric, "AUC"],
+        },
+        num_boost_round=60,
+        eval_set=[(X[120:], y_eval)],
+        early_stopping_rounds=6,
+        early_stopping_metric=metric,
+    )
+
+    assert "SignedAccuracy" in booster.evals_result_["validation"]
+    history = np.asarray(booster.evals_result_["validation"]["SignedAccuracy"], dtype=np.float32)
+    assert history.shape[0] == booster.best_iteration + 1
+    expected_metric = _signed_accuracy_metric(booster.predict(X[120:]), y_eval)
+    np.testing.assert_allclose(history[-1], expected_metric, rtol=1e-6, atol=1e-6)
+
+
+def test_callable_metric_requires_explicit_direction_for_early_stopping():
+    X, y = make_classification(
+        n_samples=180,
+        n_features=6,
+        n_informative=4,
+        n_redundant=0,
+        random_state=81,
+    )
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+
+    with pytest.raises(ValueError, match="primary eval metric must declare higher_is_better"):
+        ctboost.train(
+            ctboost.Pool(X[:100], y[:100]),
+            {
+                "objective": "Logloss",
+                "learning_rate": 0.2,
+                "max_depth": 2,
+                "alpha": 1.0,
+                "lambda_l2": 1.0,
+                "eval_metric": [_signed_accuracy_metric],
+            },
+            num_boost_round=20,
+            eval_set=[(X[100:], y[100:])],
+            early_stopping_rounds=5,
+        )
+
+
+def test_classifier_accepts_callable_eval_metric():
+    X, y = make_classification(
+        n_samples=220,
+        n_features=8,
+        n_informative=5,
+        n_redundant=0,
+        random_state=83,
+    )
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+
+    metric = ctboost.make_eval_metric(
+        _signed_accuracy_metric,
+        name="SignedAccuracy",
+        higher_is_better=True,
+        allow_early_stopping=True,
+    )
+    clf = ctboost.CTBoostClassifier(
+        iterations=40,
+        learning_rate=0.2,
+        max_depth=2,
+        alpha=1.0,
+        lambda_l2=1.0,
+        eval_metric=metric,
+    )
+    clf.fit(
+        X[:120],
+        y[:120],
+        eval_set=[(X[120:], y[120:])],
+        early_stopping_rounds=6,
+    )
+
+    assert "SignedAccuracy" in clf.evals_result_["validation"]
 
 
 @pytest.mark.parametrize("objective", ["Cox", "SurvivalExponential"])

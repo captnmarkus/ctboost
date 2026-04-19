@@ -217,6 +217,38 @@ def test_booster_export_model_generates_standalone_python_predictor(tmp_path: Pa
     np.testing.assert_allclose(single_prediction, booster.predict(X[:1])[0], rtol=1e-6, atol=1e-6)
 
 
+def test_booster_export_model_generates_json_predictor(tmp_path: Path):
+    X, y = make_regression(
+        n_samples=96,
+        n_features=5,
+        n_informative=4,
+        noise=0.1,
+        random_state=31,
+    )
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+
+    booster = ctboost.train(
+        X,
+        {
+            "objective": "RMSE",
+            "learning_rate": 0.2,
+            "max_depth": 2,
+            "alpha": 1.0,
+            "lambda_l2": 1.0,
+        },
+        label=y,
+        num_boost_round=8,
+    )
+
+    export_path = tmp_path / "predictor.json"
+    booster.export_model(export_path, export_format="json_predictor")
+
+    predictor = ctboost.load_exported_predictor(export_path)
+    exported_pred = np.asarray(predictor.predict(X), dtype=np.float32)
+    np.testing.assert_allclose(exported_pred, booster.predict(X), rtol=1e-6, atol=1e-6)
+
+
 def test_estimator_export_model_matches_predict_proba(tmp_path: Path):
     X, y = make_classification(
         n_samples=160,
@@ -248,6 +280,159 @@ def test_estimator_export_model_matches_predict_proba(tmp_path: Path):
     standalone_proba = np.asarray(module.predict_proba(X), dtype=np.float32)
     np.testing.assert_allclose(standalone_proba, clf.predict_proba(X), rtol=1e-6, atol=1e-6)
     np.testing.assert_array_equal(np.asarray(module.predict_class(X), dtype=np.int32), clf.predict(X))
+
+
+def test_training_snapshot_resume_matches_explicit_warm_start(tmp_path: Path):
+    X, y = make_regression(
+        n_samples=180,
+        n_features=6,
+        n_informative=4,
+        noise=0.2,
+        random_state=43,
+    )
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+
+    params = {
+        "objective": "RMSE",
+        "learning_rate": 0.15,
+        "max_depth": 3,
+        "alpha": 1.0,
+        "lambda_l2": 1.0,
+        "random_seed": 19,
+    }
+    snapshot_path = tmp_path / "resume_snapshot.ctb"
+    partial = ctboost.train(
+        ctboost.Pool(X, y),
+        params,
+        num_boost_round=7,
+        snapshot_path=snapshot_path,
+        snapshot_interval=2,
+    )
+    assert snapshot_path.exists()
+    explicit_resume = ctboost.train(
+        ctboost.Pool(X, y),
+        params,
+        num_boost_round=11,
+        init_model=ctboost.load_model(snapshot_path),
+    )
+    resumed = ctboost.train(
+        ctboost.Pool(X, y),
+        params,
+        num_boost_round=18,
+        snapshot_path=snapshot_path,
+        resume_from_snapshot=True,
+    )
+
+    assert partial.num_iterations_trained == 7
+    assert resumed.num_iterations_trained == 18
+    np.testing.assert_allclose(resumed.predict(X), explicit_resume.predict(X), rtol=1e-6, atol=1e-6)
+
+
+def test_estimator_resume_from_snapshot_matches_explicit_warm_start(tmp_path: Path):
+    X, y = make_regression(
+        n_samples=180,
+        n_features=6,
+        n_informative=4,
+        noise=0.2,
+        random_state=47,
+    )
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+
+    snapshot_path = tmp_path / "estimator_snapshot.ctb"
+    partial = ctboost.CTBoostRegressor(
+        iterations=8,
+        learning_rate=0.15,
+        max_depth=3,
+        alpha=1.0,
+        lambda_l2=1.0,
+        random_seed=23,
+    )
+    partial.fit(X, y, snapshot_path=snapshot_path, snapshot_interval=2)
+    assert snapshot_path.exists()
+
+    explicit_resume = ctboost.CTBoostRegressor(
+        iterations=12,
+        learning_rate=0.15,
+        max_depth=3,
+        alpha=1.0,
+        lambda_l2=1.0,
+        random_seed=23,
+    )
+    explicit_resume.fit(X, y, init_model=ctboost.load_model(snapshot_path))
+
+    resumed = ctboost.CTBoostRegressor(
+        iterations=20,
+        learning_rate=0.15,
+        max_depth=3,
+        alpha=1.0,
+        lambda_l2=1.0,
+        random_seed=23,
+    )
+    resumed.fit(X, y, snapshot_path=snapshot_path, resume_from_snapshot=True)
+
+    assert resumed._booster.num_iterations_trained == 20
+    np.testing.assert_allclose(
+        resumed.predict(X),
+        explicit_resume.predict(X),
+        rtol=1e-6,
+        atol=1e-6,
+    )
+
+
+def test_model_schema_metadata_survives_booster_and_estimator_round_trips(tmp_path: Path):
+    X, y = make_regression(
+        n_samples=120,
+        n_features=3,
+        n_informative=3,
+        noise=0.1,
+        random_state=53,
+    )
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+    pool = ctboost.Pool(
+        X,
+        y,
+        feature_names=["score", "ratio", "city_code"],
+        column_roles=["numeric", "numeric", "categorical"],
+        feature_metadata={"score": {"description": "normalized score"}},
+        categorical_schema={"city_code": {"categories": ["berlin", "paris", "rome"]}},
+    )
+
+    booster = ctboost.train(
+        pool,
+        {
+            "objective": "RMSE",
+            "learning_rate": 0.2,
+            "max_depth": 2,
+            "alpha": 1.0,
+            "lambda_l2": 1.0,
+        },
+        num_boost_round=10,
+    )
+    assert booster.data_schema["feature_names"] == ["score", "ratio", "city_code"]
+    assert booster.data_schema["column_roles"] == ["numeric", "numeric", "categorical"]
+
+    booster_path = tmp_path / "schema_booster.json"
+    booster.save_model(booster_path)
+    restored_booster = ctboost.load_model(booster_path)
+    assert restored_booster.data_schema == booster.data_schema
+
+    reg = ctboost.CTBoostRegressor(
+        iterations=10,
+        learning_rate=0.2,
+        max_depth=2,
+        alpha=1.0,
+        lambda_l2=1.0,
+    )
+    reg.fit(pool)
+    assert reg.data_schema_["feature_names"] == ["score", "ratio", "city_code"]
+
+    estimator_path = tmp_path / "schema_estimator.json"
+    reg.save_model(estimator_path)
+    restored_reg = ctboost.CTBoostRegressor.load_model(estimator_path)
+    assert restored_reg.data_schema_ == reg.data_schema_
 
 
 def test_low_level_train_accepts_raw_feature_pipeline_and_persists_it(tmp_path: Path):

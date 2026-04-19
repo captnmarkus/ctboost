@@ -7,6 +7,7 @@ from ._version import __version__
 
 _CORE_EXPORT_NAMES = {
     "Booster",
+    "EvalMetricSpec",
     "FeaturePipeline",
     "Pool",
     "PreparedTrainingData",
@@ -16,7 +17,9 @@ _CORE_EXPORT_NAMES = {
     "prepare_training_data",
     "cv",
     "log_evaluation",
+    "load_exported_predictor",
     "load_model",
+    "make_eval_metric",
     "train",
 }
 
@@ -31,23 +34,27 @@ _SKLEARN_EXPORT_NAMES = {
 
 
 def _load_core_exports() -> Dict[str, Any]:
+    from ._export import load_exported_predictor
     from .core import Pool
     from .feature_pipeline import FeaturePipeline
     from .prepared_data import prepare_pool
     from .training import (
         Booster,
+        EvalMetricSpec,
         PreparedTrainingData,
         TrainingCallbackEnv,
         checkpoint_callback,
         cv,
         load_model,
         log_evaluation,
+        make_eval_metric,
         prepare_training_data,
         train,
     )
 
     exports = {
         "Booster": Booster,
+        "EvalMetricSpec": EvalMetricSpec,
         "FeaturePipeline": FeaturePipeline,
         "Pool": Pool,
         "PreparedTrainingData": PreparedTrainingData,
@@ -56,8 +63,10 @@ def _load_core_exports() -> Dict[str, Any]:
         "prepare_pool": prepare_pool,
         "prepare_training_data": prepare_training_data,
         "cv": cv,
+        "load_exported_predictor": load_exported_predictor,
         "log_evaluation": log_evaluation,
         "load_model": load_model,
+        "make_eval_metric": make_eval_metric,
         "train": train,
     }
     globals().update(exports)
@@ -120,6 +129,7 @@ __all__ = [
     "CTBoostClassifier",
     "CTBoostRanker",
     "CTBoostRegressor",
+    "EvalMetricSpec",
     "FeaturePipeline",
     "Pool",
     "PreparedTrainingData",
@@ -129,7 +139,9 @@ __all__ = [
     "build_info",
     "checkpoint_callback",
     "cv",
+    "load_exported_predictor",
     "load_model",
     "log_evaluation",
+    "make_eval_metric",
     "train",
 ]

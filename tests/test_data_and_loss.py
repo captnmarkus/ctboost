@@ -92,6 +92,31 @@ def test_pool_preserves_ranking_metadata_and_baseline():
     np.testing.assert_allclose(pool.pairs_weight, pairs_weight, rtol=0.0, atol=0.0)
 
 
+def test_pool_preserves_schema_metadata():
+    data = np.asarray([[1.0, 0.0], [0.5, 1.0]], dtype=np.float32)
+    label = np.asarray([0.0, 1.0], dtype=np.float32)
+
+    pool = ctboost.Pool(
+        data,
+        label,
+        feature_names=["score", "city_code"],
+        column_roles={"score": "numeric", "city_code": "categorical"},
+        feature_metadata={
+            "score": {"description": "normalized score"},
+            "city_code": {"source": "city_lookup"},
+        },
+        categorical_schema={"city_code": {"categories": ["berlin", "paris"]}},
+    )
+
+    assert pool.feature_names == ["score", "city_code"]
+    assert pool.column_roles == ["numeric", "categorical"]
+    assert pool.feature_metadata == {
+        "score": {"description": "normalized score"},
+        "city_code": {"source": "city_lookup"},
+    }
+    assert pool.categorical_schema == {"city_code": {"categories": ["berlin", "paris"]}}
+
+
 def test_pool_passes_fortran_ordered_matrix_to_native(monkeypatch):
     captured = {}
     original_pool = ctcore._core.Pool

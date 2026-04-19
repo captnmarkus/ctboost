@@ -174,6 +174,9 @@ class FeaturePipeline:
         pairs: Any = None,
         pairs_weight: Any = None,
         feature_names: Optional[Sequence[str]] = None,
+        column_roles: Any = None,
+        feature_metadata: Optional[Mapping[str, Any]] = None,
+        categorical_schema: Optional[Mapping[str, Any]] = None,
     ) -> Pool:
         transformed, cat_features, output_feature_names = self.transform_array(
             data,
@@ -191,6 +194,9 @@ class FeaturePipeline:
             pairs=pairs,
             pairs_weight=pairs_weight,
             feature_names=output_feature_names,
+            column_roles=column_roles,
+            feature_metadata=feature_metadata,
+            categorical_schema=categorical_schema,
             _releasable_feature_storage=True,
         )
 
