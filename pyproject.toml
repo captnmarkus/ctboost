@@ -7,7 +7,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "ctboost"
-version = "0.1.40"
+version = "0.1.41"
 description = "A GPU-accelerated gradient boosting library using Conditional Inference Trees."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -54,7 +54,9 @@ dev = [
 [tool.scikit-build]
 minimum-version = "build-system.requires"
 cmake.version = ">=3.24"
-build-dir = "build/{wheel_tag}"
+# Keep the wheel build cache out of the shared build/ tree so repeated
+# release attempts do not trip over stale or cross-user CMake state.
+build-dir = ".ctbuild/{wheel_tag}"
 wheel.packages = ["ctboost"]
 sdist.include = [
   "CMakeLists.txt",
