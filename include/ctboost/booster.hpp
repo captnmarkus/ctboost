@@ -70,6 +70,7 @@ class GradientBooster {
            int early_stopping_rounds = 0,
            bool continue_training = false);
   void SetIterations(int iterations);
+  void SetLearningRate(double learning_rate);
   std::vector<float> Predict(const Pool& pool, int num_iteration = -1) const;
   std::vector<std::int32_t> PredictLeafIndices(const Pool& pool, int num_iteration = -1) const;
   std::vector<float> PredictContributions(const Pool& pool, int num_iteration = -1) const;
@@ -77,6 +78,7 @@ class GradientBooster {
                  QuantizationSchemaPtr quantization_schema,
                  std::vector<double> loss_history,
                  std::vector<double> eval_loss_history,
+                 std::vector<double> tree_learning_rates,
                  std::vector<double> feature_importance_sums,
                  int best_iteration,
                  double best_score,
@@ -95,6 +97,7 @@ class GradientBooster {
   const std::string& objective_name() const noexcept;
   int iterations() const noexcept;
   double learning_rate() const noexcept;
+  const std::vector<double>& tree_learning_rates() const noexcept;
   int max_depth() const noexcept;
   double alpha() const noexcept;
   double lambda_l2() const noexcept;
@@ -194,6 +197,7 @@ class GradientBooster {
   HistBuilder hist_builder_;
   QuantizationSchemaPtr quantization_schema_;
   std::vector<Tree> trees_;
+  std::vector<double> tree_learning_rates_;
   std::vector<double> loss_history_;
   std::vector<double> eval_loss_history_;
   std::vector<double> feature_importance_sums_;

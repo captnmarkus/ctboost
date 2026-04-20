@@ -35,6 +35,9 @@ def _standalone_python_payload(handle: Any, *, expects_prepared_features: bool) 
         "ctboost_version": __version__,
         "objective_name": str(handle.objective_name()),
         "learning_rate": float(handle.learning_rate()),
+        "tree_learning_rates": []
+        if not hasattr(handle, "tree_learning_rates")
+        else [float(value) for value in handle.tree_learning_rates()],
         "prediction_dimension": int(handle.prediction_dimension()),
         "num_features": len(list(quantization_schema["num_bins_per_feature"])),
         "expects_prepared_features": bool(expects_prepared_features),
@@ -48,6 +51,10 @@ class ExportedPredictor:
         self.payload = dict(payload)
         self.objective_name = str(self.payload["objective_name"])
         self.learning_rate = float(self.payload["learning_rate"])
+        tree_learning_rates = self.payload.get("tree_learning_rates")
+        self.tree_learning_rates = (
+            [] if tree_learning_rates is None else [float(value) for value in tree_learning_rates]
+        )
         self.prediction_dimension = int(self.payload["prediction_dimension"])
         self.num_features = int(self.payload["num_features"])
         self.expects_prepared_features = bool(self.payload["expects_prepared_features"])
@@ -125,6 +132,12 @@ class ExportedPredictor:
         scores = [0.0] * self.prediction_dimension
         for tree_index, tree in enumerate(self.trees):
             nodes = tree["nodes"]
+            iteration_index = tree_index // self.prediction_dimension
+            tree_learning_rate = (
+                self.tree_learning_rates[iteration_index]
+                if iteration_index < len(self.tree_learning_rates)
+                else self.learning_rate
+            )
             node_index = 0
             while True:
                 node = nodes[node_index]
@@ -137,7 +150,7 @@ class ExportedPredictor:
                 else:
                     go_left = split_bin <= int(node["split_bin_index"])
                 node_index = int(node["left_child"] if go_left else node["right_child"])
-            scores[tree_index % self.prediction_dimension] += self.learning_rate * float(node["leaf_weight"])
+            scores[tree_index % self.prediction_dimension] += tree_learning_rate * float(node["leaf_weight"])
         return scores[0] if self.prediction_dimension == 1 else scores
 
     def _coerce_rows(self, data: Any) -> tuple[list[list[Any]], bool]:
@@ -257,6 +270,7 @@ MODEL = {payload_literal}
 CTBOOST_VERSION = MODEL["ctboost_version"]
 OBJECTIVE_NAME = MODEL["objective_name"]
 LEARNING_RATE = float(MODEL["learning_rate"])
+TREE_LEARNING_RATES = [float(value) for value in MODEL.get("tree_learning_rates", [])]
 PREDICTION_DIMENSION = int(MODEL["prediction_dimension"])
 NUM_FEATURES = int(MODEL["num_features"])
 EXPECTS_PREPARED_FEATURES = bool(MODEL["expects_prepared_features"])
@@ -343,6 +357,12 @@ def _row_scores(row):
     scores = [0.0] * PREDICTION_DIMENSION
     for tree_index, tree in enumerate(TREES):
         nodes = tree["nodes"]
+        iteration_index = tree_index // PREDICTION_DIMENSION
+        tree_learning_rate = (
+            TREE_LEARNING_RATES[iteration_index]
+            if iteration_index < len(TREE_LEARNING_RATES)
+            else LEARNING_RATE
+        )
         node_index = 0
         while True:
             node = nodes[node_index]
@@ -355,7 +375,7 @@ def _row_scores(row):
             else:
                 go_left = split_bin <= int(node["split_bin_index"])
             node_index = int(node["left_child"] if go_left else node["right_child"])
-        scores[tree_index % PREDICTION_DIMENSION] += LEARNING_RATE * float(node["leaf_weight"])
+        scores[tree_index % PREDICTION_DIMENSION] += tree_learning_rate * float(node["leaf_weight"])
     return scores[0] if PREDICTION_DIMENSION == 1 else scores
 
 

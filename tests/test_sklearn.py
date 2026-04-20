@@ -77,6 +77,32 @@ def test_regressor_feature_importances_match_feature_count():
     assert reg.feature_importances_.shape == (X.shape[1],)
 
 
+def test_regressor_accepts_learning_rate_schedule():
+    X, y = make_regression(
+        n_samples=128,
+        n_features=6,
+        n_informative=4,
+        noise=0.1,
+        random_state=27,
+    )
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+    schedule = [0.2, 0.2, 0.1, 0.1, 0.05, 0.05]
+
+    reg = ctboost.CTBoostRegressor(
+        iterations=len(schedule),
+        learning_rate=schedule[0],
+        max_depth=2,
+        alpha=1.0,
+        lambda_l2=1.0,
+        random_seed=17,
+    )
+    reg.fit(X, y, learning_rate_schedule=schedule)
+
+    assert reg._booster.learning_rate_history == pytest.approx(schedule)
+    assert reg.predict(X).shape == (X.shape[0],)
+
+
 def test_regressor_early_stopping_uses_eval_set():
     X, y = make_regression(
         n_samples=256,

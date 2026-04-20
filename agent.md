@@ -17,8 +17,8 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 - NumPy, pandas, and SciPy sparse ingestion without dense conversion
 - External-memory pool staging through `ctboost.prepare_pool(..., external_memory=True)` and reusable preparation through `ctboost.prepare_training_data(...)`
 - Native feature pipeline support for categorical, text, and embedding inputs through `FeaturePipeline`
-- Callable eval metrics, multi-metric reporting, early stopping, and per-iteration callbacks
-- Built-in `log_evaluation(...)`, `checkpoint_callback(...)`, `snapshot_path`, and `resume_from_snapshot`
+- Callable eval metrics, multi-metric reporting, early stopping, per-iteration callbacks, and learning-rate schedules or callback-driven learning-rate changes
+- Built-in `log_evaluation(...)`, `checkpoint_callback(...)`, `snapshot_path`, and `resume_from_snapshot` with strict config and schema validation
 - Richer schema metadata via `feature_names`, `column_roles`, `feature_metadata`, `categorical_schema`, and `Booster.data_schema`
 - Standalone Python export plus lightweight JSON predictor export through `export_format="json_predictor"`
 - Regression, classification, ranking, and survival objectives already present in the native package
@@ -27,7 +27,7 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 
 ## Active Generic Backlog
 
-- Tighten the guarantee surface for snapshot / resume beyond the current warm-start-based convenience flow
+- Tighten the exact-equivalence guarantee surface for snapshot / resume beyond the current warm-start-based convenience flow
 - Broaden export and deployment surfaces with clearer manifests and downstream contracts
 - Add higher-level platform integration helpers for workflows such as Dask, Spark handoff, or Kaggle setup without changing learner semantics
 
@@ -36,7 +36,7 @@ See [BACKLOG.md](BACKLOG.md) for the prioritized roadmap.
 ## Already Covered, Not Open Backlog Items
 
 - Native sparse ingestion and sparse-preserving pool plumbing
-- Callback-based training control
+- Callback-based training control, including learning-rate schedules and callback-driven learning-rate changes
 - Callable evaluation metrics with safe early-stopping flags
 - Schema metadata round-tripping for boosters and sklearn estimators
 - Lightweight JSON predictor export
@@ -66,5 +66,5 @@ See [BACKLOG.md](BACKLOG.md) for the prioritized roadmap.
 - Treat wheel coverage as part of the public install contract
 - Keep standard `pip install ctboost` CPU-friendly; do not make default installation depend on CUDA or a local compiler toolchain
 - Preserve JSON booster compatibility when changing native persistence internals, or version the schema explicitly
-- Be explicit when documentation is describing warm-start-based resume semantics versus stronger exact-equivalence guarantees
+- Be explicit when documentation is describing warm-start-based resume semantics, strict config and schema validation, versus stronger exact-equivalence guarantees
 - When adding generic library features, prefer changes in data handling, preprocessing, metrics, orchestration, or export rather than in the core learner

@@ -329,6 +329,44 @@ def test_training_snapshot_resume_matches_explicit_warm_start(tmp_path: Path):
     np.testing.assert_allclose(resumed.predict(X), explicit_resume.predict(X), rtol=1e-6, atol=1e-6)
 
 
+def test_resume_from_snapshot_rejects_config_drift(tmp_path: Path):
+    X, y = make_regression(
+        n_samples=180,
+        n_features=6,
+        n_informative=4,
+        noise=0.2,
+        random_state=49,
+    )
+    X = X.astype(np.float32)
+    y = y.astype(np.float32)
+
+    params = {
+        "objective": "RMSE",
+        "learning_rate": 0.15,
+        "max_depth": 3,
+        "alpha": 1.0,
+        "lambda_l2": 1.0,
+        "random_seed": 17,
+    }
+    snapshot_path = tmp_path / "strict_resume_snapshot.ctb"
+    ctboost.train(
+        ctboost.Pool(X, y),
+        params,
+        num_boost_round=6,
+        snapshot_path=snapshot_path,
+        snapshot_interval=1,
+    )
+
+    with pytest.raises(ValueError, match="Use init_model"):
+        ctboost.train(
+            ctboost.Pool(X, y),
+            {**params, "max_depth": 4},
+            num_boost_round=12,
+            snapshot_path=snapshot_path,
+            resume_from_snapshot=True,
+        )
+
+
 def test_estimator_resume_from_snapshot_matches_explicit_warm_start(tmp_path: Path):
     X, y = make_regression(
         n_samples=180,

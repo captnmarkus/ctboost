@@ -394,6 +394,7 @@ py::dict BoosterToStateDict(const ctboost::GradientBooster& booster) {
   state["objective_name"] = booster.objective_name();
   state["iterations"] = booster.iterations();
   state["learning_rate"] = booster.learning_rate();
+  state["tree_learning_rates"] = booster.tree_learning_rates();
   state["max_depth"] = booster.max_depth();
   state["alpha"] = booster.alpha();
   state["lambda_l2"] = booster.lambda_l2();
@@ -597,6 +598,9 @@ ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
                     quantization_schema,
                     py::cast<std::vector<double>>(state["loss_history"]),
                     py::cast<std::vector<double>>(state["eval_loss_history"]),
+                    state.contains("tree_learning_rates")
+                        ? py::cast<std::vector<double>>(state["tree_learning_rates"])
+                        : std::vector<double>{},
                     std::vector<double>{},
                     py::cast<int>(state["best_iteration"]),
                     py::cast<double>(state["best_score"]),
@@ -1086,6 +1090,7 @@ PYBIND11_MODULE(_core, m) {
       .def("eval_metric_name", &ctboost::GradientBooster::eval_metric_name)
       .def("iterations", &ctboost::GradientBooster::iterations)
       .def("learning_rate", &ctboost::GradientBooster::learning_rate)
+      .def("tree_learning_rates", &ctboost::GradientBooster::tree_learning_rates)
       .def("max_depth", &ctboost::GradientBooster::max_depth)
       .def("alpha", &ctboost::GradientBooster::alpha)
       .def("lambda_l2", &ctboost::GradientBooster::lambda_l2)
@@ -1133,6 +1138,9 @@ PYBIND11_MODULE(_core, m) {
       .def("set_iterations",
            &ctboost::GradientBooster::SetIterations,
            py::arg("iterations"))
+      .def("set_learning_rate",
+           &ctboost::GradientBooster::SetLearningRate,
+           py::arg("learning_rate"))
       .def("export_state", [](const ctboost::GradientBooster& booster) {
         return BoosterToStateDict(booster);
       })
@@ -1162,6 +1170,9 @@ PYBIND11_MODULE(_core, m) {
                                quantization_schema,
                                py::cast<std::vector<double>>(state["loss_history"]),
                                py::cast<std::vector<double>>(state["eval_loss_history"]),
+                               state.contains("tree_learning_rates")
+                                   ? py::cast<std::vector<double>>(state["tree_learning_rates"])
+                                   : std::vector<double>{},
                                std::vector<double>{},
                                py::cast<int>(state["best_iteration"]),
                                py::cast<double>(state["best_score"]),

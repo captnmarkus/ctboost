@@ -1,6 +1,6 @@
 # CTBoost Generic Feature Backlog
 
-Last updated: 2026-04-19
+Last updated: 2026-04-20
 
 ## Goal
 
@@ -23,11 +23,11 @@ CTBoost now covers the core tabular baseline and several generic-library layers 
 - weights / class imbalance controls
 - missing values via `nan_mode`
 - multi-metric evaluation, callable eval metrics, and early stopping
-- per-iteration callbacks plus built-in logging and checkpoint helpers
+- per-iteration callbacks, learning-rate schedules, callback-driven learning-rate control, and built-in logging or checkpoint helpers
 - staged prediction
 - warm start
 - stable JSON and pickle persistence
-- snapshot-path resume convenience on top of warm start
+- snapshot-path resume convenience on top of warm start, with saved config and schema validation
 - grouped ranking with `group_id`, `group_weight`, `subgroup_id`, `pairs`, `pairs_weight`, and `baseline`
 - richer schema metadata in `Pool`, boosters, and sklearn estimators
 - standalone Python export plus a lightweight JSON predictor export
@@ -66,7 +66,8 @@ Current state:
 
 - `checkpoint_callback(...)` writes model checkpoints from the Python callback surface
 - `snapshot_path` writes a resumable checkpoint and `resume_from_snapshot=True` wraps the existing warm-start flow
-- resumed training currently follows warm-start semantics; exact parity with one uninterrupted run is not promised yet
+- `resume_from_snapshot=True` now rejects config or data-schema drift instead of silently reusing an incompatible checkpoint
+- resumed training still follows warm-start semantics; exact parity with one uninterrupted run is not promised yet
 
 Scope:
 
@@ -123,7 +124,7 @@ Important note:
 ## Recently Closed
 
 - native sparse ingestion and sparse-preserving pool plumbing
-- callback-based training control
+- callback-based training control, including learning-rate schedules and callback-driven learning-rate changes
 - callable evaluation metrics with explicit early-stopping safety flags
 - schema metadata round-tripping for boosters and sklearn estimators
 - lightweight JSON predictor export via `export_format="json_predictor"`

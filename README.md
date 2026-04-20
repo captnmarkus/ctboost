@@ -11,8 +11,8 @@ The project constraint is deliberate: keep the conditional-inference-tree split 
 - NumPy, pandas, and SciPy sparse input without dense conversion
 - Native categorical, text, and embedding preprocessing through `FeaturePipeline`
 - Row weights, class imbalance controls, missing-value handling, quantization controls, and generic regularization or growth settings
-- Validation watchlists, multiple eval metrics, callable eval metrics, early stopping, and per-iteration callbacks
-- Stable JSON and pickle persistence, warm start via `init_model`, resumable snapshot loading, staged prediction, and standalone Python or JSON predictor export
+- Validation watchlists, multiple eval metrics, callable eval metrics, early stopping, per-iteration callbacks, and learning-rate schedules or callback-driven learning-rate changes
+- Stable JSON and pickle persistence, warm start via `init_model`, snapshot-path resume with config and schema validation, staged prediction, and standalone Python or JSON predictor export
 - Richer `Pool` schema metadata via `feature_names`, `column_roles`, `feature_metadata`, and `categorical_schema`
 - Ranking metadata in `Pool`: `group_id`, `group_weight`, `subgroup_id`, `pairs`, `pairs_weight`, and `baseline`
 - External-memory pool staging plus optional TCP-based distributed training
@@ -123,6 +123,30 @@ booster = ctboost.train(
 predictions = booster.predict(pool)
 ```
 
+### Learning-Rate Schedules And Callbacks
+
+```python
+schedule = [0.2, 0.2, 0.1, 0.1, 0.05, 0.05]
+
+booster = ctboost.train(
+    pool,
+    {
+        "objective": "RMSE",
+        "learning_rate": schedule[0],
+        "max_depth": 3,
+        "alpha": 1.0,
+        "lambda_l2": 1.0,
+    },
+    num_boost_round=len(schedule),
+    learning_rate_schedule=schedule,
+    callbacks=[ctboost.log_evaluation(2)],
+)
+
+print(booster.learning_rate_history)
+```
+
+Callbacks receive `env.learning_rate` and may call `env.model.set_learning_rate(...)` to change the step size used for later rounds. The scikit-learn estimators accept the same `learning_rate_schedule=` keyword on `fit(...)`.
+
 ### Categorical, Text, And Embedding Inputs
 
 ```python
@@ -204,7 +228,7 @@ predictor = ctboost.load_exported_predictor("predictor.json")
 exported_predictions = predictor.predict(X_numeric)
 ```
 
-`resume_from_snapshot=True` is a convenience wrapper around loading the saved booster and continuing training with the existing warm-start path. For per-iteration checkpoint emission and logging hooks, use `callbacks=[ctboost.log_evaluation(...), ctboost.checkpoint_callback(...)]`.
+`resume_from_snapshot=True` validates the saved training configuration and data schema before loading the checkpoint. It remains a warm-start-based convenience flow rather than a blanket exact-equivalence guarantee for every training path. For per-iteration checkpoint emission and logging hooks, use `callbacks=[ctboost.log_evaluation(...), ctboost.checkpoint_callback(...)]`.
 
 ## Metadata
 

@@ -579,6 +579,21 @@ void ScaleTreeLeafWeights(Tree& tree, double scale) {
   }
 }
 
+double ResolveIterationLearningRate(const std::vector<double>& tree_learning_rates,
+                                    std::size_t tree_index,
+                                    int prediction_dimension,
+                                    double default_learning_rate) {
+  if (prediction_dimension <= 0) {
+    return default_learning_rate;
+  }
+  const std::size_t iteration_index =
+      tree_index / static_cast<std::size_t>(prediction_dimension);
+  if (iteration_index >= tree_learning_rates.size()) {
+    return default_learning_rate;
+  }
+  return tree_learning_rates[iteration_index];
+}
+
 std::vector<std::size_t> SampleDroppedTreeGroups(std::size_t completed_iterations,
                                                  double drop_rate,
                                                  double skip_drop,
@@ -695,6 +710,9 @@ HistMatrix BuildPredictionHist(const Pool& pool, const QuantizationSchema& quant
 
 std::vector<GpuTreeNode> FlattenTreesForGpu(const std::vector<Tree>& trees,
                                             std::size_t tree_limit,
+                                            const std::vector<double>& tree_learning_rates,
+                                            double default_learning_rate,
+                                            int prediction_dimension,
                                             std::vector<std::int32_t>& tree_offsets) {
   std::size_t total_nodes = 0;
   for (std::size_t tree_index = 0; tree_index < tree_limit; ++tree_index) {
@@ -708,6 +726,8 @@ std::vector<GpuTreeNode> FlattenTreesForGpu(const std::vector<Tree>& trees,
 
   for (std::size_t tree_index = 0; tree_index < tree_limit; ++tree_index) {
     const auto& tree_nodes = trees[tree_index].nodes();
+    const float tree_learning_rate = static_cast<float>(ResolveIterationLearningRate(
+        tree_learning_rates, tree_index, prediction_dimension, default_learning_rate));
     const std::int32_t tree_offset = static_cast<std::int32_t>(flattened_nodes.size());
     tree_offsets.push_back(tree_offset);
     for (const Node& node : tree_nodes) {
@@ -720,7 +740,7 @@ std::vector<GpuTreeNode> FlattenTreesForGpu(const std::vector<Tree>& trees,
           node.left_child < 0 ? -1 : tree_offset + static_cast<std::int32_t>(node.left_child);
       gpu_node.right_child =
           node.right_child < 0 ? -1 : tree_offset + static_cast<std::int32_t>(node.right_child);
-      gpu_node.leaf_weight = node.leaf_weight;
+      gpu_node.leaf_weight = node.leaf_weight * tree_learning_rate;
       std::copy(node.left_categories.begin(), node.left_categories.end(), gpu_node.left_categories);
       flattened_nodes.push_back(std::move(gpu_node));
     }
@@ -751,26 +771,30 @@ void UpdatePredictions(const Tree& tree,
 void AccumulateIterationPredictions(const std::vector<Tree>& trees,
                                     std::size_t iteration_index,
                                     const HistMatrix& hist,
-                                    double learning_rate,
+                                    const std::vector<double>& tree_learning_rates,
+                                    double default_learning_rate,
                                     int prediction_dimension,
                                     std::vector<float>& predictions) {
   const std::size_t tree_begin =
       iteration_index * static_cast<std::size_t>(prediction_dimension);
   const std::size_t tree_end = tree_begin + static_cast<std::size_t>(prediction_dimension);
   for (std::size_t tree_index = tree_begin; tree_index < tree_end; ++tree_index) {
+    const double tree_learning_rate = ResolveIterationLearningRate(
+        tree_learning_rates, tree_index, prediction_dimension, default_learning_rate);
     const int class_index =
         prediction_dimension == 1 ? 0
                                   : static_cast<int>(
                                         tree_index % static_cast<std::size_t>(prediction_dimension));
     UpdatePredictions(
-        trees[tree_index], hist, learning_rate, prediction_dimension, class_index, predictions);
+        trees[tree_index], hist, tree_learning_rate, prediction_dimension, class_index, predictions);
   }
 }
 
 std::vector<float> PredictFromHist(const std::vector<Tree>& trees,
                                    const HistMatrix& hist,
                                    std::size_t tree_limit,
-                                   double learning_rate,
+                                   const std::vector<double>& tree_learning_rates,
+                                   double default_learning_rate,
                                    bool use_gpu,
                                    int prediction_dimension,
                                    const std::string& devices = "0") {
@@ -783,12 +807,13 @@ std::vector<float> PredictFromHist(const std::vector<Tree>& trees,
   if (use_gpu && CudaBackendCompiled()) {
     std::vector<std::int32_t> tree_offsets;
     const std::vector<GpuTreeNode> flattened_nodes =
-        FlattenTreesForGpu(trees, tree_limit, tree_offsets);
+        FlattenTreesForGpu(
+            trees, tree_limit, tree_learning_rates, default_learning_rate, prediction_dimension, tree_offsets);
     PredictRawGpu(
         hist,
         flattened_nodes,
         tree_offsets,
-        static_cast<float>(learning_rate),
+        1.0F,
         prediction_dimension,
         predictions,
         devices);
@@ -796,12 +821,14 @@ std::vector<float> PredictFromHist(const std::vector<Tree>& trees,
   }
 
   for (std::size_t tree_index = 0; tree_index < tree_limit; ++tree_index) {
+    const double tree_learning_rate = ResolveIterationLearningRate(
+        tree_learning_rates, tree_index, prediction_dimension, default_learning_rate);
     const int class_index =
         prediction_dimension == 1
             ? 0
             : static_cast<int>(tree_index % static_cast<std::size_t>(prediction_dimension));
     UpdatePredictions(
-        trees[tree_index], hist, learning_rate, prediction_dimension, class_index, predictions);
+        trees[tree_index], hist, tree_learning_rate, prediction_dimension, class_index, predictions);
   }
   return predictions;
 }
@@ -1473,6 +1500,7 @@ void GradientBooster::Fit(Pool& pool,
       has_existing_state ? QuantizationSchemaPtr{} : quantization_schema_;
   if (!continue_training) {
     trees_.clear();
+    tree_learning_rates_.clear();
     quantization_schema_ = imported_quantization_schema;
     loss_history_.clear();
     eval_loss_history_.clear();
@@ -1525,6 +1553,7 @@ void GradientBooster::Fit(Pool& pool,
                               ? PredictFromHist(trees_,
                                                 workspace.train_hist,
                                                 trees_.size(),
+                                                tree_learning_rates_,
                                                 learning_rate_,
                                                 use_gpu_,
                                                 prediction_dimension_,
@@ -1591,6 +1620,7 @@ void GradientBooster::Fit(Pool& pool,
                                      ? PredictFromHist(trees_,
                                                        workspace.eval_hist,
                                                        trees_.size(),
+                                                       tree_learning_rates_,
                                                        learning_rate_,
                                                        use_gpu_,
                                                        prediction_dimension_,
@@ -1666,6 +1696,7 @@ void GradientBooster::Fit(Pool& pool,
               trees_,
               dropped_iteration,
               workspace.train_hist,
+              tree_learning_rates_,
               learning_rate_,
               prediction_dimension_,
               dropped_train_predictions);
@@ -1674,6 +1705,7 @@ void GradientBooster::Fit(Pool& pool,
                 trees_,
                 dropped_iteration,
                 workspace.eval_hist,
+                tree_learning_rates_,
                 learning_rate_,
                 prediction_dimension_,
                 dropped_eval_predictions);
@@ -1812,6 +1844,7 @@ void GradientBooster::Fit(Pool& pool,
       MarkUsedFeatures(tree, model_feature_used_mask);
 
       trees_.push_back(std::move(tree));
+      tree_learning_rates_.push_back(learning_rate_);
     } else {
       std::vector<float> structure_gradients;
       std::vector<float> structure_hessians;
@@ -1947,6 +1980,7 @@ void GradientBooster::Fit(Pool& pool,
         MarkUsedFeatures(tree, model_feature_used_mask);
         trees_.push_back(std::move(tree));
       }
+      tree_learning_rates_.push_back(learning_rate_);
       prediction_ms +=
           std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - prediction_start)
               .count();
@@ -2146,6 +2180,9 @@ void GradientBooster::Fit(Pool& pool,
   const std::size_t retained_iterations =
       static_cast<std::size_t>(best_iteration_ + 1);
   trees_.resize(retained_iterations * static_cast<std::size_t>(prediction_dimension_));
+  if (tree_learning_rates_.size() > retained_iterations) {
+    tree_learning_rates_.resize(retained_iterations);
+  }
   loss_history_.resize(retained_iterations);
   eval_loss_history_.resize(retained_iterations);
   RecomputeFeatureImportances(trees_, pool.num_cols(), feature_importance_sums_);
@@ -2160,6 +2197,13 @@ void GradientBooster::SetIterations(int iterations) {
     throw std::invalid_argument("iterations must be positive");
   }
   iterations_ = iterations;
+}
+
+void GradientBooster::SetLearningRate(double learning_rate) {
+  if (learning_rate <= 0.0) {
+    throw std::invalid_argument("learning_rate must be positive");
+  }
+  learning_rate_ = learning_rate;
 }
 
 std::vector<float> GradientBooster::Predict(const Pool& pool, int num_iteration) const {
@@ -2180,12 +2224,13 @@ std::vector<float> GradientBooster::Predict(const Pool& pool, int num_iteration)
   if (use_gpu_ && CudaBackendCompiled()) {
     const HistMatrix hist = BuildPredictionHist(pool, RequireQuantizationSchema(quantization_schema_));
     std::vector<std::int32_t> tree_offsets;
-    const std::vector<GpuTreeNode> flattened_nodes = FlattenTreesForGpu(trees_, tree_limit, tree_offsets);
+    const std::vector<GpuTreeNode> flattened_nodes = FlattenTreesForGpu(
+        trees_, tree_limit, tree_learning_rates_, learning_rate_, prediction_dimension_, tree_offsets);
     PredictRawGpu(
         hist,
         flattened_nodes,
         tree_offsets,
-        static_cast<float>(learning_rate_),
+        1.0F,
         prediction_dimension_,
         predictions,
         devices_);
@@ -2196,8 +2241,10 @@ std::vector<float> GradientBooster::Predict(const Pool& pool, int num_iteration)
   if (prediction_dimension_ == 1) {
     for (std::size_t tree_index = 0; tree_index < tree_limit; ++tree_index) {
       const Tree& tree = trees_[tree_index];
+      const double tree_learning_rate = ResolveIterationLearningRate(
+          tree_learning_rates_, tree_index, prediction_dimension_, learning_rate_);
       for (std::size_t row = 0; row < pool.num_rows(); ++row) {
-        predictions[row] += learning_rate_ * tree.PredictRow(pool, row);
+        predictions[row] += tree_learning_rate * tree.PredictRow(pool, row);
       }
     }
     AddPoolBaselineToPredictions(pool, prediction_dimension_, predictions);
@@ -2205,11 +2252,13 @@ std::vector<float> GradientBooster::Predict(const Pool& pool, int num_iteration)
   }
 
   for (std::size_t tree_index = 0; tree_index < tree_limit; ++tree_index) {
+    const double tree_learning_rate = ResolveIterationLearningRate(
+        tree_learning_rates_, tree_index, prediction_dimension_, learning_rate_);
     const int class_index = static_cast<int>(
         tree_index % static_cast<std::size_t>(prediction_dimension_));
     for (std::size_t row = 0; row < pool.num_rows(); ++row) {
       predictions[row * static_cast<std::size_t>(prediction_dimension_) + class_index] +=
-          learning_rate_ * trees_[tree_index].PredictRow(pool, row);
+          tree_learning_rate * trees_[tree_index].PredictRow(pool, row);
     }
   }
   AddPoolBaselineToPredictions(pool, prediction_dimension_, predictions);
@@ -2250,9 +2299,11 @@ std::vector<float> GradientBooster::PredictContributions(const Pool& pool, int n
     const std::size_t class_index = prediction_dimension_ == 1
                                         ? 0
                                         : tree_index % static_cast<std::size_t>(prediction_dimension_);
+    const float tree_learning_rate = static_cast<float>(ResolveIterationLearningRate(
+        tree_learning_rates_, tree_index, prediction_dimension_, learning_rate_));
     for (std::size_t row = 0; row < pool.num_rows(); ++row) {
       std::vector<float> row_buffer(pool.num_cols() + 1, 0.0F);
-      trees_[tree_index].AccumulateContributions(pool, row, static_cast<float>(learning_rate_), row_buffer);
+      trees_[tree_index].AccumulateContributions(pool, row, tree_learning_rate, row_buffer);
       const std::size_t row_offset = row * row_width + class_index * (pool.num_cols() + 1);
       for (std::size_t feature = 0; feature < row_buffer.size(); ++feature) {
         contributions[row_offset + feature] += row_buffer[feature];
@@ -2266,12 +2317,14 @@ void GradientBooster::LoadState(std::vector<Tree> trees,
                                 QuantizationSchemaPtr quantization_schema,
                                 std::vector<double> loss_history,
                                 std::vector<double> eval_loss_history,
+                                std::vector<double> tree_learning_rates,
                                 std::vector<double> feature_importance_sums,
                                 int best_iteration,
                                 double best_score,
                                 bool use_gpu,
                                 std::uint64_t rng_state) {
   trees_ = std::move(trees);
+  tree_learning_rates_ = std::move(tree_learning_rates);
   if (quantization_schema == nullptr && !trees_.empty()) {
     auto mutable_quantization_schema = std::make_shared<QuantizationSchema>();
     mutable_quantization_schema->num_bins_per_feature = trees_.front().num_bins_per_feature();
@@ -2287,6 +2340,13 @@ void GradientBooster::LoadState(std::vector<Tree> trees,
     for (Tree& tree : trees_) {
       tree.SetQuantizationSchema(quantization_schema_);
     }
+  }
+  const std::size_t trained_iterations = num_iterations_trained();
+  if (!tree_learning_rates_.empty() && tree_learning_rates_.size() != trained_iterations) {
+    throw std::invalid_argument("tree_learning_rates must match the trained iteration count");
+  }
+  if (tree_learning_rates_.empty() && trained_iterations > 0) {
+    tree_learning_rates_.assign(trained_iterations, learning_rate_);
   }
   loss_history_ = std::move(loss_history);
   eval_loss_history_ = std::move(eval_loss_history);
@@ -2346,6 +2406,10 @@ const std::string& GradientBooster::objective_name() const noexcept {
 int GradientBooster::iterations() const noexcept { return iterations_; }
 
 double GradientBooster::learning_rate() const noexcept { return learning_rate_; }
+
+const std::vector<double>& GradientBooster::tree_learning_rates() const noexcept {
+  return tree_learning_rates_;
+}
 
 int GradientBooster::max_depth() const noexcept { return max_depth_; }
 

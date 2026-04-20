@@ -43,6 +43,7 @@ class TrainingCallbackEnv:
     history: Dict[str, Dict[str, List[float]]]
     best_iteration: int
     best_score: Optional[float]
+    learning_rate: float
 
 
 @dataclass
@@ -146,6 +147,251 @@ def _resolve_resume_snapshot_path(
             raise ValueError("resume_from_snapshot=True requires snapshot_path")
         return snapshot_path
     return Path(resume_from_snapshot)
+
+
+def _normalize_learning_rate_schedule(learning_rate_schedule: Any) -> Optional[Any]:
+    if learning_rate_schedule is None:
+        return None
+    if callable(learning_rate_schedule):
+        return learning_rate_schedule
+    if isinstance(learning_rate_schedule, (str, bytes)):
+        raise TypeError("learning_rate_schedule must be a callable or a sequence of numeric values")
+    try:
+        resolved_schedule = list(learning_rate_schedule)
+    except TypeError as exc:
+        raise TypeError(
+            "learning_rate_schedule must be a callable or a sequence of numeric values"
+        ) from exc
+    if not resolved_schedule:
+        raise ValueError("learning_rate_schedule must not be empty")
+    return resolved_schedule
+
+
+def _call_learning_rate_schedule(schedule: Callable[..., Any], iteration: int, total_iterations: int) -> Any:
+    try:
+        signature = inspect.signature(schedule)
+    except (TypeError, ValueError):
+        return schedule(iteration, total_iterations=total_iterations)
+    accepts_kwargs = any(
+        parameter.kind == inspect.Parameter.VAR_KEYWORD
+        for parameter in signature.parameters.values()
+    )
+    keyword_arguments = {"total_iterations": total_iterations}
+    if accepts_kwargs:
+        return schedule(iteration, **keyword_arguments)
+    filtered_kwargs = {
+        key: value for key, value in keyword_arguments.items() if key in signature.parameters
+    }
+    return schedule(iteration, **filtered_kwargs)
+
+
+def _resolve_learning_rate_for_iteration(
+    learning_rate_schedule: Any,
+    *,
+    iteration: int,
+    total_iterations: int,
+) -> float:
+    if callable(learning_rate_schedule):
+        resolved_learning_rate = _call_learning_rate_schedule(
+            learning_rate_schedule, iteration, total_iterations
+        )
+    else:
+        if iteration >= len(learning_rate_schedule):
+            raise ValueError(
+                "learning_rate_schedule does not provide enough entries for the requested number of rounds"
+            )
+        resolved_learning_rate = learning_rate_schedule[iteration]
+    learning_rate = float(resolved_learning_rate)
+    if learning_rate <= 0.0:
+        raise ValueError("learning_rate_schedule entries must be positive")
+    return learning_rate
+
+
+def _normalize_resume_signature_value(value: Any) -> Any:
+    if isinstance(value, np.ndarray):
+        return [_normalize_resume_signature_value(item) for item in value.tolist()]
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, Mapping):
+        return {
+            str(key): _normalize_resume_signature_value(item)
+            for key, item in sorted(value.items(), key=lambda item: str(item[0]))
+        }
+    if isinstance(value, tuple):
+        return [_normalize_resume_signature_value(item) for item in value]
+    if isinstance(value, list):
+        return [_normalize_resume_signature_value(item) for item in value]
+    return value
+
+
+def _resume_signature_values_match(left: Any, right: Any) -> bool:
+    if isinstance(left, Mapping) and isinstance(right, Mapping):
+        if set(left.keys()) != set(right.keys()):
+            return False
+        return all(_resume_signature_values_match(left[key], right[key]) for key in left)
+    if isinstance(left, list) and isinstance(right, list):
+        if len(left) != len(right):
+            return False
+        return all(_resume_signature_values_match(left_item, right_item) for left_item, right_item in zip(left, right))
+    if isinstance(left, float) or isinstance(right, float):
+        try:
+            return bool(np.isclose(float(left), float(right), rtol=1e-12, atol=1e-12))
+        except (TypeError, ValueError):
+            return left == right
+    return left == right
+
+
+def _resume_snapshot_config_signature(*, pool: Pool, **kwargs: Any) -> Dict[str, Any]:
+    return {
+        "objective_name": str(kwargs["objective"]),
+        "learning_rate": float(kwargs["learning_rate"]),
+        "max_depth": int(kwargs["max_depth"]),
+        "alpha": float(kwargs["alpha"]),
+        "lambda_l2": float(kwargs["lambda_l2"]),
+        "subsample": float(kwargs["subsample"]),
+        "bootstrap_type": str(kwargs["bootstrap_type"]),
+        "bagging_temperature": float(kwargs["bagging_temperature"]),
+        "boosting_type": str(kwargs["boosting_type"]),
+        "drop_rate": float(kwargs["drop_rate"]),
+        "skip_drop": float(kwargs["skip_drop"]),
+        "max_drop": int(kwargs["max_drop"]),
+        "monotone_constraints": _normalize_resume_signature_value(kwargs["monotone_constraints"]),
+        "interaction_constraints": _normalize_resume_signature_value(kwargs["interaction_constraints"]),
+        "colsample_bytree": float(kwargs["colsample_bytree"]),
+        "feature_weights": _normalize_resume_signature_value(kwargs["feature_weights"]),
+        "first_feature_use_penalties": _normalize_resume_signature_value(
+            kwargs["first_feature_use_penalties"]
+        ),
+        "random_strength": float(kwargs["random_strength"]),
+        "grow_policy": str(kwargs["grow_policy"]),
+        "max_leaves": int(kwargs["max_leaves"]),
+        "min_samples_split": int(kwargs["min_samples_split"]),
+        "min_data_in_leaf": int(kwargs["min_data_in_leaf"]),
+        "min_child_weight": float(kwargs["min_child_weight"]),
+        "gamma": float(kwargs["gamma"]),
+        "max_leaf_weight": float(kwargs["max_leaf_weight"]),
+        "num_classes": int(kwargs["num_classes"]),
+        "max_bins": int(kwargs["max_bins"]),
+        "nan_mode": str(kwargs["nan_mode"]),
+        "max_bin_by_feature": _normalize_resume_signature_value(kwargs["max_bin_by_feature"]),
+        "border_selection_method": str(kwargs["border_selection_method"]),
+        "nan_mode_by_feature": _normalize_resume_signature_value(kwargs["nan_mode_by_feature"]),
+        "feature_borders": _normalize_resume_signature_value(kwargs["feature_borders"]),
+        "external_memory": bool(kwargs["native_external_memory"]),
+        "external_memory_dir": str(kwargs["native_external_memory_dir"]),
+        "quantile_alpha": float(kwargs["quantile_alpha"]),
+        "huber_delta": float(kwargs["huber_delta"]),
+        "tweedie_variance_power": float(kwargs["tweedie_variance_power"]),
+        "task_type": str(kwargs["task_type"]),
+        "devices": str(kwargs["devices"]),
+        "distributed_world_size": int(kwargs["distributed_world_size"]),
+        "distributed_rank": int(kwargs["distributed_rank"]),
+        "distributed_root": str(kwargs["distributed_root"]),
+        "distributed_run_id": str(kwargs["distributed_run_id"]),
+        "distributed_timeout": float(kwargs["distributed_timeout"]),
+        "random_seed": int(kwargs["random_seed"]),
+        "data_schema": _normalize_resume_signature_value(_pool_schema_metadata(pool)),
+    }
+
+
+def _resume_snapshot_state_signature(init_state: Mapping[str, Any], init_model: Any) -> Dict[str, Any]:
+    return {
+        "objective_name": str(init_state["objective_name"]),
+        "learning_rate": float(init_state["learning_rate"]),
+        "max_depth": int(init_state["max_depth"]),
+        "alpha": float(init_state["alpha"]),
+        "lambda_l2": float(init_state["lambda_l2"]),
+        "subsample": float(init_state.get("subsample", 1.0)),
+        "bootstrap_type": str(init_state.get("bootstrap_type", "No")),
+        "bagging_temperature": float(init_state.get("bagging_temperature", 0.0)),
+        "boosting_type": str(init_state.get("boosting_type", "GradientBoosting")),
+        "drop_rate": float(init_state.get("drop_rate", 0.1)),
+        "skip_drop": float(init_state.get("skip_drop", 0.5)),
+        "max_drop": int(init_state.get("max_drop", 0)),
+        "monotone_constraints": _normalize_resume_signature_value(
+            init_state.get("monotone_constraints", [])
+        ),
+        "interaction_constraints": _normalize_resume_signature_value(
+            init_state.get("interaction_constraints", [])
+        ),
+        "colsample_bytree": float(init_state.get("colsample_bytree", 1.0)),
+        "feature_weights": _normalize_resume_signature_value(init_state.get("feature_weights", [])),
+        "first_feature_use_penalties": _normalize_resume_signature_value(
+            init_state.get("first_feature_use_penalties", [])
+        ),
+        "random_strength": float(init_state.get("random_strength", 0.0)),
+        "grow_policy": str(init_state.get("grow_policy", "DepthWise")),
+        "max_leaves": int(init_state.get("max_leaves", 0)),
+        "min_samples_split": int(init_state.get("min_samples_split", 2)),
+        "min_data_in_leaf": int(init_state.get("min_data_in_leaf", 0)),
+        "min_child_weight": float(init_state.get("min_child_weight", 0.0)),
+        "gamma": float(init_state.get("gamma", 0.0)),
+        "max_leaf_weight": float(init_state.get("max_leaf_weight", 0.0)),
+        "num_classes": int(init_state["num_classes"]),
+        "max_bins": int(init_state["max_bins"]),
+        "nan_mode": str(init_state["nan_mode"]),
+        "max_bin_by_feature": _normalize_resume_signature_value(init_state.get("max_bin_by_feature", [])),
+        "border_selection_method": str(init_state.get("border_selection_method", "Quantile")),
+        "nan_mode_by_feature": _normalize_resume_signature_value(init_state.get("nan_mode_by_feature", [])),
+        "feature_borders": _normalize_resume_signature_value(init_state.get("feature_borders", [])),
+        "external_memory": bool(init_state.get("external_memory", False)),
+        "external_memory_dir": str(init_state.get("external_memory_dir", "")),
+        "quantile_alpha": float(init_state["quantile_alpha"]),
+        "huber_delta": float(init_state["huber_delta"]),
+        "tweedie_variance_power": float(init_state.get("tweedie_variance_power", 1.5)),
+        "task_type": str(init_state["task_type"]),
+        "devices": str(init_state["devices"]),
+        "distributed_world_size": int(init_state.get("distributed_world_size", 1)),
+        "distributed_rank": int(init_state.get("distributed_rank", 0)),
+        "distributed_root": str(init_state.get("distributed_root", "")),
+        "distributed_run_id": str(init_state.get("distributed_run_id", "default")),
+        "distributed_timeout": float(init_state.get("distributed_timeout", 600.0)),
+        "random_seed": int(init_state.get("random_seed", 0)),
+        "data_schema": _normalize_resume_signature_value(getattr(init_model, "data_schema", {})),
+    }
+
+
+def _validate_resume_snapshot_contract(
+    *,
+    init_state: Mapping[str, Any],
+    init_model: Any,
+    requested_signature: Mapping[str, Any],
+    learning_rate_schedule: Any,
+    requested_iterations: int,
+) -> None:
+    snapshot_signature = _resume_snapshot_state_signature(init_state, init_model)
+    for key, expected_value in snapshot_signature.items():
+        if key == "data_schema" and not expected_value:
+            continue
+        actual_value = _normalize_resume_signature_value(requested_signature[key])
+        if not _resume_signature_values_match(actual_value, expected_value):
+            raise ValueError(
+                "resume_from_snapshot requires the saved training configuration and data schema; "
+                f"mismatch for {key!r}. Use init_model=... for a generic warm start instead."
+            )
+    if learning_rate_schedule is None:
+        return
+    existing_history = list(getattr(init_model, "learning_rate_history", []))
+    if not existing_history:
+        prediction_dimension = max(int(init_state.get("num_classes", 1)), 1)
+        trained_iterations = int(len(init_state.get("trees", [])) // prediction_dimension)
+        existing_history = [float(init_state["learning_rate"])] * trained_iterations
+    for iteration, stored_learning_rate in enumerate(existing_history):
+        expected_learning_rate = _resolve_learning_rate_for_iteration(
+            learning_rate_schedule,
+            iteration=iteration,
+            total_iterations=requested_iterations,
+        )
+        if not np.isclose(
+            float(stored_learning_rate),
+            float(expected_learning_rate),
+            rtol=1e-12,
+            atol=1e-12,
+        ):
+            raise ValueError(
+                "resume_from_snapshot learning_rate_schedule must reproduce the saved schedule "
+                f"through iteration {iteration + 1}"
+            )
 
 
 def _load_sklearn_splitters():
@@ -2307,6 +2553,8 @@ def _prune_booster_to_best_iteration(handle: Any, best_iteration: int) -> None:
     retained_iterations = int(best_iteration) + 1
     prediction_dimension = int(handle.prediction_dimension())
     state["trees"] = state["trees"][: retained_iterations * prediction_dimension]
+    if "tree_learning_rates" in state:
+        state["tree_learning_rates"] = state["tree_learning_rates"][:retained_iterations]
     state["loss_history"] = state["loss_history"][:retained_iterations]
     state["eval_loss_history"] = state["eval_loss_history"][:retained_iterations]
     state["best_iteration"] = int(best_iteration)
@@ -2320,6 +2568,7 @@ def _prune_booster_to_best_iteration(handle: Any, best_iteration: int) -> None:
 
 
 def _initial_evals_result_from_model(init_model: Any) -> Optional[Dict[str, Dict[str, List[float]]]]:
+    metadata = None
     if isinstance(init_model, Booster):
         metadata = getattr(init_model, "_training_metadata", None)
         if metadata is not None and "evals_result" in metadata:
@@ -2327,8 +2576,21 @@ def _initial_evals_result_from_model(init_model: Any) -> Optional[Dict[str, Dict
     booster = getattr(init_model, "_booster", None)
     if isinstance(booster, Booster):
         metadata = getattr(booster, "_training_metadata", None)
-        if metadata is not None and "evals_result" in metadata:
-            return _copy_evals_result(metadata["evals_result"])
+    if metadata is not None and "evals_result" in metadata:
+        return _copy_evals_result(metadata["evals_result"])
+    return None
+
+
+def _initial_learning_rate_history_from_model(init_model: Any) -> Optional[List[float]]:
+    if isinstance(init_model, Booster):
+        metadata = getattr(init_model, "_training_metadata", None)
+        if metadata is not None and "learning_rate_history" in metadata:
+            return [float(value) for value in metadata["learning_rate_history"]]
+    booster = getattr(init_model, "_booster", None)
+    if isinstance(booster, Booster):
+        metadata = getattr(booster, "_training_metadata", None)
+        if metadata is not None and "learning_rate_history" in metadata:
+            return [float(value) for value in metadata["learning_rate_history"]]
     return None
 
 
@@ -2565,6 +2827,7 @@ class Booster:
         best_score: Optional[float] = None,
         eval_metric_name: Optional[str] = None,
         data_schema: Optional[Mapping[str, Any]] = None,
+        learning_rate_history: Optional[Iterable[float]] = None,
     ) -> None:
         if (
             evals_result is None
@@ -2573,6 +2836,7 @@ class Booster:
             and best_score is None
             and eval_metric_name is None
             and data_schema is None
+            and learning_rate_history is None
         ):
             self._training_metadata = None
             return
@@ -2589,6 +2853,8 @@ class Booster:
             metadata["eval_metric_name"] = str(eval_metric_name)
         if data_schema is not None:
             metadata["data_schema"] = dict(data_schema)
+        if learning_rate_history is not None:
+            metadata["learning_rate_history"] = [float(value) for value in learning_rate_history]
         self._training_metadata = metadata
 
     def _prediction_pool(self, data: Any) -> Pool:
@@ -2723,6 +2989,25 @@ class Booster:
             "missing_value_mask": list(schema["missing_value_mask"]),
         }
 
+    def set_learning_rate(self, learning_rate: float) -> None:
+        resolved_learning_rate = float(learning_rate)
+        if resolved_learning_rate <= 0.0:
+            raise ValueError("learning_rate must be positive")
+        if hasattr(self._handle, "set_learning_rate"):
+            self._handle.set_learning_rate(resolved_learning_rate)
+            return
+        current_learning_rate = float(self._handle.learning_rate())
+        if np.isclose(current_learning_rate, resolved_learning_rate, rtol=1e-12, atol=1e-12):
+            return
+        state = dict(self._handle.export_state())
+        scale = current_learning_rate / resolved_learning_rate
+        for tree_state in state.get("trees", []):
+            for node in tree_state.get("nodes", []):
+                if bool(node.get("is_leaf", False)):
+                    node["leaf_weight"] = float(node["leaf_weight"]) * scale
+        state["learning_rate"] = resolved_learning_rate
+        self._handle = _core.GradientBooster.from_state(state)
+
     @property
     def loss_history(self) -> List[float]:
         return list(self._handle.loss_history())
@@ -2780,6 +3065,20 @@ class Booster:
         if self._training_metadata is None or "data_schema" not in self._training_metadata:
             return {}
         return dict(self._training_metadata["data_schema"])
+
+    @property
+    def learning_rate(self) -> float:
+        return float(self._handle.learning_rate())
+
+    @property
+    def learning_rate_history(self) -> List[float]:
+        if self._training_metadata is not None and "learning_rate_history" in self._training_metadata:
+            return [float(value) for value in self._training_metadata["learning_rate_history"]]
+        if hasattr(self._handle, "tree_learning_rates"):
+            history = list(self._handle.tree_learning_rates())
+            if history:
+                return [float(value) for value in history]
+        return [self.learning_rate] * self.num_iterations_trained
 
     @property
     def feature_names(self) -> Optional[List[str]]:
@@ -2894,6 +3193,7 @@ def train(
     early_stopping_metric: Optional[Any] = None,
     early_stopping_name: Optional[str] = None,
     callbacks: Optional[Iterable[Callable[[TrainingCallbackEnv], Any]]] = None,
+    learning_rate_schedule: Any = None,
     snapshot_path: Optional[PathLike] = None,
     snapshot_interval: int = 1,
     snapshot_save_best_only: bool = False,
@@ -3113,6 +3413,7 @@ def train(
             if not callable(callback):
                 raise TypeError("callbacks must contain only callables")
     callback_list = list(user_callback_list)
+    resolved_learning_rate_schedule = _normalize_learning_rate_schedule(learning_rate_schedule)
 
     resolved_snapshot_interval = _normalize_snapshot_interval(snapshot_interval)
     snapshot_callback = None
@@ -3443,6 +3744,7 @@ def train(
     )
     use_python_eval_surface = (
         bool(user_callback_list)
+        or resolved_learning_rate_schedule is not None
         or len(eval_pools) > 1
         or len(eval_metric_specs) > 1
         or resolved_eval_names != default_eval_names
@@ -3511,6 +3813,61 @@ def train(
         weighted_eval_pools = [
             _apply_objective_weights(eval_pool, config, objective) for eval_pool in eval_pools
         ]
+        if resolved_resume_snapshot_path is not None:
+            _validate_resume_snapshot_contract(
+                init_state=init_state,
+                init_model=resolved_init_model,
+                requested_signature=_resume_snapshot_config_signature(
+                    pool=weighted_pool,
+                    objective=objective,
+                    learning_rate=learning_rate,
+                    max_depth=max_depth,
+                    alpha=alpha,
+                    lambda_l2=lambda_l2,
+                    subsample=subsample,
+                    bootstrap_type=bootstrap_type,
+                    bagging_temperature=bagging_temperature,
+                    boosting_type=boosting_type,
+                    drop_rate=drop_rate,
+                    skip_drop=skip_drop,
+                    max_drop=max_drop,
+                    monotone_constraints=monotone_constraints,
+                    interaction_constraints=interaction_constraints,
+                    colsample_bytree=colsample_bytree,
+                    feature_weights=feature_weights,
+                    first_feature_use_penalties=first_feature_use_penalties,
+                    random_strength=random_strength,
+                    grow_policy=grow_policy,
+                    max_leaves=max_leaves,
+                    min_samples_split=min_samples_split,
+                    min_data_in_leaf=min_data_in_leaf,
+                    min_child_weight=min_child_weight,
+                    gamma=gamma,
+                    max_leaf_weight=max_leaf_weight,
+                    num_classes=num_classes,
+                    max_bins=max_bins,
+                    nan_mode=nan_mode,
+                    max_bin_by_feature=max_bin_by_feature,
+                    border_selection_method=border_selection_method,
+                    nan_mode_by_feature=nan_mode_by_feature,
+                    feature_borders=feature_borders,
+                    native_external_memory=native_external_memory,
+                    native_external_memory_dir=native_external_memory_dir,
+                    quantile_alpha=quantile_alpha,
+                    huber_delta=huber_delta,
+                    tweedie_variance_power=tweedie_variance_power,
+                    task_type=task_type,
+                    devices=devices,
+                    distributed_world_size=distributed_world_size,
+                    distributed_rank=distributed_rank,
+                    distributed_root=distributed_root,
+                    distributed_run_id=distributed_run_id,
+                    distributed_timeout=distributed_timeout,
+                    random_seed=random_seed,
+                ),
+                learning_rate_schedule=resolved_learning_rate_schedule,
+                requested_iterations=requested_iterations,
+            )
 
         def _make_native_booster(
             chunk_iterations: int,
@@ -3576,6 +3933,7 @@ def train(
         booster = _make_native_booster(iterations, state=init_state)
         if not use_python_eval_surface:
             native_eval_pool = weighted_eval_pools[0] if weighted_eval_pools else None
+            seeded_learning_rate_history = _initial_learning_rate_history_from_model(resolved_init_model)
             booster.fit(
                 weighted_pool._handle,
                 None if native_eval_pool is None else native_eval_pool._handle,
@@ -3587,7 +3945,18 @@ def train(
                 feature_pipeline=feature_pipeline,
                 training_metadata=getattr(resolved_init_model, "_training_metadata", None),
             )
-            trained_booster._set_training_metadata(data_schema=_pool_schema_metadata(weighted_pool))
+            if seeded_learning_rate_history is None:
+                learning_rate_history = [trained_booster.learning_rate] * trained_booster.num_iterations_trained
+            else:
+                learning_rate_history = [float(value) for value in seeded_learning_rate_history]
+                learning_rate_history.extend(
+                    [trained_booster.learning_rate]
+                    * max(trained_booster.num_iterations_trained - len(learning_rate_history), 0)
+                )
+            trained_booster._set_training_metadata(
+                data_schema=_pool_schema_metadata(weighted_pool),
+                learning_rate_history=learning_rate_history,
+            )
             if resolved_snapshot_path is not None:
                 trained_booster.save_model(
                     resolved_snapshot_path,
@@ -3602,6 +3971,7 @@ def train(
         )
         train_pool_template = _clone_pool(weighted_pool, releasable_feature_storage=True)
         seeded_evals_result = _initial_evals_result_from_model(resolved_init_model)
+        seeded_learning_rate_history = _initial_learning_rate_history_from_model(resolved_init_model)
         eval_metric_names = [str(metric_spec["name"]) for metric_spec in eval_metric_specs]
         evals_result: Dict[str, Dict[str, List[float]]] = {
             "learn": {"loss": [float(value) for value in booster.loss_history()]}
@@ -3628,6 +3998,19 @@ def train(
 
         begin_iteration = int(booster.num_iterations_trained())
         end_iteration = begin_iteration + iterations
+        learning_rate_history = (
+            [float(value) for value in seeded_learning_rate_history]
+            if seeded_learning_rate_history is not None
+            else [wrapped_booster.learning_rate] * begin_iteration
+        )
+        if resolved_learning_rate_schedule is not None and begin_iteration < end_iteration:
+            wrapped_booster.set_learning_rate(
+                _resolve_learning_rate_for_iteration(
+                    resolved_learning_rate_schedule,
+                    iteration=begin_iteration,
+                    total_iterations=end_iteration,
+                )
+            )
         if primary_eval_name is not None:
             monitor_history = evals_result[primary_eval_name][primary_eval_metric]
             best_iteration = -1
@@ -3663,11 +4046,14 @@ def train(
             best_score=best_score,
             eval_metric_name=primary_eval_metric,
             data_schema=_pool_schema_metadata(weighted_pool),
+            learning_rate_history=learning_rate_history,
         )
 
         stopped_by_early_stopping = False
         callback_stop_requested = False
         for _ in range(iterations):
+            booster = wrapped_booster._handle
+            current_learning_rate = float(wrapped_booster.learning_rate)
             iteration_train_pool = _clone_pool(train_pool_template, releasable_feature_storage=True)
             booster.set_iterations(1)
             booster.fit(
@@ -3679,6 +4065,7 @@ def train(
             booster.set_iterations(iterations)
             evals_result["learn"]["loss"] = [float(value) for value in booster.loss_history()]
             current_iteration = int(booster.num_iterations_trained()) - 1
+            learning_rate_history.append(current_learning_rate)
             evaluation_result_list: List[tuple[str, str, float, bool]] = [
                 ("learn", "loss", float(evals_result["learn"]["loss"][-1]), False)
             ]
@@ -3747,6 +4134,7 @@ def train(
                 best_score=best_score,
                 eval_metric_name=primary_eval_metric,
                 data_schema=_pool_schema_metadata(weighted_pool),
+                learning_rate_history=learning_rate_history,
             )
 
             if callback_list:
@@ -3759,6 +4147,7 @@ def train(
                     history=wrapped_booster.evals_result_,
                     best_iteration=best_iteration,
                     best_score=None if best_score is None else float(best_score),
+                    learning_rate=current_learning_rate,
                 )
                 if _distributed_is_root(distributed_config):
                     for callback in callback_list:
@@ -3774,13 +4163,28 @@ def train(
                         )
                     )
 
+            next_iteration = current_iteration + 1
+            if (
+                resolved_learning_rate_schedule is not None
+                and next_iteration < end_iteration
+            ):
+                wrapped_booster.set_learning_rate(
+                    _resolve_learning_rate_for_iteration(
+                        resolved_learning_rate_schedule,
+                        iteration=next_iteration,
+                        total_iterations=end_iteration,
+                    )
+                )
+
             if stopped_by_early_stopping or callback_stop_requested:
                 break
 
+        booster = wrapped_booster._handle
         booster.set_iterations(iterations)
         if stopped_by_early_stopping and best_iteration >= 0 and best_iteration + 1 < booster.num_iterations_trained():
             _prune_booster_to_best_iteration(booster, best_iteration)
             retained_iterations = best_iteration + 1
+            learning_rate_history = learning_rate_history[:retained_iterations]
             evals_result["learn"]["loss"] = evals_result["learn"]["loss"][:retained_iterations]
             for eval_name in resolved_eval_names:
                 for metric_name in eval_metric_names:
@@ -3795,9 +4199,10 @@ def train(
                 if primary_eval_name is not None
                 else []
             ),
-            best_iteration=best_iteration,
-            best_score=best_score,
-            eval_metric_name=primary_eval_metric,
-            data_schema=_pool_schema_metadata(weighted_pool),
-        )
+                best_iteration=best_iteration,
+                best_score=best_score,
+                eval_metric_name=primary_eval_metric,
+                data_schema=_pool_schema_metadata(weighted_pool),
+                learning_rate_history=learning_rate_history,
+            )
         return wrapped_booster
