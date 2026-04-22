@@ -3,19 +3,6 @@ import pytest
 from sklearn.datasets import make_classification, make_regression
 from sklearn.metrics import balanced_accuracy_score
 import ctboost
-import ctboost._core as _core
-
-def _rebase_learning_rate(booster, learning_rate):
-    state = dict(booster._handle.export_state())
-    current_learning_rate = float(booster.learning_rate)
-    resolved_learning_rate = float(learning_rate)
-    scale = current_learning_rate / resolved_learning_rate
-    for tree_state in state.get("trees", []):
-        for node in tree_state.get("nodes", []):
-            if bool(node.get("is_leaf", False)):
-                node["leaf_weight"] = float(node["leaf_weight"]) * scale
-    state["learning_rate"] = resolved_learning_rate
-    return ctboost.Booster(_core.GradientBooster.from_state(state))
 
 def test_learning_rate_schedule_matches_manual_warm_start_and_export(tmp_path):
     X, y = make_regression(
@@ -44,13 +31,13 @@ def test_learning_rate_schedule_matches_manual_warm_start_and_export(tmp_path):
         pool,
         {**base_params, "learning_rate": 0.1},
         num_boost_round=2,
-        init_model=_rebase_learning_rate(stage_one, 0.1),
+        init_model=stage_one,
     )
     manual = ctboost.train(
         pool,
         {**base_params, "learning_rate": 0.05},
         num_boost_round=3,
-        init_model=_rebase_learning_rate(stage_two, 0.05),
+        init_model=stage_two,
     )
     scheduled = ctboost.train(
         pool,
@@ -110,7 +97,7 @@ def test_callback_can_change_learning_rate_for_subsequent_iterations():
         pool,
         {**params, "learning_rate": 0.05},
         num_boost_round=5,
-        init_model=_rebase_learning_rate(manual_first, 0.05),
+        init_model=manual_first,
     )
 
     np.testing.assert_allclose(
