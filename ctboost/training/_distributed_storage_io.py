@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import time
 from typing import Any, Dict, List
@@ -131,8 +132,12 @@ def _write_distributed_shard(pool: Pool, config: Dict[str, Any]) -> Path:
         manifest["sparse_indptr_path"] = "sparse_indptr.npy"
 
     manifest_path = shard_root / "manifest.json"
-    with manifest_path.open("w", encoding="utf-8") as stream:
+    manifest_temp_path = manifest_path.with_suffix(".tmp")
+    with manifest_temp_path.open("w", encoding="utf-8") as stream:
         json.dump(manifest, stream, indent=2, sort_keys=True)
+        stream.flush()
+        os.fsync(stream.fileno())
+    manifest_temp_path.replace(manifest_path)
     return manifest_path
 
 def _load_manifest(path: Path) -> Dict[str, Any]:

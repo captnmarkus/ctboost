@@ -10,6 +10,7 @@ from sklearn.datasets import make_classification, make_regression
 import ctboost
 
 from tests.helpers import find_free_tcp_port as _find_free_tcp_port
+from tests.helpers import wait_for_tcp_listener as _wait_for_tcp_listener
 from tests.helpers import make_classification_data as _make_classification_data
 
 def test_regressor_distributed_fit_matches_central_estimator(tmp_path: Path):
@@ -69,12 +70,13 @@ def test_regressor_distributed_fit_matches_central_estimator(tmp_path: Path):
 
     worker_env = os.environ.copy()
     worker_env["PYTHONPATH"] = str(Path.cwd()) + os.pathsep + worker_env.get("PYTHONPATH", "")
-    worker_one = subprocess.Popen(
-        [sys.executable, str(worker_script), "1", str(tmp_path), str(port)],
-        env=worker_env,
-    )
     worker_zero = subprocess.Popen(
         [sys.executable, str(worker_script), "0", str(tmp_path), str(port)],
+        env=worker_env,
+    )
+    _wait_for_tcp_listener(port)
+    worker_one = subprocess.Popen(
+        [sys.executable, str(worker_script), "1", str(tmp_path), str(port)],
         env=worker_env,
     )
     assert worker_one.wait(timeout=180) == 0

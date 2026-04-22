@@ -19,6 +19,7 @@ from ctboost.distributed import (
 )
 
 from tests.helpers import find_free_tcp_port as _find_free_tcp_port
+from tests.helpers import wait_for_tcp_listener as _wait_for_tcp_listener
 
 def test_distributed_tcp_request_retries_until_coordinator_is_ready():
     port = _find_free_tcp_port()
@@ -84,12 +85,13 @@ def test_distributed_collective_context_waits_for_all_ranks_before_shutdown(tmp_
 
     worker_env = os.environ.copy()
     worker_env["PYTHONPATH"] = str(Path.cwd()) + os.pathsep + worker_env.get("PYTHONPATH", "")
-    worker_one = subprocess.Popen(
-        [sys.executable, str(worker_script), "1", str(port), "0.5"],
-        env=worker_env,
-    )
     worker_zero = subprocess.Popen(
         [sys.executable, str(worker_script), "0", str(port), "0.0"],
+        env=worker_env,
+    )
+    _wait_for_tcp_listener(port)
+    worker_one = subprocess.Popen(
+        [sys.executable, str(worker_script), "1", str(port), "0.5"],
         env=worker_env,
     )
     assert worker_one.wait(timeout=60) == 0

@@ -25,6 +25,8 @@ from ._distributed_storage_merge import _merge_distributed_shards
 @contextlib.contextmanager
 def _distributed_collective_context(distributed: Optional[Dict[str, Any]]):
     server_process = None
+    body_error: Optional[BaseException] = None
+    shutdown_error: Optional[BaseException] = None
     if distributed is not None and distributed["backend"] == "tcp" and distributed["rank"] == 0:
         if distributed["host"] is None or distributed["port"] is None:
             raise ValueError("tcp distributed coordination requires a host and port")
@@ -46,8 +48,11 @@ def _distributed_collective_context(distributed: Optional[Dict[str, Any]]):
         )
     try:
         yield
+    except BaseException as exc:
+        body_error = exc
+        raise
     finally:
-        if distributed is not None and distributed["backend"] == "tcp":
+        if distributed is not None and distributed["backend"] == "tcp" and body_error is None:
             try:
                 distributed_tcp_request(
                     distributed["root"],
@@ -58,9 +63,8 @@ def _distributed_collective_context(distributed: Optional[Dict[str, Any]]):
                     distributed["world_size"],
                     b"",
                 )
-            except Exception:
-                if server_process is None:
-                    raise
+            except Exception as exc:
+                shutdown_error = exc
         if server_process is not None:
             server_process.terminate()
             try:
@@ -68,6 +72,8 @@ def _distributed_collective_context(distributed: Optional[Dict[str, Any]]):
             except subprocess.TimeoutExpired:
                 server_process.kill()
                 server_process.wait(timeout=5.0)
+        if shutdown_error is not None:
+            raise shutdown_error
 
 def _resolve_distributed_quantization_schema(
     pool: Pool,
