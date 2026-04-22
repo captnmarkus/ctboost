@@ -89,6 +89,14 @@ class NativeFeaturePipeline {
                                     bool use_training_ctr_columns) const;
   std::vector<int> ResolveIndices(const pybind11::object& selectors) const;
   void RefreshCombinationSourceIndices();
+  void FitCoreFeatureState(pybind11::array object_matrix,
+                           const std::vector<float>& label_values,
+                           const std::vector<int>& cat_indices,
+                           const std::vector<int>& text_indices,
+                           const std::vector<int>& embedding_indices);
+  void FitCtrState(pybind11::array object_matrix, const std::vector<float>& label_values);
+  void FitTextAndEmbeddingState(const std::vector<int>& text_indices,
+                                const std::vector<int>& embedding_indices);
   void LoadState(const pybind11::dict& state);
 
   pybind11::object cat_features_;

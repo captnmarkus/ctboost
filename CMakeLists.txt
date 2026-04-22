@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24...4.3)
 
-project(CTBoost VERSION 0.1.41 LANGUAGES CXX)
+project(CTBoost VERSION 0.1.43 LANGUAGES CXX)
 
 if(DEFINED SKBUILD_PROJECT_VERSION_FULL)
   set(CTBOOST_PACKAGE_VERSION "${SKBUILD_PROJECT_VERSION_FULL}")
@@ -68,15 +68,71 @@ endif()
 
 add_library(ctboost_core STATIC
   src/core/booster.cpp
+  src/core/booster_accessors.cpp
+  src/core/booster_constructor.cpp
+  src/core/booster_distributed.cpp
+  src/core/booster_fit.cpp
+  src/core/booster_fit_iteration.cpp
+  src/core/booster_fit_loop.cpp
+  src/core/booster_fit_metrics.cpp
+  src/core/booster_fit_multiclass.cpp
+  src/core/booster_fit_single_output.cpp
+  src/core/booster_fit_support.cpp
+  src/core/booster_predict.cpp
+  src/core/booster_prediction.cpp
+  src/core/booster_sampling.cpp
+  src/core/booster_state.cpp
+  src/core/booster_tokens.cpp
+  src/core/booster_tree_updates.cpp
   src/core/build_info.cpp
   src/core/data.cpp
+  src/core/data_dense.cpp
+  src/core/data_metadata.cpp
+  src/core/data_validation.cpp
   src/core/feature_pipeline.cpp
+  src/core/feature_pipeline_fit.cpp
+  src/core/feature_pipeline_fit_core.cpp
+  src/core/feature_pipeline_fit_ctr.cpp
+  src/core/feature_pipeline_normalize.cpp
+  src/core/feature_pipeline_state.cpp
+  src/core/feature_pipeline_state_load.cpp
+  src/core/feature_pipeline_state_support.cpp
+  src/core/feature_pipeline_transform.cpp
   src/core/histogram.cpp
+  src/core/histogram_builder.cpp
+  src/core/histogram_builder_support.cpp
+  src/core/histogram_quantization.cpp
+  src/core/histogram_quantization_support.cpp
+  src/core/histogram_schema.cpp
+  src/core/histogram_storage.cpp
   src/core/metric.cpp
+  src/core/metric_classification.cpp
+  src/core/metric_classification_scores.cpp
+  src/core/metric_ranking.cpp
+  src/core/metric_regression.cpp
+  src/core/metric_support.cpp
+  src/core/metric_survival.cpp
   src/core/objective.cpp
+  src/core/objective_classification.cpp
+  src/core/objective_ranking.cpp
+  src/core/objective_regression.cpp
+  src/core/objective_support.cpp
+  src/core/objective_survival.cpp
   src/core/profiler.cpp
   src/core/statistics.cpp
+  src/core/statistics_gamma.cpp
   src/core/tree.cpp
+  src/core/tree_build.cpp
+  src/core/tree_build_cpu.cpp
+  src/core/tree_build_gpu.cpp
+  src/core/tree_build_children.cpp
+  src/core/tree_build_gpu_support.cpp
+  src/core/tree_build_support.cpp
+  src/core/tree_candidates.cpp
+  src/core/tree_distributed.cpp
+  src/core/tree_distributed_payloads.cpp
+  src/core/tree_predict.cpp
+  src/core/tree_split_scoring.cpp
 )
 
 target_include_directories(ctboost_core
@@ -125,6 +181,15 @@ endif()
 
 pybind11_add_module(_core MODULE
   src/bindings/module.cpp
+  src/bindings/module_arrays.cpp
+  src/bindings/module_registration.cpp
+  src/bindings/module_registration_booster.cpp
+  src/bindings/module_registration_booster_accessors.cpp
+  src/bindings/module_registration_booster_state.cpp
+  src/bindings/module_registration_pipeline.cpp
+  src/bindings/module_registration_pool.cpp
+  src/bindings/module_state.cpp
+  src/bindings/module_state_booster.cpp
 )
 
 target_include_directories(_core PRIVATE ${PROJECT_SOURCE_DIR}/include)

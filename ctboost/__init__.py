@@ -1,9 +1,38 @@
 """Public Python API for CTBoost."""
 
+import importlib.util
+import pathlib
+import sys
 from typing import Any, Dict
 
+from . import _core as _core
 from ._core import build_info as _native_build_info
 from ._version import __version__
+
+
+def _ensure_split_package(name: str) -> None:
+    full_name = f"{__name__}.{name}"
+    if full_name in sys.modules:
+        return
+    package_dir = pathlib.Path(__file__).with_name(name)
+    init_py = package_dir / "__init__.py"
+    if not init_py.is_file():
+        return
+    spec = importlib.util.spec_from_file_location(
+        full_name,
+        init_py,
+        submodule_search_locations=[str(package_dir)],
+    )
+    if spec is None or spec.loader is None:
+        return
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[full_name] = module
+    spec.loader.exec_module(module)
+
+
+for _split_package in ("core", "distributed", "training", "sklearn"):
+    _ensure_split_package(_split_package)
+del _split_package
 
 _CORE_EXPORT_NAMES = {
     "Booster",
