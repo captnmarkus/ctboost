@@ -5,7 +5,6 @@ import pathlib
 import sys
 from typing import Any, Dict
 
-from . import _core as _core
 from ._core import build_info as _native_build_info
 from ._version import __version__
 
@@ -139,6 +138,10 @@ def build_info() -> Dict[str, Any]:
 
 
 def __getattr__(name: str) -> Any:
+    if name == "_core":
+        module = __import__(f"{__name__}._core", fromlist=["_core"])
+        globals()["_core"] = module
+        return module
     if name in _CORE_EXPORT_NAMES:
         return _load_core_exports()[name]
     if name in _SKLEARN_EXPORT_NAMES:
@@ -147,7 +150,7 @@ def __getattr__(name: str) -> Any:
 
 
 def __dir__() -> Any:
-    return sorted(set(globals()) | _CORE_EXPORT_NAMES | _SKLEARN_EXPORT_NAMES)
+    return sorted(set(globals()) | _CORE_EXPORT_NAMES | _SKLEARN_EXPORT_NAMES | {"_core"})
 
 __all__ = [
     "__version__",

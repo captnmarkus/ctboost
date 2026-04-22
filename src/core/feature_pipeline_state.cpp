@@ -23,9 +23,16 @@ py::dict NativeFeaturePipeline::to_state() const {
   state["embedding_stats"] = embedding_stats_;
   state["ctr_prior_strength"] = ctr_prior_strength_;
   state["random_seed"] = random_seed_;
-  state["feature_names_in_"] =
-      feature_names_in_.has_value() ? detail::VectorToPyList(feature_names_in_.value()) : py::none();
-  state["n_features_in_"] = n_features_in_ >= 0 ? py::int_(n_features_in_) : py::none();
+  if (feature_names_in_.has_value()) {
+    state["feature_names_in_"] = detail::VectorToPyList(feature_names_in_.value());
+  } else {
+    state["feature_names_in_"] = py::none();
+  }
+  if (n_features_in_ >= 0) {
+    state["n_features_in_"] = py::int_(n_features_in_);
+  } else {
+    state["n_features_in_"] = py::none();
+  }
   state["cat_feature_indices_"] = detail::VectorToPyList(cat_feature_indices_);
   state["output_feature_names_"] = detail::VectorToPyList(output_feature_names_);
   state["numeric_indices"] = detail::VectorToPyList(numeric_indices_);
