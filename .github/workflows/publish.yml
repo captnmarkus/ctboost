@@ -126,7 +126,7 @@ jobs:
       CIBW_BUILD_VERBOSITY: 3
       CIBW_TEST_REQUIRES: pytest
       CIBW_TEST_COMMAND: >-
-        python -X faulthandler -m pytest {project}/tests/test_gpu_wheel_smoke.py -q
+        python {project}/tests/run_installed_smoke.py {project}/tests/test_gpu_wheel_smoke.py
       CIBW_CONFIG_SETTINGS: >-
         cmake.define.CTBOOST_ENABLE_CUDA=ON
         cmake.define.CTBOOST_REQUIRE_CUDA=ON
@@ -229,7 +229,7 @@ jobs:
           CIBW_BUILD_VERBOSITY: 3
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: >-
-            python -X faulthandler -m pytest {project}/tests/test_gpu_wheel_smoke.py -q
+            python {project}/tests/run_installed_smoke.py {project}/tests/test_gpu_wheel_smoke.py
           CIBW_BEFORE_BUILD_WINDOWS: >-
             python -m pip install --upgrade "delvewheel>=1.8"
           CIBW_TEST_ENVIRONMENT_WINDOWS: >-
