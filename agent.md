@@ -8,7 +8,6 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 
 - Preserve the current conditional-inference-tree split logic and the conditional evaluation of candidate features during tree growth.
 - Prefer work in data plumbing, preprocessing, metrics, orchestration, serialization, profiling, packaging, and deployment.
-- Do not replace the learner with CatBoost-style or XGBoost-style split selection in the name of generic feature parity.
 
 ## Current Baseline
 

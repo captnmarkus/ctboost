@@ -2,7 +2,7 @@
 
 CTBoost is a gradient boosting library built around Conditional Inference Trees, with a native C++17 core, `pybind11` bindings, optional CUDA support, and optional scikit-learn compatible estimators.
 
-The project constraint is deliberate: keep the conditional-inference-tree split logic intact. New features should land in data ingestion, preprocessing, metrics, orchestration, serialization, and deployment layers rather than by replacing the learner with CatBoost-style or XGBoost-style tree growth.
+CTBoost is focused on making conditional-inference-tree boosting practical for real datasets and production workflows. Development is centered on data ingestion, preprocessing, metrics, orchestration, serialization, and deployment around the existing learner.
 
 ## What CTBoost Supports
 
@@ -19,6 +19,15 @@ The project constraint is deliberate: keep the conditional-inference-tree split 
 - Feature importance, leaf indices, and path-based prediction contributions
 
 See [BACKLOG.md](BACKLOG.md) for the remaining generic feature roadmap and deferred items.
+
+## Demos
+
+The repository ships local Kaggle-oriented demos in [`demo/`](demo/) instead of remote kernel automation:
+
+- `demo/kaggle_titanic.py` for binary classification on Titanic
+- `demo/kaggle_house_prices.py` for regression on House Prices
+
+See [`demo/README.md`](demo/README.md) for expected data layouts and run commands.
 
 ## Installation
 
@@ -274,12 +283,23 @@ cmake --build build --config Release --parallel
 
 ```text
 ctboost/      Python API surface
+demo/         local example workflows, including Kaggle demos
 include/      public C++ headers
 src/core/     core training, data, objectives, trees, statistics
 src/bindings/ pybind11 extension bindings
 cuda/         optional CUDA backend
 tests/        Python test suite
 ```
+
+## Acknowledgments
+
+CTBoost draws methodological inspiration from the original conditional inference tree work by
+Torsten Hothorn, Kurt Hornik, and Achim Zeileis, along with the subsequent `partykit` work on
+CRAN by Torsten Hothorn, Achim Zeileis, and Heidi Seibold. If you are using CTBoost in research
+or want the statistical background behind the learner, start with these references:
+
+- Hothorn, T., Hornik, K., and Zeileis, A. (2006). *Unbiased Recursive Partitioning: A Conditional Inference Framework.*
+- Hothorn, T. and Zeileis, A. (2015). *partykit: A Modular Toolkit for Recursive Partytioning in R.*
 
 ## License
 
