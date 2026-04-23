@@ -73,10 +73,11 @@ def distributed_tcp_request(
             if last_error is None:
                 raise TimeoutError(f"timed out waiting for distributed tcp coordinator at {root}")
             raise TimeoutError(f"timed out waiting for distributed tcp coordinator at {root}") from last_error
-        attempt_timeout = min(max(remaining, 0.05), 1.0)
+        connect_timeout = min(max(remaining, 0.05), 1.0)
         try:
-            with socket.create_connection((parsed.host, parsed.port), timeout=attempt_timeout) as connection:
-                connection.settimeout(attempt_timeout)
+            with socket.create_connection((parsed.host, parsed.port), timeout=connect_timeout) as connection:
+                response_timeout = max(deadline - time.monotonic(), 0.05)
+                connection.settimeout(response_timeout)
                 stream = connection.makefile("rwb", buffering=0)
                 header = f"{op}\t{key}\t{rank}\t{world_size}\t{len(payload)}\n".encode("utf-8")
                 stream.write(header)

@@ -21,7 +21,7 @@ class _CollectiveState:
         self.world_size = world_size
         self.payloads: Dict[int, bytes] = {}
         self.response: Optional[bytes] = None
-        self.remaining = world_size
+        self.completed_ranks: set[int] = set()
         self.condition = threading.Condition()
 
 
@@ -104,8 +104,8 @@ class DistributedCollectiveServer:
             while state.response is None:
                 state.condition.wait()
             response = state.response
-            state.remaining -= 1
-            if state.remaining == 0:
+            state.completed_ranks.add(rank)
+            if len(state.completed_ranks) == state.world_size:
                 with self._states_lock:
                     self._states.pop(state_key, None)
             return response
