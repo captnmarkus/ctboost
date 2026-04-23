@@ -125,7 +125,7 @@ jobs:
       CIBW_ARCHS: x86_64
       CIBW_BUILD_VERBOSITY: 3
       CIBW_TEST_REQUIRES: >-
-        pytest scikit-learn>=1.3
+        pytest
       CIBW_TEST_COMMAND: >-
         python {project}/tests/run_installed_smoke.py {project}/tests/test_gpu_wheel_smoke.py
       CIBW_CONFIG_SETTINGS: >-
@@ -229,7 +229,7 @@ jobs:
           CIBW_ARCHS: AMD64
           CIBW_BUILD_VERBOSITY: 3
           CIBW_TEST_REQUIRES: >-
-            pytest scikit-learn>=1.3
+            pytest
           CIBW_TEST_COMMAND: >-
             python {project}/tests/run_installed_smoke.py {project}/tests/test_gpu_wheel_smoke.py
           CIBW_BEFORE_BUILD_WINDOWS: >-

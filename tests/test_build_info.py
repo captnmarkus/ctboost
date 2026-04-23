@@ -1,5 +1,13 @@
+import os
+import pathlib
+import subprocess
+import sys
+
 import ctboost
 import numpy as np
+
+_PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
+
 
 def test_build_info_matches_package_version():
     info = ctboost.build_info()
@@ -21,6 +29,44 @@ def test_pool_shell_preserves_constructor_shape():
     assert pool.cat_features == [1]
     assert pool.feature_names == ["a", "b"]
     np.testing.assert_array_equal(pool.label, np.array([0.0, 1.0], dtype=np.float32))
+
+
+def test_import_does_not_eagerly_require_sklearn():
+    script = """
+import importlib.abc
+
+class _BlockSklearn(importlib.abc.MetaPathFinder):
+    def find_spec(self, fullname, path=None, target=None):
+        if fullname == "sklearn" or fullname.startswith("sklearn."):
+            raise ModuleNotFoundError(fullname)
+        return None
+
+import sys
+sys.meta_path.insert(0, _BlockSklearn())
+
+import ctboost
+
+info = ctboost.build_info()
+assert info["version"] == ctboost.__version__
+"""
+    env = os.environ.copy()
+    pythonpath = env.get("PYTHONPATH")
+    path_entries = [str(_PROJECT_ROOT)]
+    if pythonpath:
+        path_entries.append(pythonpath)
+    env["PYTHONPATH"] = os.pathsep.join(path_entries)
+
+    result = subprocess.run(
+        [sys.executable, "-c", script],
+        cwd=_PROJECT_ROOT,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr or result.stdout
+
 
 def test_estimators_expose_sklearn_params():
     clf = ctboost.CTBoostClassifier(
@@ -120,10 +166,12 @@ def test_estimators_expose_sklearn_params():
     assert reg_params["iterations"] == 12
     assert reg_params["loss_function"] == "RMSE"
 
+
 def test_native_booster_exports_verbose_flag():
     handle = ctboost._core.GradientBooster(verbose=True)
     state = handle.export_state()
     assert state["verbose"] is True
+
 
 def test_native_booster_exports_tree_control_state():
     handle = ctboost._core.GradientBooster(

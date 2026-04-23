@@ -29,7 +29,9 @@ def _ensure_split_package(name: str) -> None:
     spec.loader.exec_module(module)
 
 
-for _split_package in ("core", "distributed", "training", "sklearn"):
+# Keep the sklearn layer lazy so plain `import ctboost` works without the
+# optional scikit-learn stack installed.
+for _split_package in ("core", "distributed", "training"):
     _ensure_split_package(_split_package)
 del _split_package
 
