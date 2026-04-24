@@ -37,9 +37,9 @@ CTBoost now covers the core tabular baseline and several generic-library layers 
 Relevant local references:
 
 - [README.md](README.md)
-- [ctboost/core.py](ctboost/core.py)
-- [ctboost/training.py](ctboost/training.py)
-- [ctboost/sklearn.py](ctboost/sklearn.py)
+- [ctboost/core/](ctboost/core/)
+- [ctboost/training/](ctboost/training/)
+- [ctboost/sklearn/](ctboost/sklearn/)
 - [ctboost/_export.py](ctboost/_export.py)
 
 ## Priority 0: Keep Out Of Scope

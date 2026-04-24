@@ -203,12 +203,14 @@ int Tree::BuildNodeCpu(const HistMatrix& hist,
     ++(*leaf_count);
   }
 
-  const detail::ChildInteractionState child_interaction = detail::ResolveChildInteractionState(
+  detail::ChildInteractionState child_interaction;
+  detail::ResolveChildInteractionState(
       hist,
       options,
       feature_choice.feature_id,
       node_allowed_features,
-      active_interaction_groups);
+      active_interaction_groups,
+      child_interaction);
   const bool build_left_first = detail::ChooseCpuFirstChild(hist,
                                                             child_histograms,
                                                             options,

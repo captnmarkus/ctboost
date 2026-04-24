@@ -87,12 +87,13 @@ ChildLeafBounds ComputeChildLeafBounds(const TreeBuildOptions& options,
                                        double leaf_upper_bound);
 const QuantizationSchema& RequireQuantizationSchema(const QuantizationSchemaPtr& schema);
 double ClampLeafWeight(double leaf_weight, double lower_bound, double upper_bound);
-ChildInteractionState ResolveChildInteractionState(
+void ResolveChildInteractionState(
     const HistMatrix& hist,
     const TreeBuildOptions& options,
     int feature_id,
     const std::vector<int>* node_allowed_features,
-    const std::vector<int>* active_interaction_groups);
+    const std::vector<int>* active_interaction_groups,
+    ChildInteractionState& state);
 
 NodeHistogramSet ComputeNodeHistogramSet(const HistMatrix& hist,
                                          const std::vector<float>& gradients,

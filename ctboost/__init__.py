@@ -1,12 +1,40 @@
 """Public Python API for CTBoost."""
 
+import importlib.machinery
 import importlib.util
 import pathlib
 import sys
 from typing import Any, Dict
 
+
+def _load_colocated_native_extension() -> None:
+    module_name = f"{__name__}._core"
+    if module_name in sys.modules:
+        return
+
+    package_dir = pathlib.Path(__file__).resolve().parent
+    for suffix in importlib.machinery.EXTENSION_SUFFIXES:
+        candidate = package_dir / f"_core{suffix}"
+        if not candidate.is_file():
+            continue
+        spec = importlib.util.spec_from_file_location(module_name, candidate)
+        if spec is None or spec.loader is None:
+            continue
+        module = importlib.util.module_from_spec(spec)
+        sys.modules[module_name] = module
+        try:
+            spec.loader.exec_module(module)
+        except Exception:
+            sys.modules.pop(module_name, None)
+            raise
+        return
+
+
+_load_colocated_native_extension()
 from ._core import build_info as _native_build_info
 from ._version import __version__
+
+del _load_colocated_native_extension
 
 
 def _ensure_split_package(name: str) -> None:
@@ -105,6 +133,7 @@ def _load_core_exports() -> Dict[str, Any]:
 
 def _load_sklearn_exports() -> Dict[str, Any]:
     try:
+        _ensure_split_package("sklearn")
         from .sklearn import (
             CBoostClassifier,
             CBoostRanker,

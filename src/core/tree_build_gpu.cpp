@@ -197,12 +197,14 @@ int Tree::BuildNodeGpu(const HistMatrix& hist,
     ++(*leaf_count);
   }
 
-  const detail::ChildInteractionState child_interaction = detail::ResolveChildInteractionState(
+  detail::ChildInteractionState child_interaction;
+  detail::ResolveChildInteractionState(
       hist,
       options,
       node_search.feature_id,
       node_allowed_features,
-      active_interaction_groups);
+      active_interaction_groups,
+      child_interaction);
   const bool build_left_first = detail::ChooseGpuFirstChild(options,
                                                             gpu_workspace,
                                                             child_interaction.allowed_features,

@@ -37,28 +37,29 @@ ChildLeafBounds ComputeChildLeafBounds(const TreeBuildOptions& options,
   return bounds;
 }
 
-ChildInteractionState ResolveChildInteractionState(
+void ResolveChildInteractionState(
     const HistMatrix& hist,
     const TreeBuildOptions& options,
     int feature_id,
     const std::vector<int>* node_allowed_features,
-    const std::vector<int>* active_interaction_groups) {
-  ChildInteractionState state;
+    const std::vector<int>* active_interaction_groups,
+    ChildInteractionState& state) {
+  state = ChildInteractionState{};
   state.active_groups = active_interaction_groups;
   state.allowed_features = node_allowed_features;
   if (options.interaction_constraints == nullptr || feature_id < 0) {
-    return state;
+    return;
   }
 
   const auto& constraints = *options.interaction_constraints;
   if (static_cast<std::size_t>(feature_id) >= constraints.feature_to_groups.size()) {
-    return state;
+    return;
   }
 
   const auto& feature_groups =
       constraints.feature_to_groups[static_cast<std::size_t>(feature_id)];
   if (feature_groups.empty()) {
-    return state;
+    return;
   }
 
   if (active_interaction_groups == nullptr || active_interaction_groups->empty()) {
@@ -75,7 +76,6 @@ ChildInteractionState ResolveChildInteractionState(
       constraints,
       state.active_groups);
   state.allowed_features = &state.allowed_features_storage;
-  return state;
 }
 
 CpuChildHistogramState BuildCpuChildHistogramState(
