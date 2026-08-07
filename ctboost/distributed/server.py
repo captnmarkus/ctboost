@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import socketserver
 import threading
-import time
 from typing import Callable, Dict, List, Optional
 
 from .merge import build_schema_collect_response
@@ -40,9 +39,18 @@ class DistributedCollectiveServer:
     ) -> None:
         self._schema_builder = schema_builder
         self._states: Dict[tuple[str, str], _CollectiveState] = {}
+        self._response_sent: Dict[tuple[str, str], set[int]] = {}
         self._states_lock = threading.Lock()
+        self._stop_lock = threading.Lock()
+        self._stopped = threading.Event()
         self._server = _ThreadingCollectiveTcpServer((host, port), self._make_handler())
-        self._thread = threading.Thread(target=self._server.serve_forever, daemon=True)
+        self._thread = threading.Thread(target=self._serve, daemon=True)
+
+    def _serve(self) -> None:
+        try:
+            self._server.serve_forever()
+        finally:
+            self._stopped.set()
 
     def _make_handler(self):
         owner = self
@@ -56,18 +64,36 @@ class DistributedCollectiveServer:
                 if len(header) != 5:
                     raise RuntimeError("invalid distributed coordinator request header")
                 op, key, raw_rank, raw_world, raw_payload_size = header
+                rank = int(raw_rank)
+                world_size = int(raw_world)
                 response = owner._dispatch(
                     op,
                     key,
-                    int(raw_rank),
-                    int(raw_world),
+                    rank,
+                    world_size,
                     _read_exact(self.rfile, int(raw_payload_size)),
                 )
                 self.wfile.write(f"ok\t{len(response)}\n".encode("utf-8"))
                 if response:
                     self.wfile.write(response)
+                self.wfile.flush()
+                owner._mark_response_sent(op, key, rank, world_size)
 
         return Handler
+
+    def _mark_response_sent(self, op: str, key: str, rank: int, world_size: int) -> None:
+        if op != "barrier" or not key.endswith("/__shutdown__"):
+            return
+
+        state_key = (op, key)
+        with self._states_lock:
+            sent_ranks = self._response_sent.setdefault(state_key, set())
+            sent_ranks.add(rank)
+            if len(sent_ranks) < world_size:
+                return
+            self._response_sent.pop(state_key, None)
+
+        threading.Thread(target=self.stop, daemon=True).start()
 
     def _dispatch(self, op: str, key: str, rank: int, world_size: int, payload: bytes) -> bytes:
         if op == "ping":
@@ -113,18 +139,28 @@ class DistributedCollectiveServer:
     def start(self) -> None:
         self._thread.start()
 
+    def wait(self, timeout: Optional[float] = None) -> bool:
+        self._thread.join(timeout=timeout)
+        return not self._thread.is_alive()
+
     def stop(self) -> None:
-        self._server.shutdown()
-        self._server.server_close()
-        self._thread.join(timeout=5.0)
+        with self._stop_lock:
+            if self._stopped.is_set():
+                self._server.server_close()
+                return
+            self._server.shutdown()
+            self._server.server_close()
+        if threading.current_thread() is not self._thread:
+            self._thread.join(timeout=5.0)
+        self._stopped.set()
 
 
 def run_distributed_collective_server(host: str, port: int) -> None:
     server = DistributedCollectiveServer(host, port, schema_builder=build_schema_collect_response)
     server.start()
     try:
-        while True:
-            time.sleep(3600.0)
+        while not server.wait(timeout=3600.0):
+            pass
     except KeyboardInterrupt:
         pass
     finally:

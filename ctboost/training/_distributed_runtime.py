@@ -66,12 +66,18 @@ def _distributed_collective_context(distributed: Optional[Dict[str, Any]]):
             except Exception as exc:
                 shutdown_error = exc
         if server_process is not None:
-            server_process.terminate()
-            try:
-                server_process.wait(timeout=5.0)
-            except subprocess.TimeoutExpired:
-                server_process.kill()
-                server_process.wait(timeout=5.0)
+            if body_error is None and shutdown_error is None:
+                try:
+                    server_process.wait(timeout=5.0)
+                except subprocess.TimeoutExpired:
+                    pass
+            if server_process.poll() is None:
+                server_process.terminate()
+                try:
+                    server_process.wait(timeout=5.0)
+                except subprocess.TimeoutExpired:
+                    server_process.kill()
+                    server_process.wait(timeout=5.0)
         if shutdown_error is not None:
             raise shutdown_error
 

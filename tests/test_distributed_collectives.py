@@ -70,6 +70,35 @@ def test_distributed_tcp_request_waits_for_slow_coordinator_response():
         server.server_close()
         thread.join(timeout=5.0)
 
+def test_distributed_collective_server_self_stops_after_shutdown_barrier():
+    port = _find_free_tcp_port()
+    root = f"tcp://127.0.0.1:{port}"
+    server = DistributedCollectiveServer("127.0.0.1", port)
+    server.start()
+    errors = []
+
+    def request_shutdown(rank: int) -> None:
+        try:
+            distributed_tcp_request(root, 5.0, "barrier", "run/__shutdown__", rank, 2, b"")
+        except BaseException as exc:
+            errors.append(exc)
+
+    workers = [
+        threading.Thread(target=request_shutdown, args=(rank,), daemon=True)
+        for rank in range(2)
+    ]
+    try:
+        for worker in workers:
+            worker.start()
+        for worker in workers:
+            worker.join(timeout=5.0)
+
+        assert not errors
+        assert all(not worker.is_alive() for worker in workers)
+        assert server.wait(timeout=5.0)
+    finally:
+        server.stop()
+
 def test_distributed_collective_context_waits_for_all_ranks_before_shutdown(tmp_path: Path):
     port = _find_free_tcp_port()
     worker_script = tmp_path / "distributed_barrier_worker.py"
