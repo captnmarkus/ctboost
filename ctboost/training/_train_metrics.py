@@ -17,7 +17,6 @@ def _resolve_metric_runtime(
     init_state: Optional[Mapping[str, Any]],
     eval_pools: List[Any],
     resolved_eval_names: List[str],
-    default_eval_names: List[str],
     early_stopping_rounds: Optional[int],
     early_stopping_metric: Optional[Any],
     early_stopping_name: Optional[str],
@@ -92,7 +91,6 @@ def _resolve_metric_runtime(
         or learning_rate_schedule is not None
         or len(eval_pools) > 1
         or len(eval_metric_specs) > 1
-        or resolved_eval_names != default_eval_names
         or any(metric_spec["kind"] == "callable" for metric_spec in eval_metric_specs)
         or (snapshot_callback is not None and distributed_config is not None)
     )

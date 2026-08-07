@@ -4,6 +4,80 @@
 #include <stdexcept>
 
 namespace ctboost {
+namespace {
+
+template <typename BinType>
+bool HasCompleteContiguousBinStorage(const HistMatrix& hist,
+                                     const std::vector<BinType>& storage) noexcept {
+  if (hist.uses_external_bin_storage()) {
+    return false;
+  }
+  if (hist.num_rows == 0) {
+    return true;
+  }
+  return hist.num_cols <= storage.size() / hist.num_rows;
+}
+
+template <typename BinType>
+int PredictContiguousLeafIndex(const std::vector<Node>& nodes,
+                               const BinType* bin_indices,
+                               std::size_t num_rows,
+                               std::size_t row) noexcept {
+  int node_index = 0;
+  while (!nodes[static_cast<std::size_t>(node_index)].is_leaf) {
+    const Node& node = nodes[static_cast<std::size_t>(node_index)];
+    const std::size_t offset =
+        static_cast<std::size_t>(node.split_feature_id) * num_rows + row;
+    const std::uint16_t bin = static_cast<std::uint16_t>(bin_indices[offset]);
+    node_index = node.is_categorical_split
+                     ? (node.left_categories[bin] != 0 ? node.left_child : node.right_child)
+                     : (bin <= node.split_bin_index ? node.left_child : node.right_child);
+  }
+  return node_index;
+}
+
+template <typename BinType>
+void AccumulateContiguousContributions(const std::vector<Node>& nodes,
+                                       const BinType* bin_indices,
+                                       std::size_t num_rows,
+                                       std::size_t row,
+                                       float scale,
+                                       std::vector<float>& row_contributions) {
+  std::size_t path_length = 0;
+  int node_index = 0;
+  while (!nodes[static_cast<std::size_t>(node_index)].is_leaf) {
+    const Node& node = nodes[static_cast<std::size_t>(node_index)];
+    ++path_length;
+    const std::size_t offset =
+        static_cast<std::size_t>(node.split_feature_id) * num_rows + row;
+    const std::uint16_t bin = static_cast<std::uint16_t>(bin_indices[offset]);
+    node_index = node.is_categorical_split
+                     ? (node.left_categories[bin] != 0 ? node.left_child : node.right_child)
+                     : (bin <= node.split_bin_index ? node.left_child : node.right_child);
+  }
+
+  const float leaf_value =
+      scale * nodes[static_cast<std::size_t>(node_index)].leaf_weight;
+  if (path_length == 0) {
+    row_contributions.back() += leaf_value;
+    return;
+  }
+
+  const float share = leaf_value / static_cast<float>(path_length);
+  node_index = 0;
+  while (!nodes[static_cast<std::size_t>(node_index)].is_leaf) {
+    const Node& node = nodes[static_cast<std::size_t>(node_index)];
+    row_contributions[static_cast<std::size_t>(node.split_feature_id)] += share;
+    const std::size_t offset =
+        static_cast<std::size_t>(node.split_feature_id) * num_rows + row;
+    const std::uint16_t bin = static_cast<std::uint16_t>(bin_indices[offset]);
+    node_index = node.is_categorical_split
+                     ? (node.left_categories[bin] != 0 ? node.left_child : node.right_child)
+                     : (bin <= node.split_bin_index ? node.left_child : node.right_child);
+  }
+}
+
+}  // namespace
 
 float Tree::PredictRow(const Pool& pool, std::size_t row) const {
   const int leaf_index = PredictLeafIndex(pool, row);
@@ -63,6 +137,64 @@ void Tree::AccumulateContributions(
   }
 }
 
+void Tree::AccumulateBinnedContributions(
+    const HistMatrix& hist,
+    std::size_t row,
+    float scale,
+    std::vector<float>& row_contributions) const {
+  if (row_contributions.empty()) {
+    return;
+  }
+  if (nodes_.empty()) {
+    return;
+  }
+
+  if (hist.bin_storage_bytes() == 1 &&
+      HasCompleteContiguousBinStorage(hist, hist.compact_bin_indices)) {
+    AccumulateContiguousContributions(nodes_,
+                                      hist.compact_bin_indices.data(),
+                                      hist.num_rows,
+                                      row,
+                                      scale,
+                                      row_contributions);
+    return;
+  }
+  if (hist.bin_storage_bytes() == 2 &&
+      HasCompleteContiguousBinStorage(hist, hist.bin_indices)) {
+    AccumulateContiguousContributions(nodes_,
+                                      hist.bin_indices.data(),
+                                      hist.num_rows,
+                                      row,
+                                      scale,
+                                      row_contributions);
+    return;
+  }
+
+  std::vector<int> path_features;
+  int node_index = 0;
+  while (!nodes_[node_index].is_leaf) {
+    const Node& node = nodes_[node_index];
+    path_features.push_back(node.split_feature_id);
+    const auto feature_bins = hist.feature_bins(
+        static_cast<std::size_t>(node.split_feature_id));
+    const std::uint16_t bin = feature_bins[row];
+    node_index = node.is_categorical_split
+                     ? (node.left_categories[bin] != 0 ? node.left_child : node.right_child)
+                     : (bin <= node.split_bin_index ? node.left_child : node.right_child);
+  }
+
+  const float leaf_value = scale * nodes_[node_index].leaf_weight;
+  if (path_features.empty()) {
+    row_contributions.back() += leaf_value;
+    return;
+  }
+
+  const float share = leaf_value / static_cast<float>(path_features.size());
+  for (const int feature_index : path_features) {
+    row_contributions[static_cast<std::size_t>(feature_index)] += share;
+  }
+}
+
 float Tree::PredictBinnedRow(const HistMatrix& hist, std::size_t row) const {
   const int leaf_index = PredictBinnedLeafIndex(hist, row);
   return leaf_index < 0 ? 0.0F : nodes_[leaf_index].leaf_weight;
@@ -71,6 +203,16 @@ float Tree::PredictBinnedRow(const HistMatrix& hist, std::size_t row) const {
 int Tree::PredictBinnedLeafIndex(const HistMatrix& hist, std::size_t row) const {
   if (nodes_.empty()) {
     return -1;
+  }
+
+  if (hist.bin_storage_bytes() == 1 &&
+      HasCompleteContiguousBinStorage(hist, hist.compact_bin_indices)) {
+    return PredictContiguousLeafIndex(
+        nodes_, hist.compact_bin_indices.data(), hist.num_rows, row);
+  }
+  if (hist.bin_storage_bytes() == 2 &&
+      HasCompleteContiguousBinStorage(hist, hist.bin_indices)) {
+    return PredictContiguousLeafIndex(nodes_, hist.bin_indices.data(), hist.num_rows, row);
   }
 
   int node_index = 0;

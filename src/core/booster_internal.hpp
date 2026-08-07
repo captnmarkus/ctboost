@@ -110,6 +110,9 @@ void RecomputeFeatureImportances(const std::vector<Tree>& trees,
                                  std::vector<double>& feature_importance_sums);
 void MarkUsedFeatures(const Tree& tree, std::vector<std::uint8_t>& feature_used_mask);
 HistMatrix BuildPredictionHist(const Pool& pool, const QuantizationSchema& quantization_schema);
+HistMatrix BuildPredictionHist(const Pool& pool,
+                               const QuantizationSchema& quantization_schema,
+                               const std::vector<std::uint8_t>* active_features);
 HistMatrix BuildPredictionHist(const Pool& pool, const Tree& reference_tree);
 std::vector<GpuTreeNode> FlattenTreesForGpu(const std::vector<Tree>& trees,
                                             std::size_t tree_limit,

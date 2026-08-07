@@ -80,14 +80,14 @@ void RunMulticlassIteration(const FitLoopContext& context,
     UpdatePredictionsFromLeafRanges(tree,
                                     training_row_indices,
                                     training_leaf_ranges,
-                                    context.learning_rate * new_tree_scale,
+                                    context.learning_rate,
                                     context.prediction_dimension,
                                     class_index,
                                     context.workspace->predictions);
     if (context.eval_pool != nullptr) {
       UpdatePredictionsFromLeafIndices(tree,
                                        eval_leaf_indices,
-                                       context.learning_rate * new_tree_scale,
+                                       context.learning_rate,
                                        context.prediction_dimension,
                                        class_index,
                                        context.workspace->eval_predictions);

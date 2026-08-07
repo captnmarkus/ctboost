@@ -3,6 +3,11 @@
 #include <algorithm>
 
 namespace ctboost::booster_detail {
+namespace {
+
+constexpr double kMinimumLeafDenominator = 1e-12;
+
+}  // namespace
 
 void UpdatePredictionsFromLeafRanges(const Tree& tree,
                                      const std::vector<std::size_t>& row_indices,
@@ -52,7 +57,10 @@ void UpdatePredictionsFromLeafRanges(const Tree& tree,
 }
 
 float ComputeLeafWeightFromSums(double gradient_sum, double hessian_sum, double lambda_l2) {
-  return static_cast<float>(-gradient_sum / (hessian_sum + lambda_l2));
+  const double denominator = hessian_sum + lambda_l2;
+  return denominator <= kMinimumLeafDenominator
+             ? 0.0F
+             : static_cast<float>(-gradient_sum / denominator);
 }
 
 void BuildSharedMulticlassTargets(const std::vector<float>& gradients,

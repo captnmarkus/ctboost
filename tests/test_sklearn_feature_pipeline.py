@@ -51,7 +51,8 @@ def test_feature_pipeline_handles_ctr_text_and_embedding_columns(tmp_path):
     prediction = reg.predict(frame)
     assert prediction.shape == (frame.shape[0],)
     assert np.all(np.isfinite(prediction))
-    assert reg.n_features_in_ > frame.shape[1]
+    assert reg.n_features_in_ == frame.shape[1]
+    assert reg.n_transformed_features_ > frame.shape[1]
 
     model_path = tmp_path / "pipeline_regressor.ctb"
     reg.save_model(model_path)

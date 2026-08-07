@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional
 from .. import _core
 from ..core import Pool
 from .booster import Booster
-from .resume import _initial_learning_rate_history_from_model
+from .resume import _initial_evals_result_from_model, _initial_learning_rate_history_from_model
 from .schema import _pool_schema_metadata
 
 
@@ -91,6 +91,8 @@ def _train_native_only(
     resolved_snapshot_path: Optional[Path],
     snapshot_model_format: Optional[str],
     native_eval_metric: str,
+    native_eval_name: Optional[str],
+    reported_eval_metric: str,
 ) -> Booster:
     booster = _make_native_booster(
         native_params,
@@ -100,7 +102,9 @@ def _train_native_only(
         distributed_quantization_schema=distributed_quantization_schema,
     )
     native_eval_pool = weighted_eval_pools[0] if weighted_eval_pools else None
+    begin_iteration = int(booster.num_iterations_trained())
     seeded_learning_rate_history = _initial_learning_rate_history_from_model(resolved_init_model)
+    seeded_evals_result = _initial_evals_result_from_model(resolved_init_model)
     booster.fit(
         weighted_pool._handle,
         None if native_eval_pool is None else native_eval_pool._handle,
@@ -110,19 +114,86 @@ def _train_native_only(
     trained_booster = Booster(
         booster,
         feature_pipeline=feature_pipeline,
-        training_metadata=getattr(resolved_init_model, "_training_metadata", None),
+        training_metadata=None,
     )
     if seeded_learning_rate_history is None:
         learning_rate_history = [trained_booster.learning_rate] * trained_booster.num_iterations_trained
     else:
-        learning_rate_history = [float(value) for value in seeded_learning_rate_history]
+        learning_rate_history = [
+            float(value)
+            for value in seeded_learning_rate_history[:begin_iteration]
+        ]
         learning_rate_history.extend(
             [trained_booster.learning_rate] * max(trained_booster.num_iterations_trained - len(learning_rate_history), 0)
         )
-    trained_booster._set_training_metadata(
-        data_schema=_pool_schema_metadata(weighted_pool),
-        learning_rate_history=learning_rate_history,
-    )
+        learning_rate_history = learning_rate_history[:trained_booster.num_iterations_trained]
+    train_loss_history = [float(value) for value in booster.loss_history()]
+    metadata: Dict[str, Any] = {
+        "evals_result": {"learn": {"loss": train_loss_history}},
+        "eval_loss_history": [],
+        "best_iteration": int(booster.best_iteration()),
+        "eval_metric_name": reported_eval_metric,
+        "data_schema": _pool_schema_metadata(weighted_pool),
+        "learning_rate_history": learning_rate_history,
+    }
+    if native_eval_pool is not None:
+        resolved_eval_name = native_eval_name or "validation"
+        result_metric_name = (
+            "loss"
+            if native_eval_name is None
+            and reported_eval_metric.lower() == native_params["objective"].lower()
+            else reported_eval_metric
+        )
+        native_eval_history = [float(value) for value in booster.eval_loss_history()]
+        trained_iterations = int(booster.num_iterations_trained())
+        seeded_eval_history: List[float] = []
+        if seeded_evals_result is not None and resolved_eval_name in seeded_evals_result:
+            seeded_metrics = seeded_evals_result[resolved_eval_name]
+            matching_metric_name = next(
+                (
+                    metric_name
+                    for metric_name in (reported_eval_metric, result_metric_name)
+                    if metric_name in seeded_metrics
+                ),
+                None,
+            )
+            if matching_metric_name is None:
+                matching_metric_name = next(
+                    (
+                        metric_name
+                        for metric_name in seeded_metrics
+                        if metric_name.lower() == reported_eval_metric.lower()
+                    ),
+                    None,
+                )
+            if matching_metric_name is not None:
+                seeded_eval_history = [float(value) for value in seeded_metrics[matching_metric_name]]
+
+        if len(native_eval_history) >= trained_iterations:
+            eval_loss_history = native_eval_history[:trained_iterations]
+        elif seeded_eval_history:
+            newly_trained_iterations = max(trained_iterations - begin_iteration, 0)
+            new_eval_history = (
+                native_eval_history[-newly_trained_iterations:]
+                if newly_trained_iterations > 0
+                else []
+            )
+            eval_loss_history = seeded_eval_history[:begin_iteration] + new_eval_history
+        else:
+            eval_loss_history = native_eval_history
+
+        metadata.update(
+            evals_result={
+                "learn": {"loss": train_loss_history},
+                resolved_eval_name: {result_metric_name: eval_loss_history},
+            },
+            eval_loss_history=eval_loss_history,
+        )
+    best_iteration = int(booster.best_iteration())
+    score_history = metadata["eval_loss_history"] if native_eval_pool is not None else train_loss_history
+    if 0 <= best_iteration < len(score_history):
+        metadata["best_score"] = float(score_history[best_iteration])
+    trained_booster._set_training_metadata(**metadata)
     if resolved_snapshot_path is not None:
         trained_booster.save_model(resolved_snapshot_path, model_format=snapshot_model_format)
     return trained_booster

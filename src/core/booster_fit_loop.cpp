@@ -1,10 +1,33 @@
 #include "booster_fit_internal.hpp"
 
+#include <algorithm>
 #include <chrono>
+#include <utility>
 
 namespace ctboost::booster_detail {
 
 void RunTrainingLoop(const FitLoopContext& context, FitLoopState& state) {
+  const bool snapshot_best_dart_ensemble =
+      context.boosting_type == BoostingType::kDart && context.eval_pool != nullptr &&
+      context.early_stopping_rounds > 0;
+  std::vector<Tree> best_dart_trees;
+  std::vector<double> best_dart_learning_rates;
+  bool has_best_dart_snapshot = false;
+  if (snapshot_best_dart_ensemble && *context.best_iteration >= 0) {
+    const std::size_t retained_iterations =
+        static_cast<std::size_t>(*context.best_iteration + 1);
+    const std::size_t retained_tree_count = std::min(
+        context.trees->size(),
+        retained_iterations * static_cast<std::size_t>(context.prediction_dimension));
+    best_dart_trees.assign(
+        context.trees->begin(), context.trees->begin() + retained_tree_count);
+    best_dart_learning_rates.assign(
+        context.tree_learning_rates->begin(),
+        context.tree_learning_rates->begin() +
+            std::min(retained_iterations, context.tree_learning_rates->size()));
+    has_best_dart_snapshot = true;
+  }
+
   for (int iteration = 0; iteration < context.iterations; ++iteration) {
     const auto iteration_start = std::chrono::steady_clock::now();
     const int total_iteration = state.initial_completed_iterations + iteration;
@@ -86,6 +109,11 @@ void RunTrainingLoop(const FitLoopContext& context, FitLoopState& state) {
 
     const auto metric_start = std::chrono::steady_clock::now();
     MetricSummary metrics = EvaluateIterationMetrics(context, state, distributed_ptr, total_iteration);
+    if (snapshot_best_dart_ensemble && *context.best_iteration == total_iteration) {
+      best_dart_trees = *context.trees;
+      best_dart_learning_rates = *context.tree_learning_rates;
+      has_best_dart_snapshot = true;
+    }
     metrics.metric_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - metric_start).count();
     const double iteration_ms =
@@ -99,6 +127,10 @@ void RunTrainingLoop(const FitLoopContext& context, FitLoopState& state) {
                                    metrics.eval_ms,
                                    iteration_ms);
     if (metrics.early_stopped) {
+      if (snapshot_best_dart_ensemble && has_best_dart_snapshot) {
+        *context.trees = std::move(best_dart_trees);
+        *context.tree_learning_rates = std::move(best_dart_learning_rates);
+      }
       state.early_stopped = true;
       break;
     }

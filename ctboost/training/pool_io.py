@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, List, Mapping, Optional
 
-from ..core import Pool
+from ..core import Pool, _clone_pool
 from ..feature_pipeline import FeaturePipeline
 from ..prepared_data import uses_feature_pipeline_params
 from ._eval_sets import _normalize_eval_names, _normalize_eval_sets
@@ -70,7 +70,18 @@ def prepare_training_data(
             )
         if eval_set is not None or eval_names is not None:
             raise ValueError("eval_set and eval_names cannot be passed when pool is PreparedTrainingData")
-        return pool
+        # Native training may release storage from releasable pools after
+        # quantization.  Clone the lightweight handles so a prepared bundle
+        # remains reusable across fits, including the native-only eval path.
+        return PreparedTrainingData(
+            pool=_clone_pool(pool.pool, releasable_feature_storage=True),
+            eval_pools=[
+                _clone_pool(eval_pool, releasable_feature_storage=True)
+                for eval_pool in pool.eval_pools
+            ],
+            eval_names=list(pool.eval_names),
+            feature_pipeline=pool.feature_pipeline,
+        )
 
     config = dict(params)
     distributed_config = _normalize_distributed_config(config)

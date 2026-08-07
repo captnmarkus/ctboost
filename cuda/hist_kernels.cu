@@ -9,6 +9,7 @@ constexpr double kGammaTolerance = 3e-14;
 constexpr double kGammaTiny = 1e-300;
 constexpr double kStatisticEpsilon = 1e-7;
 constexpr double kFeatureTieTolerance = 1e-12;
+constexpr double kMinimumLeafDenominator = 1e-12;
 
 __device__ __forceinline__ std::uint16_t ReadBin(const std::uint8_t* bins_u8,
                                                  const std::uint16_t* bins_u16,
@@ -84,13 +85,17 @@ __device__ double ChiSquareSurvivalDevice(double statistic, std::size_t degrees_
 }
 
 __device__ double ComputeGainDevice(double gradient_sum, double hessian_sum, double lambda_l2) {
-  return (gradient_sum * gradient_sum) / (hessian_sum + lambda_l2);
+  const double denominator = hessian_sum + lambda_l2;
+  return denominator <= kMinimumLeafDenominator
+             ? 0.0
+             : (gradient_sum * gradient_sum) / denominator;
 }
 
 __device__ double ComputeLeafWeightDevice(double gradient_sum,
                                           double hessian_sum,
                                           double lambda_l2) {
-  return -gradient_sum / (hessian_sum + lambda_l2);
+  const double denominator = hessian_sum + lambda_l2;
+  return denominator <= kMinimumLeafDenominator ? 0.0 : -gradient_sum / denominator;
 }
 
 __device__ double ClampLeafWeightDevice(double leaf_weight,

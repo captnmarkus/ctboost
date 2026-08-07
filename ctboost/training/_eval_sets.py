@@ -7,6 +7,7 @@ from typing import Any, Iterable, List, Optional
 import numpy as np
 
 from ..core import Pool, _clone_pool
+from ..core.sparse import sp
 
 def _load_sklearn_splitters():
     try:
@@ -60,6 +61,8 @@ def _normalize_eval_names(eval_names: Any, eval_count: int) -> List[str]:
         names = [str(name) for name in eval_names]
     else:
         raise TypeError("eval_names must be a string or a sequence of strings")
+    if "learn" in names:
+        raise ValueError("eval_names cannot use the reserved training dataset name 'learn'")
     if len(set(names)) != len(names):
         raise ValueError("eval_names entries must be unique")
     return names
@@ -113,7 +116,13 @@ def _slice_pairs(
     return kept_pairs, np.ascontiguousarray(resolved_pairs_weight[keep_mask], dtype=np.float32)
 
 def _slice_pool(pool: Pool, indices: Iterable[int]) -> Pool:
-    index_array = np.asarray(list(indices), dtype=np.int64)
+    index_array = (
+        np.asarray(indices, dtype=np.int64)
+        if isinstance(indices, np.ndarray)
+        else np.fromiter(indices, dtype=np.int64)
+    )
+    if index_array.ndim != 1:
+        raise ValueError("pool slice indices must be a 1D array")
     weight = None if pool.weight is None else pool.weight[index_array]
     group_weight = None if pool.group_weight is None else np.asarray(pool.group_weight, dtype=np.float32)[index_array]
     subgroup_id = None if pool.subgroup_id is None else np.asarray(pool.subgroup_id, dtype=np.int64)[index_array]
@@ -124,8 +133,22 @@ def _slice_pool(pool: Pool, indices: Iterable[int]) -> Pool:
         index_array,
         original_num_rows=pool.num_rows,
     )
+    sparse_components = getattr(pool, "_sparse_csc_components", None)
+    if sparse_components is not None and sp is not None:
+        sparse_data, sparse_indices, sparse_indptr, shape = sparse_components
+        source_data = sp.csc_matrix(
+            (sparse_data, sparse_indices, sparse_indptr),
+            shape=shape,
+            copy=False,
+        )
+        sliced_data = source_data[index_array]
+    else:
+        source_data = getattr(pool, "_dense_data_ref", None)
+        if source_data is None:
+            source_data = pool.data
+        sliced_data = source_data[index_array]
     return Pool(
-        data=pool.data[index_array],
+        data=sliced_data,
         label=pool.label[index_array],
         cat_features=pool.cat_features,
         weight=weight,

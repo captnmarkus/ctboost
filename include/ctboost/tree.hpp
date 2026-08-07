@@ -99,6 +99,10 @@ class Tree {
   int PredictLeafIndex(const Pool& pool, std::size_t row) const;
   void AccumulateContributions(
       const Pool& pool, std::size_t row, float scale, std::vector<float>& row_contributions) const;
+  void AccumulateBinnedContributions(const HistMatrix& hist,
+                                     std::size_t row,
+                                     float scale,
+                                     std::vector<float>& row_contributions) const;
   std::vector<float> Predict(const Pool& pool) const;
   void SetLeafWeight(std::size_t node_index, float leaf_weight);
   void SetQuantizationSchema(const QuantizationSchemaPtr& quantization_schema);

@@ -7,7 +7,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "ctboost"
-version = "0.1.50"
+version = "0.1.51"
 description = "A GPU-accelerated gradient boosting library using Conditional Inference Trees."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -59,15 +59,40 @@ cmake.version = ">=3.24"
 build-dir = ".ctbuild/{wheel_tag}"
 wheel.packages = ["ctboost"]
 sdist.include = [
-  "CMakeLists.txt",
-  "README.md",
-  "ctboost/**",
-  "demo/**",
-  "cuda/**",
-  "include/**",
-  "src/**",
-  "tests/**",
+  "/CMakeLists.txt",
+  "/LICENSE",
+  "/README.md",
+  "/pyproject.toml",
+  "/ctboost/__init__.py",
+  "/ctboost/_export.py",
+  "/ctboost/_prepared_data_support.py",
+  "/ctboost/_serialization.py",
+  "/ctboost/_version.py",
+  "/ctboost/export_codegen.py",
+  "/ctboost/export_payload.py",
+  "/ctboost/export_runtime.py",
+  "/ctboost/feature_pipeline.py",
+  "/ctboost/prepared_data.py",
+  "/ctboost/core/*.py",
+  "/ctboost/distributed/*.py",
+  "/ctboost/sklearn/*.py",
+  "/ctboost/training/*.py",
+  "/demo/*.md",
+  "/demo/*.py",
+  "/cuda/*.cu",
+  "/cuda/*.cuh",
+  "/include/ctboost/*.hpp",
+  "/src/bindings/*.cpp",
+  "/src/bindings/*.hpp",
+  "/src/core/*.cpp",
+  "/src/core/*.hpp",
+  "/tests/*.py",
 ]
+# Build source distributions from an explicit source allowlist.  The backend
+# otherwise walks every non-ignored workspace file, which can accidentally
+# package local virtual environments, compiled extensions, logs, and scratch
+# copies when a release is built from an active development checkout.
+sdist.exclude = ["*"]
 
 [tool.cibuildwheel]
 build = ["cp38-*", "cp39-*", "cp310-*", "cp311-*", "cp312-*", "cp313-*", "cp314-*"]

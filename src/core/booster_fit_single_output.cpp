@@ -49,14 +49,14 @@ void RunSingleOutputIteration(const FitLoopContext& context,
   UpdatePredictionsFromLeafRanges(tree,
                                   training_row_indices,
                                   training_leaf_ranges,
-                                  context.learning_rate * new_tree_scale,
+                                  context.learning_rate,
                                   context.prediction_dimension,
                                   0,
                                   context.workspace->predictions);
   if (context.eval_pool != nullptr) {
     UpdatePredictions(tree,
                       context.workspace->eval_hist,
-                      context.learning_rate * new_tree_scale,
+                      context.learning_rate,
                       context.prediction_dimension,
                       0,
                       context.workspace->eval_predictions);

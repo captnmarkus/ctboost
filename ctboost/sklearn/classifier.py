@@ -11,9 +11,9 @@ from ..core import Pool
 from ..training import _pool_from_data_and_label
 from .base import _BaseCTBoost
 from .labels import _encode_classifier_eval_set, _resolve_classifier_eval_pool
-from .serialization import _serialize_value
+from .serialization import PathLike, _serialize_value
 
-class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
+class CTBoostClassifier(ClassifierMixin, _BaseCTBoost):
     def __init__(
         self,
         *,
@@ -79,6 +79,11 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
         distributed_run_id: str = "default",
         distributed_timeout: float = 600.0,
         verbose: bool = False,
+        n_estimators: Optional[int] = None,
+        depth: Optional[int] = None,
+        reg_lambda: Optional[float] = None,
+        l2_leaf_reg: Optional[float] = None,
+        random_state: Optional[int] = None,
     ) -> None:
         super().__init__(
             iterations=iterations,
@@ -141,6 +146,11 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
             distributed_run_id=distributed_run_id,
             distributed_timeout=distributed_timeout,
             verbose=verbose,
+            n_estimators=n_estimators,
+            depth=depth,
+            reg_lambda=reg_lambda,
+            l2_leaf_reg=l2_leaf_reg,
+            random_state=random_state,
         )
         self.class_weight = class_weight
         self.scale_pos_weight = scale_pos_weight
@@ -205,15 +215,22 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
                 train_params["class_weights"] = self.class_weight
         if self.scale_pos_weight is not None:
             train_params["scale_pos_weight"] = self.scale_pos_weight
-        train_input = (
-            X
-            if self._uses_feature_pipeline() or isinstance(X, Pool)
-            else _pool_from_data_and_label(X, encoded_labels, baseline=baseline)
-        )
+        if isinstance(X, Pool):
+            train_input = _pool_from_data_and_label(X, encoded_labels, baseline=baseline)
+            train_labels = None
+            fit_baseline = None
+        elif self._uses_feature_pipeline():
+            train_input = X
+            train_labels = encoded_labels
+            fit_baseline = baseline
+        else:
+            train_input = _pool_from_data_and_label(X, encoded_labels, baseline=baseline)
+            train_labels = None
+            fit_baseline = None
         fitted = self._fit_impl(
             train_input,
-            None if isinstance(train_input, Pool) else encoded_labels,
-            baseline=baseline,
+            train_labels,
+            baseline=fit_baseline,
             init_model=init_model,
             sample_weight=sample_weight,
             eval_set=eval_pool,
@@ -250,6 +267,16 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
         exp_scores = np.exp(shifted)
         return exp_scores / exp_scores.sum(axis=1, keepdims=True)
 
+    @staticmethod
+    def _sigmoid(scores: np.ndarray) -> np.ndarray:
+        values = np.asarray(scores, dtype=np.float32)
+        probabilities = np.empty_like(values, dtype=np.float32)
+        nonnegative = values >= 0.0
+        probabilities[nonnegative] = 1.0 / (1.0 + np.exp(-values[nonnegative]))
+        exp_values = np.exp(values[~nonnegative])
+        probabilities[~nonnegative] = exp_values / (1.0 + exp_values)
+        return probabilities
+
     def predict(self, X: Any, *, num_iteration: Optional[int] = None) -> Any:
         pool = self._transform_prediction_pool(X)
         probabilities = self.predict_proba(pool, num_iteration=num_iteration)
@@ -266,7 +293,7 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
             if scores.ndim == 1:
                 scores = scores.reshape((pool.num_rows, self.n_classes_))
             return self._softmax(scores)
-        probabilities = 1.0 / (1.0 + np.exp(-scores))
+        probabilities = self._sigmoid(scores)
         return np.column_stack([1.0 - probabilities, probabilities])
 
     def staged_predict_proba(self, X: Any) -> Iterable[Any]:
@@ -278,7 +305,7 @@ class CTBoostClassifier(_BaseCTBoost, ClassifierMixin):
                     scores = scores.reshape((pool.num_rows, self.n_classes_))
                 yield self._softmax(scores)
             else:
-                probabilities = 1.0 / (1.0 + np.exp(-scores))
+                probabilities = self._sigmoid(scores)
                 yield np.column_stack([1.0 - probabilities, probabilities])
 
     def staged_predict(self, X: Any) -> Iterable[Any]:

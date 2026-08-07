@@ -8,8 +8,9 @@ import numpy as np
 from sklearn.base import RegressorMixin
 
 from .base import _BaseCTBoost
+from .serialization import PathLike
 
-class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
+class CTBoostRegressor(RegressorMixin, _BaseCTBoost):
     def __init__(
         self,
         *,
@@ -73,6 +74,11 @@ class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
         distributed_run_id: str = "default",
         distributed_timeout: float = 600.0,
         verbose: bool = False,
+        n_estimators: Optional[int] = None,
+        depth: Optional[int] = None,
+        reg_lambda: Optional[float] = None,
+        l2_leaf_reg: Optional[float] = None,
+        random_state: Optional[int] = None,
     ) -> None:
         super().__init__(
             iterations=iterations,
@@ -135,6 +141,11 @@ class CTBoostRegressor(_BaseCTBoost, RegressorMixin):
             distributed_run_id=distributed_run_id,
             distributed_timeout=distributed_timeout,
             verbose=verbose,
+            n_estimators=n_estimators,
+            depth=depth,
+            reg_lambda=reg_lambda,
+            l2_leaf_reg=l2_leaf_reg,
+            random_state=random_state,
         )
 
     def fit(

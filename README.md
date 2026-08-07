@@ -106,6 +106,31 @@ pred = model.predict(frame)
 importance = model.feature_importances_
 ```
 
+The estimators also accept familiar XGBoost/CatBoost parameter names, so existing
+model-selection code can usually switch libraries without a parameter rewrite:
+
+```python
+model = CTBoostClassifier(
+    n_estimators=256,
+    depth=3,
+    reg_lambda=1.0,       # l2_leaf_reg is accepted too
+    random_state=13,
+)
+model.fit(frame.iloc[:200], y[:200])
+
+leaf_indices = model.apply(frame)
+history = model.get_evals_result()
+best_iteration = model.get_best_iteration()
+native_booster = model.get_booster()
+```
+
+`is_fitted()`, `get_best_score()`, `evals_result()`, and
+`calc_leaf_indexes()` are available as convenience aliases. The low-level
+`train(...)` API likewise accepts `n_estimators`/`num_trees`, `eta`, `depth`,
+`reg_lambda`/`l2_leaf_reg`, `random_state`/`seed`, and `max_bin`. Conflicting
+aliases and unknown parameter names fail early with a useful error instead of
+being silently ignored.
+
 ### Low-Level API
 
 ```python
@@ -131,6 +156,8 @@ booster = ctboost.train(
 
 predictions = booster.predict(pool)
 ```
+
+For inference-only data, labels are optional: `prediction_pool = ctboost.Pool(X_new)`.
 
 ### Learning-Rate Schedules And Callbacks
 

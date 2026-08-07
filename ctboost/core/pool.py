@@ -35,7 +35,7 @@ class Pool:
         sparse_indices: np.ndarray,
         sparse_indptr: np.ndarray,
         shape: Tuple[int, int],
-        label: Any,
+        label: Any = None,
         *,
         cat_features: Optional[List[int]] = None,
         weight: Any = None,
@@ -72,7 +72,11 @@ class Pool:
             group_id=resolved_group_id,
             num_rows=int(shape[0]),
         )
-        label_array = np.ascontiguousarray(label, dtype=np.float32)
+        label_array = (
+            np.empty(0, dtype=np.float32)
+            if label is None
+            else np.ascontiguousarray(label, dtype=np.float32)
+        )
         native_weight = np.ones(int(shape[0]), dtype=np.float32) if weight is None else np.ascontiguousarray(weight, dtype=np.float32)
         resolved_weight = None if weight is None else native_weight
         native_group_id = None if resolved_group_id is None else np.ascontiguousarray(resolved_group_id, dtype=np.int64)
@@ -124,7 +128,7 @@ class Pool:
     def __init__(
         self,
         data: Any,
-        label: Any,
+        label: Any = None,
         cat_features: Optional[List[int]] = None,
         weight: Any = None,
         group_id: Any = None,
@@ -152,7 +156,11 @@ class Pool:
             label = label.to_numpy(copy=False)
         resolved_group_id = _normalize_group_id(group_id)
         resolved_subgroup_id = _normalize_identifier_array(subgroup_id, name="subgroup_id")
-        label_array = np.ascontiguousarray(label, dtype=np.float32)
+        label_array = (
+            np.empty(0, dtype=np.float32)
+            if label is None
+            else np.ascontiguousarray(label, dtype=np.float32)
+        )
         num_rows = sparse_components[3][0] if sparse_components is not None else int(np.asarray(data).shape[0])
         num_cols = sparse_components[3][1] if sparse_components is not None else int(np.asarray(data).shape[1])
         native_weight = np.ones(num_rows, dtype=np.float32) if weight is None else np.ascontiguousarray(weight, dtype=np.float32)

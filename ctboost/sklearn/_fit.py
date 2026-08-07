@@ -9,6 +9,12 @@ import numpy as np
 from ..core import Pool
 from ..feature_pipeline import FeaturePipeline
 from ..training import _apply_sample_weight_to_pool, _normalize_eval_sets, _pool_from_data_and_label, train
+from ..training.eval_metrics import (
+    _eval_metric_direction,
+    _metric_higher_is_better,
+    _normalize_eval_metrics,
+)
+from .serialization import PathLike
 
 
 class _BaseFitMixin:
@@ -40,7 +46,8 @@ class _BaseFitMixin:
             objective: str,
             num_classes: int = 1,
             extra_train_params: Optional[Dict[str, Any]] = None,
-        ) -> "_BaseCTBoost":
+        ) -> Any:
+            raw_feature_count, raw_feature_names = self._input_feature_metadata(X)
             resolved_eval_sets = _normalize_eval_sets(eval_set)
             if self._uses_feature_pipeline():
                 if isinstance(X, Pool):
@@ -66,6 +73,7 @@ class _BaseFitMixin:
                     feature_names=transformed_feature_names,
                     _releasable_feature_storage=True,
                 )
+                train_pool._feature_pipeline = self._feature_pipeline
                 eval_pools = []
                 for resolved_eval_set in resolved_eval_sets:
                     if len(resolved_eval_set) == 2:
@@ -196,7 +204,15 @@ class _BaseFitMixin:
                 resume_from_snapshot=resume_from_snapshot,
                 init_model=resolved_init_model,
             )
-            self.n_features_in_ = train_pool.num_cols
+            if self._feature_pipeline is not None:
+                self._booster._feature_pipeline = self._feature_pipeline
+            self.n_features_in_ = raw_feature_count
+            self.n_transformed_features_ = train_pool.num_cols
+            if raw_feature_names is None:
+                if hasattr(self, "feature_names_in_"):
+                    del self.feature_names_in_
+            else:
+                self.feature_names_in_ = np.asarray(raw_feature_names, dtype=object)
             self.best_iteration_ = self._booster.best_iteration
             self.evals_result_ = self._booster.evals_result_
             self.best_score_ = self._compute_best_score()
@@ -210,19 +226,40 @@ class _BaseFitMixin:
             best_index = self.best_iteration_ if self.best_iteration_ >= 0 else len(self._booster.loss_history) - 1
             if best_index < 0:
                 return result
+            metric_params = {
+                "quantile_alpha": self.quantile_alpha,
+                "huber_delta": self.huber_delta,
+                "tweedie_variance_power": self.tweedie_variance_power,
+            }
+            configured_metrics = _normalize_eval_metrics(self.eval_metric)
+            configured_directions = {
+                str(metric["name"]).lower(): _eval_metric_direction(metric, metric_params)
+                for metric in configured_metrics
+            }
             for dataset_name, metric_histories in evals_result.items():
                 dataset_scores = {}
                 for metric_name, history in metric_histories.items():
                     if not history:
                         continue
-                    resolved_index = min(best_index, len(history) - 1)
-                    dataset_scores[metric_name] = float(history[resolved_index])
+                    normalized_metric_name = str(metric_name).lower()
+                    direction = (
+                        False
+                        if normalized_metric_name == "loss"
+                        else configured_directions.get(normalized_metric_name)
+                    )
+                    if direction is None:
+                        try:
+                            direction = _metric_higher_is_better(metric_name, metric_params)
+                        except (RuntimeError, ValueError):
+                            direction = None
+                    if direction is None:
+                        resolved_index = min(best_index, len(history) - 1)
+                        dataset_scores[metric_name] = float(history[resolved_index])
+                    elif direction:
+                        dataset_scores[metric_name] = float(max(history))
+                    else:
+                        dataset_scores[metric_name] = float(min(history))
                 if not dataset_scores:
                     continue
-                if dataset_name == "learn" and list(dataset_scores) == ["loss"]:
-                    result[dataset_name] = dataset_scores["loss"]
-                elif len(dataset_scores) == 1 and list(dataset_scores) == [self._booster.eval_metric_name]:
-                    result[dataset_name] = dataset_scores[self._booster.eval_metric_name]
-                else:
-                    result[dataset_name] = dataset_scores
+                result[dataset_name] = dataset_scores
             return result

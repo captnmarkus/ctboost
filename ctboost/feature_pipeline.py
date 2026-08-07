@@ -28,6 +28,18 @@ def _embedding_stat_names(stats: Sequence[str]) -> Tuple[str, ...]:
     return resolved
 
 
+def _feature_pipelines_equivalent(expected: Any, actual: Any) -> bool:
+    """Return whether two fitted pipelines encode the same feature space."""
+    if expected is actual:
+        return True
+    if expected is None or actual is None:
+        return False
+    try:
+        return bool(expected.to_state() == actual.to_state())
+    except (AttributeError, TypeError, ValueError):
+        return False
+
+
 class FeaturePipeline:
     """Native-backed preprocessing for categorical, text, and embedding features."""
 
@@ -164,7 +176,7 @@ class FeaturePipeline:
     def transform_pool(
         self,
         data: Any,
-        label: Any,
+        label: Any = None,
         *,
         weight: Any = None,
         group_id: Any = None,
@@ -182,7 +194,7 @@ class FeaturePipeline:
             data,
             feature_names=feature_names,
         )
-        return Pool(
+        pool = Pool(
             data=transformed,
             label=label,
             cat_features=cat_features,
@@ -199,6 +211,8 @@ class FeaturePipeline:
             categorical_schema=categorical_schema,
             _releasable_feature_storage=True,
         )
+        pool._feature_pipeline = self
+        return pool
 
     def to_state(self) -> Dict[str, Any]:
         return dict(self._native.to_state())

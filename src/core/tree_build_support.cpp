@@ -4,13 +4,22 @@
 #include <stdexcept>
 
 namespace ctboost::detail {
+namespace {
+
+constexpr double kMinimumLeafDenominator = 1e-12;
+
+}  // namespace
 
 double ComputeLeafWeight(double gradient_sum, double hessian_sum, double lambda_l2) {
-  return -gradient_sum / (hessian_sum + lambda_l2);
+  const double denominator = hessian_sum + lambda_l2;
+  return denominator <= kMinimumLeafDenominator ? 0.0 : -gradient_sum / denominator;
 }
 
 double ComputeGain(double gradient_sum, double hessian_sum, double lambda_l2) {
-  return (gradient_sum * gradient_sum) / (hessian_sum + lambda_l2);
+  const double denominator = hessian_sum + lambda_l2;
+  return denominator <= kMinimumLeafDenominator
+             ? 0.0
+             : (gradient_sum * gradient_sum) / denominator;
 }
 
 double ComputeGradientVariance(double weighted_gradient_sum,

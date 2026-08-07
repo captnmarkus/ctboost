@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <cmath>
+#include <limits>
 #include <map>
 #include <stdexcept>
 #include <unordered_set>
@@ -10,6 +11,20 @@ namespace ctboost::detail {
 namespace {
 
 constexpr std::size_t kMaxCategoricalBins = 256;
+constexpr std::size_t kMaxStoredBins =
+    static_cast<std::size_t>(std::numeric_limits<std::uint16_t>::max());
+
+std::uint16_t CheckedStoredBinCount(std::size_t non_missing_bins,
+                                    bool has_missing_values,
+                                    const char* feature_kind) {
+  const std::size_t total_bins = non_missing_bins + (has_missing_values ? 1U : 0U);
+  if (total_bins > kMaxStoredBins) {
+    throw std::invalid_argument(
+        std::string(feature_kind) +
+        " feature requires more than 65535 total bins including the missing-value bin");
+  }
+  return static_cast<std::uint16_t>(total_bins == 0 ? 1U : total_bins);
+}
 
 }  // namespace
 
@@ -95,6 +110,11 @@ FeatureHistogramResult BuildFeatureHistogram(const Pool& pool,
     if (has_missing_values && feature_nan_mode == NanMode::Forbidden) {
       throw std::invalid_argument("NaN values are not allowed when nan_mode='Forbidden'");
     }
+    if (category_to_bin.size() + (has_missing_values ? 1U : 0U) >
+        kMaxCategoricalBins) {
+      throw std::invalid_argument(
+          "categorical feature requires more than 256 total bins including the missing-value bin");
+    }
 
     result.missing_value_mask = has_missing_values ? 1U : 0U;
     std::uint16_t next_bin =
@@ -105,8 +125,8 @@ FeatureHistogramResult BuildFeatureHistogram(const Pool& pool,
       result.cut_values.push_back(category);
     }
 
-    result.num_bins =
-        static_cast<std::uint16_t>(category_to_bin.size() + (has_missing_values ? 1U : 0U));
+    result.num_bins = static_cast<std::uint16_t>(
+        category_to_bin.size() + (has_missing_values ? 1U : 0U));
     result.elapsed_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - feature_start)
             .count();
@@ -153,8 +173,8 @@ FeatureHistogramResult BuildFeatureHistogram(const Pool& pool,
   if (custom_borders != nullptr) {
     result.cut_values = NormalizeCustomBorders(*custom_borders);
     const std::size_t non_missing_bins = non_missing_count == 0 ? 0U : result.cut_values.size() + 1U;
-    const std::size_t total_bins = non_missing_bins + (has_missing_values ? 1U : 0U);
-    result.num_bins = static_cast<std::uint16_t>(total_bins == 0 ? 1U : total_bins);
+    result.num_bins =
+        CheckedStoredBinCount(non_missing_bins, has_missing_values, "custom-border numeric");
     result.elapsed_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - feature_start)
             .count();
@@ -186,14 +206,17 @@ FeatureHistogramResult BuildFeatureHistogram(const Pool& pool,
                 observed_unique_values.size(),
                 unique_count_capped,
                 feature_max_bins);
+  const std::size_t automatic_max_bins =
+      has_missing_values && feature_max_bins >= kMaxStoredBins
+          ? kMaxStoredBins - 1U
+          : feature_max_bins;
   result.cut_values =
       border_selection_method == BorderSelectionMethod::Uniform
-          ? ComputeUniformCuts(quantile_values, feature_max_bins)
-          : ComputeQuantileCuts(std::move(quantile_values), feature_max_bins, quantile_strategy);
+          ? ComputeUniformCuts(quantile_values, automatic_max_bins)
+          : ComputeQuantileCuts(
+                std::move(quantile_values), automatic_max_bins, quantile_strategy);
   const std::size_t non_missing_bins = non_missing_count == 0 ? 0U : result.cut_values.size() + 1U;
-  const std::size_t total_bins = non_missing_bins + (has_missing_values ? 1U : 0U);
-
-  result.num_bins = static_cast<std::uint16_t>(total_bins == 0 ? 1U : total_bins);
+  result.num_bins = CheckedStoredBinCount(non_missing_bins, has_missing_values, "numeric");
   result.elapsed_ms =
       std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - feature_start)
           .count();

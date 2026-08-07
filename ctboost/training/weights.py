@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, Mapping, Optional
+from typing import Any, Dict, List, Mapping, Optional, Tuple
 
 import numpy as np
 
@@ -80,67 +80,102 @@ def _resolve_class_weight_map(
         for label, weight in zip(unique_labels.tolist(), weight_values.tolist())
     }
 
-def _classification_weight_multiplier(
-    labels: np.ndarray,
+def _resolve_objective_weighting(
+    pool: Pool,
+    params: Mapping[str, Any],
     objective_name: str,
-    *,
-    class_weights: Optional[Any] = None,
-    auto_class_weights: Optional[str] = None,
-    scale_pos_weight: Optional[float] = None,
-) -> Optional[np.ndarray]:
+) -> Optional[Dict[str, Any]]:
     if (
-        class_weights is None
-        and auto_class_weights is None
-        and scale_pos_weight is None
+        params.get("class_weights") is None
+        and params.get("auto_class_weights") is None
+        and params.get("scale_pos_weight") is None
     ):
         return None
 
     if not _is_classification_objective(objective_name):
         raise ValueError("class weighting parameters require a classification objective")
 
-    labels = np.asarray(labels)
+    labels = np.asarray(pool.label)
     if labels.ndim != 1:
         raise ValueError("classification labels must be a 1D array")
 
-    multiplier = np.ones(labels.shape[0], dtype=np.float32)
-    class_weight_map = _resolve_class_weight_map(labels, class_weights, auto_class_weights)
+    class_weight_map = _resolve_class_weight_map(
+        labels,
+        params.get("class_weights"),
+        params.get("auto_class_weights"),
+    )
     if class_weight_map is not None:
         unique_labels = {
             label.item() if hasattr(label, "item") else label for label in np.unique(labels).tolist()
         }
         if set(class_weight_map) != unique_labels:
             raise ValueError("class_weights must provide a weight for every class in the data")
-        for label_value, weight in class_weight_map.items():
+        for weight in class_weight_map.values():
             if weight <= 0.0:
                 raise ValueError("class weights must be positive")
-            multiplier[labels == label_value] *= float(weight)
 
+    scale_pos_weight = params.get("scale_pos_weight")
     if scale_pos_weight is not None:
         if not _is_binary_classification_objective(objective_name):
             raise ValueError("scale_pos_weight is only supported for binary classification")
         scale_value = float(scale_pos_weight)
         if scale_value <= 0.0:
             raise ValueError("scale_pos_weight must be positive")
-        positive_mask = labels == 1
-        multiplier[positive_mask] *= scale_value
+        scale_pos_weight = scale_value
 
-    return multiplier
+    return {
+        "class_weight_map": class_weight_map,
+        "scale_pos_weight": scale_pos_weight,
+    }
 
-def _apply_objective_weights(pool: Pool, params: Mapping[str, Any], objective_name: str) -> Pool:
-    objective_weight = _classification_weight_multiplier(
-        np.asarray(pool.label),
-        objective_name,
-        class_weights=params.get("class_weights"),
-        auto_class_weights=params.get("auto_class_weights"),
-        scale_pos_weight=params.get("scale_pos_weight"),
-    )
-    if objective_weight is None:
+def _apply_objective_weights(
+    pool: Pool,
+    objective_name: str,
+    resolved_weighting: Optional[Mapping[str, Any]],
+) -> Pool:
+    if resolved_weighting is None:
         return pool
+
+    labels = np.asarray(pool.label)
+    if labels.ndim != 1:
+        raise ValueError("classification labels must be a 1D array")
+    objective_weight = np.ones(labels.shape[0], dtype=np.float32)
+    class_weight_map = resolved_weighting.get("class_weight_map")
+    if class_weight_map is not None:
+        unique_labels = {
+            label.item() if hasattr(label, "item") else label for label in np.unique(labels).tolist()
+        }
+        missing_labels = unique_labels - set(class_weight_map)
+        if missing_labels:
+            raise ValueError("class_weights must provide a weight for every class in the data")
+        for label_value, class_weight in class_weight_map.items():
+            objective_weight[labels == label_value] *= float(class_weight)
+
+    scale_pos_weight = resolved_weighting.get("scale_pos_weight")
+    if scale_pos_weight is not None:
+        if not _is_binary_classification_objective(objective_name):
+            raise ValueError("scale_pos_weight is only supported for binary classification")
+        objective_weight[labels == 1] *= float(scale_pos_weight)
 
     combined_weight = _combine_weight_arrays(pool.weight, objective_weight)
     return _clone_pool(
         pool,
         weight=combined_weight,
         releasable_feature_storage=True,
+    )
+
+def _apply_objective_weights_to_pools(
+    pool: Pool,
+    eval_pools: List[Pool],
+    params: Mapping[str, Any],
+    objective_name: str,
+) -> Tuple[Pool, List[Pool]]:
+    resolved_weighting = _resolve_objective_weighting(pool, params, objective_name)
+    return (
+        _apply_objective_weights(pool, objective_name, resolved_weighting),
+        [
+            _apply_objective_weights(eval_pool, objective_name, resolved_weighting)
+            for eval_pool in eval_pools
+        ],
     )
 

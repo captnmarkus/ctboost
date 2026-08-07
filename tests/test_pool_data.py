@@ -27,6 +27,16 @@ def test_pool_rejects_mismatched_label_length():
     with pytest.raises(ValueError, match="label size must match"):
         ctboost.Pool(data, label)
 
+def test_pool_label_is_optional_for_prediction_data():
+    data = np.random.default_rng(5).normal(size=(4, 3)).astype(np.float32)
+
+    pool = ctboost.Pool(data)
+
+    assert pool.num_rows == 4
+    assert pool.num_cols == 3
+    assert pool.label.shape == (0,)
+    np.testing.assert_array_equal(pool.data, data)
+
 def test_pool_accepts_pandas_dataframe_with_categorical_columns():
     pd = pytest.importorskip("pandas")
 

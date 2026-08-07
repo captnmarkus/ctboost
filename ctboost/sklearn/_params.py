@@ -2,9 +2,39 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 from ..feature_pipeline import FeaturePipeline
+
+
+_COMPATIBILITY_ALIASES = {
+    "iterations": ("n_estimators",),
+    "max_depth": ("depth",),
+    "lambda_l2": ("reg_lambda", "l2_leaf_reg"),
+    "random_seed": ("random_state",),
+}
+
+
+def _resolve_constructor_alias(
+    canonical_name: str,
+    canonical_value: Any,
+    canonical_default: Any,
+    aliases: Dict[str, Any],
+) -> Any:
+    provided = {name: value for name, value in aliases.items() if value is not None}
+    if not provided:
+        return canonical_value
+    values = list(provided.values())
+    if any(value != values[0] for value in values[1:]):
+        raise ValueError(
+            f"conflicting aliases for {canonical_name}: {', '.join(provided)}"
+        )
+    alias_value = values[0]
+    if canonical_value != canonical_default and canonical_value != alias_value:
+        raise ValueError(
+            f"{canonical_name} conflicts with its compatibility alias"
+        )
+    return alias_value
 
 
 class _BaseInitMixin:
@@ -71,7 +101,27 @@ class _BaseInitMixin:
             distributed_run_id: str = "default",
             distributed_timeout: float = 600.0,
             verbose: bool = False,
+            n_estimators: Optional[int] = None,
+            depth: Optional[int] = None,
+            reg_lambda: Optional[float] = None,
+            l2_leaf_reg: Optional[float] = None,
+            random_state: Optional[int] = None,
         ) -> None:
+            iterations = _resolve_constructor_alias(
+                "iterations", iterations, 100, {"n_estimators": n_estimators}
+            )
+            max_depth = _resolve_constructor_alias(
+                "max_depth", max_depth, 6, {"depth": depth}
+            )
+            lambda_l2 = _resolve_constructor_alias(
+                "lambda_l2",
+                lambda_l2,
+                1.0,
+                {"reg_lambda": reg_lambda, "l2_leaf_reg": l2_leaf_reg},
+            )
+            random_seed = _resolve_constructor_alias(
+                "random_seed", random_seed, 0, {"random_state": random_state}
+            )
             self.iterations = iterations
             self.learning_rate = learning_rate
             self.max_depth = max_depth
@@ -132,7 +182,53 @@ class _BaseInitMixin:
             self.distributed_run_id = distributed_run_id
             self.distributed_timeout = distributed_timeout
             self.verbose = verbose
+            self.n_estimators = n_estimators
+            self.depth = depth
+            self.reg_lambda = reg_lambda
+            self.l2_leaf_reg = l2_leaf_reg
+            self.random_state = random_state
             self._feature_pipeline: Optional[FeaturePipeline] = None
+        def set_params(self, **params: Any) -> "_BaseInitMixin":
+            for canonical_name, alias_names in _COMPATIBILITY_ALIASES.items():
+                provided_aliases = {
+                    name: params[name]
+                    for name in alias_names
+                    if name in params and params[name] is not None
+                }
+                if not provided_aliases:
+                    if canonical_name in params:
+                        for alias_name in alias_names:
+                            params.setdefault(alias_name, None)
+                    continue
+                alias_values = list(provided_aliases.values())
+                if any(value != alias_values[0] for value in alias_values[1:]):
+                    raise ValueError(
+                        f"conflicting aliases for {canonical_name}: "
+                        f"{', '.join(provided_aliases)}"
+                    )
+                alias_value = alias_values[0]
+                if canonical_name in params and params[canonical_name] != alias_value:
+                    raise ValueError(
+                        f"{canonical_name} conflicts with its compatibility alias"
+                    )
+                params[canonical_name] = alias_value
+                for alias_name in alias_names:
+                    if alias_name not in provided_aliases:
+                        params[alias_name] = None
+            return super().set_params(**params)
+        def _synchronize_compatibility_aliases(self) -> None:
+            """Restore the parameter identity invariant required by sklearn.clone."""
+            for canonical_name, alias_names in _COMPATIBILITY_ALIASES.items():
+                for alias_name in alias_names:
+                    if not hasattr(self, alias_name):
+                        setattr(self, alias_name, None)
+                    alias_value = getattr(self, alias_name, None)
+                    if alias_value is not None:
+                        setattr(self, canonical_name, alias_value)
+                        break
+        def __setstate__(self, state: Dict[str, Any]) -> None:
+            super().__setstate__(state)
+            self._synchronize_compatibility_aliases()
         def _uses_feature_pipeline(self) -> bool:
             return bool(
                 self.ordered_ctr

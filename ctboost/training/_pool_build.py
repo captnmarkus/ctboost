@@ -6,8 +6,6 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import numpy as np
-
 from ..core import Pool, _clone_pool
 from ..feature_pipeline import FeaturePipeline
 from ..prepared_data import prepare_pool
@@ -233,8 +231,7 @@ def _prepare_pool_from_raw(
 def _prediction_pool(data: Any) -> Pool:
     if isinstance(data, Pool):
         return data
-    num_rows = int(data.shape[0]) if hasattr(data, "shape") else len(data)
-    return Pool(data=data, label=np.zeros(num_rows, dtype=np.float32))
+    return Pool(data=data)
 
 def _resolve_num_iteration(num_iteration: Optional[int]) -> int:
     if num_iteration is None:

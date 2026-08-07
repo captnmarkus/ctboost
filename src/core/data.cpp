@@ -117,11 +117,17 @@ Pool::Pool(py::array_t<float, py::array::forcecast> sparse_data,
     if (begin < 0 || end < begin || static_cast<std::size_t>(end) > sparse_nnz_) {
       throw std::invalid_argument("sparse_indptr must be a non-decreasing CSC column pointer array");
     }
-  }
-  for (std::size_t index = 0; index < sparse_nnz_; ++index) {
-    const std::int64_t row_index = sparse_indices_ptr_[index];
-    if (row_index < 0 || static_cast<std::size_t>(row_index) >= num_rows_) {
-      throw std::invalid_argument("sparse row index is out of bounds");
+    std::int64_t previous_row = -1;
+    for (std::int64_t index = begin; index < end; ++index) {
+      const std::int64_t row_index = sparse_indices_ptr_[static_cast<std::size_t>(index)];
+      if (row_index < 0 || static_cast<std::size_t>(row_index) >= num_rows_) {
+        throw std::invalid_argument("sparse row index is out of bounds");
+      }
+      if (row_index <= previous_row) {
+        throw std::invalid_argument(
+            "sparse CSC row indices must be sorted and unique within each column");
+      }
+      previous_row = row_index;
     }
   }
 

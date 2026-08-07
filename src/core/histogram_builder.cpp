@@ -108,7 +108,8 @@ HistMatrix HistBuilder::Build(const Pool& pool, const TrainingProfiler* profiler
   std::mutex error_mutex;
   std::atomic<bool> failed{false};
   std::atomic<std::size_t> next_feature{0};
-  const std::size_t thread_count = detail::ResolveHistogramThreadCount(hist.num_cols);
+  const std::size_t thread_count =
+      detail::ResolveHistogramThreadCount(hist.num_rows, hist.num_cols);
   std::vector<std::thread> workers;
   workers.reserve(thread_count);
 
@@ -140,11 +141,25 @@ HistMatrix HistBuilder::Build(const Pool& pool, const TrainingProfiler* profiler
     }
   };
 
-  for (std::size_t thread_index = 0; thread_index < thread_count; ++thread_index) {
-    workers.emplace_back(worker);
-  }
-  for (std::thread& worker_thread : workers) {
-    worker_thread.join();
+  if (thread_count == 1) {
+    for (std::size_t feature = 0; feature < hist.num_cols; ++feature) {
+      feature_results[feature] = detail::BuildFeatureHistogram(
+          pool,
+          detail::ResolveFeatureMaxBins(max_bins_by_feature_, feature, max_bins_),
+          resolved_feature_nan_modes[feature],
+          border_selection_method_,
+          feature,
+          hist.categorical_mask[feature] != 0U,
+          build_context,
+          detail::ResolveFeatureBorders(feature_borders_, feature));
+    }
+  } else {
+    for (std::size_t thread_index = 0; thread_index < thread_count; ++thread_index) {
+      workers.emplace_back(worker);
+    }
+    for (std::thread& worker_thread : workers) {
+      worker_thread.join();
+    }
   }
   if (first_error != nullptr) {
     std::rethrow_exception(first_error);
@@ -217,11 +232,25 @@ HistMatrix HistBuilder::Build(const Pool& pool, const TrainingProfiler* profiler
     }
   };
 
-  for (std::size_t thread_index = 0; thread_index < thread_count; ++thread_index) {
-    workers.emplace_back(materialize_worker);
-  }
-  for (std::thread& worker_thread : workers) {
-    worker_thread.join();
+  if (thread_count == 1) {
+    for (std::size_t feature = 0; feature < hist.num_cols; ++feature) {
+      if (use_external_bin_storage) {
+        const std::filesystem::path feature_path =
+            external_storage_root / ("feature_" + std::to_string(feature) + ".bin");
+        detail::MaterializeFeatureBinsToExternalStorage(
+            pool, feature, feature_results[feature], hist.bin_index_bytes, feature_path);
+        hist.external_feature_bin_paths[feature] = feature_path.string();
+      } else {
+        detail::MaterializeFeatureBins(pool, feature, feature_results[feature], hist);
+      }
+    }
+  } else {
+    for (std::size_t thread_index = 0; thread_index < thread_count; ++thread_index) {
+      workers.emplace_back(materialize_worker);
+    }
+    for (std::thread& worker_thread : workers) {
+      worker_thread.join();
+    }
   }
   if (first_error != nullptr) {
     std::rethrow_exception(first_error);

@@ -8,6 +8,7 @@ from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Union
 import numpy as np
 
 from ..core import Pool
+from ._train_config import _normalize_training_config
 from ._eval_sets import _load_sklearn_splitters, _normalize_eval_names, _slice_pool, _stack_histories
 from ._early_stopping import _finalize_early_stopping
 from ._train_metrics import _resolve_metric_runtime
@@ -33,7 +34,7 @@ from .resume import (
     _validate_resume_snapshot_contract,
 )
 from .schema import _is_classification_objective, _is_ranking_objective, _objective_name, _validate_distributed_pool_metadata
-from .weights import _apply_objective_weights
+from .weights import _apply_objective_weights_to_pools
 
 PathLike = Union[str, Path]
 
@@ -128,7 +129,7 @@ def train(
     resume_from_snapshot: Any = None,
     init_model: Any = None,
 ) -> Booster:
-    config = dict(params)
+    config = _normalize_training_config(params)
     distributed_config = _normalize_distributed_config(config)
     resolved_snapshot_path = _resolve_snapshot_path(snapshot_path)
     resolved_resume_snapshot_path = _resolve_resume_snapshot_path(resume_from_snapshot, resolved_snapshot_path)
@@ -161,8 +162,20 @@ def train(
     pool = prepared_inputs.pool
     eval_pools = list(prepared_inputs.eval_pools)
     resolved_eval_names = list(prepared_inputs.eval_names)
+    if np.asarray(pool.label).shape[0] != pool.num_rows:
+        raise ValueError("training pool requires labels")
+    for eval_pool in eval_pools:
+        if np.asarray(eval_pool.label).shape[0] != eval_pool.num_rows:
+            raise ValueError("eval pool requires labels")
     default_eval_names = _normalize_eval_names(None, len(eval_pools))
     feature_pipeline = prepared_inputs.feature_pipeline or getattr(pool, "_feature_pipeline", None)
+    if feature_pipeline is not None:
+        # Prepared/distributed pools already contain transformed features, but
+        # serialization and shard merging do not retain Python-only object
+        # markers. Restore the marker before internal metric prediction.
+        pool._feature_pipeline = feature_pipeline
+        for eval_pool in eval_pools:
+            eval_pool._feature_pipeline = feature_pipeline
     if distributed_config is not None:
         _validate_distributed_pool_metadata(pool, context="the training pool")
         for eval_index, eval_pool in enumerate(eval_pools):
@@ -198,7 +211,6 @@ def train(
         init_state=init_state,
         eval_pools=eval_pools,
         resolved_eval_names=resolved_eval_names,
-        default_eval_names=default_eval_names,
         early_stopping_rounds=early_stopping_rounds,
         early_stopping_metric=early_stopping_metric,
         early_stopping_name=early_stopping_name,
@@ -244,8 +256,12 @@ def train(
                 raise ValueError("init_model objective must match the current training objective")
             if native_params["num_classes"] != int(init_state["num_classes"]):
                 raise ValueError("init_model num_classes must match the current training configuration")
-        weighted_pool = _apply_objective_weights(pool, config, native_params["objective"])
-        weighted_eval_pools = [_apply_objective_weights(eval_pool, config, native_params["objective"]) for eval_pool in eval_pools]
+        weighted_pool, weighted_eval_pools = _apply_objective_weights_to_pools(
+            pool,
+            eval_pools,
+            config,
+            native_params["objective"],
+        )
         if resolved_resume_snapshot_path is not None:
             _validate_resume_snapshot_contract(
                 init_state=init_state,
@@ -268,6 +284,12 @@ def train(
                 resolved_snapshot_path=resolved_snapshot_path,
                 snapshot_model_format=snapshot_model_format,
                 native_eval_metric=metric_runtime["native_eval_metric"],
+                native_eval_name=(
+                    resolved_eval_names[0]
+                    if resolved_eval_names and resolved_eval_names != default_eval_names
+                    else None
+                ),
+                reported_eval_metric=metric_runtime["primary_eval_metric"],
             )
         trained_booster = _train_with_python_surface(
             native_params=native_params,

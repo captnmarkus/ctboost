@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.datasets import make_classification, make_regression
 
 import ctboost
+from ctboost.training.weights import _apply_objective_weights, _resolve_objective_weighting
 
 
 def test_regressor_sample_weight_matches_weighted_pool():
@@ -114,3 +115,50 @@ def test_classifier_class_weight_matches_explicit_sample_weights():
     balanced.fit(X, y)
 
     np.testing.assert_allclose(weighted.predict_proba(X), balanced.predict_proba(X), rtol=1e-6, atol=1e-6)
+
+
+def test_class_weights_are_resolved_from_training_labels_when_eval_lacks_a_class():
+    rng = np.random.default_rng(47)
+    X_train = rng.normal(size=(24, 4)).astype(np.float32)
+    y_train = np.asarray([0.0, 1.0] * 12, dtype=np.float32)
+    X_eval = rng.normal(size=(6, 4)).astype(np.float32)
+    y_eval = np.zeros(6, dtype=np.float32)
+
+    for class_weights in ({0: 1.0, 1: 3.0}, [1.0, 3.0]):
+        booster = ctboost.train(
+            X_train,
+            {
+                "objective": "Logloss",
+                "iterations": 3,
+                "alpha": 1.0,
+                "class_weights": class_weights,
+            },
+            label=y_train,
+            eval_set=(X_eval, y_eval),
+        )
+        assert len(booster.eval_loss_history) == 3
+        assert np.all(np.isfinite(booster.eval_loss_history))
+
+
+def test_auto_class_weights_reuse_training_distribution_for_eval_weights():
+    features = np.arange(8, dtype=np.float32).reshape(4, 2)
+    training_pool = ctboost.Pool(
+        features,
+        np.asarray([0.0, 0.0, 0.0, 1.0], dtype=np.float32),
+    )
+    eval_pool = ctboost.Pool(
+        features,
+        np.asarray([0.0, 1.0, 1.0, 1.0], dtype=np.float32),
+    )
+    resolved = _resolve_objective_weighting(
+        training_pool,
+        {"auto_class_weights": "balanced"},
+        "Logloss",
+    )
+
+    weighted_eval = _apply_objective_weights(eval_pool, "Logloss", resolved)
+
+    np.testing.assert_allclose(
+        weighted_eval.weight,
+        np.asarray([2.0 / 3.0, 2.0, 2.0, 2.0], dtype=np.float32),
+    )

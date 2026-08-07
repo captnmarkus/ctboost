@@ -17,6 +17,7 @@ constexpr std::size_t kApproxQuantileMinValuesPerFeature = 2048;
 constexpr std::size_t kExactSelectionThresholdRowsDefault = 1048576;
 constexpr std::size_t kExactLowCardinalityBinsMultiplier = 4;
 constexpr std::size_t kExactLowCardinalityFloor = 1024;
+constexpr std::size_t kMinParallelHistogramValuesDefault = 16384;
 
 std::size_t ParseEnvUnsigned(const char* name, std::size_t default_value) {
   const char* raw_value = std::getenv(name);
@@ -171,12 +172,20 @@ std::vector<float> NormalizeCustomBorders(std::vector<float> cuts) {
   return cuts;
 }
 
-std::size_t ResolveHistogramThreadCount(std::size_t num_features) {
+std::size_t ResolveHistogramThreadCount(std::size_t num_rows, std::size_t num_features) {
   if (num_features <= 1) {
     return 1;
   }
 
   const std::size_t configured_threads = ParseEnvUnsigned("CTBOOST_HIST_THREADS", 0);
+  const std::size_t minimum_parallel_values = ParseEnvUnsigned(
+      "CTBOOST_HIST_MIN_PARALLEL_VALUES", kMinParallelHistogramValuesDefault);
+  if (configured_threads == 0 &&
+      (num_rows == 0 ||
+       (num_features <= std::numeric_limits<std::size_t>::max() / num_rows &&
+        num_rows * num_features < minimum_parallel_values))) {
+    return 1;
+  }
   const std::size_t hardware_threads =
       std::max<std::size_t>(1, std::thread::hardware_concurrency());
   const std::size_t thread_count =

@@ -10,6 +10,7 @@ from ..core import Pool
 from ..training import _pool_from_data_and_label
 from .base import _BaseCTBoost
 from .labels import _resolve_ranker_eval_pool
+from .serialization import PathLike
 
 class CTBoostRanker(_BaseCTBoost):
     def __init__(
@@ -75,6 +76,11 @@ class CTBoostRanker(_BaseCTBoost):
         distributed_run_id: str = "default",
         distributed_timeout: float = 600.0,
         verbose: bool = False,
+        n_estimators: Optional[int] = None,
+        depth: Optional[int] = None,
+        reg_lambda: Optional[float] = None,
+        l2_leaf_reg: Optional[float] = None,
+        random_state: Optional[int] = None,
     ) -> None:
         super().__init__(
             iterations=iterations,
@@ -137,6 +143,11 @@ class CTBoostRanker(_BaseCTBoost):
             distributed_run_id=distributed_run_id,
             distributed_timeout=distributed_timeout,
             verbose=verbose,
+            n_estimators=n_estimators,
+            depth=depth,
+            reg_lambda=reg_lambda,
+            l2_leaf_reg=l2_leaf_reg,
+            random_state=random_state,
         )
 
     def fit(
@@ -184,16 +195,19 @@ class CTBoostRanker(_BaseCTBoost):
             if y is None:
                 raise ValueError("y must be provided when X is not a Pool")
             resolved_group_id = group_id
-            train_pool = _pool_from_data_and_label(
-                X,
-                y,
-                group_id=group_id,
-                group_weight=group_weight,
-                subgroup_id=subgroup_id,
-                baseline=baseline,
-                pairs=pairs,
-                pairs_weight=pairs_weight,
-            )
+            if self._uses_feature_pipeline():
+                train_pool = X
+            else:
+                train_pool = _pool_from_data_and_label(
+                    X,
+                    y,
+                    group_id=group_id,
+                    group_weight=group_weight,
+                    subgroup_id=subgroup_id,
+                    baseline=baseline,
+                    pairs=pairs,
+                    pairs_weight=pairs_weight,
+                )
 
         if resolved_group_id is None:
             raise ValueError("CTBoostRanker requires group_id")
@@ -201,6 +215,7 @@ class CTBoostRanker(_BaseCTBoost):
         eval_pool = eval_set if self._uses_feature_pipeline() else _resolve_ranker_eval_pool(eval_set)
         fitted = self._fit_impl(
             train_pool,
+            y if self._uses_feature_pipeline() and not isinstance(train_pool, Pool) else None,
             group_id=resolved_group_id,
             group_weight=group_weight,
             subgroup_id=subgroup_id,

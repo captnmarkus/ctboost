@@ -27,6 +27,14 @@ def _scipy_sparse_to_csc_components(matrix: Any) -> Tuple[np.ndarray, np.ndarray
     csc_matrix = matrix.astype(np.float32, copy=False)
     if not sp.isspmatrix_csc(csc_matrix):
         csc_matrix = csc_matrix.tocsc(copy=False)
+    if not csc_matrix.has_canonical_format or not csc_matrix.has_sorted_indices:
+        # Pool's native sparse lookup relies on strictly increasing row indices
+        # within each CSC column.  SciPy deliberately permits unsorted indices
+        # and duplicate coordinates, so canonicalize a private copy instead of
+        # mutating the caller's matrix.
+        csc_matrix = csc_matrix.copy()
+        csc_matrix.sum_duplicates()
+        csc_matrix.sort_indices()
     sparse_data = np.ascontiguousarray(csc_matrix.data, dtype=np.float32)
     sparse_indices = np.ascontiguousarray(csc_matrix.indices, dtype=np.int64)
     sparse_indptr = np.ascontiguousarray(csc_matrix.indptr, dtype=np.int64)

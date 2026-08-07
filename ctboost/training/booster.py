@@ -10,7 +10,7 @@ import numpy as np
 from .. import _core
 from .._export import export_model as _export_model
 from .._serialization import load_booster_document, save_booster
-from ..feature_pipeline import FeaturePipeline
+from ..feature_pipeline import FeaturePipeline, _feature_pipelines_equivalent
 from ..core import Pool
 from ._booster_schema import _borders_from_quantization_schema
 from ._pool_build import _prediction_pool, _resolve_num_iteration
@@ -74,17 +74,30 @@ class Booster:
 
     def _prediction_pool(self, data: Any) -> Pool:
         if isinstance(data, Pool):
+            if (
+                self._feature_pipeline is not None
+                and not _feature_pipelines_equivalent(
+                    self._feature_pipeline,
+                    getattr(data, "_feature_pipeline", None),
+                )
+            ):
+                raise ValueError(
+                    "Pool input must contain features transformed by this booster's fitted "
+                    "feature pipeline; pass the original raw array or DataFrame instead"
+                )
+            if self._feature_pipeline is not None:
+                data._feature_pipeline = self._feature_pipeline
             return data
         if self._feature_pipeline is None:
             return _prediction_pool(data)
-        num_rows = int(data.shape[0]) if hasattr(data, "shape") else len(data)
         transformed, cat_features, feature_names = self._feature_pipeline.transform_array(data)
-        return Pool(
+        pool = Pool(
             data=transformed,
-            label=np.zeros(num_rows, dtype=np.float32),
             cat_features=cat_features,
             feature_names=feature_names,
         )
+        pool._feature_pipeline = self._feature_pipeline
+        return pool
 
     def _predict_raw(self, data: Any, *, num_iteration: Optional[int] = None) -> np.ndarray:
         pool = self._prediction_pool(data)
