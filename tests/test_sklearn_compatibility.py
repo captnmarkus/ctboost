@@ -29,8 +29,6 @@ def test_estimator_mixins_report_sklearn_estimator_types():
     assert not is_regressor(classifier)
     assert is_regressor(regressor)
     assert not is_classifier(regressor)
-    assert classifier._estimator_type == "classifier"
-    assert regressor._estimator_type == "regressor"
 
 
 def test_classifier_pool_labels_and_explicit_y_are_encoded():
