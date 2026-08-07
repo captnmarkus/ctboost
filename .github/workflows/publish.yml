@@ -131,26 +131,25 @@ jobs:
       CIBW_CONFIG_SETTINGS: >-
         cmake.define.CTBOOST_ENABLE_CUDA=ON
         cmake.define.CTBOOST_REQUIRE_CUDA=ON
-        cmake.define.CMAKE_CUDA_COMPILER=/usr/local/cuda-12.0/bin/nvcc
-        cmake.define.CUDAToolkit_ROOT=/usr/local/cuda-12.0
+        cmake.define.CMAKE_CUDA_COMPILER=/usr/local/cuda-12.8/bin/nvcc
+        cmake.define.CUDAToolkit_ROOT=/usr/local/cuda-12.8
         cmake.define.CMAKE_CUDA_ARCHITECTURES=60\;70\;75\;80\;86\;89
         wheel.build-tag=1gpu
       CIBW_ENVIRONMENT: >-
         CTBOOST_EXPECT_CUDA=1
-        CUDACXX=/usr/local/cuda-12.0/bin/nvcc
-        CUDA_HOME=/usr/local/cuda-12.0
-        CUDAToolkit_ROOT=/usr/local/cuda-12.0
-        PATH=/usr/local/cuda-12.0/bin:$PATH
-        LD_LIBRARY_PATH=/usr/local/cuda-12.0/lib64:$LD_LIBRARY_PATH
-      CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+        CUDACXX=/usr/local/cuda-12.8/bin/nvcc
+        CUDA_HOME=/usr/local/cuda-12.8
+        CUDAToolkit_ROOT=/usr/local/cuda-12.8
+        PATH=/usr/local/cuda-12.8/bin:$PATH
+        LD_LIBRARY_PATH=/usr/local/cuda-12.8/lib64:$LD_LIBRARY_PATH
+      CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28
       CIBW_BEFORE_ALL_LINUX: >-
-        rm -f /etc/yum.repos.d/epel*.repo &&
-        yum install -y wget &&
-        wget https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo -O /etc/yum.repos.d/cuda.repo &&
-        yum clean all &&
-        yum -y install cuda-compiler-12-0 cuda-cudart-devel-12-0 &&
-        /usr/local/cuda-12.0/bin/nvcc --version &&
-        test -f /usr/local/cuda-12.0/lib64/libcudart.so
+        dnf install -y wget &&
+        wget https://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/cuda-rhel8.repo -O /etc/yum.repos.d/cuda.repo &&
+        dnf clean all &&
+        dnf -y install cuda-compiler-12-8 cuda-cudart-devel-12-8 &&
+        /usr/local/cuda-12.8/bin/nvcc --version &&
+        test -f /usr/local/cuda-12.8/lib64/libcudart.so
     steps:
       - name: Checkout
         uses: actions/checkout@v6
