@@ -94,6 +94,13 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def _resolve_effective_time_limit(requested: Optional[int], experiment_bundle: Any) -> int:
+    """Match TabArena's bundle default while retaining the CLI value separately."""
+    if requested is not None:
+        return int(requested)
+    return int(experiment_bundle.DEFAULT_TIME_LIMIT)
+
+
 def _format_table(frame: Any) -> str:
     """Render a leaderboard without making pandas' ``tabulate`` extra mandatory."""
     try:
@@ -143,7 +150,8 @@ def _local_distribution_checkout(name: str) -> Optional[Path]:
         path_text = f"//{parsed.netloc}{path_text}"
     if os.name == "nt" and len(path_text) >= 3 and path_text[0] == "/" and path_text[2] == ":":
         path_text = path_text[1:]
-    return Path(path_text).resolve()
+    checkout = Path(path_text).resolve()
+    return checkout if checkout.is_dir() else None
 
 
 def _ctboost_install_fingerprint() -> str:
@@ -161,16 +169,31 @@ def _ctboost_install_fingerprint() -> str:
     return digest.hexdigest()
 
 
-def _git_source_identity() -> Optional[Dict[str, Any]]:
-    """Describe a source checkout without assuming the benchmark runs in one."""
-    candidates = [Path(__file__).resolve().parents[2]]
-    local_checkout = _local_distribution_checkout("ctboost")
-    if local_checkout is not None and local_checkout not in candidates:
-        candidates.append(local_checkout)
-    repository = next(
-        (candidate for candidate in candidates if (candidate / ".git").exists()),
-        None,
-    )
+def _git_source_identity(distribution_name: str = "ctboost") -> Optional[Dict[str, Any]]:
+    """Describe an installed distribution's source checkout, when available."""
+    candidates: list[tuple[Path, bool]] = []
+    local_checkout = _local_distribution_checkout(distribution_name)
+    if local_checkout is not None:
+        # PEP 610 identifies the runtime package source. Editable packages such
+        # as TabArena live below their repository root, so parent ascent is safe
+        # only for this explicit source path.
+        candidates.append((local_checkout, True))
+    if distribution_name == "ctboost":
+        adapter_root = Path(__file__).resolve().parents[2]
+        if adapter_root != local_checkout and (adapter_root / ".git").exists():
+            # Source-tree fallback. Never ascend from site-packages: a virtual
+            # environment can itself live inside an unrelated Git checkout.
+            candidates.append((adapter_root, False))
+
+    repository = None
+    for candidate, allow_parent_ascent in candidates:
+        possible_roots = (candidate, *candidate.parents) if allow_parent_ascent else (candidate,)
+        for possible_root in possible_roots:
+            if (possible_root / ".git").exists():
+                repository = possible_root
+                break
+        if repository is not None:
+            break
     if repository is None:
         return None
 
@@ -234,7 +257,8 @@ def _write_manifest(path: Path, args: argparse.Namespace, *, status: str) -> Non
             "num_cpus": args.num_cpus,
             "num_gpus": args.num_gpus,
             "memory_limit_gb": args.memory_limit_gb,
-            "time_limit_seconds": args.time_limit,
+            "requested_time_limit_seconds": args.time_limit,
+            "time_limit_seconds": getattr(args, "effective_time_limit", args.time_limit),
         },
         "results_dir": str(args.results_dir.resolve()),
         "output_dir": str(args.output_dir.resolve()),
@@ -247,6 +271,7 @@ def _write_manifest(path: Path, args: argparse.Namespace, *, status: str) -> Non
         "ctboost_build": ctboost.build_info(),
         "ctboost_install_sha256": _ctboost_install_fingerprint(),
         "ctboost_git": _git_source_identity(),
+        "tabarena_git": _git_source_identity("tabarena"),
         "ctboost_source": _distribution_source("ctboost"),
         "tabarena_source": _distribution_source("tabarena"),
     }
@@ -432,8 +457,13 @@ def main() -> int:
             raise SystemExit("--device gpu/both cannot be combined with --num-gpus 0")
 
     models = _experiment_models(args)
-    experiments = TabArenaV0pt1ExperimentBundle(models=models).build_experiments(
-        time_limit=args.time_limit,
+    experiment_bundle = TabArenaV0pt1ExperimentBundle(models=models)
+    args.effective_time_limit = _resolve_effective_time_limit(
+        args.time_limit,
+        experiment_bundle,
+    )
+    experiments = experiment_bundle.build_experiments(
+        time_limit=args.effective_time_limit,
         num_cpus=args.num_cpus,
         num_gpus=(0 if args.device == "cpu" and args.num_gpus is None else args.num_gpus),
         memory_limit=args.memory_limit_gb,
