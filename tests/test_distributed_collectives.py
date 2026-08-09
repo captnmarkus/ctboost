@@ -22,11 +22,15 @@ from ctboost.distributed.tcp import _read_exact, _read_line
 
 from tests.helpers import find_free_tcp_port as _find_free_tcp_port
 from tests.helpers import wait_for_tcp_listener as _wait_for_tcp_listener
+from tests.helpers import authenticated_tcp_root as _authenticated_tcp_root
+from tests.helpers import TEST_DISTRIBUTED_AUTH_TOKEN
 
 def test_distributed_tcp_request_retries_until_coordinator_is_ready():
     port = _find_free_tcp_port()
-    root = f"tcp://127.0.0.1:{port}"
-    server = DistributedCollectiveServer("127.0.0.1", port)
+    root = _authenticated_tcp_root(port)
+    server = DistributedCollectiveServer(
+        "127.0.0.1", port, auth_token=TEST_DISTRIBUTED_AUTH_TOKEN
+    )
 
     def delayed_start() -> None:
         time.sleep(0.2)
@@ -43,7 +47,7 @@ def test_distributed_tcp_request_retries_until_coordinator_is_ready():
 
 def test_distributed_tcp_request_waits_for_slow_coordinator_response():
     port = _find_free_tcp_port()
-    root = f"tcp://127.0.0.1:{port}"
+    root = _authenticated_tcp_root(port)
 
     class SlowServer(socketserver.ThreadingTCPServer):
         allow_reuse_address = True
@@ -52,10 +56,11 @@ def test_distributed_tcp_request_waits_for_slow_coordinator_response():
     class SlowHandler(socketserver.StreamRequestHandler):
         def handle(self) -> None:
             header = _read_line(self.rfile).split("\t")
-            assert len(header) == 5
+            assert len(header) == 7
+            assert header[:2] == ["CTB1", TEST_DISTRIBUTED_AUTH_TOKEN]
             _read_exact(self.rfile, int(header[-1]))
             time.sleep(1.5)
-            self.wfile.write(b"ok\t4\nslow")
+            self.wfile.write(b"CTB1\tok\t4\nslow")
 
     server = SlowServer(("127.0.0.1", port), SlowHandler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -72,8 +77,10 @@ def test_distributed_tcp_request_waits_for_slow_coordinator_response():
 
 def test_distributed_collective_server_self_stops_after_shutdown_barrier():
     port = _find_free_tcp_port()
-    root = f"tcp://127.0.0.1:{port}"
-    server = DistributedCollectiveServer("127.0.0.1", port)
+    root = _authenticated_tcp_root(port)
+    server = DistributedCollectiveServer(
+        "127.0.0.1", port, auth_token=TEST_DISTRIBUTED_AUTH_TOKEN
+    )
     server.start()
     errors = []
 
@@ -112,14 +119,17 @@ def test_distributed_collective_context_waits_for_all_ranks_before_shutdown(tmp_
             from ctboost.distributed import distributed_tcp_request
             from ctboost.training import _distributed_collective_context
 
+            token = "a" * 64
+
             rank = int(sys.argv[1])
             port = int(sys.argv[2])
             delay = float(sys.argv[3])
             distributed = {
                 "backend": "tcp",
-                "root": f"tcp://127.0.0.1:{port}",
+                "root": f"tcp://127.0.0.1:{port}/auth/{token}",
                 "host": "127.0.0.1",
                 "port": port,
+                "auth_token": token,
                 "rank": rank,
                 "world_size": 2,
                 "run_id": "barrier-case",
@@ -132,9 +142,9 @@ def test_distributed_collective_context_waits_for_all_ranks_before_shutdown(tmp_
                     distributed["root"],
                     distributed["timeout"],
                     "ping",
-                    "__health__",
+                    "barrier-case/__health__",
                     rank,
-                    1,
+                    2,
                     b"",
                 )
             print(json.dumps({"rank": rank, "ok": True}))

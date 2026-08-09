@@ -101,13 +101,18 @@ def split_feature_frame(
 def allocate_tcp_endpoint(host_hint: Optional[str] = None) -> tuple[str, str]:
     """Return a worker-reachable TCP root and the current runtime node id placeholder."""
 
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener:
-        listener.bind(("0.0.0.0", 0))
-        port = int(listener.getsockname()[1])
+    from .distributed.tcp import authenticated_tcp_root
+
     host = str(host_hint or "").strip()
     if not host or host in {"0.0.0.0", "::", "localhost"}:
-        host = socket.gethostbyname(socket.gethostname())
-    return f"tcp://{host}:{port}", ""
+        host = socket.gethostname()
+    host = socket.gethostbyname(host)
+    if host in {"0.0.0.0", "::"}:
+        raise ValueError("distributed endpoint allocation requires a concrete host")
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listener:
+        listener.bind((host, 0))
+        port = int(listener.getsockname()[1])
+    return authenticated_tcp_root(host, port), ""
 
 
 def train_distributed_shard(
@@ -131,7 +136,12 @@ def train_distributed_shard(
     from .training import train
 
     if rank != 0:
-        wait_for_distributed_tcp_coordinator(distributed_root, float(timeout))
+        wait_for_distributed_tcp_coordinator(
+            distributed_root,
+            float(timeout),
+            run_id=str(run_id),
+            world_size=int(world_size),
+        )
     distributed_params = dict(params)
     distributed_params.update(
         distributed_world_size=int(world_size),

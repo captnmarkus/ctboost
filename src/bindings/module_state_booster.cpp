@@ -1,5 +1,7 @@
 #include "module_internal.hpp"
 
+#include "ctboost/distributed_root.hpp"
+
 namespace ctboost::bindings {
 
 py::dict BoosterToStateDict(const ctboost::GradientBooster& booster) {
@@ -52,7 +54,7 @@ py::dict BoosterToStateDict(const ctboost::GradientBooster& booster) {
   state["devices"] = booster.devices();
   state["distributed_world_size"] = booster.distributed_world_size();
   state["distributed_rank"] = booster.distributed_rank();
-  state["distributed_root"] = booster.distributed_root();
+  state["distributed_root"] = ctboost::RedactDistributedTcpRoot(booster.distributed_root());
   state["distributed_run_id"] = booster.distributed_run_id();
   state["distributed_timeout"] = booster.distributed_timeout();
   state["random_seed"] = booster.random_seed();

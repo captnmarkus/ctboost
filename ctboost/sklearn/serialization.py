@@ -11,6 +11,7 @@ from sklearn.utils.validation import check_is_fitted
 
 from .. import _core
 from .._serialization import load_estimator_document, save_estimator
+from ..distributed.tcp import redact_distributed_root
 from ..feature_pipeline import FeaturePipeline
 from ..training import Booster
 from ..training.objectives import _custom_objective_native_name
@@ -30,6 +31,10 @@ def _inference_safe_eval_metric(value: Any) -> Any:
 
 def _inference_safe_estimator_state(estimator: Any, state: Dict[str, Any]) -> Dict[str, Any]:
     safe_state = dict(state)
+    if "distributed_root" in safe_state:
+        safe_state["distributed_root"] = redact_distributed_root(
+            safe_state["distributed_root"]
+        )
     booster = getattr(estimator, "_booster", None)
     if booster is not None and "loss_function" in safe_state:
         native_objective = _custom_objective_native_name(
@@ -79,6 +84,13 @@ def _deserialize_value(value: Any) -> Any:
 
 
 class _SerializationMixin:
+        def __repr__(self) -> str:
+            rendered = super().__repr__()
+            distributed_root = str(getattr(self, "distributed_root", "") or "")
+            redacted_root = redact_distributed_root(distributed_root)
+            if distributed_root and distributed_root != redacted_root:
+                rendered = rendered.replace(distributed_root, redacted_root)
+            return rendered
         def __getstate__(self) -> Dict[str, Any]:
             state = super().__getstate__()
             return _inference_safe_estimator_state(self, state)

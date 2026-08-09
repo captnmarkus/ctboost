@@ -1,4 +1,5 @@
 import csv
+from importlib import metadata
 import json
 import os
 from pathlib import Path
@@ -311,11 +312,35 @@ def test_optional_arrow_table_input(tmp_path: Path, suffix: str):
 
 
 def test_project_registers_console_script_and_cli_extra():
-    project = (REPOSITORY_ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    assert 'ctboost = "ctboost.cli:main"' in project
-    assert "cli = [" in project
-    assert '"pandas>=1.5"' in project
-    assert '"pyarrow>=12"' in project
+    project_path = REPOSITORY_ROOT / "pyproject.toml"
+    if project_path.is_file():
+        project = project_path.read_text(encoding="utf-8")
+        assert 'ctboost = "ctboost.cli:main"' in project
+        assert "cli = [" in project
+        assert '"pandas>=1.5"' in project
+        assert '"pyarrow>=12"' in project
+        return
+
+    distribution = metadata.distribution("ctboost")
+    console_scripts = {
+        entry_point.name: entry_point.value
+        for entry_point in distribution.entry_points
+        if entry_point.group == "console_scripts"
+    }
+    assert console_scripts["ctboost"] == "ctboost.cli:main"
+
+    requirements = distribution.requires or []
+    cli_requirements = [
+        requirement
+        for requirement in requirements
+        if 'extra == "cli"' in requirement
+    ]
+    assert any(
+        requirement.startswith("pandas>=1.5") for requirement in cli_requirements
+    )
+    assert any(
+        requirement.startswith("pyarrow>=12") for requirement in cli_requirements
+    )
 
 
 def test_group_id_normalization_does_not_truncate_distinct_float_identifiers():

@@ -5,6 +5,13 @@ import numpy as np
 from sklearn.datasets import make_classification
 
 
+TEST_DISTRIBUTED_AUTH_TOKEN = "a" * 64
+
+
+def authenticated_tcp_root(port: int, *, host: str = "127.0.0.1") -> str:
+    return f"tcp://{host}:{int(port)}/auth/{TEST_DISTRIBUTED_AUTH_TOKEN}"
+
+
 def find_free_tcp_port() -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
         sock.bind(("127.0.0.1", 0))

@@ -528,6 +528,23 @@ prediction_dataset = ctr.predict(
 )
 ```
 
+Automatic Dask and Ray endpoints bind the selected worker's concrete network
+address and attach a cryptographically random, per-run bearer token. For a
+manually coordinated run, create one root and pass that same value to every
+rank:
+
+```python
+from ctboost.distributed import authenticated_tcp_root
+
+root = authenticated_tcp_root("10.0.0.12", 19091)
+```
+
+The token is kept only in live runtime configuration; model exports, estimator
+pickles, and snapshots store the redacted `tcp://host:port` endpoint. The TCP
+collective does not provide TLS encryption, so use it only on a trusted private
+network or through a protected network overlay/firewall. Manually supplied bare
+or wildcard TCP roots are rejected.
+
 `ctboost.spark.train(...)` intentionally requires `mode="collect"` and calls
 `DataFrame.toPandas()` for fitting, making the driver-memory boundary explicit.
 It returns `SparkCTBoostModel`; its `transform(...)` method performs partitioned

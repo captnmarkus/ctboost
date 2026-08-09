@@ -8,6 +8,7 @@ from typing import Any, Dict, Mapping, Optional
 import numpy as np
 
 from ..distributed import parse_distributed_root
+from ..distributed.tcp import MAX_KEY_BYTES
 from ..feature_pipeline import FeaturePipeline
 
 _DISTRIBUTED_PARAM_KEYS = {
@@ -32,9 +33,16 @@ def _normalize_distributed_config(params: Mapping[str, Any]) -> Optional[Dict[st
         raise ValueError("distributed_root is required when distributed_world_size > 1")
     parsed_root = parse_distributed_root(root_value)
     run_id = str(params.get("distributed_run_id", "default"))
+    if not run_id or "\t" in run_id or "\n" in run_id or len(run_id.encode("utf-8")) > MAX_KEY_BYTES:
+        raise ValueError("distributed_run_id is empty or exceeds protocol limits")
     timeout = float(params.get("distributed_timeout", 600.0))
     if timeout <= 0.0:
         raise ValueError("distributed_timeout must be positive")
+    if parsed_root.backend == "tcp" and parsed_root.auth_token is None:
+        raise ValueError(
+            "distributed TCP training requires an authenticated root; append "
+            "'/auth/<64-hex-token>' or use the Dask/Ray automatic endpoint"
+        )
 
     return {
         "world_size": world_size,
@@ -43,6 +51,7 @@ def _normalize_distributed_config(params: Mapping[str, Any]) -> Optional[Dict[st
         "backend": parsed_root.backend,
         "host": parsed_root.host,
         "port": parsed_root.port,
+        "auth_token": parsed_root.auth_token,
         "run_id": run_id,
         "timeout": timeout,
     }

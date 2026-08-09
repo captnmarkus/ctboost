@@ -10,6 +10,7 @@ import numpy as np
 
 from .. import _core
 from ..core import Pool
+from ..distributed.tcp import redact_distributed_root
 from ._learning_rate_schedule import _normalize_learning_rate_schedule, _resolve_learning_rate_for_iteration
 from .booster import Booster
 from .eval_metrics import _copy_evals_result
@@ -117,7 +118,7 @@ def _resume_snapshot_config_signature(*, pool: Pool, **kwargs: Any) -> Dict[str,
         "devices": str(kwargs["devices"]),
         "distributed_world_size": int(kwargs["distributed_world_size"]),
         "distributed_rank": int(kwargs["distributed_rank"]),
-        "distributed_root": str(kwargs["distributed_root"]),
+        "distributed_root": redact_distributed_root(kwargs["distributed_root"]),
         "distributed_run_id": str(kwargs["distributed_run_id"]),
         "distributed_timeout": float(kwargs["distributed_timeout"]),
         "random_seed": int(kwargs["random_seed"]),
@@ -173,7 +174,7 @@ def _resume_snapshot_state_signature(init_state: Mapping[str, Any], init_model: 
         "devices": str(init_state["devices"]),
         "distributed_world_size": int(init_state.get("distributed_world_size", 1)),
         "distributed_rank": int(init_state.get("distributed_rank", 0)),
-        "distributed_root": str(init_state.get("distributed_root", "")),
+        "distributed_root": redact_distributed_root(init_state.get("distributed_root", "")),
         "distributed_run_id": str(init_state.get("distributed_run_id", "default")),
         "distributed_timeout": float(init_state.get("distributed_timeout", 600.0)),
         "random_seed": int(init_state.get("random_seed", 0)),

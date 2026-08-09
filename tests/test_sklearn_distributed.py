@@ -56,7 +56,7 @@ def test_regressor_distributed_fit_matches_central_estimator(tmp_path: Path):
                 random_seed=7,
                 distributed_world_size=2,
                 distributed_rank=rank,
-                distributed_root=f"tcp://127.0.0.1:{port}",
+                distributed_root=f"tcp://127.0.0.1:{port}/auth/{'a' * 64}",
                 distributed_run_id="sklearn-case",
                 distributed_timeout=120.0,
             )

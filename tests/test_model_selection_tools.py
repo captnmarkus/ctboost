@@ -13,6 +13,24 @@ def _regression_data():
     return X, y
 
 
+def _comparison_regression_data():
+    """Return three identical, deterministic folds with a strong signal."""
+
+    row = np.arange(30)
+    signal = (row % 10).astype(np.float32) - 4.5
+    block = np.column_stack(
+        [
+            signal,
+            (row * 7 % 11).astype(np.float32),
+            (row * 3 % 5).astype(np.float32),
+            np.ones(30, dtype=np.float32),
+        ]
+    )
+    X = np.tile(block, (3, 1))
+    y = np.tile(3.0 * signal, 3).astype(np.float32)
+    return X, y
+
+
 def test_grid_search_refits_estimator_and_returns_cv_details():
     X, y = _regression_data()
     model = CTBoostRegressor(iterations=4, max_depth=1, alpha=1.0, random_seed=3)
@@ -94,7 +112,7 @@ def test_select_features_operates_in_raw_categorical_input_space():
 
 
 def test_compare_estimators_uses_identical_folds_and_ranks_scores():
-    X, y = _regression_data()
+    X, y = _comparison_regression_data()
     ctboost_model = CTBoostRegressor(
         iterations=20, max_depth=2, alpha=1.0, random_seed=23
     )
