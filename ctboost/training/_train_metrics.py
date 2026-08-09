@@ -89,10 +89,10 @@ def _resolve_metric_runtime(
     use_python_eval_surface = (
         bool(user_callback_list)
         or learning_rate_schedule is not None
+        or snapshot_callback is not None
         or len(eval_pools) > 1
         or len(eval_metric_specs) > 1
         or any(metric_spec["kind"] == "callable" for metric_spec in eval_metric_specs)
-        or (snapshot_callback is not None and distributed_config is not None)
     )
     callback_list = list(user_callback_list)
     if snapshot_callback is not None and use_python_eval_surface:

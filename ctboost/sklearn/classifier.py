@@ -8,6 +8,7 @@ import numpy as np
 from sklearn.base import ClassifierMixin
 
 from ..core import Pool
+from ..core.columnar import _columnar_vector_to_numpy
 from ..training import _pool_from_data_and_label
 from .base import _BaseCTBoost
 from .labels import _encode_classifier_eval_set, _resolve_classifier_eval_pool
@@ -40,8 +41,17 @@ class CTBoostClassifier(ClassifierMixin, _BaseCTBoost):
         per_feature_ctr: Optional[Any] = None,
         text_features: Optional[Any] = None,
         text_hash_dim: int = 64,
+        text_tokenizer: str = "word",
+        text_ngram_range: Any = (1, 1),
+        text_lowercase: bool = True,
+        text_min_token_count: int = 1,
+        text_max_dictionary_size: int = 0,
+        text_feature_calcer: str = "count",
         embedding_features: Optional[Any] = None,
         embedding_stats: Any = ("mean", "std", "min", "max", "l2"),
+        embedding_target_features: bool = False,
+        embedding_target_regularization: float = 1.0,
+        embedding_target_mode: str = "auto",
         ctr_prior_strength: float = 1.0,
         monotone_constraints: Optional[Any] = None,
         interaction_constraints: Optional[Any] = None,
@@ -109,8 +119,17 @@ class CTBoostClassifier(ClassifierMixin, _BaseCTBoost):
             per_feature_ctr=per_feature_ctr,
             text_features=text_features,
             text_hash_dim=text_hash_dim,
+            text_tokenizer=text_tokenizer,
+            text_ngram_range=text_ngram_range,
+            text_lowercase=text_lowercase,
+            text_min_token_count=text_min_token_count,
+            text_max_dictionary_size=text_max_dictionary_size,
+            text_feature_calcer=text_feature_calcer,
             embedding_features=embedding_features,
             embedding_stats=embedding_stats,
+            embedding_target_features=embedding_target_features,
+            embedding_target_regularization=embedding_target_regularization,
+            embedding_target_mode=embedding_target_mode,
             ctr_prior_strength=ctr_prior_strength,
             monotone_constraints=monotone_constraints,
             interaction_constraints=interaction_constraints,
@@ -177,11 +196,13 @@ class CTBoostClassifier(ClassifierMixin, _BaseCTBoost):
         resume_from_snapshot: Any = None,
     ) -> "CTBoostClassifier":
         if isinstance(X, Pool):
-            raw_labels = np.asarray(X.label if y is None else y)
+            raw_labels = np.asarray(
+                X.label if y is None else _columnar_vector_to_numpy(y)
+            )
         else:
             if y is None:
                 raise ValueError("y must be provided when X is not a Pool")
-            raw_labels = np.asarray(y)
+            raw_labels = np.asarray(_columnar_vector_to_numpy(y))
         if raw_labels.ndim != 1:
             raise ValueError("classification labels must be a 1D array")
 

@@ -35,6 +35,10 @@ py::handle MatrixValue(const MatrixView& matrix, std::size_t row, std::size_t co
 bool IsMissing(const py::handle& value);
 std::string NormalizeKey(const py::handle& value);
 std::vector<std::string> NormalizeEmbeddingStats(py::object embedding_stats);
+std::string NormalizeTextTokenizer(std::string tokenizer);
+std::pair<int, int> NormalizeTextNgramRange(py::object ngram_range);
+std::string NormalizeTextFeatureCalcer(std::string feature_calcer);
+std::string NormalizeEmbeddingTargetMode(std::string target_mode);
 py::object NormalizeOptionalSequence(py::object values);
 py::object NormalizeOptionalCombinations(py::object values);
 std::string CanonicalCtrType(std::string ctr_type);
@@ -53,7 +57,14 @@ std::string JoinNormalizedKey(const MatrixView& matrix,
 std::uint64_t BytesToLittleEndianU64(const py::bytes& digest);
 std::vector<float> EmbeddingValues(const py::handle& value);
 std::pair<int, std::vector<float>> FitTargetMode(const std::vector<float>& labels);
-std::vector<std::string> ExtractAsciiTokens(std::string text);
+std::vector<std::string> ExtractTextTokens(std::string text,
+                                           const std::string& tokenizer,
+                                           int ngram_min,
+                                           int ngram_max,
+                                           bool lowercase);
+std::string TextOutputName(const std::string& prefix,
+                           const std::string& token,
+                           std::size_t index);
 py::list VectorToPyList(const std::vector<int>& values);
 py::list VectorToPyList(const std::vector<std::string>& values);
 py::list VectorToPyList(const std::vector<float>& values);

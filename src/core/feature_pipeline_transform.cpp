@@ -177,22 +177,50 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
         continue;
       }
       const std::string text = py::str(raw_value).cast<std::string>();
-      for (const std::string& token : detail::ExtractAsciiTokens(text)) {
-        auto cache_it = text_hash_cache_.find(token);
-        if (cache_it == text_hash_cache_.end()) {
-          const py::bytes digest =
-              detail::HashlibModule()
-                  .attr("blake2b")(py::bytes(token), py::arg("digest_size") = 8)
-                  .attr("digest")()
-                  .cast<py::bytes>();
-          cache_it = text_hash_cache_.emplace(token, detail::BytesToLittleEndianU64(digest)).first;
+      for (const std::string& token : detail::ExtractTextTokens(text,
+                                                               text_tokenizer_,
+                                                               text_ngram_min_,
+                                                               text_ngram_max_,
+                                                               text_lowercase_)) {
+        int bucket = -1;
+        if (state.uses_dictionary != 0U) {
+          const auto vocabulary_it = state.vocabulary_indices.find(token);
+          if (vocabulary_it == state.vocabulary_indices.end()) {
+            continue;
+          }
+          bucket = vocabulary_it->second;
+        } else {
+          if (state.filters_tokens != 0U &&
+              state.vocabulary_indices.find(token) == state.vocabulary_indices.end()) {
+            continue;
+          }
+          auto cache_it = text_hash_cache_.find(token);
+          if (cache_it == text_hash_cache_.end()) {
+            const py::bytes digest =
+                detail::HashlibModule()
+                    .attr("blake2b")(py::bytes(token), py::arg("digest_size") = 8)
+                    .attr("digest")()
+                    .cast<py::bytes>();
+            cache_it = text_hash_cache_.emplace(token, detail::BytesToLittleEndianU64(digest)).first;
+          }
+          bucket = static_cast<int>(
+              cache_it->second % static_cast<std::uint64_t>(text_hash_dim_));
         }
-        const std::size_t bucket =
-            static_cast<std::size_t>(cache_it->second % static_cast<std::uint64_t>(text_hash_dim_));
-        data[(text_column_start + bucket) * row_count + row] += 1.0F;
+        float& value = data[(text_column_start + static_cast<std::size_t>(bucket)) * row_count + row];
+        if (text_feature_calcer_ == "binary") {
+          value = 1.0F;
+        } else {
+          value += 1.0F;
+        }
+      }
+      if (text_feature_calcer_ == "tfidf") {
+        for (int offset = 0; offset < state.output_dim; ++offset) {
+          data[(text_column_start + static_cast<std::size_t>(offset)) * row_count + row] *=
+              state.idf_values[static_cast<std::size_t>(offset)];
+        }
       }
     }
-    column_index += static_cast<std::size_t>(text_hash_dim_);
+    column_index += static_cast<std::size_t>(state.output_dim);
   }
 
   for (const auto& state : embedding_states_) {
@@ -237,8 +265,26 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
         }
         write_column_value(row, embedding_column_start + stat_index, stat_value);
       }
+
+      const std::size_t target_column_start = embedding_column_start + state.stats.size();
+      if (!state.target_projection_weights.empty()) {
+        if (values.size() != state.center.size()) {
+          throw std::invalid_argument(
+              "embedding dimension does not match the fitted target projection");
+        }
+        for (std::size_t projection_index = 0;
+             projection_index < state.target_projection_weights.size(); ++projection_index) {
+          float projection = 0.0F;
+          const auto& weights = state.target_projection_weights[projection_index];
+          for (std::size_t dimension = 0; dimension < values.size(); ++dimension) {
+            projection += (values[dimension] - state.center[dimension]) * weights[dimension];
+          }
+          write_column_value(
+              row, target_column_start + projection_index, projection);
+        }
+      }
     }
-    column_index += state.stats.size();
+    column_index += state.stats.size() + state.target_projection_weights.size();
   }
 
   return py::make_tuple(std::move(transformed),

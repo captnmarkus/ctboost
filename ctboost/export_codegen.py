@@ -20,6 +20,8 @@ import math
 
 MODEL = {payload_literal}
 
+ARTIFACT_FORMAT = MODEL.get("format", "ctboost-json-predictor")
+ARTIFACT_FORMAT_VERSION = int(MODEL.get("format_version", 0))
 CTBOOST_VERSION = MODEL["ctboost_version"]
 OBJECTIVE_NAME = MODEL["objective_name"]
 LEARNING_RATE = float(MODEL["learning_rate"])
@@ -29,6 +31,8 @@ NUM_FEATURES = int(MODEL["num_features"])
 EXPECTS_PREPARED_FEATURES = bool(MODEL["expects_prepared_features"])
 QUANTIZATION_SCHEMA = MODEL["quantization_schema"]
 TREES = MODEL["trees"]
+CLASS_LABELS = MODEL.get("class_labels")
+INFERENCE_MANIFEST = MODEL.get("inference_manifest")
 
 _BINARY_OBJECTIVES = {{"logloss", "binary_logloss", "binary:logistic"}}
 _MULTICLASS_OBJECTIVES = {{"multiclass", "softmax", "softmaxloss"}}
@@ -170,6 +174,11 @@ def predict(data):
     return predict_raw(data)
 
 
+def get_inference_manifest():
+    """Return the deployment contract embedded when this scorer was generated."""
+    return INFERENCE_MANIFEST
+
+
 def _sigmoid(value):
     if value >= 0.0:
         exp_value = math.exp(-value)
@@ -209,8 +218,10 @@ def predict_class(data):
     if objective_name in _BINARY_OBJECTIVES:
         raw = predict_raw(data)
         if isinstance(raw, (int, float)):
-            return 1 if float(raw) >= 0.0 else 0
-        return [1 if float(value) >= 0.0 else 0 for value in raw]
+            index = 1 if float(raw) >= 0.0 else 0
+            return index if CLASS_LABELS is None else CLASS_LABELS[index]
+        indices = [1 if float(value) >= 0.0 else 0 for value in raw]
+        return indices if CLASS_LABELS is None else [CLASS_LABELS[index] for index in indices]
     if objective_name in _MULTICLASS_OBJECTIVES:
         raw = predict_raw(data)
         is_single_row = bool(raw) and isinstance(raw[0], (int, float))
@@ -224,6 +235,8 @@ def predict_class(data):
                     best_index = index
                     best_score = float(score)
             classes.append(best_index)
+        if CLASS_LABELS is not None:
+            classes = [CLASS_LABELS[index] for index in classes]
         return classes[0] if is_single_row else classes
     raise RuntimeError(
         f"predict_class is only available for classification objectives, got {{OBJECTIVE_NAME!r}}"

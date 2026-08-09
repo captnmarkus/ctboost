@@ -190,6 +190,12 @@ def _validate_resume_snapshot_contract(
 ) -> None:
     snapshot_signature = _resume_snapshot_state_signature(init_state, init_model)
     for key, expected_value in snapshot_signature.items():
+        # A scheduled run stores the rate used by its most recently completed
+        # iteration on the native booster.  The caller's base learning_rate is
+        # therefore not expected to equal that current rate; the complete
+        # per-iteration history is validated against the schedule below.
+        if key == "learning_rate" and learning_rate_schedule is not None:
+            continue
         if key == "data_schema" and not expected_value:
             continue
         actual_value = _normalize_resume_signature_value(requested_signature[key])

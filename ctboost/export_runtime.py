@@ -8,12 +8,21 @@ import math
 from pathlib import Path
 from typing import Any, Union
 
+from .export_payload import JSON_PREDICTOR_FORMAT, JSON_PREDICTOR_FORMAT_VERSION
+from .inference_manifest import _model_fingerprint, validate_inference_manifest
+
 PathLike = Union[str, Path]
 
 
 class ExportedPredictor:
     def __init__(self, payload: dict[str, Any]) -> None:
         self.payload = dict(payload)
+        artifact_format = self.payload.get("format")
+        if artifact_format is not None and artifact_format != JSON_PREDICTOR_FORMAT:
+            raise ValueError(f"unsupported predictor format: {artifact_format!r}")
+        format_version = self.payload.get("format_version")
+        if format_version is not None and int(format_version) != JSON_PREDICTOR_FORMAT_VERSION:
+            raise ValueError(f"unsupported predictor format version: {format_version!r}")
         self.objective_name = str(self.payload["objective_name"])
         self.learning_rate = float(self.payload["learning_rate"])
         tree_learning_rates = self.payload.get("tree_learning_rates")
@@ -25,6 +34,24 @@ class ExportedPredictor:
         self.expects_prepared_features = bool(self.payload["expects_prepared_features"])
         self.quantization_schema = dict(self.payload["quantization_schema"])
         self.trees = list(self.payload["trees"])
+        class_labels = self.payload.get("class_labels")
+        self.class_labels = None if class_labels is None else list(class_labels)
+        manifest = self.payload.get("inference_manifest")
+        self.inference_manifest = (
+            None if manifest is None else validate_inference_manifest(manifest)
+        )
+        if (
+            self.inference_manifest is not None
+            and self.inference_manifest["model"]["fingerprint"]
+            != _model_fingerprint(self.payload, self.class_labels)
+        ):
+            raise ValueError("predictor model fingerprint mismatch")
+
+    def get_inference_manifest(self) -> Union[dict[str, Any], None]:
+        """Return a defensive copy of the embedded deployment contract, if present."""
+        if self.inference_manifest is None:
+            return None
+        return validate_inference_manifest(self.inference_manifest)
 
     @staticmethod
     def _is_nan(value: Any) -> bool:
@@ -183,8 +210,14 @@ class ExportedPredictor:
         if objective_name in {"logloss", "binary_logloss", "binary:logistic"}:
             raw = self.predict_raw(data)
             if isinstance(raw, (int, float)):
-                return 1 if float(raw) >= 0.0 else 0
-            return [1 if float(value) >= 0.0 else 0 for value in raw]
+                index = 1 if float(raw) >= 0.0 else 0
+                return index if self.class_labels is None else self.class_labels[index]
+            indices = [1 if float(value) >= 0.0 else 0 for value in raw]
+            return (
+                indices
+                if self.class_labels is None
+                else [self.class_labels[index] for index in indices]
+            )
         if objective_name in {"multiclass", "softmax", "softmaxloss"}:
             raw = self.predict_raw(data)
             is_single_row = bool(raw) and isinstance(raw[0], (int, float))
@@ -198,6 +231,8 @@ class ExportedPredictor:
                         best_index = index
                         best_score = float(score)
                 classes.append(best_index)
+            if self.class_labels is not None:
+                classes = [self.class_labels[index] for index in classes]
             return classes[0] if is_single_row else classes
         raise RuntimeError(
             f"predict_class is only available for classification objectives, got {self.objective_name!r}"

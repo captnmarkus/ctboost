@@ -1,9 +1,11 @@
 #include "feature_pipeline_internal.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <limits>
 #include <numeric>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 
@@ -105,29 +107,100 @@ std::pair<int, std::vector<float>> FitTargetMode(const std::vector<float>& label
   return {1, std::vector<float>{mean}};
 }
 
-std::vector<std::string> ExtractAsciiTokens(std::string text) {
-  for (char& ch : text) {
-    if (ch >= 'A' && ch <= 'Z') {
-      ch = static_cast<char>(ch - 'A' + 'a');
+std::vector<std::string> ExtractTextTokens(std::string text,
+                                           const std::string& tokenizer,
+                                           int ngram_min,
+                                           int ngram_max,
+                                           bool lowercase) {
+  if (lowercase) {
+    for (char& ch : text) {
+      if (ch >= 'A' && ch <= 'Z') {
+        ch = static_cast<char>(ch - 'A' + 'a');
+      }
+    }
+  }
+
+  std::vector<std::string> base_tokens;
+  if (tokenizer == "character") {
+    base_tokens.reserve(text.size());
+    for (std::size_t index = 0; index < text.size();) {
+      const unsigned char lead = static_cast<unsigned char>(text[index]);
+      std::size_t width = 1U;
+      if ((lead & 0xE0U) == 0xC0U) {
+        width = 2U;
+      } else if ((lead & 0xF0U) == 0xE0U) {
+        width = 3U;
+      } else if ((lead & 0xF8U) == 0xF0U) {
+        width = 4U;
+      }
+      width = std::min(width, text.size() - index);
+      if (width > 1U || !std::isspace(lead)) {
+        base_tokens.push_back(text.substr(index, width));
+      }
+      index += width;
+    }
+  } else if (tokenizer == "whitespace") {
+    std::istringstream stream(text);
+    std::string token;
+    while (stream >> token) {
+      base_tokens.push_back(std::move(token));
+    }
+  } else {
+    std::string current;
+    for (unsigned char ch : text) {
+      const bool is_token_char =
+          (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+          (ch >= '0' && ch <= '9') || ch == '_';
+      if (is_token_char) {
+        current.push_back(static_cast<char>(ch));
+      } else if (!current.empty()) {
+        base_tokens.push_back(std::move(current));
+        current.clear();
+      }
+    }
+    if (!current.empty()) {
+      base_tokens.push_back(std::move(current));
     }
   }
 
   std::vector<std::string> tokens;
-  std::string current;
-  for (unsigned char ch : text) {
-    const bool is_token_char =
-        (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '_';
-    if (is_token_char) {
-      current.push_back(static_cast<char>(ch));
-    } else if (!current.empty()) {
-      tokens.push_back(std::move(current));
-      current.clear();
+  for (int width = ngram_min; width <= ngram_max; ++width) {
+    if (static_cast<std::size_t>(width) > base_tokens.size()) {
+      continue;
+    }
+    for (std::size_t begin = 0;
+         begin + static_cast<std::size_t>(width) <= base_tokens.size(); ++begin) {
+      std::string ngram;
+      for (int offset = 0; offset < width; ++offset) {
+        if (offset > 0 && tokenizer != "character") {
+          ngram.push_back('_');
+        }
+        ngram += base_tokens[begin + static_cast<std::size_t>(offset)];
+      }
+      tokens.push_back(std::move(ngram));
     }
   }
-  if (!current.empty()) {
-    tokens.push_back(std::move(current));
-  }
   return tokens;
+}
+
+std::string TextOutputName(const std::string& prefix,
+                           const std::string& token,
+                           std::size_t index) {
+  std::string clean;
+  clean.reserve(std::min<std::size_t>(token.size(), 32U));
+  for (unsigned char ch : token) {
+    const bool ascii_alnum = (ch >= 'a' && ch <= 'z') ||
+                             (ch >= 'A' && ch <= 'Z') ||
+                             (ch >= '0' && ch <= '9');
+    clean.push_back(ascii_alnum || ch == '_' ? static_cast<char>(ch) : '_');
+    if (clean.size() == 32U) {
+      break;
+    }
+  }
+  if (clean.empty()) {
+    clean = "token";
+  }
+  return prefix + "_token_" + clean + "_" + std::to_string(index);
 }
 
 }  // namespace ctboost::detail

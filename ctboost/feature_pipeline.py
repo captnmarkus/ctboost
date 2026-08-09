@@ -8,6 +8,14 @@ import numpy as np
 
 from . import _core
 from .core import Pool
+from .core.columnar import (
+    _array_protocol_to_numpy,
+    _columnar_frame_metadata,
+    _columnar_frame_to_numpy,
+    _columnar_vector_to_numpy,
+    _is_columnar_frame,
+    _is_polars_lazy_frame,
+)
 
 try:
     import pandas as pd
@@ -25,6 +33,22 @@ def _embedding_stat_names(stats: Sequence[str]) -> Tuple[str, ...]:
     for stat in resolved:
         if stat not in supported:
             raise ValueError(f"unsupported embedding stat: {stat}")
+    return resolved
+
+
+def _text_ngram_bounds(values: Sequence[int]) -> Tuple[int, int]:
+    resolved = tuple(int(value) for value in values)
+    if len(resolved) != 2 or resolved[0] <= 0 or resolved[1] < resolved[0]:
+        raise ValueError(
+            "text_ngram_range must be a (minimum, maximum) pair of positive integers"
+        )
+    return resolved
+
+
+def _choice(value: str, *, name: str, choices: Sequence[str]) -> str:
+    resolved = str(value).lower()
+    if resolved not in choices:
+        raise ValueError(f"{name} must be one of: {', '.join(choices)}")
     return resolved
 
 
@@ -57,8 +81,17 @@ class FeaturePipeline:
         per_feature_ctr: Optional[Mapping[Any, Sequence[str]]] = None,
         text_features: Optional[Sequence[Any]] = None,
         text_hash_dim: int = 64,
+        text_tokenizer: str = "word",
+        text_ngram_range: Sequence[int] = (1, 1),
+        text_lowercase: bool = True,
+        text_min_token_count: int = 1,
+        text_max_dictionary_size: int = 0,
+        text_feature_calcer: str = "count",
         embedding_features: Optional[Sequence[Any]] = None,
         embedding_stats: Sequence[str] = ("mean", "std", "min", "max", "l2"),
+        embedding_target_features: bool = False,
+        embedding_target_regularization: float = 1.0,
+        embedding_target_mode: str = "auto",
         ctr_prior_strength: float = 1.0,
         random_seed: int = 0,
     ) -> None:
@@ -81,8 +114,37 @@ class FeaturePipeline:
         )
         self.text_features = None if text_features is None else list(text_features)
         self.text_hash_dim = int(text_hash_dim)
+        if self.text_hash_dim <= 0:
+            raise ValueError("text_hash_dim must be positive")
+        self.text_tokenizer = _choice(
+            text_tokenizer,
+            name="text_tokenizer",
+            choices=("word", "whitespace", "character"),
+        )
+        self.text_ngram_range = _text_ngram_bounds(text_ngram_range)
+        self.text_lowercase = bool(text_lowercase)
+        self.text_min_token_count = int(text_min_token_count)
+        if self.text_min_token_count <= 0:
+            raise ValueError("text_min_token_count must be positive")
+        self.text_max_dictionary_size = int(text_max_dictionary_size)
+        if self.text_max_dictionary_size < 0:
+            raise ValueError("text_max_dictionary_size must be non-negative")
+        self.text_feature_calcer = _choice(
+            text_feature_calcer,
+            name="text_feature_calcer",
+            choices=("count", "binary", "tfidf"),
+        )
         self.embedding_features = None if embedding_features is None else list(embedding_features)
         self.embedding_stats = _embedding_stat_names(embedding_stats)
+        self.embedding_target_features = bool(embedding_target_features)
+        self.embedding_target_regularization = float(embedding_target_regularization)
+        if self.embedding_target_regularization < 0.0:
+            raise ValueError("embedding_target_regularization must be non-negative")
+        self.embedding_target_mode = _choice(
+            embedding_target_mode,
+            name="embedding_target_mode",
+            choices=("auto", "regression", "classification"),
+        )
         self.ctr_prior_strength = float(ctr_prior_strength)
         self.random_seed = int(random_seed)
 
@@ -103,8 +165,17 @@ class FeaturePipeline:
             per_feature_ctr=self.per_feature_ctr,
             text_features=self.text_features,
             text_hash_dim=self.text_hash_dim,
+            text_tokenizer=self.text_tokenizer,
+            text_ngram_range=self.text_ngram_range,
+            text_lowercase=self.text_lowercase,
+            text_min_token_count=self.text_min_token_count,
+            text_max_dictionary_size=self.text_max_dictionary_size,
+            text_feature_calcer=self.text_feature_calcer,
             embedding_features=self.embedding_features,
             embedding_stats=list(self.embedding_stats),
+            embedding_target_features=self.embedding_target_features,
+            embedding_target_regularization=self.embedding_target_regularization,
+            embedding_target_mode=self.embedding_target_mode,
             ctr_prior_strength=self.ctr_prior_strength,
             random_seed=self.random_seed,
         )
@@ -116,7 +187,22 @@ class FeaturePipeline:
     ) -> Tuple[np.ndarray, Optional[List[str]]]:
         if _is_pandas_dataframe(data):
             return data.to_numpy(dtype=object, copy=False), [str(name) for name in data.columns]
-        array = np.asarray(data, dtype=object)
+        if _is_columnar_frame(data):
+            metadata = _columnar_frame_metadata(data)
+            if metadata is None:  # pragma: no cover - guarded by the predicate
+                raise TypeError("unsupported columnar frame")
+            resolved_feature_names = (
+                metadata[2] if feature_names is None else [str(name) for name in feature_names]
+            )
+            return (
+                _columnar_frame_to_numpy(data, dtype=object),
+                resolved_feature_names,
+            )
+        if _is_polars_lazy_frame(data):
+            raise TypeError(
+                "Polars LazyFrame input is not eager; call collect() before passing it to CTBoost"
+            )
+        array = np.asarray(_array_protocol_to_numpy(data), dtype=object)
         if array.ndim != 2:
             raise ValueError("feature pipelines expect a 2D array-like input")
         resolved_feature_names = None if feature_names is None else [str(name) for name in feature_names]
@@ -137,7 +223,9 @@ class FeaturePipeline:
         feature_names: Optional[Sequence[str]] = None,
     ) -> "FeaturePipeline":
         raw_matrix, resolved_feature_names = self._extract_frame(data, feature_names)
-        labels = np.asarray(label, dtype=np.float32).reshape(-1)
+        labels = np.asarray(
+            _columnar_vector_to_numpy(label), dtype=np.float32
+        ).reshape(-1)
         self._native.fit_array(raw_matrix, labels, resolved_feature_names)
         self._refresh_metadata()
         return self
@@ -164,7 +252,9 @@ class FeaturePipeline:
         feature_names: Optional[Sequence[str]] = None,
     ) -> Tuple[np.ndarray, List[int], List[str]]:
         raw_matrix, resolved_feature_names = self._extract_frame(data, feature_names)
-        labels = np.asarray(label, dtype=np.float32).reshape(-1)
+        labels = np.asarray(
+            _columnar_vector_to_numpy(label), dtype=np.float32
+        ).reshape(-1)
         transformed, cat_features, output_feature_names = self._native.fit_transform_array(
             raw_matrix,
             labels,
@@ -217,6 +307,20 @@ class FeaturePipeline:
     def to_state(self) -> Dict[str, Any]:
         return dict(self._native.to_state())
 
+    def __getstate__(self) -> Dict[str, Any]:
+        """Serialize the native pipeline through its stable state document.
+
+        pybind11 extension objects are not pickleable by default.  Keeping the
+        Python pickle contract on this wrapper also makes fitted sklearn models
+        work with joblib, AutoGluon bagging, and multiprocessing spawn.
+        """
+        return {"native_state": self.to_state()}
+
+    def __setstate__(self, state: Mapping[str, Any]) -> None:
+        native_state = state.get("native_state", state)
+        restored = type(self).from_state(native_state)
+        self.__dict__.update(restored.__dict__)
+
     @classmethod
     def from_state(cls, state: Mapping[str, Any]) -> "FeaturePipeline":
         pipeline = cls(
@@ -231,8 +335,19 @@ class FeaturePipeline:
             per_feature_ctr=state.get("per_feature_ctr"),
             text_features=state.get("text_features"),
             text_hash_dim=state.get("text_hash_dim", 64),
+            text_tokenizer=state.get("text_tokenizer", "word"),
+            text_ngram_range=state.get("text_ngram_range", (1, 1)),
+            text_lowercase=state.get("text_lowercase", True),
+            text_min_token_count=state.get("text_min_token_count", 1),
+            text_max_dictionary_size=state.get("text_max_dictionary_size", 0),
+            text_feature_calcer=state.get("text_feature_calcer", "count"),
             embedding_features=state.get("embedding_features"),
             embedding_stats=state.get("embedding_stats", ("mean", "std", "min", "max", "l2")),
+            embedding_target_features=state.get("embedding_target_features", False),
+            embedding_target_regularization=state.get(
+                "embedding_target_regularization", 1.0
+            ),
+            embedding_target_mode=state.get("embedding_target_mode", "auto"),
             ctr_prior_strength=state.get("ctr_prior_strength", 1.0),
             random_seed=state.get("random_seed", 0),
         )

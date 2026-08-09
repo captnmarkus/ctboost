@@ -12,6 +12,7 @@ from ._prepared_data_support import (
     _uses_feature_pipeline_params,
 )
 from .core import Pool
+from .core.columnar import _columnar_frame_metadata
 from .feature_pipeline import FeaturePipeline
 
 
@@ -56,13 +57,25 @@ def prepare_pool(
     per_feature_ctr: Optional[Any] = None,
     text_features: Optional[Any] = None,
     text_hash_dim: int = 64,
+    text_tokenizer: str = "word",
+    text_ngram_range: Sequence[int] = (1, 1),
+    text_lowercase: bool = True,
+    text_min_token_count: int = 1,
+    text_max_dictionary_size: int = 0,
+    text_feature_calcer: str = "count",
     embedding_features: Optional[Any] = None,
     embedding_stats: Sequence[str] = ("mean", "std", "min", "max", "l2"),
+    embedding_target_features: bool = False,
+    embedding_target_regularization: float = 1.0,
+    embedding_target_mode: str = "auto",
     ctr_prior_strength: float = 1.0,
     random_seed: int = 0,
     feature_pipeline: Optional[FeaturePipeline] = None,
     fit_feature_pipeline: bool = True,
 ) -> Pool:
+    columnar_metadata = _columnar_frame_metadata(data)
+    if feature_names is None and columnar_metadata is not None:
+        feature_names = columnar_metadata[2]
     prepared_data, prepared_label, prepared_cat_features, prepared_feature_names, pipeline = (
         _prepare_feature_pipeline(
             data,
@@ -80,8 +93,17 @@ def prepare_pool(
                 "per_feature_ctr": per_feature_ctr,
                 "text_features": text_features,
                 "text_hash_dim": text_hash_dim,
+                "text_tokenizer": text_tokenizer,
+                "text_ngram_range": text_ngram_range,
+                "text_lowercase": text_lowercase,
+                "text_min_token_count": text_min_token_count,
+                "text_max_dictionary_size": text_max_dictionary_size,
+                "text_feature_calcer": text_feature_calcer,
                 "embedding_features": embedding_features,
                 "embedding_stats": embedding_stats,
+                "embedding_target_features": embedding_target_features,
+                "embedding_target_regularization": embedding_target_regularization,
+                "embedding_target_mode": embedding_target_mode,
                 "ctr_prior_strength": ctr_prior_strength,
                 "random_seed": random_seed,
             },

@@ -70,7 +70,10 @@ def _evaluate_custom_metric_from_inputs(
     result_array = np.asarray(result, dtype=np.float32)
     if result_array.ndim != 0:
         raise TypeError("custom eval metrics must return a scalar float value")
-    return float(result_array)
+    value = float(result_array)
+    if not np.isfinite(value):
+        raise ValueError("custom eval metrics must return a finite scalar value")
+    return value
 
 def _evaluate_metric_on_pool(
     metric_name: str,

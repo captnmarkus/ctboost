@@ -24,6 +24,13 @@ from .distributed import (
     _resolve_distributed_quantization_schema,
 )
 from .pool_io import PreparedTrainingData, prepare_training_data
+from .objectives import (
+    ObjectiveSpec,
+    _native_objective_config,
+    _objective_value,
+    _resolve_objective_runtime,
+    _validate_custom_objective_continuation,
+)
 from .resume import (
     _initial_learning_rate_history_from_model,
     _normalize_learning_rate_schedule,
@@ -33,7 +40,14 @@ from .resume import (
     _resume_snapshot_config_signature,
     _validate_resume_snapshot_contract,
 )
-from .schema import _is_classification_objective, _is_ranking_objective, _objective_name, _validate_distributed_pool_metadata
+from .schema import (
+    _is_classification_objective,
+    _is_ranking_objective,
+    _objective_name,
+    _validate_ndcg_weights,
+    _validate_distributed_pool_metadata,
+    _validate_objective_labels,
+)
 from .weights import _apply_objective_weights_to_pools
 
 PathLike = Union[str, Path]
@@ -128,8 +142,23 @@ def train(
     snapshot_model_format: Optional[str] = None,
     resume_from_snapshot: Any = None,
     init_model: Any = None,
+    obj: Optional[Callable[..., Any]] = None,
 ) -> Booster:
     config = _normalize_training_config(params)
+    if obj is not None:
+        if not callable(obj):
+            raise TypeError("obj must be callable")
+        configured_objective = _objective_value(config)
+        if callable(configured_objective) or isinstance(configured_objective, ObjectiveSpec):
+            raise ValueError("obj cannot be combined with a callable objective in params")
+        config = dict(config)
+        config.pop("loss_function", None)
+        config["objective"] = ObjectiveSpec(
+            obj,
+            native_objective=str(configured_objective),
+        )
+    objective_runtime = _resolve_objective_runtime(config)
+    native_config = _native_objective_config(config, objective_runtime)
     distributed_config = _normalize_distributed_config(config)
     resolved_snapshot_path = _resolve_snapshot_path(snapshot_path)
     resolved_resume_snapshot_path = _resolve_resume_snapshot_path(resume_from_snapshot, resolved_snapshot_path)
@@ -158,6 +187,7 @@ def train(
         eval_set=eval_set,
         eval_names=eval_names,
         init_model=resolved_init_model,
+        refit_init_pipeline=resolved_resume_snapshot_path is not None,
     )
     pool = prepared_inputs.pool
     eval_pools = list(prepared_inputs.eval_pools)
@@ -204,10 +234,18 @@ def train(
         iterations = requested_iterations - trained_iterations
         if iterations == 0:
             return Booster(init_handle, feature_pipeline=feature_pipeline, training_metadata=getattr(resolved_init_model, "_training_metadata", None))
-    native_params = _resolve_native_training_params(config, pool, init_state=init_state)
+    _validate_custom_objective_continuation(resolved_init_model, objective_runtime)
+    native_params = _resolve_native_training_params(native_config, pool, init_state=init_state)
     native_params["early_stopping"] = early_stopping
+    _validate_objective_labels(native_params["objective"], pool, context="the training pool")
+    for eval_index, eval_pool in enumerate(eval_pools):
+        _validate_objective_labels(
+            native_params["objective"],
+            eval_pool,
+            context=f"eval_set[{eval_index}]",
+        )
     metric_runtime = _resolve_metric_runtime(
-        config=config,
+        config=native_config,
         init_state=init_state,
         eval_pools=eval_pools,
         resolved_eval_names=resolved_eval_names,
@@ -219,6 +257,17 @@ def train(
         snapshot_callback=snapshot_callback,
         distributed_config=distributed_config,
     )
+    if any(
+        metric_spec["kind"] == "native"
+        and str(metric_spec["name"]).lower()
+        in {"ndcg", "lambdamart", "lambdarank", "rank:ndcg"}
+        for metric_spec in metric_runtime["eval_metric_specs"]
+    ):
+        _validate_ndcg_weights(pool, context="the training pool")
+        for eval_index, eval_pool in enumerate(eval_pools):
+            _validate_ndcg_weights(eval_pool, context=f"eval_set[{eval_index}]")
+    if objective_runtime is not None:
+        metric_runtime["use_python_eval_surface"] = True
     filesystem_compat_required = distributed_config is not None and distributed_config["backend"] != "tcp" and (
         native_params["task_type"].upper() == "GPU" or bool(eval_pools) or metric_runtime["use_python_eval_surface"] or pool.group_id is not None
     )
@@ -259,7 +308,7 @@ def train(
         weighted_pool, weighted_eval_pools = _apply_objective_weights_to_pools(
             pool,
             eval_pools,
-            config,
+            native_config,
             native_params["objective"],
         )
         if resolved_resume_snapshot_path is not None:
@@ -304,5 +353,6 @@ def train(
             resolved_init_model=resolved_init_model,
             resolved_learning_rate_schedule=resolved_learning_rate_schedule,
             distributed_config=distributed_config,
+            custom_objective=objective_runtime,
         )
         return _finalize_early_stopping(trained_booster) if early_stopping > 0 else trained_booster

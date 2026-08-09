@@ -75,7 +75,7 @@ struct FitLoopContext {
   const TrainingProfiler* profiler{nullptr};
   const QuantizationSchemaPtr* quantization_schema{nullptr};
   FitWorkspace* workspace{nullptr};
-  ObjectiveFunction* objective{nullptr};
+  const ObjectiveFunction* objective{nullptr};
   MetricFunction* objective_metric{nullptr};
   MetricFunction* eval_metric{nullptr};
   std::vector<Tree>* trees{nullptr};
@@ -138,6 +138,7 @@ void ValidateFitInputs(const Pool& pool,
                        const std::vector<double>& feature_weights,
                        const std::vector<double>& first_feature_use_penalties,
                        int prediction_dimension);
+void ValidateUniformQueryWeights(const Pool& pool, const char* consumer_name);
 TreeBuildOptions MakeTreeBuildOptions(const FitLoopContext& context,
                                       const std::vector<int>* allowed_features,
                                       DistributedCoordinator* distributed_coordinator);

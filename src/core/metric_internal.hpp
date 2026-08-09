@@ -12,6 +12,7 @@ void ValidatePredictionLabelWeightSizes(const std::vector<float>& preds,
                                         const std::vector<float>& labels,
                                         const std::vector<float>& weights);
 void ValidateNonNegativeMetricLabels(const std::vector<float>& labels, const char* metric_name);
+void ValidatePositiveMetricLabels(const std::vector<float>& labels, const char* metric_name);
 
 struct MetricSurvivalLabel {
   double time{0.0};

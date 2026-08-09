@@ -63,8 +63,19 @@ def _feature_pipeline_from_params(params: Mapping[str, Any]) -> FeaturePipeline:
         per_feature_ctr=params.get("per_feature_ctr"),
         text_features=params.get("text_features"),
         text_hash_dim=int(params.get("text_hash_dim", 64)),
+        text_tokenizer=params.get("text_tokenizer", "word"),
+        text_ngram_range=params.get("text_ngram_range", (1, 1)),
+        text_lowercase=bool(params.get("text_lowercase", True)),
+        text_min_token_count=int(params.get("text_min_token_count", 1)),
+        text_max_dictionary_size=int(params.get("text_max_dictionary_size", 0)),
+        text_feature_calcer=params.get("text_feature_calcer", "count"),
         embedding_features=params.get("embedding_features"),
         embedding_stats=params.get("embedding_stats", ("mean", "std", "min", "max", "l2")),
+        embedding_target_features=bool(params.get("embedding_target_features", False)),
+        embedding_target_regularization=float(
+            params.get("embedding_target_regularization", 1.0)
+        ),
+        embedding_target_mode=params.get("embedding_target_mode", "auto"),
         ctr_prior_strength=float(params.get("ctr_prior_strength", 1.0)),
         random_seed=int(params.get("random_seed", 0)),
     )

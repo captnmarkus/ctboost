@@ -66,19 +66,25 @@ del _split_package
 _CORE_EXPORT_NAMES = {
     "Booster",
     "EvalMetricSpec",
+    "ObjectiveSpec",
     "FeaturePipeline",
     "Pool",
+    "PoolBatch",
     "PreparedTrainingData",
     "TrainingCallbackEnv",
     "checkpoint_callback",
     "prepare_pool",
+    "pool_from_batches",
     "prepare_training_data",
     "cv",
     "log_evaluation",
     "load_exported_predictor",
+    "load_inference_manifest",
     "load_model",
     "make_eval_metric",
+    "make_objective",
     "train",
+    "validate_inference_manifest",
 }
 
 _SKLEARN_EXPORT_NAMES = {
@@ -86,8 +92,13 @@ _SKLEARN_EXPORT_NAMES = {
     "CBoostRanker",
     "CBoostRegressor",
     "CTBoostClassifier",
+    "CTBoostAFTRegressor",
+    "CTBoostAFTSurvivalRegressor",
+    "CTBoostMultiLabelClassifier",
+    "CTBoostMultiOutputRegressor",
     "CTBoostRanker",
     "CTBoostRegressor",
+    "compare_estimators",
 }
 
 
@@ -95,10 +106,13 @@ def _load_core_exports() -> Dict[str, Any]:
     from ._export import load_exported_predictor
     from .core import Pool
     from .feature_pipeline import FeaturePipeline
+    from .inference_manifest import load_inference_manifest, validate_inference_manifest
     from .prepared_data import prepare_pool
+    from .streaming import PoolBatch, pool_from_batches
     from .training import (
         Booster,
         EvalMetricSpec,
+        ObjectiveSpec,
         PreparedTrainingData,
         TrainingCallbackEnv,
         checkpoint_callback,
@@ -106,6 +120,7 @@ def _load_core_exports() -> Dict[str, Any]:
         load_model,
         log_evaluation,
         make_eval_metric,
+        make_objective,
         prepare_training_data,
         train,
     )
@@ -113,19 +128,25 @@ def _load_core_exports() -> Dict[str, Any]:
     exports = {
         "Booster": Booster,
         "EvalMetricSpec": EvalMetricSpec,
+        "ObjectiveSpec": ObjectiveSpec,
         "FeaturePipeline": FeaturePipeline,
         "Pool": Pool,
+        "PoolBatch": PoolBatch,
         "PreparedTrainingData": PreparedTrainingData,
         "TrainingCallbackEnv": TrainingCallbackEnv,
         "checkpoint_callback": checkpoint_callback,
         "prepare_pool": prepare_pool,
+        "pool_from_batches": pool_from_batches,
         "prepare_training_data": prepare_training_data,
         "cv": cv,
         "load_exported_predictor": load_exported_predictor,
+        "load_inference_manifest": load_inference_manifest,
         "log_evaluation": log_evaluation,
         "load_model": load_model,
         "make_eval_metric": make_eval_metric,
+        "make_objective": make_objective,
         "train": train,
+        "validate_inference_manifest": validate_inference_manifest,
     }
     globals().update(exports)
     return exports
@@ -139,8 +160,13 @@ def _load_sklearn_exports() -> Dict[str, Any]:
             CBoostRanker,
             CBoostRegressor,
             CTBoostClassifier,
+            CTBoostAFTRegressor,
+            CTBoostAFTSurvivalRegressor,
+            CTBoostMultiLabelClassifier,
+            CTBoostMultiOutputRegressor,
             CTBoostRanker,
             CTBoostRegressor,
+            compare_estimators,
         )
     except ModuleNotFoundError as exc:
         if exc.name and exc.name.startswith("sklearn"):
@@ -155,8 +181,13 @@ def _load_sklearn_exports() -> Dict[str, Any]:
         "CBoostRanker": CBoostRanker,
         "CBoostRegressor": CBoostRegressor,
         "CTBoostClassifier": CTBoostClassifier,
+        "CTBoostAFTRegressor": CTBoostAFTRegressor,
+        "CTBoostAFTSurvivalRegressor": CTBoostAFTSurvivalRegressor,
+        "CTBoostMultiLabelClassifier": CTBoostMultiLabelClassifier,
+        "CTBoostMultiOutputRegressor": CTBoostMultiOutputRegressor,
         "CTBoostRanker": CTBoostRanker,
         "CTBoostRegressor": CTBoostRegressor,
+        "compare_estimators": compare_estimators,
     }
     globals().update(exports)
     return exports
@@ -190,21 +221,32 @@ __all__ = [
     "CBoostRanker",
     "CBoostRegressor",
     "CTBoostClassifier",
+    "CTBoostAFTRegressor",
+    "CTBoostAFTSurvivalRegressor",
+    "CTBoostMultiLabelClassifier",
+    "CTBoostMultiOutputRegressor",
     "CTBoostRanker",
     "CTBoostRegressor",
+    "compare_estimators",
     "EvalMetricSpec",
+    "ObjectiveSpec",
     "FeaturePipeline",
     "Pool",
+    "PoolBatch",
     "PreparedTrainingData",
     "TrainingCallbackEnv",
     "prepare_pool",
+    "pool_from_batches",
     "prepare_training_data",
     "build_info",
     "checkpoint_callback",
     "cv",
     "load_exported_predictor",
+    "load_inference_manifest",
     "load_model",
     "log_evaluation",
     "make_eval_metric",
+    "make_objective",
     "train",
+    "validate_inference_manifest",
 ]

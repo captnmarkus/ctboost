@@ -117,7 +117,11 @@ def _resolve_feature_float_config(value: Any, pool: Pool, param_name: str) -> Li
     return resolved
 
 def _objective_name(params: Mapping[str, Any]) -> str:
-    return str(params.get("objective", params.get("loss_function", "RMSE")))
+    objective = params.get("objective", params.get("loss_function", "RMSE"))
+    native_objective = getattr(objective, "native_objective", None)
+    if native_objective is not None:
+        return str(native_objective)
+    return "RMSE" if callable(objective) else str(objective)
 
 def _is_binary_classification_objective(objective_name: str) -> bool:
     return objective_name.lower() in {"logloss", "binary_logloss", "binary:logistic"}
@@ -133,7 +137,54 @@ def _is_classification_objective(objective_name: str) -> bool:
     }
 
 def _is_ranking_objective(objective_name: str) -> bool:
-    return objective_name.lower() in {"pairlogit", "pairwise", "ranknet"}
+    return objective_name.lower() in {
+        "pairlogit",
+        "pairwise",
+        "ranknet",
+        "lambdamart",
+        "lambdarank",
+        "rank:ndcg",
+    }
+
+def _validate_uniform_query_weights(pool: Pool, *, context: str, consumer: str) -> None:
+    if pool.group_id is None or pool.weight is None:
+        return
+    group_ids = np.asarray(pool.group_id, dtype=np.int64)
+    weights = np.asarray(pool.weight, dtype=np.float64)
+    _, first_indices, inverse = np.unique(
+        group_ids,
+        return_index=True,
+        return_inverse=True,
+    )
+    reference_weights = weights[first_indices[inverse]]
+    if not np.all(
+        np.isclose(weights, reference_weights, rtol=1e-6, atol=1e-7)
+    ):
+        raise ValueError(
+            f"{consumer} requires sample weights to be uniform within each "
+            f"group_id in {context}; use one query weight per group (or "
+            "group_weight) instead"
+        )
+
+def _validate_ndcg_weights(pool: Pool, *, context: str) -> None:
+    _validate_uniform_query_weights(pool, context=context, consumer="NDCG")
+
+def _validate_objective_labels(objective_name: str, pool: Pool, *, context: str) -> None:
+    normalized = objective_name.lower()
+    labels = np.asarray(pool.label, dtype=np.float32)
+    if normalized in {"gamma", "gammaloss", "reg:gamma"}:
+        if labels.ndim != 1 or not np.all(np.isfinite(labels) & (labels > 0.0)):
+            raise ValueError(f"Gamma objective requires finite positive labels in {context}")
+    if normalized in {"lambdamart", "lambdarank", "rank:ndcg"}:
+        if labels.ndim != 1 or not np.all(np.isfinite(labels) & (labels >= 0.0)):
+            raise ValueError(
+                f"LambdaMART requires finite non-negative relevance labels in {context}"
+            )
+        _validate_uniform_query_weights(
+            pool,
+            context=context,
+            consumer="LambdaMART",
+        )
 
 def _pool_has_extended_ranking_metadata(pool: Pool) -> bool:
     return pool.group_weight is not None or pool.subgroup_id is not None or pool.pairs is not None

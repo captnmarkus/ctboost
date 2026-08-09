@@ -8,6 +8,14 @@ import numpy as np
 
 from .. import _core
 from ._handle import _pool_from_handle
+from .columnar import (
+    _array_protocol_to_numpy,
+    _columnar_frame_metadata,
+    _columnar_frame_to_numpy,
+    _columnar_vector_to_numpy,
+    _is_columnar_frame,
+    _is_polars_lazy_frame,
+)
 from .normalization import (
     _is_pandas_dataframe,
     _is_pandas_series,
@@ -27,6 +35,17 @@ from .sparse import _dataframe_to_numpy, _is_scipy_sparse_matrix, _scipy_sparse_
 
 class Pool:
     """Python wrapper around the native `ctboost::Pool`."""
+
+    @classmethod
+    def from_batches(cls, batches: Any, **kwargs: Any) -> "Pool":
+        """Assemble a one-pass iterable into a disk-backed numeric pool.
+
+        See :func:`ctboost.pool_from_batches` for accepted batch formats and
+        metadata consistency requirements.
+        """
+        from ..streaming import pool_from_batches
+
+        return pool_from_batches(batches, **kwargs)
 
     @classmethod
     def from_csc_components(
@@ -149,11 +168,31 @@ class Pool:
             if feature_names is None:
                 feature_names = [str(column_name) for column_name in data.columns]
             data, resolved_cat_features = _dataframe_to_numpy(data, resolved_cat_features)
+        elif _is_columnar_frame(data):
+            metadata = _columnar_frame_metadata(data)
+            if metadata is None:  # pragma: no cover - guarded by the predicate
+                raise TypeError("unsupported columnar frame")
+            if feature_names is None:
+                feature_names = metadata[2]
+            data = _columnar_frame_to_numpy(data, dtype=np.float32, order="F")
+        elif _is_polars_lazy_frame(data):
+            raise TypeError(
+                "Polars LazyFrame input is not eager; call collect() before passing it to CTBoost"
+            )
         elif _is_scipy_sparse_matrix(data):
             sparse_components = _scipy_sparse_to_csc_components(data)
+        else:
+            data = _array_protocol_to_numpy(data)
         resolved_feature_names = None if feature_names is None else [str(name) for name in feature_names]
         if _is_pandas_series(label):
             label = label.to_numpy(copy=False)
+        else:
+            label = _columnar_vector_to_numpy(label)
+        weight = _columnar_vector_to_numpy(weight)
+        group_id = _columnar_vector_to_numpy(group_id)
+        group_weight = _columnar_vector_to_numpy(group_weight)
+        subgroup_id = _columnar_vector_to_numpy(subgroup_id)
+        pairs_weight = _columnar_vector_to_numpy(pairs_weight)
         resolved_group_id = _normalize_group_id(group_id)
         resolved_subgroup_id = _normalize_identifier_array(subgroup_id, name="subgroup_id")
         label_array = (

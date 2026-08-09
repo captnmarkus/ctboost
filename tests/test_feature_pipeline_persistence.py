@@ -2,6 +2,7 @@ import importlib.util
 import json
 from pathlib import Path
 import os
+import pickle
 import socket
 import subprocess
 import sys
@@ -57,6 +58,53 @@ def test_low_level_train_accepts_raw_feature_pipeline_and_persists_it(tmp_path: 
     booster.save_model(model_path)
     restored = ctboost.load_model(model_path)
     np.testing.assert_allclose(restored.predict(X), prediction, rtol=1e-6, atol=1e-6)
+
+
+def test_fitted_pipeline_estimator_is_pickleable_for_bagging_frameworks():
+    pd = pytest.importorskip("pandas")
+    rng = np.random.default_rng(117)
+    row_count = 90
+    frame = pd.DataFrame(
+        {
+            "city": rng.choice(["berlin", "oslo", "rome"], size=row_count),
+            "value": rng.normal(size=row_count).astype(np.float32),
+        }
+    )
+    label = (
+        frame["value"].to_numpy(dtype=np.float32)
+        + 0.7 * (frame["city"] == "berlin").to_numpy(dtype=np.float32)
+    )
+    model = ctboost.CTBoostRegressor(
+        iterations=8,
+        max_depth=2,
+        alpha=1.0,
+        cat_features=["city"],
+        ordered_ctr=True,
+        random_seed=19,
+    ).fit(frame, label)
+
+    expected = model.predict(frame)
+    restored = pickle.loads(pickle.dumps(model, protocol=pickle.HIGHEST_PROTOCOL))
+
+    np.testing.assert_allclose(restored.predict(frame), expected, rtol=1e-6, atol=1e-6)
+    assert restored._feature_pipeline is restored._booster._feature_pipeline
+
+
+def test_low_level_pipeline_booster_is_pickleable():
+    data = np.asarray(
+        [["a", 0.0], ["b", 1.0], ["a", 2.0], ["c", 3.0]],
+        dtype=object,
+    )
+    label = np.asarray([0.0, 1.0, 1.5, 3.0], dtype=np.float32)
+    booster = ctboost.train(
+        data,
+        {"objective": "RMSE", "cat_features": [0], "max_depth": 1, "alpha": 1.0},
+        label=label,
+        num_boost_round=4,
+    )
+
+    restored = pickle.loads(pickle.dumps(booster, protocol=pickle.HIGHEST_PROTOCOL))
+    np.testing.assert_allclose(restored.predict(data), booster.predict(data), rtol=1e-6, atol=1e-6)
 
 def test_low_level_train_persists_per_feature_ctr_configuration_with_combination_keys(tmp_path: Path):
     pd = pytest.importorskip("pandas")

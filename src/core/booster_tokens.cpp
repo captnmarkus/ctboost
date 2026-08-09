@@ -42,6 +42,11 @@ bool IsTweedieObjective(const std::string& normalized_objective) {
          normalized_objective == "reg:tweedie";
 }
 
+bool IsGammaObjective(const std::string& normalized_objective) {
+  return normalized_objective == "gamma" || normalized_objective == "gammaloss" ||
+         normalized_objective == "reg:gamma";
+}
+
 bool IsSurvivalObjective(const std::string& normalized_objective) {
   return normalized_objective == "cox" || normalized_objective == "coxph" ||
          normalized_objective == "survival:cox" || normalized_objective == "survivalexponential" ||
@@ -59,9 +64,14 @@ bool IsMulticlassObjective(const std::string& normalized_objective) {
          normalized_objective == "softmaxloss";
 }
 
+bool IsLambdaMARTObjective(const std::string& normalized_objective) {
+  return normalized_objective == "lambdamart" || normalized_objective == "lambdarank" ||
+         normalized_objective == "rank:ndcg";
+}
+
 bool IsRankingObjective(const std::string& normalized_objective) {
   return normalized_objective == "pairlogit" || normalized_objective == "pairwise" ||
-         normalized_objective == "ranknet";
+         normalized_objective == "ranknet" || IsLambdaMARTObjective(normalized_objective);
 }
 
 bool IsRegressionObjective(const std::string& normalized_objective) {
@@ -69,7 +79,7 @@ bool IsRegressionObjective(const std::string& normalized_objective) {
          IsAbsoluteErrorObjective(normalized_objective) ||
          IsHuberObjective(normalized_objective) || IsQuantileObjective(normalized_objective) ||
          IsPoissonObjective(normalized_objective) || IsTweedieObjective(normalized_objective) ||
-         IsSurvivalObjective(normalized_objective);
+         IsGammaObjective(normalized_objective) || IsSurvivalObjective(normalized_objective);
 }
 
 std::uint64_t NormalizeRngState(std::uint64_t seed) {

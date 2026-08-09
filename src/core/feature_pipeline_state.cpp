@@ -8,6 +8,7 @@ namespace ctboost {
 
 py::dict NativeFeaturePipeline::to_state() const {
   py::dict state;
+  state["feature_pipeline_format_version"] = 2;
   state["cat_features"] = cat_features_;
   state["ordered_ctr"] = ordered_ctr_;
   state["one_hot_max_size"] = one_hot_max_size_;
@@ -19,8 +20,17 @@ py::dict NativeFeaturePipeline::to_state() const {
   state["per_feature_ctr"] = per_feature_ctr_;
   state["text_features"] = text_features_;
   state["text_hash_dim"] = text_hash_dim_;
+  state["text_tokenizer"] = text_tokenizer_;
+  state["text_ngram_range"] = py::make_tuple(text_ngram_min_, text_ngram_max_);
+  state["text_lowercase"] = text_lowercase_;
+  state["text_min_token_count"] = text_min_token_count_;
+  state["text_max_dictionary_size"] = text_max_dictionary_size_;
+  state["text_feature_calcer"] = text_feature_calcer_;
   state["embedding_features"] = embedding_features_;
   state["embedding_stats"] = embedding_stats_;
+  state["embedding_target_features"] = embedding_target_features_;
+  state["embedding_target_regularization"] = embedding_target_regularization_;
+  state["embedding_target_mode"] = embedding_target_mode_;
   state["ctr_prior_strength"] = ctr_prior_strength_;
   state["random_seed"] = random_seed_;
   if (feature_names_in_.has_value()) {
@@ -107,6 +117,11 @@ py::dict NativeFeaturePipeline::to_state() const {
     py::dict item;
     item["source_index"] = text_state.source_index;
     item["prefix"] = text_state.prefix;
+    item["output_dim"] = text_state.output_dim;
+    item["uses_dictionary"] = text_state.uses_dictionary != 0U;
+    item["filters_tokens"] = text_state.filters_tokens != 0U;
+    item["vocabulary"] = detail::VectorToPyList(text_state.vocabulary);
+    item["idf_values"] = detail::VectorToPyList(text_state.idf_values);
     text_states.append(std::move(item));
   }
   state["text_states"] = std::move(text_states);
@@ -117,6 +132,13 @@ py::dict NativeFeaturePipeline::to_state() const {
     item["source_index"] = embedding_state.source_index;
     item["prefix"] = embedding_state.prefix;
     item["stats"] = detail::VectorToPyList(embedding_state.stats);
+    item["center"] = detail::VectorToPyList(embedding_state.center);
+    py::list target_projection_weights;
+    for (const auto& weights : embedding_state.target_projection_weights) {
+      target_projection_weights.append(detail::VectorToPyList(weights));
+    }
+    item["target_projection_weights"] = std::move(target_projection_weights);
+    item["target_output_names"] = detail::VectorToPyList(embedding_state.target_output_names);
     embedding_states.append(std::move(item));
   }
   state["embedding_states"] = std::move(embedding_states);

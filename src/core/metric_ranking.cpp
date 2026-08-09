@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <stdexcept>
 #include <unordered_map>
 
 namespace {
@@ -81,6 +82,7 @@ class NDCGMetric final : public ctboost::MetricFunction {
                   const ctboost::RankingMetadataView* ranking) const override {
     const auto& resolved_group_ids =
         ctboost::detail::ValidateRankingMetricInputs(preds, labels, weights, num_classes, ranking);
+    ctboost::detail::ValidateNonNegativeMetricLabels(labels, "NDCG metric");
     std::unordered_map<std::int64_t, std::vector<std::size_t>> group_rows;
     group_rows.reserve(resolved_group_ids.size());
     for (std::size_t row = 0; row < resolved_group_ids.size(); ++row) {
@@ -95,9 +97,26 @@ class NDCGMetric final : public ctboost::MetricFunction {
         continue;
       }
 
+      const double query_sample_weight = static_cast<double>(weights[rows.front()]);
+      for (const std::size_t row : rows) {
+        const double row_weight = static_cast<double>(weights[row]);
+        const double tolerance =
+            1e-7 + 1e-6 * std::max(std::fabs(query_sample_weight), std::fabs(row_weight));
+        if (std::fabs(query_sample_weight - row_weight) > tolerance) {
+          throw std::invalid_argument(
+              "NDCG metric requires sample weights to be uniform within each group_id; "
+              "use one query weight per group (or group_weight) instead");
+        }
+      }
+
       auto gain = [&](std::size_t row_index) {
-        return static_cast<double>(weights[row_index]) *
-               (std::pow(2.0, static_cast<double>(labels[row_index])) - 1.0);
+        const double result =
+            std::exp2(static_cast<double>(labels[row_index])) - 1.0;
+        if (!std::isfinite(result)) {
+          throw std::invalid_argument(
+              "NDCG metric relevance labels produce non-finite gains");
+        }
+        return result;
       };
 
       std::vector<std::size_t> prediction_order = rows;
@@ -118,7 +137,8 @@ class NDCGMetric final : public ctboost::MetricFunction {
 
       double dcg = 0.0;
       double ideal_dcg = 0.0;
-      const double group_weight = ctboost::detail::ResolveMetricGroupWeight(ranking, rows.front());
+      const double group_weight =
+          query_sample_weight * ctboost::detail::ResolveMetricGroupWeight(ranking, rows.front());
       for (std::size_t rank = 0; rank < rows.size(); ++rank) {
         const double discount = 1.0 / std::log2(static_cast<double>(rank) + 2.0);
         dcg += gain(prediction_order[rank]) * discount;
@@ -128,7 +148,8 @@ class NDCGMetric final : public ctboost::MetricFunction {
         continue;
       }
 
-      ndcg_sum += group_weight * (dcg / ideal_dcg);
+      const double query_ndcg = std::clamp(dcg / ideal_dcg, 0.0, 1.0);
+      ndcg_sum += group_weight * query_ndcg;
       group_weight_sum += group_weight;
     }
 
@@ -245,7 +266,8 @@ std::unique_ptr<MetricFunction> CreateRankingMetric(std::string_view normalized,
       normalized == "ranknet") {
     return std::make_unique<PairLogitMetric>();
   }
-  if (normalized == "ndcg") {
+  if (normalized == "ndcg" || normalized == "lambdamart" ||
+      normalized == "lambdarank" || normalized == "rank:ndcg") {
     return std::make_unique<NDCGMetric>();
   }
   if (normalized == "map" || normalized == "map@all") {

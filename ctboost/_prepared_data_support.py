@@ -9,6 +9,12 @@ from typing import Any, Mapping, Optional, Sequence, Tuple
 import numpy as np
 
 from .core import Pool, _is_scipy_sparse_matrix, _normalize_categorical_features, _scipy_sparse_to_csc_components
+from .core.columnar import (
+    _array_protocol_to_numpy,
+    _columnar_frame_to_numpy,
+    _columnar_vector_to_numpy,
+    _is_columnar_frame,
+)
 from .feature_pipeline import FeaturePipeline
 
 
@@ -39,8 +45,17 @@ _FEATURE_PIPELINE_KEYS = {
     "per_feature_ctr",
     "text_features",
     "text_hash_dim",
+    "text_tokenizer",
+    "text_ngram_range",
+    "text_lowercase",
+    "text_min_token_count",
+    "text_max_dictionary_size",
+    "text_feature_calcer",
     "embedding_features",
     "embedding_stats",
+    "embedding_target_features",
+    "embedding_target_regularization",
+    "embedding_target_mode",
     "ctr_prior_strength",
     "random_seed",
 }
@@ -56,7 +71,7 @@ _EXTERNAL_MEMORY_KEYS = {
 def _normalize_optional_array(values: Any, dtype: Any) -> Optional[np.ndarray]:
     if values is None:
         return None
-    return np.asarray(values, dtype=dtype)
+    return np.asarray(_columnar_vector_to_numpy(values), dtype=dtype)
 
 
 def _open_memmap(path: Path, shape: Tuple[int, ...], *, dtype: Any, fortran_order: bool = False) -> np.memmap:
@@ -96,8 +111,19 @@ def _prepare_feature_pipeline(
             per_feature_ctr=params.get("per_feature_ctr"),
             text_features=params.get("text_features"),
             text_hash_dim=int(params.get("text_hash_dim", 64)),
+            text_tokenizer=params.get("text_tokenizer", "word"),
+            text_ngram_range=params.get("text_ngram_range", (1, 1)),
+            text_lowercase=bool(params.get("text_lowercase", True)),
+            text_min_token_count=int(params.get("text_min_token_count", 1)),
+            text_max_dictionary_size=int(params.get("text_max_dictionary_size", 0)),
+            text_feature_calcer=params.get("text_feature_calcer", "count"),
             embedding_features=params.get("embedding_features"),
             embedding_stats=params.get("embedding_stats", ("mean", "std", "min", "max", "l2")),
+            embedding_target_features=bool(params.get("embedding_target_features", False)),
+            embedding_target_regularization=float(
+                params.get("embedding_target_regularization", 1.0)
+            ),
+            embedding_target_mode=params.get("embedding_target_mode", "auto"),
             ctr_prior_strength=float(params.get("ctr_prior_strength", 1.0)),
             random_seed=int(params.get("random_seed", 0)),
         )
@@ -150,7 +176,11 @@ def _dense_external_memory_pool(
 ) -> Pool:
     root = Path(directory) if directory is not None else Path(tempfile.mkdtemp(prefix="ctboost-ext-"))
     root.mkdir(parents=True, exist_ok=True)
-    data_array = np.asarray(data, dtype=np.float32, order="F")
+    data_array = (
+        _columnar_frame_to_numpy(data, dtype=np.float32, order="F")
+        if _is_columnar_frame(data)
+        else np.asarray(_array_protocol_to_numpy(data), dtype=np.float32, order="F")
+    )
     data_map = _open_memmap(root / "data.npy", data_array.shape, dtype=np.float32, fortran_order=True)
     data_map[...] = data_array
     data_map.flush()
@@ -158,7 +188,11 @@ def _dense_external_memory_pool(
     group_array = _normalize_optional_array(group_id, np.int64)
     pool = Pool(
         data=np.load(root / "data.npy", mmap_mode="r"),
-        label=np.asarray(label, dtype=np.float32),
+        label=(
+            None
+            if label is None
+            else np.asarray(_columnar_vector_to_numpy(label), dtype=np.float32)
+        ),
         cat_features=list(cat_features),
         weight=weight_array,
         group_id=group_array,
@@ -214,7 +248,9 @@ def _sparse_external_memory_pool(
         np.load(root / "sparse_indices.npy", mmap_mode="r"),
         np.load(root / "sparse_indptr.npy", mmap_mode="r"),
         shape,
-        np.asarray(label, dtype=np.float32),
+        None
+        if label is None
+        else np.asarray(_columnar_vector_to_numpy(label), dtype=np.float32),
         cat_features=list(cat_features),
         weight=weight_array,
         group_id=group_array,

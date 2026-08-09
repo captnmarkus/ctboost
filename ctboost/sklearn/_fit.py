@@ -14,6 +14,7 @@ from ..training.eval_metrics import (
     _metric_higher_is_better,
     _normalize_eval_metrics,
 )
+from ..training.objectives import ObjectiveSpec, _with_native_objective
 from .serialization import PathLike
 
 
@@ -43,7 +44,7 @@ class _BaseFitMixin:
             snapshot_save_best_only: bool = False,
             snapshot_model_format: Optional[str] = None,
             resume_from_snapshot: Any = None,
-            objective: str,
+            objective: Any,
             num_classes: int = 1,
             extra_train_params: Optional[Dict[str, Any]] = None,
         ) -> Any:
@@ -131,7 +132,11 @@ class _BaseFitMixin:
                 eval_arg = eval_pools[0]
             else:
                 eval_arg = eval_pools
-            resolved_objective = objective if num_classes > 2 else (self.loss_function or objective)
+            configured_loss = self.loss_function
+            if callable(configured_loss) or isinstance(configured_loss, ObjectiveSpec):
+                resolved_objective = _with_native_objective(configured_loss, objective)
+            else:
+                resolved_objective = objective if num_classes > 2 else (configured_loss or objective)
             train_params = {
                 "iterations": self.iterations,
                 "learning_rate": self.learning_rate,

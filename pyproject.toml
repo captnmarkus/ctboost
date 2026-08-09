@@ -7,7 +7,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "ctboost"
-version = "0.1.52"
+version = "0.1.53"
 description = "A GPU-accelerated gradient boosting library using Conditional Inference Trees."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -40,9 +40,50 @@ Homepage = "https://github.com/captnmarkus/ctboost"
 Repository = "https://github.com/captnmarkus/ctboost"
 Issues = "https://github.com/captnmarkus/ctboost/issues"
 
+[project.scripts]
+ctboost = "ctboost.cli:main"
+ctboost-tabarena = "benchmarks.tabarena.run:main"
+ctboost-install-gpu = "ctboost.gpu_install:main"
+
 [project.optional-dependencies]
+cli = [
+  "pandas>=1.5",
+  "pyarrow>=12",
+  "scikit-learn>=1.3",
+]
 sklearn = [
   "scikit-learn>=1.3",
+  "scipy>=1.10",
+]
+plot = [
+  "matplotlib>=3.6",
+]
+arrow = [
+  "pyarrow>=12",
+]
+polars = [
+  "polars>=0.20",
+]
+dataframes = [
+  "pyarrow>=12",
+  "polars>=0.20",
+]
+dask = [
+  "dask[dataframe]>=2023.5",
+  "distributed>=2023.5",
+  "pandas>=1.5",
+]
+ray = [
+  "ray[data]>=2.9",
+  "pandas>=1.5",
+]
+spark = [
+  "pyspark>=3.4",
+  "pyarrow>=12",
+  "pandas>=1.5",
+]
+onnx = [
+  "onnx>=1.16",
 ]
 dev = [
   "pandas",
@@ -57,28 +98,70 @@ cmake.version = ">=3.24"
 # Keep the wheel build cache out of the shared build/ tree so repeated
 # release attempts do not trip over stale or cross-user CMake state.
 build-dir = ".ctbuild/{wheel_tag}"
-wheel.packages = ["ctboost"]
+wheel.packages = ["ctboost", "benchmarks"]
+# ``wheel.packages`` copies package directories directly from the checkout, so
+# Git ignores alone do not prevent local scratch files from entering a wheel.
+# Keep common cache, credential, editor, and backup artifacts out of the final
+# archive even when they happen to exist below a packaged directory.
+wheel.exclude = [
+  "**/__pycache__/**",
+  "**/.pytest_cache/**",
+  "**/.mypy_cache/**",
+  "**/.pyright/**",
+  "**/.ruff_cache/**",
+  "**/.hypothesis/**",
+  "**/.ipynb_checkpoints/**",
+  "**/.env",
+  "**/.env.*",
+  "**/.pypirc",
+  "**/.npmrc",
+  "**/pip.conf",
+  "**/*.pem",
+  "**/*.key",
+  "**/*.bak",
+  "**/*.tmp",
+  "**/*.log",
+  "**/* copy.*",
+  "**/.DS_Store",
+  "**/Thumbs.db",
+  "**/Desktop.ini",
+]
 sdist.include = [
   "/CMakeLists.txt",
   "/LICENSE",
   "/README.md",
   "/pyproject.toml",
   "/ctboost/__init__.py",
+  "/ctboost/__main__.py",
   "/ctboost/_export.py",
+  "/ctboost/_integration_utils.py",
   "/ctboost/_prepared_data_support.py",
   "/ctboost/_serialization.py",
   "/ctboost/_version.py",
+  "/ctboost/cli.py",
   "/ctboost/export_codegen.py",
+  "/ctboost/export_cpp.py",
+  "/ctboost/export_onnx.py",
   "/ctboost/export_payload.py",
   "/ctboost/export_runtime.py",
+  "/ctboost/dask.py",
+  "/ctboost/gpu_install.py",
+  "/ctboost/explain.py",
+  "/ctboost/inference_manifest.py",
   "/ctboost/feature_pipeline.py",
   "/ctboost/prepared_data.py",
+  "/ctboost/ray.py",
+  "/ctboost/spark.py",
+  "/ctboost/streaming.py",
   "/ctboost/core/*.py",
   "/ctboost/distributed/*.py",
   "/ctboost/sklearn/*.py",
   "/ctboost/training/*.py",
   "/demo/*.md",
   "/demo/*.py",
+  "/benchmarks/*.py",
+  "/benchmarks/tabarena/*.md",
+  "/benchmarks/tabarena/*.py",
   "/cuda/*.cu",
   "/cuda/*.cuh",
   "/include/ctboost/*.hpp",
@@ -87,6 +170,7 @@ sdist.include = [
   "/src/core/*.cpp",
   "/src/core/*.hpp",
   "/tests/*.py",
+  "/tests/cpp_export_smoke/CMakeLists.txt",
 ]
 # Build source distributions from an explicit source allowlist.  The backend
 # otherwise walks every non-ignored workspace file, which can accidentally

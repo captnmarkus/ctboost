@@ -60,6 +60,24 @@ def test_tweedie_gradients_match_numpy():
     np.testing.assert_allclose(gradients, expected_gradients, rtol=1e-6, atol=1e-6)
     np.testing.assert_allclose(hessians, expected_hessians, rtol=1e-6, atol=1e-6)
 
+def test_gamma_gradients_match_numpy():
+    preds = np.array([-0.3, 0.1, 0.8], dtype=np.float32)
+    labels = np.array([0.5, 1.5, 3.0], dtype=np.float32)
+
+    gradients, hessians = _core._debug_compute_objective("Gamma", preds, labels)
+
+    scaled_labels = labels * np.exp(-preds)
+    np.testing.assert_allclose(gradients, 1.0 - scaled_labels, rtol=1e-6, atol=1e-6)
+    np.testing.assert_allclose(hessians, scaled_labels, rtol=1e-6, atol=1e-6)
+
+@pytest.mark.parametrize("invalid_label", [0.0, -1.0, np.nan])
+def test_gamma_gradients_reject_non_positive_or_non_finite_labels(invalid_label):
+    preds = np.zeros(2, dtype=np.float32)
+    labels = np.array([1.0, invalid_label], dtype=np.float32)
+
+    with pytest.raises(ValueError, match="finite positive labels"):
+        _core._debug_compute_objective("Gamma", preds, labels)
+
 def test_survival_exponential_gradients_match_numpy():
     preds = np.array([-0.2, 0.1, 0.5], dtype=np.float32)
     labels = np.array([2.0, -1.5, 3.0], dtype=np.float32)

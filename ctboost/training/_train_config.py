@@ -71,6 +71,9 @@ _PREPROCESSING_PARAM_KEYS = {
     "ctr_prior_strength",
     "embedding_features",
     "embedding_stats",
+    "embedding_target_features",
+    "embedding_target_regularization",
+    "embedding_target_mode",
     "max_cat_threshold",
     "max_cat_to_onehot",
     "one_hot_max_size",
@@ -79,7 +82,13 @@ _PREPROCESSING_PARAM_KEYS = {
     "per_feature_ctr",
     "simple_ctr",
     "text_features",
+    "text_feature_calcer",
     "text_hash_dim",
+    "text_lowercase",
+    "text_max_dictionary_size",
+    "text_min_token_count",
+    "text_ngram_range",
+    "text_tokenizer",
 }
 
 _EXTERNAL_MEMORY_PARAM_KEYS = {
