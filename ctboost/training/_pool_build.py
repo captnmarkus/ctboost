@@ -99,8 +99,19 @@ def _feature_pipeline_config_signature(config: Mapping[str, Any]) -> Dict[str, A
         "per_feature_ctr": config.get("per_feature_ctr"),
         "text_features": config.get("text_features"),
         "text_hash_dim": int(config.get("text_hash_dim", 64)),
+        "text_tokenizer": config.get("text_tokenizer", "word"),
+        "text_ngram_range": list(config.get("text_ngram_range", (1, 1))),
+        "text_lowercase": bool(config.get("text_lowercase", True)),
+        "text_min_token_count": int(config.get("text_min_token_count", 1)),
+        "text_max_dictionary_size": int(config.get("text_max_dictionary_size", 0)),
+        "text_feature_calcer": config.get("text_feature_calcer", "count"),
         "embedding_features": config.get("embedding_features"),
         "embedding_stats": list(config.get("embedding_stats", ("mean", "std", "min", "max", "l2"))),
+        "embedding_target_features": bool(config.get("embedding_target_features", False)),
+        "embedding_target_regularization": float(
+            config.get("embedding_target_regularization", 1.0)
+        ),
+        "embedding_target_mode": config.get("embedding_target_mode", "auto"),
         "ctr_prior_strength": float(config.get("ctr_prior_strength", 1.0)),
         "random_seed": int(config.get("random_seed", 0)),
     }
@@ -132,8 +143,23 @@ def _assert_compatible_feature_pipeline(
         "per_feature_ctr": pipeline_state.get("per_feature_ctr"),
         "text_features": pipeline_state.get("text_features"),
         "text_hash_dim": int(pipeline_state.get("text_hash_dim", 64)),
+        "text_tokenizer": pipeline_state.get("text_tokenizer", "word"),
+        "text_ngram_range": list(pipeline_state.get("text_ngram_range", (1, 1))),
+        "text_lowercase": bool(pipeline_state.get("text_lowercase", True)),
+        "text_min_token_count": int(pipeline_state.get("text_min_token_count", 1)),
+        "text_max_dictionary_size": int(
+            pipeline_state.get("text_max_dictionary_size", 0)
+        ),
+        "text_feature_calcer": pipeline_state.get("text_feature_calcer", "count"),
         "embedding_features": pipeline_state.get("embedding_features"),
         "embedding_stats": list(pipeline_state.get("embedding_stats", ("mean", "std", "min", "max", "l2"))),
+        "embedding_target_features": bool(
+            pipeline_state.get("embedding_target_features", False)
+        ),
+        "embedding_target_regularization": float(
+            pipeline_state.get("embedding_target_regularization", 1.0)
+        ),
+        "embedding_target_mode": pipeline_state.get("embedding_target_mode", "auto"),
         "ctr_prior_strength": float(pipeline_state.get("ctr_prior_strength", 1.0)),
         "random_seed": int(pipeline_state.get("random_seed", 0)),
     }
@@ -220,8 +246,19 @@ def _prepare_pool_from_raw(
         per_feature_ctr=params.get("per_feature_ctr"),
         text_features=params.get("text_features"),
         text_hash_dim=int(params.get("text_hash_dim", 64)),
+        text_tokenizer=params.get("text_tokenizer", "word"),
+        text_ngram_range=params.get("text_ngram_range", (1, 1)),
+        text_lowercase=bool(params.get("text_lowercase", True)),
+        text_min_token_count=int(params.get("text_min_token_count", 1)),
+        text_max_dictionary_size=int(params.get("text_max_dictionary_size", 0)),
+        text_feature_calcer=params.get("text_feature_calcer", "count"),
         embedding_features=params.get("embedding_features"),
         embedding_stats=params.get("embedding_stats", ("mean", "std", "min", "max", "l2")),
+        embedding_target_features=bool(params.get("embedding_target_features", False)),
+        embedding_target_regularization=float(
+            params.get("embedding_target_regularization", 1.0)
+        ),
+        embedding_target_mode=params.get("embedding_target_mode", "auto"),
         ctr_prior_strength=float(params.get("ctr_prior_strength", 1.0)),
         random_seed=int(params.get("random_seed", 0)),
         feature_pipeline=feature_pipeline,

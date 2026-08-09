@@ -27,6 +27,15 @@ void ValidateNonNegativeMetricLabels(const std::vector<float>& labels, const cha
   }
 }
 
+void ValidatePositiveMetricLabels(const std::vector<float>& labels, const char* metric_name) {
+  for (const float label : labels) {
+    if (!(label > 0.0F) || !std::isfinite(label)) {
+      throw std::invalid_argument(std::string(metric_name) +
+                                  " requires finite positive labels");
+    }
+  }
+}
+
 std::vector<MetricSurvivalLabel> ParseSignedMetricSurvivalLabels(
     const std::vector<float>& labels,
     const char* metric_name) {

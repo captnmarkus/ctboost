@@ -37,6 +37,28 @@ void NativeFeaturePipeline::LoadState(const py::dict& state) {
       state.contains("text_features") ? py::reinterpret_borrow<py::object>(state["text_features"])
                                       : py::none());
   text_hash_dim_ = state.contains("text_hash_dim") ? py::cast<int>(state["text_hash_dim"]) : 64;
+  text_tokenizer_ = detail::NormalizeTextTokenizer(
+      state.contains("text_tokenizer") ? py::cast<std::string>(state["text_tokenizer"])
+                                       : std::string("word"));
+  const auto ngram_range = detail::NormalizeTextNgramRange(
+      state.contains("text_ngram_range")
+          ? py::reinterpret_borrow<py::object>(state["text_ngram_range"])
+          : py::none());
+  text_ngram_min_ = ngram_range.first;
+  text_ngram_max_ = ngram_range.second;
+  text_lowercase_ = state.contains("text_lowercase")
+                        ? py::cast<bool>(state["text_lowercase"])
+                        : true;
+  text_min_token_count_ = state.contains("text_min_token_count")
+                              ? py::cast<int>(state["text_min_token_count"])
+                              : 1;
+  text_max_dictionary_size_ = state.contains("text_max_dictionary_size")
+                                  ? py::cast<int>(state["text_max_dictionary_size"])
+                                  : 0;
+  text_feature_calcer_ = detail::NormalizeTextFeatureCalcer(
+      state.contains("text_feature_calcer")
+          ? py::cast<std::string>(state["text_feature_calcer"])
+          : std::string("count"));
   embedding_features_ =
       detail::NormalizeOptionalSequence(state.contains("embedding_features")
                                             ? py::reinterpret_borrow<py::object>(state["embedding_features"])
@@ -45,6 +67,17 @@ void NativeFeaturePipeline::LoadState(const py::dict& state) {
       detail::NormalizeEmbeddingStats(state.contains("embedding_stats")
                                           ? py::reinterpret_borrow<py::object>(state["embedding_stats"])
                                           : py::none()));
+  embedding_target_features_ = state.contains("embedding_target_features")
+                                   ? py::cast<bool>(state["embedding_target_features"])
+                                   : false;
+  embedding_target_regularization_ = state.contains("embedding_target_regularization")
+                                         ? py::cast<double>(
+                                               state["embedding_target_regularization"])
+                                         : 1.0;
+  embedding_target_mode_ = detail::NormalizeEmbeddingTargetMode(
+      state.contains("embedding_target_mode")
+          ? py::cast<std::string>(state["embedding_target_mode"])
+          : std::string("auto"));
   ctr_prior_strength_ =
       state.contains("ctr_prior_strength") ? py::cast<double>(state["ctr_prior_strength"]) : 1.0;
   random_seed_ = state.contains("random_seed") ? py::cast<int>(state["random_seed"]) : 0;
@@ -151,6 +184,23 @@ void NativeFeaturePipeline::LoadState(const py::dict& state) {
       TextState text_state;
       text_state.source_index = py::cast<int>(item["source_index"]);
       text_state.prefix = py::cast<std::string>(item["prefix"]);
+      text_state.output_dim =
+          item.contains("output_dim") ? py::cast<int>(item["output_dim"]) : text_hash_dim_;
+      text_state.uses_dictionary =
+          item.contains("uses_dictionary") && py::cast<bool>(item["uses_dictionary"]) ? 1U : 0U;
+      text_state.filters_tokens =
+          item.contains("filters_tokens") && py::cast<bool>(item["filters_tokens"]) ? 1U : 0U;
+      text_state.vocabulary = item.contains("vocabulary")
+                                  ? py::cast<std::vector<std::string>>(item["vocabulary"])
+                                  : std::vector<std::string>{};
+      for (std::size_t index = 0; index < text_state.vocabulary.size(); ++index) {
+        text_state.vocabulary_indices.emplace(
+            text_state.vocabulary[index],
+            text_state.uses_dictionary != 0U ? static_cast<int>(index) : 0);
+      }
+      text_state.idf_values = item.contains("idf_values")
+                                  ? py::cast<std::vector<float>>(item["idf_values"])
+                                  : std::vector<float>{};
       text_states_.push_back(std::move(text_state));
     }
   }
@@ -163,6 +213,19 @@ void NativeFeaturePipeline::LoadState(const py::dict& state) {
       embedding_state.source_index = py::cast<int>(item["source_index"]);
       embedding_state.prefix = py::cast<std::string>(item["prefix"]);
       embedding_state.stats = py::cast<std::vector<std::string>>(item["stats"]);
+      embedding_state.center = item.contains("center")
+                                   ? py::cast<std::vector<float>>(item["center"])
+                                   : std::vector<float>{};
+      if (item.contains("target_projection_weights")) {
+        for (const py::handle weights : py::cast<py::list>(item["target_projection_weights"])) {
+          embedding_state.target_projection_weights.push_back(
+              py::cast<std::vector<float>>(weights));
+        }
+      }
+      embedding_state.target_output_names = item.contains("target_output_names")
+                                                ? py::cast<std::vector<std::string>>(
+                                                      item["target_output_names"])
+                                                : std::vector<std::string>{};
       embedding_states_.push_back(std::move(embedding_state));
     }
   }

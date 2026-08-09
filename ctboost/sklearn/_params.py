@@ -64,8 +64,17 @@ class _BaseInitMixin:
             per_feature_ctr: Optional[Any] = None,
             text_features: Optional[Any] = None,
             text_hash_dim: int = 64,
+            text_tokenizer: str = "word",
+            text_ngram_range: Any = (1, 1),
+            text_lowercase: bool = True,
+            text_min_token_count: int = 1,
+            text_max_dictionary_size: int = 0,
+            text_feature_calcer: str = "count",
             embedding_features: Optional[Any] = None,
             embedding_stats: Any = ("mean", "std", "min", "max", "l2"),
+            embedding_target_features: bool = False,
+            embedding_target_regularization: float = 1.0,
+            embedding_target_mode: str = "auto",
             ctr_prior_strength: float = 1.0,
             monotone_constraints: Optional[Any] = None,
             interaction_constraints: Optional[Any] = None,
@@ -145,8 +154,17 @@ class _BaseInitMixin:
             self.per_feature_ctr = per_feature_ctr
             self.text_features = text_features
             self.text_hash_dim = text_hash_dim
+            self.text_tokenizer = text_tokenizer
+            self.text_ngram_range = text_ngram_range
+            self.text_lowercase = text_lowercase
+            self.text_min_token_count = text_min_token_count
+            self.text_max_dictionary_size = text_max_dictionary_size
+            self.text_feature_calcer = text_feature_calcer
             self.embedding_features = embedding_features
             self.embedding_stats = embedding_stats
+            self.embedding_target_features = embedding_target_features
+            self.embedding_target_regularization = embedding_target_regularization
+            self.embedding_target_mode = embedding_target_mode
             self.ctr_prior_strength = ctr_prior_strength
             self.monotone_constraints = monotone_constraints
             self.interaction_constraints = interaction_constraints
@@ -228,7 +246,23 @@ class _BaseInitMixin:
                         break
         def __setstate__(self, state: Dict[str, Any]) -> None:
             super().__setstate__(state)
+            preprocessing_defaults = {
+                "text_tokenizer": "word",
+                "text_ngram_range": (1, 1),
+                "text_lowercase": True,
+                "text_min_token_count": 1,
+                "text_max_dictionary_size": 0,
+                "text_feature_calcer": "count",
+                "embedding_target_features": False,
+                "embedding_target_regularization": 1.0,
+                "embedding_target_mode": "auto",
+            }
+            for name, default in preprocessing_defaults.items():
+                if not hasattr(self, name):
+                    setattr(self, name, default)
             self._synchronize_compatibility_aliases()
+            if hasattr(self, "_booster"):
+                self._booster._feature_pipeline = getattr(self, "_feature_pipeline", None)
         def _uses_feature_pipeline(self) -> bool:
             return bool(
                 self.ordered_ctr
@@ -244,6 +278,13 @@ class _BaseInitMixin:
                 or self.embedding_features
             )
         def _build_feature_pipeline(self) -> FeaturePipeline:
+            embedding_target_mode = self.embedding_target_mode
+            if embedding_target_mode == "auto" and self.embedding_target_features:
+                embedding_target_mode = (
+                    "classification"
+                    if getattr(self, "_estimator_type", None) == "classifier"
+                    else "regression"
+                )
             return FeaturePipeline(
                 cat_features=self.cat_features,
                 ordered_ctr=self.ordered_ctr,
@@ -256,8 +297,17 @@ class _BaseInitMixin:
                 per_feature_ctr=self.per_feature_ctr,
                 text_features=self.text_features,
                 text_hash_dim=self.text_hash_dim,
+                text_tokenizer=self.text_tokenizer,
+                text_ngram_range=self.text_ngram_range,
+                text_lowercase=self.text_lowercase,
+                text_min_token_count=self.text_min_token_count,
+                text_max_dictionary_size=self.text_max_dictionary_size,
+                text_feature_calcer=self.text_feature_calcer,
                 embedding_features=self.embedding_features,
                 embedding_stats=self.embedding_stats,
+                embedding_target_features=self.embedding_target_features,
+                embedding_target_regularization=self.embedding_target_regularization,
+                embedding_target_mode=embedding_target_mode,
                 ctr_prior_strength=self.ctr_prior_strength,
                 random_seed=self.random_seed,
             )

@@ -195,7 +195,7 @@ def test_distributed_tcp_training_supports_eval_set_and_init_model(tmp_path: Pat
                     "random_seed": 23,
                     "distributed_world_size": 2,
                     "distributed_rank": rank,
-                    "distributed_root": f"tcp://127.0.0.1:{port}",
+                    "distributed_root": f"tcp://127.0.0.1:{port}/auth/{'a' * 64}",
                     "distributed_run_id": "eval-init-case",
                     "distributed_timeout": 120.0,
                 },

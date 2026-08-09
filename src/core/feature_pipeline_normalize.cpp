@@ -120,6 +120,51 @@ std::vector<std::string> NormalizeEmbeddingStats(py::object embedding_stats) {
   return resolved;
 }
 
+std::string NormalizeTextTokenizer(std::string tokenizer) {
+  std::transform(tokenizer.begin(), tokenizer.end(), tokenizer.begin(), [](unsigned char ch) {
+    return static_cast<char>(std::tolower(ch));
+  });
+  if (tokenizer == "word" || tokenizer == "whitespace" || tokenizer == "character") {
+    return tokenizer;
+  }
+  throw std::invalid_argument(
+      "text_tokenizer must be one of: word, whitespace, character");
+}
+
+std::pair<int, int> NormalizeTextNgramRange(py::object ngram_range) {
+  if (ngram_range.is_none()) {
+    return {1, 1};
+  }
+  const std::vector<int> values = py::cast<std::vector<int>>(ngram_range);
+  if (values.size() != 2U || values[0] <= 0 || values[1] < values[0]) {
+    throw std::invalid_argument(
+        "text_ngram_range must be a (minimum, maximum) pair of positive integers");
+  }
+  return {values[0], values[1]};
+}
+
+std::string NormalizeTextFeatureCalcer(std::string feature_calcer) {
+  std::transform(feature_calcer.begin(), feature_calcer.end(), feature_calcer.begin(),
+                 [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+  if (feature_calcer == "count" || feature_calcer == "binary" ||
+      feature_calcer == "tfidf") {
+    return feature_calcer;
+  }
+  throw std::invalid_argument(
+      "text_feature_calcer must be one of: count, binary, tfidf");
+}
+
+std::string NormalizeEmbeddingTargetMode(std::string target_mode) {
+  std::transform(target_mode.begin(), target_mode.end(), target_mode.begin(),
+                 [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+  if (target_mode == "auto" || target_mode == "regression" ||
+      target_mode == "classification") {
+    return target_mode;
+  }
+  throw std::invalid_argument(
+      "embedding_target_mode must be one of: auto, regression, classification");
+}
+
 py::object NormalizeOptionalSequence(py::object values) {
   if (values.is_none()) {
     return py::none();

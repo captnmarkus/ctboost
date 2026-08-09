@@ -12,6 +12,14 @@ void GradientBooster::Fit(Pool& pool,
                           Pool* eval_pool,
                           int early_stopping_rounds,
                           bool continue_training) {
+  FitWithObjective(pool, *objective_, eval_pool, early_stopping_rounds, continue_training);
+}
+
+void GradientBooster::FitWithObjective(Pool& pool,
+                                       const ObjectiveFunction& objective,
+                                       Pool* eval_pool,
+                                       int early_stopping_rounds,
+                                       bool continue_training) {
   const auto fit_start = std::chrono::steady_clock::now();
   const TrainingProfiler profiler(verbose_);
   profiler.LogFitStart(pool.num_rows(), pool.num_cols(), iterations_, use_gpu_, prediction_dimension_);
@@ -26,6 +34,17 @@ void GradientBooster::Fit(Pool& pool,
                                     feature_weights_,
                                     first_feature_use_penalties_,
                                     prediction_dimension_);
+  const std::string normalized_objective = booster_detail::NormalizeToken(objective_name_);
+  if (booster_detail::IsLambdaMARTObjective(normalized_objective)) {
+    booster_detail::ValidateUniformQueryWeights(pool, "LambdaMART");
+  }
+  if (eval_pool != nullptr) {
+    const std::string normalized_eval_metric = booster_detail::NormalizeToken(eval_metric_name_);
+    if (normalized_eval_metric == "ndcg" || normalized_eval_metric == "lambdamart" ||
+        normalized_eval_metric == "lambdarank" || normalized_eval_metric == "rank:ndcg") {
+      booster_detail::ValidateUniformQueryWeights(*eval_pool, "NDCG");
+    }
+  }
 
   const InteractionConstraintSet interaction_constraint_set =
       booster_detail::BuildInteractionConstraintSet(interaction_constraints_, pool.num_cols());
@@ -190,7 +209,7 @@ void GradientBooster::Fit(Pool& pool,
   context.profiler = &profiler;
   context.quantization_schema = &quantization_schema_;
   context.workspace = &workspace;
-  context.objective = objective_.get();
+  context.objective = &objective;
   context.objective_metric = objective_metric_.get();
   context.eval_metric = eval_metric_.get();
   context.trees = &trees_;

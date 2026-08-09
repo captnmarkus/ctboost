@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -28,8 +29,22 @@ def _distributed_collective_context(distributed: Optional[Dict[str, Any]]):
     body_error: Optional[BaseException] = None
     shutdown_error: Optional[BaseException] = None
     if distributed is not None and distributed["backend"] == "tcp" and distributed["rank"] == 0:
-        if distributed["host"] is None or distributed["port"] is None:
-            raise ValueError("tcp distributed coordination requires a host and port")
+        if (
+            distributed["host"] is None
+            or distributed["port"] is None
+            or distributed.get("auth_token") is None
+        ):
+            raise ValueError("tcp distributed coordination requires an authenticated host and port")
+        server_env = os.environ.copy()
+        server_env.update(
+            CTBOOST_DISTRIBUTED_AUTH_TOKEN=str(distributed["auth_token"]),
+            CTBOOST_DISTRIBUTED_RUN_ID=str(distributed["run_id"]),
+            CTBOOST_DISTRIBUTED_WORLD_SIZE=str(distributed["world_size"]),
+            CTBOOST_DISTRIBUTED_REQUEST_TIMEOUT=str(
+                min(30.0, float(distributed["timeout"]))
+            ),
+            CTBOOST_DISTRIBUTED_COLLECTIVE_TIMEOUT=str(distributed["timeout"]),
+        )
         server_process = subprocess.Popen(
             [
                 sys.executable,
@@ -41,10 +56,13 @@ def _distributed_collective_context(distributed: Optional[Dict[str, Any]]):
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
+            env=server_env,
         )
         wait_for_distributed_tcp_coordinator(
             distributed["root"],
             min(10.0, float(distributed["timeout"])),
+            run_id=str(distributed["run_id"]),
+            world_size=int(distributed["world_size"]),
         )
     try:
         yield

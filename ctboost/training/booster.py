@@ -3,12 +3,16 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Union
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Union
 
 import numpy as np
 
 from .. import _core
-from .._export import export_model as _export_model
+from .._export import (
+    export_inference_manifest as _export_inference_manifest,
+    export_model as _export_model,
+    get_inference_manifest as _get_inference_manifest,
+)
 from .._serialization import load_booster_document, save_booster
 from ..feature_pipeline import FeaturePipeline, _feature_pipelines_equivalent
 from ..core import Pool
@@ -72,6 +76,27 @@ class Booster:
             metadata["learning_rate_history"] = [float(value) for value in learning_rate_history]
         self._training_metadata = metadata
 
+    def __getstate__(self) -> Dict[str, Any]:
+        """Return a pickle-safe representation of the native booster."""
+        return {
+            "handle_state": dict(self._handle.export_state()),
+            "feature_pipeline_state": (
+                None if self._feature_pipeline is None else self._feature_pipeline.to_state()
+            ),
+            "training_metadata": self._training_metadata,
+        }
+
+    def __setstate__(self, state: Mapping[str, Any]) -> None:
+        self._handle = _core.GradientBooster.from_state(dict(state["handle_state"]))
+        pipeline_state = state.get("feature_pipeline_state")
+        self._feature_pipeline = (
+            None if pipeline_state is None else FeaturePipeline.from_state(pipeline_state)
+        )
+        training_metadata = state.get("training_metadata")
+        self._training_metadata = (
+            None if training_metadata is None else dict(training_metadata)
+        )
+
     def _prediction_pool(self, data: Any) -> Pool:
         if isinstance(data, Pool):
             if (
@@ -110,8 +135,40 @@ class Booster:
             return raw.reshape((pool.num_rows, prediction_dimension))
         return raw
 
-    def predict(self, data: Any, *, num_iteration: Optional[int] = None) -> np.ndarray:
+    def predict_raw(self, data: Any, *, num_iteration: Optional[int] = None) -> np.ndarray:
+        """Return the additive raw score before any objective inverse link."""
         return self._predict_raw(data, num_iteration=num_iteration)
+
+    def predict(self, data: Any, *, num_iteration: Optional[int] = None) -> np.ndarray:
+        """Return raw scores, preserving CTBoost's existing prediction contract."""
+        return self.predict_raw(data, num_iteration=num_iteration)
+
+    def predict_mean(self, data: Any, *, num_iteration: Optional[int] = None) -> np.ndarray:
+        """Return the response-scale mean for a supported log-link objective."""
+        objective = self.native_objective_name.lower()
+        if objective not in {
+            "gamma",
+            "gammaloss",
+            "reg:gamma",
+            "poisson",
+            "poissonregression",
+            "tweedie",
+            "tweedieloss",
+            "reg:tweedie",
+        }:
+            raise ValueError(
+                "predict_mean is available for Gamma, Poisson, and Tweedie "
+                "log-link objectives"
+            )
+        raw_prediction = self.predict_raw(
+            data,
+            num_iteration=num_iteration,
+        ).astype(np.float64, copy=False)
+        return np.exp(np.clip(raw_prediction, -745.0, 709.0))
+
+    def predict_response(self, data: Any, *, num_iteration: Optional[int] = None) -> np.ndarray:
+        """Alias for :meth:`predict_mean` on log-link mean objectives."""
+        return self.predict_mean(data, num_iteration=num_iteration)
 
     def staged_predict(self, data: Any) -> Iterable[np.ndarray]:
         pool = self._prediction_pool(data)
@@ -146,6 +203,235 @@ class Booster:
             contributions[:, -1] += baseline[:, 0]
         return contributions
 
+    def predict_shap(
+        self,
+        data: Any,
+        background: Any,
+        *,
+        num_iteration: Optional[int] = None,
+    ) -> np.ndarray:
+        """Return exact interventional TreeSHAP values for raw model output.
+
+        ``background`` defines the empirical reference distribution.  Its
+        ``Pool.weight`` values are honored when present; otherwise rows are
+        weighted uniformly.  The final column contains the expected model
+        output over that distribution, so every row sums to ``predict(data)``.
+
+        This method is exact and distinct from :meth:`predict_contrib`, which
+        is a faster path-based additive decomposition.
+        """
+        from ..explain import explain_booster
+
+        return explain_booster(
+            self,
+            data,
+            background,
+            num_iteration=num_iteration,
+            interaction_values=False,
+        )
+
+    def predict_shap_values(
+        self,
+        data: Any,
+        background: Any,
+        *,
+        num_iteration: Optional[int] = None,
+    ) -> np.ndarray:
+        """Alias for :meth:`predict_shap`."""
+        return self.predict_shap(data, background, num_iteration=num_iteration)
+
+    def predict_shap_interactions(
+        self,
+        data: Any,
+        background: Any,
+        *,
+        num_iteration: Optional[int] = None,
+    ) -> np.ndarray:
+        """Return exact pairwise interventional SHAP interaction values.
+
+        For a single-output model the shape is
+        ``(n_rows, n_features + 1, n_features + 1)``.  Multiclass output adds
+        an output dimension after ``n_rows``.  The final row and column are
+        reserved for bias and the expected value is stored at ``[-1, -1]``.
+        Each feature row sums to that feature's SHAP value and the entire
+        matrix sums to the raw model prediction.
+        """
+        from ..explain import explain_booster
+
+        return explain_booster(
+            self,
+            data,
+            background,
+            num_iteration=num_iteration,
+            interaction_values=True,
+        )
+
+    def predict_shap_interaction_values(
+        self,
+        data: Any,
+        background: Any,
+        *,
+        num_iteration: Optional[int] = None,
+    ) -> np.ndarray:
+        """Alias for :meth:`predict_shap_interactions`."""
+        return self.predict_shap_interactions(
+            data, background, num_iteration=num_iteration
+        )
+
+    def calc_leaf_influence(
+        self,
+        data: Any,
+        reference_data: Any,
+        *,
+        num_iteration: Optional[int] = None,
+        return_coverage: bool = False,
+    ) -> Any:
+        """Return signed shared-leaf object attribution scores.
+
+        This is a leaf co-membership approximation, not exact leave-one-out
+        influence and not a model refit. See :func:`ctboost.explain.calc_leaf_influence`.
+        """
+        from ..explain import calc_leaf_influence
+
+        return calc_leaf_influence(
+            self,
+            data,
+            reference_data,
+            num_iteration=num_iteration,
+            return_coverage=return_coverage,
+        )
+
+    def get_object_importance(
+        self,
+        data: Any,
+        reference_data: Any,
+        *,
+        top_size: int = -1,
+        importance_type: str = "Average",
+        prediction_dimension: Optional[int] = None,
+        num_iteration: Optional[int] = None,
+    ) -> Any:
+        """Rank reference rows by approximate shared-leaf influence."""
+        from ..explain import get_object_importance
+
+        return get_object_importance(
+            self,
+            data,
+            reference_data,
+            top_size=top_size,
+            importance_type=importance_type,
+            prediction_dimension=prediction_dimension,
+            num_iteration=num_iteration,
+        )
+
+    def tree_to_dot(
+        self,
+        tree_index: int = 0,
+        *,
+        rankdir: str = "TB",
+        precision: int = 6,
+    ) -> str:
+        """Return one fitted tree as dependency-free Graphviz DOT source."""
+        from ..explain import tree_to_dot
+
+        return tree_to_dot(self, tree_index, rankdir=rankdir, precision=precision)
+
+    def plot_tree(
+        self,
+        tree_index: int = 0,
+        *,
+        ax: Any = None,
+        figsize: Any = (12.0, 7.0),
+        precision: int = 4,
+    ) -> Any:
+        """Plot one fitted tree with matplotlib and return its axes."""
+        from ..explain import plot_tree
+
+        return plot_tree(
+            self,
+            tree_index,
+            ax=ax,
+            figsize=figsize,
+            precision=precision,
+        )
+
+    def calc_feature_statistics(
+        self,
+        data: Any,
+        target: Any = None,
+        *,
+        feature: Any = None,
+        prediction_dimension: Optional[int] = None,
+        plot: bool = False,
+        axes: Any = None,
+    ) -> Dict[str, Dict[str, Any]]:
+        """Aggregate predictions and optional targets by fitted feature bin."""
+        from ..explain import calc_feature_statistics, plot_feature_statistics
+
+        result = calc_feature_statistics(
+            self,
+            data,
+            target,
+            feature=feature,
+            prediction_dimension=prediction_dimension,
+        )
+        if plot:
+            plot_feature_statistics(result, axes=axes)
+        return result
+
+    def plot_feature_statistics(
+        self,
+        data: Any,
+        target: Any = None,
+        *,
+        feature: Any = None,
+        prediction_dimension: Optional[int] = None,
+        axes: Any = None,
+        figsize: Any = None,
+        show_object_count: bool = True,
+    ) -> Any:
+        """Calculate and plot fitted-bin feature statistics, returning axes."""
+        from ..explain import calc_feature_statistics, plot_feature_statistics
+
+        statistics = calc_feature_statistics(
+            self,
+            data,
+            target,
+            feature=feature,
+            prediction_dimension=prediction_dimension,
+        )
+        return plot_feature_statistics(
+            statistics,
+            axes=axes,
+            figsize=figsize,
+            show_object_count=show_object_count,
+        )
+
+    def plot_predictions(
+        self,
+        data: Any,
+        target: Any = None,
+        *,
+        kind: str = "auto",
+        prediction_dimension: Optional[int] = None,
+        num_iteration: Optional[int] = None,
+        ax: Any = None,
+        figsize: Any = (7.0, 5.0),
+    ) -> Any:
+        """Plot raw predictions or numeric-target residual diagnostics."""
+        from ..explain import plot_predictions
+
+        return plot_predictions(
+            self,
+            data,
+            target,
+            kind=kind,
+            prediction_dimension=prediction_dimension,
+            num_iteration=num_iteration,
+            ax=ax,
+            figsize=figsize,
+        )
+
     def save_model(self, path: PathLike, *, model_format: Optional[str] = None) -> None:
         destination = Path(path)
         save_booster(
@@ -164,6 +450,8 @@ class Booster:
         *,
         export_format: Optional[str] = None,
         prepared_features: bool = False,
+        class_labels: Optional[Sequence[Any]] = None,
+        estimator_name: Optional[str] = None,
     ) -> None:
         _export_model(
             path,
@@ -171,6 +459,45 @@ class Booster:
             export_format=export_format,
             feature_pipeline=self._feature_pipeline,
             prepared_features=prepared_features,
+            data_schema=self.data_schema,
+            class_labels=class_labels,
+            estimator_name=estimator_name,
+        )
+
+    def get_inference_manifest(
+        self,
+        *,
+        prepared_features: bool = False,
+        class_labels: Optional[Sequence[Any]] = None,
+        estimator_name: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Return the model's versioned input/output deployment contract."""
+        return _get_inference_manifest(
+            self._handle,
+            feature_pipeline=self._feature_pipeline,
+            prepared_features=prepared_features,
+            data_schema=self.data_schema,
+            class_labels=class_labels,
+            estimator_name=estimator_name,
+        )
+
+    def export_inference_manifest(
+        self,
+        path: PathLike,
+        *,
+        prepared_features: bool = False,
+        class_labels: Optional[Sequence[Any]] = None,
+        estimator_name: Optional[str] = None,
+    ) -> None:
+        """Write the model's versioned input/output deployment contract as JSON."""
+        _export_inference_manifest(
+            path,
+            self._handle,
+            feature_pipeline=self._feature_pipeline,
+            prepared_features=prepared_features,
+            data_schema=self.data_schema,
+            class_labels=class_labels,
+            estimator_name=estimator_name,
         )
 
     @classmethod
@@ -255,6 +582,13 @@ class Booster:
 
     @property
     def objective_name(self) -> str:
+        if self._training_metadata is not None and "objective_name" in self._training_metadata:
+            return str(self._training_metadata["objective_name"])
+        return str(self._handle.objective_name())
+
+    @property
+    def native_objective_name(self) -> str:
+        """Return the native objective used for model shape and inference semantics."""
         return str(self._handle.objective_name())
 
     @property

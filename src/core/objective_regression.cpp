@@ -162,6 +162,28 @@ void TweedieLoss::compute_gradients(const std::vector<float>& preds,
   }
 }
 
+void GammaLoss::compute_gradients(const std::vector<float>& preds,
+                                  const std::vector<float>& labels,
+                                  std::vector<float>& out_g,
+                                  std::vector<float>& out_h,
+                                  int num_classes,
+                                  const RankingMetadataView*) const {
+  if (num_classes != 1) {
+    throw std::invalid_argument("gamma loss expects num_classes equal to one");
+  }
+  detail::ValidatePredictionLabelSizes(preds, labels);
+  detail::ValidatePositiveLabels(labels, "gamma loss");
+
+  out_g.resize(preds.size());
+  out_h.resize(preds.size());
+  for (std::size_t i = 0; i < preds.size(); ++i) {
+    const double scaled_label =
+        static_cast<double>(labels[i]) * std::exp(-static_cast<double>(preds[i]));
+    out_g[i] = static_cast<float>(1.0 - scaled_label);
+    out_h[i] = static_cast<float>(scaled_label);
+  }
+}
+
 }  // namespace ctboost
 
 namespace ctboost::detail {
@@ -188,6 +210,10 @@ std::unique_ptr<ObjectiveFunction> CreateRegressionObjective(std::string_view no
   if (normalized == "tweedie" || normalized == "tweedieloss" ||
       normalized == "reg:tweedie") {
     return std::make_unique<TweedieLoss>(config.tweedie_variance_power);
+  }
+  if (normalized == "gamma" || normalized == "gammaloss" ||
+      normalized == "reg:gamma") {
+    return std::make_unique<GammaLoss>();
   }
   return nullptr;
 }

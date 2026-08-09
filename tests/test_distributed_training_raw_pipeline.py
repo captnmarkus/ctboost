@@ -79,7 +79,7 @@ def test_distributed_tcp_training_fits_raw_feature_pipeline_across_ranks(tmp_pat
                     "text_hash_dim": 16,
                     "distributed_world_size": 2,
                     "distributed_rank": rank,
-                    "distributed_root": f"tcp://127.0.0.1:{port}",
+                    "distributed_root": f"tcp://127.0.0.1:{port}/auth/{'a' * 64}",
                     "distributed_run_id": "raw-pipeline-case",
                     "distributed_timeout": 120.0,
                 },

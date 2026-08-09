@@ -64,7 +64,7 @@ def test_distributed_tcp_ranking_training_matches_central_fit(tmp_path: Path):
                     "random_seed": 9,
                     "distributed_world_size": 2,
                     "distributed_rank": rank,
-                    "distributed_root": f"tcp://127.0.0.1:{port}",
+                    "distributed_root": f"tcp://127.0.0.1:{port}/auth/{'a' * 64}",
                     "distributed_run_id": "ranking-case",
                     "distributed_timeout": 120.0,
                 },

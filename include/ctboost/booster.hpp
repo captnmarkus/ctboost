@@ -69,6 +69,11 @@ class GradientBooster {
            Pool* eval_pool = nullptr,
            int early_stopping_rounds = 0,
            bool continue_training = false);
+  void FitWithObjective(Pool& pool,
+                        const ObjectiveFunction& objective,
+                        Pool* eval_pool = nullptr,
+                        int early_stopping_rounds = 0,
+                        bool continue_training = false);
   void SetIterations(int iterations);
   void SetLearningRate(double learning_rate);
   std::vector<float> Predict(const Pool& pool, int num_iteration = -1) const;

@@ -47,6 +47,7 @@ def prepare_training_data(
     eval_set: Any = None,
     eval_names: Any = None,
     init_model: Any = None,
+    refit_init_pipeline: bool = False,
 ) -> PreparedTrainingData:
     if isinstance(pool, PreparedTrainingData):
         if (
@@ -141,7 +142,13 @@ def prepare_training_data(
                 categorical_schema=categorical_schema,
                 params=config,
                 feature_pipeline=shared_feature_pipeline,
-                fit_feature_pipeline=False,
+                # Ordered CTR values used while fitting are deliberately
+                # leakage-controlled and therefore differ from inference-time
+                # transforms.  Exact snapshot resume must deterministically
+                # regenerate those training values from the original labels.
+                fit_feature_pipeline=bool(
+                    refit_init_pipeline and shared_feature_pipeline.ordered_ctr
+                ),
             )
         elif distributed_config is not None and uses_feature_pipeline_params(config):
             if distributed_config["backend"] == "tcp":

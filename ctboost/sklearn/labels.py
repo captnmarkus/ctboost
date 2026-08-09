@@ -7,10 +7,11 @@ from typing import Any, Dict, Optional
 import numpy as np
 
 from ..core import Pool
+from ..core.columnar import _columnar_vector_to_numpy
 from ..training import _normalize_eval_sets, _pool_from_data_and_label
 
 def _encode_class_labels(raw_labels: Any, label_to_index: Dict[Any, int], label_name: str) -> np.ndarray:
-    label_array = np.asarray(raw_labels)
+    label_array = np.asarray(_columnar_vector_to_numpy(raw_labels))
     if label_array.ndim != 1:
         raise ValueError("classification labels must be a 1D array")
 

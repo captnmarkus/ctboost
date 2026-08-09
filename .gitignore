@@ -45,18 +45,48 @@ __pycache__/
 *.py[cod]
 *.pyd
 .pytest_cache/
+.hypothesis/
+.mypy_cache/
+.pyright/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.ipynb_checkpoints/
 .venv/
 venv/
+env/
+.env
+.env.*
+!.env.example
+.pypirc
+.npmrc
+pip.conf
+*.pem
+*.key
 
 # Packaging
 build/
 dist/
+wheelhouse/
+wheelhouse-*/
+*.whl
+*.tar.gz
 *.egg-info/
 
 # CMake / scikit-build
 CMakeUserPresets.json
 CMakeCache.txt
 CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+Testing/
+_core.exp
 _skbuild/
 
 # CTBoost local build, test, benchmark, and debug workspaces
@@ -68,6 +98,35 @@ _skbuild/
 .tmp_*
 build-*/
 catboost_info/
+benchmark-results/
+dask-worker-space/
+ray_results/
+.ray/
+spark-warehouse/
+metastore_db/
+derby.log
+
+# Generated models, profiling, and local data products
+*.ctb
+*.ctboost
+*.onnx
+*.mlmodel
+*.mlpackage/
+*.pmml
+*.prof
+*.npy
+*.npz
+*.parquet
+*.arrow
+*.feather
+*.log
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
 
 # Downloaded GitHub Actions diagnostics
 annotations-*.json

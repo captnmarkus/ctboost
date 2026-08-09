@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 import ctboost
 import ctboost._core as _core
@@ -90,6 +91,166 @@ def test_low_level_pairlogit_training_with_group_id():
     assert _pair_accuracy(predictions, y[valid_mask], group_id[valid_mask]) > 0.9
     assert booster.eval_loss_history
     assert booster.eval_metric_name == "NDCG"
+
+
+def test_lambdamart_native_objective_optimizes_grouped_ndcg():
+    X, y, group_id = _make_ranking_data(num_groups=32, group_size=6)
+    train_pool = ctboost.Pool(X, y, group_id=group_id)
+
+    booster = ctboost.train(
+        train_pool,
+        {
+            "objective": "LambdaMART",
+            "learning_rate": 0.15,
+            "max_depth": 2,
+            "alpha": 1.0,
+            "lambda_l2": 1.0,
+        },
+        num_boost_round=16,
+        eval_set=train_pool,
+    )
+
+    predictions = booster.predict(train_pool)
+    ndcg = _core._evaluate_metric(
+        predictions,
+        y,
+        np.ones_like(y),
+        "NDCG",
+        1,
+        group_id,
+        None,
+        None,
+        None,
+        None,
+    )
+    assert ndcg > 0.99
+    assert booster.objective_name == "LambdaMART"
+    assert booster.eval_loss_history
+    assert np.all(np.isfinite(booster.eval_loss_history))
+
+
+def test_lambdamart_rejects_negative_relevance_labels():
+    X, y, group_id = _make_ranking_data(num_groups=2, group_size=3)
+    y[0] = -1.0
+    with np.testing.assert_raises_regex(ValueError, "finite non-negative relevance"):
+        ctboost.train(
+            ctboost.Pool(X, y, group_id=group_id),
+            {"objective": "rank:ndcg", "max_depth": 1, "alpha": 1.0},
+            num_boost_round=1,
+        )
+
+
+def test_ndcg_rejects_nonuniform_row_weights_within_query():
+    predictions = np.asarray([0.0, 1.0], dtype=np.float32)
+    labels = np.asarray([2.0, 1.0], dtype=np.float32)
+    group_id = np.asarray([0, 0], dtype=np.int64)
+    weights = np.asarray([0.1, 10.0], dtype=np.float32)
+
+    with pytest.raises(ValueError, match="uniform within each group_id"):
+        _core._evaluate_metric(
+            predictions,
+            labels,
+            weights,
+            "NDCG",
+            1,
+            group_id,
+            None,
+            None,
+            None,
+            None,
+        )
+
+    X = np.column_stack([predictions, labels]).astype(np.float32)
+    with pytest.raises(ValueError, match="uniform within each group_id"):
+        ctboost.train(
+            ctboost.Pool(X, labels, group_id=group_id, weight=weights),
+            {"objective": "LambdaMART", "max_depth": 1, "alpha": 1.0},
+            num_boost_round=1,
+        )
+
+    uniform_eval_pool = ctboost.Pool(
+        X,
+        labels,
+        group_id=group_id,
+        weight=np.ones_like(weights),
+    )
+    with pytest.raises(
+        ValueError,
+        match="NDCG.*uniform within each group_id in the training pool",
+    ):
+        ctboost.train(
+            ctboost.Pool(X, labels, group_id=group_id, weight=weights),
+            {
+                "objective": "PairLogit",
+                "eval_metric": "NDCG",
+                "max_depth": 1,
+                "alpha": 1.0,
+            },
+            num_boost_round=1,
+            eval_set=uniform_eval_pool,
+        )
+
+
+def test_ndcg_uses_uniform_row_weight_as_query_weight_and_stays_bounded():
+    predictions = np.asarray([2.0, 1.0, 0.0, 1.0], dtype=np.float32)
+    labels = np.asarray([2.0, 1.0, 2.0, 1.0], dtype=np.float32)
+    group_id = np.asarray([0, 0, 1, 1], dtype=np.int64)
+    weights = np.asarray([4.0, 4.0, 1.0, 1.0], dtype=np.float32)
+
+    weighted = _core._evaluate_metric(
+        predictions,
+        labels,
+        weights,
+        "NDCG",
+        1,
+        group_id,
+        None,
+        None,
+        None,
+        None,
+    )
+    group_zero = _core._evaluate_metric(
+        predictions[:2],
+        labels[:2],
+        np.ones(2, dtype=np.float32),
+        "NDCG",
+        1,
+        np.zeros(2, dtype=np.int64),
+        None,
+        None,
+        None,
+        None,
+    )
+    group_one = _core._evaluate_metric(
+        predictions[2:],
+        labels[2:],
+        np.ones(2, dtype=np.float32),
+        "NDCG",
+        1,
+        np.zeros(2, dtype=np.int64),
+        None,
+        None,
+        None,
+        None,
+    )
+    assert weighted == pytest.approx((4.0 * group_zero + group_one) / 5.0)
+    assert 0.0 <= weighted <= 1.0
+
+
+def test_pairlogit_metric_still_accepts_negative_relevance_scales():
+    value = _core._evaluate_metric(
+        np.asarray([1.0, 0.0], dtype=np.float32),
+        np.asarray([-1.0, -2.0], dtype=np.float32),
+        np.ones(2, dtype=np.float32),
+        "PairLogit",
+        1,
+        np.zeros(2, dtype=np.int64),
+        None,
+        None,
+        None,
+        None,
+    )
+    assert np.isfinite(value)
 
 
 def test_explicit_pairs_enable_pairlogit_training_without_label_order():

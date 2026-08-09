@@ -8,6 +8,10 @@ import numpy as np
 from sklearn.utils.validation import check_is_fitted
 
 from ..core import Pool
+from ..core.columnar import (
+    _columnar_frame_metadata,
+    _is_polars_lazy_frame,
+)
 from ..feature_pipeline import _feature_pipelines_equivalent
 
 
@@ -16,6 +20,14 @@ class _BasePredictionMixin:
         def _input_feature_metadata(X: Any) -> tuple[int, Any]:
             if isinstance(X, Pool):
                 return int(X.num_cols), None if X.feature_names is None else list(X.feature_names)
+
+            columnar_metadata = _columnar_frame_metadata(X)
+            if columnar_metadata is not None:
+                return int(columnar_metadata[1]), list(columnar_metadata[2])
+            if _is_polars_lazy_frame(X):
+                raise TypeError(
+                    "Polars LazyFrame input is not eager; call collect() before passing it to CTBoost"
+                )
 
             shape = getattr(X, "shape", None)
             if shape is None:

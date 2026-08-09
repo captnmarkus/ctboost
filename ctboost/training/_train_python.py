@@ -17,6 +17,7 @@ from ._eval_runtime import (
 from ._train_native import _make_native_booster
 from .booster import Booster
 from .callbacks import TrainingCallbackEnv
+from .objectives import ObjectiveSpec, _custom_objective_callback
 from .resume import (
     _initial_evals_result_from_model,
     _initial_learning_rate_history_from_model,
@@ -39,6 +40,7 @@ def _train_with_python_surface(
     resolved_init_model: Any,
     resolved_learning_rate_schedule: Any,
     distributed_config: Optional[Dict[str, Any]],
+    custom_objective: Optional[ObjectiveSpec] = None,
 ) -> Booster:
     booster = _make_native_booster(
         native_params,
@@ -52,6 +54,24 @@ def _train_with_python_surface(
         feature_pipeline=feature_pipeline,
         training_metadata=getattr(resolved_init_model, "_training_metadata", None),
     )
+    custom_objective_callable = None
+    if custom_objective is not None:
+        custom_objective_callable = _custom_objective_callback(
+            custom_objective,
+            weighted_pool,
+            native_params,
+        )
+        objective_metadata = (
+            {}
+            if wrapped_booster._training_metadata is None
+            else dict(wrapped_booster._training_metadata)
+        )
+        objective_metadata.update(
+            objective_name=str(custom_objective.name),
+            native_objective_name=str(custom_objective.native_objective),
+            custom_objective=True,
+        )
+        wrapped_booster._training_metadata = objective_metadata
     train_pool_template = _clone_pool(weighted_pool, releasable_feature_storage=True)
     seeded_evals_result = _initial_evals_result_from_model(resolved_init_model)
     seeded_learning_rate_history = _initial_learning_rate_history_from_model(resolved_init_model)
@@ -125,12 +145,21 @@ def _train_with_python_surface(
         current_learning_rate = float(wrapped_booster.learning_rate)
         iteration_train_pool = _clone_pool(train_pool_template, releasable_feature_storage=True)
         booster.set_iterations(1)
-        booster.fit(
-            iteration_train_pool._handle,
-            None,
-            0,
-            booster.num_iterations_trained() > 0,
-        )
+        if custom_objective_callable is None:
+            booster.fit(
+                iteration_train_pool._handle,
+                None,
+                0,
+                booster.num_iterations_trained() > 0,
+            )
+        else:
+            booster.fit_custom_objective(
+                iteration_train_pool._handle,
+                custom_objective_callable,
+                None,
+                0,
+                booster.num_iterations_trained() > 0,
+            )
         booster.set_iterations(iterations)
         evals_result["learn"]["loss"] = [float(value) for value in booster.loss_history()]
         current_iteration = int(booster.num_iterations_trained()) - 1

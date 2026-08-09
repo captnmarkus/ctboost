@@ -11,6 +11,7 @@ namespace ctboost::detail {
 void ValidatePredictionLabelSizes(const std::vector<float>& preds,
                                   const std::vector<float>& labels);
 void ValidateNonNegativeLabels(const std::vector<float>& labels, const char* objective_name);
+void ValidatePositiveLabels(const std::vector<float>& labels, const char* objective_name);
 
 struct SurvivalLabel {
   double time{0.0};

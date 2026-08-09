@@ -22,6 +22,15 @@ void ValidateNonNegativeLabels(const std::vector<float>& labels, const char* obj
   }
 }
 
+void ValidatePositiveLabels(const std::vector<float>& labels, const char* objective_name) {
+  for (const float label : labels) {
+    if (!(label > 0.0F) || !std::isfinite(label)) {
+      throw std::invalid_argument(std::string(objective_name) +
+                                  " requires finite positive labels");
+    }
+  }
+}
+
 std::vector<SurvivalLabel> ParseSignedSurvivalLabels(const std::vector<float>& labels,
                                                      const char* objective_name) {
   std::vector<SurvivalLabel> parsed(labels.size());

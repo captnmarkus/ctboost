@@ -1,7 +1,10 @@
 #include "booster_fit_internal.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <stdexcept>
+#include <string>
+#include <unordered_map>
 
 namespace ctboost::booster_detail {
 
@@ -69,6 +72,31 @@ void ValidateFitInputs(const Pool& pool,
   }
   if (!first_feature_use_penalties.empty() && first_feature_use_penalties.size() != pool.num_cols()) {
     throw std::invalid_argument("first_feature_use_penalties must have one entry per feature when provided");
+  }
+}
+
+void ValidateUniformQueryWeights(const Pool& pool, const char* consumer_name) {
+  if (!pool.has_group_ids()) {
+    return;
+  }
+  const auto& group_ids = pool.group_ids();
+  const auto& weights = pool.weights();
+  std::unordered_map<std::int64_t, float> weight_by_group;
+  weight_by_group.reserve(group_ids.size());
+  for (std::size_t row = 0; row < group_ids.size(); ++row) {
+    const auto [entry, inserted] = weight_by_group.emplace(group_ids[row], weights[row]);
+    if (inserted) {
+      continue;
+    }
+    const double reference = static_cast<double>(entry->second);
+    const double current = static_cast<double>(weights[row]);
+    const double tolerance = 1e-7 + 1e-6 * std::max(std::fabs(reference), std::fabs(current));
+    if (std::fabs(reference - current) > tolerance) {
+      throw std::invalid_argument(
+          std::string(consumer_name) +
+          " requires sample weights to be uniform within each group_id; "
+          "use one query weight per group (or group_weight) instead");
+    }
   }
 }
 

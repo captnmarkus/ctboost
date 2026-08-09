@@ -37,8 +37,17 @@ class CTBoostRegressor(RegressorMixin, _BaseCTBoost):
         per_feature_ctr: Optional[Any] = None,
         text_features: Optional[Any] = None,
         text_hash_dim: int = 64,
+        text_tokenizer: str = "word",
+        text_ngram_range: Any = (1, 1),
+        text_lowercase: bool = True,
+        text_min_token_count: int = 1,
+        text_max_dictionary_size: int = 0,
+        text_feature_calcer: str = "count",
         embedding_features: Optional[Any] = None,
         embedding_stats: Any = ("mean", "std", "min", "max", "l2"),
+        embedding_target_features: bool = False,
+        embedding_target_regularization: float = 1.0,
+        embedding_target_mode: str = "auto",
         ctr_prior_strength: float = 1.0,
         monotone_constraints: Optional[Any] = None,
         interaction_constraints: Optional[Any] = None,
@@ -104,8 +113,17 @@ class CTBoostRegressor(RegressorMixin, _BaseCTBoost):
             per_feature_ctr=per_feature_ctr,
             text_features=text_features,
             text_hash_dim=text_hash_dim,
+            text_tokenizer=text_tokenizer,
+            text_ngram_range=text_ngram_range,
+            text_lowercase=text_lowercase,
+            text_min_token_count=text_min_token_count,
+            text_max_dictionary_size=text_max_dictionary_size,
+            text_feature_calcer=text_feature_calcer,
             embedding_features=embedding_features,
             embedding_stats=embedding_stats,
+            embedding_target_features=embedding_target_features,
+            embedding_target_regularization=embedding_target_regularization,
+            embedding_target_mode=embedding_target_mode,
             ctr_prior_strength=ctr_prior_strength,
             monotone_constraints=monotone_constraints,
             interaction_constraints=interaction_constraints,
@@ -190,9 +208,23 @@ class CTBoostRegressor(RegressorMixin, _BaseCTBoost):
             objective="SquaredError",
         )
 
-    def predict(self, X: Any, *, num_iteration: Optional[int] = None) -> Any:
+    def predict_raw(self, X: Any, *, num_iteration: Optional[int] = None) -> np.ndarray:
+        """Return the additive raw score before any objective inverse link."""
         pool = self._transform_prediction_pool(X)
         return np.asarray(self._booster.predict(pool, num_iteration=num_iteration), dtype=np.float32)
+
+    def predict(self, X: Any, *, num_iteration: Optional[int] = None) -> Any:
+        """Return raw scores, preserving CTBoost's existing regression contract."""
+        return self.predict_raw(X, num_iteration=num_iteration)
+
+    def predict_mean(self, X: Any, *, num_iteration: Optional[int] = None) -> np.ndarray:
+        """Return the response-scale mean for a supported log-link objective."""
+        pool = self._transform_prediction_pool(X)
+        return self._booster.predict_mean(pool, num_iteration=num_iteration)
+
+    def predict_response(self, X: Any, *, num_iteration: Optional[int] = None) -> np.ndarray:
+        """Alias for :meth:`predict_mean` on log-link mean objectives."""
+        return self.predict_mean(X, num_iteration=num_iteration)
 
     def staged_predict(self, X: Any) -> Iterable[Any]:
         pool = self._transform_prediction_pool(X)

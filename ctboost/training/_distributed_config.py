@@ -8,6 +8,7 @@ from typing import Any, Dict, Mapping, Optional
 import numpy as np
 
 from ..distributed import parse_distributed_root
+from ..distributed.tcp import MAX_KEY_BYTES
 from ..feature_pipeline import FeaturePipeline
 
 _DISTRIBUTED_PARAM_KEYS = {
@@ -32,9 +33,16 @@ def _normalize_distributed_config(params: Mapping[str, Any]) -> Optional[Dict[st
         raise ValueError("distributed_root is required when distributed_world_size > 1")
     parsed_root = parse_distributed_root(root_value)
     run_id = str(params.get("distributed_run_id", "default"))
+    if not run_id or "\t" in run_id or "\n" in run_id or len(run_id.encode("utf-8")) > MAX_KEY_BYTES:
+        raise ValueError("distributed_run_id is empty or exceeds protocol limits")
     timeout = float(params.get("distributed_timeout", 600.0))
     if timeout <= 0.0:
         raise ValueError("distributed_timeout must be positive")
+    if parsed_root.backend == "tcp" and parsed_root.auth_token is None:
+        raise ValueError(
+            "distributed TCP training requires an authenticated root; append "
+            "'/auth/<64-hex-token>' or use the Dask/Ray automatic endpoint"
+        )
 
     return {
         "world_size": world_size,
@@ -43,6 +51,7 @@ def _normalize_distributed_config(params: Mapping[str, Any]) -> Optional[Dict[st
         "backend": parsed_root.backend,
         "host": parsed_root.host,
         "port": parsed_root.port,
+        "auth_token": parsed_root.auth_token,
         "run_id": run_id,
         "timeout": timeout,
     }
@@ -63,8 +72,19 @@ def _feature_pipeline_from_params(params: Mapping[str, Any]) -> FeaturePipeline:
         per_feature_ctr=params.get("per_feature_ctr"),
         text_features=params.get("text_features"),
         text_hash_dim=int(params.get("text_hash_dim", 64)),
+        text_tokenizer=params.get("text_tokenizer", "word"),
+        text_ngram_range=params.get("text_ngram_range", (1, 1)),
+        text_lowercase=bool(params.get("text_lowercase", True)),
+        text_min_token_count=int(params.get("text_min_token_count", 1)),
+        text_max_dictionary_size=int(params.get("text_max_dictionary_size", 0)),
+        text_feature_calcer=params.get("text_feature_calcer", "count"),
         embedding_features=params.get("embedding_features"),
         embedding_stats=params.get("embedding_stats", ("mean", "std", "min", "max", "l2")),
+        embedding_target_features=bool(params.get("embedding_target_features", False)),
+        embedding_target_regularization=float(
+            params.get("embedding_target_regularization", 1.0)
+        ),
+        embedding_target_mode=params.get("embedding_target_mode", "auto"),
         ctr_prior_strength=float(params.get("ctr_prior_strength", 1.0)),
         random_seed=int(params.get("random_seed", 0)),
     )

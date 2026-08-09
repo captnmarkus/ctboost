@@ -124,7 +124,7 @@ void NativeFeaturePipeline::FitInternal(py::array raw_matrix,
 
   FitCoreFeatureState(object_matrix, label_values, cat_indices, text_indices, embedding_indices);
   FitCtrState(object_matrix, label_values);
-  FitTextAndEmbeddingState(text_indices, embedding_indices);
+  FitTextAndEmbeddingState(object_matrix, label_values, text_indices, embedding_indices);
 }
 
 }  // namespace ctboost

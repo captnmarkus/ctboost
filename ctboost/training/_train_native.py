@@ -71,7 +71,19 @@ def _make_native_booster(
         verbose=native_params["verbose"],
     )
     if state is not None:
-        native_booster.load_state(state)
+        # Persisted model state deliberately excludes the ephemeral TCP bearer
+        # token.  Runtime distributed settings are authoritative when a
+        # snapshot is resumed and must survive load_state().
+        runtime_state = dict(state)
+        for key in (
+            "distributed_world_size",
+            "distributed_rank",
+            "distributed_root",
+            "distributed_run_id",
+            "distributed_timeout",
+        ):
+            runtime_state[key] = native_params[key]
+        native_booster.load_state(runtime_state)
     elif distributed_quantization_schema is not None:
         native_booster.load_quantization_schema(distributed_quantization_schema)
     return native_booster

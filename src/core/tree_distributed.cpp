@@ -14,8 +14,11 @@ namespace ctboost::detail {
 namespace {
 
 std::filesystem::path DistributedTreeRoot(const DistributedCoordinator& coordinator) {
-  return std::filesystem::path(coordinator.root) / coordinator.run_id /
-         ("tree_" + std::to_string(coordinator.tree_index));
+  const std::filesystem::path run_root = DistributedRootUsesTcp(coordinator.root)
+                                             ? std::filesystem::path(coordinator.run_id)
+                                             : std::filesystem::path(coordinator.root) /
+                                                   coordinator.run_id;
+  return run_root / ("tree_" + std::to_string(coordinator.tree_index));
 }
 
 std::filesystem::path DistributedOperationDir(DistributedCoordinator& coordinator,

@@ -179,6 +179,31 @@ class TweedieMetric final : public ctboost::MetricFunction {
   double variance_power_{1.5};
 };
 
+class GammaMetric final : public ctboost::MetricFunction {
+ public:
+  double Evaluate(const std::vector<float>& preds,
+                  const std::vector<float>& labels,
+                  const std::vector<float>& weights,
+                  int,
+                  const ctboost::RankingMetadataView*) const override {
+    ctboost::detail::ValidatePredictionLabelWeightSizes(preds, labels, weights);
+    ctboost::detail::ValidatePositiveMetricLabels(labels, "gamma metric");
+    double loss_sum = 0.0;
+    double weight_sum = 0.0;
+    for (std::size_t i = 0; i < preds.size(); ++i) {
+      const double prediction = static_cast<double>(preds[i]);
+      const double sample_weight = static_cast<double>(weights[i]);
+      const double scaled_label =
+          static_cast<double>(labels[i]) * std::exp(-prediction);
+      loss_sum += sample_weight * (prediction + scaled_label);
+      weight_sum += sample_weight;
+    }
+    return weight_sum <= 0.0 ? 0.0 : loss_sum / weight_sum;
+  }
+
+  bool HigherIsBetter() const noexcept override { return false; }
+};
+
 }  // namespace
 
 namespace ctboost::detail {
@@ -205,6 +230,10 @@ std::unique_ptr<MetricFunction> CreateRegressionMetric(std::string_view normaliz
   if (normalized == "tweedie" || normalized == "tweedieloss" ||
       normalized == "reg:tweedie") {
     return std::make_unique<TweedieMetric>(config.tweedie_variance_power);
+  }
+  if (normalized == "gamma" || normalized == "gammaloss" ||
+      normalized == "reg:gamma" || normalized == "gamma-nloglik") {
+    return std::make_unique<GammaMetric>();
   }
   return nullptr;
 }

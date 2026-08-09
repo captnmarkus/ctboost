@@ -122,6 +122,16 @@ class TweedieLoss final : public ObjectiveFunction {
   double variance_power_{1.5};
 };
 
+class GammaLoss final : public ObjectiveFunction {
+ public:
+  void compute_gradients(const std::vector<float>& preds,
+                         const std::vector<float>& labels,
+                         std::vector<float>& out_g,
+                         std::vector<float>& out_h,
+                         int num_classes = 1,
+                         const RankingMetadataView* ranking = nullptr) const override;
+};
+
 class CoxLoss final : public ObjectiveFunction {
  public:
   void compute_gradients(const std::vector<float>& preds,
@@ -143,6 +153,16 @@ class SurvivalExponentialLoss final : public ObjectiveFunction {
 };
 
 class PairLogitLoss final : public ObjectiveFunction {
+ public:
+  void compute_gradients(const std::vector<float>& preds,
+                         const std::vector<float>& labels,
+                         std::vector<float>& out_g,
+                         std::vector<float>& out_h,
+                         int num_classes = 1,
+                         const RankingMetadataView* ranking = nullptr) const override;
+};
+
+class LambdaMARTLoss final : public ObjectiveFunction {
  public:
   void compute_gradients(const std::vector<float>& preds,
                          const std::vector<float>& labels,
