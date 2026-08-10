@@ -69,7 +69,7 @@ uses eight-fold bagging:
 | Result | Configurations | Outer jobs | Child fits |
 |---|---:|---:|---:|
 | default | 1 | 816 | 6,528 |
-| tuned + ensemble | default + 200 sampled | 164,016 | 1,312,128 |
+| tuned + ensemble | default + frozen 200-config portfolio | 164,016 | 1,312,128 |
 
 The full tuned run belongs on a resumable Linux cluster. Official publication also
 requires upstream model registration, raw-artifact review, and TabArena maintainer

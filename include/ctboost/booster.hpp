@@ -65,7 +65,8 @@ class GradientBooster {
                   std::uint64_t random_seed = 0,
                   bool verbose = false,
                   bool boost_from_average = true,
-                  std::vector<double> base_score = {});
+                  std::vector<double> base_score = {},
+                  int leaf_estimation_iterations = 1);
 
   void Fit(Pool& pool,
            Pool* eval_pool = nullptr,
@@ -130,6 +131,7 @@ class GradientBooster {
   double min_child_weight() const noexcept;
   double gamma() const noexcept;
   double max_leaf_weight() const noexcept;
+  int leaf_estimation_iterations() const noexcept;
   std::size_t max_bins() const noexcept;
   const std::string& nan_mode_name() const noexcept;
   const std::vector<std::uint16_t>& max_bin_by_feature() const noexcept;
@@ -191,6 +193,7 @@ class GradientBooster {
   double min_child_weight_{0.0};
   double gamma_{0.0};
   double max_leaf_weight_{0.0};
+  int leaf_estimation_iterations_{1};
   int num_classes_{1};
   int prediction_dimension_{1};
   std::size_t max_bins_{256};

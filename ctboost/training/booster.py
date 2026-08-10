@@ -618,6 +618,11 @@ class Booster:
         return bool(self._handle.boost_from_average())
 
     @property
+    def leaf_estimation_iterations(self) -> int:
+        """Number of fixed-structure leaf-value estimation steps per tree."""
+        return int(self._handle.leaf_estimation_iterations())
+
+    @property
     def configured_base_score(self) -> List[float]:
         """Return the optional user-configured raw-margin intercept."""
         return [float(value) for value in self._handle.configured_base_score()]

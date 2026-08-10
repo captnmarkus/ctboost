@@ -62,6 +62,7 @@ def test_distributed_multi_host_training_merges_shards_and_matches_central_fit(t
                     "max_depth": 2,
                     "alpha": 1.0,
                     "lambda_l2": 1.0,
+                    "leaf_estimation_iterations": 3,
                     "random_seed": 11,
                     "external_memory": True,
                     "external_memory_dir": str(root / "native_ext"),
@@ -109,6 +110,7 @@ def test_distributed_multi_host_training_merges_shards_and_matches_central_fit(t
             "max_depth": 2,
             "alpha": 1.0,
             "lambda_l2": 1.0,
+            "leaf_estimation_iterations": 3,
             "random_seed": 11,
             "external_memory": True,
             "external_memory_dir": str(tmp_path / "central_ext"),
@@ -123,6 +125,98 @@ def test_distributed_multi_host_training_merges_shards_and_matches_central_fit(t
     np.testing.assert_allclose(distributed_pred_1, central_pred, rtol=1e-6, atol=1e-6)
     assert distributed_schema_0 == central_schema
     assert distributed_schema_1 == central_schema
+
+
+def test_distributed_leaf_refinement_preserves_high_dynamic_range_sums(tmp_path: Path):
+    row_count = 32
+    rng = np.random.default_rng(643)
+    positive = (
+        np.float32(1.0e8)
+        + rng.integers(-1000, 1001, row_count // 2).astype(np.float32)
+        * np.float32(8.0)
+    )
+    negative = (
+        -np.float32(1.0e8)
+        + rng.integers(-1000, 1001, row_count // 2).astype(np.float32)
+        * np.float32(8.0)
+    )
+    X = np.zeros((row_count, 1), dtype=np.float32)
+    y = np.empty(row_count, dtype=np.float32)
+    y[::2] = positive
+    y[1::2] = negative
+    np.save(tmp_path / "X_dynamic_full.npy", X)
+    for rank in range(2):
+        np.save(tmp_path / f"X_dynamic_{rank}.npy", X[rank::2])
+        np.save(tmp_path / f"y_dynamic_{rank}.npy", y[rank::2])
+
+    worker_script = tmp_path / "distributed_dynamic_worker.py"
+    worker_script.write_text(
+        textwrap.dedent(
+            """
+            from pathlib import Path
+            import sys
+            import numpy as np
+            import ctboost
+
+            rank = int(sys.argv[1])
+            root = Path(sys.argv[2])
+            X = np.load(root / f"X_dynamic_{rank}.npy")
+            y = np.load(root / f"y_dynamic_{rank}.npy")
+            X_full = np.load(root / "X_dynamic_full.npy")
+            booster = ctboost.train(
+                X,
+                {
+                    "objective": "RMSE",
+                    "learning_rate": 1.0,
+                    "max_depth": 0,
+                    "lambda_l2": 1.0,
+                    "boost_from_average": False,
+                    "leaf_estimation_iterations": 2,
+                    "distributed_world_size": 2,
+                    "distributed_rank": rank,
+                    "distributed_root": str(root / "dynamic_coord"),
+                    "distributed_run_id": "double-leaf-statistics",
+                    "distributed_timeout": 120.0,
+                },
+                label=y,
+                num_boost_round=1,
+            )
+            np.save(root / f"dynamic_pred_{rank}.npy", booster.predict(X_full))
+            """
+        ),
+        encoding="utf-8",
+    )
+    worker_env = os.environ.copy()
+    worker_env["PYTHONPATH"] = str(Path.cwd()) + os.pathsep + worker_env.get("PYTHONPATH", "")
+    workers = [
+        subprocess.Popen(
+            [sys.executable, str(worker_script), str(rank), str(tmp_path)],
+            env=worker_env,
+        )
+        for rank in range(2)
+    ]
+    assert [worker.wait(timeout=180) for worker in workers] == [0, 0]
+
+    central = ctboost.train(
+        X,
+        {
+            "objective": "RMSE",
+            "learning_rate": 1.0,
+            "max_depth": 0,
+            "lambda_l2": 1.0,
+            "boost_from_average": False,
+            "leaf_estimation_iterations": 2,
+        },
+        label=y,
+        num_boost_round=1,
+    )
+    central_predictions = central.predict(X)
+    for rank in range(2):
+        np.testing.assert_array_equal(
+            np.load(tmp_path / f"dynamic_pred_{rank}.npy"),
+            central_predictions,
+        )
+
 
 def test_distributed_tcp_training_supports_eval_set_and_init_model(tmp_path: Path):
     X, y = make_regression(
@@ -192,6 +286,7 @@ def test_distributed_tcp_training_supports_eval_set_and_init_model(tmp_path: Pat
                     "max_depth": 2,
                     "alpha": 1.0,
                     "lambda_l2": 1.0,
+                    "leaf_estimation_iterations": 3,
                     "random_seed": 23,
                     "distributed_world_size": 2,
                     "distributed_rank": rank,
@@ -251,6 +346,7 @@ def test_distributed_tcp_training_supports_eval_set_and_init_model(tmp_path: Pat
             "max_depth": 2,
             "alpha": 1.0,
             "lambda_l2": 1.0,
+            "leaf_estimation_iterations": 3,
             "random_seed": 23,
         },
         label=y_train,

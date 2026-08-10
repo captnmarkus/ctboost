@@ -119,6 +119,7 @@ struct FitLoopContext {
   double min_child_weight{0.0};
   double gamma{0.0};
   double max_leaf_weight{0.0};
+  int leaf_estimation_iterations{1};
   double random_strength{0.0};
   const std::vector<int>* monotone_constraints{nullptr};
   const std::vector<double>* feature_weights{nullptr};
@@ -155,6 +156,7 @@ void RunSingleOutputIteration(const FitLoopContext& context,
                               const FitLoopState& state,
                               DistributedCoordinator* distributed_coordinator,
                               const std::vector<float>& iteration_weights,
+                              const std::vector<float>& gradient_predictions,
                               const DartPredictionState& dart_state,
                               double dropped_tree_scale,
                               double new_tree_scale,
@@ -174,5 +176,11 @@ MetricSummary EvaluateIterationMetrics(const FitLoopContext& context,
                                       const DistributedCoordinator* distributed_coordinator,
                                       int total_iteration);
 void RunTrainingLoop(const FitLoopContext& context, FitLoopState& state);
-
+void RefineSingleOutputTreeLeaves(const FitLoopContext& context,
+                                  Tree& tree,
+                                  const std::vector<std::size_t>& row_indices,
+                                  const std::vector<LeafRowRange>& leaf_row_ranges,
+                                  const std::vector<float>& iteration_weights,
+                                  const std::vector<float>& gradient_predictions,
+                                  DistributedCoordinator* distributed_coordinator);
 }  // namespace ctboost::booster_detail

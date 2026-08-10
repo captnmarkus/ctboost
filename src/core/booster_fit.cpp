@@ -268,6 +268,7 @@ void GradientBooster::FitWithObjective(Pool& pool,
   context.min_child_weight = min_child_weight_;
   context.gamma = gamma_;
   context.max_leaf_weight = max_leaf_weight_;
+  context.leaf_estimation_iterations = leaf_estimation_iterations_;
   context.random_strength = random_strength_;
   context.monotone_constraints = &monotone_constraints_;
   context.feature_weights = &feature_weights_;

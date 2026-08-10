@@ -37,19 +37,38 @@ The wrapper contract is:
 - finite `time_limit` enforced by the between-tree callback
 - a conservative static memory estimate for fold-parallel scheduling
 
-The HPO generator is the frozen deterministic space in `ctboost_model.py`: one
-manual default plus 200 random configs, depth 3-8, learning rate 0.02-0.2, and
-conditional leaf/CTR parameters. It must not be changed after inspecting
-TabArena-Full test performance.
+The HPO generator is the frozen deterministic portfolio in `ctboost_model.py`:
+one manual default plus a progressively ordered 200-point Latin-hypercube
+design, depth 3-8, learning rate 0.02-0.2, conditional leaf/CTR parameters,
+learning-rate-scaled 400-1,600 tree caps, and 30-80 round early-stopping
+patience. TabArena's `CustomAGConfigGenerator` accepts this deterministic
+callable directly; ConfigSpace sampling is not required by the upstream API.
+
+Some ordered-CTR configurations request a two- or four-pair categorical budget.
+The wrapper resolves it from training-fold cardinalities only, considers at
+most 16 non-constant low-cardinality columns, rejects products above 4,096, and
+passes explicit pairs rather than enabling the quadratic all-pairs option. The
+portfolio contains no `random_seed`: TabArena-v0.1's fold-config-wise seed
+contract injects disjoint seeds through `seed_name = "random_seed"`.
+
+These choices are generated from fixed seed `1234` and frozen independently of
+TabArena dataset metadata, validation outcomes, and test metrics. They must not
+be changed after inspecting TabArena-Full test performance; a future revision
+requires a newly identified portfolio and fresh artifact directory. Adaptive
+tree caps never replace or extend the official 3,600-second per-fit deadline.
 
 ## Required evidence before cluster time
 
 - `FitHelper.verify_model` passes binary, multiclass, and regression under the
   exact AutoGluon/TabArena dependency versions.
 - All 201 configs fit a tiny binary, multiclass, and regression dataset.
-- The generated configs are deterministic and unique; DepthWise has no partial
-  leaf cap, LeafWise caps stay below `2**max_depth`, and CTR smoothing is emitted
-  only when ordered CTR is enabled.
+- The generated configs are deterministic, unique, and prefix-stable;
+  DepthWise has no partial leaf cap, LeafWise caps stay below
+  `2**max_depth`, CTR smoothing/pair budgets are emitted only when ordered CTR
+  is enabled, and no config hard-codes a model seed.
+- Pair-budget preflights cover no-category, constant/high-cardinality, binary,
+  multiclass, and regression inputs and never produce more than four explicit
+  pairs.
 - A default-only TabArena-Full run has 816/816 raw outer-split artifacts with no
   failures, non-finite metrics, or resource-limit violations.
 - The full default + 200 run has 164,016/164,016 raw outer-split artifacts. Each

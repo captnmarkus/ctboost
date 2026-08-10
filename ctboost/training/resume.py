@@ -102,6 +102,7 @@ def _resume_snapshot_config_signature(*, pool: Pool, **kwargs: Any) -> Dict[str,
         "min_child_weight": float(kwargs["min_child_weight"]),
         "gamma": float(kwargs["gamma"]),
         "max_leaf_weight": float(kwargs["max_leaf_weight"]),
+        "leaf_estimation_iterations": int(kwargs["leaf_estimation_iterations"]),
         "boost_from_average": bool(kwargs["boost_from_average"]),
         "configured_base_score": _normalize_resume_signature_value(kwargs["base_score"]),
         "num_classes": int(kwargs["num_classes"]),
@@ -160,6 +161,7 @@ def _resume_snapshot_state_signature(init_state: Mapping[str, Any], init_model: 
         "min_child_weight": float(init_state.get("min_child_weight", 0.0)),
         "gamma": float(init_state.get("gamma", 0.0)),
         "max_leaf_weight": float(init_state.get("max_leaf_weight", 0.0)),
+        "leaf_estimation_iterations": int(init_state.get("leaf_estimation_iterations", 1)),
         "boost_from_average": bool(init_state.get("boost_from_average", False)),
         "configured_base_score": _normalize_resume_signature_value(
             init_state.get("configured_base_score", [])

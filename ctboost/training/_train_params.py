@@ -109,6 +109,12 @@ def _resolve_native_training_params(
         "max_leaf_weight": float(
             config.get("max_leaf_weight", 0.0 if init_state is None else init_state.get("max_leaf_weight", 0.0))
         ),
+        "leaf_estimation_iterations": int(
+            config.get(
+                "leaf_estimation_iterations",
+                1 if init_state is None else init_state.get("leaf_estimation_iterations", 1),
+            )
+        ),
         "boost_from_average": bool(
             config.get(
                 "boost_from_average",

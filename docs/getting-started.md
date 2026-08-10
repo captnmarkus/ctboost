@@ -50,6 +50,33 @@ model.fit(
 predictions = model.predict(X_test)
 ```
 
+## Fixed-structure leaf refinement
+
+For single-output objectives, `leaf_estimation_iterations` can run 1–5 Newton
+or objective-defined gradient/Hessian passes after each conditional-inference
+tree structure has been selected:
+
+```python
+model = CTBoostClassifier(leaf_estimation_iterations=3)
+```
+
+The default is `1`, which is the legacy training path. Additional passes keep
+the split topology fixed and update only its leaves. They evaluate the current
+tree as an unshrunk raw-margin delta; the outer learning rate and any DART scale
+are applied once afterward. Sample/bootstrap weights, ranking metadata, leaf
+caps, monotone constraints, and snapshots follow the same contract. GPU tree
+construction uses these same host-side leaf passes, and distributed
+single-output training reduces per-leaf statistics across workers. Extra passes
+add training work and should be selected on validation data. The value is
+persisted in model state and snapshots; exact snapshot resume requires the same
+value and rejects configuration drift (use `init_model` when intentionally
+changing it).
+
+Multiclass objectives currently reject values greater than `1`: independent
+per-class diagonal Newton steps can overshoot because softmax classes are
+coupled. This fails closed until a coupled, safeguarded multiclass solver is
+available.
+
 ## pandas categoricals
 
 Keep categorical values as strings or pandas `category` columns and identify them

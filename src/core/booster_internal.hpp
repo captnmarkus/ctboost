@@ -41,6 +41,11 @@ struct DistributedMetricInputs {
   bool has_group_ids{false};
 };
 
+struct LeafStatistics {
+  std::vector<double> gradient_sums;
+  std::vector<double> hessian_sums;
+};
+
 std::string NormalizeToken(std::string value);
 bool IsSquaredErrorObjective(const std::string& normalized_objective);
 bool IsAbsoluteErrorObjective(const std::string& normalized_objective);
@@ -80,6 +85,9 @@ DistributedMetricInputs AllGatherDistributedMetricInputs(
     const DistributedCoordinator* coordinator,
     const char* label,
     const DistributedMetricInputs& local_inputs);
+LeafStatistics AllReduceLeafStatistics(const DistributedCoordinator* coordinator,
+                                       const char* label,
+                                       const LeafStatistics& local_statistics);
 
 double UniformUnit(std::uint64_t& state);
 std::uint32_t SamplePoisson(double lambda, std::uint64_t& state);

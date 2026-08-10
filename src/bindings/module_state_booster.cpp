@@ -38,6 +38,7 @@ py::dict BoosterToStateDict(const ctboost::GradientBooster& booster) {
   state["min_child_weight"] = booster.min_child_weight();
   state["gamma"] = booster.gamma();
   state["max_leaf_weight"] = booster.max_leaf_weight();
+  state["leaf_estimation_iterations"] = booster.leaf_estimation_iterations();
   state["num_classes"] = booster.num_classes();
   state["max_bins"] = booster.max_bins();
   state["nan_mode"] = booster.nan_mode_name();
@@ -222,7 +223,10 @@ ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
                                    state.contains("configured_base_score")
                                        ? py::cast<std::vector<double>>(
                                              state["configured_base_score"])
-                                       : std::vector<double>{});
+                                       : std::vector<double>{},
+                                   state.contains("leaf_estimation_iterations")
+                                       ? py::cast<int>(state["leaf_estimation_iterations"])
+                                       : 1);
 
   booster.LoadState(std::move(trees),
                     quantization_schema,

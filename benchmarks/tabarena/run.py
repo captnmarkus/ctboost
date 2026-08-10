@@ -3,22 +3,25 @@
 from __future__ import annotations
 
 import argparse
-from collections import Counter
 import csv
-from datetime import datetime, timezone
 import hashlib
 import importlib.metadata
 import json
 import os
 import platform
-from pathlib import Path
 import subprocess
 import sys
+from collections import Counter
+from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
 from urllib.parse import unquote, urlparse
 
-from .ctboost_model import gen_ctboost_cpu, gen_ctboost_gpu
-
+from .ctboost_model import (
+    TABARENA_SEARCH_PORTFOLIO_SIZE,
+    gen_ctboost_cpu,
+    gen_ctboost_gpu,
+)
 
 DEFAULT_LITE_DATASETS = [
     "blood-transfusion-service-center",
@@ -77,7 +80,7 @@ def _parse_args() -> argparse.Namespace:
         "--n-configs",
         type=int,
         default=0,
-        help="Number of sampled HPO configurations in addition to the default.",
+        help="Number of frozen HPO portfolio configurations in addition to the default.",
     )
     parser.add_argument("--results-dir", type=Path, default=Path("benchmark-results/tabarena/raw"))
     parser.add_argument("--output-dir", type=Path, default=Path("benchmark-results/tabarena/report"))
@@ -133,6 +136,11 @@ def _parse_args() -> argparse.Namespace:
 def _validate_args(args: argparse.Namespace) -> None:
     if args.n_configs < 0:
         raise SystemExit("--n-configs must be non-negative")
+    if args.n_configs > TABARENA_SEARCH_PORTFOLIO_SIZE:
+        raise SystemExit(
+            "--n-configs cannot exceed the frozen "
+            f"{TABARENA_SEARCH_PORTFOLIO_SIZE}-configuration portfolio"
+        )
     if args.shard_count <= 0:
         raise SystemExit("--shard-count must be positive")
     if args.shard_index < 0 or args.shard_index >= args.shard_count:
@@ -750,7 +758,8 @@ def main() -> int:
         if not bool(ctboost.build_info().get("cuda_enabled", False)):
             raise SystemExit(
                 "GPU benchmarking requires a CUDA-enabled CTBoost wheel; "
-                "run ctboost-install-gpu first"
+                "install or upgrade the unified wheel with "
+                "`python -m pip install --upgrade --only-binary=:all: \"ctboost>=0.1.54\"`"
             )
         if args.num_gpus == 0:
             raise SystemExit("--device gpu/both cannot be combined with --num-gpus 0")

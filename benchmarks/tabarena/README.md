@@ -64,12 +64,15 @@ If `--time-limit` is omitted, the runner derives it from the installed
 audited revision). The manifest records both the requested CLI value and the
 effective per-fit value.
 
-On a CUDA worker with the matching GPU wheel, `--device gpu` publishes a
-separate `CTBoostGPU` method. `--device both` runs CPU and GPU methods in the
-same experiment bundle. Add `--rerun-competitors` to execute CatBoost and
-XGBoost on those exact folds and resource limits too; without it, `compare`
-uses TabArena's public cached competitor baselines. GPU modes fail fast when
-the installed CTBoost build is CPU-only.
+On a CUDA worker, CTBoost 0.1.54's ordinary unified PyPI wheel publishes a
+separate `CTBoostGPU` method with `--device gpu`; install it with
+`python -m pip install --upgrade --only-binary=:all: "ctboost>=0.1.54"`.
+`--device both` runs CPU
+and GPU methods in the same experiment bundle. Add `--rerun-competitors` to
+execute CatBoost and XGBoost on those exact folds and resource limits too;
+without it, `compare` uses TabArena's public cached competitor baselines. GPU
+modes fail fast when the installed CTBoost build is CPU-only. The deprecated
+`ctboost-install-gpu` helper is not needed for 0.1.54 or later.
 
 Sample 20 additional author-defined configurations:
 
@@ -77,10 +80,36 @@ Sample 20 additional author-defined configurations:
 .venv-tabarena/bin/ctboost-tabarena --subset lite --n-configs 20
 ```
 
+The HPO entry is a frozen, progressively ordered 200-configuration portfolio.
+TabArena's official `CustomAGConfigGenerator` contract accepts a deterministic
+configuration callable, so the adapter uses a fixed Latin-hypercube design
+instead of depending on ConfigSpace's unconstrained random sampler. Smaller
+`--n-configs` runs are prefixes of the same portfolio. Numeric ranges are
+stratified, conditional knobs are absent when inactive, and the full portfolio
+balances 100 DepthWise/100 LeafWise and 150 ordered-CTR/50 unordered-CTR
+configurations.
+
+Learning-rate configurations receive a bounded 400-1,600 tree cap and 30-80
+round validation patience; early stopping chooses the actual retained tree
+count. A subset of ordered-CTR configurations requests two or four categorical
+pairs. At fit time the adapter selects no more than that number from the 16
+lowest-cardinality non-constant categorical columns, rejects pairs whose
+cardinality product exceeds 4,096, and uses only the training fold to make the
+choice. It never enables CTBoost's unbounded all-pairs switch.
+
+These ranges and rules were generated from the fixed seed `1234` and frozen from
+implementation/resource constraints plus non-TabArena development evidence.
+They do not inspect TabArena dataset metadata, validation outcomes, or test
+metrics. Do not revise them after inspecting full test metrics; start a newly
+versioned portfolio instead. The adaptive tree caps do not change TabArena's
+3,600-second per-fit limit or its deadline callback.
+
 The clean default-only smoke behind the provisional `1058.7` three-dataset Elo is
 recorded in [`smoke_fd187da.json`](smoke_fd187da.json). The file contains exact
 per-split metrics, timing, memory, versions, and commits without machine-local
-artifact paths. It is explicitly not a TabArena-Full or official leaderboard result.
+artifact paths. It is explicitly not a TabArena-Full or official leaderboard result;
+an Elo at or above 1,300 remains an unproven target until the frozen tuned portfolio
+completes the full protocol.
 
 Run the full benchmark only on appropriately provisioned infrastructure:
 
@@ -128,8 +157,9 @@ cross-dataset rank and normalized-error comparisons.
 
 - TabArena supplies the official train/validation/test folds and metrics.
 - Validation data is used only for early stopping.
-- AutoGluon injects each fold/configuration seed through CTBoost's
-  `random_seed`; an explicitly configured `random_seed` remains authoritative.
+- AutoGluon injects disjoint fold/configuration seeds through CTBoost's
+  `random_seed`; the search portfolio never hard-codes a model seed, while an
+  explicitly configured `random_seed` remains authoritative.
 - When no `eval_metric` is configured, supported AutoGluon stopping metrics are
   translated to CTBoost (`roc_auc` to `AUC`, classification `log_loss` to
   `Logloss`/`MultiClass`, and regression `rmse` to `RMSE`).

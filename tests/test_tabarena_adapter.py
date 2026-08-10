@@ -13,6 +13,8 @@ import benchmarks.tabarena.run as tabarena_run
 from benchmarks.tabarena.ctboost_model import (
     CTBoostTabArenaGPUModel,
     CTBoostTabArenaModel,
+    _adaptive_training_budget,
+    _bounded_categorical_pairs,
     _ctboost_eval_metric,
     _ctboost_histogram_threads,
     _finalize_search_config,
@@ -26,8 +28,8 @@ from benchmarks.tabarena.run import (
     _format_table,
     _git_source_identity,
     _local_distribution_checkout,
-    _run_job_shard,
     _resolve_effective_time_limit,
+    _run_job_shard,
     _select_expected_raw_paths,
     _shard_manifest_path,
     _validate_args,
@@ -149,8 +151,6 @@ def test_tabarena_search_finalizes_only_meaningful_leaf_caps():
 
 
 def test_tabarena_search_is_deterministic_unique_and_task_safe():
-    pytest.importorskip("ConfigSpace")
-
     first = generate_configs_ctboost(200)
     second = generate_configs_ctboost(200)
 
@@ -169,12 +169,93 @@ def test_tabarena_search_is_deterministic_unique_and_task_safe():
         config["ordered_ctr"] or "ctr_prior_strength" not in config
         for config in first
     )
+    assert sum(config["grow_policy"] == "DepthWise" for config in first) == 100
+    assert sum(config["ordered_ctr"] for config in first) == 150
+    assert any(config.get("tabarena_categorical_pair_budget", 0) for config in first)
+    assert all(
+        not config.get("tabarena_categorical_pair_budget", 0) or config["ordered_ctr"]
+        for config in first
+    )
+    assert all(
+        (config["iterations"], config["early_stopping_rounds"])
+        == _adaptive_training_budget(config["learning_rate"])
+        for config in first
+    )
+    assert all("random_seed" not in config for config in first)
+    for count in (1, 8, 200):
+        selected = generate_configs_ctboost(count)
+        assert selected == first[:count]
+        assert len(selected) == count
+        assert len({tuple(sorted(config.items())) for config in selected}) == count
+
+
+def test_tabarena_categorical_pair_selection_is_bounded_and_deterministic():
+    frame = pd.DataFrame(
+        {
+            "a": ["x", "x", "y", "y", "x", "y"],
+            "b": ["m", "n", "m", "n", "m", "n"],
+            "c": ["u", "v", "w", "u", "v", "w"],
+            "constant": ["same"] * 6,
+        }
+    )
+
+    pairs = _bounded_categorical_pairs(
+        frame,
+        ["a", "b", "c", "constant"],
+        max_pairs=2,
+        max_joint_cardinality=12,
+    )
+
+    assert pairs == [["a", "b"], ["a", "c"]]
+
+
+def test_tabarena_fit_resolves_pair_budget_without_leaking_wrapper_parameter(monkeypatch):
+    constructed = []
+
+    class FakeClassifier:
+        def __init__(self, **params):
+            self.params = params
+            constructed.append(self)
+
+        def fit(self, _X, _y, **_kwargs):
+            pass
+
+    monkeypatch.setattr("ctboost.CTBoostClassifier", FakeClassifier)
+    adapter = _model_adapter(
+        problem_type="binary",
+        stopping_metric=None,
+        params={"ordered_ctr": True, "tabarena_categorical_pair_budget": 2},
+    )
+
+    def preprocess(frame, *, is_train=False, **_kwargs):
+        if is_train:
+            adapter._ctboost_categorical_columns = ["a", "b", "c"]
+        return frame
+
+    adapter.preprocess = preprocess
+    frame = pd.DataFrame(
+        {
+            "a": ["x", "x", "y", "y"],
+            "b": ["m", "n", "m", "n"],
+            "c": ["u", "v", "u", "v"],
+        }
+    )
+
+    adapter._fit(frame, np.array([0, 1, 0, 1]))
+
+    assert "tabarena_categorical_pair_budget" not in constructed[0].params
+    assert constructed[0].params["categorical_combinations"] == [
+        ["a", "b"],
+        ["a", "c"],
+    ]
 
 
 def test_tabarena_search_rejects_negative_counts_without_optional_dependencies():
     with pytest.raises(ValueError, match="non-negative"):
         generate_configs_ctboost(-1)
     assert generate_configs_ctboost(0) == []
+    with pytest.raises(ValueError, match="cannot exceed"):
+        generate_configs_ctboost(201)
 
 
 def _model_adapter(
@@ -623,6 +704,11 @@ def test_tabarena_cli_validation_and_shard_manifest_names(tmp_path):
     invalid.shard_index = 4
     with pytest.raises(SystemExit, match="shard-index"):
         _validate_args(invalid)
+
+    too_many_configs = SimpleNamespace(**vars(valid))
+    too_many_configs.n_configs = 201
+    with pytest.raises(SystemExit, match="frozen 200-configuration"):
+        _validate_args(too_many_configs)
 
 
 def test_committed_tabarena_smoke_summary_is_sanitized_and_explicitly_provisional():

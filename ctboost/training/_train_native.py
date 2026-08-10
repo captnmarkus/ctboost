@@ -47,6 +47,7 @@ def _make_native_booster(
         min_child_weight=native_params["min_child_weight"],
         gamma=native_params["gamma"],
         max_leaf_weight=native_params["max_leaf_weight"],
+        leaf_estimation_iterations=native_params["leaf_estimation_iterations"],
         num_classes=native_params["num_classes"],
         max_bins=native_params["max_bins"],
         nan_mode=native_params["nan_mode"],
