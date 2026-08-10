@@ -27,6 +27,7 @@ from benchmarks.split_research._external_panel_protocol import (
     array_digest,
     assert_no_absolute_paths,
     identity_digest,
+    objective_and_metric,
     seal_record,
     sha256_json,
 )
@@ -93,6 +94,58 @@ def test_frozen_protocol_has_exact_tasks_profiles_treatments_and_counts():
         "implicit_control_check_fits": 42,
         "total_subprocess_fits": 294,
     }
+    assert manifest["protocol"]["name"] == ("ctboost-grouped-split-external-panel-v2")
+    assert manifest["protocol"]["training_objective_metrics"] == {
+        "binary": {"objective": "Logloss", "eval_metric": "AUC"},
+        "multiclass": {
+            "objective": "MultiClass",
+            "eval_metric": "MultiClass",
+        },
+        "regression": {"objective": "RMSE", "eval_metric": "RMSE"},
+    }
+
+
+def test_training_objective_and_metric_mapping_is_task_correct():
+    assert objective_and_metric("binary", 2) == ("Logloss", "AUC")
+    assert objective_and_metric("multiclass", 3) == (
+        "MultiClass",
+        "MultiClass",
+    )
+    assert objective_and_metric("regression", None) == ("RMSE", "RMSE")
+
+    with pytest.raises(ValueError, match="exactly two"):
+        objective_and_metric("binary", 3)
+    with pytest.raises(ValueError, match="at least three"):
+        objective_and_metric("multiclass", 2)
+
+
+def test_multiclass_training_metric_runs_with_an_eval_set():
+    ctboost = pytest.importorskip("ctboost")
+    objective, eval_metric = objective_and_metric("multiclass", 3)
+    features = np.column_stack(
+        [np.arange(18, dtype=np.float64), np.tile([0.0, 1.0, 2.0], 6)]
+    )
+    labels = np.tile([0, 1, 2], 6)
+    train_pool = ctboost.Pool(features[:12], labels[:12])
+    valid_pool = ctboost.Pool(features[12:], labels[12:])
+
+    booster = ctboost.train(
+        train_pool,
+        {
+            "objective": objective,
+            "eval_metric": eval_metric,
+            "max_depth": 2,
+            "random_seed": 7,
+            "verbose": False,
+        },
+        num_boost_round=3,
+        eval_set=valid_pool,
+        early_stopping_rounds=2,
+    )
+
+    predictions = np.asarray(booster.predict(valid_pool))
+    assert predictions.shape == (6, 3)
+    assert np.isfinite(predictions).all()
 
 
 def test_treatment_order_alternates_deterministically():
