@@ -30,6 +30,12 @@ class ExportedPredictor:
             [] if tree_learning_rates is None else [float(value) for value in tree_learning_rates]
         )
         self.prediction_dimension = int(self.payload["prediction_dimension"])
+        self.base_score = [
+            float(value)
+            for value in self.payload.get("base_score", [0.0] * self.prediction_dimension)
+        ]
+        if len(self.base_score) != self.prediction_dimension:
+            raise ValueError("predictor base_score dimension mismatch")
         self.num_features = int(self.payload["num_features"])
         self.expects_prepared_features = bool(self.payload["expects_prepared_features"])
         self.quantization_schema = dict(self.payload["quantization_schema"])
@@ -121,7 +127,7 @@ class ExportedPredictor:
         if len(row) != self.num_features:
             raise ValueError(f"expected {self.num_features} features per row, got {len(row)}")
         bins = [self._bin_value(index, value) for index, value in enumerate(row)]
-        scores = [0.0] * self.prediction_dimension
+        scores = list(self.base_score)
         for tree_index, tree in enumerate(self.trees):
             nodes = tree["nodes"]
             iteration_index = tree_index // self.prediction_dimension

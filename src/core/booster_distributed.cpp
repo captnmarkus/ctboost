@@ -1,7 +1,15 @@
 #include "booster_internal.hpp"
 
+#include <chrono>
 #include <cstring>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
+#include <iterator>
+#include <random>
+#include <sstream>
 #include <stdexcept>
+#include <thread>
 
 namespace ctboost::booster_detail {
 namespace {
@@ -143,6 +151,171 @@ DistributedMetricInputs MergeDistributedMetricInputs(
   return merged;
 }
 
+std::filesystem::path DistributedMetricOperationDir(
+    const DistributedCoordinator& coordinator,
+    const char* label) {
+  return std::filesystem::path(coordinator.root) / coordinator.run_id /
+         ("tree_" + std::to_string(coordinator.tree_index)) /
+         (std::string("booster_") + label);
+}
+
+std::string DistributedMetricRankName(int rank) {
+  std::ostringstream stream;
+  stream << "rank_" << std::setw(5) << std::setfill('0') << rank;
+  return stream.str();
+}
+
+std::string FreshDistributedNonce() {
+  std::random_device random;
+  std::ostringstream stream;
+  stream << std::hex << std::setfill('0');
+  for (int index = 0; index < 4; ++index) {
+    stream << std::setw(8) << random();
+  }
+  return stream.str();
+}
+
+void WriteDistributedMetricPayload(const std::filesystem::path& path,
+                                   const std::vector<std::uint8_t>& payload) {
+  std::error_code error;
+  std::filesystem::create_directories(path.parent_path(), error);
+  if (error) {
+    throw std::runtime_error("failed to create distributed metric directory: " +
+                             error.message());
+  }
+  const std::filesystem::path temp_path = path.string() + ".tmp";
+  std::ofstream output(temp_path, std::ios::binary | std::ios::trunc);
+  if (!output) {
+    throw std::runtime_error("failed to open distributed metric payload for writing");
+  }
+  if (!payload.empty()) {
+    output.write(reinterpret_cast<const char*>(payload.data()),
+                 static_cast<std::streamsize>(payload.size()));
+  }
+  if (!output) {
+    throw std::runtime_error("failed to write distributed metric payload");
+  }
+  output.close();
+  std::filesystem::remove(path, error);
+  error.clear();
+  std::filesystem::rename(temp_path, path, error);
+  if (error) {
+    throw std::runtime_error("failed to publish distributed metric payload: " +
+                             error.message());
+  }
+}
+
+bool TryReadDistributedMetricPayload(const std::filesystem::path& path,
+                                     std::vector<std::uint8_t>& payload) {
+  std::ifstream input(path, std::ios::binary);
+  if (!input) {
+    return false;
+  }
+  payload.assign(std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>());
+  return true;
+}
+
+std::filesystem::path FindDistributedMetricRequest(
+    const std::filesystem::path& directory,
+    const std::string& prefix) {
+  std::error_code error;
+  std::filesystem::path selected;
+  std::filesystem::file_time_type selected_time{};
+  for (const auto& entry : std::filesystem::directory_iterator(directory, error)) {
+    if (error || !entry.is_regular_file()) {
+      continue;
+    }
+    const std::string filename = entry.path().filename().string();
+    if (filename.rfind(prefix, 0) != 0U || filename.size() < 4U ||
+        filename.substr(filename.size() - 4U) != ".bin") {
+      continue;
+    }
+    const auto write_time = entry.last_write_time(error);
+    if (!error && (selected.empty() || write_time > selected_time)) {
+      selected = entry.path();
+      selected_time = write_time;
+    }
+    error.clear();
+  }
+  return selected;
+}
+
+DistributedMetricInputs AllGatherFilesystemMetricInputs(
+    const DistributedCoordinator& coordinator,
+    const char* label,
+    const DistributedMetricInputs& local_inputs) {
+  const std::filesystem::path directory =
+      DistributedMetricOperationDir(coordinator, label);
+  const auto deadline = std::chrono::steady_clock::now() +
+                        std::chrono::duration<double>(coordinator.timeout_seconds);
+  const std::string local_nonce = FreshDistributedNonce();
+  const std::filesystem::path challenge_path = directory / "challenge.bin";
+  if (coordinator.rank == 0) {
+    const std::string root_nonce = FreshDistributedNonce();
+    WriteDistributedMetricPayload(
+        challenge_path, std::vector<std::uint8_t>(root_nonce.begin(), root_nonce.end()));
+    std::vector<std::vector<std::uint8_t>> payloads(
+        static_cast<std::size_t>(coordinator.world_size));
+    std::vector<std::filesystem::path> request_paths(
+        static_cast<std::size_t>(coordinator.world_size));
+    payloads[0] = SerializeDistributedMetricInputs(local_inputs);
+    for (int rank = 1; rank < coordinator.world_size; ++rank) {
+      const std::string prefix =
+          "request_" + DistributedMetricRankName(rank) + "_" + root_nonce + "_";
+      while (request_paths[static_cast<std::size_t>(rank)].empty()) {
+        request_paths[static_cast<std::size_t>(rank)] =
+            FindDistributedMetricRequest(directory, prefix);
+        if (!request_paths[static_cast<std::size_t>(rank)].empty()) {
+          break;
+        }
+        if (std::chrono::steady_clock::now() >= deadline) {
+          throw std::runtime_error("timed out waiting for distributed metric request");
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      }
+      if (!TryReadDistributedMetricPayload(
+              request_paths[static_cast<std::size_t>(rank)],
+              payloads[static_cast<std::size_t>(rank)])) {
+        throw std::runtime_error("failed to read distributed metric request");
+      }
+    }
+    DistributedMetricInputs merged = MergeDistributedMetricInputs(payloads);
+    const std::vector<std::uint8_t> merged_payload =
+        SerializeDistributedMetricInputs(merged);
+    for (int rank = 1; rank < coordinator.world_size; ++rank) {
+      const std::string request_name =
+          request_paths[static_cast<std::size_t>(rank)].filename().string();
+      WriteDistributedMetricPayload(
+          directory / ("result_" + request_name.substr(std::string("request_").size())),
+          merged_payload);
+    }
+    return merged;
+  }
+  std::string active_root_nonce;
+  std::filesystem::path result_path;
+  while (std::chrono::steady_clock::now() < deadline) {
+    std::vector<std::uint8_t> challenge;
+    if (TryReadDistributedMetricPayload(challenge_path, challenge)) {
+      const std::string root_nonce(challenge.begin(), challenge.end());
+      if (!root_nonce.empty() && root_nonce != active_root_nonce) {
+        active_root_nonce = root_nonce;
+        const std::string suffix = DistributedMetricRankName(coordinator.rank) + "_" +
+                                   active_root_nonce + "_" + local_nonce + ".bin";
+        WriteDistributedMetricPayload(
+            directory / ("request_" + suffix),
+            SerializeDistributedMetricInputs(local_inputs));
+        result_path = directory / ("result_" + suffix);
+      }
+    }
+    std::vector<std::uint8_t> result;
+    if (!result_path.empty() && TryReadDistributedMetricPayload(result_path, result)) {
+      return DeserializeDistributedMetricInputs(result);
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+  throw std::runtime_error("timed out waiting for distributed metric result");
+}
+
 }  // namespace
 
 std::vector<std::uint8_t> SerializeDistributedMetricControl(
@@ -192,8 +365,11 @@ DistributedMetricInputs AllGatherDistributedMetricInputs(
     const char* label,
     const DistributedMetricInputs& local_inputs) {
   if (coordinator == nullptr || coordinator->world_size <= 1 ||
-      !DistributedRootUsesTcp(coordinator->root)) {
+      coordinator->root.empty()) {
     return local_inputs;
+  }
+  if (!DistributedRootUsesTcp(coordinator->root)) {
+    return AllGatherFilesystemMetricInputs(*coordinator, label, local_inputs);
   }
   const std::string key =
       coordinator->run_id + "/" + std::to_string(coordinator->tree_index) + "/" + label;

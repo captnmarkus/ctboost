@@ -111,7 +111,10 @@ def test_multioutput_regressor_sparse_eval_weights_and_exports(tmp_path):
 
 def test_multilabel_classifier_probabilities_persistence_and_exports(tmp_path):
     X, y = _multilabel_data()
-    model = ctboost.CTBoostMultiLabelClassifier(_classifier(), n_jobs=1).fit(
+    # Keep this wrapper/persistence test's historical deterministic quality
+    # contract independent of the objective-aware intercept default.
+    estimator = _classifier().set_params(boost_from_average=False)
+    model = ctboost.CTBoostMultiLabelClassifier(estimator, n_jobs=1).fit(
         X[:110],
         y[:110],
         eval_set=(X[110:], y[110:]),

@@ -1,6 +1,7 @@
-import json
 import io
+import json
 import os
+from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
@@ -14,14 +15,21 @@ from benchmarks.tabarena.ctboost_model import (
     CTBoostTabArenaModel,
     _ctboost_eval_metric,
     _ctboost_histogram_threads,
+    _finalize_search_config,
     _resolve_time_limit,
+    generate_configs_ctboost,
     normalize_tabarena_frame,
 )
 from benchmarks.tabarena.run import (
+    _expected_raw_keys,
     _format_table,
     _git_source_identity,
     _local_distribution_checkout,
+    _run_job_shard,
     _resolve_effective_time_limit,
+    _select_expected_raw_paths,
+    _shard_manifest_path,
+    _validate_args,
     _write_console_table,
     _write_manifest,
     _write_resource_summary,
@@ -84,11 +92,86 @@ def test_tabarena_manifest_records_checkout_identity_when_available():
 
 def test_tabarena_cpu_and_gpu_models_have_distinct_resource_contracts():
     assert CTBoostTabArenaModel.ag_name == "CTBoost"
+    assert CTBoostTabArenaModel.ag_priority == 65
+    assert CTBoostTabArenaModel._supported_problem_types == [
+        "binary",
+        "multiclass",
+        "regression",
+    ]
+    assert CTBoostTabArenaModel.default_resources_physical_cores_only is True
+    assert "supported_problem_types" not in CTBoostTabArenaModel.__dict__
+    assert "_get_default_auxiliary_params" not in CTBoostTabArenaModel.__dict__
+    assert "object" in CTBoostTabArenaModel._default_auxiliary_params_extra["valid_raw_types"]
     assert CTBoostTabArenaModel.default_num_gpus == 0
     assert CTBoostTabArenaGPUModel.ag_name == "CTBoostGPU"
     assert CTBoostTabArenaGPUModel.default_num_gpus == 1
     assert CTBoostTabArenaGPUModel.minimum_num_gpus == 1
     assert CTBoostTabArenaGPUModel.gpu_required is True
+
+
+def test_tabarena_memory_estimate_accounts_for_multiclass_tree_capacity():
+    frame = pd.DataFrame(np.zeros((100, 4), dtype=np.float32))
+
+    binary = CTBoostTabArenaModel._estimate_memory_usage_static(
+        X=frame,
+        num_classes=2,
+        hyperparameters={"iterations": 100, "max_depth": 4},
+    )
+    multiclass = CTBoostTabArenaModel._estimate_memory_usage_static(
+        X=frame,
+        num_classes=20,
+        hyperparameters={"iterations": 100, "max_depth": 4},
+    )
+
+    assert binary >= 512 * 1024 * 1024
+    assert multiclass > binary
+
+
+def test_tabarena_search_finalizes_only_meaningful_leaf_caps():
+    depthwise = _finalize_search_config(
+        {"grow_policy": "DepthWise", "max_depth": np.int64(6)}
+    )
+    leafwise = _finalize_search_config(
+        {
+            "grow_policy": "LeafWise",
+            "max_depth": np.int64(6),
+            "__leaf_fraction": np.float64(0.5),
+        }
+    )
+
+    assert depthwise["max_leaves"] == 0
+    assert leafwise["max_depth"] == 6
+    assert leafwise["max_leaves"] == 32
+    assert "__leaf_fraction" not in leafwise
+
+
+def test_tabarena_search_is_deterministic_unique_and_task_safe():
+    pytest.importorskip("ConfigSpace")
+
+    first = generate_configs_ctboost(200)
+    second = generate_configs_ctboost(200)
+
+    assert first == second
+    assert len(first) == 200
+    assert len({tuple(sorted(config.items())) for config in first}) == 200
+    assert all(0.02 <= config["learning_rate"] <= 0.2 for config in first)
+    assert all(3 <= config["max_depth"] <= 8 for config in first)
+    assert all(
+        config["max_leaves"] == 0
+        if config["grow_policy"] == "DepthWise"
+        else 4 <= config["max_leaves"] < 2 ** config["max_depth"]
+        for config in first
+    )
+    assert all(
+        config["ordered_ctr"] or "ctr_prior_strength" not in config
+        for config in first
+    )
+
+
+def test_tabarena_search_rejects_negative_counts_without_optional_dependencies():
+    with pytest.raises(ValueError, match="non-negative"):
+        generate_configs_ctboost(-1)
+    assert generate_configs_ctboost(0) == []
 
 
 def _model_adapter(*, problem_type, stopping_metric, params):
@@ -301,7 +384,7 @@ def test_resource_summary_exports_memory_and_timing(tmp_path):
             "method_metadata": {"num_cpus": 4, "num_gpus": 1, "disk_usage": 1234},
         }
 
-    artifact_path = tmp_path / "raw" / "results.pkl"
+    artifact_path = tmp_path / "raw" / "data" / "CTBoost" / "7" / "0_1" / "results.pkl"
     raw_loading = SimpleNamespace(
         fetch_raw_result_paths=lambda _path: [artifact_path],
         load_and_align=lambda _path: Artifact(),
@@ -326,6 +409,187 @@ def test_resource_summary_overwrites_stale_csv_when_no_results_exist(tmp_path):
     assert _write_resource_summary(tmp_path / "raw", output, _raw_loading=raw_loading) == []
     assert "stale benchmark data" not in csv_path.read_text(encoding="utf-8")
     assert json.loads((output / "resources_per_split.json").read_text()) == []
+
+
+def test_resource_summary_can_stream_without_collecting_rows(tmp_path):
+    class Artifact:
+        result = {
+            "framework": "CTBoost",
+            "problem_type": "binary",
+            "metric": "roc_auc",
+            "metric_error": 0.2,
+            "time_train_s": 1.0,
+            "time_infer_s": 0.1,
+            "task_metadata": {"name": "data", "tid": 1, "fold": 0, "repeat": 0},
+            "memory_usage": {},
+            "method_metadata": {},
+        }
+
+    path = tmp_path / "raw" / "data" / "CTBoost" / "1" / "0_0" / "results.pkl"
+    raw_loading = SimpleNamespace(load_and_align=lambda _path: Artifact())
+
+    count = _write_resource_summary(
+        tmp_path / "raw",
+        tmp_path / "report",
+        _raw_loading=raw_loading,
+        file_paths=[path],
+        collect_rows=False,
+    )
+
+    assert count == 1
+    assert len(json.loads((tmp_path / "report" / "resources_per_split.json").read_text())) == 1
+
+
+def test_resource_summary_rejects_artifact_identity_that_disagrees_with_path(tmp_path):
+    class Artifact:
+        result = {
+            "framework": "CTBoost_other",
+            "problem_type": "binary",
+            "metric": "roc_auc",
+            "metric_error": 0.2,
+            "time_train_s": 1.0,
+            "time_infer_s": 0.1,
+            "task_metadata": {"name": "data", "tid": 1, "fold": 0, "repeat": 0},
+            "memory_usage": {},
+            "method_metadata": {},
+        }
+
+    path = tmp_path / "raw" / "data" / "CTBoost" / "1" / "0_0" / "results.pkl"
+    raw_loading = SimpleNamespace(load_and_align=lambda _path: Artifact())
+
+    with pytest.raises(RuntimeError, match="identity does not match"):
+        _write_resource_summary(
+            tmp_path / "raw",
+            tmp_path / "report",
+            _raw_loading=raw_loading,
+            file_paths=[path],
+            collect_rows=False,
+        )
+
+
+def test_tabarena_job_shards_are_disjoint_and_bounded(tmp_path):
+    class FakeContext:
+        def __init__(self):
+            self.calls = []
+
+        def run_jobs(self, jobs, **kwargs):
+            assert kwargs["register"] is False
+            assert kwargs["debug_mode"] is True
+            assert kwargs["cache_mode"] == "default"
+            self.calls.append(list(jobs))
+            return [{} for _ in jobs]
+
+    context = FakeContext()
+    stats = _run_job_shard(
+        context,
+        [list(range(4)), list(range(4, 10))],
+        results_dir=tmp_path,
+        shard_count=3,
+        shard_index=1,
+        job_batch_size=2,
+        use_ray=False,
+    )
+
+    assert context.calls == [[1, 4], [7]]
+    assert stats == {
+        "total_jobs": 10,
+        "selected_jobs": 3,
+        "completed_results": 3,
+        "batches": 2,
+    }
+
+
+def test_tabarena_raw_coverage_filters_stale_configs_and_rejects_missing(tmp_path):
+    jobs = [
+        SimpleNamespace(
+            experiment=SimpleNamespace(name="CTBoost_c1"),
+            task=SimpleNamespace(dataset="first", repeat=0, fold=0),
+        ),
+        SimpleNamespace(
+            experiment=SimpleNamespace(name="CTBoost_c1"),
+            task=SimpleNamespace(dataset="second", repeat=0, fold=0),
+        ),
+    ]
+    context = SimpleNamespace(
+        task_metadata_collection=SimpleNamespace(
+            dataset_to_tid=lambda: {"first": 1, "second": 2}
+        )
+    )
+    expected = _expected_raw_keys(context, [jobs])
+
+    def raw_path(method, task, split):
+        return tmp_path / "raw" / "data" / method / str(task) / split / "results.pkl"
+
+    expected_paths = [
+        raw_path("CTBoost_c1", 1, "0_0"),
+        raw_path("CTBoost_c1", 2, "0_0"),
+    ]
+    stale_path = raw_path("CTBoost_r99", 1, "0_0")
+
+    selected, coverage = _select_expected_raw_paths(
+        expected,
+        [*expected_paths, stale_path],
+        allow_incomplete=False,
+    )
+
+    assert selected == sorted(expected_paths, key=str)
+    assert coverage["complete"] is True
+    assert coverage["ignored_stale_or_other_results"] == 1
+
+    with pytest.raises(RuntimeError, match="coverage is incomplete"):
+        _select_expected_raw_paths(
+            expected,
+            expected_paths[:1],
+            allow_incomplete=False,
+        )
+
+    wrong_task_paths = [
+        expected_paths[0],
+        raw_path("CTBoost_c1", 99, "0_0"),
+    ]
+    with pytest.raises(RuntimeError, match="coverage is incomplete"):
+        _select_expected_raw_paths(
+            expected,
+            wrong_task_paths,
+            allow_incomplete=False,
+        )
+
+
+def test_tabarena_cli_validation_and_shard_manifest_names(tmp_path):
+    valid = SimpleNamespace(
+        n_configs=200,
+        shard_count=4,
+        shard_index=2,
+        job_batch_size=8,
+        stage="run",
+        num_cpus=8,
+        num_gpus=0,
+        memory_limit_gb=32,
+        time_limit=3600,
+    )
+    _validate_args(valid)
+    assert _shard_manifest_path(tmp_path, shard_count=4, shard_index=2).name == (
+        "run_manifest.shard-00002-of-00004.json"
+    )
+
+    invalid = SimpleNamespace(**vars(valid))
+    invalid.shard_index = 4
+    with pytest.raises(SystemExit, match="shard-index"):
+        _validate_args(invalid)
+
+
+def test_committed_tabarena_smoke_summary_is_sanitized_and_explicitly_provisional():
+    path = Path(__file__).parents[1] / "benchmarks" / "tabarena" / "smoke_fd187da.json"
+    summary = json.loads(path.read_text(encoding="utf-8"))
+    serialized = json.dumps(summary)
+
+    assert summary["status"] == "provisional_not_official"
+    assert summary["leaderboard"]["elo"] == 1058.7
+    assert summary["provenance"]["ctboost_commit"].startswith("fd187da")
+    assert len(summary["per_split"]) == 3
+    assert "C:\\" not in serialized
+    assert "/home/" not in serialized
+    assert "artifact" not in serialized.lower()
 
 
 def test_console_table_replaces_characters_unsupported_by_windows_code_pages():

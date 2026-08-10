@@ -69,6 +69,8 @@ def _make_native_booster(
         distributed_timeout=native_params["distributed_timeout"],
         random_seed=native_params["random_seed"],
         verbose=native_params["verbose"],
+        boost_from_average=native_params["boost_from_average"],
+        base_score=native_params["base_score"],
     )
     if state is not None:
         # Persisted model state deliberately excludes the ephemeral TCP bearer

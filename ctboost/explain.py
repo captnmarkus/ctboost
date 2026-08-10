@@ -306,6 +306,12 @@ def explain_booster(
     shap_values = np.zeros(
         (sample_count, prediction_dimension, feature_count + 1), dtype=np.float64
     )
+    base_score = np.asarray(
+        state.get("base_score", [0.0] * prediction_dimension), dtype=np.float64
+    ).reshape(-1)
+    if base_score.size != prediction_dimension:
+        raise ValueError("persisted base_score dimension does not match the model")
+    shap_values[:, :, -1] += base_score[np.newaxis, :]
     interactions = (
         np.zeros(
             (

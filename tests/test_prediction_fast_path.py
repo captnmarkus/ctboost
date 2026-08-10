@@ -10,7 +10,10 @@ def _reference_predict_and_leaves(predictor, data, num_iteration):
         len(predictor.trees),
         num_iteration * prediction_dimension,
     )
-    predictions = np.zeros((rows.shape[0], prediction_dimension), dtype=np.float32)
+    predictions = np.broadcast_to(
+        np.asarray(predictor.base_score, dtype=np.float32),
+        (rows.shape[0], prediction_dimension),
+    ).copy()
     leaf_indices = np.full((rows.shape[0], tree_limit), -1, dtype=np.int32)
 
     for row_index, row in enumerate(rows):
@@ -62,6 +65,42 @@ def _assert_native_prediction_matches_exported_reference(
             booster.predict_leaf_index(data, num_iteration=num_iteration),
             reference_leaves,
         )
+
+
+def test_legacy_zero_intercept_state_keeps_sub_micro_float_prediction_compatibility(
+    tmp_path,
+):
+    rng = np.random.default_rng(812)
+    data = rng.normal(size=(220, 6)).astype(np.float32)
+    labels = (2.0 * data[:, 0] - 1.3 * data[:, 1] + 0.4 * data[:, 4]).astype(
+        np.float32
+    )
+    booster = ctboost.train(
+        data,
+        {
+            "objective": "RMSE",
+            "boost_from_average": False,
+            "learning_rate": 0.123456789,
+            "max_depth": 3,
+            "alpha": 1.0,
+            "random_seed": 37,
+        },
+        label=labels,
+        num_boost_round=80,
+    )
+    export_path = tmp_path / "legacy_float_reference.json"
+    booster.export_model(export_path, export_format="json_predictor")
+    predictor = ctboost.load_exported_predictor(export_path)
+    reference, _ = _reference_predict_and_leaves(predictor, data, 80)
+
+    legacy_state = dict(booster._handle.export_state())
+    for key in ("boost_from_average", "configured_base_score", "base_score"):
+        legacy_state.pop(key)
+    restored = ctboost._core.GradientBooster.from_state(legacy_state)
+    actual = np.asarray(restored.predict(ctboost.Pool(data)._handle))
+
+    assert restored.base_score() == [0.0]
+    assert float(np.max(np.abs(actual - reference))) <= 1.0e-6
 
 
 def test_compact_prediction_fast_path_matches_exported_multiclass_reference(tmp_path):

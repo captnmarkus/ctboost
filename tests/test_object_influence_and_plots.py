@@ -34,13 +34,16 @@ def test_leaf_influence_is_a_signed_tree_output_decomposition():
     assert influence.shape == (7, X.shape[0])
     np.testing.assert_allclose(coverage, 1.0)
     np.testing.assert_allclose(
-        influence.sum(axis=1), booster.predict(X[:7]), rtol=1e-6, atol=1e-6
+        influence.sum(axis=1),
+        booster.predict(X[:7]) - booster.base_score[0],
+        rtol=1e-6,
+        atol=1e-6,
     )
 
     partial = booster.calc_leaf_influence(X[:7], train_pool, num_iteration=3)
     np.testing.assert_allclose(
         partial.sum(axis=1),
-        booster.predict(X[:7], num_iteration=3),
+        booster.predict(X[:7], num_iteration=3) - booster.base_score[0],
         rtol=1e-6,
         atol=1e-6,
     )
@@ -57,7 +60,9 @@ def test_leaf_influence_distributes_by_reference_pool_weight():
     assert np.count_nonzero(influence) == same_leaf.size
     ratios = influence[same_leaf] / weights[same_leaf]
     np.testing.assert_allclose(ratios, ratios[0], rtol=1e-6, atol=1e-7)
-    np.testing.assert_allclose(influence.sum(), booster.predict(X[:1])[0], rtol=1e-6)
+    np.testing.assert_allclose(
+        influence.sum(), booster.predict(X[:1])[0] - booster.base_score[0], rtol=1e-6
+    )
 
 
 def test_ranked_object_importance_matches_leaf_scores_and_is_deterministic():
@@ -103,7 +108,9 @@ def test_multiclass_leaf_influence_preserves_output_dimension():
     )
     assert influence.shape == (3, 3, X.shape[0])
     assert coverage.shape == (3, 3)
-    np.testing.assert_allclose(influence.sum(axis=2), booster.predict(X[:3]), rtol=1e-6)
+    np.testing.assert_allclose(
+        influence.sum(axis=2), booster.predict(X[:3]) - booster.base_score, rtol=1e-6
+    )
     with pytest.raises(ValueError, match="prediction_dimension is required"):
         booster.get_object_importance(X[:2], pool, top_size=3)
     indices, scores = booster.get_object_importance(

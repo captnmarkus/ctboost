@@ -202,7 +202,14 @@ class CTBoostTabArenaModel(AbstractModel):
 
     ag_key = "CTB"
     ag_name = "CTBoost"
+    ag_priority = 65
     seed_name = "random_seed"
+    _supported_problem_types = ["binary", "multiclass", "regression"]
+    _default_auxiliary_params_extra = {
+        "valid_raw_types": ["bool", "int", "float", "category", "object"],
+        "ignored_type_group_raw": ["datetime_as_object"],
+    }
+    default_resources_physical_cores_only = True
     default_num_gpus = 0
 
     def __init__(self, **kwargs: Any) -> None:
@@ -303,19 +310,60 @@ class CTBoostTabArenaModel(AbstractModel):
         for name, value in defaults.items():
             self._set_default_param_value(name, value)
 
-    def _get_default_auxiliary_params(self) -> dict[str, Any]:
-        params = super()._get_default_auxiliary_params()
-        params.update(
-            {
-                "valid_raw_types": ["bool", "int", "float", "category", "object"],
-                "ignored_type_group_raw": ["datetime_as_object"],
-            }
-        )
-        return params
-
     @classmethod
-    def supported_problem_types(cls) -> list[str]:
-        return ["binary", "multiclass", "regression"]
+    def _estimate_memory_usage_static(
+        cls,
+        *,
+        X: Any,
+        hyperparameters: Optional[dict[str, Any]] = None,
+        num_classes: Optional[int] = 1,
+        **kwargs: Any,
+    ) -> int:
+        """Conservatively estimate peak fit memory for fold scheduling.
+
+        CTBoost keeps the input frame, quantized bins, gradient/statistic buffers,
+        and the fitted trees resident during training.  Including the worst-case
+        tree payload is important for multiclass datasets, where a depth-only
+        estimate can otherwise let AutoGluon start too many folds in parallel.
+        """
+        del kwargs
+        params = dict(hyperparameters or {})
+        rows, columns = (int(value) for value in X.shape)
+        classes = max(1, int(num_classes or 1))
+        try:
+            from autogluon.common.utils.pandas_utils import get_approximate_df_mem_usage
+
+            input_bytes = int(get_approximate_df_mem_usage(X).sum())
+        except (ImportError, AttributeError, TypeError):
+            memory_usage = getattr(X, "memory_usage", None)
+            input_bytes = (
+                int(memory_usage(index=True, deep=True).sum())
+                if callable(memory_usage)
+                else rows * columns * 8
+            )
+
+        max_bins = max(1, int(params.get("max_bins", 256)))
+        bin_width = 1 if max_bins <= 256 else 2 if max_bins <= 65_535 else 4
+        quantized_bytes = rows * columns * bin_width
+        statistic_bytes = rows * classes * 8 * 6
+        histogram_bytes = columns * max_bins * classes * 8 * 3
+
+        depth = max(0, int(params.get("max_depth", params.get("depth", 6))))
+        depth_leaves = 1 << min(depth, 20)
+        configured_leaves = int(params.get("max_leaves", 0) or 0)
+        leaves = min(depth_leaves, configured_leaves) if configured_leaves > 0 else depth_leaves
+        iterations = max(1, int(params.get("iterations", params.get("n_estimators", 1000))))
+        tree_bytes = iterations * classes * max(1, 2 * leaves - 1) * 64
+
+        baseline_bytes = 512 * 1024 * 1024
+        return int(
+            baseline_bytes
+            + 4 * input_bytes
+            + 2 * quantized_bytes
+            + statistic_bytes
+            + histogram_bytes
+            + tree_bytes
+        )
 
 
 class CTBoostTabArenaGPUModel(CTBoostTabArenaModel):
@@ -328,38 +376,95 @@ class CTBoostTabArenaGPUModel(CTBoostTabArenaModel):
     gpu_required = True
 
 
-def generate_configs_ctboost(num_random_configs: int = 200) -> list[dict[str, Any]]:
-    """Generate the author-controlled CTBoost search space for TabArena."""
-    from ConfigSpace import Categorical, ConfigurationSpace, Float, Integer
+def _finalize_search_config(config: dict[str, Any]) -> dict[str, Any]:
+    """Resolve internal conditional knobs into valid CTBoost parameters."""
+    resolved = {
+        name: value.item() if isinstance(value, np.generic) else value
+        for name, value in config.items()
+    }
+    leaf_fraction = resolved.pop("__leaf_fraction", None)
+    if leaf_fraction is None:
+        # A leaf cap makes depth-first growth stop part-way through a level.  It
+        # is useful only for the best-first LeafWise policy in this search.
+        resolved["max_leaves"] = 0
+    else:
+        full_leaf_count = 1 << int(resolved["max_depth"])
+        resolved["max_leaves"] = max(
+            4,
+            min(full_leaf_count - 1, round(float(leaf_fraction) * full_leaf_count)),
+        )
+    return resolved
 
-    search_space = ConfigurationSpace(
-        space=[
-            Float("learning_rate", (5e-3, 2e-1), log=True),
-            Integer("max_depth", (3, 10)),
-            Float("alpha", (1e-3, 2e-1), log=True),
-            Float("lambda_l2", (1e-4, 10.0), log=True),
-            Float("subsample", (0.6, 1.0)),
-            Float("colsample_bytree", (0.6, 1.0)),
-            Categorical("grow_policy", ["DepthWise", "LeafWise"]),
-            Integer("max_leaves", (8, 1024), log=True),
-            Integer("min_data_in_leaf", (1, 100), log=True),
-            Float("min_child_weight", (1e-3, 10.0), log=True),
-            Integer("one_hot_max_size", (2, 100), log=True),
-            Integer("max_cat_threshold", (8, 256), log=True),
-            Categorical("ordered_ctr", [False, True]),
-        ],
-        seed=1234,
+
+def generate_configs_ctboost(num_random_configs: int = 200) -> list[dict[str, Any]]:
+    """Generate a deterministic, task-safe 200-config TabArena search.
+
+    The tree-count cap remains fixed at 1,000 and every TabArena fold supplies a
+    validation set for early stopping.  Consequently the learning-rate floor is
+    deliberately 0.02: lower values consumed a large part of the old 200-config
+    budget while frequently reaching the cap before converging.  Depth is capped
+    at eight to keep multiclass CPU fits and model artifacts within the official
+    per-fit resource envelope.
+    """
+    count = int(num_random_configs)
+    if count < 0:
+        raise ValueError("num_random_configs must be non-negative")
+    if count == 0:
+        return []
+
+    from ConfigSpace import Categorical, ConfigurationSpace, EqualsCondition, Float, Integer
+
+    search_space = ConfigurationSpace(seed=1234)
+    learning_rate = Float("learning_rate", (2e-2, 2e-1), log=True, default=5e-2)
+    max_depth = Integer("max_depth", (3, 8), default=6)
+    alpha = Float("alpha", (5e-3, 5e-1), log=True, default=5e-2)
+    lambda_l2 = Float("lambda_l2", (1e-4, 10.0), log=True, default=1.0)
+    subsample = Float("subsample", (0.6, 1.0), default=0.8)
+    colsample_bytree = Float("colsample_bytree", (0.6, 1.0), default=1.0)
+    grow_policy = Categorical("grow_policy", ["DepthWise", "LeafWise"], default="DepthWise")
+    leaf_fraction = Categorical("__leaf_fraction", [0.25, 0.5, 0.75], default=0.5)
+    min_data_in_leaf = Integer("min_data_in_leaf", (1, 64), log=True, default=1)
+    min_child_weight = Categorical(
+        "min_child_weight",
+        [0.0, 0.01, 0.1, 1.0, 5.0],
+        default=0.0,
     )
-    configs = search_space.sample_configuration(int(num_random_configs))
-    if int(num_random_configs) == 1:
-        configs = [configs]
-    return [
-        {
-            name: value.item() if isinstance(value, np.generic) else value
-            for name, value in dict(config).items()
-        }
-        for config in configs
-    ]
+    one_hot_max_size = Categorical("one_hot_max_size", [2, 4, 16, 64], default=4)
+    max_cat_threshold = Categorical("max_cat_threshold", [16, 64, 256], default=64)
+    ordered_ctr = Categorical("ordered_ctr", [False, True], default=True)
+    ctr_prior_strength = Float("ctr_prior_strength", (0.1, 10.0), log=True, default=1.0)
+    random_strength = Categorical("random_strength", [0.0, 0.01, 0.1, 1.0], default=0.0)
+    max_bins = Categorical("max_bins", [128, 256], default=256)
+    search_space.add(
+        [
+            learning_rate,
+            max_depth,
+            alpha,
+            lambda_l2,
+            subsample,
+            colsample_bytree,
+            grow_policy,
+            leaf_fraction,
+            min_data_in_leaf,
+            min_child_weight,
+            one_hot_max_size,
+            max_cat_threshold,
+            ordered_ctr,
+            ctr_prior_strength,
+            random_strength,
+            max_bins,
+        ]
+    )
+    search_space.add(
+        [
+            EqualsCondition(leaf_fraction, grow_policy, "LeafWise"),
+            EqualsCondition(ctr_prior_strength, ordered_ctr, True),
+        ]
+    )
+
+    sampled = search_space.sample_configuration(count)
+    configs = [sampled] if count == 1 else sampled
+    return [_finalize_search_config(dict(config)) for config in configs]
 
 
 def _build_config_generator(model_cls: Any = CTBoostTabArenaModel) -> Any:

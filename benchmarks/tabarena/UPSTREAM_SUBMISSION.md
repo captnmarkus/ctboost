@@ -1,0 +1,90 @@
+# CTBoost TabArena upstream submission
+
+This is the hand-off checklist for a TabArena-v0.1 CPU submission. CTBoost's
+conditional-inference split selection remains unchanged; the wrapper only supplies
+TabArena data, resources, validation, seeds, and result metadata.
+
+## Required upstream patch
+
+Base the contribution on the current TabArena `main` after (or rebased over)
+[PR 468](https://github.com/autogluon/tabarena/pull/468), because AutoGluon 1.6
+rejects the former override-method model API. Add:
+
+1. `packages/tabarena/src/tabarena/models/ctboost/__init__.py`
+2. `packages/tabarena/src/tabarena/models/ctboost/model.py`
+3. `packages/tabarena/src/tabarena/models/ctboost/hpo.py`
+4. `packages/tabarena/src/tabarena/models/ctboost/info.py`
+5. Lazy `CTBoostModel` export in `packages/tabarena/src/tabarena/models/__init__.py`
+6. `ctboost = ["ctboost>=0.1.53"]` and `tabarena[ctboost]` in the `extended`
+   extra in `packages/tabarena/pyproject.toml`
+7. `CTB` in the tree-model prefix/display mappings in
+   `packages/tabarena/src/tabarena/website/website_format.py`
+8. A small-iteration `CTBoost` entry in `tests/tabarena/models/smoke_configs.py`
+
+After a complete run is processed and hosted, maintainers add the verified method
+metadata to `packages/tabarena/src/tabarena/contexts/tabarena/methods.py` and record
+the cluster invocation in `packages/tabflow_slurm/BENCHMARK_LOG.md`.
+
+The wrapper contract is:
+
+- `ag_key = "CTB"`, `ag_name = "CTBoost"`, `ag_priority = 65`
+- `_supported_problem_types = ["binary", "multiclass", "regression"]`
+- `_default_auxiliary_params_extra` for bool/int/float/category/object inputs
+- `default_resources_physical_cores_only = True`, CPU compute
+- AutoGluon validation data used for CTBoost early stopping
+- `num_cpus` applied through `CTBOOST_HIST_THREADS`
+- `random_seed` supplied by AutoGluon's fold/config seed contract
+- finite `time_limit` enforced by the between-tree callback
+- a conservative static memory estimate for fold-parallel scheduling
+
+The HPO generator is the frozen deterministic space in `ctboost_model.py`: one
+manual default plus 200 random configs, depth 3-8, learning rate 0.02-0.2, and
+conditional leaf/CTR parameters. It must not be changed after inspecting
+TabArena-Full test performance.
+
+## Required evidence before cluster time
+
+- `FitHelper.verify_model` passes binary, multiclass, and regression under the
+  exact AutoGluon/TabArena dependency versions.
+- All 201 configs fit a tiny binary, multiclass, and regression dataset.
+- The generated configs are deterministic and unique; DepthWise has no partial
+  leaf cap, LeafWise caps stay below `2**max_depth`, and CTR smoothing is emitted
+  only when ordered CTR is enabled.
+- A default-only TabArena-Full run has 816/816 raw outer-split artifacts with no
+  failures, non-finite metrics, or resource-limit violations.
+- The full default + 200 run has 164,016/164,016 raw outer-split artifacts. Each
+  outer split contains eight AutoGluon bag folds (1,312,128 child fits total).
+- Raw-to-results processing produces default, tuned (`n_iterations=1`), and tuned
+  plus ensemble (`n_iterations=40`) rows. No CTBoost-specific ensemble code is
+  required.
+
+The committed three-dataset smoke in `smoke_fd187da.json` is useful integration
+evidence but does not satisfy either full-run gate.
+
+## Pull request text
+
+Suggested title: `[New Model] CTBoost`
+
+The body should state that CTBoost is a standalone CPU conditional-inference-tree
+gradient booster, link the repository/PyPI/docs/license, list the three supported
+task types, and document native categorical/missing handling. Include the exact
+fairness contract above, the 201-config preflight counts, default-full artifact
+count, hardware/resources, and the contribution license statement used by other
+TabArena model PRs. Explicitly say that the search space was frozen without using
+TabArena-Full test results.
+
+Once that PR is merged, request the official run with an issue titled:
+
+`Run CTBoost 0.1.53 on TabArena-v0.1 (default + 200 configs)`
+
+Link the merged integration PR and PyPI release; confirm the three-task preflight,
+frozen search space, time/resource behavior, and request the CPU TabArena-Full
+cluster run. [Issue 463](https://github.com/autogluon/tabarena/issues/463) was
+sufficient for ChimeraBoost only because its wrapper, search space, metadata, and
+prior official artifacts had already landed in
+[PR 358](https://github.com/autogluon/tabarena/pull/358). CTBoost needs the model
+integration PR first.
+
+No Hugging Face token is needed to download public TabArena data or run the CPU
+benchmark. Publication to TabArena's artifact storage is a maintainer step and may
+require their R2 credentials.

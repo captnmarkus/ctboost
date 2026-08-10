@@ -158,7 +158,9 @@ void BindGradientBooster(py::module_& m) {
                     std::string,
                     double,
                     std::uint64_t,
-                    bool>(),
+                    bool,
+                    bool,
+                    std::vector<double>>(),
            py::arg("objective") = "RMSE",
            py::arg("iterations") = 100,
            py::arg("learning_rate") = 0.1,
@@ -206,7 +208,9 @@ void BindGradientBooster(py::module_& m) {
            py::arg("distributed_run_id") = "default",
            py::arg("distributed_timeout") = 600.0,
            py::arg("random_seed") = 0,
-           py::arg("verbose") = false)
+           py::arg("verbose") = false,
+           py::arg("boost_from_average") = true,
+           py::arg("base_score") = std::vector<double>{})
       .def("fit",
            [](ctboost::GradientBooster& booster,
               py::object pool_obj,

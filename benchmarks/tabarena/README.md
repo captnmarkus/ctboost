@@ -77,11 +77,39 @@ Sample 20 additional author-defined configurations:
 .venv-tabarena/bin/ctboost-tabarena --subset lite --n-configs 20
 ```
 
+The clean default-only smoke behind the provisional `1058.7` three-dataset Elo is
+recorded in [`smoke_fd187da.json`](smoke_fd187da.json). The file contains exact
+per-split metrics, timing, memory, versions, and commits without machine-local
+artifact paths. It is explicitly not a TabArena-Full or official leaderboard result.
+
 Run the full benchmark only on appropriately provisioned infrastructure:
 
 ```bash
 .venv-tabarena/bin/ctboost-tabarena --subset all --n-configs 200 --ray
 ```
+
+For a distributed or interruptible run, execute disjoint outer-job shards into
+the same results directory, then evaluate once all shards have completed. Existing
+`results.pkl` files are reused, so rerunning a shard resumes rather than refits it:
+
+```bash
+# Submit indices 0..63 as separate workers.
+.venv-tabarena/bin/ctboost-tabarena --stage run --subset all --n-configs 200 \
+  --shard-count 64 --shard-index 0 --job-batch-size 32 --ray
+
+# Run once after every worker succeeds.
+.venv-tabarena/bin/ctboost-tabarena --stage evaluate --subset all \
+  --n-configs 200 --shard-count 64 --ray
+```
+
+The runner builds one dataset's lightweight job objects at a time and retains at
+most `--job-batch-size` raw result objects in the driver. Evaluation uses
+TabArena's task-by-task `EndToEnd.from_path_raw` path, filters unrelated configs,
+and requires exactly one artifact for every expected `(config, task, split)` key.
+`--allow-incomplete` is available only for diagnostics; such a report is not
+leaderboard-valid. TabArena's cache key does not include the package commit or
+hyperparameter payload, so resume a directory only with the same frozen source and
+search space. Start with a fresh `--results-dir` after either changes.
 
 On Windows, the executable is `.venv-tabarena/Scripts/ctboost-tabarena.exe`.
 
@@ -116,3 +144,6 @@ cross-dataset rank and normalized-error comparisons.
 Official leaderboard submission requires processing and hosting the generated
 artifacts according to TabArena's current maintainer instructions. Do not submit
 the three-dataset smoke result as a full benchmark result.
+
+The exact upstream file list, validation gates, scale calculation, and PR/run-request
+templates are in [`UPSTREAM_SUBMISSION.md`](UPSTREAM_SUBMISSION.md).

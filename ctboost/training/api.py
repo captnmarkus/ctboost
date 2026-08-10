@@ -144,6 +144,17 @@ def train(
     init_model: Any = None,
     obj: Optional[Callable[..., Any]] = None,
 ) -> Booster:
+    """Train a CTBoost model.
+
+    Fresh built-in training uses ``boost_from_average=True`` by default. The
+    fitted raw-margin intercept is a weighted mean (RMSE), weighted quantile
+    (MAE/Quantile), weighted Huber location, weighted class-prior logit/logits,
+    or the log weighted mean (Poisson/Tweedie/Gamma). ``base_score`` supplies
+    a finite raw-margin scalar or one value per output and takes precedence.
+    Ranking, survival, callable objectives, and pools with row baselines keep a
+    zero automatic intercept. Set ``boost_from_average=False`` for the legacy
+    zero-intercept behavior.
+    """
     config = _normalize_training_config(params)
     if obj is not None:
         if not callable(obj):

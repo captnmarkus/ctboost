@@ -94,6 +94,8 @@ class _BaseInitMixin:
             border_selection_method: str = "Quantile",
             nan_mode_by_feature: Optional[Any] = None,
             feature_borders: Optional[Any] = None,
+            boost_from_average: bool = True,
+            base_score: Optional[Any] = None,
             random_seed: int = 0,
             loss_function: Optional[str] = None,
             eval_metric: Optional[Any] = None,
@@ -184,6 +186,8 @@ class _BaseInitMixin:
             self.border_selection_method = border_selection_method
             self.nan_mode_by_feature = nan_mode_by_feature
             self.feature_borders = feature_borders
+            self.boost_from_average = boost_from_average
+            self.base_score = base_score
             self.random_seed = random_seed
             self.loss_function = loss_function
             self.eval_metric = eval_metric
@@ -256,6 +260,8 @@ class _BaseInitMixin:
                 "embedding_target_features": False,
                 "embedding_target_regularization": 1.0,
                 "embedding_target_mode": "auto",
+                "boost_from_average": True,
+                "base_score": None,
             }
             for name, default in preprocessing_defaults.items():
                 if not hasattr(self, name):

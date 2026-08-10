@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import csv
 from datetime import datetime, timezone
 import hashlib
@@ -13,7 +14,7 @@ import platform
 from pathlib import Path
 import subprocess
 import sys
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Iterable, Optional
 from urllib.parse import unquote, urlparse
 
 from .ctboost_model import gen_ctboost_cpu, gen_ctboost_gpu
@@ -52,6 +53,15 @@ _RESOURCE_FIELDS = (
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
+        "--stage",
+        default="all",
+        choices=("all", "run", "evaluate"),
+        help=(
+            "Run jobs and evaluate them, run one resumable job shard only, or "
+            "evaluate already-cached raw artifacts."
+        ),
+    )
+    parser.add_argument(
         "--subset",
         default="lite",
         choices=("lite", "all"),
@@ -74,7 +84,33 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--ray",
         action="store_true",
-        help="Use TabArena's Ray backend; the default runs in-process for easier debugging.",
+        help=(
+            "Use TabArena's Ray fold/evaluation backend. Outer benchmark jobs are "
+            "distributed with --shard-count/--shard-index, not by this flag."
+        ),
+    )
+    parser.add_argument(
+        "--shard-count",
+        type=int,
+        default=1,
+        help="Number of disjoint outer-job shards (use with --stage run).",
+    )
+    parser.add_argument(
+        "--shard-index",
+        type=int,
+        default=0,
+        help="Zero-based outer-job shard to execute (use with --stage run).",
+    )
+    parser.add_argument(
+        "--job-batch-size",
+        type=int,
+        default=32,
+        help="Maximum raw result objects retained by the run driver at once.",
+    )
+    parser.add_argument(
+        "--allow-incomplete",
+        action="store_true",
+        help="Evaluate partial raw coverage instead of rejecting it (not leaderboard-valid).",
     )
     parser.add_argument(
         "--device",
@@ -92,6 +128,30 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--memory-limit-gb", type=int, help="RAM limit supplied to TabArena.")
     parser.add_argument("--time-limit", type=int, help="Per-fit time limit in seconds.")
     return parser.parse_args()
+
+
+def _validate_args(args: argparse.Namespace) -> None:
+    if args.n_configs < 0:
+        raise SystemExit("--n-configs must be non-negative")
+    if args.shard_count <= 0:
+        raise SystemExit("--shard-count must be positive")
+    if args.shard_index < 0 or args.shard_index >= args.shard_count:
+        raise SystemExit("--shard-index must satisfy 0 <= index < --shard-count")
+    if args.job_batch_size <= 0:
+        raise SystemExit("--job-batch-size must be positive")
+    if args.stage == "all" and args.shard_count != 1:
+        raise SystemExit(
+            "--stage all requires --shard-count 1; run every shard with --stage run, "
+            "then invoke --stage evaluate"
+        )
+    if args.stage == "evaluate" and args.shard_index != 0:
+        raise SystemExit("--shard-index is only meaningful with --stage run")
+    for name in ("num_cpus", "num_gpus", "memory_limit_gb", "time_limit"):
+        value = getattr(args, name)
+        if value is not None and value <= 0 and name != "num_gpus":
+            raise SystemExit(f"--{name.replace('_', '-')} must be positive")
+        if name == "num_gpus" and value is not None and value < 0:
+            raise SystemExit("--num-gpus must be non-negative")
 
 
 def _resolve_effective_time_limit(requested: Optional[int], experiment_bundle: Any) -> int:
@@ -233,7 +293,14 @@ def _git_source_identity(distribution_name: str = "ctboost") -> Optional[Dict[st
     }
 
 
-def _write_manifest(path: Path, args: argparse.Namespace, *, status: str) -> None:
+def _write_manifest(
+    path: Path,
+    args: argparse.Namespace,
+    *,
+    status: str,
+    run_stats: Optional[Dict[str, Any]] = None,
+    coverage: Optional[Dict[str, Any]] = None,
+) -> None:
     import ctboost
 
     package_versions = {}
@@ -247,10 +314,17 @@ def _write_manifest(path: Path, args: argparse.Namespace, *, status: str) -> Non
         "status": status,
         "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
         "benchmark": "TabArena-v0.1",
+        "stage": getattr(args, "stage", "all"),
         "subset": args.subset,
         "datasets": args.datasets,
         "n_random_configs": args.n_configs,
         "ray_backend": bool(args.ray),
+        "sharding": {
+            "count": getattr(args, "shard_count", 1),
+            "index": getattr(args, "shard_index", 0),
+            "job_batch_size": getattr(args, "job_batch_size", None),
+        },
+        "allow_incomplete": bool(getattr(args, "allow_incomplete", False)),
         "device": args.device,
         "rerun_competitors": bool(args.rerun_competitors),
         "resources": {
@@ -275,8 +349,16 @@ def _write_manifest(path: Path, args: argparse.Namespace, *, status: str) -> Non
         "ctboost_source": _distribution_source("ctboost"),
         "tabarena_source": _distribution_source("tabarena"),
     }
+    if run_stats is not None:
+        manifest["run_stats"] = run_stats
+    if coverage is not None:
+        manifest["raw_coverage"] = coverage
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _shard_manifest_path(output_dir: Path, *, shard_count: int, shard_index: int) -> Path:
+    return output_dir / f"run_manifest.shard-{shard_index:05d}-of-{shard_count:05d}.json"
 
 
 def _write_resource_summary(
@@ -284,8 +366,10 @@ def _write_resource_summary(
     output_dir: Path,
     *,
     _raw_loading: Optional[Any] = None,
-) -> list[Dict[str, Any]]:
-    """Export TabArena's per-split timing and CPU/GPU peak-memory records."""
+    file_paths: Optional[Iterable[Path]] = None,
+    collect_rows: bool = True,
+) -> list[Dict[str, Any]] | int:
+    """Export per-split resource records without retaining full-run rows by default."""
     if _raw_loading is None:
         from tabarena.benchmark.result import raw_loading as _raw_loading
 
@@ -293,19 +377,45 @@ def _write_resource_summary(
         item = getattr(value, "item", None)
         return item() if callable(item) else value
 
+    paths = (
+        list(_raw_loading.fetch_raw_result_paths(results_dir))
+        if file_paths is None
+        else list(file_paths)
+    )
+    paths.sort(key=str)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    json_path = output_dir / "resources_per_split.json"
+    csv_path = output_dir / "resources_per_split.csv"
     rows: list[Dict[str, Any]] = []
-    for path in _raw_loading.fetch_raw_result_paths(results_dir):
-        artifact = _raw_loading.load_and_align(path)
-        result = artifact.result
-        task = dict(result.get("task_metadata", {}))
-        memory = dict(result.get("memory_usage", {}))
-        peak_cpu = json_scalar(memory.get("peak_mem_cpu"))
-        minimum_cpu = json_scalar(memory.get("min_mem_cpu"))
-        peak_gpu = json_scalar(memory.get("peak_mem_gpu"))
-        minimum_gpu = json_scalar(memory.get("min_mem_gpu"))
-        method_metadata = dict(result.get("method_metadata", {}))
-        rows.append(
-            {
+    row_count = 0
+    with csv_path.open("w", encoding="utf-8", newline="") as csv_stream, json_path.open(
+        "w", encoding="utf-8", newline="\n"
+    ) as json_stream:
+        writer = csv.DictWriter(csv_stream, fieldnames=list(_RESOURCE_FIELDS))
+        writer.writeheader()
+        json_stream.write("[\n")
+        for path in paths:
+            artifact = _raw_loading.load_and_align(path)
+            result = artifact.result
+            task = dict(result.get("task_metadata", {}))
+            expected_identity = _raw_result_key(path)
+            observed_identity = (
+                str(result.get("framework", "")),
+                str(json_scalar(task.get("tid"))),
+                f"{json_scalar(task.get('repeat'))}_{json_scalar(task.get('fold'))}",
+            )
+            if observed_identity != expected_identity:
+                raise RuntimeError(
+                    "Raw TabArena artifact identity does not match its cache path: "
+                    f"path={path}, expected={expected_identity}, observed={observed_identity}"
+                )
+            memory = dict(result.get("memory_usage", {}))
+            peak_cpu = json_scalar(memory.get("peak_mem_cpu"))
+            minimum_cpu = json_scalar(memory.get("min_mem_cpu"))
+            peak_gpu = json_scalar(memory.get("peak_mem_gpu"))
+            minimum_gpu = json_scalar(memory.get("min_mem_gpu"))
+            method_metadata = dict(result.get("method_metadata", {}))
+            row = {
                 "method": str(result.get("framework", "")),
                 "dataset": str(task.get("name", "")),
                 "task_id": json_scalar(task.get("tid")),
@@ -335,28 +445,179 @@ def _write_resource_summary(
                 "disk_usage_bytes": json_scalar(method_metadata.get("disk_usage")),
                 "artifact": str(path),
             }
+            writer.writerow(row)
+            if row_count:
+                json_stream.write(",\n")
+            json_stream.write("  " + json.dumps(row, sort_keys=True))
+            row_count += 1
+            if collect_rows:
+                rows.append(row)
+        json_stream.write("\n]\n")
+    return rows if collect_rows else row_count
+
+
+def _run_job_shard(
+    context: Any,
+    job_chunks: Iterable[list[Any]],
+    *,
+    results_dir: Path,
+    shard_count: int,
+    shard_index: int,
+    job_batch_size: int,
+    use_ray: bool,
+) -> Dict[str, int]:
+    """Run one deterministic shard while discarding each bounded result batch."""
+    total_jobs = 0
+    selected_jobs = 0
+    completed_results = 0
+    batches = 0
+    batch: list[Any] = []
+
+    def flush() -> None:
+        nonlocal completed_results, batches
+        if not batch:
+            return
+        results = context.run_jobs(
+            list(batch),
+            expname=str(results_dir),
+            register=False,
+            debug_mode=not use_ray,
+            cache_mode="default",
         )
-    rows.sort(
-        key=lambda row: (
-            row["method"],
-            row["dataset"],
-            int(row["repeat"] or 0),
-            int(row["fold"] or 0),
+        if len(results) != len(batch):
+            raise RuntimeError(
+                f"TabArena returned {len(results)} results for a {len(batch)}-job batch"
+            )
+        completed_results += len(results)
+        batches += 1
+        batch.clear()
+
+    for jobs in job_chunks:
+        for job in jobs:
+            index = total_jobs
+            total_jobs += 1
+            if index % shard_count != shard_index:
+                continue
+            selected_jobs += 1
+            batch.append(job)
+            if len(batch) >= job_batch_size:
+                flush()
+    flush()
+    return {
+        "total_jobs": total_jobs,
+        "selected_jobs": selected_jobs,
+        "completed_results": completed_results,
+        "batches": batches,
+    }
+
+
+def _raw_result_key(path: Path) -> tuple[str, str, str]:
+    """Return ``(method, task, split)`` from TabArena's raw cache layout."""
+    path = Path(path)
+    if path.name != "results.pkl" or len(path.parents) < 3:
+        raise ValueError(f"not a TabArena raw result path: {path}")
+    return path.parents[2].name, path.parents[1].name, path.parents[0].name
+
+
+def _select_expected_raw_paths(
+    expected: Counter[tuple[str, str, str]],
+    file_paths: Iterable[Path],
+    *,
+    allow_incomplete: bool,
+) -> tuple[list[Path], Dict[str, Any]]:
+    """Filter unrelated artifacts and require every exact scheduled job key."""
+    paths = [Path(path) for path in file_paths]
+    keyed_paths = [(path, _raw_result_key(path)) for path in paths]
+    selected = [path for path, key in keyed_paths if key in expected]
+    observed = Counter(key for _path, key in keyed_paths if key in expected)
+    mismatches = [
+        {
+            "method": key[0],
+            "task": key[1],
+            "split": key[2],
+            "expected": expected[key],
+            "observed": observed.get(key, 0),
+        }
+        for key in sorted(expected)
+        if observed.get(key, 0) != expected[key]
+    ]
+    coverage: Dict[str, Any] = {
+        "expected_results": sum(expected.values()),
+        "observed_results": len(selected),
+        "ignored_stale_or_other_results": len(paths) - len(selected),
+        "complete": not mismatches,
+        "mismatches": mismatches,
+    }
+    if mismatches and not allow_incomplete:
+        preview = mismatches[:10]
+        raise RuntimeError(
+            "Raw TabArena coverage is incomplete or duplicated; refusing leaderboard evaluation. "
+            f"First mismatches: {preview}. Finish all run shards or pass --allow-incomplete."
         )
+    if not selected:
+        raise RuntimeError("No raw artifacts match the requested benchmark configuration")
+    return sorted(selected, key=str), coverage
+
+
+def _expected_raw_keys(
+    context: Any,
+    job_chunks: Iterable[list[Any]],
+) -> Counter[tuple[str, str, str]]:
+    """Count exact scheduled cache keys without retaining the complete job grid."""
+    dataset_to_tid = {
+        str(dataset): str(tid)
+        for dataset, tid in context.task_metadata_collection.dataset_to_tid().items()
+    }
+    counts: Counter[tuple[str, str, str]] = Counter()
+    for jobs in job_chunks:
+        for job in jobs:
+            dataset = str(job.task.dataset)
+            try:
+                task_id = dataset_to_tid[dataset]
+            except KeyError as exc:
+                raise RuntimeError(
+                    f"Scheduled dataset {dataset!r} is missing from TabArena task metadata"
+                ) from exc
+            key = (
+                str(job.experiment.name),
+                task_id,
+                f"{int(job.task.repeat)}_{int(job.task.fold)}",
+            )
+            counts[key] += 1
+    return counts
+
+
+def _scoped_dataset_names(
+    context: Any,
+    *,
+    subset: str,
+    datasets: Optional[list[str]],
+) -> list[str]:
+    """Resolve the benchmark scope using metadata only (no dataset materialization)."""
+    filters: Dict[str, Any] = {"subset": subset}
+    if datasets is not None:
+        filters["dataset_names"] = datasets
+    collection = context.task_metadata_collection.subset_tasks(
+        predicates=context.subset_predicates,
+        **filters,
     )
-    output_dir.mkdir(parents=True, exist_ok=True)
-    json_path = output_dir / "resources_per_split.json"
-    json_path.write_text(
-        json.dumps(rows, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-    csv_path = output_dir / "resources_per_split.csv"
-    with csv_path.open("w", encoding="utf-8", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=list(_RESOURCE_FIELDS))
-        writer.writeheader()
-        if rows:
-            writer.writerows(rows)
-    return rows
+    return collection.dataset_names()
+
+
+def _iter_dataset_job_chunks(
+    context: Any,
+    experiments: list[Any],
+    *,
+    subset: str,
+    dataset_names: Iterable[str],
+) -> Iterable[list[Any]]:
+    """Build at most one dataset's jobs at a time instead of a 164k-job list."""
+    for dataset_name in dataset_names:
+        yield context.build_jobs(
+            experiments,
+            subset=subset,
+            dataset_names=[dataset_name],
+        )
 
 
 _GPU_COMPETITOR_GENERATORS: Optional[list[Any]] = None
@@ -440,12 +701,13 @@ def main() -> int:
     from tabarena.contexts import TabArenaContext
 
     args = _parse_args()
+    _validate_args(args)
     datasets = args.datasets
     if datasets is None and args.subset == "lite":
         datasets = DEFAULT_LITE_DATASETS
     args.datasets = datasets
 
-    if args.device in {"gpu", "both"}:
+    if args.stage in {"all", "run"} and args.device in {"gpu", "both"}:
         import ctboost
 
         if not bool(ctboost.build_info().get("cuda_enabled", False)):
@@ -470,21 +732,85 @@ def main() -> int:
     )
 
     context = TabArenaContext()
-    manifest_path = args.output_dir / "run_manifest.json"
-    _write_manifest(manifest_path, args, status="started")
-    build_kwargs = {} if datasets is None else {"dataset_names": datasets}
-    context.build_and_run_jobs(
-        experiments,
-        expname=str(args.results_dir),
+    scoped_dataset_names = _scoped_dataset_names(
+        context,
         subset=args.subset,
-        build_kwargs=build_kwargs,
-        new_result_prefix="[New] ",
-        debug_mode=not args.ray,
+        datasets=datasets,
     )
-    _write_resource_summary(args.results_dir, args.output_dir)
-    leaderboard = context.compare(output_dir=args.output_dir)
-    website = context.leaderboard_to_website_format(leaderboard=leaderboard)
-    _write_manifest(manifest_path, args, status="completed")
+
+    def job_chunks() -> Iterable[list[Any]]:
+        return _iter_dataset_job_chunks(
+            context,
+            experiments,
+            subset=args.subset,
+            dataset_names=scoped_dataset_names,
+        )
+
+    if args.stage in {"all", "run"}:
+        shard_manifest = _shard_manifest_path(
+            args.output_dir,
+            shard_count=args.shard_count,
+            shard_index=args.shard_index,
+        )
+        _write_manifest(shard_manifest, args, status="run_started")
+        try:
+            run_stats = _run_job_shard(
+                context,
+                job_chunks(),
+                results_dir=args.results_dir,
+                shard_count=args.shard_count,
+                shard_index=args.shard_index,
+                job_batch_size=args.job_batch_size,
+                use_ray=args.ray,
+            )
+        except Exception:
+            _write_manifest(shard_manifest, args, status="run_failed")
+            raise
+        _write_manifest(
+            shard_manifest,
+            args,
+            status="run_completed",
+            run_stats=run_stats,
+        )
+        if args.stage == "run":
+            _write_console_table(json.dumps(run_stats, indent=2, sort_keys=True))
+            return 0
+
+    from tabarena.benchmark.result import raw_loading
+    from tabarena.end_to_end import EndToEnd
+
+    all_raw_paths = raw_loading.fetch_raw_result_paths(args.results_dir)
+    expected_raw_keys = _expected_raw_keys(context, job_chunks())
+    selected_raw_paths, coverage = _select_expected_raw_paths(
+        expected_raw_keys,
+        all_raw_paths,
+        allow_incomplete=args.allow_incomplete,
+    )
+    _write_resource_summary(
+        args.results_dir,
+        args.output_dir,
+        _raw_loading=raw_loading,
+        file_paths=selected_raw_paths,
+        collect_rows=False,
+    )
+    processed = EndToEnd.from_path_raw(
+        path_raw=args.results_dir,
+        file_paths=selected_raw_paths,
+        cache=True,
+        cache_processed=True,
+        backend="ray" if args.ray else "native",
+        num_cpus=args.num_cpus,
+    )
+    new_methods = processed.to_method_metadata_lst(new_result_prefix="[New] ")
+    evaluation_context = TabArenaContext(extra_methods=new_methods, only_valid_tasks=True)
+    leaderboard = evaluation_context.compare(output_dir=args.output_dir)
+    website = evaluation_context.leaderboard_to_website_format(leaderboard=leaderboard)
+    _write_manifest(
+        args.output_dir / "run_manifest.json",
+        args,
+        status="completed" if coverage["complete"] else "completed_incomplete",
+        coverage=coverage,
+    )
     _write_console_table(_format_table(website))
     return 0
 

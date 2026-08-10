@@ -12,14 +12,16 @@ void GradientBooster::Fit(Pool& pool,
                           Pool* eval_pool,
                           int early_stopping_rounds,
                           bool continue_training) {
-  FitWithObjective(pool, *objective_, eval_pool, early_stopping_rounds, continue_training);
+  FitWithObjective(
+      pool, *objective_, eval_pool, early_stopping_rounds, continue_training, true);
 }
 
 void GradientBooster::FitWithObjective(Pool& pool,
                                        const ObjectiveFunction& objective,
                                        Pool* eval_pool,
                                        int early_stopping_rounds,
-                                       bool continue_training) {
+                                       bool continue_training,
+                                       bool allow_average_initialization) {
   const auto fit_start = std::chrono::steady_clock::now();
   const TrainingProfiler profiler(verbose_);
   profiler.LogFitStart(pool.num_rows(), pool.num_cols(), iterations_, use_gpu_, prediction_dimension_);
@@ -103,6 +105,9 @@ void GradientBooster::FitWithObjective(Pool& pool,
   if (total_weight <= 0.0) {
     throw std::invalid_argument("training pool must have a positive total sample weight");
   }
+  if (!has_existing_state) {
+    InitializeBaseScore(pool, allow_average_initialization);
+  }
   workspace.predictions = has_existing_state
                               ? booster_detail::PredictFromHist(trees_,
                                                                 workspace.train_hist,
@@ -111,8 +116,13 @@ void GradientBooster::FitWithObjective(Pool& pool,
                                                                 learning_rate_,
                                                                 use_gpu_,
                                                                 prediction_dimension_,
-                                                                devices_)
+                                                                devices_,
+                                                                base_score_)
                               : std::vector<float>(pool.num_rows() * static_cast<std::size_t>(prediction_dimension_), 0.0F);
+  if (!has_existing_state) {
+    booster_detail::AddBaseScoreToPredictions(
+        base_score_, prediction_dimension_, workspace.predictions);
+  }
   booster_detail::AddPoolBaselineToPredictions(pool, prediction_dimension_, workspace.predictions);
   if (use_gpu_) {
     workspace.train_hist.ReleaseBinStorage();
@@ -150,8 +160,13 @@ void GradientBooster::FitWithObjective(Pool& pool,
                                                                        learning_rate_,
                                                                        use_gpu_,
                                                                        prediction_dimension_,
-                                                                       devices_)
+                                                                       devices_,
+                                                                       base_score_)
                                      : std::vector<float>(eval_pool->num_rows() * static_cast<std::size_t>(prediction_dimension_), 0.0F);
+    if (!has_existing_state) {
+      booster_detail::AddBaseScoreToPredictions(
+          base_score_, prediction_dimension_, workspace.eval_predictions);
+    }
     booster_detail::AddPoolBaselineToPredictions(*eval_pool, prediction_dimension_, workspace.eval_predictions);
     if (!continue_training || eval_loss_history_.empty()) {
       best_score_ = maximize_eval_metric_ ? -std::numeric_limits<double>::infinity()

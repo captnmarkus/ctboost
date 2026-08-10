@@ -162,6 +162,12 @@ def build_onnx_model(payload: Mapping[str, Any]) -> Any:
     trees = list(payload["trees"])
     feature_count = int(payload["num_features"])
     prediction_dimension = int(payload["prediction_dimension"])
+    base_score = [
+        float(value)
+        for value in payload.get("base_score", [0.0] * prediction_dimension)
+    ]
+    if len(base_score) != prediction_dimension:
+        raise ValueError("predictor base_score dimension mismatch")
     used_features = sorted(
         {
             int(node["split_feature_id"])
@@ -215,7 +221,10 @@ def build_onnx_model(payload: Mapping[str, Any]) -> Any:
         if not terms:
             raise ValueError("ONNX export found an output dimension without trees")
         summed = terms[0] if len(terms) == 1 else builder.node("Sum", terms, "tree_sum")
-        dimension_outputs.append(summed)
+        bias = builder.constant(
+            "base_score", [base_score[output_index]], np.float32
+        )
+        dimension_outputs.append(builder.node("Add", [summed, bias], "biased_tree_sum"))
     if prediction_dimension == 1:
         squeeze_axes = builder.constant("squeeze_axes", [1], np.int64)
         raw_output = builder.node("Squeeze", [dimension_outputs[0], squeeze_axes], "raw")

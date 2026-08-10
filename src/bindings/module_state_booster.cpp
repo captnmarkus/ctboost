@@ -61,6 +61,9 @@ py::dict BoosterToStateDict(const ctboost::GradientBooster& booster) {
   state["rng_state"] = booster.rng_state();
   state["task_type"] = booster.use_gpu() ? "GPU" : "CPU";
   state["verbose"] = booster.verbose();
+  state["boost_from_average"] = booster.boost_from_average();
+  state["configured_base_score"] = booster.configured_base_score();
+  state["base_score"] = booster.base_score();
   if (const auto* quantization_schema = booster.quantization_schema(); quantization_schema != nullptr) {
     state["quantization_schema"] = QuantizationSchemaToStateDict(*quantization_schema);
   }
@@ -212,7 +215,14 @@ ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
                                    state.contains("random_seed")
                                        ? py::cast<std::uint64_t>(state["random_seed"])
                                        : 0U,
-                                   state.contains("verbose") ? py::cast<bool>(state["verbose"]) : false);
+                                   state.contains("verbose") ? py::cast<bool>(state["verbose"]) : false,
+                                   state.contains("boost_from_average")
+                                       ? py::cast<bool>(state["boost_from_average"])
+                                       : false,
+                                   state.contains("configured_base_score")
+                                       ? py::cast<std::vector<double>>(
+                                             state["configured_base_score"])
+                                       : std::vector<double>{});
 
   booster.LoadState(std::move(trees),
                     quantization_schema,
@@ -225,7 +235,10 @@ ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
                     py::cast<int>(state["best_iteration"]),
                     py::cast<double>(state["best_score"]),
                     use_gpu,
-                    state.contains("rng_state") ? py::cast<std::uint64_t>(state["rng_state"]) : 0U);
+                    state.contains("rng_state") ? py::cast<std::uint64_t>(state["rng_state"]) : 0U,
+                    state.contains("base_score")
+                        ? py::cast<std::vector<double>>(state["base_score"])
+                        : std::vector<double>{});
   return booster;
 }
 

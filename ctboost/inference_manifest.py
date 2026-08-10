@@ -19,6 +19,7 @@ _MODEL_IDENTITY_KEYS = (
     "objective_name",
     "learning_rate",
     "tree_learning_rates",
+    "base_score",
     "prediction_dimension",
     "num_features",
     "quantization_schema",
@@ -59,7 +60,11 @@ def _model_fingerprint(
     scoring_payload: Mapping[str, Any],
     class_labels: Optional[list[Any]] = None,
 ) -> str:
-    identity = {key: scoring_payload[key] for key in _MODEL_IDENTITY_KEYS}
+    identity = {
+        key: scoring_payload[key]
+        for key in _MODEL_IDENTITY_KEYS
+        if key in scoring_payload
+    }
     if class_labels is not None:
         identity["class_labels"] = _json_ready(class_labels)
     return _fingerprint(identity)
@@ -339,6 +344,7 @@ def build_inference_manifest(
             "iteration_count": len(scoring_payload.get("tree_learning_rates", []))
             or len(scoring_payload["trees"]) // prediction_dimension,
             "prediction_dimension": prediction_dimension,
+            "base_score": [float(value) for value in scoring_payload.get("base_score", ())],
         },
         "input": _input_contract(
             scoring_payload=scoring_payload,

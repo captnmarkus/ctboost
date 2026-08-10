@@ -608,6 +608,26 @@ class Booster:
         return float(self._handle.learning_rate())
 
     @property
+    def boost_from_average(self) -> bool:
+        """Whether fresh built-in training estimates an objective-specific intercept.
+
+        A configured ``base_score`` takes precedence. Automatic initialization is
+        deliberately skipped for ranking, survival, custom objectives, and pools
+        carrying per-row baselines.
+        """
+        return bool(self._handle.boost_from_average())
+
+    @property
+    def configured_base_score(self) -> List[float]:
+        """Return the optional user-configured raw-margin intercept."""
+        return [float(value) for value in self._handle.configured_base_score()]
+
+    @property
+    def base_score(self) -> np.ndarray:
+        """Return the fitted raw-margin intercept, one value per output."""
+        return np.asarray(self._handle.base_score(), dtype=np.float64)
+
+    @property
     def learning_rate_history(self) -> List[float]:
         if self._training_metadata is not None and "learning_rate_history" in self._training_metadata:
             return [float(value) for value in self._training_metadata["learning_rate_history"]]

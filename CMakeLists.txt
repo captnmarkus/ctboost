@@ -69,6 +69,7 @@ endif()
 add_library(ctboost_core STATIC
   src/core/booster.cpp
   src/core/booster_accessors.cpp
+  src/core/booster_base_score.cpp
   src/core/booster_constructor.cpp
   src/core/booster_distributed.cpp
   src/core/booster_fit.cpp

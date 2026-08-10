@@ -1,6 +1,5 @@
 import hashlib
 import io
-from pathlib import Path
 
 import pytest
 
@@ -46,7 +45,11 @@ def test_select_gpu_asset_rejects_missing_or_ambiguous_assets():
 def test_download_verified_checks_digest_and_size(tmp_path, monkeypatch):
     payload = b"verified wheel bytes"
     asset = _asset("ctboost.whl", payload)
-    monkeypatch.setattr(gpu_install.urllib.request, "urlopen", lambda *args, **kwargs: io.BytesIO(payload))
+    monkeypatch.setattr(
+        gpu_install.urllib.request,
+        "urlopen",
+        lambda *args, **kwargs: io.BytesIO(payload),
+    )
     destination = tmp_path / "ctboost.whl"
 
     digest = gpu_install._download_verified(asset, destination)
@@ -82,3 +85,58 @@ def test_dry_run_never_downloads_or_invokes_pip(monkeypatch):
     result = gpu_install.install_gpu(version="0.1.52", dry_run=True)
 
     assert result["name"] == asset["name"]
+
+
+def test_unified_gpu_wheel_is_an_idempotent_noop(monkeypatch):
+    monkeypatch.setattr(gpu_install, "__version__", "0.1.53")
+    monkeypatch.setattr(gpu_install, "_installed_cuda_enabled", lambda: True)
+    monkeypatch.setattr(
+        gpu_install,
+        "_release_assets",
+        lambda *args, **kwargs: pytest.fail(
+            "unified wheels must not query GitHub Releases"
+        ),
+    )
+    monkeypatch.setattr(
+        gpu_install.subprocess,
+        "run",
+        lambda *args, **kwargs: pytest.fail(
+            "unified wheels must not invoke pip in-process"
+        ),
+    )
+
+    result = gpu_install.install_gpu(version="0.1.53")
+
+    assert result["already_installed"] is True
+    assert result["name"] == "ctboost==0.1.53"
+    assert result["url"] == "https://pypi.org/project/ctboost/0.1.53/"
+
+
+def test_unified_cpu_build_points_to_ordinary_pip_without_self_replacement(monkeypatch):
+    monkeypatch.setattr(gpu_install, "__version__", "0.1.53")
+    monkeypatch.setattr(gpu_install, "_installed_cuda_enabled", lambda: False)
+    monkeypatch.setattr(
+        gpu_install.subprocess,
+        "run",
+        lambda *args, **kwargs: pytest.fail(
+            "a loaded Windows extension must not be replaced"
+        ),
+    )
+
+    with pytest.raises(
+        RuntimeError, match="ordinary Linux x86-64 and Windows AMD64 wheels"
+    ):
+        gpu_install.install_gpu(version="0.1.53")
+
+
+def test_newer_unified_version_never_uses_legacy_release_asset_names(monkeypatch):
+    monkeypatch.setattr(
+        gpu_install,
+        "_release_assets",
+        lambda *args, **kwargs: pytest.fail(
+            "unified wheels must not query legacy assets"
+        ),
+    )
+
+    with pytest.raises(RuntimeError, match="pip install"):
+        gpu_install.install_gpu(version="0.2.0", dry_run=True)

@@ -24,6 +24,8 @@ _NATIVE_TRAIN_PARAM_KEYS = {
     "bagging_temperature",
     "boosting_type",
     "bootstrap_type",
+    "boost_from_average",
+    "base_score",
     "border_selection_method",
     "colsample_bytree",
     "devices",
