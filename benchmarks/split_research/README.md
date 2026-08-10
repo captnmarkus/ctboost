@@ -25,6 +25,17 @@ interpretation and literature links.
 
 The [external ablation panel](EXTERNAL_PANEL.md) freezes task IDs, folds,
 profiles, metrics, and promotion thresholds before native results are run.
+Its runner is split into protocol, OpenML/provenance, isolated-worker, and
+aggregation modules. Inspect its exact machine-readable schedule without
+network access or a fit:
+
+```bash
+python -m benchmarks.split_research.external_panel metadata
+python -m benchmarks.split_research.external_panel preflight
+```
+
+The result-producing `run` command is documented in the frozen panel ledger and
+is intentionally not part of the synthetic reference experiment above.
 
 Reference implementations include:
 
