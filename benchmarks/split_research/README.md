@@ -23,6 +23,9 @@ Bonferroni results, category-ordering diagnostics, and reference runtimes.
 See [the decision record](../../docs/split-statistics-research.md) for the
 interpretation and literature links.
 
+The [external ablation panel](EXTERNAL_PANEL.md) freezes task IDs, folds,
+profiles, metrics, and promotion thresholds before native results are run.
+
 Reference implementations include:
 
 - the current nominal `k - 1` quadratic test, with explicit

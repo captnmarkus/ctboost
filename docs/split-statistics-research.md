@@ -145,6 +145,7 @@ non-negotiable if any target-derived ordering is exposed.
 | Raw 255-bin `k - 1` test as a numeric strategy | Do not advance | Null-conservative and zero power in the high-cardinality stress test. The released production default remains unchanged until an external/native ablation justifies migration. |
 | Smoothed WoE as a separate binary category ordering | Do not advance | Algebraically ranking-equivalent to the matched Newton score in this setting; same-row target use leaks. |
 
-The next gate for grouped 8 is a native, opt-in implementation followed by
-fixed-seed external datasets and TabArena ablations. Synthetic results alone
-are insufficient to change CTBoost defaults or claim an Elo improvement.
+The next gate for grouped 8 is a native, opt-in implementation followed by the
+[pre-registered external panel](https://github.com/captnmarkus/ctboost/blob/master/benchmarks/split_research/EXTERNAL_PANEL.md)
+and only then a frozen TabArena ablation. Synthetic results alone are
+insufficient to change CTBoost defaults or claim an Elo improvement.
