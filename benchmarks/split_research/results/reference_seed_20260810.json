@@ -1,0 +1,664 @@
+{
+  "schema_version": 1,
+  "status": "reference_only_not_integrated",
+  "config": {
+    "repetitions": 250,
+    "global_repetitions": 200,
+    "n_observations": 320,
+    "n_permutations": 199,
+    "alpha": 0.05,
+    "effect_size": 0.6,
+    "seed": 20260810,
+    "maxstat_calibration": "one shared response-permutation draw per feature test is evaluated across every eligible cutpoint; inclusive plus-one Monte Carlo p-value"
+  },
+  "scenarios": [
+    {
+      "scenario": {
+        "name": "null_cardinality_2",
+        "family": "null",
+        "relationship": "independent",
+        "cardinality": 2,
+        "missing_rate": 0.0,
+        "frequency_weighted": false
+      },
+      "repetitions": 250,
+      "methods": {
+        "nominal_quadratic": {
+          "rejection_rate": 0.044,
+          "median_p_value": 0.5263030788335135,
+          "p10": 0.12881190361991227,
+          "p90": 0.8832834931060882
+        },
+        "ordered_midrank": {
+          "rejection_rate": 0.044,
+          "median_p_value": 0.5263030785891062,
+          "p10": 0.12881190335695628,
+          "p90": 0.8832834930367692
+        },
+        "permutation_maxstat": {
+          "rejection_rate": 0.052,
+          "median_p_value": 0.525,
+          "p10": 0.1395,
+          "p90": 0.8855
+        }
+      }
+    },
+    {
+      "scenario": {
+        "name": "null_cardinality_8",
+        "family": "null",
+        "relationship": "independent",
+        "cardinality": 8,
+        "missing_rate": 0.0,
+        "frequency_weighted": false
+      },
+      "repetitions": 250,
+      "methods": {
+        "nominal_quadratic": {
+          "rejection_rate": 0.044,
+          "median_p_value": 0.5291303338261162,
+          "p10": 0.13149303900845516,
+          "p90": 0.8526801391828503
+        },
+        "ordered_midrank": {
+          "rejection_rate": 0.068,
+          "median_p_value": 0.476510728653819,
+          "p10": 0.1113694450385526,
+          "p90": 0.9029268308832805
+        },
+        "permutation_maxstat": {
+          "rejection_rate": 0.044,
+          "median_p_value": 0.51,
+          "p10": 0.125,
+          "p90": 0.8869999999999999
+        }
+      }
+    },
+    {
+      "scenario": {
+        "name": "null_cardinality_32",
+        "family": "null",
+        "relationship": "independent",
+        "cardinality": 32,
+        "missing_rate": 0.0,
+        "frequency_weighted": false
+      },
+      "repetitions": 250,
+      "methods": {
+        "nominal_quadratic": {
+          "rejection_rate": 0.052,
+          "median_p_value": 0.451848070594568,
+          "p10": 0.09369331835402622,
+          "p90": 0.8450792748864258
+        },
+        "ordered_midrank": {
+          "rejection_rate": 0.056,
+          "median_p_value": 0.503359928723976,
+          "p10": 0.0928958039250195,
+          "p90": 0.8603516849810451
+        },
+        "permutation_maxstat": {
+          "rejection_rate": 0.056,
+          "median_p_value": 0.48,
+          "p10": 0.11,
+          "p90": 0.8729999999999998
+        }
+      }
+    },
+    {
+      "scenario": {
+        "name": "null_cardinality_64",
+        "family": "null",
+        "relationship": "independent",
+        "cardinality": 64,
+        "missing_rate": 0.0,
+        "frequency_weighted": false
+      },
+      "repetitions": 250,
+      "methods": {
+        "nominal_quadratic": {
+          "rejection_rate": 0.032,
+          "median_p_value": 0.49006957261890927,
+          "p10": 0.12000027578288387,
+          "p90": 0.875478896035649
+        },
+        "ordered_midrank": {
+          "rejection_rate": 0.056,
+          "median_p_value": 0.49318141740142396,
+          "p10": 0.12828725045571318,
+          "p90": 0.8875387317188316
+        },
+        "permutation_maxstat": {
+          "rejection_rate": 0.056,
+          "median_p_value": 0.4375,
+          "p10": 0.08,
+          "p90": 0.89
+        }
+      }
+    },
+    {
+      "scenario": {
+        "name": "null_cardinality_255",
+        "family": "null",
+        "relationship": "independent",
+        "cardinality": 255,
+        "missing_rate": 0.0,
+        "frequency_weighted": false
+      },
+      "repetitions": 250,
+      "methods": {
+        "nominal_quadratic": {
+          "rejection_rate": 0.008,
+          "median_p_value": 0.4772912711119514,
+          "p10": 0.18942080291226146,
+          "p90": 0.7870784431042155
+        },
+        "ordered_midrank": {
+          "rejection_rate": 0.04,
+          "median_p_value": 0.5478177475972961,
+          "p10": 0.11031637222928457,
+          "p90": 0.9108829351508058
+        },
+        "permutation_maxstat": {
+          "rejection_rate": 0.064,
+          "median_p_value": 0.525,
+          "p10": 0.1,
+          "p90": 0.885
+        }
+      }
+    },
+    {
+      "scenario": {
+        "name": "null_missing_0",
+        "family": "null",
+        "relationship": "independent",
+        "cardinality": 8,
+        "missing_rate": 0.0,
+        "frequency_weighted": false
+      },
+      "repetitions": 250,
+      "methods": {
+        "nominal_quadratic": {
+          "rejection_rate": 0.052,
+          "median_p_value": 0.5053627094208515,
+          "p10": 0.09813699927227362,
+          "p90": 0.9098764932017251
+        },
+        "ordered_midrank": {
+          "rejection_rate": 0.044,
+          "median_p_value": 0.4970628491603944,
+          "p10": 0.0976596072927678,
+          "p90": 0.9040184892607127
+        },
+        "permutation_maxstat": {
+          "rejection_rate": 0.044,
+          "median_p_value": 0.52,
+          "p10": 0.095,
+          "p90": 0.9
+        }
+      }
+    },
+    {
+      "scenario": {
+        "name": "null_missing_30",
+        "family": "null",
+        "relationship": "independent",
+        "cardinality": 8,
+        "missing_rate": 0.3,
+        "frequency_weighted": false
+      },
+      "repetitions": 250,
+      "methods": {
+        "nominal_quadratic": {
+          "rejection_rate": 0.024,
+          "median_p_value": 0.45630023586242485,
+          "p10": 0.11573052422798986,
+          "p90": 0.8517392697128697
+        },
+        "ordered_midrank": {
+          "rejection_rate": 0.056,
+          "median_p_value": 0.49135660322374974,
+          "p10": 0.08432428797253633,
+          "p90": 0.9112797743271169
+        },
+        "permutation_maxstat": {
+          "rejection_rate": 0.048,
+          "median_p_value": 0.46,
+          "p10": 0.11450000000000002,
+          "p90": 0.8809999999999999
+        }
+      }
+    },
+    {
+      "scenario": {
+        "name": "null_frequency_weights",
+        "family": "null",
+        "relationship": "independent_binary_aggregate",
+        "cardinality": 8,
+        "missing_rate": 0.0,
+        "frequency_weighted": true
+      },
+      "repetitions": 250,
+      "methods": {
+        "nominal_quadratic": {
+          "rejection_rate": 0.052,
+          "median_p_value": 0.4923300995544645,
+          "p10": 0.09005026868944124,
+          "p90": 0.9143241014162462
+        },
+        "ordered_midrank": {
+          "rejection_rate": 0.024,
+          "median_p_value": 0.5272503470595039,
+          "p10": 0.10575120373184159,
+          "p90": 0.9144625583447733
+        },
+        "permutation_maxstat": {
+          "rejection_rate": 0.056,
+          "median_p_value": 0.5225,
+          "p10": 0.13350000000000004,
+          "p90": 0.9
+        }
+      }
+    },
+    {
+      "scenario": {
+        "name": "power_smooth",
+        "family": "power",
+        "relationship": "smooth",
+        "cardinality": null,
+        "missing_rate": 0.0,
+        "frequency_weighted": false
+      },
+      "repetitions": 250,
+      "methods": {
+        "nominal_quadratic": {
+          "rejection_rate": 1.0,
+          "median_p_value": 2.8823623098254077e-16,
+          "p10": 7.164102387286585e-20,
+          "p90": 5.38210840227665e-13
+        },
+        "ordered_midrank": {
+          "rejection_rate": 1.0,
+          "median_p_value": 3.3213667179276285e-20,
+          "p10": 8.351595749593662e-24,
+          "p90": 1.5851309502394957e-16
+        },
+        "permutation_maxstat": {
+          "rejection_rate": 1.0,
+          "median_p_value": 0.005,
+          "p10": 0.005,
+          "p90": 0.005
+        }
+      }
+    },
+    {
+      "scenario": {
+        "name": "power_abrupt",
+        "family": "power",
+        "relationship": "abrupt",
+        "cardinality": null,
+        "missing_rate": 0.0,
+        "frequency_weighted": false
+      },
+      "repetitions": 250,
+      "methods": {
+        "nominal_quadratic": {
+          "rejection_rate": 1.0,
+          "median_p_value": 5.150530208277582e-15,
+          "p10": 1.7173007145075705e-18,
+          "p90": 7.96211491833321e-12
+        },
+        "ordered_midrank": {
+          "rejection_rate": 1.0,
+          "median_p_value": 1.591275188677586e-14,
+          "p10": 4.828345906664004e-18,
+          "p90": 1.8534763968359085e-11
+        },
+        "permutation_maxstat": {
+          "rejection_rate": 1.0,
+          "median_p_value": 0.005,
+          "p10": 0.005,
+          "p90": 0.005
+        }
+      }
+    },
+    {
+      "scenario": {
+        "name": "power_u_shaped",
+        "family": "power",
+        "relationship": "u_shaped",
+        "cardinality": null,
+        "missing_rate": 0.0,
+        "frequency_weighted": false
+      },
+      "repetitions": 250,
+      "methods": {
+        "nominal_quadratic": {
+          "rejection_rate": 1.0,
+          "median_p_value": 3.7202132184587014e-15,
+          "p10": 2.2373555137016695e-18,
+          "p90": 5.879194536157461e-12
+        },
+        "ordered_midrank": {
+          "rejection_rate": 0.096,
+          "median_p_value": 0.41198580646690663,
+          "p10": 0.055089982948400354,
+          "p90": 0.8911536565898436
+        },
+        "permutation_maxstat": {
+          "rejection_rate": 1.0,
+          "median_p_value": 0.005,
+          "p10": 0.005,
+          "p90": 0.005
+        }
+      }
+    }
+  ],
+  "global_null": {
+    "repetitions": 200,
+    "cardinalities": [
+      2,
+      8,
+      32,
+      64,
+      255
+    ],
+    "alpha": 0.05,
+    "methods": {
+      "nominal_quadratic": {
+        "familywise_rejection_rate": 0.015,
+        "selected_counts_after_stop": {
+          "2": 0,
+          "8": 3,
+          "32": 0,
+          "64": 0,
+          "255": 0
+        }
+      },
+      "ordered_midrank": {
+        "familywise_rejection_rate": 0.04,
+        "selected_counts_after_stop": {
+          "2": 0,
+          "8": 0,
+          "32": 2,
+          "64": 3,
+          "255": 3
+        }
+      },
+      "permutation_maxstat": {
+        "familywise_rejection_rate": 0.035,
+        "selected_counts_after_stop": {
+          "2": 2,
+          "8": 0,
+          "32": 3,
+          "64": 1,
+          "255": 1
+        }
+      }
+    }
+  },
+  "numeric_quantization": {
+    "repetitions": 250,
+    "n_observations": 320,
+    "requested_bin_counts": [
+      8,
+      32,
+      64,
+      255
+    ],
+    "note": "For continuous inputs, the final setting is min(255, n_observations); ordered and maxstat rates are computed once per data replicate and repeated for comparison, not retuned per quantization.",
+    "rows": [
+      {
+        "relationship": "null",
+        "requested_bins": 8,
+        "nominal_rejection_rate": 0.036,
+        "nominal_median_p_value": 0.47571912598445293,
+        "ordered_midrank": 0.044,
+        "permutation_maxstat": 0.056
+      },
+      {
+        "relationship": "null",
+        "requested_bins": 32,
+        "nominal_rejection_rate": 0.028,
+        "nominal_median_p_value": 0.4877649930381367,
+        "ordered_midrank": 0.044,
+        "permutation_maxstat": 0.056
+      },
+      {
+        "relationship": "null",
+        "requested_bins": 64,
+        "nominal_rejection_rate": 0.012,
+        "nominal_median_p_value": 0.4890770778578175,
+        "ordered_midrank": 0.044,
+        "permutation_maxstat": 0.056
+      },
+      {
+        "relationship": "null",
+        "requested_bins": 255,
+        "nominal_rejection_rate": 0.0,
+        "nominal_median_p_value": 0.48952743266375626,
+        "ordered_midrank": 0.044,
+        "permutation_maxstat": 0.056
+      },
+      {
+        "relationship": "smooth",
+        "requested_bins": 8,
+        "nominal_rejection_rate": 1.0,
+        "nominal_median_p_value": 5.42541812101827e-16,
+        "ordered_midrank": 1.0,
+        "permutation_maxstat": 1.0
+      },
+      {
+        "relationship": "smooth",
+        "requested_bins": 32,
+        "nominal_rejection_rate": 1.0,
+        "nominal_median_p_value": 3.5799520074982343e-10,
+        "ordered_midrank": 1.0,
+        "permutation_maxstat": 1.0
+      },
+      {
+        "relationship": "smooth",
+        "requested_bins": 64,
+        "nominal_rejection_rate": 1.0,
+        "nominal_median_p_value": 1.3707089022516126e-06,
+        "ordered_midrank": 1.0,
+        "permutation_maxstat": 1.0
+      },
+      {
+        "relationship": "smooth",
+        "requested_bins": 255,
+        "nominal_rejection_rate": 0.0,
+        "nominal_median_p_value": 0.22143471080790283,
+        "ordered_midrank": 1.0,
+        "permutation_maxstat": 1.0
+      },
+      {
+        "relationship": "abrupt",
+        "requested_bins": 8,
+        "nominal_rejection_rate": 1.0,
+        "nominal_median_p_value": 8.341139903426025e-15,
+        "ordered_midrank": 1.0,
+        "permutation_maxstat": 1.0
+      },
+      {
+        "relationship": "abrupt",
+        "requested_bins": 32,
+        "nominal_rejection_rate": 1.0,
+        "nominal_median_p_value": 5.983268652597328e-10,
+        "ordered_midrank": 1.0,
+        "permutation_maxstat": 1.0
+      },
+      {
+        "relationship": "abrupt",
+        "requested_bins": 64,
+        "nominal_rejection_rate": 1.0,
+        "nominal_median_p_value": 1.752604361110968e-06,
+        "ordered_midrank": 1.0,
+        "permutation_maxstat": 1.0
+      },
+      {
+        "relationship": "abrupt",
+        "requested_bins": 255,
+        "nominal_rejection_rate": 0.0,
+        "nominal_median_p_value": 0.21036044069244042,
+        "ordered_midrank": 1.0,
+        "permutation_maxstat": 1.0
+      },
+      {
+        "relationship": "u_shaped",
+        "requested_bins": 8,
+        "nominal_rejection_rate": 1.0,
+        "nominal_median_p_value": 2.811461024181555e-15,
+        "ordered_midrank": 0.092,
+        "permutation_maxstat": 1.0
+      },
+      {
+        "relationship": "u_shaped",
+        "requested_bins": 32,
+        "nominal_rejection_rate": 1.0,
+        "nominal_median_p_value": 2.6296349001043196e-10,
+        "ordered_midrank": 0.092,
+        "permutation_maxstat": 1.0
+      },
+      {
+        "relationship": "u_shaped",
+        "requested_bins": 64,
+        "nominal_rejection_rate": 1.0,
+        "nominal_median_p_value": 8.540242432803331e-07,
+        "ordered_midrank": 0.092,
+        "permutation_maxstat": 1.0
+      },
+      {
+        "relationship": "u_shaped",
+        "requested_bins": 255,
+        "nominal_rejection_rate": 0.0,
+        "nominal_median_p_value": 0.21575690441301365,
+        "ordered_midrank": 0.092,
+        "permutation_maxstat": 1.0
+      }
+    ]
+  },
+  "missing_policy": {
+    "repetitions": 2000,
+    "n_observations": 320,
+    "cardinality": 8,
+    "missing_rate": 0.3,
+    "alpha": 0.05,
+    "policies": {
+      "production_bin": {
+        "rejection_rate": 0.042,
+        "median_p_value": 0.48715267210636287
+      },
+      "ctree_omit": {
+        "rejection_rate": 0.04,
+        "median_p_value": 0.49874253706351845
+      }
+    }
+  },
+  "grouped_hybrid": {
+    "repetitions_per_relationship": 250,
+    "n_observations": 320,
+    "raw_bins": 255,
+    "alpha": 0.05,
+    "rows": [
+      {
+        "relationship": "null",
+        "rejection_rates": {
+          "raw_nominal_255": 0.0,
+          "grouped_quadratic_8": 0.04,
+          "grouped_quadratic_16": 0.024,
+          "ordered_midrank": 0.056,
+          "hybrid_8": 0.048,
+          "hybrid_16": 0.052,
+          "permutation_maxstat": 0.036
+        }
+      },
+      {
+        "relationship": "smooth",
+        "rejection_rates": {
+          "raw_nominal_255": 0.0,
+          "grouped_quadratic_8": 1.0,
+          "grouped_quadratic_16": 1.0,
+          "ordered_midrank": 1.0,
+          "hybrid_8": 1.0,
+          "hybrid_16": 1.0,
+          "permutation_maxstat": 1.0
+        }
+      },
+      {
+        "relationship": "abrupt",
+        "rejection_rates": {
+          "raw_nominal_255": 0.0,
+          "grouped_quadratic_8": 1.0,
+          "grouped_quadratic_16": 1.0,
+          "ordered_midrank": 1.0,
+          "hybrid_8": 1.0,
+          "hybrid_16": 1.0,
+          "permutation_maxstat": 1.0
+        }
+      },
+      {
+        "relationship": "u_shaped",
+        "rejection_rates": {
+          "raw_nominal_255": 0.0,
+          "grouped_quadratic_8": 1.0,
+          "grouped_quadratic_16": 1.0,
+          "ordered_midrank": 0.112,
+          "hybrid_8": 1.0,
+          "hybrid_16": 1.0,
+          "permutation_maxstat": 1.0
+        }
+      },
+      {
+        "relationship": "missing_signal",
+        "rejection_rates": {
+          "raw_nominal_255": 0.528,
+          "grouped_quadratic_8": 1.0,
+          "grouped_quadratic_16": 1.0,
+          "ordered_midrank": 0.048,
+          "hybrid_8": 1.0,
+          "hybrid_16": 1.0,
+          "permutation_maxstat": 0.076
+        }
+      }
+    ],
+    "mean_microseconds_per_test": {
+      "raw_nominal_255": 1500.9044800593983,
+      "grouped_quadratic_8": 1458.3440800546668,
+      "grouped_quadratic_16": 1444.8304800142068,
+      "ordered_midrank": 2222.990080015734,
+      "hybrid_8": 3686.66344024823,
+      "hybrid_16": 3710.0637600582554,
+      "permutation_maxstat": 2725.3260000492446
+    },
+    "guardrail": "Grouping affects feature selection only; any later gain/cut search would retain all raw bins. Hybrid p-values include a within-feature Bonferroni factor of two."
+  },
+  "categorical_diagnostics": {
+    "newton_woe": {
+      "pairwise_order_agreement": 1.0,
+      "orders_equal": true,
+      "matched_smoothing": 8.928019194881363,
+      "newton_order": [
+        "level_1",
+        "level_0",
+        "level_2",
+        "level_3",
+        "level_4"
+      ],
+      "woe_order": [
+        "level_1",
+        "level_0",
+        "level_2",
+        "level_3",
+        "level_4"
+      ]
+    },
+    "unique_category_null": {
+      "n_observations": 240,
+      "in_sample_target_correlation": 1.0,
+      "cross_fitted_target_correlation": 0.0,
+      "cross_fitted_all_unseen_are_zero": true
+    }
+  },
+  "elapsed_seconds": 54.299994099994365
+}
