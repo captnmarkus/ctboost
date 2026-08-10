@@ -623,6 +623,7 @@ def _training_parameters(args: argparse.Namespace) -> Dict[str, Any]:
         "iterations": args.iterations,
         "learning_rate": args.learning_rate,
         "max_depth": args.max_depth,
+        "leaf_estimation_iterations": args.leaf_estimation_iterations,
         "random_seed": args.random_seed,
         "task_type": args.task_type,
         "devices": args.devices,
@@ -953,6 +954,12 @@ def build_parser() -> argparse.ArgumentParser:
     train_parser.add_argument("--iterations", type=int, help="Override iterations")
     train_parser.add_argument("--learning-rate", type=float, help="Override learning_rate")
     train_parser.add_argument("--max-depth", type=int, help="Override max_depth")
+    train_parser.add_argument(
+        "--leaf-estimation-iterations",
+        type=int,
+        choices=range(1, 6),
+        help="Override fixed-structure leaf estimation steps for single-output objectives (1-5)",
+    )
     train_parser.add_argument("--random-seed", type=int, help="Override random_seed")
     train_parser.add_argument("--task-type", choices=("CPU", "GPU"), help="Override task_type")
     train_parser.add_argument("--devices", help="Override GPU devices")

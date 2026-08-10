@@ -8,6 +8,7 @@ void RunSingleOutputIteration(const FitLoopContext& context,
                               const FitLoopState& state,
                               DistributedCoordinator* distributed_coordinator,
                               const std::vector<float>& iteration_weights,
+                              const std::vector<float>& gradient_predictions,
                               const DartPredictionState& dart_state,
                               double dropped_tree_scale,
                               double new_tree_scale,
@@ -40,6 +41,20 @@ void RunSingleOutputIteration(const FitLoopContext& context,
   timing->tree_ms += single_tree_ms;
   context.profiler->LogTreeBuild(
       total_iteration + 1, state.target_total_iterations, 0, context.prediction_dimension, single_tree_ms);
+
+  if (context.leaf_estimation_iterations > 1) {
+    const auto leaf_estimation_start = std::chrono::steady_clock::now();
+    RefineSingleOutputTreeLeaves(context,
+                                 tree,
+                                 training_row_indices,
+                                 training_leaf_ranges,
+                                 iteration_weights,
+                                 gradient_predictions,
+                                 distributed_coordinator);
+    timing->tree_ms += std::chrono::duration<double, std::milli>(
+                           std::chrono::steady_clock::now() - leaf_estimation_start)
+                           .count();
+  }
 
   const auto prediction_start = std::chrono::steady_clock::now();
   ApplyDroppedTreeAdjustments(context, dart_state, dropped_tree_scale);

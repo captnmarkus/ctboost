@@ -40,6 +40,7 @@ _NATIVE_TRAIN_PARAM_KEYS = {
     "interaction_constraints",
     "iterations",
     "lambda_l2",
+    "leaf_estimation_iterations",
     "learning_rate",
     "loss_function",
     "max_bin_by_feature",

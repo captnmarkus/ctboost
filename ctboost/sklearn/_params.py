@@ -89,6 +89,7 @@ class _BaseInitMixin:
             min_child_weight: float = 0.0,
             gamma: float = 0.0,
             max_leaf_weight: float = 0.0,
+            leaf_estimation_iterations: int = 1,
             max_bins: int = 256,
             max_bin_by_feature: Optional[Any] = None,
             border_selection_method: str = "Quantile",
@@ -181,6 +182,7 @@ class _BaseInitMixin:
             self.min_child_weight = min_child_weight
             self.gamma = gamma
             self.max_leaf_weight = max_leaf_weight
+            self.leaf_estimation_iterations = leaf_estimation_iterations
             self.max_bins = max_bins
             self.max_bin_by_feature = max_bin_by_feature
             self.border_selection_method = border_selection_method
@@ -262,6 +264,7 @@ class _BaseInitMixin:
                 "embedding_target_mode": "auto",
                 "boost_from_average": True,
                 "base_score": None,
+                "leaf_estimation_iterations": 1,
             }
             for name, default in preprocessing_defaults.items():
                 if not hasattr(self, name):

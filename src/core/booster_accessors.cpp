@@ -39,6 +39,9 @@ int GradientBooster::min_data_in_leaf() const noexcept { return min_data_in_leaf
 double GradientBooster::min_child_weight() const noexcept { return min_child_weight_; }
 double GradientBooster::gamma() const noexcept { return gamma_; }
 double GradientBooster::max_leaf_weight() const noexcept { return max_leaf_weight_; }
+int GradientBooster::leaf_estimation_iterations() const noexcept {
+  return leaf_estimation_iterations_;
+}
 std::size_t GradientBooster::max_bins() const noexcept { return max_bins_; }
 const std::string& GradientBooster::nan_mode_name() const noexcept { return hist_builder_.nan_mode_name(); }
 const std::vector<std::uint16_t>& GradientBooster::max_bin_by_feature() const noexcept { return hist_builder_.max_bins_by_feature(); }

@@ -316,6 +316,155 @@ DistributedMetricInputs AllGatherFilesystemMetricInputs(
   throw std::runtime_error("timed out waiting for distributed metric result");
 }
 
+std::vector<std::uint8_t> SerializeLeafStatistics(
+    const LeafStatistics& statistics) {
+  if (statistics.gradient_sums.size() != statistics.hessian_sums.size()) {
+    throw std::invalid_argument(
+        "leaf gradient and hessian statistic buffers must have matching sizes");
+  }
+  std::vector<std::uint8_t> buffer;
+  const std::uint64_t statistic_count =
+      static_cast<std::uint64_t>(statistics.gradient_sums.size());
+  buffer.reserve(sizeof(statistic_count) +
+                 statistics.gradient_sums.size() * 2U * sizeof(double));
+  AppendBinary(buffer, statistic_count);
+  for (const double value : statistics.gradient_sums) {
+    AppendBinary(buffer, value);
+  }
+  for (const double value : statistics.hessian_sums) {
+    AppendBinary(buffer, value);
+  }
+  return buffer;
+}
+
+LeafStatistics DeserializeLeafStatistics(
+    const std::vector<std::uint8_t>& buffer) {
+  std::size_t offset = 0;
+  const std::uint64_t statistic_count = ReadBinary<std::uint64_t>(buffer, offset);
+  if (statistic_count >
+      static_cast<std::uint64_t>((buffer.size() - offset) / (2U * sizeof(double)))) {
+    throw std::runtime_error("distributed leaf statistic payload is truncated");
+  }
+  LeafStatistics statistics;
+  statistics.gradient_sums.resize(static_cast<std::size_t>(statistic_count));
+  statistics.hessian_sums.resize(static_cast<std::size_t>(statistic_count));
+  for (double& value : statistics.gradient_sums) {
+    value = ReadBinary<double>(buffer, offset);
+  }
+  for (double& value : statistics.hessian_sums) {
+    value = ReadBinary<double>(buffer, offset);
+  }
+  if (offset != buffer.size()) {
+    throw std::runtime_error("distributed leaf statistic payload has trailing bytes");
+  }
+  return statistics;
+}
+
+LeafStatistics ReduceLeafStatisticPayloads(
+    const std::vector<std::vector<std::uint8_t>>& payloads) {
+  LeafStatistics reduced;
+  bool initialized = false;
+  for (const auto& payload : payloads) {
+    const LeafStatistics shard = DeserializeLeafStatistics(payload);
+    if (!initialized) {
+      reduced.gradient_sums.assign(shard.gradient_sums.size(), 0.0);
+      reduced.hessian_sums.assign(shard.hessian_sums.size(), 0.0);
+      initialized = true;
+    } else if (shard.gradient_sums.size() != reduced.gradient_sums.size()) {
+      throw std::runtime_error(
+          "distributed leaf statistic shards must have matching sizes");
+    }
+    for (std::size_t index = 0; index < shard.gradient_sums.size(); ++index) {
+      reduced.gradient_sums[index] += shard.gradient_sums[index];
+      reduced.hessian_sums[index] += shard.hessian_sums[index];
+    }
+  }
+  return reduced;
+}
+
+LeafStatistics AllReduceFilesystemLeafStatistics(
+    const DistributedCoordinator& coordinator,
+    const char* label,
+    const LeafStatistics& local_statistics) {
+  const std::filesystem::path directory =
+      DistributedMetricOperationDir(coordinator, label);
+  const auto deadline = std::chrono::steady_clock::now() +
+                        std::chrono::duration<double>(coordinator.timeout_seconds);
+  const std::string local_nonce = FreshDistributedNonce();
+  const std::filesystem::path challenge_path = directory / "challenge.bin";
+  if (coordinator.rank == 0) {
+    const std::string root_nonce = FreshDistributedNonce();
+    WriteDistributedMetricPayload(
+        challenge_path,
+        std::vector<std::uint8_t>(root_nonce.begin(), root_nonce.end()));
+    std::vector<std::vector<std::uint8_t>> payloads(
+        static_cast<std::size_t>(coordinator.world_size));
+    std::vector<std::filesystem::path> request_paths(
+        static_cast<std::size_t>(coordinator.world_size));
+    payloads[0] = SerializeLeafStatistics(local_statistics);
+    for (int rank = 1; rank < coordinator.world_size; ++rank) {
+      const std::string prefix =
+          "request_" + DistributedMetricRankName(rank) + "_" + root_nonce + "_";
+      while (request_paths[static_cast<std::size_t>(rank)].empty()) {
+        request_paths[static_cast<std::size_t>(rank)] =
+            FindDistributedMetricRequest(directory, prefix);
+        if (!request_paths[static_cast<std::size_t>(rank)].empty()) {
+          break;
+        }
+        if (std::chrono::steady_clock::now() >= deadline) {
+          throw std::runtime_error(
+              "timed out waiting for distributed leaf statistic request");
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      }
+      if (!TryReadDistributedMetricPayload(
+              request_paths[static_cast<std::size_t>(rank)],
+              payloads[static_cast<std::size_t>(rank)])) {
+        throw std::runtime_error(
+            "failed to read distributed leaf statistic request");
+      }
+    }
+    const LeafStatistics reduced = ReduceLeafStatisticPayloads(payloads);
+    const std::vector<std::uint8_t> reduced_payload =
+        SerializeLeafStatistics(reduced);
+    for (int rank = 1; rank < coordinator.world_size; ++rank) {
+      const std::string request_name =
+          request_paths[static_cast<std::size_t>(rank)].filename().string();
+      WriteDistributedMetricPayload(
+          directory /
+              ("result_" + request_name.substr(std::string("request_").size())),
+          reduced_payload);
+    }
+    return reduced;
+  }
+
+  std::string active_root_nonce;
+  std::filesystem::path result_path;
+  while (std::chrono::steady_clock::now() < deadline) {
+    std::vector<std::uint8_t> challenge;
+    if (TryReadDistributedMetricPayload(challenge_path, challenge)) {
+      const std::string root_nonce(challenge.begin(), challenge.end());
+      if (!root_nonce.empty() && root_nonce != active_root_nonce) {
+        active_root_nonce = root_nonce;
+        const std::string suffix = DistributedMetricRankName(coordinator.rank) + "_" +
+                                   active_root_nonce + "_" + local_nonce + ".bin";
+        WriteDistributedMetricPayload(
+            directory / ("request_" + suffix),
+            SerializeLeafStatistics(local_statistics));
+        result_path = directory / ("result_" + suffix);
+      }
+    }
+    std::vector<std::uint8_t> result;
+    if (!result_path.empty() &&
+        TryReadDistributedMetricPayload(result_path, result)) {
+      return DeserializeLeafStatistics(result);
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+  throw std::runtime_error(
+      "timed out waiting for distributed leaf statistic result");
+}
+
 }  // namespace
 
 std::vector<std::uint8_t> SerializeDistributedMetricControl(
@@ -382,6 +531,38 @@ DistributedMetricInputs AllGatherDistributedMetricInputs(
       coordinator->world_size,
       SerializeDistributedMetricInputs(local_inputs));
   return MergeDistributedMetricInputs(DeserializeGatheredPayloads(response));
+}
+
+LeafStatistics AllReduceLeafStatistics(const DistributedCoordinator* coordinator,
+                                       const char* label,
+                                       const LeafStatistics& local_statistics) {
+  if (local_statistics.gradient_sums.size() != local_statistics.hessian_sums.size()) {
+    throw std::invalid_argument(
+        "leaf gradient and hessian statistic buffers must have matching sizes");
+  }
+  if (coordinator == nullptr || coordinator->world_size <= 1) {
+    return local_statistics;
+  }
+  if (!DistributedRootUsesTcp(coordinator->root)) {
+    return AllReduceFilesystemLeafStatistics(
+        *coordinator, label, local_statistics);
+  }
+  const std::string key = coordinator->run_id + "/" +
+                          std::to_string(coordinator->tree_index) + "/" + label;
+  const std::vector<std::uint8_t> response = DistributedTcpRequest(
+      coordinator->root,
+      coordinator->timeout_seconds,
+      "allgather",
+      key,
+      coordinator->rank,
+      coordinator->world_size,
+      SerializeLeafStatistics(local_statistics));
+  const std::vector<std::vector<std::uint8_t>> payloads =
+      DeserializeGatheredPayloads(response);
+  if (payloads.size() != static_cast<std::size_t>(coordinator->world_size)) {
+    throw std::runtime_error("distributed leaf statistic rank count mismatch");
+  }
+  return ReduceLeafStatisticPayloads(payloads);
 }
 
 }  // namespace ctboost::booster_detail

@@ -163,6 +163,7 @@ class _BaseFitMixin:
                 "min_child_weight": self.min_child_weight,
                 "gamma": self.gamma,
                 "max_leaf_weight": self.max_leaf_weight,
+                "leaf_estimation_iterations": self.leaf_estimation_iterations,
                 "max_bins": self.max_bins,
                 "max_bin_by_feature": self.max_bin_by_feature,
                 "border_selection_method": self.border_selection_method,

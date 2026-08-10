@@ -74,6 +74,7 @@ add_library(ctboost_core STATIC
   src/core/booster_distributed.cpp
   src/core/booster_fit.cpp
   src/core/booster_fit_iteration.cpp
+  src/core/booster_leaf_estimation.cpp
   src/core/booster_fit_loop.cpp
   src/core/booster_fit_metrics.cpp
   src/core/booster_fit_multiclass.cpp

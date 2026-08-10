@@ -56,7 +56,8 @@ GradientBooster::GradientBooster(std::string objective,
                                  std::uint64_t random_seed,
                                  bool verbose,
                                  bool boost_from_average,
-                                 std::vector<double> base_score)
+                                 std::vector<double> base_score,
+                                 int leaf_estimation_iterations)
     : objective_name_(std::move(objective)),
       eval_metric_name_(std::move(eval_metric)),
       objective_config_{huber_delta, quantile_alpha, tweedie_variance_power},
@@ -87,6 +88,7 @@ GradientBooster::GradientBooster(std::string objective,
       min_child_weight_(min_child_weight),
       gamma_(gamma),
       max_leaf_weight_(max_leaf_weight),
+      leaf_estimation_iterations_(leaf_estimation_iterations),
       num_classes_(num_classes),
       max_bins_(max_bins),
       external_memory_(external_memory),
@@ -137,6 +139,9 @@ GradientBooster::GradientBooster(std::string objective,
       distributed_timeout_ <= 0.0 || num_classes_ <= 0) {
     throw std::invalid_argument("booster configuration is invalid");
   }
+  if (leaf_estimation_iterations_ < 1 || leaf_estimation_iterations_ > 5) {
+    throw std::invalid_argument("leaf_estimation_iterations must be in [1, 5]");
+  }
   (void)booster_detail::ParseBootstrapType(bootstrap_type_);
   (void)booster_detail::ParseBoostingType(boosting_type_);
   (void)booster_detail::ParseGrowPolicy(grow_policy_);
@@ -155,6 +160,10 @@ GradientBooster::GradientBooster(std::string objective,
   if (booster_detail::IsMulticlassObjective(normalized_objective)) {
     if (num_classes_ <= 2) {
       throw std::invalid_argument("multiclass objective requires num_classes greater than two");
+    }
+    if (leaf_estimation_iterations_ > 1) {
+      throw std::invalid_argument(
+          "leaf_estimation_iterations greater than 1 is not supported for multiclass objectives");
     }
     prediction_dimension_ = num_classes_;
   } else if (booster_detail::IsRankingObjective(normalized_objective) ||

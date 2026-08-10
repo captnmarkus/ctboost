@@ -43,6 +43,7 @@ void BindGradientBoosterAccessors(py::class_<ctboost::GradientBooster>& booster_
       .def("min_child_weight", &ctboost::GradientBooster::min_child_weight)
       .def("gamma", &ctboost::GradientBooster::gamma)
       .def("max_leaf_weight", &ctboost::GradientBooster::max_leaf_weight)
+      .def("leaf_estimation_iterations", &ctboost::GradientBooster::leaf_estimation_iterations)
       .def("max_bins", &ctboost::GradientBooster::max_bins)
       .def("nan_mode_name", &ctboost::GradientBooster::nan_mode_name)
       .def("max_bin_by_feature", &ctboost::GradientBooster::max_bin_by_feature)

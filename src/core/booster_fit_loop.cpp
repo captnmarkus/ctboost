@@ -90,6 +90,7 @@ void RunTrainingLoop(const FitLoopContext& context, FitLoopState& state) {
                                state,
                                distributed_ptr,
                                iteration_weights,
+                               gradient_predictions,
                                dart_state,
                                dropped_tree_scale,
                                new_tree_scale,
