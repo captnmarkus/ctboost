@@ -6,6 +6,18 @@ substitute for TabArena. Its purpose is to decide whether the synthetic
 grouped-8 result is strong enough to justify a public, opt-in learner feature
 and a later frozen TabArena scout.
 
+## Protocol correction
+
+The first execution attempt was stopped after 90 of 294 scheduled jobs. Its
+27 multiclass jobs failed because the runner incorrectly supplied the binary
+training evaluator name `Logloss` to the `MultiClass` objective. No promotion
+summary was produced and none of those partial results are reused. Protocol
+v2 freezes the corrected CTBoost training pair as
+`objective="MultiClass", eval_metric="MultiClass"` and restarts in a fresh
+source/result identity. This correction is applied identically to control and
+candidate and does not change the pre-registered datasets, schedules,
+hyperparameters, held-out metrics, or decision thresholds.
+
 ## Dataset tasks
 
 The classification tasks come from OpenML-CC18 (suite 99); the regression
@@ -94,6 +106,11 @@ external-panel result is produced:
 - The task bootstrap uses 10,000 task-level resamples, seed `20260815`, and a
   two-sided 95% percentile interval for the median relative primary-loss
   improvement.
+- Freeze CTBoost's training objective/evaluator pairs in the manifest:
+  binary `Logloss`/`AUC`, multiclass `MultiClass`/`MultiClass`, and regression
+  `RMSE`/`RMSE`. The multiclass held-out primary metric remains scikit-learn
+  multiclass log loss; `MultiClass` is CTBoost's name for the training and
+  early-stopping evaluator.
 
 The runner records the actual OpenML data and published-index fingerprints,
 the full fit configuration, the source working-tree fingerprint, the installed
