@@ -361,6 +361,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#fixed-structure-leaf-refinement" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed-structure leaf refinement
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#pandas-categoricals" class="md-nav__link">
     <span class="md-ellipsis">
       pandas categoricals
@@ -760,6 +769,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#fixed-structure-leaf-refinement" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fixed-structure leaf refinement
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#pandas-categoricals" class="md-nav__link">
     <span class="md-ellipsis">
       pandas categoricals
@@ -834,22 +852,43 @@
 <a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="p">)</span>
 <a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="n">predictions</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
 </code></pre></div>
+<h2 id="fixed-structure-leaf-refinement">Fixed-structure leaf refinement<a class="headerlink" href="#fixed-structure-leaf-refinement" title="Permanent link">&para;</a></h2>
+<p>For single-output objectives, <code>leaf_estimation_iterations</code> can run 1–5 Newton
+or objective-defined gradient/Hessian passes after each conditional-inference
+tree structure has been selected:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">model</span> <span class="o">=</span> <span class="n">CTBoostClassifier</span><span class="p">(</span><span class="n">leaf_estimation_iterations</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+</code></pre></div>
+<p>The default is <code>1</code>, which is the legacy training path. Additional passes keep
+the split topology fixed and update only its leaves. They evaluate the current
+tree as an unshrunk raw-margin delta; the outer learning rate and any DART scale
+are applied once afterward. Sample/bootstrap weights, ranking metadata, leaf
+caps, monotone constraints, and snapshots follow the same contract. GPU tree
+construction uses these same host-side leaf passes, and distributed
+single-output training reduces per-leaf statistics across workers. Extra passes
+add training work and should be selected on validation data. The value is
+persisted in model state and snapshots; exact snapshot resume requires the same
+value and rejects configuration drift (use <code>init_model</code> when intentionally
+changing it).</p>
+<p>Multiclass objectives currently reject values greater than <code>1</code>: independent
+per-class diagonal Newton steps can overshoot because softmax classes are
+coupled. This fails closed until a coupled, safeguarded multiclass solver is
+available.</p>
 <h2 id="pandas-categoricals">pandas categoricals<a class="headerlink" href="#pandas-categoricals" title="Permanent link">&para;</a></h2>
 <p>Keep categorical values as strings or pandas <code>category</code> columns and identify them
 by name or position:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">model</span> <span class="o">=</span> <span class="n">CTBoostClassifier</span><span class="p">(</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">cat_features</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;country&quot;</span><span class="p">,</span> <span class="s2">&quot;plan&quot;</span><span class="p">],</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">ordered_ctr</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="p">)</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">model</span> <span class="o">=</span> <span class="n">CTBoostClassifier</span><span class="p">(</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">cat_features</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;country&quot;</span><span class="p">,</span> <span class="s2">&quot;plan&quot;</span><span class="p">],</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">ordered_ctr</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="p">)</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
 </code></pre></div>
 <p>The fitted feature pipeline is stored with the estimator, including category
 dictionaries, CTR statistics, text dictionaries, and embedding transforms.</p>
 <h2 id="check-the-build">Check the build<a class="headerlink" href="#check-the-build" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">ctboost</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">ctboost</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">ctboost</span><span class="o">.</span><span class="n">build_info</span><span class="p">())</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">ctboost</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">ctboost</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">ctboost</span><span class="o">.</span><span class="n">build_info</span><span class="p">())</span>
 </code></pre></div>
 <p><code>build_info()</code> reports the compiled version, compiler, C++ standard, and whether
 the installed wheel contains CUDA support.</p>
