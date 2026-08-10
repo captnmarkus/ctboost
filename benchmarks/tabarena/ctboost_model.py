@@ -29,19 +29,20 @@ except ModuleNotFoundError as exc:  # pragma: no cover - exercised in benchmark 
         def __init__(self, *_args: Any, **_kwargs: Any) -> None:
             raise ModuleNotFoundError(
                 "The CTBoost TabArena adapter requires AutoGluon and TabArena. "
-                "Follow benchmarks/tabarena/README.md to create the benchmark environment."
+                "Follow benchmarks/tabarena/README.md to create the benchmark "
+                "environment."
             ) from _AUTOGLUON_IMPORT_ERROR
 
 else:
     _AUTOGLUON_IMPORT_ERROR = None
 
-_MISSING_CATEGORY = "__CTBOOST_MISSING__"
 _HISTOGRAM_THREAD_ENV = "CTBOOST_HIST_THREADS"
 _HISTOGRAM_THREAD_LOCK = threading.Lock()
 _MIN_TRAINING_BUDGET_FRACTION = 0.4
 TABARENA_SEARCH_PORTFOLIO_SIZE = 200
 _SEARCH_PORTFOLIO_SEED = 1234
 _PAIR_BUDGET_PARAM = "tabarena_categorical_pair_budget"
+_PAIR_BUDGET_LIMIT = 4
 _PAIR_CANDIDATE_COLUMN_LIMIT = 16
 _PAIR_JOINT_CARDINALITY_LIMIT = 4096
 
@@ -98,7 +99,9 @@ def _callback_list(callbacks: Any) -> list[Any]:
     try:
         return list(callbacks)
     except TypeError as exc:
-        raise TypeError("callbacks must be callable or an iterable of callables") from exc
+        raise TypeError(
+            "callbacks must be callable or an iterable of callables"
+        ) from exc
 
 
 def _raise_time_limit_exceeded() -> None:
@@ -152,9 +155,23 @@ def _categorical_columns(frame: Any) -> list[str]:
     columns: list[str] = []
     for name, dtype in frame.dtypes.items():
         dtype_name = str(dtype).lower()
-        if dtype_name in {"object", "category", "string"} or dtype_name.startswith("string["):
+        if dtype_name in {"object", "category", "string"} or dtype_name.startswith(
+            "string["
+        ):
             columns.append(str(name))
     return columns
+
+
+def _resolve_categorical_pair_budget(value: Any) -> int:
+    """Validate the small adapter-only categorical-pair budget."""
+    if isinstance(value, (bool, np.bool_)) or not isinstance(value, (int, np.integer)):
+        raise TypeError(f"{_PAIR_BUDGET_PARAM} must be an integer")
+    resolved = int(value)
+    if not 0 <= resolved <= _PAIR_BUDGET_LIMIT:
+        raise ValueError(
+            f"{_PAIR_BUDGET_PARAM} must be between 0 and {_PAIR_BUDGET_LIMIT}"
+        )
+    return resolved
 
 
 def normalize_tabarena_frame(
@@ -162,12 +179,13 @@ def normalize_tabarena_frame(
     *,
     categorical_columns: Optional[Sequence[str]] = None,
 ) -> tuple[Any, list[str]]:
-    """Normalize a TabArena frame without ordinal-encoding categoricals.
+    """Preserve a TabArena frame for CTBoost's native data handling.
 
     CatBoost and XGBoost are evaluated with categorical awareness in TabArena.
-    Keeping category values as strings lets CTBoost exercise its own fitted CTR
-    and unknown-category handling instead of receiving an unfair pre-encoded
-    representation.
+    CTBoost natively handles pandas categorical/object/string values, missing
+    values, booleans, and unseen categories.  The adapter therefore records the
+    training schema without stringifying or replacing values; doing so could
+    alias a literal category with a missing-value sentinel.
     """
     try:
         import pandas as pd
@@ -184,23 +202,14 @@ def normalize_tabarena_frame(
         if categorical_columns is None
         else [str(name) for name in categorical_columns]
     )
-    missing_columns = [name for name in resolved_categoricals if name not in normalized.columns]
+    missing_columns = [
+        name for name in resolved_categoricals if name not in normalized.columns
+    ]
     if missing_columns:
         raise ValueError(
             "TabArena prediction data is missing categorical columns seen during fit: "
             + ", ".join(missing_columns)
         )
-
-    for name in resolved_categoricals:
-        values = normalized[name].astype(object)
-        values = values.where(~pd.isna(values), _MISSING_CATEGORY)
-        normalized[name] = values.map(str)
-
-    for name in normalized.columns:
-        if name in resolved_categoricals:
-            continue
-        if str(normalized[name].dtype).lower() in {"bool", "boolean"}:
-            normalized[name] = normalized[name].astype(np.int8)
 
     return normalized, resolved_categoricals
 
@@ -261,7 +270,7 @@ class CTBoostTabArenaModel(AbstractModel):
     _supported_problem_types = ["binary", "multiclass", "regression"]
     _default_auxiliary_params_extra = {
         "valid_raw_types": ["bool", "int", "float", "category", "object"],
-        "ignored_type_group_raw": ["datetime_as_object"],
+        "ignored_type_group_special": ["datetime_as_object"],
     }
     default_resources_physical_cores_only = True
     default_num_gpus = 0
@@ -309,9 +318,9 @@ class CTBoostTabArenaModel(AbstractModel):
 
         params = dict(self._get_model_params())
         early_stopping_rounds = int(params.pop("early_stopping_rounds", 50))
-        categorical_pair_budget = int(params.pop(_PAIR_BUDGET_PARAM, 0))
-        if categorical_pair_budget < 0:
-            raise ValueError(f"{_PAIR_BUDGET_PARAM} must be non-negative")
+        categorical_pair_budget = _resolve_categorical_pair_budget(
+            params.pop(_PAIR_BUDGET_PARAM, 0)
+        )
         configured_callbacks = _callback_list(params.pop("callbacks", None))
         configured_callbacks.extend(_callback_list(callbacks))
         if "eval_metric" not in params:
@@ -356,7 +365,10 @@ class CTBoostTabArenaModel(AbstractModel):
             if training_deadline is not None:
                 training_started_at = time.monotonic()
                 remaining_time = training_deadline - training_started_at
-                if remaining_time <= resolved_time_limit * _MIN_TRAINING_BUDGET_FRACTION:
+                if (
+                    remaining_time
+                    <= resolved_time_limit * _MIN_TRAINING_BUDGET_FRACTION
+                ):
                     _raise_time_limit_exceeded()
                 configured_callbacks.append(
                     _deadline_callback(training_deadline, training_started_at)
@@ -414,8 +426,10 @@ class CTBoostTabArenaModel(AbstractModel):
                 else rows * raw_columns * 8
             )
 
-        pair_budget = max(0, int(params.get(_PAIR_BUDGET_PARAM, 0) or 0))
-        columns = raw_columns + min(pair_budget, 4)
+        pair_budget = _resolve_categorical_pair_budget(
+            params.get(_PAIR_BUDGET_PARAM, 0)
+        )
+        columns = raw_columns + min(pair_budget, _PAIR_BUDGET_LIMIT)
         max_bins = max(1, int(params.get("max_bins", 256)))
         bin_width = 1 if max_bins <= 256 else 2 if max_bins <= 65_535 else 4
         quantized_bytes = rows * columns * bin_width
@@ -425,8 +439,14 @@ class CTBoostTabArenaModel(AbstractModel):
         depth = max(0, int(params.get("max_depth", params.get("depth", 6))))
         depth_leaves = 1 << min(depth, 20)
         configured_leaves = int(params.get("max_leaves", 0) or 0)
-        leaves = min(depth_leaves, configured_leaves) if configured_leaves > 0 else depth_leaves
-        iterations = max(1, int(params.get("iterations", params.get("n_estimators", 1000))))
+        leaves = (
+            min(depth_leaves, configured_leaves)
+            if configured_leaves > 0
+            else depth_leaves
+        )
+        iterations = max(
+            1, int(params.get("iterations", params.get("n_estimators", 1000)))
+        )
         tree_bytes = iterations * classes * max(1, 2 * leaves - 1) * 64
 
         baseline_bytes = 512 * 1024 * 1024
@@ -566,7 +586,9 @@ def generate_configs_ctboost(num_random_configs: int = 200) -> list[dict[str, An
             f"{TABARENA_SEARCH_PORTFOLIO_SIZE}-config portfolio"
         )
 
-    samples = _stratified_unit_samples(TABARENA_SEARCH_PORTFOLIO_SIZE, dimensions=17)[:count]
+    samples = _stratified_unit_samples(TABARENA_SEARCH_PORTFOLIO_SIZE, dimensions=17)[
+        :count
+    ]
     configs: list[dict[str, Any]] = []
     for values in samples:
         ordered_ctr = bool(values[12] >= 0.25)

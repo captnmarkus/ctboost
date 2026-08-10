@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import pickle
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -18,6 +19,7 @@ from benchmarks.tabarena.ctboost_model import (
     _ctboost_eval_metric,
     _ctboost_histogram_threads,
     _finalize_search_config,
+    _resolve_categorical_pair_budget,
     _resolve_time_limit,
     generate_configs_ctboost,
     normalize_tabarena_frame,
@@ -51,9 +53,106 @@ def test_tabarena_frame_preserves_categorical_values_and_numeric_missing_values(
     normalized, categorical = normalize_tabarena_frame(frame)
 
     assert categorical == ["city"]
-    assert normalized["city"].tolist() == ["Berlin", "__CTBOOST_MISSING__", "Paris"]
-    assert normalized["flag"].dtype == np.int8
+    assert normalized["city"].dtype == frame["city"].dtype
+    assert normalized.loc[0, "city"] == "Berlin"
+    assert pd.isna(normalized.loc[1, "city"])
+    assert normalized.loc[2, "city"] == "Paris"
+    assert normalized["flag"].dtype == frame["flag"].dtype
     assert np.isnan(normalized.loc[1, "value"])
+
+
+def test_tabarena_frame_does_not_alias_literal_category_and_missing_value():
+    frame = pd.DataFrame(
+        {
+            "category": pd.Series(
+                ["__CTBOOST_MISSING__", None, "ordinary"], dtype="category"
+            )
+        }
+    )
+
+    normalized, categorical = normalize_tabarena_frame(frame)
+
+    assert categorical == ["category"]
+    assert normalized.loc[0, "category"] == "__CTBOOST_MISSING__"
+    assert pd.isna(normalized.loc[1, "category"])
+    assert normalized.loc[2, "category"] == "ordinary"
+
+
+def test_tabarena_native_categorical_missing_values_remain_separable_after_pickle():
+    from ctboost import CTBoostClassifier
+
+    literal = "__CTBOOST_MISSING__"
+    frame = pd.DataFrame(
+        {"category": pd.Series([literal] * 30 + [None] * 30, dtype="category")}
+    )
+    target = np.array([0] * 30 + [1] * 30)
+    normalized, categorical = normalize_tabarena_frame(frame)
+    model = CTBoostClassifier(
+        iterations=40,
+        learning_rate=0.2,
+        max_depth=2,
+        alpha=1.0,
+        random_seed=7,
+        cat_features=categorical,
+        verbose=False,
+    )
+    model.fit(normalized, target)
+    probe, _ = normalize_tabarena_frame(
+        pd.DataFrame({"category": pd.Series([literal, None], dtype="category")}),
+        categorical_columns=categorical,
+    )
+
+    probabilities = model.predict_proba(probe)[:, 1]
+    restored_probabilities = pickle.loads(pickle.dumps(model)).predict_proba(probe)[
+        :, 1
+    ]
+
+    assert abs(float(probabilities[0] - probabilities[1])) > 0.2
+    np.testing.assert_array_equal(restored_probabilities, probabilities)
+
+
+def test_tabarena_native_mixed_frame_predicts_unseen_values_and_missing_data():
+    from ctboost import CTBoostClassifier
+
+    frame = pd.DataFrame(
+        {
+            "category": pd.Series(["red", "blue", None] * 20, dtype="category"),
+            "object": pd.Series(["left", "right", None] * 20, dtype=object),
+            "string": pd.Series(["low", "high", pd.NA] * 20, dtype="string"),
+            "boolean": pd.Series([True, False, True] * 20, dtype=bool),
+            "numeric": pd.Series([1.0, np.nan, 3.0] * 20, dtype=np.float64),
+        }
+    )
+    target = np.tile([0, 1, 0], 20)
+    normalized, categorical = normalize_tabarena_frame(frame)
+    model = CTBoostClassifier(
+        iterations=8,
+        max_depth=2,
+        alpha=1.0,
+        random_seed=11,
+        cat_features=categorical,
+        verbose=False,
+    )
+    model.fit(normalized, target)
+    probe = pd.DataFrame(
+        {
+            "category": pd.Series(["green", None], dtype="category"),
+            "object": pd.Series(["centre", None], dtype=object),
+            "string": pd.Series(["medium", pd.NA], dtype="string"),
+            "boolean": pd.Series([False, True], dtype=bool),
+            "numeric": pd.Series([2.0, np.nan], dtype=np.float64),
+        }
+    )
+    probe, _ = normalize_tabarena_frame(
+        probe,
+        categorical_columns=categorical,
+    )
+
+    probabilities = model.predict_proba(probe)
+
+    assert probabilities.shape == (2, 2)
+    assert np.isfinite(probabilities).all()
+    np.testing.assert_allclose(probabilities.sum(axis=1), 1.0, atol=1e-7)
 
 
 def test_tabarena_frame_reuses_training_schema_and_rejects_missing_columns():
@@ -67,7 +166,9 @@ def test_tabarena_frame_reuses_training_schema_and_rejects_missing_columns():
     assert normalized["city"].tolist() == ["Berlin"]
 
     with pytest.raises(ValueError, match="missing categorical columns"):
-        normalize_tabarena_frame(pd.DataFrame({"value": [1.0]}), categorical_columns=["city"])
+        normalize_tabarena_frame(
+            pd.DataFrame({"value": [1.0]}), categorical_columns=["city"]
+        )
 
 
 def test_tabarena_output_falls_back_when_markdown_extra_is_missing():
@@ -104,7 +205,21 @@ def test_tabarena_cpu_and_gpu_models_have_distinct_resource_contracts():
     assert CTBoostTabArenaModel.default_resources_physical_cores_only is True
     assert "supported_problem_types" not in CTBoostTabArenaModel.__dict__
     assert "_get_default_auxiliary_params" not in CTBoostTabArenaModel.__dict__
-    assert "object" in CTBoostTabArenaModel._default_auxiliary_params_extra["valid_raw_types"]
+    assert (
+        "object"
+        in CTBoostTabArenaModel._default_auxiliary_params_extra["valid_raw_types"]
+    )
+    assert (
+        "datetime_as_object"
+        in (
+            CTBoostTabArenaModel._default_auxiliary_params_extra[
+                "ignored_type_group_special"
+            ]
+        )
+    )
+    assert "ignored_type_group_raw" not in (
+        CTBoostTabArenaModel._default_auxiliary_params_extra
+    )
     assert CTBoostTabArenaModel.default_num_gpus == 0
     assert CTBoostTabArenaModel._ctboost_task_type == "CPU"
     assert CTBoostTabArenaGPUModel.ag_name == "CTBoostGPU"
@@ -166,8 +281,7 @@ def test_tabarena_search_is_deterministic_unique_and_task_safe():
         for config in first
     )
     assert all(
-        config["ordered_ctr"] or "ctr_prior_strength" not in config
-        for config in first
+        config["ordered_ctr"] or "ctr_prior_strength" not in config for config in first
     )
     assert sum(config["grow_policy"] == "DepthWise" for config in first) == 100
     assert sum(config["ordered_ctr"] for config in first) == 150
@@ -209,7 +323,9 @@ def test_tabarena_categorical_pair_selection_is_bounded_and_deterministic():
     assert pairs == [["a", "b"], ["a", "c"]]
 
 
-def test_tabarena_fit_resolves_pair_budget_without_leaking_wrapper_parameter(monkeypatch):
+def test_tabarena_fit_resolves_pair_budget_without_leaking_wrapper_parameter(
+    monkeypatch,
+):
     constructed = []
 
     class FakeClassifier:
@@ -248,6 +364,40 @@ def test_tabarena_fit_resolves_pair_budget_without_leaking_wrapper_parameter(mon
         ["a", "b"],
         ["a", "c"],
     ]
+
+
+def test_tabarena_fit_rejects_pair_budget_above_supported_limit(monkeypatch):
+    class FakeClassifier:
+        def __init__(self, **_params):
+            pytest.fail("invalid pair budget must fail before model construction")
+
+    monkeypatch.setattr("ctboost.CTBoostClassifier", FakeClassifier)
+    adapter = _model_adapter(
+        problem_type="binary",
+        stopping_metric=None,
+        params={"tabarena_categorical_pair_budget": 5},
+    )
+
+    with pytest.raises(ValueError, match="between 0 and 4"):
+        adapter._fit(
+            pd.DataFrame({"value": [0.0, 1.0]}),
+            np.array([0, 1]),
+        )
+
+
+@pytest.mark.parametrize("value", [True, False, 4.9, -0.5, "2", "", None])
+def test_tabarena_pair_budget_rejects_noninteger_values(value):
+    with pytest.raises(TypeError, match="must be an integer"):
+        _resolve_categorical_pair_budget(value)
+
+
+@pytest.mark.parametrize("value", [False, 0.0, "", None])
+def test_tabarena_memory_estimate_uses_strict_pair_budget_validation(value):
+    with pytest.raises(TypeError, match="must be an integer"):
+        CTBoostTabArenaModel._estimate_memory_usage_static(
+            X=pd.DataFrame({"value": [0.0, 1.0]}),
+            hyperparameters={"tabarena_categorical_pair_budget": value},
+        )
 
 
 def test_tabarena_search_rejects_negative_counts_without_optional_dependencies():
@@ -414,7 +564,9 @@ def test_tabarena_fit_consumes_setup_budget_and_preserves_callbacks(monkeypatch)
         params={"callbacks": [user_callback]},
     )
 
-    adapter._fit(pd.DataFrame({"value": [0.0, 1.0]}), np.array([0.0, 1.0]), time_limit=5)
+    adapter._fit(
+        pd.DataFrame({"value": [0.0, 1.0]}), np.array([0.0, 1.0]), time_limit=5
+    )
 
     callbacks = constructed[0].fit_kwargs["callbacks"]
     assert callbacks[0] is user_callback
@@ -501,7 +653,13 @@ def test_resource_summary_exports_memory_and_timing(tmp_path):
             "metric_error": np.float64(0.25),
             "time_train_s": 1.5,
             "time_infer_s": 0.1,
-            "task_metadata": {"name": "public-data", "tid": 7, "fold": 1, "repeat": 0, "sample": 0},
+            "task_metadata": {
+                "name": "public-data",
+                "tid": 7,
+                "fold": 1,
+                "repeat": 0,
+                "sample": 0,
+            },
             "memory_usage": {
                 "peak_mem_cpu": 150,
                 "min_mem_cpu": 100,
@@ -524,7 +682,10 @@ def test_resource_summary_exports_memory_and_timing(tmp_path):
     assert rows[0]["incremental_peak_mem_cpu_bytes"] == 50
     assert rows[0]["incremental_peak_mem_gpu_bytes"] == 60
     assert (output / "resources_per_split.csv").is_file()
-    assert json.loads((output / "resources_per_split.json").read_text())[0]["metric_error"] == 0.25
+    assert (
+        json.loads((output / "resources_per_split.json").read_text())[0]["metric_error"]
+        == 0.25
+    )
 
 
 def test_resource_summary_overwrites_stale_csv_when_no_results_exist(tmp_path):
@@ -534,7 +695,10 @@ def test_resource_summary_overwrites_stale_csv_when_no_results_exist(tmp_path):
     csv_path.write_text("stale benchmark data\n", encoding="utf-8")
     raw_loading = SimpleNamespace(fetch_raw_result_paths=lambda _path: [])
 
-    assert _write_resource_summary(tmp_path / "raw", output, _raw_loading=raw_loading) == []
+    assert (
+        _write_resource_summary(tmp_path / "raw", output, _raw_loading=raw_loading)
+        == []
+    )
     assert "stale benchmark data" not in csv_path.read_text(encoding="utf-8")
     assert json.loads((output / "resources_per_split.json").read_text()) == []
 
@@ -565,7 +729,10 @@ def test_resource_summary_can_stream_without_collecting_rows(tmp_path):
     )
 
     assert count == 1
-    assert len(json.loads((tmp_path / "report" / "resources_per_split.json").read_text())) == 1
+    assert (
+        len(json.loads((tmp_path / "report" / "resources_per_split.json").read_text()))
+        == 1
+    )
 
 
 def test_resource_summary_rejects_artifact_identity_that_disagrees_with_path(tmp_path):
@@ -740,7 +907,9 @@ def test_local_distribution_checkout_resolves_pep610_file_url(monkeypatch, tmp_p
     checkout.mkdir()
     monkeypatch.setattr(
         "benchmarks.tabarena.run._distribution_source",
-        lambda name: {"url": checkout.resolve().as_uri()} if name == "ctboost" else None,
+        lambda name: (
+            {"url": checkout.resolve().as_uri()} if name == "ctboost" else None
+        ),
     )
 
     assert _local_distribution_checkout("ctboost") == checkout.resolve()
@@ -773,7 +942,9 @@ def test_git_identity_finds_repository_above_editable_package(monkeypatch, tmp_p
     }
 
 
-def test_ctboost_git_identity_prefers_runtime_distribution_checkout(monkeypatch, tmp_path):
+def test_ctboost_git_identity_prefers_runtime_distribution_checkout(
+    monkeypatch, tmp_path
+):
     adapter_repository = tmp_path / "adapter-a"
     runtime_repository = tmp_path / "runtime-b"
     adapter_file = adapter_repository / "benchmarks" / "tabarena" / "run.py"
@@ -814,11 +985,15 @@ def test_ctboost_git_identity_does_not_ascend_from_site_packages(monkeypatch, tm
     adapter_file.parent.mkdir(parents=True)
     (enclosing_repository / ".git").mkdir()
     monkeypatch.setattr(tabarena_run, "__file__", str(adapter_file))
-    monkeypatch.setattr(tabarena_run, "_local_distribution_checkout", lambda _name: None)
+    monkeypatch.setattr(
+        tabarena_run, "_local_distribution_checkout", lambda _name: None
+    )
     monkeypatch.setattr(
         tabarena_run.subprocess,
         "run",
-        lambda *_args, **_kwargs: pytest.fail("unrelated repository must not be queried"),
+        lambda *_args, **_kwargs: pytest.fail(
+            "unrelated repository must not be queried"
+        ),
     )
 
     assert _git_source_identity() is None
@@ -897,8 +1072,12 @@ def test_manifest_records_ctboost_and_tabarena_git_identities(monkeypatch, tmp_p
         "benchmarks.tabarena.run._git_source_identity",
         lambda name="ctboost": {"distribution": name},
     )
-    monkeypatch.setattr("benchmarks.tabarena.run._distribution_source", lambda _name: None)
-    monkeypatch.setattr("benchmarks.tabarena.run._ctboost_install_fingerprint", lambda: "f" * 64)
+    monkeypatch.setattr(
+        "benchmarks.tabarena.run._distribution_source", lambda _name: None
+    )
+    monkeypatch.setattr(
+        "benchmarks.tabarena.run._ctboost_install_fingerprint", lambda: "f" * 64
+    )
     args = SimpleNamespace(
         subset="lite",
         datasets=None,
