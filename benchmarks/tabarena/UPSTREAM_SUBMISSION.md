@@ -15,7 +15,7 @@ rejects the former override-method model API. Add:
 3. `packages/tabarena/src/tabarena/models/ctboost/hpo.py`
 4. `packages/tabarena/src/tabarena/models/ctboost/info.py`
 5. Lazy `CTBoostModel` export in `packages/tabarena/src/tabarena/models/__init__.py`
-6. `ctboost = ["ctboost>=0.1.53"]` and `tabarena[ctboost]` in the `extended`
+6. `ctboost = ["ctboost>=0.1.54"]` and `tabarena[ctboost]` in the `extended`
    extra in `packages/tabarena/pyproject.toml`
 7. `CTB` in the tree-model prefix/display mappings in
    `packages/tabarena/src/tabarena/website/website_format.py`
@@ -75,7 +75,7 @@ TabArena-Full test results.
 
 Once that PR is merged, request the official run with an issue titled:
 
-`Run CTBoost 0.1.53 on TabArena-v0.1 (default + 200 configs)`
+`Run CTBoost 0.1.54 on TabArena-v0.1 (default + 200 configs)`
 
 Link the merged integration PR and PyPI release; confirm the three-task preflight,
 frozen search space, time/resource behavior, and request the CPU TabArena-Full

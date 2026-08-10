@@ -88,7 +88,7 @@ def test_dry_run_never_downloads_or_invokes_pip(monkeypatch):
 
 
 def test_unified_gpu_wheel_is_an_idempotent_noop(monkeypatch):
-    monkeypatch.setattr(gpu_install, "__version__", "0.1.53")
+    monkeypatch.setattr(gpu_install, "__version__", "0.1.54")
     monkeypatch.setattr(gpu_install, "_installed_cuda_enabled", lambda: True)
     monkeypatch.setattr(
         gpu_install,
@@ -105,15 +105,15 @@ def test_unified_gpu_wheel_is_an_idempotent_noop(monkeypatch):
         ),
     )
 
-    result = gpu_install.install_gpu(version="0.1.53")
+    result = gpu_install.install_gpu(version="0.1.54")
 
     assert result["already_installed"] is True
-    assert result["name"] == "ctboost==0.1.53"
-    assert result["url"] == "https://pypi.org/project/ctboost/0.1.53/"
+    assert result["name"] == "ctboost==0.1.54"
+    assert result["url"] == "https://pypi.org/project/ctboost/0.1.54/"
 
 
 def test_unified_cpu_build_points_to_ordinary_pip_without_self_replacement(monkeypatch):
-    monkeypatch.setattr(gpu_install, "__version__", "0.1.53")
+    monkeypatch.setattr(gpu_install, "__version__", "0.1.54")
     monkeypatch.setattr(gpu_install, "_installed_cuda_enabled", lambda: False)
     monkeypatch.setattr(
         gpu_install.subprocess,
@@ -126,7 +126,7 @@ def test_unified_cpu_build_points_to_ordinary_pip_without_self_replacement(monke
     with pytest.raises(
         RuntimeError, match="ordinary Linux x86-64 and Windows AMD64 wheels"
     ):
-        gpu_install.install_gpu(version="0.1.53")
+        gpu_install.install_gpu(version="0.1.54")
 
 
 def test_newer_unified_version_never_uses_legacy_release_asset_names(monkeypatch):

@@ -211,6 +211,7 @@ class CTBoostTabArenaModel(AbstractModel):
     }
     default_resources_physical_cores_only = True
     default_num_gpus = 0
+    _ctboost_task_type = "CPU"
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
@@ -264,8 +265,10 @@ class CTBoostTabArenaModel(AbstractModel):
             if eval_metric is not None:
                 params["eval_metric"] = eval_metric
         params["cat_features"] = self._ctboost_categorical_columns or None
-        if num_gpus and "task_type" not in params:
-            params["task_type"] = "GPU"
+        # Resource allocation and model identity are separate contracts.  In
+        # particular, a mixed CPU/GPU TabArena run must never turn the CPU
+        # leaderboard entry into a GPU fit merely because a GPU is available.
+        params["task_type"] = self._ctboost_task_type
 
         if self.problem_type == "regression":
             self.model = CTBoostRegressor(**params)
@@ -374,6 +377,7 @@ class CTBoostTabArenaGPUModel(CTBoostTabArenaModel):
     default_num_gpus = 1
     minimum_num_gpus = 1
     gpu_required = True
+    _ctboost_task_type = "GPU"
 
 
 def _finalize_search_config(config: dict[str, Any]) -> dict[str, Any]:

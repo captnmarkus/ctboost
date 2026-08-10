@@ -37,7 +37,7 @@ Install the current release from PyPI:
 python -m pip install --upgrade ctboost
 ```
 
-Starting with CTBoost 0.1.53, that ordinary pip command installs a
+Starting with CTBoost 0.1.54, that ordinary pip command installs a
 CUDA-enabled wheel on manylinux-compatible x86-64 systems and Windows AMD64
 when using CPython 3.10 through 3.14. The same wheel continues to work for CPU
 training on a machine without an NVIDIA GPU. It bundles the CUDA 12.8 runtime
@@ -58,7 +58,7 @@ python -c "import ctboost; print(ctboost.build_info())"
 GPU-capable builds report `cuda_enabled: True`; a driver or device error is
 reported only when GPU work is requested. The legacy `ctboost-install-gpu`
 command is retained for CTBoost 0.1.52 and earlier GitHub Release assets. It is
-deprecated and is not needed for 0.1.53 or later.
+deprecated and is not needed for 0.1.54 or later.
 
 Install from a source checkout:
 

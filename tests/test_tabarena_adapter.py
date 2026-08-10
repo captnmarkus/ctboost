@@ -21,6 +21,7 @@ from benchmarks.tabarena.ctboost_model import (
     normalize_tabarena_frame,
 )
 from benchmarks.tabarena.run import (
+    _build_experiments,
     _expected_raw_keys,
     _format_table,
     _git_source_identity,
@@ -103,10 +104,12 @@ def test_tabarena_cpu_and_gpu_models_have_distinct_resource_contracts():
     assert "_get_default_auxiliary_params" not in CTBoostTabArenaModel.__dict__
     assert "object" in CTBoostTabArenaModel._default_auxiliary_params_extra["valid_raw_types"]
     assert CTBoostTabArenaModel.default_num_gpus == 0
+    assert CTBoostTabArenaModel._ctboost_task_type == "CPU"
     assert CTBoostTabArenaGPUModel.ag_name == "CTBoostGPU"
     assert CTBoostTabArenaGPUModel.default_num_gpus == 1
     assert CTBoostTabArenaGPUModel.minimum_num_gpus == 1
     assert CTBoostTabArenaGPUModel.gpu_required is True
+    assert CTBoostTabArenaGPUModel._ctboost_task_type == "GPU"
 
 
 def test_tabarena_memory_estimate_accounts_for_multiclass_tree_capacity():
@@ -174,8 +177,14 @@ def test_tabarena_search_rejects_negative_counts_without_optional_dependencies()
     assert generate_configs_ctboost(0) == []
 
 
-def _model_adapter(*, problem_type, stopping_metric, params):
-    adapter = object.__new__(CTBoostTabArenaModel)
+def _model_adapter(
+    *,
+    problem_type,
+    stopping_metric,
+    params,
+    model_cls=CTBoostTabArenaModel,
+):
+    adapter = object.__new__(model_cls)
     adapter.problem_type = problem_type
     adapter.stopping_metric = stopping_metric
     adapter._ctboost_categorical_columns = []
@@ -242,6 +251,44 @@ def test_tabarena_fit_maps_metric_but_preserves_explicit_metric_and_seed(monkeyp
     assert constructed[0].params["random_seed"] == 41
     assert constructed[1].params["eval_metric"] == "BalancedAccuracy"
     assert constructed[1].params["random_seed"] == 73
+
+
+@pytest.mark.parametrize(
+    ("model_cls", "allocated_gpus", "configured_task_type", "expected_task_type"),
+    [
+        (CTBoostTabArenaModel, 1, "GPU", "CPU"),
+        (CTBoostTabArenaGPUModel, 0, "CPU", "GPU"),
+    ],
+)
+def test_tabarena_adapter_pins_task_type_to_model_identity(
+    monkeypatch,
+    model_cls,
+    allocated_gpus,
+    configured_task_type,
+    expected_task_type,
+):
+    class FakeClassifier:
+        def __init__(self, **params):
+            self.params = params
+
+        def fit(self, _X, _y, **_kwargs):
+            pass
+
+    monkeypatch.setattr("ctboost.CTBoostClassifier", FakeClassifier)
+    adapter = _model_adapter(
+        problem_type="binary",
+        stopping_metric=None,
+        params={"task_type": configured_task_type},
+        model_cls=model_cls,
+    )
+
+    adapter._fit(
+        pd.DataFrame({"value": [0.0, 1.0]}),
+        np.array([0, 1]),
+        num_gpus=allocated_gpus,
+    )
+
+    assert adapter.model.params["task_type"] == expected_task_type
 
 
 def test_tabarena_fit_consumes_setup_budget_and_preserves_callbacks(monkeypatch):
@@ -696,6 +743,67 @@ def test_effective_time_limit_uses_bundle_default_or_explicit_value():
 
     assert _resolve_effective_time_limit(None, bundle) == 3_600
     assert _resolve_effective_time_limit(90, bundle) == 90
+
+
+@pytest.mark.parametrize(
+    ("requested_num_gpus", "expected_gpu_count"),
+    [(None, 1), (2, 2)],
+)
+def test_tabarena_both_device_builds_separate_cpu_and_gpu_resource_groups(
+    monkeypatch,
+    requested_num_gpus,
+    expected_gpu_count,
+):
+    cpu_generator = object()
+    gpu_generator = object()
+    monkeypatch.setattr(tabarena_run, "gen_ctboost_cpu", cpu_generator)
+    monkeypatch.setattr(tabarena_run, "gen_ctboost_gpu", gpu_generator)
+    calls = []
+
+    class FakeBundle:
+        DEFAULT_TIME_LIMIT = 3_600
+
+        def __init__(self, *, models):
+            self.models = models
+
+        def build_experiments(self, **resources):
+            calls.append((self.models, resources))
+            return list(self.models)
+
+    args = SimpleNamespace(
+        device="both",
+        n_configs=7,
+        rerun_competitors=False,
+        num_cpus=4,
+        num_gpus=requested_num_gpus,
+        memory_limit_gb=16,
+        time_limit=None,
+    )
+
+    experiments, effective_time_limit = _build_experiments(args, FakeBundle)
+
+    assert experiments == [(cpu_generator, 7), (gpu_generator, 7)]
+    assert effective_time_limit == 3_600
+    assert calls == [
+        (
+            [(cpu_generator, 7)],
+            {
+                "time_limit": 3_600,
+                "num_cpus": 4,
+                "num_gpus": 0,
+                "memory_limit": 16,
+            },
+        ),
+        (
+            [(gpu_generator, 7)],
+            {
+                "time_limit": 3_600,
+                "num_cpus": 4,
+                "num_gpus": expected_gpu_count,
+                "memory_limit": 16,
+            },
+        ),
+    ]
 
 
 def test_manifest_records_ctboost_and_tabarena_git_identities(monkeypatch, tmp_path):

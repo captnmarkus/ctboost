@@ -672,24 +672,61 @@ def _gpu_competitor_generators() -> list[Any]:
     return list(_GPU_COMPETITOR_GENERATORS)
 
 
-def _experiment_models(args: argparse.Namespace) -> list[tuple[Any, int]]:
+def _experiment_models(
+    args: argparse.Namespace,
+    *,
+    device: Optional[str] = None,
+) -> list[tuple[Any, int]]:
+    selected_device = args.device if device is None else device
     models: list[tuple[Any, int]] = []
-    if args.device in {"cpu", "both"}:
+    if selected_device in {"cpu", "both"}:
         models.append((gen_ctboost_cpu, args.n_configs))
-    if args.device in {"gpu", "both"}:
+    if selected_device in {"gpu", "both"}:
         models.append((gen_ctboost_gpu, args.n_configs))
     if args.rerun_competitors:
         from tabarena.models.catboost import gen_catboost
         from tabarena.models.xgboost import gen_xgboost
 
-        if args.device in {"cpu", "both"}:
+        if selected_device in {"cpu", "both"}:
             models.extend([(gen_catboost, args.n_configs), (gen_xgboost, args.n_configs)])
-        if args.device in {"gpu", "both"}:
+        if selected_device in {"gpu", "both"}:
             models.extend(
                 (generator, args.n_configs)
                 for generator in _gpu_competitor_generators()
             )
     return models
+
+
+def _build_experiments(
+    args: argparse.Namespace,
+    bundle_cls: Any,
+) -> tuple[list[Any], int]:
+    """Build CPU and GPU methods with device-specific resource contracts."""
+    resource_groups: list[tuple[str, int]] = []
+    if args.device in {"cpu", "both"}:
+        resource_groups.append(("cpu", 0))
+    if args.device in {"gpu", "both"}:
+        # Evaluation still needs the same GPU experiment identity even when it
+        # consumes already-produced artifacts and no local GPU was requested.
+        gpu_count = args.num_gpus if args.num_gpus is not None and args.num_gpus > 0 else 1
+        resource_groups.append(("gpu", gpu_count))
+
+    bundles = [
+        (bundle_cls(models=_experiment_models(args, device=device)), num_gpus)
+        for device, num_gpus in resource_groups
+    ]
+    effective_time_limit = _resolve_effective_time_limit(args.time_limit, bundles[0][0])
+    experiments: list[Any] = []
+    for experiment_bundle, num_gpus in bundles:
+        experiments.extend(
+            experiment_bundle.build_experiments(
+                time_limit=effective_time_limit,
+                num_cpus=args.num_cpus,
+                num_gpus=num_gpus,
+                memory_limit=args.memory_limit_gb,
+            )
+        )
+    return experiments, effective_time_limit
 
 
 def main() -> int:
@@ -718,17 +755,9 @@ def main() -> int:
         if args.num_gpus == 0:
             raise SystemExit("--device gpu/both cannot be combined with --num-gpus 0")
 
-    models = _experiment_models(args)
-    experiment_bundle = TabArenaV0pt1ExperimentBundle(models=models)
-    args.effective_time_limit = _resolve_effective_time_limit(
-        args.time_limit,
-        experiment_bundle,
-    )
-    experiments = experiment_bundle.build_experiments(
-        time_limit=args.effective_time_limit,
-        num_cpus=args.num_cpus,
-        num_gpus=(0 if args.device == "cpu" and args.num_gpus is None else args.num_gpus),
-        memory_limit=args.memory_limit_gb,
+    experiments, args.effective_time_limit = _build_experiments(
+        args,
+        TabArenaV0pt1ExperimentBundle,
     )
 
     context = TabArenaContext()

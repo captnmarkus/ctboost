@@ -16,7 +16,7 @@ from typing import Any, Dict, Iterable, Optional, Sequence
 from ._version import __version__
 
 _REPOSITORY = "captnmarkus/ctboost"
-_UNIFIED_GPU_WHEEL_VERSION = (0, 1, 53)
+_UNIFIED_GPU_WHEEL_VERSION = (0, 1, 54)
 
 
 def _public_release_tuple(version: str) -> Optional[tuple[int, int, int]]:

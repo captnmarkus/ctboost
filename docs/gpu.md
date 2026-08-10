@@ -16,9 +16,9 @@ model = CTBoostClassifier(task_type="GPU", iterations=500)
 model.fit(X_train, y_train)
 ```
 
-The release workflow is moving to unified Linux x86-64 and Windows AMD64 wheels:
-on supported CPython versions, the ordinary command below installs one wheel that can
-train on CPU and use CUDA when an NVIDIA device is available.
+Starting with CTBoost 0.1.54, releases use unified Linux x86-64 and Windows
+AMD64 wheels: on supported CPython versions, the ordinary command below installs
+one wheel that can train on CPU and use CUDA when an NVIDIA device is available.
 
 ```bash
 python -m pip install -U ctboost

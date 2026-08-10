@@ -193,7 +193,7 @@ def _write_sdist(
 def _write_complete_release(
     directory: Path,
     *,
-    version: str = "0.1.53",
+    version: str = "0.1.54",
     cuda_license_payload: bytes = b"license",
 ) -> None:
     directory.mkdir()
@@ -222,7 +222,7 @@ def test_release_matrix_has_one_wheel_per_tag_and_validates(tmp_path):
     assert (
         release_artifacts.validate_release_artifacts(
             release,
-            version="0.1.53",
+            version="0.1.54",
             expected_license_sha256=hashlib.sha256(payload).hexdigest(),
         )
         == []
@@ -234,12 +234,12 @@ def test_release_validator_rejects_missing_cuda_runtime_and_license(tmp_path):
     release = tmp_path / "dist"
     _write_complete_release(release, cuda_license_payload=payload)
     target = release / (
-        "ctboost-0.1.53-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"
+        "ctboost-0.1.54-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl"
     )
     target.unlink()
     _write_wheel(
         release,
-        version="0.1.53",
+        version="0.1.54",
         platform_family="linux-x86_64",
         python_tag="cp312",
         cuda=True,
@@ -250,7 +250,7 @@ def test_release_validator_rejects_missing_cuda_runtime_and_license(tmp_path):
 
     errors = release_artifacts.validate_release_artifacts(
         release,
-        version="0.1.53",
+        version="0.1.54",
         expected_license_sha256=hashlib.sha256(payload).hexdigest(),
     )
 
@@ -262,11 +262,11 @@ def test_release_validator_rejects_wheel_build_tags(tmp_path):
     payload = b"pinned NVIDIA license"
     release = tmp_path / "dist"
     _write_complete_release(release, cuda_license_payload=payload)
-    target = release / "ctboost-0.1.53-cp312-cp312-win_amd64.whl"
+    target = release / "ctboost-0.1.54-cp312-cp312-win_amd64.whl"
     target.unlink()
     _write_wheel(
         release,
-        version="0.1.53",
+        version="0.1.54",
         platform_family="windows-amd64",
         python_tag="cp312",
         cuda=True,
@@ -276,7 +276,7 @@ def test_release_validator_rejects_wheel_build_tags(tmp_path):
 
     errors = release_artifacts.validate_release_artifacts(
         release,
-        version="0.1.53",
+        version="0.1.54",
         expected_license_sha256=hashlib.sha256(payload).hexdigest(),
     )
 
@@ -289,13 +289,13 @@ def test_release_validator_rejects_unexpected_artifacts_and_bundled_driver(tmp_p
     release = tmp_path / "dist"
     _write_complete_release(release, cuda_license_payload=payload)
     (release / "debug.log").write_text("not for release", encoding="utf-8")
-    target = release / "ctboost-0.1.53-cp313-cp313-win_amd64.whl"
+    target = release / "ctboost-0.1.54-cp313-cp313-win_amd64.whl"
     with zipfile.ZipFile(target, mode="a") as wheel:
         wheel.writestr("ctboost.libs/nvcuda.dll", b"driver")
 
     errors = release_artifacts.validate_release_artifacts(
         release,
-        version="0.1.53",
+        version="0.1.54",
         expected_license_sha256=hashlib.sha256(payload).hexdigest(),
     )
 
@@ -307,10 +307,10 @@ def test_release_validator_inspects_sdist_metadata_and_rebuild_sources(tmp_path)
     payload = b"pinned NVIDIA license"
     release = tmp_path / "dist"
     _write_complete_release(release, cuda_license_payload=payload)
-    (release / "ctboost-0.1.53.tar.gz").unlink()
+    (release / "ctboost-0.1.54.tar.gz").unlink()
     _write_sdist(
         release,
-        version="0.1.53",
+        version="0.1.54",
         metadata_name="not-ctboost",
         metadata_version="9.9.9",
         omitted={
@@ -321,7 +321,7 @@ def test_release_validator_inspects_sdist_metadata_and_rebuild_sources(tmp_path)
 
     errors = release_artifacts.validate_release_artifacts(
         release,
-        version="0.1.53",
+        version="0.1.54",
         expected_license_sha256=hashlib.sha256(payload).hexdigest(),
     )
 
@@ -341,16 +341,16 @@ def test_release_validator_rejects_unsafe_sdist_paths(tmp_path):
     payload = b"pinned NVIDIA license"
     release = tmp_path / "dist"
     _write_complete_release(release, cuda_license_payload=payload)
-    (release / "ctboost-0.1.53.tar.gz").unlink()
+    (release / "ctboost-0.1.54.tar.gz").unlink()
     _write_sdist(
         release,
-        version="0.1.53",
+        version="0.1.54",
         extra_members={"../outside.txt": b"escape"},
     )
 
     errors = release_artifacts.validate_release_artifacts(
         release,
-        version="0.1.53",
+        version="0.1.54",
         expected_license_sha256=hashlib.sha256(payload).hexdigest(),
     )
 
@@ -361,16 +361,16 @@ def test_release_validator_rejects_unexpected_release_scripts(tmp_path):
     payload = b"pinned NVIDIA license"
     release = tmp_path / "dist"
     _write_complete_release(release, cuda_license_payload=payload)
-    (release / "ctboost-0.1.53.tar.gz").unlink()
+    (release / "ctboost-0.1.54.tar.gz").unlink()
     _write_sdist(
         release,
-        version="0.1.53",
+        version="0.1.54",
         extra_members={"scripts/local_release_helper.py": b"local only\n"},
     )
 
     errors = release_artifacts.validate_release_artifacts(
         release,
-        version="0.1.53",
+        version="0.1.54",
         expected_license_sha256=hashlib.sha256(payload).hexdigest(),
     )
 
@@ -384,7 +384,7 @@ def test_release_validator_rejects_unsafe_duplicate_native_wheel(tmp_path):
     payload = b"pinned NVIDIA license"
     release = tmp_path / "dist"
     _write_complete_release(release, cuda_license_payload=payload)
-    target = release / "ctboost-0.1.53-cp312-cp312-win_amd64.whl"
+    target = release / "ctboost-0.1.54-cp312-cp312-win_amd64.whl"
     with pytest.warns(UserWarning, match="Duplicate name"):
         with zipfile.ZipFile(target, mode="a") as wheel:
             wheel.writestr("ctboost/_core.pyd", b"duplicate-native-extension")
@@ -392,7 +392,7 @@ def test_release_validator_rejects_unsafe_duplicate_native_wheel(tmp_path):
 
     errors = release_artifacts.validate_release_artifacts(
         release,
-        version="0.1.53",
+        version="0.1.54",
         expected_license_sha256=hashlib.sha256(payload).hexdigest(),
     )
 
