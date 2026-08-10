@@ -57,6 +57,9 @@ bool SameCategoricalFeatures(const Pool& lhs, const Pool& rhs);
 void AddPoolBaselineToPredictions(const Pool& pool,
                                   int prediction_dimension,
                                   std::vector<float>& predictions);
+void AddBaseScoreToPredictions(const std::vector<double>& base_score,
+                               int prediction_dimension,
+                               std::vector<float>& predictions);
 int LabelToClassIndex(float label, int num_classes);
 std::string NormalizeTaskType(std::string task_type);
 std::string CanonicalBootstrapType(std::string bootstrap_type);
@@ -141,7 +144,8 @@ std::vector<float> PredictFromHist(const std::vector<Tree>& trees,
                                    double default_learning_rate,
                                    bool use_gpu,
                                    int prediction_dimension,
-                                   const std::string& devices = "0");
+                                   const std::string& devices = "0",
+                                   const std::vector<double>& initial_score = {});
 void UpdatePredictionsFromLeafRanges(const Tree& tree,
                                      const std::vector<std::size_t>& row_indices,
                                      const std::vector<LeafRowRange>& leaf_row_ranges,

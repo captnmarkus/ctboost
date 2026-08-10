@@ -130,7 +130,9 @@ void UpdatePredictionsFromLeafIndices(const Tree& tree,
     for (std::size_t row = 0; row < leaf_indices.size(); ++row) {
       const int leaf_index = leaf_indices[row];
       if (leaf_index >= 0) {
-        predictions[row] += learning_rate * nodes[static_cast<std::size_t>(leaf_index)].leaf_weight;
+        const float update = static_cast<float>(learning_rate) *
+                             nodes[static_cast<std::size_t>(leaf_index)].leaf_weight;
+        predictions[row] += update;
       }
     }
     return;
@@ -141,7 +143,9 @@ void UpdatePredictionsFromLeafIndices(const Tree& tree,
       continue;
     }
     const std::size_t offset = row * static_cast<std::size_t>(prediction_dimension) + class_index;
-    predictions[offset] += learning_rate * nodes[static_cast<std::size_t>(leaf_index)].leaf_weight;
+    const float update = static_cast<float>(learning_rate) *
+                         nodes[static_cast<std::size_t>(leaf_index)].leaf_weight;
+    predictions[offset] += update;
   }
 }
 

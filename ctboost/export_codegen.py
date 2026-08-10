@@ -27,6 +27,9 @@ OBJECTIVE_NAME = MODEL["objective_name"]
 LEARNING_RATE = float(MODEL["learning_rate"])
 TREE_LEARNING_RATES = [float(value) for value in MODEL.get("tree_learning_rates", [])]
 PREDICTION_DIMENSION = int(MODEL["prediction_dimension"])
+BASE_SCORE = [float(value) for value in MODEL.get("base_score", [0.0] * PREDICTION_DIMENSION)]
+if len(BASE_SCORE) != PREDICTION_DIMENSION:
+    raise ValueError("predictor base_score dimension mismatch")
 NUM_FEATURES = int(MODEL["num_features"])
 EXPECTS_PREPARED_FEATURES = bool(MODEL["expects_prepared_features"])
 QUANTIZATION_SCHEMA = MODEL["quantization_schema"]
@@ -111,7 +114,7 @@ def _row_scores(row):
             f"expected {{NUM_FEATURES}} features per row, got {{len(row)}}"
         )
     bins = [_bin_value(index, value) for index, value in enumerate(row)]
-    scores = [0.0] * PREDICTION_DIMENSION
+    scores = list(BASE_SCORE)
     for tree_index, tree in enumerate(TREES):
         nodes = tree["nodes"]
         iteration_index = tree_index // PREDICTION_DIMENSION

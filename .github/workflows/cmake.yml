@@ -85,6 +85,10 @@ jobs:
           }
           New-Item -ItemType Directory -Force -Path $testRoot | Out-Null
           Copy-Item -Path tests -Destination $testRoot -Recurse
+          Copy-Item -Path benchmarks -Destination $testRoot -Recurse
+          New-Item -ItemType Directory -Force -Path (Join-Path $testRoot "scripts") | Out-Null
+          Copy-Item -Path scripts/prepare_cuda_runtime_license.py -Destination (Join-Path $testRoot "scripts")
+          Copy-Item -Path scripts/validate_release_artifacts.py -Destination (Join-Path $testRoot "scripts")
 
           Push-Location $testRoot
           try {

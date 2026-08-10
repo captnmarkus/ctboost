@@ -61,6 +61,11 @@ double GradientBooster::distributed_timeout() const noexcept { return distribute
 std::uint64_t GradientBooster::random_seed() const noexcept { return random_seed_; }
 std::uint64_t GradientBooster::rng_state() const noexcept { return rng_state_; }
 bool GradientBooster::verbose() const noexcept { return verbose_; }
+bool GradientBooster::boost_from_average() const noexcept { return boost_from_average_; }
+const std::vector<double>& GradientBooster::configured_base_score() const noexcept {
+  return configured_base_score_;
+}
+const std::vector<double>& GradientBooster::base_score() const noexcept { return base_score_; }
 const QuantizationSchema* GradientBooster::quantization_schema() const noexcept { return quantization_schema_.get(); }
 const std::vector<Tree>& GradientBooster::trees() const noexcept { return trees_; }
 

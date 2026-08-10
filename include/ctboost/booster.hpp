@@ -63,7 +63,9 @@ class GradientBooster {
                   std::string distributed_run_id = "default",
                   double distributed_timeout = 600.0,
                   std::uint64_t random_seed = 0,
-                  bool verbose = false);
+                  bool verbose = false,
+                  bool boost_from_average = true,
+                  std::vector<double> base_score = {});
 
   void Fit(Pool& pool,
            Pool* eval_pool = nullptr,
@@ -73,7 +75,8 @@ class GradientBooster {
                         const ObjectiveFunction& objective,
                         Pool* eval_pool = nullptr,
                         int early_stopping_rounds = 0,
-                        bool continue_training = false);
+                        bool continue_training = false,
+                        bool allow_average_initialization = false);
   void SetIterations(int iterations);
   void SetLearningRate(double learning_rate);
   std::vector<float> Predict(const Pool& pool, int num_iteration = -1) const;
@@ -88,7 +91,8 @@ class GradientBooster {
                  int best_iteration,
                  double best_score,
                  bool use_gpu,
-                 std::uint64_t rng_state = 0);
+                 std::uint64_t rng_state = 0,
+                 std::vector<double> base_score = {});
   void LoadQuantizationSchema(QuantizationSchemaPtr quantization_schema);
 
   const std::vector<double>& loss_history() const noexcept;
@@ -148,6 +152,9 @@ class GradientBooster {
   std::uint64_t random_seed() const noexcept;
   std::uint64_t rng_state() const noexcept;
   bool verbose() const noexcept;
+  bool boost_from_average() const noexcept;
+  const std::vector<double>& configured_base_score() const noexcept;
+  const std::vector<double>& base_score() const noexcept;
   const QuantizationSchema* quantization_schema() const noexcept;
   const std::vector<Tree>& trees() const noexcept;
   std::vector<float> get_feature_importances() const;
@@ -199,6 +206,9 @@ class GradientBooster {
   std::uint64_t random_seed_{0};
   std::uint64_t rng_state_{0};
   bool verbose_{false};
+  bool boost_from_average_{true};
+  std::vector<double> configured_base_score_;
+  std::vector<double> base_score_;
   HistBuilder hist_builder_;
   QuantizationSchemaPtr quantization_schema_;
   std::vector<Tree> trees_;
@@ -209,6 +219,8 @@ class GradientBooster {
   int best_iteration_{-1};
   double best_score_{0.0};
   bool maximize_eval_metric_{false};
+
+  void InitializeBaseScore(const Pool& pool, bool allow_average_initialization);
 };
 
 }  // namespace ctboost

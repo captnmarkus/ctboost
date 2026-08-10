@@ -56,7 +56,7 @@ def test_callable_objective_matches_native_derivatives_and_receives_metadata():
     }
     expected = ctboost.train(
         pool,
-        {**common_params, "objective": "RMSE"},
+        {**common_params, "objective": "RMSE", "boost_from_average": False},
         num_boost_round=8,
     )
     actual = ctboost.train(

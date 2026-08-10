@@ -31,37 +31,64 @@ See [`demo/README.md`](demo/README.md) for expected data layouts and run command
 
 ## Installation
 
-Install from source:
+Install the current release from PyPI:
 
 ```bash
-pip install .
+python -m pip install --upgrade ctboost
 ```
 
-Install development dependencies:
+Starting with CTBoost 0.1.54, that ordinary pip command installs a
+CUDA-enabled wheel on manylinux-compatible x86-64 systems and Windows AMD64
+when using CPython 3.10 through 3.14. The same wheel continues to work for CPU
+training on a machine without an NVIDIA GPU. It bundles the CUDA 12.8 runtime
+library, so GPU use requires an NVIDIA driver compatible with CUDA 12.x
+(525.60.13 or newer on Linux; 528.33 or newer on Windows), but does not require
+a locally installed CUDA toolkit. The bundled NVIDIA runtime remains subject
+to the NVIDIA CUDA Toolkit license included in each CUDA-enabled wheel.
+
+Released CUDA wheels target NVIDIA compute capability 6.0 or newer, with
+native code for Pascal through Blackwell and forward-compatible PTX for future
+architectures. macOS, Linux aarch64, and the CPython 3.8/3.9 wheels remain
+CPU-only. Inspect the installed build before selecting `task_type="GPU"`:
 
 ```bash
-pip install -e .[dev]
+python -c "import ctboost; print(ctboost.build_info())"
+```
+
+GPU-capable builds report `cuda_enabled: True`; a driver or device error is
+reported only when GPU work is requested. The legacy `ctboost-install-gpu`
+command is retained for CTBoost 0.1.52 and earlier GitHub Release assets. It is
+deprecated and is not needed for 0.1.54 or later.
+
+Install from a source checkout:
+
+```bash
+python -m pip install .
+```
+
+Install development dependencies from a checkout:
+
+```bash
+python -m pip install -e ".[dev]"
 ```
 
 Install the optional scikit-learn wrappers and `ctboost.cv(...)` support:
 
 ```bash
-pip install -e .[sklearn]
+python -m pip install -e ".[sklearn]"
 ```
-
-`pip install ctboost` uses CPU wheels when a matching wheel exists on PyPI. Tagged GitHub releases also publish CUDA wheel assets for supported Linux and Windows targets.
 
 To force a CPU-only native source build:
 
 ```bash
-CMAKE_ARGS="-DCTBOOST_ENABLE_CUDA=OFF" pip install .
+CMAKE_ARGS="-DCTBOOST_ENABLE_CUDA=OFF" python -m pip install .
 ```
 
 On PowerShell:
 
 ```powershell
 $env:CMAKE_ARGS="-DCTBOOST_ENABLE_CUDA=OFF"
-pip install .
+python -m pip install .
 ```
 
 ## Quick Start

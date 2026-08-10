@@ -1,6 +1,7 @@
 #include "booster_internal.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <stdexcept>
 
@@ -53,7 +54,9 @@ GradientBooster::GradientBooster(std::string objective,
                                  std::string distributed_run_id,
                                  double distributed_timeout,
                                  std::uint64_t random_seed,
-                                 bool verbose)
+                                 bool verbose,
+                                 bool boost_from_average,
+                                 std::vector<double> base_score)
     : objective_name_(std::move(objective)),
       eval_metric_name_(std::move(eval_metric)),
       objective_config_{huber_delta, quantile_alpha, tweedie_variance_power},
@@ -97,6 +100,8 @@ GradientBooster::GradientBooster(std::string objective,
       random_seed_(random_seed),
       rng_state_(booster_detail::NormalizeRngState(random_seed)),
       verbose_(TrainingProfiler::ResolveEnabled(verbose)),
+      boost_from_average_(boost_from_average),
+      configured_base_score_(std::move(base_score)),
       hist_builder_(max_bins_,
                     std::move(nan_mode),
                     std::move(max_bin_by_feature),
@@ -163,6 +168,25 @@ GradientBooster::GradientBooster(std::string objective,
       throw std::invalid_argument("binary objectives require num_classes equal to one or two");
     }
     prediction_dimension_ = 1;
+  }
+
+  if (configured_base_score_.size() != 0U && configured_base_score_.size() != 1U &&
+      configured_base_score_.size() != static_cast<std::size_t>(prediction_dimension_)) {
+    throw std::invalid_argument(
+        "base_score must contain one raw margin or one margin per prediction dimension");
+  }
+  for (const double value : configured_base_score_) {
+    if (!std::isfinite(value)) {
+      throw std::invalid_argument("base_score entries must be finite raw margins");
+    }
+  }
+  if (configured_base_score_.empty()) {
+    base_score_.assign(static_cast<std::size_t>(prediction_dimension_), 0.0);
+  } else if (configured_base_score_.size() == 1U) {
+    base_score_.assign(static_cast<std::size_t>(prediction_dimension_),
+                       configured_base_score_.front());
+  } else {
+    base_score_ = configured_base_score_;
   }
 
   const std::string normalized_task_type = booster_detail::NormalizeTaskType(std::move(task_type));

@@ -168,6 +168,8 @@ class _BaseFitMixin:
                 "border_selection_method": self.border_selection_method,
                 "nan_mode_by_feature": self.nan_mode_by_feature,
                 "feature_borders": self.feature_borders,
+                "boost_from_average": self.boost_from_average,
+                "base_score": self.base_score,
                 "random_seed": self.random_seed,
                 "objective": resolved_objective,
                 "num_classes": num_classes,

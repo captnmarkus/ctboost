@@ -132,6 +132,20 @@ void AddPoolBaselineToPredictions(const Pool& pool,
   }
 }
 
+void AddBaseScoreToPredictions(const std::vector<double>& base_score,
+                               int prediction_dimension,
+                               std::vector<float>& predictions) {
+  if (prediction_dimension <= 0 ||
+      base_score.size() != static_cast<std::size_t>(prediction_dimension) ||
+      predictions.size() % static_cast<std::size_t>(prediction_dimension) != 0U) {
+    throw std::invalid_argument("base_score dimension does not match the prediction buffer");
+  }
+  for (std::size_t index = 0; index < predictions.size(); ++index) {
+    predictions[index] +=
+        static_cast<float>(base_score[index % static_cast<std::size_t>(prediction_dimension)]);
+  }
+}
+
 int LabelToClassIndex(float label, int num_classes) {
   const float rounded = std::round(label);
   if (std::fabs(label - rounded) > 1e-6F) {

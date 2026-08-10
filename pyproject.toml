@@ -7,7 +7,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "ctboost"
-version = "0.1.53"
+version = "0.1.54"
 description = "A GPU-accelerated gradient boosting library using Conditional Inference Trees."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -37,6 +37,7 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/captnmarkus/ctboost"
+Documentation = "https://captnmarkus.github.io/ctboost/"
 Repository = "https://github.com/captnmarkus/ctboost"
 Issues = "https://github.com/captnmarkus/ctboost/issues"
 
@@ -130,7 +131,9 @@ sdist.include = [
   "/CMakeLists.txt",
   "/LICENSE",
   "/README.md",
+  "/mkdocs.yml",
   "/pyproject.toml",
+  "/requirements-docs.txt",
   "/ctboost/__init__.py",
   "/ctboost/__main__.py",
   "/ctboost/_export.py",
@@ -161,7 +164,14 @@ sdist.include = [
   "/demo/*.py",
   "/benchmarks/*.py",
   "/benchmarks/tabarena/*.md",
+  "/benchmarks/tabarena/*.json",
   "/benchmarks/tabarena/*.py",
+  "/docs/*.md",
+  "/docs/guides/*.md",
+  "/docs/reference/*.md",
+  "/docs/stylesheets/*.css",
+  "/scripts/prepare_cuda_runtime_license.py",
+  "/scripts/validate_release_artifacts.py",
   "/cuda/*.cu",
   "/cuda/*.cuh",
   "/include/ctboost/*.hpp",

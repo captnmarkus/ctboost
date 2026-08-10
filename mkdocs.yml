@@ -1,0 +1,73 @@
+site_name: CTBoost
+site_description: Conditional-inference gradient boosting for Python, with CPU and CUDA training
+site_url: https://captnmarkus.github.io/ctboost/
+repo_url: https://github.com/captnmarkus/ctboost
+repo_name: captnmarkus/ctboost
+edit_uri: edit/master/docs/
+copyright: Apache-2.0 licensed
+
+theme:
+  name: material
+  language: en
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: amber
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: amber
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.tracking
+    - content.code.copy
+    - search.highlight
+    - search.suggest
+    - toc.follow
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+
+extra_css:
+  - stylesheets/extra.css
+
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+  - Why CTBoost: why-ctboost.md
+  - Benchmarks: benchmarks.md
+  - GPU installation: gpu.md
+  - Guides:
+      - Categorical, text, and embeddings: guides/categorical-text.md
+      - Explainability: guides/explainability.md
+      - Distributed training: guides/distributed.md
+      - Deployment: guides/deployment.md
+  - Reference:
+      - Python API: reference/api.md
+      - Compatibility and limits: reference/compatibility.md

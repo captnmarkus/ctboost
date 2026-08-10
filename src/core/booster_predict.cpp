@@ -15,6 +15,7 @@ std::vector<float> GradientBooster::Predict(const Pool& pool, int num_iteration)
   std::vector<float> predictions(
       pool.num_rows() * static_cast<std::size_t>(prediction_dimension_), 0.0F);
   if (tree_limit == 0) {
+    booster_detail::AddBaseScoreToPredictions(base_score_, prediction_dimension_, predictions);
     booster_detail::AddPoolBaselineToPredictions(pool, prediction_dimension_, predictions);
     return predictions;
   }
@@ -35,7 +36,8 @@ std::vector<float> GradientBooster::Predict(const Pool& pool, int num_iteration)
                                                 learning_rate_,
                                                 use_gpu_,
                                                 prediction_dimension_,
-                                                devices_);
+                                                devices_,
+                                                base_score_);
   booster_detail::AddPoolBaselineToPredictions(pool, prediction_dimension_, predictions);
   return predictions;
 }
@@ -80,6 +82,14 @@ std::vector<float> GradientBooster::PredictContributions(const Pool& pool, int n
   }
   const std::size_t row_width = static_cast<std::size_t>(prediction_dimension_) * (pool.num_cols() + 1);
   std::vector<float> contributions(pool.num_rows() * row_width, 0.0F);
+  for (std::size_t row = 0; row < pool.num_rows(); ++row) {
+    for (int output = 0; output < prediction_dimension_; ++output) {
+      const std::size_t bias_index =
+          row * row_width + static_cast<std::size_t>(output) * (pool.num_cols() + 1) +
+          pool.num_cols();
+      contributions[bias_index] = base_score_[static_cast<std::size_t>(output)];
+    }
+  }
   if (tree_limit == 0) {
     return contributions;
   }

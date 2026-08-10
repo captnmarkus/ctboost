@@ -28,6 +28,21 @@ def _normalize_callback_list(callbacks: Optional[Any]) -> List[Callable[..., Any
     return callback_list
 
 
+def _normalize_base_score(value: Any) -> List[float]:
+    if value is None:
+        return []
+    array = np.asarray(value, dtype=np.float64)
+    if array.ndim == 0:
+        array = array.reshape(1)
+    elif array.ndim != 1:
+        raise ValueError("base_score must be a finite scalar or 1D sequence of raw margins")
+    if array.size == 0:
+        return []
+    if not np.isfinite(array).all():
+        raise ValueError("base_score must contain only finite raw margins")
+    return [float(item) for item in array]
+
+
 def _resolve_native_training_params(
     config: Mapping[str, Any],
     pool: Pool,
@@ -93,6 +108,18 @@ def _resolve_native_training_params(
         "gamma": float(config.get("gamma", 0.0 if init_state is None else init_state.get("gamma", 0.0))),
         "max_leaf_weight": float(
             config.get("max_leaf_weight", 0.0 if init_state is None else init_state.get("max_leaf_weight", 0.0))
+        ),
+        "boost_from_average": bool(
+            config.get(
+                "boost_from_average",
+                True if init_state is None else init_state.get("boost_from_average", False),
+            )
+        ),
+        "base_score": _normalize_base_score(
+            config.get(
+                "base_score",
+                None if init_state is None else init_state.get("configured_base_score"),
+            )
         ),
         "quantile_alpha": float(config.get("quantile_alpha", 0.5 if init_state is None else init_state["quantile_alpha"])),
         "huber_delta": float(config.get("huber_delta", 1.0 if init_state is None else init_state["huber_delta"])),

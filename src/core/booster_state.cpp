@@ -1,6 +1,7 @@
 #include "booster_internal.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <numeric>
 #include <stdexcept>
 
@@ -29,7 +30,8 @@ void GradientBooster::LoadState(std::vector<Tree> trees,
                                 int best_iteration,
                                 double best_score,
                                 bool use_gpu,
-                                std::uint64_t rng_state) {
+                                std::uint64_t rng_state,
+                                std::vector<double> base_score) {
   trees_ = std::move(trees);
   tree_learning_rates_ = std::move(tree_learning_rates);
   if (quantization_schema == nullptr && !trees_.empty()) {
@@ -68,6 +70,20 @@ void GradientBooster::LoadState(std::vector<Tree> trees,
   use_gpu_ = use_gpu;
   if (rng_state != 0) {
     rng_state_ = booster_detail::NormalizeRngState(rng_state);
+  }
+  if (base_score.empty()) {
+    base_score_.assign(static_cast<std::size_t>(prediction_dimension_), 0.0);
+  } else if (base_score.size() == 1U) {
+    base_score_.assign(static_cast<std::size_t>(prediction_dimension_), base_score.front());
+  } else if (base_score.size() == static_cast<std::size_t>(prediction_dimension_)) {
+    base_score_ = std::move(base_score);
+  } else {
+    throw std::invalid_argument("persisted base_score dimension does not match the model");
+  }
+  for (const double value : base_score_) {
+    if (!std::isfinite(value)) {
+      throw std::invalid_argument("persisted base_score entries must be finite");
+    }
   }
 }
 

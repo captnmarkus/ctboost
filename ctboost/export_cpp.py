@@ -79,6 +79,12 @@ def standalone_cpp_source(payload: Mapping[str, Any]) -> str:
     schema = flattened["schema"]
     nodes = flattened["nodes"]
     prediction_dimension = int(payload["prediction_dimension"])
+    base_score = [
+        float(value)
+        for value in payload.get("base_score", [0.0] * prediction_dimension)
+    ]
+    if len(base_score) != prediction_dimension:
+        raise ValueError("predictor base_score dimension mismatch")
     tree_count = len(flattened["tree_offsets"])
     default_learning_rate = float(payload["learning_rate"])
     learning_rates = [float(value) for value in payload.get("tree_learning_rates", ())]
@@ -162,6 +168,7 @@ def standalone_cpp_source(payload: Mapping[str, Any]) -> str:
                 _integer_literal,
             ),
             _array("float", "kTreeScales", tree_scales, _float_literal),
+            _array("float", "kBaseScore", base_score, _float_literal),
             _array(
                 "std::uint8_t",
                 "kCategoryRoutes",
@@ -239,7 +246,9 @@ std::uint16_t BinValue(std::size_t feature, float value) noexcept {
 void PredictRow(const float* row, double* output) noexcept {
   std::uint16_t bins[kNumFeatures > 0U ? kNumFeatures : 1U] = {};
   for (std::size_t feature = 0; feature < kNumFeatures; ++feature) bins[feature] = BinValue(feature, row[feature]);
-  for (std::size_t output_index = 0; output_index < kPredictionDimension; ++output_index) output[output_index] = 0.0;
+  for (std::size_t output_index = 0; output_index < kPredictionDimension; ++output_index) {
+    output[output_index] = static_cast<double>(kBaseScore[output_index]);
+  }
   for (std::size_t tree_index = 0; tree_index < kTreeCount; ++tree_index) {
     const Node* tree = kNodes + kTreeOffsets[tree_index];
     std::int32_t node_index = 0;

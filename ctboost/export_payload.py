@@ -48,6 +48,14 @@ def _standalone_python_payload(
     )
     objective_name = str(handle.objective_name())
     normalized_objective = objective_name.strip().lower()
+    prediction_dimension = int(handle.prediction_dimension())
+    base_score = (
+        []
+        if not hasattr(handle, "base_score")
+        else [float(value) for value in handle.base_score()]
+    )
+    if not base_score:
+        base_score = [0.0] * prediction_dimension
     if resolved_class_labels is not None:
         if normalized_objective in {"logloss", "binary_logloss", "binary:logistic"}:
             expected_class_count = 2
@@ -69,7 +77,8 @@ def _standalone_python_payload(
         "tree_learning_rates": []
         if not hasattr(handle, "tree_learning_rates")
         else [float(value) for value in handle.tree_learning_rates()],
-        "prediction_dimension": int(handle.prediction_dimension()),
+        "base_score": base_score,
+        "prediction_dimension": prediction_dimension,
         "num_features": len(list(quantization_schema["num_bins_per_feature"])),
         "expects_prepared_features": bool(expects_prepared_features),
         "quantization_schema": dict(quantization_schema),

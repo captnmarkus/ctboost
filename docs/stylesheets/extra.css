@@ -1,0 +1,31 @@
+:root {
+  --ctb-ink: #102a2a;
+  --ctb-teal: #0f766e;
+  --ctb-amber: #f59e0b;
+}
+
+.ctb-hero {
+  padding: 1.4rem 1.5rem 1.6rem;
+  margin: 0 0 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--ctb-teal) 32%, transparent);
+  border-radius: 0.8rem;
+  background:
+    radial-gradient(circle at 90% 15%, rgb(245 158 11 / 16%), transparent 35%),
+    linear-gradient(135deg, rgb(15 118 110 / 14%), transparent 65%);
+}
+
+.ctb-hero > p:first-child {
+  max-width: 48rem;
+  font-size: 1.12rem;
+}
+
+.md-typeset .grid.cards > ul > li {
+  border-top: 3px solid var(--ctb-teal);
+}
+
+[data-md-color-scheme="slate"] .ctb-hero {
+  border-color: rgb(45 212 191 / 35%);
+  background:
+    radial-gradient(circle at 90% 15%, rgb(245 158 11 / 13%), transparent 35%),
+    linear-gradient(135deg, rgb(20 184 166 / 13%), transparent 65%);
+}

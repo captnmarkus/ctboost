@@ -127,7 +127,9 @@ void UpdatePredictionsFromContiguousBins(const Tree& tree,
   if (prediction_dimension == 1) {
     for (std::size_t row = 0; row < num_rows; ++row) {
       const int leaf_index = PredictContiguousLeafIndex(nodes, bin_indices, num_rows, row);
-      predictions[row] += learning_rate * nodes[static_cast<std::size_t>(leaf_index)].leaf_weight;
+      const float update = static_cast<float>(learning_rate) *
+                           nodes[static_cast<std::size_t>(leaf_index)].leaf_weight;
+      predictions[row] += update;
     }
     return;
   }
@@ -136,8 +138,9 @@ void UpdatePredictionsFromContiguousBins(const Tree& tree,
     const std::size_t offset =
         row * static_cast<std::size_t>(prediction_dimension) +
         static_cast<std::size_t>(class_index);
-    predictions[offset] +=
-        learning_rate * nodes[static_cast<std::size_t>(leaf_index)].leaf_weight;
+    const float update = static_cast<float>(learning_rate) *
+                         nodes[static_cast<std::size_t>(leaf_index)].leaf_weight;
+    predictions[offset] += update;
   }
 }
 
@@ -274,13 +277,17 @@ void UpdatePredictions(const Tree& tree,
   }
   if (prediction_dimension == 1) {
     for (std::size_t row = 0; row < hist.num_rows; ++row) {
-      predictions[row] += learning_rate * tree.PredictBinnedRow(hist, row);
+      const float update =
+          static_cast<float>(learning_rate) * tree.PredictBinnedRow(hist, row);
+      predictions[row] += update;
     }
     return;
   }
   for (std::size_t row = 0; row < hist.num_rows; ++row) {
     const std::size_t offset = row * static_cast<std::size_t>(prediction_dimension) + class_index;
-    predictions[offset] += learning_rate * tree.PredictBinnedRow(hist, row);
+    const float update =
+        static_cast<float>(learning_rate) * tree.PredictBinnedRow(hist, row);
+    predictions[offset] += update;
   }
 }
 
@@ -314,9 +321,16 @@ std::vector<float> PredictFromHist(const std::vector<Tree>& trees,
                                    double default_learning_rate,
                                    bool use_gpu,
                                    int prediction_dimension,
-                                   const std::string& devices) {
+                                   const std::string& devices,
+                                   const std::vector<double>& initial_score) {
   std::vector<float> predictions(hist.num_rows * static_cast<std::size_t>(prediction_dimension), 0.0F);
+  if (!initial_score.empty() && !(use_gpu && CudaBackendCompiled())) {
+    AddBaseScoreToPredictions(initial_score, prediction_dimension, predictions);
+  }
   if (tree_limit == 0 || hist.num_rows == 0) {
+    if (!initial_score.empty() && use_gpu && CudaBackendCompiled()) {
+      AddBaseScoreToPredictions(initial_score, prediction_dimension, predictions);
+    }
     return predictions;
   }
   if (use_gpu && CudaBackendCompiled()) {
@@ -324,6 +338,9 @@ std::vector<float> PredictFromHist(const std::vector<Tree>& trees,
     const std::vector<GpuTreeNode> flattened_nodes = FlattenTreesForGpu(
         trees, tree_limit, tree_learning_rates, default_learning_rate, prediction_dimension, tree_offsets);
     PredictRawGpu(hist, flattened_nodes, tree_offsets, 1.0F, prediction_dimension, predictions, devices);
+    if (!initial_score.empty()) {
+      AddBaseScoreToPredictions(initial_score, prediction_dimension, predictions);
+    }
     return predictions;
   }
   for (std::size_t tree_index = 0; tree_index < tree_limit; ++tree_index) {
@@ -349,13 +366,15 @@ void UpdatePredictions(const Tree& tree,
                        std::vector<float>& predictions) {
   if (prediction_dimension == 1) {
     for (std::size_t row = 0; row < pool.num_rows(); ++row) {
-      predictions[row] += learning_rate * tree.PredictRow(pool, row);
+      const float update = static_cast<float>(learning_rate) * tree.PredictRow(pool, row);
+      predictions[row] += update;
     }
     return;
   }
   for (std::size_t row = 0; row < pool.num_rows(); ++row) {
     const std::size_t offset = row * static_cast<std::size_t>(prediction_dimension) + class_index;
-    predictions[offset] += learning_rate * tree.PredictRow(pool, row);
+    const float update = static_cast<float>(learning_rate) * tree.PredictRow(pool, row);
+    predictions[offset] += update;
   }
 }
 

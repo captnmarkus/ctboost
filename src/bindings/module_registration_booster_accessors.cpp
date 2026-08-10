@@ -63,6 +63,9 @@ void BindGradientBoosterAccessors(py::class_<ctboost::GradientBooster>& booster_
       .def("distributed_timeout", &ctboost::GradientBooster::distributed_timeout)
       .def("random_seed", &ctboost::GradientBooster::random_seed)
       .def("rng_state", &ctboost::GradientBooster::rng_state)
+      .def("boost_from_average", &ctboost::GradientBooster::boost_from_average)
+      .def("configured_base_score", &ctboost::GradientBooster::configured_base_score)
+      .def("base_score", &ctboost::GradientBooster::base_score)
       .def("verbose", &ctboost::GradientBooster::verbose);
 }
 

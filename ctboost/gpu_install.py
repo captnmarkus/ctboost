@@ -15,8 +15,41 @@ from typing import Any, Dict, Iterable, Optional, Sequence
 
 from ._version import __version__
 
-
 _REPOSITORY = "captnmarkus/ctboost"
+_UNIFIED_GPU_WHEEL_VERSION = (0, 1, 54)
+
+
+def _public_release_tuple(version: str) -> Optional[tuple[int, int, int]]:
+    fields = str(version).split(".")
+    if len(fields) < 3 or not all(field.isdigit() for field in fields[:3]):
+        return None
+    return int(fields[0]), int(fields[1]), int(fields[2])
+
+
+def _uses_unified_gpu_wheels(version: str) -> bool:
+    parsed = _public_release_tuple(version)
+    return parsed is not None and parsed >= _UNIFIED_GPU_WHEEL_VERSION
+
+
+def _installed_cuda_enabled() -> bool:
+    # Import lazily so the legacy asset-selection helpers remain independently
+    # testable and usable by packaging tools.
+    from . import build_info
+
+    return bool(build_info().get("cuda_enabled", False))
+
+
+def _ordinary_pip_guidance(version: str) -> str:
+    return (
+        "CTBoost %s and later ship CUDA support in the ordinary Linux x86-64 and "
+        "Windows AMD64 wheels for CPython 3.10-3.14. After this command exits, run "
+        "'%s -m pip install --only-binary=:all: --force-reinstall ctboost==%s'."
+        % (
+            ".".join(str(value) for value in _UNIFIED_GPU_WHEEL_VERSION),
+            sys.executable,
+            version,
+        )
+    )
 
 
 def _cpython_tag() -> str:
@@ -28,12 +61,16 @@ def _cpython_tag() -> str:
 def _platform_suffix() -> str:
     machine = platform.machine().lower()
     if machine not in {"amd64", "x86_64"}:
-        raise RuntimeError("prebuilt CTBoost GPU wheels currently require an x86-64 machine")
+        raise RuntimeError(
+            "prebuilt CTBoost GPU wheels currently require an x86-64 machine"
+        )
     if sys.platform == "win32":
         return "win_amd64.whl"
     if sys.platform.startswith("linux"):
         return "x86_64.whl"
-    raise RuntimeError("prebuilt CTBoost GPU wheels are currently available for Linux and Windows")
+    raise RuntimeError(
+        "prebuilt CTBoost GPU wheels are currently available for Linux and Windows"
+    )
 
 
 def select_gpu_asset(
@@ -65,17 +102,24 @@ def select_gpu_asset(
     return asset
 
 
-def _release_assets(version: str, *, repository: str = _REPOSITORY) -> Sequence[Dict[str, Any]]:
+def _release_assets(
+    version: str, *, repository: str = _REPOSITORY
+) -> Sequence[Dict[str, Any]]:
     url = "https://api.github.com/repos/%s/releases/tags/v%s" % (repository, version)
     request = urllib.request.Request(
         url,
-        headers={"Accept": "application/vnd.github+json", "User-Agent": "ctboost-gpu-installer"},
+        headers={
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "ctboost-gpu-installer",
+        },
     )
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
             payload = json.load(response)
     except Exception as exc:
-        raise RuntimeError("could not read CTBoost release metadata from GitHub: %s" % exc) from exc
+        raise RuntimeError(
+            "could not read CTBoost release metadata from GitHub: %s" % exc
+        ) from exc
     assets = payload.get("assets")
     if not isinstance(assets, list):
         raise RuntimeError("GitHub release metadata did not contain an asset list")
@@ -85,12 +129,17 @@ def _release_assets(version: str, *, repository: str = _REPOSITORY) -> Sequence[
 def _download_verified(asset: Dict[str, Any], destination: Path) -> str:
     request = urllib.request.Request(
         str(asset["browser_download_url"]),
-        headers={"Accept": "application/octet-stream", "User-Agent": "ctboost-gpu-installer"},
+        headers={
+            "Accept": "application/octet-stream",
+            "User-Agent": "ctboost-gpu-installer",
+        },
     )
     digest = hashlib.sha256()
     received = 0
     try:
-        with urllib.request.urlopen(request, timeout=120) as response, destination.open("wb") as output:
+        with urllib.request.urlopen(request, timeout=120) as response, destination.open(
+            "wb"
+        ) as output:
             while True:
                 chunk = response.read(1024 * 1024)
                 if not chunk:
@@ -99,7 +148,9 @@ def _download_verified(asset: Dict[str, Any], destination: Path) -> str:
                 digest.update(chunk)
                 received += len(chunk)
     except Exception as exc:
-        raise RuntimeError("could not download the CTBoost GPU wheel: %s" % exc) from exc
+        raise RuntimeError(
+            "could not download the CTBoost GPU wheel: %s" % exc
+        ) from exc
 
     expected_size = asset.get("size")
     if expected_size is not None and received != int(expected_size):
@@ -124,9 +175,23 @@ def install_gpu(
     user: bool = False,
     target: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Install the GPU build matching this interpreter and return asset details."""
+    """Install a legacy GPU build or report an already-enabled unified wheel."""
 
-    asset = select_gpu_asset(_release_assets(version, repository=repository), version=version)
+    version = str(version)
+    if _uses_unified_gpu_wheels(version):
+        if version == __version__ and _installed_cuda_enabled():
+            return {
+                "name": "ctboost==%s" % version,
+                "url": "https://pypi.org/project/ctboost/%s/" % version,
+                "digest": "",
+                "version": version,
+                "already_installed": True,
+            }
+        raise RuntimeError(_ordinary_pip_guidance(version))
+
+    asset = select_gpu_asset(
+        _release_assets(version, repository=repository), version=version
+    )
     result = {
         "name": str(asset["name"]),
         "url": str(asset["browser_download_url"]),
@@ -160,11 +225,22 @@ def install_gpu(
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Install the CUDA-enabled CTBoost wheel matching this Python and platform."
+        description=(
+            "Install a legacy (0.1.52 or earlier) CUDA-enabled CTBoost wheel. "
+            "Current releases include CUDA in the ordinary pip wheel."
+        )
     )
-    parser.add_argument("--version", default=__version__, help="release version (default: installed version)")
+    parser.add_argument(
+        "--version",
+        default=__version__,
+        help="release version (default: installed version)",
+    )
     parser.add_argument("--repository", default=_REPOSITORY, help=argparse.SUPPRESS)
-    parser.add_argument("--dry-run", action="store_true", help="show the selected verified release asset")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="show the selected verified release asset",
+    )
     parser.add_argument("--user", action="store_true", help="pass --user to pip")
     parser.add_argument("--target", help="pass --target DIRECTORY to pip")
     return parser
@@ -183,11 +259,23 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     except (RuntimeError, ValueError, subprocess.CalledProcessError) as exc:
         print("ctboost-install-gpu: %s" % exc, file=sys.stderr)
         return 1
+    if result.get("already_installed"):
+        print("CUDA support is already included in %s." % result["name"])
+        print(result["url"])
+        return 0
+    print(
+        "ctboost-install-gpu is deprecated; it is retained only for CTBoost 0.1.52 "
+        "and earlier release assets.",
+        file=sys.stderr,
+    )
     action = "Selected" if arguments.dry_run else "Installed"
     print("%s %s" % (action, result["name"]))
     print(result["url"])
     if not arguments.dry_run:
-        print("Restart Python, then verify with: python -c \"import ctboost; print(ctboost.build_info())\"")
+        print(
+            "Restart Python, then verify with: "
+            'python -c "import ctboost; print(ctboost.build_info())"'
+        )
     return 0
 
 

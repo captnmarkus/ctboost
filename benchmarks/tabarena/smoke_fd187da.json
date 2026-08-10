@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "result_kind": "tabarena_smoke",
+  "status": "provisional_not_official",
+  "benchmark": "TabArena-v0.1",
+  "recorded_at_utc": "2026-08-09T20:57:47.383176+00:00",
+  "provenance": {
+    "ctboost_version": "0.1.53",
+    "ctboost_commit": "fd187da60ec1844ef8d83c95b2d2ac6ccd839cd3",
+    "ctboost_tree_clean": true,
+    "ctboost_install_sha256": "f762e9fcd4f66e68bd1135efb26ef1f71b51da76ffd8917488cdaa73082f4384",
+    "tabarena_commit": "50f8ab1bbc6e7f7e5dd9b19d8b643ac284ae9b3c",
+    "tabarena_tree_clean": true,
+    "python": "3.12.11",
+    "autogluon_tabular": "1.6.2b20260809",
+    "numpy": "2.5.2",
+    "pandas": "2.3.3"
+  },
+  "scope": {
+    "subset": "lite",
+    "datasets": [
+      "blood-transfusion-service-center",
+      "QSAR_fish_toxicity",
+      "anneal"
+    ],
+    "outer_splits": 3,
+    "bag_folds_per_outer_split": 8,
+    "random_configs": 0,
+    "device": "cpu",
+    "cached_public_competitors": true
+  },
+  "resources": {
+    "num_cpus_per_fit": 8,
+    "num_gpus_per_fit": 0,
+    "memory_limit_gb": 24,
+    "time_limit_seconds_per_fit": 3600,
+    "logical_cpu_count": 16,
+    "platform": "Windows 11 AMD64",
+    "compiler": "MSVC 1944"
+  },
+  "leaderboard": {
+    "method": "CTBoost default",
+    "elo": 1058.7,
+    "rank": 63.0,
+    "winrate": 0.26190475,
+    "normalized_error": 0.9910569366333114,
+    "imputed_fraction": 0.0
+  },
+  "per_split": [
+    {
+      "dataset": "QSAR_fish_toxicity",
+      "task_id": 363698,
+      "fold": 0,
+      "repeat": 0,
+      "problem_type": "regression",
+      "metric": "rmse",
+      "metric_error": 0.9612810609834775,
+      "time_train_s": 3.9433162212371826,
+      "time_infer_s": 0.010655403137207031,
+      "peak_mem_cpu_bytes": 609607680,
+      "incremental_peak_mem_cpu_bytes": 3108864,
+      "disk_usage_bytes": 7569698
+    },
+    {
+      "dataset": "anneal",
+      "task_id": 363614,
+      "fold": 0,
+      "repeat": 0,
+      "problem_type": "multiclass",
+      "metric": "log_loss",
+      "metric_error": 0.041871435940265656,
+      "time_train_s": 150.18484449386597,
+      "time_infer_s": 0.23080945014953613,
+      "peak_mem_cpu_bytes": 669478912,
+      "incremental_peak_mem_cpu_bytes": 433238016,
+      "disk_usage_bytes": 257234812
+    },
+    {
+      "dataset": "blood-transfusion-service-center",
+      "task_id": 363621,
+      "fold": 0,
+      "repeat": 0,
+      "problem_type": "binary",
+      "metric": "roc_auc",
+      "metric_error": 0.3149122807017545,
+      "time_train_s": 2.3510937690734863,
+      "time_infer_s": 0.006082773208618164,
+      "peak_mem_cpu_bytes": 623222784,
+      "incremental_peak_mem_cpu_bytes": 4149248,
+      "disk_usage_bytes": 2583527
+    }
+  ],
+  "limitations": [
+    "This is a three-dataset smoke run, not the 51-dataset TabArena-Full evaluation.",
+    "The Elo estimate is unstable at this sample size and must not be presented as an official leaderboard score.",
+    "Only the default configuration was evaluated; tuned and tuned-plus-ensemble variants require the complete 200-config run."
+  ]
+}

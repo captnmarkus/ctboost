@@ -49,7 +49,10 @@ void BindGradientBoosterStateMethods(py::class_<ctboost::GradientBooster>& boost
                                use_gpu,
                                state.contains("rng_state")
                                    ? py::cast<std::uint64_t>(state["rng_state"])
-                                   : 0U);
+                                   : 0U,
+                               state.contains("base_score")
+                                   ? py::cast<std::vector<double>>(state["base_score"])
+                                   : std::vector<double>{});
              return booster;
            },
            py::arg("state"),
