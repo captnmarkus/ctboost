@@ -57,6 +57,51 @@ Run these three fixed profiles with `max_bins=256`, `alpha=0.05`,
 Use deterministic seed `20260815 + task_id + 100 * fold`. Do not add a
 profile, remove a dataset, or alter a threshold after inspecting results.
 
+## Frozen execution details
+
+These operational details are part of the ledger and are fixed before any
+external-panel result is produced:
+
+- Resolve data only by OpenML task ID. Use the task's published
+  `repeat=0`, `fold in {0, 1, 2}`, `sample=0` indices; never reproduce a fold
+  from a dataset name or a new splitter.
+- Split each published outer-training fold once into 80% inner training and
+  20% inner validation with that fit's deterministic seed. Classification is
+  stratified and shuffled; regression is shuffled without stratification.
+  The published outer-test fold is never supplied as an evaluation set and is
+  used only for the final held-out prediction and metrics.
+- Retain the OpenML pandas DataFrame, convert OpenML-declared categorical
+  columns to pandas categorical dtype when needed, and preserve missing values.
+  Do not impute, one-hot encode, or coerce the whole frame to a numeric array in
+  the runner.
+- Set `CTBOOST_HIST_THREADS=8`. Launch every fit in a fresh subprocess and
+  record that process's peak RSS. Run the subprocesses sequentially so another
+  panel fit cannot contaminate peak process memory.
+- Alternate treatment order by the frozen dataset/fold/profile ordinal:
+  control then candidate for even ordinals, candidate then control for odd
+  ordinals. Resuming skips completed identities but does not reorder the
+  remaining ledger.
+- OpenML download/cache access, staged-data validation, fold slicing, and Pool
+  construction happen before the fit timer. Fit time covers only the
+  `ctboost.train(...)` call. Model serialization and outer-test prediction are
+  also outside fit time.
+- On fold 0 of every profile and every listed dataset, run an additional
+  implicit-control fit that omits `feature_test`, `feature_test_bins`, and
+  `feature_test_adjustment`. It must match the explicit quadratic control's raw
+  outer-test prediction bytes, canonical tree JSON, and best iteration exactly.
+  Whole serialized-model hashes are recorded but are not the equality gate,
+  because explicit configuration metadata may legitimately differ.
+- The task bootstrap uses 10,000 task-level resamples, seed `20260815`, and a
+  two-sided 95% percentile interval for the median relative primary-loss
+  improvement.
+
+The runner records the actual OpenML data and published-index fingerprints,
+the full fit configuration, the source working-tree fingerprint, the installed
+CTBoost package fingerprint, and the native-extension SHA-256. A completed fit
+is reusable only when the hash of all three identities (source, data, and full
+configuration) is unchanged. Each fit result is added through an atomic JSON
+replacement. Public manifests and summaries contain no absolute paths.
+
 ## Metrics and aggregation
 
 - Binary: ROC-AUC is primary; log loss is a diagnostic.
@@ -73,6 +118,13 @@ changes. Report task-macro win/tie/loss, the median relative change, and a
 fixed-seed task bootstrap interval. A tie is an absolute relative change below
 0.1%.
 
+Define relative improvement as `(control_loss - candidate_loss) / control_loss`,
+so positive values favor grouped-8. Regression normalization uses the
+published outer-training target standard deviation with `ddof=0`. The reported
+fit-time ratio is the median of candidate/control ratios across the 108 matched
+fold/profile pairs in the 12 decision datasets. The two stress tasks and their
+control checks are reported separately and do not enter any promotion gate.
+
 ## Pre-registered decision
 
 Grouped-8 advances to a frozen TabArena scout only if all of these hold:
@@ -86,3 +138,31 @@ Grouped-8 advances to a frozen TabArena scout only if all of these hold:
 If these gates fail, grouped-8 remains an experimental user option or is
 rejected. The panel must not be revised using TabArena outcomes. A later full
 TabArena result is reported regardless of whether it supports the hypothesis.
+
+## Runner
+
+The implementation is intentionally separate from the learner and can be
+inspected without OpenML or a native build:
+
+```bash
+python -m benchmarks.split_research.external_panel metadata
+python -m benchmarks.split_research.external_panel preflight
+```
+
+`metadata` is dependency-free apart from CTBoost's normal NumPy requirement.
+`preflight` imports installed dependencies and probes the grouped native API,
+but does not request an OpenML task or fit a model. A result-producing run is a
+separate explicit command and should be invoked only after reviewing this
+ledger and its generated metadata:
+
+```bash
+python -m pip install pandas scikit-learn openml
+python -m benchmarks.split_research.external_panel run \
+  --results-dir benchmark-results/split_research/external-panel \
+  --cache-dir benchmark-results/split_research/openml-cache
+```
+
+The default directories are ignored by Git. Re-running the command resumes the
+atomic full-identity ledger; `--rerun-failures` explicitly retries recorded
+failures. `summarize` regenerates the sanitized public summary from existing
+artifacts without contacting OpenML.
