@@ -1,0 +1,83 @@
+# Conditional split statistics
+
+CTBoost keeps feature selection and split-point selection as two separate
+steps. At each node it first tests every eligible feature for association with
+the current gradient scores, selects by the raw feature-level p-value, applies
+the `alpha` stopping rule, and only then searches that selected feature's full
+histogram for the gain-optimal cut. The options on this page do not replace
+that conditional-inference structure.
+
+The ordinary unconstrained path is strictly minimum raw p-value followed by a
+gain search only within that feature. CTBoost's pre-existing advanced search
+path is slightly broader: monotone/interaction constraints, nonzero
+`random_strength`, feature weights, or first-use penalties iterate the
+raw-p-ranked set of significant features and choose the best feasible adjusted
+gain. Grouping and multiplicity adjustment change neither search policy.
+
+## Numeric grouped test
+
+The legacy and default setting is `feature_test="quadratic"`. It treats every
+active histogram bin as a separate category in the quadratic independence
+statistic. This path is unchanged.
+
+`feature_test="grouped"` is an opt-in test for high-resolution numeric
+histograms. Before the feature-level independence test, CTBoost combines
+adjacent non-missing bins into at most `feature_test_bins` contiguous groups
+with approximately equal node weight. A missing-value bin remains a separate
+group for both `nan_mode="Min"` and `nan_mode="Max"`. Categorical features
+always use the original nominal quadratic test.
+
+```python
+from ctboost import CTBoostRegressor
+
+model = CTBoostRegressor(
+    feature_test="grouped",
+    feature_test_bins=8,  # accepted range: 2..64
+)
+```
+
+Grouping is used only for the feature-level test. If the feature passes, the
+within-feature gain search still sees every original numeric histogram bin, so
+the final split is not restricted to a grouped boundary.
+
+## Multiplicity adjustment
+
+Set `feature_test_adjustment="bonferroni"` to compare the winning raw p-value
+with `alpha / m`, where `m` is the number of eligible, non-degenerate features
+tested at that node. Raw p-values still determine feature ranking; the
+adjustment affects only stopping. The default is `"none"`.
+
+With verbose profiling, `node_search` retains the existing `p_value` field for
+the raw value and also reports `stopping_p_value`. The latter is
+`min(1, m * p_value)` for Bonferroni and equals the raw value for `"none"`;
+`tested_features` reports `m` on CPU. GPU profiling reports
+`tested_features=0` because that diagnostic count is not currently returned by
+the GPU search. The raw `p_value` is the one used for ranking.
+
+```python
+model = CTBoostRegressor(
+    feature_test="grouped",
+    feature_test_bins=8,
+    feature_test_adjustment="bonferroni",
+    alpha=0.05,
+)
+```
+
+These experimental options currently support CPU training, including the CPU
+distributed histogram path. GPU training fails closed unless
+`feature_test="quadratic"` and `feature_test_adjustment="none"`; this prevents a
+silent CPU/GPU statistical mismatch. Prediction remains device-independent.
+
+Model state, snapshots, warm starts, the scikit-learn estimators, and the CLI
+persist all three settings. Snapshot resume rejects configuration drift;
+`init_model` can be used when a later stage intentionally changes the test.
+
+## Statistical background
+
+The two-stage design follows the conditional-inference framework of Hothorn,
+Hornik, and Zeileis. Grouping is a power-oriented, lower-degree-of-freedom
+alternative for ordered numeric histograms; it is not presented as an exact
+permutation or maximally selected statistic.
+
+- [Unbiased Recursive Partitioning: A Conditional Inference Framework (2006)](https://www.zeileis.org/papers/Hothorn+Hornik+Zeileis-2006.pdf)
+- [Model-Based Recursive Partitioning (2008)](https://www.zeileis.org/papers/Zeileis+Hothorn+Hornik-2008.pdf)

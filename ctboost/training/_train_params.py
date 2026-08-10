@@ -55,6 +55,16 @@ def _resolve_native_training_params(
             config.get("loss_function", "RMSE" if init_state is None else init_state["objective_name"]),
         )
     )
+    feature_test_default = (
+        "quadratic" if init_state is None else init_state.get("feature_test", "quadratic")
+    )
+    feature_test = str(config.get("feature_test", feature_test_default)).strip().lower()
+    feature_test_adjustment_default = (
+        "none" if init_state is None else init_state.get("feature_test_adjustment", "none")
+    )
+    feature_test_adjustment = (
+        str(config.get("feature_test_adjustment", feature_test_adjustment_default)).strip().lower()
+    )
     params = {
         "objective": objective,
         "learning_rate": float(config.get("learning_rate", 0.1 if init_state is None else init_state["learning_rate"])),
@@ -115,6 +125,14 @@ def _resolve_native_training_params(
                 1 if init_state is None else init_state.get("leaf_estimation_iterations", 1),
             )
         ),
+        "feature_test": feature_test or "quadratic",
+        "feature_test_bins": int(
+            config.get(
+                "feature_test_bins",
+                8 if init_state is None else init_state.get("feature_test_bins", 8),
+            )
+        ),
+        "feature_test_adjustment": feature_test_adjustment or "none",
         "boost_from_average": bool(
             config.get(
                 "boost_from_average",

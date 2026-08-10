@@ -6,7 +6,46 @@
 namespace ctboost::detail {
 namespace {
 
-std::vector<FeatureChoice> RankFeaturesByStatistic(const NodeHistogramSet& node_stats,
+LinearStatisticScore EvaluateFeatureStatistic(const HistMatrix& hist,
+                                               std::size_t feature,
+                                               const NodeHistogramSet& node_stats,
+                                               const TreeBuildOptions& options,
+                                               const LinearStatistic& statistic_engine) {
+  const BinStatistics& raw_stats = node_stats.by_feature[feature];
+  if (options.feature_test == FeatureTest::Quadratic || hist.is_categorical(feature)) {
+    return statistic_engine.EvaluateScoreFromBinStatistics(raw_stats,
+                                                           node_stats.total_gradient,
+                                                           node_stats.sample_weight_sum,
+                                                           node_stats.gradient_variance);
+  }
+  const bool has_missing = hist.has_missing_values(feature);
+  const std::size_t missing_bin =
+      !has_missing
+          ? kNoMissingStatisticBin
+          : (hist.nan_mode_for_feature(feature) == NanMode::Min
+                 ? 0U
+                 : raw_stats.weight_sums.size() - 1U);
+  const BinStatistics grouped_stats =
+      GroupOrderedBinStatistics(raw_stats, options.feature_test_bins, missing_bin);
+  return statistic_engine.EvaluateScoreFromBinStatistics(grouped_stats,
+                                                         node_stats.total_gradient,
+                                                         node_stats.sample_weight_sum,
+                                                         node_stats.gradient_variance);
+}
+
+double AdjustFeatureTestPValue(double raw_p_value,
+                               std::size_t tested_features,
+                               const TreeBuildOptions& options) {
+  const std::size_t multiplicity =
+      options.feature_test_adjustment == FeatureTestAdjustment::Bonferroni
+          ? std::max<std::size_t>(1U, tested_features)
+          : 1U;
+  return std::min(1.0, raw_p_value * static_cast<double>(multiplicity));
+}
+
+std::vector<FeatureChoice> RankFeaturesByStatistic(const HistMatrix& hist,
+                                                   const NodeHistogramSet& node_stats,
+                                                   const TreeBuildOptions& options,
                                                    const LinearStatistic& statistic_engine,
                                                    const std::vector<int>* allowed_features) {
   std::vector<FeatureChoice> ranked_features;
@@ -17,11 +56,8 @@ std::vector<FeatureChoice> RankFeaturesByStatistic(const NodeHistogramSet& node_
       return;
     }
 
-    const auto result = statistic_engine.EvaluateScoreFromBinStatistics(
-        feature_stats,
-        node_stats.total_gradient,
-        node_stats.sample_weight_sum,
-        node_stats.gradient_variance);
+    const auto result =
+        EvaluateFeatureStatistic(hist, feature, node_stats, options, statistic_engine);
     if (result.degrees_of_freedom == 0) {
       return;
     }
@@ -81,9 +117,12 @@ bool FeatureAllowedByInteraction(int feature_id,
   return false;
 }
 
-FeatureChoice SelectBestFeature(const NodeHistogramSet& node_stats,
+FeatureChoice SelectBestFeature(const HistMatrix& hist,
+                                const NodeHistogramSet& node_stats,
+                                const TreeBuildOptions& options,
                                 const LinearStatistic& statistic_engine,
-                                const std::vector<int>* allowed_features) {
+                                const std::vector<int>* allowed_features,
+                                std::size_t& tested_features) {
   FeatureChoice best;
 
   const auto evaluate_feature = [&](std::size_t feature) {
@@ -92,14 +131,12 @@ FeatureChoice SelectBestFeature(const NodeHistogramSet& node_stats,
       return;
     }
 
-    const auto result = statistic_engine.EvaluateScoreFromBinStatistics(
-        feature_stats,
-        node_stats.total_gradient,
-        node_stats.sample_weight_sum,
-        node_stats.gradient_variance);
+    const auto result =
+        EvaluateFeatureStatistic(hist, feature, node_stats, options, statistic_engine);
     if (result.degrees_of_freedom == 0) {
       return;
     }
+    ++tested_features;
 
     if (best.feature_id < 0 || result.p_value < best.p_value ||
         (std::abs(result.p_value - best.p_value) <= 1e-12 &&
@@ -184,8 +221,15 @@ CandidateSelectionResult SelectBestCandidateSplit(const HistMatrix& hist,
                                  options.first_feature_use_penalties != nullptr;
 
   if (!use_ranked_search) {
-    best.feature_choice = SelectBestFeature(node_stats, statistic_engine, node_allowed_features);
-    if (best.feature_choice.feature_id < 0 || best.feature_choice.p_value > options.alpha) {
+    std::size_t tested_features = 0;
+    best.feature_choice = SelectBestFeature(
+        hist, node_stats, options, statistic_engine, node_allowed_features, tested_features);
+    best.tested_features = tested_features;
+    best.stopping_p_value = AdjustFeatureTestPValue(
+        best.feature_choice.p_value, tested_features, options);
+    best.feature_test_passed =
+        best.feature_choice.feature_id >= 0 && best.stopping_p_value <= options.alpha;
+    if (!best.feature_test_passed) {
       return best;
     }
 
@@ -207,13 +251,21 @@ CandidateSelectionResult SelectBestCandidateSplit(const HistMatrix& hist,
   }
 
   const std::vector<FeatureChoice> ranked_features =
-      RankFeaturesByStatistic(node_stats, statistic_engine, node_allowed_features);
+      RankFeaturesByStatistic(hist, node_stats, options, statistic_engine, node_allowed_features);
   if (!ranked_features.empty()) {
     best.feature_choice = ranked_features.front();
+    best.tested_features = ranked_features.size();
+    best.stopping_p_value = AdjustFeatureTestPValue(
+        best.feature_choice.p_value, best.tested_features, options);
+    best.feature_test_passed = best.stopping_p_value <= options.alpha;
+  }
+  if (!best.feature_test_passed) {
+    return best;
   }
 
   for (const FeatureChoice& candidate : ranked_features) {
-    if (candidate.p_value > options.alpha) {
+    if (AdjustFeatureTestPValue(candidate.p_value, ranked_features.size(), options) >
+        options.alpha) {
       break;
     }
 

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <chrono>
 #include <memory>
+#include <stdexcept>
 
 namespace ctboost::bindings {
 
@@ -172,6 +173,71 @@ void BindModuleFunctions(py::module_& m) {
         },
         py::arg("gradients"),
         py::arg("binned_feature"));
+
+  m.def("_debug_compute_grouped_pvalue",
+        [](py::array_t<float, py::array::forcecast> gradients,
+           py::array_t<std::int64_t, py::array::forcecast> binned_feature,
+           py::array_t<float, py::array::forcecast> weights,
+           std::size_t requested_groups,
+           std::int64_t missing_bin) {
+          const auto gradient_values = ArrayToVector(gradients, "gradients");
+          const auto bin_values = ArrayToBinVector(binned_feature, "binned_feature");
+          const auto weight_values = ArrayToVector(weights, "weights");
+          if (gradient_values.size() != weight_values.size()) {
+            throw std::invalid_argument("gradients and weights must have matching sizes");
+          }
+          const std::uint16_t max_bin =
+              bin_values.empty() ? 0 : *std::max_element(bin_values.begin(), bin_values.end());
+          std::vector<float> hessians(gradient_values.size(), 1.0F);
+          const ctboost::LinearStatistic statistic;
+          const ctboost::BinStatistics raw_stats = statistic.ComputeBinStatistics(
+              gradient_values,
+              hessians,
+              weight_values,
+              bin_values,
+              static_cast<std::size_t>(max_bin) + 1U);
+          const std::size_t resolved_missing_bin =
+              missing_bin < 0 ? ctboost::kNoMissingStatisticBin
+                              : static_cast<std::size_t>(missing_bin);
+          const ctboost::BinStatistics grouped_stats = ctboost::GroupOrderedBinStatistics(
+              raw_stats, requested_groups, resolved_missing_bin);
+
+          double total_gradient = 0.0;
+          double total_weight = 0.0;
+          for (std::size_t index = 0; index < gradient_values.size(); ++index) {
+            total_gradient += static_cast<double>(weight_values[index]) *
+                              static_cast<double>(gradient_values[index]);
+            total_weight += static_cast<double>(weight_values[index]);
+          }
+          const double gradient_mean =
+              total_weight <= 0.0 ? 0.0 : total_gradient / total_weight;
+          double centered_sum_of_squares = 0.0;
+          for (std::size_t index = 0; index < gradient_values.size(); ++index) {
+            const double centered =
+                static_cast<double>(gradient_values[index]) - gradient_mean;
+            centered_sum_of_squares +=
+                static_cast<double>(weight_values[index]) * centered * centered;
+          }
+          const double gradient_variance =
+              total_weight <= 0.0 ? 0.0 : centered_sum_of_squares / total_weight;
+          const ctboost::LinearStatisticScore result =
+              statistic.EvaluateScoreFromBinStatistics(
+                  grouped_stats, total_gradient, total_weight, gradient_variance);
+
+          py::dict out;
+          out["p_value"] = result.p_value;
+          out["chi_square"] = result.chi_square;
+          out["degrees_of_freedom"] = result.degrees_of_freedom;
+          out["gradient_sums"] = grouped_stats.gradient_sums;
+          out["hessian_sums"] = grouped_stats.hessian_sums;
+          out["weight_sums"] = grouped_stats.weight_sums;
+          return out;
+        },
+        py::arg("gradients"),
+        py::arg("binned_feature"),
+        py::arg("weights"),
+        py::arg("requested_groups") = 8,
+        py::arg("missing_bin") = -1);
 
   m.def("_debug_build_histogram",
         [](const ctboost::Pool& pool,

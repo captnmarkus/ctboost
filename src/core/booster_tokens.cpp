@@ -247,6 +247,52 @@ GrowPolicy ParseGrowPolicy(const std::string& grow_policy) {
   throw std::invalid_argument("grow_policy must be one of: DepthWise, LeafWise");
 }
 
+std::string CanonicalFeatureTest(std::string feature_test) {
+  const std::string normalized = NormalizeToken(std::move(feature_test));
+  if (normalized.empty() || normalized == "quadratic") {
+    return "quadratic";
+  }
+  if (normalized == "grouped") {
+    return "grouped";
+  }
+  throw std::invalid_argument("feature_test must be one of: quadratic, grouped");
+}
+
+FeatureTest ParseFeatureTest(const std::string& feature_test) {
+  const std::string normalized = NormalizeToken(feature_test);
+  if (normalized == "quadratic") {
+    return FeatureTest::Quadratic;
+  }
+  if (normalized == "grouped") {
+    return FeatureTest::Grouped;
+  }
+  throw std::invalid_argument("feature_test must be one of: quadratic, grouped");
+}
+
+std::string CanonicalFeatureTestAdjustment(std::string adjustment) {
+  const std::string normalized = NormalizeToken(std::move(adjustment));
+  if (normalized.empty() || normalized == "none") {
+    return "none";
+  }
+  if (normalized == "bonferroni") {
+    return "bonferroni";
+  }
+  throw std::invalid_argument(
+      "feature_test_adjustment must be one of: none, bonferroni");
+}
+
+FeatureTestAdjustment ParseFeatureTestAdjustment(const std::string& adjustment) {
+  const std::string normalized = NormalizeToken(adjustment);
+  if (normalized == "none") {
+    return FeatureTestAdjustment::None;
+  }
+  if (normalized == "bonferroni") {
+    return FeatureTestAdjustment::Bonferroni;
+  }
+  throw std::invalid_argument(
+      "feature_test_adjustment must be one of: none, bonferroni");
+}
+
 const QuantizationSchema& RequireQuantizationSchema(
     const QuantizationSchemaPtr& quantization_schema) {
   if (quantization_schema == nullptr) {
