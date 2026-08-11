@@ -1,0 +1,2077 @@
+from __future__ import annotations
+
+import copy
+import hashlib
+import importlib.abc
+import importlib.util
+import json
+import marshal
+import math
+import os
+import shutil
+import subprocess
+import sys
+from collections.abc import Iterator
+from contextlib import contextmanager
+from pathlib import Path
+from types import ModuleType, SimpleNamespace
+
+import pytest
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+SCOUT_IMPORT_ROOT = REPO_ROOT / "benchmarks" / "split_research" / "g8s1_harness"
+if str(SCOUT_IMPORT_ROOT) not in sys.path:
+    sys.path.insert(0, str(SCOUT_IMPORT_ROOT))
+
+import g8s1_scout.summary as scout_summary
+from g8s1_scout import identity, loader, schedule
+from g8s1_scout import models as scout_models
+from g8s1_scout.constants import (
+    BOOTSTRAP_RELATIVE,
+    EXPECTED_ARTIFACTS,
+    EXPECTED_CHUNKS,
+    EXPECTED_SCHEDULE_SHA256,
+    FORBIDDEN_BASE_FIELDS,
+    NUM_CONFIGS,
+    P50_SHA256,
+    P200_RANDOM_SHA256,
+    P201_SHA256,
+    RUNBOOK_LF_NORMALIZED_SHA256,
+    RUNBOOK_RELATIVE,
+    RUNTIME_FILES,
+    TASKS,
+    experiment_name,
+    harness_package_root,
+    source_root,
+)
+from g8s1_scout.models import (
+    CTBoostGrouped8ScoutV1Model,
+    CTBoostQuadraticScoutV1Model,
+    _validate_pairs,
+    base_p50,
+    base_p201,
+    base_random_p200,
+    canonical_json_bytes,
+    generate_configs_ctboost,
+    paired_configs,
+)
+from g8s1_scout.summary import (
+    _assert_no_absolute_paths,
+    _comparison_outcome,
+    _evaluate_decision_gates,
+    _expected_raw_paths,
+    namespace_inventory,
+    validate_namespace,
+    write_failure_summary,
+)
+
+identity.reset_and_seal_stdlib_statistics()
+
+
+@contextmanager
+def _isolated_tabarena_module_state() -> Iterator[None]:
+    saved = {
+        name: module
+        for name, module in sys.modules.items()
+        if name == "tabarena" or name.startswith("tabarena.")
+    }
+    for name in saved:
+        sys.modules.pop(name, None)
+    try:
+        yield
+    finally:
+        for name in tuple(sys.modules):
+            if name == "tabarena" or name.startswith("tabarena."):
+                sys.modules.pop(name, None)
+        sys.modules.update(saved)
+
+
+@pytest.fixture
+def isolated_tabarena_modules() -> Iterator[None]:
+    with _isolated_tabarena_module_state():
+        yield
+
+
+def test_tabarena_test_isolation_restores_optional_rich_preloads() -> None:
+    with _isolated_tabarena_module_state():
+        public_root = ModuleType("tabarena")
+        public_child = ModuleType("tabarena.utils.config_utils")
+        sys.modules["tabarena"] = public_root
+        sys.modules["tabarena.utils.config_utils"] = public_child
+        with _isolated_tabarena_module_state():
+            assert not any(
+                name == "tabarena" or name.startswith("tabarena.")
+                for name in sys.modules
+            )
+        assert sys.modules["tabarena"] is public_root
+        assert sys.modules["tabarena.utils.config_utils"] is public_child
+
+
+def _sha256(value: object) -> str:
+    return hashlib.sha256(canonical_json_bytes(value)).hexdigest()
+
+
+def test_frozen_portfolio_hashes_prefixes_and_released_default() -> None:
+    random_p200 = base_random_p200()
+    p201 = base_p201()
+    p50 = base_p50()
+
+    assert len(random_p200) == 200
+    assert len(p201) == 201
+    assert len(p50) == NUM_CONFIGS == 51
+    assert _sha256(random_p200) == P200_RANDOM_SHA256
+    assert _sha256(p201) == P201_SHA256
+    assert _sha256(p50) == P50_SHA256
+    assert p201[0] == {}
+    assert p50 == p201[:NUM_CONFIGS]
+    for count in (1, 8, 50, 200):
+        scout_models._validate_live_adapter_p200(
+            random_p200[:count], generate_configs_ctboost(count)
+        )
+
+    for config in p201:
+        assert not FORBIDDEN_BASE_FIELDS.intersection(config)
+        assert "random_seed" not in config
+
+    tree_header = (REPO_ROOT / "include" / "ctboost" / "tree.hpp").read_text(
+        encoding="utf-8"
+    )
+    assert "FeatureTest feature_test{FeatureTest::Quadratic};" in tree_header
+    assert (
+        "FeatureTestAdjustment feature_test_adjustment{FeatureTestAdjustment::None};"
+        in tree_header
+    )
+
+
+def test_canonical_p200_accepts_the_two_known_linux_libm_cells(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    canonical = scout_models._load_canonical_p200()
+    linux_equivalent = copy.deepcopy(canonical)
+    for index, key in ((87, "ctr_prior_strength"), (197, "alpha")):
+        linux_equivalent[index][key] = math.nextafter(canonical[index][key], -math.inf)
+    monkeypatch.setattr(
+        scout_models,
+        "generate_configs_ctboost",
+        lambda count: copy.deepcopy(linux_equivalent[:count]),
+    )
+    assert scout_models.base_random_p200() == canonical
+
+
+def test_canonical_p200_rejects_more_than_one_ulp_of_live_float_drift(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    canonical = scout_models._load_canonical_p200()
+    live = copy.deepcopy(canonical)
+    once = math.nextafter(live[87]["ctr_prior_strength"], -math.inf)
+    live[87]["ctr_prior_strength"] = math.nextafter(once, -math.inf)
+    monkeypatch.setattr(
+        scout_models,
+        "generate_configs_ctboost",
+        lambda count: copy.deepcopy(live[:count]),
+    )
+    with pytest.raises(RuntimeError, match=r"P200\[87\].*2 ULPs"):
+        scout_models.base_random_p200()
+
+
+@pytest.mark.parametrize("drift", ["key-order", "discrete-value"])
+def test_canonical_p200_rejects_live_structural_or_discrete_drift(
+    monkeypatch: pytest.MonkeyPatch,
+    drift: str,
+) -> None:
+    canonical = scout_models._load_canonical_p200()
+    live = copy.deepcopy(canonical)
+    if drift == "key-order":
+        first_key = next(iter(live[0]))
+        first_value = live[0].pop(first_key)
+        live[0][first_key] = first_value
+        message = "key/order drift"
+    else:
+        live[0]["max_depth"] += 1
+        message = "discrete value drift"
+    monkeypatch.setattr(
+        scout_models,
+        "generate_configs_ctboost",
+        lambda count: copy.deepcopy(live[:count]),
+    )
+    with pytest.raises(RuntimeError, match=message):
+        scout_models.base_random_p200()
+
+
+def test_tracked_import_root_preserves_subprocess_model_identity() -> None:
+    assert source_root() == REPO_ROOT
+    assert harness_package_root() == SCOUT_IMPORT_ROOT / "g8s1_scout"
+    assert CTBoostQuadraticScoutV1Model.__module__ == "g8s1_scout.models"
+    assert CTBoostGrouped8ScoutV1Model.__module__ == "g8s1_scout.models"
+    assert CTBoostQuadraticScoutV1Model.ag_key == "CTBQS1"
+    assert CTBoostGrouped8ScoutV1Model.ag_key == "CTBG8S1"
+
+
+def _copy_bootstrap_repo(destination: Path) -> Path:
+    fresh_repo = destination / "repo"
+    copied_import_root = fresh_repo / "benchmarks/split_research/g8s1_harness"
+    shutil.copytree(
+        SCOUT_IMPORT_ROOT / "g8s1_scout",
+        copied_import_root / "g8s1_scout",
+        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+    )
+    for relative in (
+        Path("benchmarks/__init__.py"),
+        Path("benchmarks/tabarena/__init__.py"),
+        Path("benchmarks/tabarena/ctboost_model.py"),
+        Path("benchmarks/split_research/G8S1_SCOUT_MANIFEST.json"),
+        Path(RUNBOOK_RELATIVE),
+        Path("benchmarks/split_research/TABARENA_GROUPED_SCOUT.md"),
+        Path("benchmarks/split_research/g8s1_scout_bootstrap.py"),
+    ):
+        destination_file = fresh_repo / relative
+        destination_file.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(REPO_ROOT / relative, destination_file)
+    return fresh_repo
+
+
+def test_canonical_no_bytecode_invocation_stays_clean_across_mocked_phases(
+    tmp_path: Path,
+) -> None:
+    fresh_repo = _copy_bootstrap_repo(tmp_path)
+    fresh_repo = tmp_path / "repo"
+    copied_import_root = fresh_repo / "benchmarks/split_research/g8s1_harness"
+    bootstrap = fresh_repo / "benchmarks/split_research/g8s1_scout_bootstrap.py"
+    environment = {
+        **os.environ,
+        "PYTHONPATH": str(tmp_path / "untrusted-pythonpath"),
+        "PYTHONDONTWRITEBYTECODE": "1",
+    }
+    help_run = subprocess.run(
+        [sys.executable, "-I", "-B", str(bootstrap), "--help"],
+        cwd=tmp_path,
+        env=environment,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert help_run.returncode == 0, help_run.stderr
+    normalized_help = " ".join(help_run.stdout.split())
+    assert "pip install --no-compile" in normalized_help
+    assert "G8S1_SCOUT_RUNBOOK.md" in normalized_help
+
+    phase_script = r"""
+from pathlib import Path
+import sys
+sys.path.insert(0, sys.argv[2])
+from g8s1_scout.summary import _expected_raw_paths, validate_namespace
+
+assert sys.dont_write_bytecode
+root = Path(sys.argv[1])
+raw = root / "raw"
+report = root / "report"
+assert validate_namespace(raw_dir=raw, report_dir=report, phase="preflight")["complete"]
+
+def write(relative_root, relative):
+    path = relative_root / Path(relative)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(b"sealed")
+
+write(report, "scout_provenance.json")
+assert validate_namespace(raw_dir=raw, report_dir=report, phase="run_input")["complete"]
+for relative in _expected_raw_paths():
+    write(raw, relative)
+write(report, "run_manifest.shard-00000-of-00001.json")
+assert validate_namespace(raw_dir=raw, report_dir=report, phase="run_output")["complete"]
+assert validate_namespace(raw_dir=raw, report_dir=report, phase="summarize_input")["complete"]
+for relative in (
+    "sanitized/scout_summary.json",
+    "sanitized/paired_configs.json",
+    "sanitized/config_results.csv",
+    "sanitized/endpoint_results.csv",
+):
+    write(report, relative)
+assert validate_namespace(raw_dir=raw, report_dir=report, phase="summary_success")["complete"]
+"""
+    phase_run = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            "-B",
+            "-c",
+            phase_script,
+            str(tmp_path / "namespace"),
+            str(copied_import_root),
+        ],
+        cwd=tmp_path,
+        env=environment,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert phase_run.returncode == 0, phase_run.stderr
+    assert not list(fresh_repo.rglob("*.pyc"))
+    assert not list(fresh_repo.rglob("__pycache__"))
+
+
+@pytest.mark.parametrize("module_name", ["__main__", "models"])
+def test_external_bootstrap_rejects_effective_forged_runtime_cache_before_execution(
+    tmp_path: Path, module_name: str
+) -> None:
+    fresh_repo = _copy_bootstrap_repo(tmp_path)
+    package = fresh_repo / "benchmarks/split_research/g8s1_harness/g8s1_scout"
+    source = package / f"{module_name}.py"
+    sentinel = tmp_path / f"{module_name}-executed.txt"
+    cache = Path(importlib.util.cache_from_source(str(source)))
+    cache.parent.mkdir(parents=True)
+    malicious = compile(
+        "from pathlib import Path\n"
+        f"Path({str(sentinel)!r}).write_text('executed', encoding='utf-8')\n",
+        str(source.resolve()),
+        "exec",
+    )
+    source_stat = source.stat()
+    header = (
+        importlib.util.MAGIC_NUMBER
+        + b"\0" * 4
+        + (int(source_stat.st_mtime) & 0xFFFFFFFF).to_bytes(4, "little")
+        + (source_stat.st_size & 0xFFFFFFFF).to_bytes(4, "little")
+    )
+    cache.write_bytes(header + marshal.dumps(malicious))
+    bootstrap = fresh_repo / "benchmarks/split_research/g8s1_scout_bootstrap.py"
+    completed = subprocess.run(
+        [sys.executable, "-I", "-B", str(bootstrap), "--help"],
+        cwd=tmp_path,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert completed.returncode != 0
+    assert "exact source-only runtime" in completed.stderr
+    assert not sentinel.exists()
+
+
+def test_provenance_rejects_noncanonical_bytecode_writing_invocation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(sys, "dont_write_bytecode", False)
+    with pytest.raises(RuntimeError, match=r"python -I -B"):
+        identity.collect_provenance(
+            ctboost_root=tmp_path,
+            tabarena_root=tmp_path,
+            expected_ctboost_commit="a" * 40,
+            expected_native_sha256="b" * 64,
+        )
+
+
+def test_preflight_collects_provenance_before_schedule_models_and_adapter(
+    tmp_path: Path,
+) -> None:
+    script = r"""
+import sys
+from pathlib import Path
+from types import SimpleNamespace
+
+sys.path.insert(0, sys.argv[1])
+import g8s1_scout.__main__ as cli
+import g8s1_scout.identity as identity
+
+class ProvenanceReached(RuntimeError):
+    pass
+
+def collect_first(**_kwargs):
+    forbidden = {
+        name
+        for name in sys.modules
+        if name in {"g8s1_scout.schedule", "g8s1_scout.models"}
+        or name == "_g8s1_scout_sealed_benchmark"
+        or name.startswith("_g8s1_scout_sealed_benchmark.")
+    }
+    assert not forbidden, sorted(forbidden)
+    raise ProvenanceReached
+
+identity.collect_provenance = collect_first
+args = SimpleNamespace(
+    tabarena_root=Path(sys.argv[2]),
+    expected_ctboost_commit="a" * 40,
+    expected_native_sha256="b" * 64,
+    results_root=Path(sys.argv[3]),
+)
+try:
+    cli._preflight(args)
+except ProvenanceReached:
+    pass
+else:
+    raise AssertionError("preflight did not reach provenance first")
+"""
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            "-B",
+            "-c",
+            script,
+            str(SCOUT_IMPORT_ROOT),
+            str(tmp_path / "tabarena"),
+            str(tmp_path / "results"),
+        ],
+        cwd=tmp_path,
+        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+def test_preflight_revalidates_tabarena_modules_after_schedule_build(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import g8s1_scout.__main__ as scout_cli
+
+    events: list[str] = []
+
+    def collect(**_kwargs: object) -> dict[str, object]:
+        events.append("provenance")
+        return {"identity_sha256": "sealed"}
+
+    def build(
+        _fixed: object,
+    ) -> tuple[object, list[object], list[object], dict[str, object]]:
+        events.append("schedule")
+        return object(), [], [], {"schedule_sha256": "sealed"}
+
+    def reject_external_child(_root: Path) -> None:
+        assert events == ["provenance", "schedule"]
+        raise RuntimeError("loaded TabArena module source origin is not exact")
+
+    monkeypatch.setattr(identity, "collect_provenance", collect)
+    monkeypatch.setattr(schedule, "fixed_args", lambda **_kwargs: object())
+    monkeypatch.setattr(schedule, "build_and_validate_schedule", build)
+    monkeypatch.setattr(
+        identity,
+        "validate_loaded_tabarena_modules",
+        reject_external_child,
+    )
+    args = SimpleNamespace(
+        tabarena_root=tmp_path / "tabarena",
+        expected_ctboost_commit="a" * 40,
+        expected_native_sha256="b" * 64,
+        results_root=tmp_path / "results",
+    )
+    with pytest.raises(RuntimeError, match="source origin is not exact"):
+        scout_cli._preflight(args)
+    assert events == ["provenance", "schedule"]
+
+
+def test_paired_configs_are_deep_copied_and_differ_only_by_treatment() -> None:
+    before = base_p50()
+    paired = paired_configs()
+    assert before == base_p50()
+
+    for index, (quadratic, grouped) in enumerate(
+        zip(paired["quadratic"], paired["grouped"], strict=True)
+    ):
+        differences = {
+            key
+            for key in set(quadratic).union(grouped)
+            if quadratic.get(key) != grouped.get(key)
+        }
+        assert differences == {"feature_test"}, index
+        assert quadratic["feature_test"] == "quadratic"
+        assert grouped["feature_test"] == "grouped"
+        assert quadratic["feature_test_bins"] == grouped["feature_test_bins"] == 8
+        assert (
+            quadratic["feature_test_adjustment"]
+            == grouped["feature_test_adjustment"]
+            == "none"
+        )
+
+    paired["grouped"][3]["max_depth"] = -1
+    assert base_p50() == before
+
+
+def test_pair_validation_fails_closed_on_non_treatment_change() -> None:
+    paired = paired_configs()
+    paired["grouped"][7]["feature_test_bins"] = 16
+    with pytest.raises(RuntimeError, match="not only feature_test"):
+        _validate_pairs(paired)
+
+
+class _TaskMetadataCollection:
+    @staticmethod
+    def dataset_to_tid() -> dict[str, int]:
+        return {dataset: task_id for task_id, dataset, _problem, _metric in TASKS}
+
+
+class _PinnedTaskShape:
+    def __init__(self, *, dataset: str, fold: int, repeat: int) -> None:
+        self.dataset = dataset
+        self.fold = fold
+        self.repeat = repeat
+
+    def as_triple(self) -> tuple[str, int, int]:
+        return self.dataset, self.fold, self.repeat
+
+
+def _frozen_chunks() -> tuple[SimpleNamespace, list[list[SimpleNamespace]]]:
+    context = SimpleNamespace(task_metadata_collection=_TaskMetadataCollection())
+    chunks: list[list[SimpleNamespace]] = []
+    for _task_id, dataset, _problem, _metric in TASKS:
+        jobs = []
+        for treatment in ("quadratic", "grouped"):
+            for index in range(NUM_CONFIGS):
+                jobs.append(
+                    SimpleNamespace(
+                        experiment=SimpleNamespace(
+                            name=experiment_name(treatment, index)
+                        ),
+                        task=_PinnedTaskShape(dataset=dataset, repeat=0, fold=0),
+                    )
+                )
+        chunks.append(jobs)
+    return context, chunks
+
+
+def test_mocked_schedule_matches_every_frozen_identity() -> None:
+    context, chunks = _frozen_chunks()
+    observed = schedule.validate_job_chunks(context, chunks)
+    assert observed == {
+        "jobs": EXPECTED_ARTIFACTS,
+        "schedule_sha256": EXPECTED_SCHEDULE_SHA256,
+        "chunks": list(EXPECTED_CHUNKS),
+    }
+
+
+@pytest.mark.parametrize("field", ["repeat", "fold"])
+def test_mocked_schedule_rejects_nonzero_split_coordinates(field: str) -> None:
+    context, chunks = _frozen_chunks()
+    setattr(chunks[0][0].task, field, 1)
+    with pytest.raises(RuntimeError, match="nonzero repeat/fold/sample"):
+        schedule.validate_job_chunks(context, chunks)
+
+
+def test_mocked_schedule_rejects_invented_task_sample_field() -> None:
+    context, chunks = _frozen_chunks()
+    chunks[0][0].task.sample = 0
+    with pytest.raises(RuntimeError, match="Task API shape drift"):
+        schedule.validate_job_chunks(context, chunks)
+
+
+def test_pinned_tabarena_real_schedule_uses_implicit_protocol_sample_zero(
+    tmp_path: Path,
+) -> None:
+    experiment_api = pytest.importorskip(
+        "tabarena.benchmark.experiment",
+        reason="real pinned TabArena API is only present in the scout environment",
+    )
+    contexts = pytest.importorskip("tabarena.contexts")
+    args = schedule.fixed_args(
+        stage="preflight",
+        results_dir=tmp_path / "raw",
+        output_dir=tmp_path / "report",
+    )
+    experiments, _effective_time_limit = schedule.build_frozen_experiments(
+        args, experiment_api.TabArenaV0pt1ExperimentBundle
+    )
+    schedule.validate_experiments(experiments)
+    context = contexts.TabArenaContext()
+    chunks = [
+        context.build_jobs(experiments, subset="lite", dataset_names=[dataset])
+        for _task_id, dataset, _problem, _metric in TASKS
+    ]
+    first_task = chunks[0][0].task
+    assert type(first_task).__module__ == "tabarena.benchmark.experiment.job"
+    assert type(first_task).__name__ == "Task"
+    assert vars(first_task) == {"dataset": TASKS[0][1], "fold": 0, "repeat": 0}
+    assert first_task.as_triple() == (TASKS[0][1], 0, 0)
+    assert not hasattr(first_task, "sample")
+
+    assert schedule.validate_job_chunks(context, chunks) == {
+        "jobs": EXPECTED_ARTIFACTS,
+        "schedule_sha256": EXPECTED_SCHEDULE_SHA256,
+        "chunks": list(EXPECTED_CHUNKS),
+    }
+
+
+def test_mocked_schedule_rejects_identity_and_chunk_tampering() -> None:
+    context, chunks = _frozen_chunks()
+    wrong_method = copy.deepcopy(chunks)
+    wrong_method[0][0].experiment.name = "CTBoostPostHoc"
+    with pytest.raises(RuntimeError, match="identities differ"):
+        schedule.validate_job_chunks(context, wrong_method)
+
+    duplicate = copy.deepcopy(chunks)
+    duplicate[0][-1] = copy.deepcopy(duplicate[0][0])
+    with pytest.raises(RuntimeError, match="identities differ"):
+        schedule.validate_job_chunks(context, duplicate)
+
+    flattened = [[job for chunk in chunks for job in chunk]]
+    with pytest.raises(RuntimeError, match="frozen job chunks"):
+        schedule.validate_job_chunks(context, flattened)
+
+
+def test_mocked_schedule_rejects_runtime_hash_drift(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    context, chunks = _frozen_chunks()
+    monkeypatch.setattr(schedule, "EXPECTED_SCHEDULE_SHA256", "0" * 64)
+    with pytest.raises(RuntimeError, match="schedule hash drift"):
+        schedule.validate_job_chunks(context, chunks)
+
+
+def _copy_harness_identity_tree(destination: Path) -> Path:
+    relative_files = [
+        Path("benchmarks/split_research/G8S1_SCOUT_MANIFEST.json"),
+        Path(RUNBOOK_RELATIVE),
+        Path("benchmarks/split_research/TABARENA_GROUPED_SCOUT.md"),
+        Path(BOOTSTRAP_RELATIVE),
+        *[
+            Path("benchmarks/split_research/g8s1_harness/g8s1_scout") / name
+            for name in RUNTIME_FILES
+        ],
+    ]
+    for relative in relative_files:
+        target = destination / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(REPO_ROOT / relative, target)
+    return destination
+
+
+def _isolated_harness_observation(root: Path) -> dict[str, object]:
+    script = r"""
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+sys.path.insert(0, str(root / "benchmarks/split_research/g8s1_harness"))
+from g8s1_scout import identity
+
+identity.reset_and_seal_stdlib_statistics()
+observed = identity._validate_harness_source(
+    root,
+    require_tracked=False,
+    verify_import_location=True,
+)
+print(json.dumps(observed, sort_keys=True))
+"""
+    environment = {
+        key: value
+        for key, value in os.environ.items()
+        if key.upper() != "PYTHONDONTWRITEBYTECODE"
+    }
+    completed = subprocess.run(
+        [sys.executable, "-I", "-B", "-c", script, str(root)],
+        cwd=root,
+        env=environment,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert completed.returncode == 0, completed.stderr
+    assert not list(
+        (root / "benchmarks/split_research/g8s1_harness").rglob("__pycache__")
+    )
+    return json.loads(completed.stdout)
+
+
+def test_tracked_harness_manifest_binds_exact_runtime_files_and_import(
+    tmp_path: Path,
+) -> None:
+    copied = _copy_harness_identity_tree(tmp_path / "isolated-harness")
+    observed = _isolated_harness_observation(copied)
+    manifest = json.loads(
+        (copied / "benchmarks/split_research/G8S1_SCOUT_MANIFEST.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert observed["runtime_files"] == dict(sorted(manifest["runtime_files"].items()))
+    assert len(observed["runtime_files"]) == len(RUNTIME_FILES) + 1 == 10
+    assert (
+        observed["runbook"]
+        == manifest["runbook"]
+        == {
+            "path": RUNBOOK_RELATIVE,
+            "lf_normalized_sha256": RUNBOOK_LF_NORMALIZED_SHA256,
+        }
+    )
+    assert (
+        identity.sha256_lf_normalized_file(copied / RUNBOOK_RELATIVE)
+        == RUNBOOK_LF_NORMALIZED_SHA256
+    )
+    assert observed["imported_from_tracked_package"] is True
+
+
+def test_harness_validation_requires_every_identity_file_to_be_tracked(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    copied = _copy_harness_identity_tree(tmp_path / "tracked")
+    calls: list[tuple[str, ...]] = []
+
+    def fake_git(_root: Path, *arguments: str, check: bool = True) -> str:
+        assert check
+        calls.append(arguments)
+        assert arguments[:3] == ("ls-files", "--error-unmatch", "--")
+        return "\n".join(arguments[3:])
+
+    monkeypatch.setattr(identity, "_git", fake_git)
+    observed = identity._validate_harness_source(
+        copied,
+        require_tracked=True,
+        verify_import_location=False,
+    )
+    assert observed["tracked"] is True
+    assert len(calls) == 1
+    assert len(calls[0][3:]) == len(RUNTIME_FILES) + 4
+
+
+def test_harness_validation_rejects_untracked_identity_file(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    copied = _copy_harness_identity_tree(tmp_path / "untracked")
+
+    def reject_untracked(_root: Path, *_arguments: str, check: bool = True) -> str:
+        assert check
+        raise RuntimeError("untracked")
+
+    monkeypatch.setattr(identity, "_git", reject_untracked)
+    with pytest.raises(RuntimeError, match="untracked"):
+        identity._validate_harness_source(
+            copied,
+            require_tracked=True,
+            verify_import_location=False,
+        )
+
+
+def test_harness_validation_rejects_modified_missing_and_extra_files(
+    tmp_path: Path,
+) -> None:
+    modified = _copy_harness_identity_tree(tmp_path / "modified")
+    identity_file = (
+        modified / "benchmarks/split_research/g8s1_harness/g8s1_scout/identity.py"
+    )
+    identity_file.write_text(
+        identity_file.read_text(encoding="utf-8") + "# tamper\n", encoding="utf-8"
+    )
+    with pytest.raises(RuntimeError, match="hash drifted"):
+        identity._validate_harness_source(
+            modified,
+            require_tracked=False,
+            verify_import_location=False,
+        )
+
+    missing = _copy_harness_identity_tree(tmp_path / "missing")
+    (missing / "benchmarks/split_research/g8s1_harness/g8s1_scout/loader.py").unlink()
+    with pytest.raises(RuntimeError, match="file set drifted"):
+        identity._validate_harness_source(
+            missing,
+            require_tracked=False,
+            verify_import_location=False,
+        )
+
+    extra = _copy_harness_identity_tree(tmp_path / "extra")
+    (
+        extra / "benchmarks/split_research/g8s1_harness/g8s1_scout/post_hoc.py"
+    ).write_text("# forbidden\n", encoding="utf-8")
+    with pytest.raises(RuntimeError, match="file set drifted"):
+        identity._validate_harness_source(
+            extra,
+            require_tracked=False,
+            verify_import_location=False,
+        )
+
+
+def test_harness_validation_rejects_tampered_sealed_runbook(tmp_path: Path) -> None:
+    copied = _copy_harness_identity_tree(tmp_path / "runbook-tamper")
+    runbook = copied / RUNBOOK_RELATIVE
+    runbook.write_text(
+        runbook.read_text(encoding="utf-8") + "\npost-hoc instruction\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(RuntimeError, match="runbook hash drifted"):
+        identity._validate_harness_source(
+            copied,
+            require_tracked=False,
+            verify_import_location=False,
+        )
+
+
+def test_harness_validation_rejects_tampered_canonical_p200(tmp_path: Path) -> None:
+    copied = _copy_harness_identity_tree(tmp_path / "p200-tamper")
+    portfolio = copied / "benchmarks/split_research/g8s1_harness/g8s1_scout/p200.json"
+    portfolio.write_text(
+        portfolio.read_text(encoding="utf-8").replace(
+            "0.04023626807940379", "0.0402362680794038", 1
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(RuntimeError, match="p200.json"):
+        identity._validate_harness_source(
+            copied,
+            require_tracked=False,
+            verify_import_location=False,
+        )
+
+
+def test_harness_runtime_hashes_are_stable_across_git_line_endings(
+    tmp_path: Path,
+) -> None:
+    copied = _copy_harness_identity_tree(tmp_path / "crlf")
+    runtime_file = (
+        copied / "benchmarks/split_research/g8s1_harness/g8s1_scout/models.py"
+    )
+    payload = runtime_file.read_bytes().replace(b"\r\n", b"\n")
+    runtime_file.write_bytes(payload.replace(b"\n", b"\r\n"))
+    protocol_file = copied / "benchmarks/split_research/TABARENA_GROUPED_SCOUT.md"
+    protocol_file.write_bytes(protocol_file.read_bytes().replace(b"\r\n", b"\n"))
+    identity._validate_harness_source(
+        copied,
+        require_tracked=False,
+        verify_import_location=False,
+    )
+
+
+def test_harness_validation_rejects_binary_module_shadow(tmp_path: Path) -> None:
+    copied = _copy_harness_identity_tree(tmp_path / "binary-shadow")
+    shadow = copied / "benchmarks/split_research/g8s1_harness/g8s1_scout/models.pyd"
+    shadow.write_bytes(b"not a real extension")
+    with pytest.raises(RuntimeError, match="unexpected importable"):
+        identity._validate_harness_source(
+            copied,
+            require_tracked=False,
+            verify_import_location=False,
+        )
+
+
+@pytest.mark.parametrize(
+    "relative",
+    [
+        "statistics.py",
+        "statistics.pyc",
+        "rogue.pyd",
+        "nested/rogue.so",
+        "nested/rogue.py",
+    ],
+)
+def test_harness_validation_closes_entire_import_root(
+    tmp_path: Path, relative: str
+) -> None:
+    copied = _copy_harness_identity_tree(tmp_path / "import-root-shadow")
+    shadow = copied / "benchmarks/split_research/g8s1_harness" / relative
+    shadow.parent.mkdir(parents=True, exist_ok=True)
+    shadow.write_bytes(b"shadow")
+    with pytest.raises(RuntimeError, match="import root.*unexpected importable"):
+        identity._validate_harness_source(
+            copied,
+            require_tracked=False,
+            verify_import_location=False,
+        )
+
+
+def test_harness_validation_rejects_tampered_current_runtime_cache(
+    tmp_path: Path,
+) -> None:
+    copied = _copy_harness_identity_tree(tmp_path / "tampered-cache")
+    source = copied / "benchmarks/split_research/g8s1_harness/g8s1_scout/models.py"
+    cache = Path(identity.importlib.util.cache_from_source(str(source)))
+    cache.parent.mkdir(parents=True)
+    source_stat = source.stat()
+    matching_header = (
+        identity.importlib.util.MAGIC_NUMBER
+        + b"\0" * 4
+        + (int(source_stat.st_mtime) & 0xFFFFFFFF).to_bytes(4, "little")
+        + (source_stat.st_size & 0xFFFFFFFF).to_bytes(4, "little")
+    )
+    cache.write_bytes(matching_header + b"not valid marshal data")
+    with pytest.raises(RuntimeError, match="import root.*unexpected importable"):
+        identity._validate_harness_source(
+            copied,
+            require_tracked=False,
+            verify_import_location=False,
+        )
+
+
+def test_harness_validation_rejects_preloaded_nonstdlib_statistics(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    del tmp_path
+    sealed = sys.modules["statistics"]
+    expected = Path(sealed.__file__).resolve()
+    fake = ModuleType("statistics")
+    fake_loader = identity.importlib.machinery.SourceFileLoader(
+        "statistics", str(expected)
+    )
+    fake.__file__ = str(expected)
+    fake.__loader__ = fake_loader
+    fake.__spec__ = identity.importlib.util.spec_from_loader(
+        "statistics", fake_loader, origin=str(expected)
+    )
+    monkeypatch.setitem(sys.modules, "statistics", fake)
+    with pytest.raises(RuntimeError, match="bootstrap-sealed stdlib source"):
+        identity._validate_stdlib_statistics()
+
+
+def test_private_loader_coexists_with_public_benchmark_module(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    public_name = "benchmarks.tabarena.ctboost_model"
+    unrelated = ModuleType(public_name)
+    monkeypatch.setitem(sys.modules, public_name, unrelated)
+    sealed = loader.load_benchmark_module("ctboost_model")
+    private_name = loader._private_module_name("ctboost_model")
+    assert sys.modules[public_name] is unrelated
+    assert sys.modules[private_name] is sealed
+    assert sealed.__name__ == private_name
+    assert isinstance(sealed.__loader__, identity.importlib.machinery.SourceFileLoader)
+    assert (
+        Path(sealed.__file__).resolve()
+        == (REPO_ROOT / "benchmarks/tabarena/ctboost_model.py").resolve()
+    )
+    loader.validate_loaded_benchmark_modules(REPO_ROOT / "benchmarks/tabarena")
+
+
+def test_private_run_loader_preserves_complete_public_benchmark_chain(
+    tmp_path: Path,
+) -> None:
+    script = r"""
+import sys
+from pathlib import Path
+from types import ModuleType
+
+public_benchmarks = ModuleType("benchmarks")
+public_benchmarks.__path__ = ["public-benchmarks"]
+public_tabarena = ModuleType("benchmarks.tabarena")
+public_tabarena.__path__ = ["public-tabarena"]
+public_adapter = ModuleType("benchmarks.tabarena.ctboost_model")
+public_adapter.MARKER = object()
+public_benchmarks.tabarena = public_tabarena
+public_tabarena.ctboost_model = public_adapter
+sys.modules["benchmarks"] = public_benchmarks
+sys.modules["benchmarks.tabarena"] = public_tabarena
+sys.modules["benchmarks.tabarena.ctboost_model"] = public_adapter
+
+sys.path.insert(0, sys.argv[1])
+from g8s1_scout import loader
+
+sealed_run = loader.load_benchmark_module("run")
+sealed_adapter = loader.load_benchmark_module("ctboost_model")
+assert sys.modules["benchmarks"] is public_benchmarks
+assert sys.modules["benchmarks.tabarena"] is public_tabarena
+assert sys.modules["benchmarks.tabarena.ctboost_model"] is public_adapter
+assert public_benchmarks.tabarena is public_tabarena
+assert public_tabarena.ctboost_model is public_adapter
+assert sealed_run.gen_ctboost_cpu is sealed_adapter.gen_ctboost_cpu
+assert sealed_run.TABARENA_SEARCH_PORTFOLIO_SIZE == 200
+loader.validate_loaded_benchmark_modules(Path(sys.argv[2]))
+"""
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            "-B",
+            "-c",
+            script,
+            str(SCOUT_IMPORT_ROOT),
+            str(REPO_ROOT / "benchmarks/tabarena"),
+        ],
+        cwd=tmp_path,
+        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+def test_private_loader_rejects_replaced_owned_package(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setitem(
+        sys.modules,
+        loader._PRIVATE_PACKAGE,
+        ModuleType(loader._PRIVATE_PACKAGE),
+    )
+    with pytest.raises(RuntimeError, match="private package identity was replaced"):
+        loader.validate_loaded_benchmark_modules(REPO_ROOT / "benchmarks/tabarena")
+
+
+def test_benchmark_child_validation_rejects_spoofed_replacement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    name = loader._private_module_name("ctboost_model")
+    expected_module = loader._LOADED_MODULES[name]
+    fake = ModuleType(name)
+    fake.__file__ = expected_module.__file__
+    fake.__loader__ = expected_module.__loader__
+    fake.__spec__ = expected_module.__spec__
+    monkeypatch.setitem(sys.modules, name, fake)
+    with pytest.raises(RuntimeError, match="invalid identity"):
+        loader.validate_loaded_benchmark_modules(REPO_ROOT / "benchmarks/tabarena")
+
+
+@pytest.mark.parametrize("target", ["package", "module"])
+def test_private_loader_rejects_replaced_module_name(
+    monkeypatch: pytest.MonkeyPatch,
+    target: str,
+) -> None:
+    private_name = loader._private_module_name("ctboost_model")
+    module = (
+        loader._OWNED_PACKAGE
+        if target == "package"
+        else loader._LOADED_MODULES[private_name]
+    )
+    assert module is not None
+    monkeypatch.setattr(module, "__name__", "spoofed")
+    with pytest.raises(RuntimeError, match="identity was replaced|invalid identity"):
+        loader.validate_loaded_benchmark_modules(REPO_ROOT / "benchmarks/tabarena")
+
+
+def test_benchmark_child_validation_rejects_unexpected_preloaded_child(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    stale_name = f"{loader._PRIVATE_PACKAGE}.stale_child"
+    monkeypatch.setitem(
+        sys.modules,
+        stale_name,
+        ModuleType(stale_name),
+    )
+    with pytest.raises(RuntimeError, match="unexpected or preloaded"):
+        loader.validate_loaded_benchmark_modules(REPO_ROOT / "benchmarks/tabarena")
+
+
+def _mock_clean_tabarena_git(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    tracked_files: tuple[str, ...] = ("__init__.py",),
+) -> None:
+    monkeypatch.setattr(
+        identity, "_full_commit", lambda _root: identity.PROTOCOL_TABARENA_COMMIT
+    )
+
+    def fake_git(_root: Path, *arguments: str, check: bool = True) -> str:
+        assert check
+        if arguments[0] == "status":
+            return ""
+        if arguments[0] == "ls-tree":
+            return "\n".join(
+                f"packages/tabarena/src/tabarena/{relative}"
+                for relative in tracked_files
+            )
+        raise AssertionError(arguments)
+
+    monkeypatch.setattr(identity, "_git", fake_git)
+
+
+def _mock_tabarena_checkout(root: Path, *, initializer: str = "") -> Path:
+    (root / ".git").mkdir(parents=True)
+    package_root = root / "packages/tabarena/src/tabarena"
+    package_root.mkdir(parents=True)
+    (package_root / "__init__.py").write_text(initializer, encoding="utf-8")
+    return package_root
+
+
+def test_tabarena_validation_rejects_preloaded_module_before_activation(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    isolated_tabarena_modules: None,
+) -> None:
+    del isolated_tabarena_modules
+    checkout = tmp_path / "tabarena"
+    _mock_tabarena_checkout(checkout)
+    _mock_clean_tabarena_git(monkeypatch)
+    sys.modules["tabarena"] = ModuleType("tabarena")
+    with pytest.raises(RuntimeError, match="before pinned-source validation"):
+        identity._validate_tabarena_source(checkout)
+
+
+def test_tabarena_validation_rejects_effective_cache_before_import(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    isolated_tabarena_modules: None,
+) -> None:
+    del isolated_tabarena_modules
+    checkout = tmp_path / "tabarena"
+    package_root = _mock_tabarena_checkout(checkout)
+    _mock_clean_tabarena_git(monkeypatch)
+    initializer = package_root / "__init__.py"
+    sentinel = tmp_path / "tabarena-cache-executed.txt"
+    cache = Path(importlib.util.cache_from_source(str(initializer)))
+    cache.parent.mkdir(parents=True)
+    malicious = compile(
+        "from pathlib import Path\n"
+        f"Path({str(sentinel)!r}).write_text('executed', encoding='utf-8')\n",
+        str(initializer.resolve()),
+        "exec",
+    )
+    source_stat = initializer.stat()
+    header = (
+        importlib.util.MAGIC_NUMBER
+        + b"\0" * 4
+        + (int(source_stat.st_mtime) & 0xFFFFFFFF).to_bytes(4, "little")
+        + (source_stat.st_size & 0xFFFFFFFF).to_bytes(4, "little")
+    )
+    cache.write_bytes(header + marshal.dumps(malicious))
+    with pytest.raises(RuntimeError, match="bytecode, a native shadow, or a symlink"):
+        identity._validate_tabarena_source(checkout)
+    assert not sentinel.exists()
+    assert "tabarena" not in sys.modules
+    assert str(package_root.parent.resolve()) not in sys.path
+
+
+@pytest.mark.parametrize("relative", ["shadow.pyd", "nested/shadow.so"])
+def test_tabarena_validation_rejects_native_shadow_before_import(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    isolated_tabarena_modules: None,
+    relative: str,
+) -> None:
+    del isolated_tabarena_modules
+    checkout = tmp_path / "tabarena"
+    package_root = _mock_tabarena_checkout(checkout)
+    shadow = package_root / relative
+    shadow.parent.mkdir(parents=True, exist_ok=True)
+    shadow.write_bytes(b"must not load")
+    _mock_clean_tabarena_git(monkeypatch)
+    with pytest.raises(RuntimeError, match="bytecode, a native shadow, or a symlink"):
+        identity._validate_tabarena_source(checkout)
+    assert "tabarena" not in sys.modules
+
+
+def test_tabarena_validation_rejects_ignored_top_level_package_before_import(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    isolated_tabarena_modules: None,
+) -> None:
+    del isolated_tabarena_modules
+    checkout = tmp_path / "tabarena"
+    package_root = _mock_tabarena_checkout(checkout)
+    sentinel = tmp_path / "ignored-package-executed.txt"
+    ignored = package_root.parent / "build/__init__.py"
+    ignored.parent.mkdir(parents=True)
+    ignored.write_text(
+        "from pathlib import Path\n"
+        f"Path({str(sentinel)!r}).write_text('executed', encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    _mock_clean_tabarena_git(monkeypatch)
+    with pytest.raises(RuntimeError, match="unexpected entry"):
+        identity._validate_tabarena_source(checkout)
+    assert not sentinel.exists()
+    assert "tabarena" not in sys.modules
+
+
+def test_tabarena_validation_rejects_untracked_empty_namespace_directory(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    isolated_tabarena_modules: None,
+) -> None:
+    del isolated_tabarena_modules
+    checkout = tmp_path / "tabarena"
+    package_root = _mock_tabarena_checkout(checkout)
+    (package_root / "unexpected_namespace").mkdir()
+    _mock_clean_tabarena_git(monkeypatch)
+    with pytest.raises(RuntimeError, match="differs from its exact commit"):
+        identity._validate_tabarena_source(checkout)
+    assert "tabarena" not in sys.modules
+
+
+def test_tabarena_validation_rejects_source_symlink_before_import(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    isolated_tabarena_modules: None,
+) -> None:
+    del isolated_tabarena_modules
+    checkout = tmp_path / "tabarena"
+    package_root = _mock_tabarena_checkout(checkout)
+    linked = package_root / "linked.py"
+    linked.write_text("must_not_load = True\n", encoding="utf-8")
+    _mock_clean_tabarena_git(monkeypatch)
+    original = identity._is_link_or_junction
+    monkeypatch.setattr(
+        identity,
+        "_is_link_or_junction",
+        lambda path: path == linked or original(path),
+    )
+    with pytest.raises(RuntimeError, match="bytecode, a native shadow, or a symlink"):
+        identity._validate_tabarena_source(checkout)
+    assert "tabarena" not in sys.modules
+
+
+def test_tabarena_validation_rejects_linked_checkout_root_before_resolution(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    isolated_tabarena_modules: None,
+) -> None:
+    del isolated_tabarena_modules
+    checkout = tmp_path / "tabarena"
+    _mock_tabarena_checkout(checkout)
+    original = identity._is_link_or_junction
+    monkeypatch.setattr(
+        identity,
+        "_is_link_or_junction",
+        lambda path: path == checkout or original(path),
+    )
+    with pytest.raises(RuntimeError, match="source root must not be linked"):
+        identity._validate_tabarena_source(checkout)
+
+
+def test_tabarena_validation_uses_prevalidated_spec_not_meta_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkout = tmp_path / "tabarena"
+    package_root = _mock_tabarena_checkout(checkout, initializer="VALUE = 1\n")
+    _mock_clean_tabarena_git(monkeypatch)
+    sentinel = tmp_path / "meta-path-executed.txt"
+
+    class SentinelLoader(importlib.abc.Loader):
+        def exec_module(self, module: ModuleType) -> None:
+            del module
+            sentinel.write_text("executed", encoding="utf-8")
+
+    class SentinelFinder(importlib.abc.MetaPathFinder):
+        def find_spec(
+            self,
+            fullname: str,
+            path: object = None,
+            target: ModuleType | None = None,
+        ) -> object:
+            del path, target
+            if fullname == "tabarena":
+                return importlib.util.spec_from_loader(fullname, SentinelLoader())
+            return None
+
+    saved_modules = {
+        name: module
+        for name, module in sys.modules.items()
+        if name == "tabarena" or name.startswith("tabarena.")
+    }
+    for name in saved_modules:
+        sys.modules.pop(name, None)
+    package_source = package_root.parent.resolve()
+    monkeypatch.setattr(sys, "meta_path", [SentinelFinder(), *sys.meta_path])
+    try:
+        identity._validate_tabarena_source(checkout)
+        assert not sentinel.exists()
+        assert sys.modules["tabarena"].VALUE == 1
+        identity._validate_loaded_tabarena_modules(package_root)
+    finally:
+        sys.path[:] = [
+            entry
+            for entry in sys.path
+            if not entry or Path(entry).resolve() != package_source
+        ]
+        for name in tuple(sys.modules):
+            if name == "tabarena" or name.startswith("tabarena."):
+                sys.modules.pop(name, None)
+        sys.modules.update(saved_modules)
+
+
+def test_tabarena_validation_cleans_up_when_module_creation_is_interrupted(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    isolated_tabarena_modules: None,
+) -> None:
+    del isolated_tabarena_modules
+    checkout = tmp_path / "tabarena"
+    package_root = _mock_tabarena_checkout(checkout)
+    _mock_clean_tabarena_git(monkeypatch)
+    package_source = package_root.parent.resolve()
+    monkeypatch.setattr(
+        identity.importlib.util,
+        "module_from_spec",
+        lambda _spec: (_ for _ in ()).throw(KeyboardInterrupt()),
+    )
+    with pytest.raises(KeyboardInterrupt):
+        identity._validate_tabarena_source(checkout)
+    assert "tabarena" not in sys.modules
+    assert str(package_source) not in sys.path
+
+
+def test_tabarena_validation_imports_exact_source_modules_after_scan(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkout = tmp_path / "tabarena"
+    package_root = _mock_tabarena_checkout(
+        checkout,
+        initializer="from . import child\n",
+    )
+    child_file = package_root / "child.py"
+    child_file.write_text("VALUE = 1\n", encoding="utf-8")
+    _mock_clean_tabarena_git(
+        monkeypatch,
+        tracked_files=("__init__.py", "child.py"),
+    )
+    saved_modules = {
+        name: module
+        for name, module in sys.modules.items()
+        if name == "tabarena" or name.startswith("tabarena.")
+    }
+    for name in saved_modules:
+        sys.modules.pop(name, None)
+    package_source = package_root.parent.resolve()
+    try:
+        observed = identity._validate_tabarena_source(checkout)
+        assert observed["source_import_root_clean"] is True
+        assert sys.path[0] == str(package_source)
+        identity._validate_loaded_tabarena_modules(package_root)
+        for name, expected_file in {
+            "tabarena": package_root / "__init__.py",
+            "tabarena.child": child_file,
+        }.items():
+            module = sys.modules[name]
+            assert isinstance(
+                module.__loader__, identity.importlib.machinery.SourceFileLoader
+            )
+            assert module.__spec__.loader is module.__loader__
+            assert Path(module.__spec__.origin).resolve() == expected_file.resolve()
+
+        child = sys.modules["tabarena.child"]
+        child.__spec__.loader = None
+        with pytest.raises(RuntimeError, match="exact source loader"):
+            identity._validate_loaded_tabarena_modules(package_root)
+    finally:
+        sys.path[:] = [
+            entry
+            for entry in sys.path
+            if not entry or Path(entry).resolve() != package_source
+        ]
+        for name in tuple(sys.modules):
+            if name == "tabarena" or name.startswith("tabarena."):
+                sys.modules.pop(name, None)
+        sys.modules.update(saved_modules)
+
+
+def test_harness_validation_rejects_symlinked_runtime_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    copied = _copy_harness_identity_tree(tmp_path / "symlink")
+    loader = copied / "benchmarks/split_research/g8s1_harness/g8s1_scout/loader.py"
+    original_is_symlink = Path.is_symlink
+
+    def report_loader_as_symlink(path: Path) -> bool:
+        return path == loader or original_is_symlink(path)
+
+    monkeypatch.setattr(Path, "is_symlink", report_loader_as_symlink)
+    with pytest.raises(RuntimeError, match="symlink"):
+        identity._validate_harness_source(
+            copied,
+            require_tracked=False,
+            verify_import_location=False,
+        )
+
+
+def test_import_location_validation_rejects_shadow_package(tmp_path: Path) -> None:
+    expected = REPO_ROOT / "benchmarks/split_research/g8s1_harness/g8s1_scout"
+    with pytest.raises(RuntimeError, match="does not come from"):
+        identity._validate_import_location(
+            expected_package_root=expected,
+            package_file=tmp_path / "g8s1_scout/__init__.py",
+            package_paths=[expected],
+            identity_file=expected / "identity.py",
+        )
+
+
+def _write_mock_python_package(root: Path, marker: str) -> None:
+    (root / "core").mkdir(parents=True)
+    (root / "__init__.py").write_text(f"IDENTITY = {marker!r}\n", encoding="utf-8")
+    (root / "core/__init__.py").write_text("", encoding="utf-8")
+
+
+def test_source_package_seal_binds_installed_package_to_commit(tmp_path: Path) -> None:
+    source_package = tmp_path / "source/ctboost"
+    installed_package = tmp_path / "site-packages/ctboost"
+    _write_mock_python_package(source_package, "expected")
+    shutil.copytree(source_package, installed_package)
+    commit = "a" * 40
+
+    binding = identity._bind_installed_package_to_source(
+        source_package_root=source_package,
+        installed_package_root=installed_package,
+        source_commit=commit,
+    )
+    assert binding["source_commit"] == commit
+    assert binding["python_file_count"] == 2
+    assert len(binding["source_package_seal_sha256"]) == 64
+
+
+def test_source_package_seal_rejects_unrelated_installed_package_even_if_external_identity_matches(
+    tmp_path: Path,
+) -> None:
+    source_package = tmp_path / "source/ctboost"
+    installed_package = tmp_path / "site-packages/ctboost"
+    _write_mock_python_package(source_package, "expected")
+    _write_mock_python_package(installed_package, "unrelated")
+
+    with pytest.raises(RuntimeError, match="does not match the expected source commit"):
+        identity._bind_installed_package_to_source(
+            source_package_root=source_package,
+            installed_package_root=installed_package,
+            source_commit="b" * 40,
+        )
+
+
+def test_installed_identity_rejects_unrelated_package_with_matching_version_api_and_native(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source_root = tmp_path / "source"
+    source_package = source_root / "ctboost"
+    installed_package = tmp_path / "site-packages/ctboost"
+    _write_mock_python_package(source_package, "expected")
+    _write_mock_python_package(installed_package, "unrelated")
+    native_payload = b"matching caller-provided native identity"
+    (installed_package / "_core.pyd").write_bytes(native_payload)
+
+    class MatchingAPI:
+        def __init__(
+            self,
+            *,
+            feature_test: str | None = None,
+            feature_test_bins: int | None = None,
+            feature_test_adjustment: str | None = None,
+        ) -> None:
+            del feature_test, feature_test_bins, feature_test_adjustment
+
+    fake_ctboost = SimpleNamespace(
+        __file__=str(installed_package / "__init__.py"),
+        CTBoostClassifier=MatchingAPI,
+        CTBoostRegressor=MatchingAPI,
+        build_info=lambda: {"cuda_enabled": False},
+    )
+    monkeypatch.setitem(sys.modules, "ctboost", fake_ctboost)
+    monkeypatch.setattr(
+        identity.importlib.metadata,
+        "version",
+        lambda name: "0.1.54" if name == "ctboost" else "unexpected",
+    )
+    monkeypatch.setattr(identity, "_PREVALIDATED_INSTALLED", None)
+    with pytest.raises(RuntimeError, match="not sealed before package import"):
+        identity._installed_ctboost_identity(
+            hashlib.sha256(native_payload).hexdigest(),
+            source_root,
+            "c" * 40,
+        )
+
+
+def _installed_record_hashes(package_root: Path) -> dict[str, str]:
+    return {
+        path.relative_to(package_root).as_posix(): identity.sha256_file(path)
+        for path in package_root.rglob("*")
+        if path.is_file() and path.suffix.lower() in {".py", ".pyc", ".pyd", ".so"}
+    }
+
+
+@pytest.mark.parametrize(
+    "extra_relative",
+    [
+        "__pycache__/__init__.cpython-312.pyc",
+        "__init__.pyd",
+        "nested/rogue.so",
+    ],
+)
+def test_installed_source_seal_rejects_extra_importables_before_import(
+    tmp_path: Path, extra_relative: str
+) -> None:
+    source_package = tmp_path / "source/ctboost"
+    installed_package = tmp_path / "site-packages/ctboost"
+    _write_mock_python_package(source_package, "expected")
+    shutil.copytree(source_package, installed_package)
+    native = installed_package / "_core.pyd"
+    native.write_bytes(b"sealed native")
+    extra = installed_package / Path(extra_relative)
+    extra.parent.mkdir(parents=True, exist_ok=True)
+    extra.write_bytes(b"must never execute")
+    with pytest.raises(
+        RuntimeError,
+        match="forbidden cached bytecode|exactly one top-level _core extension",
+    ):
+        identity._installed_importable_files(
+            source_package_root=source_package,
+            installed_package_root=installed_package,
+            source_commit="d" * 40,
+            expected_native_sha256=identity.sha256_file(native),
+            record_sha256=_installed_record_hashes(installed_package),
+        )
+
+
+def test_installed_source_seal_requires_exact_wheel_record(tmp_path: Path) -> None:
+    source_package = tmp_path / "source/ctboost"
+    installed_package = tmp_path / "site-packages/ctboost"
+    _write_mock_python_package(source_package, "expected")
+    shutil.copytree(source_package, installed_package)
+    native = installed_package / "_core.pyd"
+    native.write_bytes(b"sealed native")
+    record = _installed_record_hashes(installed_package)
+    record["__init__.py"] = "0" * 64
+    with pytest.raises(RuntimeError, match="wheel RECORD"):
+        identity._installed_importable_files(
+            source_package_root=source_package,
+            installed_package_root=installed_package,
+            source_commit="e" * 40,
+            expected_native_sha256=identity.sha256_file(native),
+            record_sha256=record,
+        )
+
+
+def test_installed_source_seal_accepts_exact_source_native_and_record(
+    tmp_path: Path,
+) -> None:
+    source_package = tmp_path / "source/ctboost"
+    installed_package = tmp_path / "site-packages/ctboost"
+    _write_mock_python_package(source_package, "expected")
+    shutil.copytree(source_package, installed_package)
+    native = installed_package / "_core.pyd"
+    native.write_bytes(b"sealed native")
+    sealed = identity._installed_importable_files(
+        source_package_root=source_package,
+        installed_package_root=installed_package,
+        source_commit="f" * 40,
+        expected_native_sha256=identity.sha256_file(native),
+        record_sha256=_installed_record_hashes(installed_package),
+    )
+    assert sealed["native_path"] == native.resolve()
+    assert len(sealed["source_binding"]["wheel_record_sha256"]) == 64
+
+
+BOUNDARY_GATES = {
+    "primary_wins": 2,
+    "primary_macro_median": 0.0025,
+    "primary_worst": -0.01,
+    "tuned_macro_median": 0.0,
+    "tuned_worst": -0.02,
+    "median_paired_training_ratio": 1.15,
+}
+
+
+def test_decision_gates_pass_at_every_frozen_boundary() -> None:
+    assert all(_evaluate_decision_gates(**BOUNDARY_GATES).values())
+    assert _comparison_outcome(0.000999) == "tie"
+    assert _comparison_outcome(-0.000999) == "tie"
+    assert _comparison_outcome(0.001) == "win"
+    assert _comparison_outcome(-0.001) == "loss"
+
+
+@pytest.mark.parametrize(
+    ("field", "failing_value"),
+    [
+        ("primary_wins", 1),
+        ("primary_macro_median", 0.002499999),
+        ("primary_worst", -0.010000001),
+        ("tuned_macro_median", -0.000000001),
+        ("tuned_worst", -0.020000001),
+        ("median_paired_training_ratio", 1.150000001),
+    ],
+)
+def test_each_decision_gate_fails_immediately_outside_boundary(
+    field: str, failing_value: float
+) -> None:
+    values = {**BOUNDARY_GATES, field: failing_value}
+    gates = _evaluate_decision_gates(**values)
+    assert sum(not passed for passed in gates.values()) == 1
+
+
+def _write_relative_files(
+    root: Path, relative_paths: set[str] | frozenset[str]
+) -> None:
+    for relative in relative_paths:
+        path = root / Path(relative)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"sealed")
+
+
+def test_namespace_inventory_enforces_exact_files_at_every_phase(
+    tmp_path: Path,
+) -> None:
+    raw_dir = tmp_path / "raw"
+    report_dir = tmp_path / "report"
+    _write_relative_files(report_dir, {"scout_provenance.json"})
+    expected_raw = _expected_raw_paths()
+    first = min(expected_raw)
+    _write_relative_files(raw_dir, {first})
+    run_input = validate_namespace(
+        raw_dir=raw_dir, report_dir=report_dir, phase="run_input"
+    )
+    assert run_input["observed_outer_artifacts"] == 1
+
+    _write_relative_files(raw_dir, expected_raw - {first})
+    _write_relative_files(report_dir, {"run_manifest.shard-00000-of-00001.json"})
+    assert validate_namespace(
+        raw_dir=raw_dir, report_dir=report_dir, phase="run_output"
+    )["complete"]
+    assert validate_namespace(
+        raw_dir=raw_dir, report_dir=report_dir, phase="summarize_input"
+    )["complete"]
+
+    success_outputs = {
+        "sanitized/scout_summary.json",
+        "sanitized/paired_configs.json",
+        "sanitized/config_results.csv",
+        "sanitized/endpoint_results.csv",
+    }
+    _write_relative_files(report_dir, success_outputs)
+    assert validate_namespace(
+        raw_dir=raw_dir, report_dir=report_dir, phase="summary_success"
+    )["complete"]
+
+    failure_report = tmp_path / "failure-report"
+    _write_relative_files(
+        failure_report,
+        {
+            "scout_provenance.json",
+            "run_manifest.shard-00000-of-00001.json",
+            "sanitized/scout_failure.json",
+        },
+    )
+    assert validate_namespace(
+        raw_dir=raw_dir, report_dir=failure_report, phase="summary_failure"
+    )["complete"]
+
+
+def test_real_artifact_loading_and_summarize_use_sealed_directory_inventory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    raw_dir = tmp_path / "raw"
+    output_dir = tmp_path / "report" / "sanitized"
+    expected_paths = _expected_raw_paths()
+    _write_relative_files(raw_dir, expected_paths)
+
+    loaded_paths: list[Path] = []
+    task_by_id = {
+        task_id: (dataset, problem_type, metric)
+        for task_id, dataset, problem_type, metric in TASKS
+    }
+
+    def load_and_align(path: Path) -> SimpleNamespace:
+        loaded_paths.append(path)
+        relative = path.relative_to(raw_dir)
+        method = relative.parts[1]
+        task_id = int(relative.parts[2])
+        dataset, problem_type, metric = task_by_id[task_id]
+        return SimpleNamespace(
+            result={
+                "framework": method,
+                "task_metadata": {
+                    "tid": task_id,
+                    "name": dataset,
+                    "repeat": 0,
+                    "fold": 0,
+                    "sample": 0,
+                },
+                "problem_type": problem_type,
+                "metric": metric,
+                "metric_error": 0.25,
+                "metric_error_val": 0.25,
+                "time_train_s": 1.0,
+                "time_infer_s": 0.1,
+            }
+        )
+
+    public_tabarena = ModuleType("tabarena")
+    public_tabarena.__path__ = []
+    public_benchmark = ModuleType("tabarena.benchmark")
+    public_benchmark.__path__ = []
+    public_result = ModuleType("tabarena.benchmark.result")
+    public_raw_loading = ModuleType("tabarena.benchmark.result.raw_loading")
+    public_raw_loading.load_and_align = load_and_align
+    public_result.raw_loading = public_raw_loading
+    public_benchmark.result = public_result
+    public_tabarena.benchmark = public_benchmark
+    for name, module in (
+        ("tabarena", public_tabarena),
+        ("tabarena.benchmark", public_benchmark),
+        ("tabarena.benchmark.result", public_result),
+        ("tabarena.benchmark.result.raw_loading", public_raw_loading),
+    ):
+        monkeypatch.setitem(sys.modules, name, module)
+
+    unexpected_empty = raw_dir / "unexpected-empty"
+    unexpected_empty.mkdir()
+    with pytest.raises(RuntimeError, match="stale, unexpected, or linked"):
+        scout_summary.load_and_validate_artifacts(raw_dir)
+    unexpected_empty.rmdir()
+
+    special_directory = (raw_dir / Path(min(expected_paths))).parent
+    original_is_link_or_junction = scout_summary._is_link_or_junction
+    with monkeypatch.context() as special_patch:
+        special_patch.setattr(
+            scout_summary,
+            "_is_link_or_junction",
+            lambda path: (
+                path == special_directory or original_is_link_or_junction(path)
+            ),
+        )
+        with pytest.raises(RuntimeError, match="stale, unexpected, or linked"):
+            scout_summary.load_and_validate_artifacts(raw_dir)
+
+    monkeypatch.setattr(scout_summary, "_validate_predictions", lambda _result: None)
+    monkeypatch.setattr(
+        scout_summary,
+        "_validate_method_metadata",
+        lambda _result, **_kwargs: (1024, 512, 256),
+    )
+    monkeypatch.setattr(scout_summary, "_endpoint_rows", lambda _loaded: ([], {}))
+    monkeypatch.setattr(
+        scout_summary,
+        "_decorate_endpoint_selections",
+        lambda _rows, _records, _selected: None,
+    )
+    monkeypatch.setattr(
+        scout_summary,
+        "_decision_summary",
+        lambda _endpoint_rows, _records: {"integration": "sealed"},
+    )
+    monkeypatch.setattr(
+        scout_summary,
+        "_resource_summary",
+        lambda _records: {"integration": "sealed"},
+    )
+    summary = scout_summary.summarize(
+        raw_dir=raw_dir,
+        output_dir=output_dir,
+        provenance={"identity": "sealed"},
+        schedule={"schedule_sha256": EXPECTED_SCHEDULE_SHA256},
+        namespace_state={"stale_or_unexpected": 0, "complete": True},
+    )
+
+    assert len(loaded_paths) == EXPECTED_ARTIFACTS
+    assert len(set(loaded_paths)) == EXPECTED_ARTIFACTS
+    assert summary["coverage"] == {
+        "expected_outer_artifacts": EXPECTED_ARTIFACTS,
+        "observed_outer_artifacts": EXPECTED_ARTIFACTS,
+        "expected_bagged_child_fits": EXPECTED_ARTIFACTS * 8,
+        "failures": 0,
+        "timeouts": 0,
+        "duplicates": 0,
+        "stale_or_unexpected": 0,
+        "complete": True,
+    }
+    assert {path.name for path in output_dir.iterdir()} == {
+        "scout_summary.json",
+        "paired_configs.json",
+        "config_results.csv",
+        "endpoint_results.csv",
+    }
+
+
+def test_existing_sealed_namespace_counts_and_rejects_every_stale_file(
+    tmp_path: Path,
+) -> None:
+    raw_dir = tmp_path / "raw"
+    report_dir = tmp_path / "report"
+    _write_relative_files(
+        raw_dir,
+        {
+            "data/Unscheduled/363614/0_0/results.pkl",
+            "data/Unscheduled/363614/0_0/debug.txt",
+        },
+    )
+    _write_relative_files(
+        report_dir,
+        {"scout_provenance.json", "sanitized/stale.json"},
+    )
+    inventory = namespace_inventory(
+        raw_dir=raw_dir, report_dir=report_dir, phase="run_input"
+    )
+    assert inventory["stale_or_unexpected"] == 7
+    with pytest.raises(RuntimeError, match="stale, unexpected, or linked"):
+        validate_namespace(raw_dir=raw_dir, report_dir=report_dir, phase="run_input")
+
+
+@pytest.mark.parametrize(
+    "relative",
+    [".g8s1-success-abandoned", ".g8s1-failure-abandoned", "sanitized"],
+)
+def test_preflight_rejects_unexpected_empty_report_directory(
+    tmp_path: Path, relative: str
+) -> None:
+    raw_dir = tmp_path / "raw"
+    report_dir = tmp_path / "report"
+    (report_dir / relative).mkdir(parents=True)
+    inventory = namespace_inventory(
+        raw_dir=raw_dir,
+        report_dir=report_dir,
+        phase="preflight",
+    )
+    assert inventory["stale_or_unexpected"] == 1
+    assert inventory["complete"] is False
+    with pytest.raises(RuntimeError, match="stale, unexpected, or linked"):
+        validate_namespace(
+            raw_dir=raw_dir,
+            report_dir=report_dir,
+            phase="preflight",
+        )
+
+
+def test_preflight_rejects_report_directory_junction(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    raw_dir = tmp_path / "raw"
+    report_dir = tmp_path / "report"
+    junction = report_dir / "abandoned"
+    junction.mkdir(parents=True)
+    original = getattr(Path, "is_junction", None)
+
+    def fake_is_junction(path: Path) -> bool:
+        return path == junction or bool(original is not None and original(path))
+
+    monkeypatch.setattr(Path, "is_junction", fake_is_junction, raising=False)
+    inventory = namespace_inventory(
+        raw_dir=raw_dir,
+        report_dir=report_dir,
+        phase="preflight",
+    )
+    assert inventory["stale_or_unexpected"] == 1
+    with pytest.raises(RuntimeError, match="stale, unexpected, or linked"):
+        validate_namespace(
+            raw_dir=raw_dir,
+            report_dir=report_dir,
+            phase="preflight",
+        )
+
+
+def test_summary_coverage_uses_observed_namespace_inventory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        scout_summary,
+        "load_and_validate_artifacts",
+        lambda _raw_dir: (
+            [],
+            [],
+            "0" * 64,
+            {"stale_or_unexpected": 3, "complete": False},
+        ),
+    )
+    monkeypatch.setattr(scout_summary, "_endpoint_rows", lambda _loaded: ([], {}))
+    monkeypatch.setattr(
+        scout_summary,
+        "_decorate_endpoint_selections",
+        lambda _rows, _records, _selected: None,
+    )
+    monkeypatch.setattr(scout_summary, "_decision_summary", lambda *_args: {})
+    monkeypatch.setattr(scout_summary, "_resource_summary", lambda _records: {})
+    summary = scout_summary.summarize(
+        raw_dir=tmp_path / "raw",
+        output_dir=tmp_path / "report/sanitized",
+        provenance={"identity": "sealed"},
+        schedule={"schedule_sha256": EXPECTED_SCHEDULE_SHA256},
+        namespace_state={"stale_or_unexpected": 7, "complete": False},
+    )
+    assert summary["coverage"]["stale_or_unexpected"] == 7
+    assert summary["coverage"]["complete"] is False
+
+
+def test_partial_success_staging_is_removed_before_failure_report(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        scout_summary,
+        "load_and_validate_artifacts",
+        lambda _raw_dir: (
+            [],
+            [],
+            "0" * 64,
+            {"stale_or_unexpected": 0, "complete": True},
+        ),
+    )
+    monkeypatch.setattr(scout_summary, "_endpoint_rows", lambda _loaded: ([], {}))
+    monkeypatch.setattr(
+        scout_summary,
+        "_decorate_endpoint_selections",
+        lambda _rows, _records, _selected: None,
+    )
+    monkeypatch.setattr(scout_summary, "_decision_summary", lambda *_args: {})
+    monkeypatch.setattr(scout_summary, "_resource_summary", lambda _records: {})
+    original_write_json = scout_summary._write_json
+    writes = 0
+
+    def fail_second_json(path: Path, value: object) -> None:
+        nonlocal writes
+        writes += 1
+        if writes == 2:
+            raise OSError("simulated partial success write")
+        original_write_json(path, value)
+
+    monkeypatch.setattr(scout_summary, "_write_json", fail_second_json)
+    output_dir = tmp_path / "report/sanitized"
+    with pytest.raises(OSError, match="partial success"):
+        scout_summary.summarize(
+            raw_dir=tmp_path / "raw",
+            output_dir=output_dir,
+            provenance={"identity": "sealed"},
+            schedule={"schedule_sha256": EXPECTED_SCHEDULE_SHA256},
+            namespace_state={"stale_or_unexpected": 0, "complete": True},
+        )
+    assert not output_dir.exists()
+    assert not list(output_dir.parent.glob(".g8s1-success-*"))
+
+    monkeypatch.setattr(scout_summary, "_write_json", original_write_json)
+    write_failure_summary(
+        output_dir=output_dir,
+        provenance={"identity": "sealed"},
+        schedule={"schedule_sha256": EXPECTED_SCHEDULE_SHA256},
+        error=RuntimeError("simulated integration failure"),
+    )
+    assert {path.name for path in output_dir.iterdir()} == {"scout_failure.json"}
+
+
+@pytest.mark.parametrize(
+    "interruption",
+    [KeyboardInterrupt(), SystemExit(17)],
+    ids=("keyboard-interrupt", "system-exit"),
+)
+def test_summary_staging_is_removed_for_base_exception(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    interruption: BaseException,
+) -> None:
+    monkeypatch.setattr(
+        scout_summary,
+        "load_and_validate_artifacts",
+        lambda _raw_dir: (
+            [],
+            [],
+            "0" * 64,
+            {"stale_or_unexpected": 0, "complete": True},
+        ),
+    )
+    monkeypatch.setattr(scout_summary, "_endpoint_rows", lambda _loaded: ([], {}))
+    monkeypatch.setattr(
+        scout_summary,
+        "_decorate_endpoint_selections",
+        lambda _rows, _records, _selected: None,
+    )
+    monkeypatch.setattr(scout_summary, "_decision_summary", lambda *_args: {})
+    monkeypatch.setattr(scout_summary, "_resource_summary", lambda _records: {})
+    original_write_json = scout_summary._write_json
+    writes = 0
+
+    def interrupt_second_json(path: Path, value: object) -> None:
+        nonlocal writes
+        writes += 1
+        if writes == 2:
+            raise interruption
+        original_write_json(path, value)
+
+    monkeypatch.setattr(scout_summary, "_write_json", interrupt_second_json)
+    output_dir = tmp_path / "report/sanitized"
+    with pytest.raises(type(interruption)):
+        scout_summary.summarize(
+            raw_dir=tmp_path / "raw",
+            output_dir=output_dir,
+            provenance={"identity": "sealed"},
+            schedule={"schedule_sha256": EXPECTED_SCHEDULE_SHA256},
+            namespace_state={"stale_or_unexpected": 0, "complete": True},
+        )
+    assert not output_dir.exists()
+    assert not list(output_dir.parent.glob(".g8s1-success-*"))
+
+
+@pytest.mark.parametrize(
+    "interruption",
+    [KeyboardInterrupt(), SystemExit(23)],
+    ids=("keyboard-interrupt", "system-exit"),
+)
+def test_failure_staging_is_removed_for_base_exception(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    interruption: BaseException,
+) -> None:
+    original_write_json = scout_summary._write_json
+
+    def interrupt_after_partial_write(path: Path, value: object) -> None:
+        original_write_json(path, value)
+        raise interruption
+
+    monkeypatch.setattr(scout_summary, "_write_json", interrupt_after_partial_write)
+    output_dir = tmp_path / "report/sanitized"
+    with pytest.raises(type(interruption)):
+        write_failure_summary(
+            output_dir=output_dir,
+            provenance={"identity": "sealed"},
+            schedule={"schedule_sha256": EXPECTED_SCHEDULE_SHA256},
+            error=RuntimeError("simulated integration failure"),
+        )
+    assert not output_dir.exists()
+    assert not list(output_dir.parent.glob(".g8s1-failure-*"))
+
+
+def test_failure_writer_refuses_existing_partial_success_directory(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "sanitized"
+    output_dir.mkdir()
+    (output_dir / "scout_summary.json").write_text("partial", encoding="utf-8")
+    with pytest.raises(RuntimeError, match="clean sanitized directory"):
+        write_failure_summary(
+            output_dir=output_dir,
+            provenance={"identity": "sealed"},
+            schedule={"schedule_sha256": EXPECTED_SCHEDULE_SHA256},
+            error=RuntimeError("later failure"),
+        )
+    assert not (output_dir / "scout_failure.json").exists()
+
+
+@pytest.mark.parametrize(
+    "absolute_path",
+    [
+        "/etc/passwd",
+        "/root/private/result.pkl",
+        "/opt/ctboost/result.pkl",
+        "embedded=/srv/private/result.pkl",
+        r"C:\private\artifact.pkl",
+        "D:/private/artifact.pkl",
+        r"\private\artifact.pkl",
+        r"\\server\share\artifact.pkl",
+        "//server/share/artifact.pkl",
+        "file:///etc/passwd",
+        "FILE://server/share/artifact.pkl",
+    ],
+)
+def test_sanitizer_rejects_all_absolute_path_forms(absolute_path: str) -> None:
+    with pytest.raises(RuntimeError, match="absolute path"):
+        _assert_no_absolute_paths({"nested": [{"bad": f"failure: {absolute_path}"}]})
+
+
+def test_sanitizer_allows_relative_paths_and_https_urls() -> None:
+    _assert_no_absolute_paths(
+        {
+            "safe": "raw/data/model/363614/0_0/results.pkl",
+            "source": "https://example.invalid/docs/path",
+        }
+    )
+
+
+@pytest.mark.parametrize(
+    "absolute_path",
+    [
+        "/etc/passwd",
+        r"C:\private\artifact.pkl",
+        r"\private\artifact.pkl",
+        r"\\server\share\artifact.pkl",
+        "file:///root/private",
+    ],
+)
+def test_failure_summary_scrubs_embedded_absolute_paths(
+    tmp_path: Path, absolute_path: str
+) -> None:
+
+    output_dir = tmp_path / "sanitized"
+    write_failure_summary(
+        output_dir=output_dir,
+        provenance={"identity": "sealed"},
+        schedule={"schedule_sha256": EXPECTED_SCHEDULE_SHA256},
+        error=RuntimeError(f"validation failed at {absolute_path} inside artifact"),
+    )
+    failure = json.loads(
+        (output_dir / "scout_failure.json").read_text(encoding="utf-8")
+    )
+    assert failure["status"] == "integration failure"
+    assert (
+        failure["error"]
+        == "validation failed with a path-bearing diagnostic; inspect private logs"
+    )
+    _assert_no_absolute_paths(failure)
