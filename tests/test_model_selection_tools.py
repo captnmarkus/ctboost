@@ -3,6 +3,7 @@ import pytest
 from sklearn.dummy import DummyRegressor
 
 from ctboost import CTBoostClassifier, CTBoostRegressor
+from ctboost.sklearn import model_selection
 from ctboost.sklearn.model_selection import compare_estimators
 
 
@@ -29,6 +30,35 @@ def _comparison_regression_data():
     X = np.tile(block, (3, 1))
     y = np.tile(3.0 * signal, 3).astype(np.float32)
     return X, y
+
+
+def test_pyplot_loader_is_lazy_and_cached(monkeypatch):
+    sentinel = object()
+    calls = []
+
+    def fake_import_module(name):
+        calls.append(name)
+        return sentinel
+
+    model_selection._load_pyplot.cache_clear()
+    monkeypatch.setattr(model_selection, "import_module", fake_import_module)
+
+    assert model_selection._require_pyplot("plot=True") is sentinel
+    assert model_selection._require_pyplot("plot_metrics") is sentinel
+    assert calls == ["matplotlib.pyplot"]
+    model_selection._load_pyplot.cache_clear()
+
+
+def test_pyplot_loader_preserves_actionable_optional_dependency_error(monkeypatch):
+    def missing_matplotlib(name):
+        raise ImportError(name)
+
+    model_selection._load_pyplot.cache_clear()
+    monkeypatch.setattr(model_selection, "import_module", missing_matplotlib)
+
+    with pytest.raises(ImportError, match="plot_metrics requires matplotlib"):
+        model_selection._require_pyplot("plot_metrics")
+    model_selection._load_pyplot.cache_clear()
 
 
 def test_grid_search_refits_estimator_and_returns_cv_details():
