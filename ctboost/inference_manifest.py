@@ -188,6 +188,9 @@ def _input_contract(
             "external_preprocessing_required": bool(expects_prepared_features),
             "raw_feature_count": int(pipeline.get("n_features_in_", num_features)),
             "transformed_feature_count": model_feature_count,
+            "categorical_key_encoding_version": int(
+                pipeline.get("categorical_key_encoding_version", 1)
+            ),
             "fingerprint": _fingerprint(pipeline),
         }
 

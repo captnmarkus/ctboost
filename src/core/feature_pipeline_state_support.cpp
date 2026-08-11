@@ -32,13 +32,30 @@ std::vector<float> ArrayToFloatVector(py::array_t<float, py::array::forcecast> v
 
 std::string JoinNormalizedKey(const MatrixView& matrix,
                               std::size_t row,
-                              const std::vector<int>& source_indices) {
+                              const std::vector<int>& source_indices,
+                              int encoding_version) {
   std::string key;
   for (std::size_t index = 0; index < source_indices.size(); ++index) {
     if (index > 0) {
       key += "||";
     }
-    key += NormalizeKey(MatrixValue(matrix, row, static_cast<std::size_t>(source_indices[index])));
+    const std::string component = NormalizeKey(
+        MatrixValue(matrix, row, static_cast<std::size_t>(source_indices[index])),
+        encoding_version);
+    if (encoding_version == kLegacyCategoricalKeyEncodingVersion) {
+      key += component;
+      continue;
+    }
+    if (encoding_version != kCurrentCategoricalKeyEncodingVersion) {
+      throw std::invalid_argument("unsupported categorical key encoding version: " +
+                                  std::to_string(encoding_version));
+    }
+    for (char ch : component) {
+      if (ch == '\\' || ch == '|') {
+        key.push_back('\\');
+      }
+      key.push_back(ch);
+    }
   }
   return key;
 }

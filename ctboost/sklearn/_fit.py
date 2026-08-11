@@ -15,6 +15,10 @@ from ..training.eval_metrics import (
     _normalize_eval_metrics,
 )
 from ..training.objectives import ObjectiveSpec, _with_native_objective
+from ..training._pool_build import (
+    _assert_compatible_feature_pipeline,
+    _resolve_init_model_pipeline,
+)
 from .serialization import PathLike
 
 
@@ -50,6 +54,10 @@ class _BaseFitMixin:
         ) -> Any:
             raw_feature_count, raw_feature_names = self._input_feature_metadata(X)
             resolved_eval_sets = _normalize_eval_sets(eval_set)
+            resolved_init_model = init_model
+            if resolved_init_model is None and self.warm_start and hasattr(self, "_booster"):
+                resolved_init_model = self._booster
+            init_pipeline = _resolve_init_model_pipeline(resolved_init_model)
             if self._uses_feature_pipeline():
                 if isinstance(X, Pool):
                     raise ValueError("feature pipeline parameters require raw array or DataFrame input")
@@ -57,10 +65,25 @@ class _BaseFitMixin:
                     raise ValueError("y must be provided when feature pipeline parameters are enabled")
                 if any(isinstance(entry, Pool) for entry in resolved_eval_sets):
                     raise ValueError("feature pipeline parameters require raw eval_set input, not a Pool")
-                self._feature_pipeline = self._build_feature_pipeline()
-                transformed_X, transformed_cat_features, transformed_feature_names = (
-                    self._feature_pipeline.fit_transform_array(X, y)
-                )
+                configured_pipeline = self._build_feature_pipeline()
+                if init_pipeline is None:
+                    self._feature_pipeline = configured_pipeline
+                    transformed_X, transformed_cat_features, transformed_feature_names = (
+                        self._feature_pipeline.fit_transform_array(X, y)
+                    )
+                else:
+                    _assert_compatible_feature_pipeline(
+                        init_pipeline, configured_pipeline.to_state()
+                    )
+                    # Preserve the fitted preprocessing space used by the seed
+                    # trees.  Cloning avoids mutating the init model; transform
+                    # must not learn unseen categories or recompute CTR state.
+                    self._feature_pipeline = FeaturePipeline.from_state(
+                        init_pipeline.to_state()
+                    )
+                    transformed_X, transformed_cat_features, transformed_feature_names = (
+                        self._feature_pipeline.transform_array(X)
+                    )
                 train_pool = Pool(
                     data=transformed_X,
                     label=y,
@@ -194,9 +217,6 @@ class _BaseFitMixin:
                 train_params["eval_metric"] = self.eval_metric
             if extra_train_params:
                 train_params.update(extra_train_params)
-            resolved_init_model = init_model
-            if resolved_init_model is None and self.warm_start and hasattr(self, "_booster"):
-                resolved_init_model = self._booster
             self._booster = train(
                 train_pool,
                 train_params,

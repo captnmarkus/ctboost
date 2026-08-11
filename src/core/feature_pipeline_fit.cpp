@@ -84,6 +84,26 @@ void NativeFeaturePipeline::RefreshCombinationSourceIndices() {
       combination_source_indices_.end());
 }
 
+std::string NativeFeaturePipeline::AllocateOutputFeatureName(
+    const std::string& proposed_name) {
+  if (categorical_key_encoding_version_ ==
+      detail::kLegacyCategoricalKeyEncodingVersion) {
+    return proposed_name;
+  }
+  if (categorical_key_encoding_version_ !=
+      detail::kCurrentCategoricalKeyEncodingVersion) {
+    throw std::invalid_argument("unsupported categorical key encoding version: " +
+                                std::to_string(categorical_key_encoding_version_));
+  }
+
+  std::string allocated = proposed_name;
+  std::size_t suffix = 2U;
+  while (!allocated_output_feature_names_.insert(allocated).second) {
+    allocated = proposed_name + "_" + std::to_string(suffix++);
+  }
+  return allocated;
+}
+
 void NativeFeaturePipeline::FitInternal(py::array raw_matrix,
                                         py::array_t<float, py::array::forcecast> labels,
                                         py::object feature_names) {
@@ -112,6 +132,7 @@ void NativeFeaturePipeline::FitInternal(py::array raw_matrix,
   }
 
   output_feature_names_.clear();
+  allocated_output_feature_names_.clear();
   cat_feature_indices_.clear();
   one_hot_states_.clear();
   categorical_states_.clear();

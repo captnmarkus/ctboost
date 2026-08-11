@@ -2,11 +2,38 @@
 
 #include "feature_pipeline_internal.hpp"
 
+#include <algorithm>
+#include <stdexcept>
+#include <string>
+#include <unordered_set>
+
 namespace py = pybind11;
 
 namespace ctboost {
 
 void NativeFeaturePipeline::LoadState(const py::dict& state) {
+  const int format_version = state.contains("feature_pipeline_format_version")
+                                 ? py::cast<int>(state["feature_pipeline_format_version"])
+                                 : 1;
+  if (format_version < 1 || format_version > detail::kCurrentFeaturePipelineFormatVersion) {
+    throw std::invalid_argument("unsupported feature pipeline format version: " +
+                                std::to_string(format_version));
+  }
+  categorical_key_encoding_version_ =
+      state.contains("categorical_key_encoding_version")
+          ? py::cast<int>(state["categorical_key_encoding_version"])
+          : detail::kLegacyCategoricalKeyEncodingVersion;
+  if (categorical_key_encoding_version_ != detail::kLegacyCategoricalKeyEncodingVersion &&
+      categorical_key_encoding_version_ != detail::kCurrentCategoricalKeyEncodingVersion) {
+    throw std::invalid_argument("unsupported categorical key encoding version: " +
+                                std::to_string(categorical_key_encoding_version_));
+  }
+  if (format_version < detail::kCurrentFeaturePipelineFormatVersion &&
+      categorical_key_encoding_version_ != detail::kLegacyCategoricalKeyEncodingVersion) {
+    throw std::invalid_argument(
+        "feature pipeline formats before version 3 require categorical key encoding version 1");
+  }
+
   cat_features_ = detail::NormalizeOptionalSequence(
       state.contains("cat_features") ? py::reinterpret_borrow<py::object>(state["cat_features"])
                                      : py::none());
@@ -96,6 +123,15 @@ void NativeFeaturePipeline::LoadState(const py::dict& state) {
   output_feature_names_ = state.contains("output_feature_names_")
                               ? py::cast<std::vector<std::string>>(state["output_feature_names_"])
                               : std::vector<std::string>{};
+  if (categorical_key_encoding_version_ ==
+      detail::kCurrentCategoricalKeyEncodingVersion) {
+    const std::unordered_set<std::string> unique_output_names(
+        output_feature_names_.begin(), output_feature_names_.end());
+    if (unique_output_names.size() != output_feature_names_.size()) {
+      throw std::invalid_argument(
+          "serialized version-2 categorical pipeline requires globally unique output names");
+    }
+  }
   numeric_indices_ = state.contains("numeric_indices")
                          ? py::cast<std::vector<int>>(state["numeric_indices"])
                          : std::vector<int>{};
@@ -111,6 +147,33 @@ void NativeFeaturePipeline::LoadState(const py::dict& state) {
       one_hot_state.output_names = py::cast<std::vector<std::string>>(item["output_names"]);
       one_hot_state.has_other_bucket =
           item.contains("has_other_bucket") && py::cast<bool>(item["has_other_bucket"]) ? 1U : 0U;
+      if (one_hot_state.category_keys.size() != one_hot_state.output_names.size()) {
+        throw std::invalid_argument(
+            "serialized one-hot category keys and output names must have matching sizes");
+      }
+      if (categorical_key_encoding_version_ ==
+          detail::kCurrentCategoricalKeyEncodingVersion) {
+        const std::unordered_set<std::string> unique_keys(one_hot_state.category_keys.begin(),
+                                                           one_hot_state.category_keys.end());
+        if (unique_keys.size() != one_hot_state.category_keys.size()) {
+          throw std::invalid_argument(
+              "serialized version-2 categorical keys must be unique");
+        }
+        const std::unordered_set<std::string> unique_names(one_hot_state.output_names.begin(),
+                                                            one_hot_state.output_names.end());
+        if (unique_names.size() != one_hot_state.output_names.size()) {
+          throw std::invalid_argument(
+              "serialized version-2 categorical keys require unique one-hot output names");
+        }
+        const std::size_t other_count = static_cast<std::size_t>(std::count(
+            one_hot_state.category_keys.begin(),
+            one_hot_state.category_keys.end(),
+            std::string(detail::kCodec2OtherKey)));
+        if (other_count != (one_hot_state.has_other_bucket != 0U ? 1U : 0U)) {
+          throw std::invalid_argument(
+              "serialized version-2 one-hot other-bucket marker is inconsistent");
+        }
+      }
       one_hot_states_.push_back(std::move(one_hot_state));
     }
   }
@@ -130,6 +193,20 @@ void NativeFeaturePipeline::LoadState(const py::dict& state) {
         categorical_state.mapping.emplace(py::cast<std::string>(mapping_item.first),
                                           py::cast<float>(mapping_item.second));
       }
+      if (categorical_key_encoding_version_ ==
+          detail::kCurrentCategoricalKeyEncodingVersion) {
+        const auto other_it = categorical_state.mapping.find(detail::kCodec2OtherKey);
+        if ((other_it != categorical_state.mapping.end()) !=
+            (categorical_state.has_other_bucket != 0U)) {
+          throw std::invalid_argument(
+              "serialized version-2 categorical other-bucket marker is inconsistent");
+        }
+        if (other_it != categorical_state.mapping.end() &&
+            other_it->second != categorical_state.other_value) {
+          throw std::invalid_argument(
+              "serialized version-2 categorical other-bucket value is inconsistent");
+        }
+      }
       categorical_states_.push_back(std::move(categorical_state));
     }
   }
@@ -147,6 +224,20 @@ void NativeFeaturePipeline::LoadState(const py::dict& state) {
       for (const auto& mapping_item : py::cast<py::dict>(item["mapping"])) {
         combination_state.mapping.emplace(py::cast<std::string>(mapping_item.first),
                                           py::cast<float>(mapping_item.second));
+      }
+      if (categorical_key_encoding_version_ ==
+          detail::kCurrentCategoricalKeyEncodingVersion) {
+        const auto other_it = combination_state.mapping.find(detail::kCodec2OtherKey);
+        if ((other_it != combination_state.mapping.end()) !=
+            (combination_state.has_other_bucket != 0U)) {
+          throw std::invalid_argument(
+              "serialized version-2 combination other-bucket marker is inconsistent");
+        }
+        if (other_it != combination_state.mapping.end() &&
+            other_it->second != combination_state.other_value) {
+          throw std::invalid_argument(
+              "serialized version-2 combination other-bucket value is inconsistent");
+        }
       }
       combination_states_.push_back(std::move(combination_state));
     }
@@ -231,6 +322,7 @@ void NativeFeaturePipeline::LoadState(const py::dict& state) {
   }
 
   training_ctr_columns_.clear();
+  allocated_output_feature_names_.clear();
   text_hash_cache_.clear();
 }
 

@@ -69,10 +69,15 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
     const auto one_hot_it = one_hot_by_index.find(feature_index);
     if (one_hot_it != one_hot_by_index.end()) {
       const auto& category_keys = one_hot_it->second->category_keys;
-      const std::string other_key = one_hot_it->second->has_other_bucket != 0U ? detail::kOtherKey : "";
+      const std::string other_key =
+          one_hot_it->second->has_other_bucket != 0U
+              ? detail::OtherKey(categorical_key_encoding_version_)
+              : "";
       for (std::size_t row = 0; row < row_count; ++row) {
         const std::string raw_key =
-            detail::NormalizeKey(detail::MatrixValue(matrix, row, static_cast<std::size_t>(feature_index)));
+            detail::NormalizeKey(
+                detail::MatrixValue(matrix, row, static_cast<std::size_t>(feature_index)),
+                categorical_key_encoding_version_);
         std::string bucket_key = raw_key;
         if (one_hot_it->second->has_other_bucket != 0U &&
             std::find(category_keys.begin(), category_keys.end(), bucket_key) == category_keys.end()) {
@@ -99,7 +104,8 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
       const auto& mapping = categorical_it->second->mapping;
       for (std::size_t row = 0; row < row_count; ++row) {
         const std::string key = detail::NormalizeKey(
-            detail::MatrixValue(matrix, row, static_cast<std::size_t>(feature_index)));
+            detail::MatrixValue(matrix, row, static_cast<std::size_t>(feature_index)),
+            categorical_key_encoding_version_);
         const auto code_it = mapping.find(key);
         write_column_value(
             row,
@@ -118,7 +124,8 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
     const auto& state = combination_states_[combination_index];
     const auto& source_indices = combination_source_indices_[combination_index];
     for (std::size_t row = 0; row < row_count; ++row) {
-      const std::string key = detail::JoinNormalizedKey(matrix, row, source_indices);
+      const std::string key = detail::JoinNormalizedKey(
+          matrix, row, source_indices, categorical_key_encoding_version_);
       const auto code_it = state.mapping.find(key);
       write_column_value(
           row,
@@ -141,7 +148,8 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
     for (const auto& state : ctr_states_) {
       for (std::size_t output_index = 0; output_index < state.output_names.size(); ++output_index) {
         for (std::size_t row = 0; row < row_count; ++row) {
-          const std::string key = detail::JoinNormalizedKey(matrix, row, state.source_indices);
+          const std::string key = detail::JoinNormalizedKey(
+              matrix, row, state.source_indices, categorical_key_encoding_version_);
           const auto count_it = state.total_counts.find(key);
           const float count =
               count_it == state.total_counts.end() ? 0.0F : static_cast<float>(count_it->second);

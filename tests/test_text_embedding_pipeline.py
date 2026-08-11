@@ -170,6 +170,7 @@ def test_old_feature_pipeline_state_loads_with_legacy_text_and_embedding_default
     legacy_state = copy.deepcopy(pipeline.to_state())
     for key in (
         "feature_pipeline_format_version",
+        "categorical_key_encoding_version",
         "text_tokenizer",
         "text_ngram_range",
         "text_lowercase",

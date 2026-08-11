@@ -11,12 +11,28 @@
 namespace ctboost::detail {
 namespace {
 
-std::string SanitizeNameToken(std::string token) {
+void ValidateCategoricalKeyEncodingVersion(int encoding_version) {
+  if (encoding_version != kLegacyCategoricalKeyEncodingVersion &&
+      encoding_version != kCurrentCategoricalKeyEncodingVersion) {
+    throw std::invalid_argument("unsupported categorical key encoding version: " +
+                                std::to_string(encoding_version));
+  }
+}
+
+std::string SanitizeNameToken(std::string token, int encoding_version) {
+  ValidateCategoricalKeyEncodingVersion(encoding_version);
   if (token == kMissingKey) {
     return "missing";
   }
-  if (token == kOtherKey) {
+  if (encoding_version == kCurrentCategoricalKeyEncodingVersion &&
+      token == kCodec2LiteralMissingKey) {
+    return "literal_missing";
+  }
+  if (token == OtherKey(encoding_version)) {
     return "other";
+  }
+  if (encoding_version == kCurrentCategoricalKeyEncodingVersion && token == kOtherKey) {
+    return "literal_other";
   }
   for (char& ch : token) {
     const bool ascii_alnum = (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
@@ -91,11 +107,22 @@ bool IsMissing(const py::handle& value) {
   return false;
 }
 
-std::string NormalizeKey(const py::handle& value) {
+std::string NormalizeKey(const py::handle& value, int encoding_version) {
+  ValidateCategoricalKeyEncodingVersion(encoding_version);
   if (IsMissing(value)) {
     return kMissingKey;
   }
-  return py::str(value).cast<std::string>();
+  std::string key = py::str(value).cast<std::string>();
+  if (encoding_version == kLegacyCategoricalKeyEncodingVersion) {
+    return key;
+  }
+  if (key == kMissingKey) {
+    return kCodec2LiteralMissingKey;
+  }
+  if (!key.empty() && key.front() == '\\') {
+    key.insert(key.begin(), '\\');
+  }
+  return key;
 }
 
 std::vector<std::string> NormalizeEmbeddingStats(py::object embedding_stats) {
@@ -216,8 +243,26 @@ py::object NormalizeOptionalCtrTypes(py::object values) {
   return std::move(normalized);
 }
 
-std::string OneHotOutputName(const std::string& prefix, const std::string& key) {
-  return prefix + "_is_" + SanitizeNameToken(key);
+std::vector<std::string> BuildOneHotOutputNames(const std::string& prefix,
+                                                const std::vector<std::string>& keys,
+                                                int encoding_version) {
+  ValidateCategoricalKeyEncodingVersion(encoding_version);
+  std::vector<std::string> names;
+  names.reserve(keys.size());
+  std::unordered_set<std::string> used_names;
+  for (const std::string& key : keys) {
+    const std::string base_name =
+        prefix + "_is_" + SanitizeNameToken(key, encoding_version);
+    std::string name = base_name;
+    if (encoding_version == kCurrentCategoricalKeyEncodingVersion) {
+      std::size_t suffix = 2U;
+      while (!used_names.insert(name).second) {
+        name = base_name + "_" + std::to_string(suffix++);
+      }
+    }
+    names.push_back(std::move(name));
+  }
+  return names;
 }
 
 std::vector<std::string> ResolveCtrTypeList(const py::object& values, bool default_mean) {
@@ -238,7 +283,9 @@ std::vector<std::string> ResolveCtrTypeList(const py::object& values, bool defau
 std::vector<std::string> BuildBucketKeys(
     const std::unordered_map<std::string, std::size_t>& key_counts,
     int max_cat_threshold,
+    int encoding_version,
     bool* out_has_other_bucket) {
+  ValidateCategoricalKeyEncodingVersion(encoding_version);
   if (out_has_other_bucket != nullptr) {
     *out_has_other_bucket = false;
   }
@@ -274,11 +321,17 @@ std::vector<std::string> BuildBucketKeys(
     keys.push_back(ranked_keys[index].first);
   }
   std::sort(keys.begin(), keys.end());
-  keys.push_back(kOtherKey);
+  keys.push_back(OtherKey(encoding_version));
   if (out_has_other_bucket != nullptr) {
     *out_has_other_bucket = true;
   }
   return keys;
+}
+
+const char* OtherKey(int encoding_version) {
+  ValidateCategoricalKeyEncodingVersion(encoding_version);
+  return encoding_version == kLegacyCategoricalKeyEncodingVersion ? kOtherKey
+                                                                   : kCodec2OtherKey;
 }
 
 py::list VectorToPyList(const std::vector<int>& values) {
