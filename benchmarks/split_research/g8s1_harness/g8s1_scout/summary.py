@@ -66,34 +66,54 @@ def _expected_raw_paths() -> frozenset[str]:
     )
 
 
-def _namespace_files(root: Path) -> tuple[set[str], set[str]]:
+def _is_link_or_junction(path: Path) -> bool:
+    if path.is_symlink():
+        return True
+    is_junction = getattr(path, "is_junction", None)
+    return bool(callable(is_junction) and is_junction())
+
+
+def _namespace_files(root: Path) -> tuple[set[str], set[str], set[str]]:
     files: set[str] = set()
+    directories: set[str] = set()
     linked_or_special: set[str] = set()
-    if root.is_symlink():
-        return files, {"."}
+    if _is_link_or_junction(root):
+        return files, directories, {"."}
     if not root.exists():
-        return files, linked_or_special
+        return files, directories, linked_or_special
     if not root.is_dir():
-        return files, {"."}
+        return files, directories, {"."}
     for path in root.rglob("*"):
         relative = path.relative_to(root).as_posix()
-        if path.is_symlink():
+        if _is_link_or_junction(path):
             linked_or_special.add(relative)
         elif path.is_file():
             files.add(relative)
             if path.stat().st_nlink != 1:
                 linked_or_special.add(relative)
-        elif not path.is_dir():
+        elif path.is_dir():
+            directories.add(relative)
+        else:
             linked_or_special.add(relative)
-    return files, linked_or_special
+    return files, directories, linked_or_special
+
+
+def _parent_directories(relative_paths: Iterable[str]) -> set[str]:
+    directories: set[str] = set()
+    for relative in relative_paths:
+        parent = Path(relative).parent
+        while parent != Path("."):
+            directories.add(parent.as_posix())
+            parent = parent.parent
+    return directories
 
 
 def namespace_inventory(
     *, raw_dir: Path, report_dir: Path, phase: str
 ) -> dict[str, Any]:
     expected_raw = _expected_raw_paths()
-    raw_files, invalid_raw = _namespace_files(raw_dir)
-    report_files, invalid_report = _namespace_files(report_dir)
+    raw_files, raw_directories, invalid_raw = _namespace_files(raw_dir)
+    report_files, report_directories, invalid_report = _namespace_files(report_dir)
     base_reports = {_PROVENANCE_REPORT, _RUN_MANIFEST_REPORT}
 
     if phase == "run_input":
@@ -113,10 +133,14 @@ def namespace_inventory(
         required_reports = set(allowed_reports)
         required_raw = set(expected_raw)
     elif phase == "preflight":
-        allowed_reports = base_reports | set(_SUCCESS_REPORTS) | set(_FAILURE_REPORTS)
+        allowed_reports = set(base_reports)
         required_reports = {_PROVENANCE_REPORT} if raw_files or report_files else set()
         sanitized = report_files - base_reports
-        if sanitized not in (set(), set(_SUCCESS_REPORTS), set(_FAILURE_REPORTS)):
+        if sanitized == set(_SUCCESS_REPORTS):
+            allowed_reports.update(_SUCCESS_REPORTS)
+        elif sanitized == set(_FAILURE_REPORTS):
+            allowed_reports.update(_FAILURE_REPORTS)
+        elif sanitized:
             invalid_report.update(sanitized)
         required_raw = set(expected_raw) if sanitized else set()
         if sanitized:
@@ -124,10 +148,14 @@ def namespace_inventory(
     else:
         raise ValueError(f"unknown scout namespace phase: {phase}")
 
+    allowed_raw_directories = _parent_directories(expected_raw)
+    allowed_report_directories = _parent_directories(allowed_reports)
     stale = {
         *(f"raw/{path}" for path in raw_files - expected_raw),
+        *(f"raw/{path}" for path in raw_directories - allowed_raw_directories),
         *(f"raw/{path}" for path in invalid_raw),
         *(f"report/{path}" for path in report_files - allowed_reports),
+        *(f"report/{path}" for path in report_directories - allowed_report_directories),
         *(f"report/{path}" for path in invalid_report),
     }
     missing = {
@@ -140,7 +168,9 @@ def namespace_inventory(
         "expected_outer_artifacts": len(expected_raw),
         "observed_outer_artifacts": observed_expected,
         "raw_file_count": len(raw_files),
+        "raw_directory_count": len(raw_directories),
         "report_file_count": len(report_files),
+        "report_directory_count": len(report_directories),
         "stale_or_unexpected": len(stale),
         "missing_required": len(missing),
         "complete": not stale and not missing,

@@ -1,8 +1,10 @@
-"""Load the tracked benchmark adapter without putting its checkout on sys.path.
+"""Load sealed benchmark sources in a private, cache-free module namespace.
 
-Keeping the CTBoost checkout off ``sys.path`` is important in the Python 3.12
-TabArena environment: fits must import the installed candidate wheel, not the
-source tree (which may contain a native extension for another Python ABI).
+The repository's ordinary ``benchmarks.tabarena`` modules may already be
+imported by an unrelated test or tool.  The scout therefore never owns or
+mutates that public namespace.  It compiles the exact tracked adapter sources
+under a private synthetic package, which also prevents Python from consulting
+an adjacent bytecode cache.
 """
 
 from __future__ import annotations
@@ -16,34 +18,75 @@ from typing import Any
 
 from .constants import source_root
 
-_OWNED_PACKAGES: dict[str, types.ModuleType] = {}
+_PRIVATE_PACKAGE = "_g8s1_scout_sealed_benchmark"
+_ALLOWED_MODULES = frozenset({"ctboost_model", "run"})
+_OWNED_PACKAGE: types.ModuleType | None = None
 _LOADED_MODULES: dict[str, types.ModuleType] = {}
 
 
-def _ensure_package(name: str, path: Path) -> None:
-    expected_path = path.resolve()
-    expected_file = expected_path / "__init__.py"
-    existing = sys.modules.get(name)
-    if existing is not None:
-        if existing is not _OWNED_PACKAGES.get(name):
-            raise RuntimeError(f"refusing preloaded benchmark package {name!r}")
-        paths = [Path(item).resolve() for item in getattr(existing, "__path__", ())]
-        package_file = getattr(existing, "__file__", None)
-        if (
-            paths != [expected_path]
-            or not isinstance(package_file, str)
-            or Path(package_file).resolve() != expected_file
-        ):
+def _private_module_name(module_name: str) -> str:
+    if module_name not in _ALLOWED_MODULES:
+        raise RuntimeError(
+            f"benchmark module is outside the sealed allowlist: {module_name}"
+        )
+    return f"{_PRIVATE_PACKAGE}.{module_name}"
+
+
+def _validate_private_package() -> None:
+    package = _OWNED_PACKAGE
+    spec = None if package is None else getattr(package, "__spec__", None)
+    if (
+        package is None
+        or sys.modules.get(_PRIVATE_PACKAGE) is not package
+        or not isinstance(package, types.ModuleType)
+        or getattr(package, "__name__", None) != _PRIVATE_PACKAGE
+        or getattr(package, "__package__", None) != _PRIVATE_PACKAGE
+        or not hasattr(package, "__path__")
+        or list(package.__path__) != []
+        or getattr(package, "__loader__", None) is not None
+        or spec is None
+        or spec.name != _PRIVATE_PACKAGE
+        or spec.loader is not None
+        or spec.submodule_search_locations is None
+        or list(spec.submodule_search_locations) != []
+    ):
+        raise RuntimeError("sealed benchmark private package identity was replaced")
+    for leaf in _ALLOWED_MODULES:
+        expected = _LOADED_MODULES.get(f"{_PRIVATE_PACKAGE}.{leaf}")
+        if expected is None:
+            if hasattr(package, leaf):
+                raise RuntimeError(
+                    "sealed benchmark private package has an unexpected child attribute"
+                )
+        elif getattr(package, leaf, None) is not expected:
             raise RuntimeError(
-                f"refusing conflicting imported package {name!r}; expected package path {path.name!r}"
+                "sealed benchmark private package child identity was replaced"
             )
-        return
-    package = types.ModuleType(name)
-    package.__package__ = name
-    package.__path__ = [str(expected_path)]  # type: ignore[attr-defined]
-    package.__file__ = str(expected_file)
-    sys.modules[name] = package
-    _OWNED_PACKAGES[name] = package
+
+
+def _ensure_private_package() -> types.ModuleType:
+    global _OWNED_PACKAGE
+    existing = sys.modules.get(_PRIVATE_PACKAGE)
+    if _OWNED_PACKAGE is not None:
+        _validate_private_package()
+        return _OWNED_PACKAGE
+    if existing is not None:
+        raise RuntimeError("refusing a preloaded sealed benchmark private package")
+    package = types.ModuleType(_PRIVATE_PACKAGE)
+    package.__package__ = _PRIVATE_PACKAGE
+    package.__path__ = []  # type: ignore[attr-defined]
+    package.__loader__ = None
+    spec = importlib.machinery.ModuleSpec(
+        _PRIVATE_PACKAGE,
+        loader=None,
+        is_package=True,
+    )
+    spec.submodule_search_locations = []
+    package.__spec__ = spec
+    sys.modules[_PRIVATE_PACKAGE] = package
+    _OWNED_PACKAGE = package
+    _validate_private_package()
+    return package
 
 
 def _validate_loaded_module(name: str, module: Any, expected_file: Path) -> None:
@@ -54,17 +97,21 @@ def _validate_loaded_module(name: str, module: Any, expected_file: Path) -> None
         not isinstance(module, types.ModuleType)
         or module is not _LOADED_MODULES.get(name)
         or sys.modules.get(name) is not module
+        or getattr(module, "__name__", None) != name
+        or getattr(module, "__package__", None) != _PRIVATE_PACKAGE
         or not isinstance(getattr(module, "__file__", None), str)
         or Path(module.__file__).resolve() != expected_file
         or spec is None
+        or spec.name != name
         or not isinstance(spec.origin, str)
         or Path(spec.origin).resolve() != expected_file
-        or not isinstance(loader, importlib.machinery.SourceFileLoader)
+        or type(loader) is not importlib.machinery.SourceFileLoader
         or spec.loader is not loader
+        or loader.name != name
         or Path(loader.path).resolve() != expected_file
         or hasattr(module, "__path__")
     ):
-        raise RuntimeError(f"benchmark child module {name!r} has an invalid origin")
+        raise RuntimeError(f"sealed benchmark module {name!r} has an invalid identity")
 
 
 def validate_loaded_benchmark_modules(tabarena_root: Path) -> None:
@@ -74,63 +121,71 @@ def validate_loaded_benchmark_modules(tabarena_root: Path) -> None:
     observed = {
         name
         for name in sys.modules
-        if name == "benchmarks" or name.startswith("benchmarks.")
+        if name == _PRIVATE_PACKAGE or name.startswith(f"{_PRIVATE_PACKAGE}.")
     }
-    expected = set(_OWNED_PACKAGES) | set(_LOADED_MODULES)
+    expected = set(_LOADED_MODULES)
+    if _OWNED_PACKAGE is not None:
+        expected.add(_PRIVATE_PACKAGE)
     if observed != expected:
-        raise RuntimeError("unexpected or preloaded benchmark child module detected")
-    for name, module in _OWNED_PACKAGES.items():
-        expected_path = (
-            source_root() / "benchmarks" if name == "benchmarks" else expected_root
-        ).resolve()
-        if (
-            sys.modules.get(name) is not module
-            or [Path(value).resolve() for value in module.__path__] != [expected_path]
-            or Path(module.__file__).resolve() != expected_path / "__init__.py"
-        ):
-            raise RuntimeError("owned benchmark package identity was replaced")
+        raise RuntimeError("unexpected or preloaded sealed benchmark module detected")
+    if _OWNED_PACKAGE is not None:
+        _validate_private_package()
     for name, module in _LOADED_MODULES.items():
         leaf = name.rsplit(".", 1)[-1]
+        if leaf not in _ALLOWED_MODULES or name != _private_module_name(leaf):
+            raise RuntimeError(
+                "loaded benchmark module is outside the sealed allowlist"
+            )
         _validate_loaded_module(name, module, expected_root / f"{leaf}.py")
 
 
 def load_benchmark_module(module_name: str) -> Any:
+    full_name = _private_module_name(module_name)
     root = source_root()
-    benchmark_root = root / "benchmarks"
-    tabarena_root = benchmark_root / "tabarena"
+    tabarena_root = root / "benchmarks" / "tabarena"
     expected_file = tabarena_root / f"{module_name}.py"
     if not expected_file.is_file() or expected_file.is_symlink():
         raise RuntimeError(f"tracked benchmark module is missing: {module_name}")
-    full_name = f"benchmarks.tabarena.{module_name}"
-    if full_name in sys.modules or full_name in _LOADED_MODULES:
-        raise RuntimeError(f"refusing preloaded benchmark child module {full_name!r}")
+    if full_name in _LOADED_MODULES:
+        validate_loaded_benchmark_modules(tabarena_root)
+        return _LOADED_MODULES[full_name]
+    if full_name in sys.modules:
+        raise RuntimeError(f"refusing preloaded sealed benchmark module {full_name!r}")
     validate_loaded_benchmark_modules(tabarena_root)
-    _ensure_package("benchmarks", benchmark_root)
-    _ensure_package("benchmarks.tabarena", tabarena_root)
-    loader = importlib.machinery.SourceFileLoader(
-        full_name, str(expected_file.resolve())
-    )
+    package = _ensure_private_package()
+    if module_name == "run":
+        load_benchmark_module("ctboost_model")
+
+    resolved_file = expected_file.resolve()
+    source_loader = importlib.machinery.SourceFileLoader(full_name, str(resolved_file))
     spec = importlib.util.spec_from_loader(
-        full_name, loader, origin=str(expected_file.resolve())
+        full_name,
+        source_loader,
+        origin=str(resolved_file),
     )
     if spec is None:
         raise RuntimeError(f"could not create benchmark module spec: {module_name}")
     module = importlib.util.module_from_spec(spec)
-    module.__loader__ = loader
-    module.__file__ = str(expected_file.resolve())
+    module.__package__ = _PRIVATE_PACKAGE
+    module.__loader__ = source_loader
+    module.__file__ = str(resolved_file)
     sys.modules[full_name] = module
     _LOADED_MODULES[full_name] = module
+    setattr(package, module_name, module)
     try:
         code = compile(
             expected_file.read_bytes(),
-            str(expected_file.resolve()),
+            str(resolved_file),
             "exec",
             dont_inherit=True,
         )
         exec(code, module.__dict__)  # noqa: S102 - execute hash-sealed tracked source
         _validate_loaded_module(full_name, module, expected_file)
-    except Exception:
+        _validate_private_package()
+    except BaseException:
         sys.modules.pop(full_name, None)
         _LOADED_MODULES.pop(full_name, None)
+        if getattr(package, module_name, None) is module:
+            delattr(package, module_name)
         raise
     return module

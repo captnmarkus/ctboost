@@ -29,7 +29,7 @@ RUNTIME_MODULE_FILES = (
 BOOTSTRAP_RELATIVE = "benchmarks/split_research/g8s1_scout_bootstrap.py"
 RUNBOOK_RELATIVE = "benchmarks/split_research/G8S1_SCOUT_RUNBOOK.md"
 RUNBOOK_LF_NORMALIZED_SHA256 = (
-    "83c0da84ce5f774bd0f396670ecfd1606f8f3f0c7b1595292aa13cae547505be"
+    "e393765efa18cf031a0bdc60ebf6475cd3e79a93b363757cb3679dae89d26e45"
 )
 
 TASKS = (

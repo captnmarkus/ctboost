@@ -5,7 +5,6 @@ from __future__ import annotations
 import argparse
 import json
 import os
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -35,20 +34,10 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _activate_pinned_tabarena(root: Path) -> None:
-    package_source = root.resolve() / "packages" / "tabarena" / "src"
-    if not (package_source / "tabarena" / "__init__.py").is_file():
-        raise RuntimeError("--tabarena-root does not contain a TabArena source package")
-    if any(name == "tabarena" or name.startswith("tabarena.") for name in sys.modules):
-        raise RuntimeError("TabArena was imported before pinned-checkout activation")
-    sys.path.insert(0, str(package_source))
-
-
 def _preflight(
     args: argparse.Namespace,
 ) -> tuple[dict[str, Any], dict[str, Any], Path, Path, Any]:
-    from .identity import collect_provenance
-    from .schedule import build_and_validate_schedule, fixed_args
+    from .identity import collect_provenance, validate_loaded_tabarena_modules
 
     ctboost_root = source_root().resolve()
     expected_commit = args.expected_ctboost_commit.lower()
@@ -58,12 +47,15 @@ def _preflight(
     report_dir = namespace_root / "report"
     provenance = collect_provenance(
         ctboost_root=ctboost_root,
-        tabarena_root=args.tabarena_root.resolve(),
+        tabarena_root=args.tabarena_root,
         expected_ctboost_commit=expected_commit,
         expected_native_sha256=args.expected_native_sha256.lower(),
     )
+    from .schedule import build_and_validate_schedule, fixed_args
+
     fixed = fixed_args(stage="run", results_dir=raw_dir, output_dir=report_dir)
     runner, _experiments, _chunks, schedule = build_and_validate_schedule(fixed)
+    validate_loaded_tabarena_modules(args.tabarena_root)
     sealed = {**provenance, "schedule": schedule, "namespace": namespace}
     return sealed, schedule, raw_dir, report_dir, runner
 
@@ -183,7 +175,6 @@ def _summarize(args: argparse.Namespace) -> int:
 
 def main() -> int:
     args = _parse_args()
-    _activate_pinned_tabarena(args.tabarena_root)
     if args.command == "run":
         return _run(args)
     if args.command == "summarize":
