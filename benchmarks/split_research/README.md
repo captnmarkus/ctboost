@@ -37,6 +37,37 @@ python -m benchmarks.split_research.external_panel preflight
 The result-producing `run` command is documented in the frozen panel ledger and
 is intentionally not part of the synthetic reference experiment above.
 
+The original [multiclass bounded-screen protocol](MULTICLASS_PROTOCOL.md)
+separately froze a reference-only comparison of the current highest-variance
+class coordinate against a full K-1 quadratic score test. Its completed v1
+ledger is retained byte-for-byte at
+`results/multiclass_reference_seed_20260820.json` (SHA-256
+`fcdc3e3761fb08ddbdabd88d329c1bceac436e9c6d255fb302136a5c51c7f2ed`).
+It is negative evidence: the candidate failed the aligned grouped-power and
+aligned cut-recovery guards.
+
+The post-run audit found an extra, unfrozen threshold-equality gate and an
+aggregate-only implementation of a paired rejection-invariance requirement.
+The corrected [v2 protocol and erratum](MULTICLASS_PROTOCOL_V2.md) freezes both
+repairs, a scale-aware deterministic numeric-gain tie rule, the unchanged
+aligned guards, and a distinct output before rerunning the same screen:
+
+```bash
+python -m benchmarks.split_research.multiclass_simulation \
+  --repetitions 400 \
+  --oracle-repetitions 80 \
+  --permutations 499 \
+  --class-permutation-repetitions 200 \
+  --cut-repetitions 200 \
+  --n-observations 480 \
+  --seed 20260820 \
+  --output benchmarks/split_research/results/multiclass_reference_v2_seed_20260820.json
+```
+
+That runner also evaluates a class-permutation-invariant diagonal-Newton
+numeric cut gain, but only after the feature is fixed. It does not use gain to
+select among features and proposes no multiclass categorical ordering.
+
 Reference implementations include:
 
 - the current nominal `k - 1` quadratic test, with explicit
@@ -48,8 +79,13 @@ Reference implementations include:
 - global Bonferroni stopping;
 - selection-only compression of raw ordered bins into 8 or 16 contiguous,
   approximately equal-weight test groups;
-- a within-feature Bonferroni hybrid of the ordered and grouped tests; and
-- binary Newton, matched smoothed-WoE, and cross-fitted category scores.
+- a within-feature Bonferroni hybrid of the ordered and grouped tests;
+- binary Newton, matched smoothed-WoE, and cross-fitted category scores;
+- the current multiclass highest-variance-coordinate response rule;
+- a full-score Moore-Penrose quadratic statistic with rank-based chi-square
+  degrees of freedom; and
+- a post-selection numeric gain summed over class-specific diagonal-Newton
+  improvements.
 
 Integer weights mean literal frequency counts. The permutation reference
 rejects non-integer case weights because arbitrary real weights do not define
