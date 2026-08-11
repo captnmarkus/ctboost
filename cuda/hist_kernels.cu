@@ -1,6 +1,6 @@
 #include "hist_kernels.cuh"
 
-#include <math_constants.h>
+#include <cuda/std/limits>
 
 namespace {
 
@@ -131,7 +131,7 @@ __device__ double SymmetricNoiseDevice(std::uint64_t base_seed,
 struct FeatureRank {
   int feature_id{-1};
   double p_value{1.0};
-  double chi_square{-CUDART_INF};
+  double chi_square{-cuda::std::numeric_limits<double>::infinity()};
   std::uint32_t degrees_of_freedom{0};
 };
 
@@ -139,7 +139,7 @@ struct AdjustedFeatureRank {
   int feature_id{-1};
   double adjusted_gain{0.0};
   double p_value{1.0};
-  double chi_square{-CUDART_INF};
+  double chi_square{-cuda::std::numeric_limits<double>::infinity()};
   std::uint32_t degrees_of_freedom{0};
 };
 
@@ -603,7 +603,7 @@ __global__ void SelectBestFeatureKernel(
   ctboost::GpuBestFeatureResult best_result{};
   best_result.feature_id = shared_ranks[0].feature_id;
   best_result.search_result.p_value = 1.0;
-  best_result.search_result.chi_square = -CUDART_INF;
+  best_result.search_result.chi_square = -cuda::std::numeric_limits<double>::infinity();
   if (shared_ranks[0].feature_id >= 0) {
     best_result.search_result =
         feature_results[static_cast<std::size_t>(shared_ranks[0].feature_id)];
@@ -686,7 +686,7 @@ __global__ void SelectBestAdjustedFeatureKernel(
   best_result.feature_id = shared_ranks[0].feature_id;
   best_result.adjusted_gain = shared_ranks[0].adjusted_gain;
   best_result.search_result.p_value = 1.0;
-  best_result.search_result.chi_square = -CUDART_INF;
+  best_result.search_result.chi_square = -cuda::std::numeric_limits<double>::infinity();
   if (shared_ranks[0].feature_id >= 0) {
     best_result.search_result =
         feature_results[static_cast<std::size_t>(shared_ranks[0].feature_id)];
