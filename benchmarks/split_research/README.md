@@ -25,6 +25,9 @@ interpretation and literature links.
 
 The [external ablation panel](EXTERNAL_PANEL.md) freezes task IDs, folds,
 profiles, metrics, and promotion thresholds before native results are run.
+If grouped-8 passes that panel, the
+[grouped-statistic TabArena scout](TABARENA_GROUPED_SCOUT.md) fixes the later
+three-task paired integration check before either treatment is evaluated.
 Its runner is split into protocol, OpenML/provenance, isolated-worker, and
 aggregation modules. Inspect its exact machine-readable schedule without
 network access or a fit:

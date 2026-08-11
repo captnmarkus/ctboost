@@ -31,6 +31,16 @@ enum class GrowPolicy : std::uint8_t {
   LeafWise = 1,
 };
 
+enum class FeatureTest : std::uint8_t {
+  Quadratic = 0,
+  Grouped = 1,
+};
+
+enum class FeatureTestAdjustment : std::uint8_t {
+  None = 0,
+  Bonferroni = 1,
+};
+
 struct Node {
   bool is_leaf{true};
   bool is_categorical_split{false};
@@ -78,6 +88,9 @@ struct TreeBuildOptions {
   const std::vector<int>* monotone_constraints{nullptr};
   const InteractionConstraintSet* interaction_constraints{nullptr};
   DistributedCoordinator* distributed{nullptr};
+  FeatureTest feature_test{FeatureTest::Quadratic};
+  std::size_t feature_test_bins{8};
+  FeatureTestAdjustment feature_test_adjustment{FeatureTestAdjustment::None};
 };
 
 class Tree {

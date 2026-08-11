@@ -72,6 +72,10 @@ BootstrapType ParseBootstrapType(const std::string& bootstrap_type);
 std::string CanonicalBoostingType(std::string boosting_type);
 BoostingType ParseBoostingType(const std::string& boosting_type); std::string CanonicalGrowPolicy(std::string grow_policy);
 GrowPolicy ParseGrowPolicy(const std::string& grow_policy);
+std::string CanonicalFeatureTest(std::string feature_test);
+FeatureTest ParseFeatureTest(const std::string& feature_test);
+std::string CanonicalFeatureTestAdjustment(std::string adjustment);
+FeatureTestAdjustment ParseFeatureTestAdjustment(const std::string& adjustment);
 const QuantizationSchema& RequireQuantizationSchema(const QuantizationSchemaPtr& quantization_schema);
 
 std::vector<std::uint8_t> SerializeDistributedMetricControl(const DistributedMetricControl& control);

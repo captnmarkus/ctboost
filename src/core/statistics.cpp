@@ -2,12 +2,71 @@
 
 #include "statistics_internal.hpp"
 
+#include <algorithm>
 #include <limits>
 #include <numeric>
 #include <stdexcept>
 #include <vector>
 
 namespace ctboost {
+
+BinStatistics GroupOrderedBinStatistics(const BinStatistics& stats,
+                                         std::size_t requested_groups,
+                                         std::size_t missing_bin) {
+  const std::size_t num_bins = stats.weight_sums.size();
+  if (stats.gradient_sums.size() != num_bins || stats.hessian_sums.size() != num_bins) {
+    throw std::invalid_argument("bin statistics vectors must have the same size");
+  }
+  if (requested_groups < 2U || requested_groups > 64U) {
+    throw std::invalid_argument("requested grouped statistic bins must be in [2, 64]");
+  }
+  const bool has_missing = missing_bin != kNoMissingStatisticBin;
+  if (has_missing && missing_bin >= num_bins) {
+    throw std::invalid_argument("missing statistic bin is out of range");
+  }
+
+  double total_non_missing_weight = 0.0;
+  for (std::size_t bin = 0; bin < num_bins; ++bin) {
+    if ((!has_missing || bin != missing_bin) && stats.weight_sums[bin] > 0.0) {
+      total_non_missing_weight += stats.weight_sums[bin];
+    }
+  }
+
+  BinStatistics grouped;
+  grouped.gradient_sums.reserve(requested_groups + (has_missing ? 1U : 0U));
+  grouped.hessian_sums.reserve(requested_groups + (has_missing ? 1U : 0U));
+  grouped.weight_sums.reserve(requested_groups + (has_missing ? 1U : 0U));
+
+  double cumulative_before = 0.0;
+  std::size_t previous_raw_group = kNoMissingStatisticBin;
+  for (std::size_t bin = 0; bin < num_bins; ++bin) {
+    if ((has_missing && bin == missing_bin) || stats.weight_sums[bin] <= 0.0) {
+      continue;
+    }
+    const double bin_weight = stats.weight_sums[bin];
+    const double midpoint = cumulative_before + 0.5 * bin_weight;
+    std::size_t raw_group = static_cast<std::size_t>(
+        static_cast<double>(requested_groups) * midpoint / total_non_missing_weight);
+    raw_group = std::min(raw_group, requested_groups - 1U);
+    if (raw_group != previous_raw_group) {
+      grouped.gradient_sums.push_back(0.0);
+      grouped.hessian_sums.push_back(0.0);
+      grouped.weight_sums.push_back(0.0);
+      previous_raw_group = raw_group;
+    }
+    grouped.gradient_sums.back() += stats.gradient_sums[bin];
+    grouped.hessian_sums.back() += stats.hessian_sums[bin];
+    grouped.weight_sums.back() += bin_weight;
+    cumulative_before += bin_weight;
+  }
+
+  if (has_missing && stats.weight_sums[missing_bin] > 0.0) {
+    grouped.gradient_sums.push_back(stats.gradient_sums[missing_bin]);
+    grouped.hessian_sums.push_back(stats.hessian_sums[missing_bin]);
+    grouped.weight_sums.push_back(stats.weight_sums[missing_bin]);
+  }
+  return grouped;
+}
 
 LinearStatistic::LinearStatistic(double epsilon) : epsilon_(epsilon) {
   if (epsilon_ <= 0.0) {

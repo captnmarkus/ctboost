@@ -90,6 +90,9 @@ class _BaseInitMixin:
             gamma: float = 0.0,
             max_leaf_weight: float = 0.0,
             leaf_estimation_iterations: int = 1,
+            feature_test: str = "quadratic",
+            feature_test_bins: int = 8,
+            feature_test_adjustment: str = "none",
             max_bins: int = 256,
             max_bin_by_feature: Optional[Any] = None,
             border_selection_method: str = "Quantile",
@@ -183,6 +186,9 @@ class _BaseInitMixin:
             self.gamma = gamma
             self.max_leaf_weight = max_leaf_weight
             self.leaf_estimation_iterations = leaf_estimation_iterations
+            self.feature_test = feature_test
+            self.feature_test_bins = feature_test_bins
+            self.feature_test_adjustment = feature_test_adjustment
             self.max_bins = max_bins
             self.max_bin_by_feature = max_bin_by_feature
             self.border_selection_method = border_selection_method
@@ -265,6 +271,9 @@ class _BaseInitMixin:
                 "boost_from_average": True,
                 "base_score": None,
                 "leaf_estimation_iterations": 1,
+                "feature_test": "quadratic",
+                "feature_test_bins": 8,
+                "feature_test_adjustment": "none",
             }
             for name, default in preprocessing_defaults.items():
                 if not hasattr(self, name):

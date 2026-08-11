@@ -77,6 +77,25 @@ per-class diagonal Newton steps can overshoot because softmax classes are
 coupled. This fails closed until a coupled, safeguarded multiclass solver is
 available.
 
+## Optional grouped feature test
+
+High-resolution numeric histograms can opt into an approximately
+equal-node-weight grouped independence test while retaining the original bins
+for the final cut search:
+
+```python
+model = CTBoostClassifier(
+    feature_test="grouped",
+    feature_test_bins=8,
+    feature_test_adjustment="bonferroni",  # optional; default is "none"
+)
+```
+
+The legacy `feature_test="quadratic"` path remains the default. Categorical
+features always retain that nominal quadratic test. See
+[Conditional split statistics](guides/split-statistics.md) for semantics,
+persistence, and current GPU limits.
+
 ## pandas categoricals
 
 Keep categorical values as strings or pandas `category` columns and identify them

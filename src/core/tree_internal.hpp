@@ -72,6 +72,9 @@ struct CandidateSelectionResult {
   FeatureChoice feature_choice;
   SplitChoice split_choice;
   double adjusted_gain{-std::numeric_limits<double>::infinity()};
+  double stopping_p_value{1.0};
+  std::size_t tested_features{0};
+  bool feature_test_passed{false};
 };
 
 double ComputeLeafWeight(double gradient_sum, double hessian_sum, double lambda_l2);
