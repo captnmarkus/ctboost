@@ -30,19 +30,19 @@ _ADAPTER = _SOURCE_ROOT / "benchmarks" / "tabarena" / "ctboost_model.py"
 # anchor used before any g8s1_scout module is imported.
 _EXPECTED_RUNTIME_HASHES = {
     "__init__.py": "52c4a1b7167d24027e1b301423f84d7d5656290c79b447e020cfce9b5c6b34a1",
-    "__main__.py": "31415cb95a12496d8b18b104c28a7387bfd222a760d276f22c06f743f51fc47f",
-    "constants.py": "c6057697c9f34c259829a846567ebb4527d1bea0ec0be6ac65ad32e47c19b23e",
-    "identity.py": "61689b896e4a6d4fae5a435dd0ed997887a466bc342180e8b431c4e2eb703532",
-    "loader.py": "c30ef4b07fd62fc90cf533cd86e3f59d4aa2b6a0a84c6a14338e796bab4eff25",
+    "__main__.py": "01f5b72fa7c1e25c30001eaf3725aa2bb4f4d6a522da656ca4464f6b52d4e780",
+    "constants.py": "b9fa89ada11842870e939cdd0e5b2a86cbf70c81d6500065f3ad05f9c8b81757",
+    "identity.py": "082fb28a353c8b0b59444ec4c889b80ba2e045c953a5e5eceac9a6d782b02d6f",
+    "loader.py": "c00e18a318ef3f3ff6765fe003dedcd6013c464c76d65581c62a279689567efd",
     "models.py": "3a1f0833cda78e526cd9526e50034c44d14f7a2562db33d81d285610d6f2111d",
     "schedule.py": "f3128dff07e825c81d4abbb50e52cbe1b03f726e5c06600b50244aab61bc3a97",
-    "summary.py": "0f6e8c1031b78f9f6901ffd1bc496647f59be0fa5f75a53795c5c5a51b8c369b",
+    "summary.py": "84bcfb3d33e06b4409a702d93b4f6628bfe33c37c8ffc44a02f1fee394b9a985",
 }
 _EXPECTED_ADAPTER_SHA256 = (
     "c5e1edccd155f70cad52e9fd514e01233f074c4db4e982363363c317c4db90d8"
 )
 _EXPECTED_RUNBOOK_SHA256 = (
-    "83c0da84ce5f774bd0f396670ecfd1606f8f3f0c7b1595292aa13cae547505be"
+    "e393765efa18cf031a0bdc60ebf6475cd3e79a93b363757cb3679dae89d26e45"
 )
 
 

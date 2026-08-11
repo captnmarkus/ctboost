@@ -461,7 +461,143 @@ def _validate_ctboost_source(root: Path, expected_commit: str) -> dict[str, Any]
     return {"commit": commit, "clean": True, "merged_into_master": True}
 
 
+def _is_link_or_junction(path: Path) -> bool:
+    if path.is_symlink():
+        return True
+    is_junction = getattr(path, "is_junction", None)
+    return bool(callable(is_junction) and is_junction())
+
+
+def _validate_tabarena_import_root(root: Path, package_source: Path) -> Path:
+    package_root = package_source / "tabarena"
+    initializer = package_root / "__init__.py"
+    if (
+        _is_link_or_junction(root)
+        or _is_link_or_junction(root / "packages")
+        or _is_link_or_junction(root / "packages" / "tabarena")
+        or _is_link_or_junction(package_source)
+        or not package_source.is_dir()
+        or _is_link_or_junction(package_root)
+        or not package_root.is_dir()
+        or _is_link_or_junction(initializer)
+        or not initializer.is_file()
+    ):
+        raise RuntimeError("pinned TabArena source package is missing or linked")
+    if {path.name for path in package_source.iterdir()} != {"tabarena"}:
+        raise RuntimeError("pinned TabArena source import root has an unexpected entry")
+    forbidden: set[str] = set()
+    actual_entries: set[str] = set()
+    pending = [package_source]
+    while pending:
+        directory = pending.pop()
+        for path in directory.iterdir():
+            relative = path.relative_to(package_source).as_posix()
+            actual_entries.add(relative)
+            linked = _is_link_or_junction(path)
+            if (
+                linked
+                or (path.is_dir() and path.name == "__pycache__")
+                or (path.is_file() and path.suffix.lower() in {".pyc", ".pyd", ".so"})
+            ):
+                forbidden.add(relative)
+            elif path.is_dir():
+                pending.append(path)
+    if forbidden:
+        raise RuntimeError(
+            "pinned TabArena source import root contains bytecode, a native shadow, or a symlink"
+        )
+    tracked_prefix = "packages/tabarena/src/"
+    tracked = _git(
+        root,
+        "ls-tree",
+        "-r",
+        "--name-only",
+        PROTOCOL_TABARENA_COMMIT,
+        "--",
+        "packages/tabarena/src/tabarena",
+    ).splitlines()
+    tracked_files = {
+        value.removeprefix(tracked_prefix)
+        for value in tracked
+        if value.startswith(f"{tracked_prefix}tabarena/")
+    }
+    tracked_directories: set[str] = {"tabarena"}
+    for relative in tracked_files:
+        parent = Path(relative).parent
+        while parent != Path("."):
+            tracked_directories.add(parent.as_posix())
+            parent = parent.parent
+    if not tracked_files or actual_entries != tracked_files | tracked_directories:
+        raise RuntimeError("pinned TabArena source tree differs from its exact commit")
+    return package_root.resolve()
+
+
+def _validate_loaded_tabarena_modules(package_root: Path) -> None:
+    package_root = package_root.resolve()
+    observed = {
+        name: module
+        for name, module in sys.modules.items()
+        if name == "tabarena" or name.startswith("tabarena.")
+    }
+    if "tabarena" not in observed:
+        raise RuntimeError("pinned TabArena package was not imported")
+    for name, module in observed.items():
+        if not isinstance(module, ModuleType):
+            raise TypeError("loaded TabArena child is not a source module")
+        spec = getattr(module, "__spec__", None)
+        loader = getattr(module, "__loader__", None)
+        if (
+            getattr(module, "__name__", None) != name
+            or spec is None
+            or spec.name != name
+            or type(loader) is not importlib.machinery.SourceFileLoader
+            or spec.loader is not loader
+            or loader.name != name
+        ):
+            raise RuntimeError("loaded TabArena module lacks its exact source loader")
+        relative_parts = name.split(".")[1:]
+        candidate = package_root.joinpath(*relative_parts)
+        is_package = spec.submodule_search_locations is not None
+        if is_package:
+            expected_package_root = candidate.resolve()
+            expected_file = expected_package_root / "__init__.py"
+            module_paths = [
+                Path(value).resolve() for value in getattr(module, "__path__", ())
+            ]
+            spec_paths = [
+                Path(value).resolve() for value in spec.submodule_search_locations or ()
+            ]
+            if (
+                module_paths != [expected_package_root]
+                or spec_paths != [expected_package_root]
+                or getattr(module, "__package__", None) != name
+            ):
+                raise RuntimeError("loaded TabArena package path is not exact")
+        else:
+            expected_file = candidate.with_suffix(".py").resolve()
+            expected_package = name.rpartition(".")[0]
+            if (
+                hasattr(module, "__path__")
+                or getattr(module, "__package__", None) != expected_package
+            ):
+                raise RuntimeError("loaded TabArena child package identity is invalid")
+        module_file = getattr(module, "__file__", None)
+        if (
+            _is_link_or_junction(expected_file)
+            or not expected_file.is_file()
+            or not isinstance(module_file, str)
+            or Path(module_file).resolve() != expected_file
+            or not isinstance(spec.origin, str)
+            or Path(spec.origin).resolve() != expected_file
+            or Path(loader.path).resolve() != expected_file
+        ):
+            raise RuntimeError("loaded TabArena module source origin is not exact")
+
+
 def _validate_tabarena_source(root: Path) -> dict[str, Any]:
+    if _is_link_or_junction(root):
+        raise RuntimeError("TabArena source root must not be linked")
+    root = root.absolute()
     if not (root / ".git").exists():
         raise RuntimeError("TabArena source root is not a Git worktree")
     commit = _full_commit(root)
@@ -478,43 +614,72 @@ def _validate_tabarena_source(root: Path) -> dict[str, Any]:
     if rejected:
         raise RuntimeError("TabArena source worktree has non-cache changes")
 
-    import tabarena
-
-    package_root = (root / "packages" / "tabarena" / "src" / "tabarena").resolve()
-    imported = Path(tabarena.__file__).resolve()
-    package_paths = [Path(value).resolve() for value in tabarena.__path__]
-    if imported != package_root / "__init__.py" or package_paths != [package_root]:
-        raise RuntimeError(
-            "imported TabArena package does not come from the pinned checkout"
-        )
-    for name, module in sys.modules.items():
-        if name != "tabarena" and not name.startswith("tabarena."):
-            continue
-        if not isinstance(module, ModuleType):
-            raise TypeError("loaded TabArena child is not a module")
-        module_file = getattr(module, "__file__", None)
-        if module_file is not None:
-            resolved_file = Path(module_file).resolve()
-            spec = getattr(module, "__spec__", None)
-            if (
-                not resolved_file.is_relative_to(package_root)
-                or spec is None
-                or not isinstance(spec.origin, str)
-                or Path(spec.origin).resolve() != resolved_file
-            ):
-                raise RuntimeError("loaded TabArena child has an unpinned origin")
-        module_paths = [
-            Path(value).resolve() for value in getattr(module, "__path__", ())
+    package_source = root / "packages" / "tabarena" / "src"
+    package_root = _validate_tabarena_import_root(root, package_source)
+    package_source = package_source.resolve()
+    preloaded = {
+        name
+        for name in sys.modules
+        if name == "tabarena" or name.startswith("tabarena.")
+    }
+    if preloaded:
+        raise RuntimeError("TabArena was imported before pinned-source validation")
+    for entry in sys.path:
+        if entry and Path(entry).resolve() == package_source:
+            raise RuntimeError(
+                "pinned TabArena source was importable before physical validation"
+            )
+    package_spec = importlib.machinery.PathFinder.find_spec(
+        "tabarena", [str(package_source)]
+    )
+    expected_initializer = package_root / "__init__.py"
+    if (
+        package_spec is None
+        or package_spec.name != "tabarena"
+        or type(package_spec.loader) is not importlib.machinery.SourceFileLoader
+        or package_spec.loader.name != "tabarena"
+        or Path(package_spec.loader.path).resolve() != expected_initializer
+        or package_spec.origin is None
+        or Path(package_spec.origin).resolve() != expected_initializer
+        or [
+            Path(value).resolve()
+            for value in package_spec.submodule_search_locations or ()
         ]
-        if module_paths and any(
-            not value.is_relative_to(package_root) for value in module_paths
-        ):
-            raise RuntimeError("loaded TabArena child has an unpinned package path")
+        != [package_root]
+    ):
+        raise RuntimeError("pinned TabArena import spec is not exact source")
+    try:
+        sys.path.insert(0, str(package_source))
+        importlib.invalidate_caches()
+        package = importlib.util.module_from_spec(package_spec)
+        sys.modules["tabarena"] = package
+        package_spec.loader.exec_module(package)
+        _validate_loaded_tabarena_modules(package_root)
+    except BaseException:
+        sys.path[:] = [
+            entry
+            for entry in sys.path
+            if not entry or Path(entry).resolve() != package_source
+        ]
+        for name in tuple(sys.modules):
+            if name == "tabarena" or name.startswith("tabarena."):
+                sys.modules.pop(name, None)
+        raise
     return {
         "commit": commit,
         "clean_source": True,
+        "source_import_root_clean": True,
         "allowed_public_dataset_cache_entries": len(allowed_cache),
     }
+
+
+def validate_loaded_tabarena_modules(tabarena_root: Path) -> None:
+    """Revalidate every TabArena module loaded after provenance collection."""
+
+    package_root = (
+        tabarena_root.absolute() / "packages" / "tabarena" / "src" / "tabarena"
+    )
+    _validate_loaded_tabarena_modules(package_root)
 
 
 def _python_package_identity(package_root: Path) -> dict[str, Any]:
@@ -855,7 +1020,7 @@ def collect_provenance(
         )
     ctboost_source = _validate_ctboost_source(ctboost_root, expected_ctboost_commit)
     harness_source = _validate_harness_source(ctboost_root)
-    tabarena_source = _validate_tabarena_source(tabarena_root.resolve())
+    tabarena_source = _validate_tabarena_source(tabarena_root)
     installed = _installed_ctboost_identity(
         expected_native_sha256, ctboost_root, expected_ctboost_commit
     )

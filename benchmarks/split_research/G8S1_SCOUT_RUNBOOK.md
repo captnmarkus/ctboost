@@ -25,6 +25,20 @@ older installation. Every importable file must have an exact hashed wheel
 Python source map to the requested clean, merged CTBoost commit before it
 imports CTBoost.
 
+## Pristine pinned TabArena checkout
+
+The pinned `packages/tabarena/src` import root must contain exactly the tracked
+`tabarena` source tree: no `__pycache__`, `.pyc`, `.pyd`, `.so`, symlink,
+untracked namespace, or ignored/generated sibling. Python's `-B` option
+prevents new bytecode writes but can still read an existing valid cache,
+including a Git-ignored cache that is invisible to ordinary status output.
+Start from a fresh checkout or remove/quarantine only verified generated
+entries beneath that exact import root before preflight. This includes editable
+install residue such as `tabarena.egg-info`; the pinned environment's installed
+`.dist-info` remains outside the source root. The harness compares every source
+entry with the pinned commit before adding the root to `sys.path` or importing
+any TabArena module.
+
 ## Canonical invocation
 
 Set `PYTHONDONTWRITEBYTECODE=1` and invoke every `preflight`, `run`, and
@@ -50,9 +64,9 @@ run the success/failure staging cleanup before they propagate. An operating
 system hard termination (`SIGKILL`, `TerminateProcess`), machine reset, or
 power loss cannot run Python cleanup. It can therefore leave an abandoned
 `.g8s1-success-*` or `.g8s1-failure-*` staging directory under the exact scout
-report directory. Namespace validation treats any files in such a directory as
-unexpected and refuses to continue. An empty abandoned staging directory is
-also not evidence of a completed publication.
+report directory. Namespace validation treats every such directory as
+unexpected and refuses to continue, even when the abandoned directory is
+empty. An empty `sanitized` directory is likewise invalid.
 
 To recover, first stop every process using the namespace. Resolve and verify
 the exact candidate namespace and report directory, then move the entire

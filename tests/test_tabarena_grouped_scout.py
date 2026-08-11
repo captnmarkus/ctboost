@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import importlib.abc
 import importlib.util
 import json
 import marshal
@@ -259,6 +260,107 @@ def test_provenance_rejects_noncanonical_bytecode_writing_invocation(
             expected_ctboost_commit="a" * 40,
             expected_native_sha256="b" * 64,
         )
+
+
+def test_preflight_collects_provenance_before_schedule_models_and_adapter(
+    tmp_path: Path,
+) -> None:
+    script = r"""
+import sys
+from pathlib import Path
+from types import SimpleNamespace
+
+sys.path.insert(0, sys.argv[1])
+import g8s1_scout.__main__ as cli
+import g8s1_scout.identity as identity
+
+class ProvenanceReached(RuntimeError):
+    pass
+
+def collect_first(**_kwargs):
+    forbidden = {
+        name
+        for name in sys.modules
+        if name in {"g8s1_scout.schedule", "g8s1_scout.models"}
+        or name == "_g8s1_scout_sealed_benchmark"
+        or name.startswith("_g8s1_scout_sealed_benchmark.")
+    }
+    assert not forbidden, sorted(forbidden)
+    raise ProvenanceReached
+
+identity.collect_provenance = collect_first
+args = SimpleNamespace(
+    tabarena_root=Path(sys.argv[2]),
+    expected_ctboost_commit="a" * 40,
+    expected_native_sha256="b" * 64,
+    results_root=Path(sys.argv[3]),
+)
+try:
+    cli._preflight(args)
+except ProvenanceReached:
+    pass
+else:
+    raise AssertionError("preflight did not reach provenance first")
+"""
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            "-B",
+            "-c",
+            script,
+            str(SCOUT_IMPORT_ROOT),
+            str(tmp_path / "tabarena"),
+            str(tmp_path / "results"),
+        ],
+        cwd=tmp_path,
+        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+def test_preflight_revalidates_tabarena_modules_after_schedule_build(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import g8s1_scout.__main__ as scout_cli
+
+    events: list[str] = []
+
+    def collect(**_kwargs: object) -> dict[str, object]:
+        events.append("provenance")
+        return {"identity_sha256": "sealed"}
+
+    def build(
+        _fixed: object,
+    ) -> tuple[object, list[object], list[object], dict[str, object]]:
+        events.append("schedule")
+        return object(), [], [], {"schedule_sha256": "sealed"}
+
+    def reject_external_child(_root: Path) -> None:
+        assert events == ["provenance", "schedule"]
+        raise RuntimeError("loaded TabArena module source origin is not exact")
+
+    monkeypatch.setattr(identity, "collect_provenance", collect)
+    monkeypatch.setattr(schedule, "fixed_args", lambda **_kwargs: object())
+    monkeypatch.setattr(schedule, "build_and_validate_schedule", build)
+    monkeypatch.setattr(
+        identity,
+        "validate_loaded_tabarena_modules",
+        reject_external_child,
+    )
+    args = SimpleNamespace(
+        tabarena_root=tmp_path / "tabarena",
+        expected_ctboost_commit="a" * 40,
+        expected_native_sha256="b" * 64,
+        results_root=tmp_path / "results",
+    )
+    with pytest.raises(RuntimeError, match="source origin is not exact"):
+        scout_cli._preflight(args)
+    assert events == ["provenance", "schedule"]
 
 
 def test_paired_configs_are_deep_copied_and_differ_only_by_treatment() -> None:
@@ -601,67 +703,412 @@ def test_harness_validation_rejects_preloaded_nonstdlib_statistics(
         identity._validate_stdlib_statistics()
 
 
-def test_loader_requires_exact_package_path_and_file(tmp_path: Path) -> None:
-    package_root = tmp_path / "benchmarks"
-    package_root.mkdir()
-    expected_file = package_root / "__init__.py"
-    expected_file.write_text("", encoding="utf-8")
-    name = "g8s1_adversarial_benchmarks"
-    sys.modules[name] = SimpleNamespace(
-        __path__=[str(package_root), str(tmp_path / "shadow")],
-        __file__=str(expected_file),
+def test_private_loader_coexists_with_public_benchmark_module(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    public_name = "benchmarks.tabarena.ctboost_model"
+    unrelated = ModuleType(public_name)
+    monkeypatch.setitem(sys.modules, public_name, unrelated)
+    sealed = loader.load_benchmark_module("ctboost_model")
+    private_name = loader._private_module_name("ctboost_model")
+    assert sys.modules[public_name] is unrelated
+    assert sys.modules[private_name] is sealed
+    assert sealed.__name__ == private_name
+    assert isinstance(sealed.__loader__, identity.importlib.machinery.SourceFileLoader)
+    assert (
+        Path(sealed.__file__).resolve()
+        == (REPO_ROOT / "benchmarks/tabarena/ctboost_model.py").resolve()
     )
-    try:
-        with pytest.raises(RuntimeError, match="preloaded benchmark package"):
-            loader._ensure_package(name, package_root)
-    finally:
-        sys.modules.pop(name, None)
+    loader.validate_loaded_benchmark_modules(REPO_ROOT / "benchmarks/tabarena")
+
+
+def test_private_run_loader_preserves_complete_public_benchmark_chain(
+    tmp_path: Path,
+) -> None:
+    script = r"""
+import sys
+from pathlib import Path
+from types import ModuleType
+
+public_benchmarks = ModuleType("benchmarks")
+public_benchmarks.__path__ = ["public-benchmarks"]
+public_tabarena = ModuleType("benchmarks.tabarena")
+public_tabarena.__path__ = ["public-tabarena"]
+public_adapter = ModuleType("benchmarks.tabarena.ctboost_model")
+public_adapter.MARKER = object()
+public_benchmarks.tabarena = public_tabarena
+public_tabarena.ctboost_model = public_adapter
+sys.modules["benchmarks"] = public_benchmarks
+sys.modules["benchmarks.tabarena"] = public_tabarena
+sys.modules["benchmarks.tabarena.ctboost_model"] = public_adapter
+
+sys.path.insert(0, sys.argv[1])
+from g8s1_scout import loader
+
+sealed_run = loader.load_benchmark_module("run")
+sealed_adapter = loader.load_benchmark_module("ctboost_model")
+assert sys.modules["benchmarks"] is public_benchmarks
+assert sys.modules["benchmarks.tabarena"] is public_tabarena
+assert sys.modules["benchmarks.tabarena.ctboost_model"] is public_adapter
+assert public_benchmarks.tabarena is public_tabarena
+assert public_tabarena.ctboost_model is public_adapter
+assert sealed_run.gen_ctboost_cpu is sealed_adapter.gen_ctboost_cpu
+assert sealed_run.TABARENA_SEARCH_PORTFOLIO_SIZE == 200
+loader.validate_loaded_benchmark_modules(Path(sys.argv[2]))
+"""
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-I",
+            "-B",
+            "-c",
+            script,
+            str(SCOUT_IMPORT_ROOT),
+            str(REPO_ROOT / "benchmarks/tabarena"),
+        ],
+        cwd=tmp_path,
+        env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert completed.returncode == 0, completed.stderr
+
+
+def test_private_loader_rejects_replaced_owned_package(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setitem(
+        sys.modules,
+        loader._PRIVATE_PACKAGE,
+        ModuleType(loader._PRIVATE_PACKAGE),
+    )
+    with pytest.raises(RuntimeError, match="private package identity was replaced"):
+        loader.validate_loaded_benchmark_modules(REPO_ROOT / "benchmarks/tabarena")
 
 
 def test_benchmark_child_validation_rejects_spoofed_replacement(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    name = "benchmarks.tabarena.ctboost_model"
+    name = loader._private_module_name("ctboost_model")
     expected_module = loader._LOADED_MODULES[name]
     fake = ModuleType(name)
     fake.__file__ = expected_module.__file__
     fake.__loader__ = expected_module.__loader__
     fake.__spec__ = expected_module.__spec__
     monkeypatch.setitem(sys.modules, name, fake)
-    with pytest.raises(RuntimeError, match="invalid origin"):
+    with pytest.raises(RuntimeError, match="invalid identity"):
+        loader.validate_loaded_benchmark_modules(REPO_ROOT / "benchmarks/tabarena")
+
+
+@pytest.mark.parametrize("target", ["package", "module"])
+def test_private_loader_rejects_replaced_module_name(
+    monkeypatch: pytest.MonkeyPatch,
+    target: str,
+) -> None:
+    private_name = loader._private_module_name("ctboost_model")
+    module = (
+        loader._OWNED_PACKAGE
+        if target == "package"
+        else loader._LOADED_MODULES[private_name]
+    )
+    assert module is not None
+    monkeypatch.setattr(module, "__name__", "spoofed")
+    with pytest.raises(RuntimeError, match="identity was replaced|invalid identity"):
         loader.validate_loaded_benchmark_modules(REPO_ROOT / "benchmarks/tabarena")
 
 
 def test_benchmark_child_validation_rejects_unexpected_preloaded_child(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    stale_name = f"{loader._PRIVATE_PACKAGE}.stale_child"
     monkeypatch.setitem(
-        sys.modules, "benchmarks.tabarena.stale_child", ModuleType("stale_child")
+        sys.modules,
+        stale_name,
+        ModuleType(stale_name),
     )
     with pytest.raises(RuntimeError, match="unexpected or preloaded"):
         loader.validate_loaded_benchmark_modules(REPO_ROOT / "benchmarks/tabarena")
 
 
-def test_tabarena_validation_rejects_extended_namespace_path(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+def _mock_clean_tabarena_git(
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    tracked_files: tuple[str, ...] = ("__init__.py",),
 ) -> None:
-    checkout = tmp_path / "tabarena"
-    (checkout / ".git").mkdir(parents=True)
-    package_root = checkout / "packages/tabarena/src/tabarena"
-    package_root.mkdir(parents=True)
-    init_file = package_root / "__init__.py"
-    init_file.write_text("", encoding="utf-8")
-    fake = SimpleNamespace(
-        __file__=str(init_file),
-        __path__=[str(package_root), str(tmp_path / "shadow")],
-    )
-    monkeypatch.setitem(sys.modules, "tabarena", fake)
     monkeypatch.setattr(
         identity, "_full_commit", lambda _root: identity.PROTOCOL_TABARENA_COMMIT
     )
-    monkeypatch.setattr(identity, "_git", lambda *_args, **_kwargs: "")
-    with pytest.raises(RuntimeError, match="does not come from the pinned checkout"):
+
+    def fake_git(_root: Path, *arguments: str, check: bool = True) -> str:
+        assert check
+        if arguments[0] == "status":
+            return ""
+        if arguments[0] == "ls-tree":
+            return "\n".join(
+                f"packages/tabarena/src/tabarena/{relative}"
+                for relative in tracked_files
+            )
+        raise AssertionError(arguments)
+
+    monkeypatch.setattr(identity, "_git", fake_git)
+
+
+def _mock_tabarena_checkout(root: Path, *, initializer: str = "") -> Path:
+    (root / ".git").mkdir(parents=True)
+    package_root = root / "packages/tabarena/src/tabarena"
+    package_root.mkdir(parents=True)
+    (package_root / "__init__.py").write_text(initializer, encoding="utf-8")
+    return package_root
+
+
+def test_tabarena_validation_rejects_preloaded_module_before_activation(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkout = tmp_path / "tabarena"
+    _mock_tabarena_checkout(checkout)
+    _mock_clean_tabarena_git(monkeypatch)
+    monkeypatch.setitem(sys.modules, "tabarena", ModuleType("tabarena"))
+    with pytest.raises(RuntimeError, match="before pinned-source validation"):
         identity._validate_tabarena_source(checkout)
+
+
+def test_tabarena_validation_rejects_effective_cache_before_import(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkout = tmp_path / "tabarena"
+    package_root = _mock_tabarena_checkout(checkout)
+    _mock_clean_tabarena_git(monkeypatch)
+    initializer = package_root / "__init__.py"
+    sentinel = tmp_path / "tabarena-cache-executed.txt"
+    cache = Path(importlib.util.cache_from_source(str(initializer)))
+    cache.parent.mkdir(parents=True)
+    malicious = compile(
+        "from pathlib import Path\n"
+        f"Path({str(sentinel)!r}).write_text('executed', encoding='utf-8')\n",
+        str(initializer.resolve()),
+        "exec",
+    )
+    source_stat = initializer.stat()
+    header = (
+        importlib.util.MAGIC_NUMBER
+        + b"\0" * 4
+        + (int(source_stat.st_mtime) & 0xFFFFFFFF).to_bytes(4, "little")
+        + (source_stat.st_size & 0xFFFFFFFF).to_bytes(4, "little")
+    )
+    cache.write_bytes(header + marshal.dumps(malicious))
+    with pytest.raises(RuntimeError, match="bytecode, a native shadow, or a symlink"):
+        identity._validate_tabarena_source(checkout)
+    assert not sentinel.exists()
+    assert "tabarena" not in sys.modules
+    assert str(package_root.parent.resolve()) not in sys.path
+
+
+@pytest.mark.parametrize("relative", ["shadow.pyd", "nested/shadow.so"])
+def test_tabarena_validation_rejects_native_shadow_before_import(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    relative: str,
+) -> None:
+    checkout = tmp_path / "tabarena"
+    package_root = _mock_tabarena_checkout(checkout)
+    shadow = package_root / relative
+    shadow.parent.mkdir(parents=True, exist_ok=True)
+    shadow.write_bytes(b"must not load")
+    _mock_clean_tabarena_git(monkeypatch)
+    with pytest.raises(RuntimeError, match="bytecode, a native shadow, or a symlink"):
+        identity._validate_tabarena_source(checkout)
+    assert "tabarena" not in sys.modules
+
+
+def test_tabarena_validation_rejects_ignored_top_level_package_before_import(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkout = tmp_path / "tabarena"
+    package_root = _mock_tabarena_checkout(checkout)
+    sentinel = tmp_path / "ignored-package-executed.txt"
+    ignored = package_root.parent / "build/__init__.py"
+    ignored.parent.mkdir(parents=True)
+    ignored.write_text(
+        "from pathlib import Path\n"
+        f"Path({str(sentinel)!r}).write_text('executed', encoding='utf-8')\n",
+        encoding="utf-8",
+    )
+    _mock_clean_tabarena_git(monkeypatch)
+    with pytest.raises(RuntimeError, match="unexpected entry"):
+        identity._validate_tabarena_source(checkout)
+    assert not sentinel.exists()
+    assert "tabarena" not in sys.modules
+
+
+def test_tabarena_validation_rejects_untracked_empty_namespace_directory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkout = tmp_path / "tabarena"
+    package_root = _mock_tabarena_checkout(checkout)
+    (package_root / "unexpected_namespace").mkdir()
+    _mock_clean_tabarena_git(monkeypatch)
+    with pytest.raises(RuntimeError, match="differs from its exact commit"):
+        identity._validate_tabarena_source(checkout)
+    assert "tabarena" not in sys.modules
+
+
+def test_tabarena_validation_rejects_source_symlink_before_import(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkout = tmp_path / "tabarena"
+    package_root = _mock_tabarena_checkout(checkout)
+    linked = package_root / "linked.py"
+    linked.write_text("must_not_load = True\n", encoding="utf-8")
+    _mock_clean_tabarena_git(monkeypatch)
+    original = identity._is_link_or_junction
+    monkeypatch.setattr(
+        identity,
+        "_is_link_or_junction",
+        lambda path: path == linked or original(path),
+    )
+    with pytest.raises(RuntimeError, match="bytecode, a native shadow, or a symlink"):
+        identity._validate_tabarena_source(checkout)
+    assert "tabarena" not in sys.modules
+
+
+def test_tabarena_validation_rejects_linked_checkout_root_before_resolution(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkout = tmp_path / "tabarena"
+    _mock_tabarena_checkout(checkout)
+    original = identity._is_link_or_junction
+    monkeypatch.setattr(
+        identity,
+        "_is_link_or_junction",
+        lambda path: path == checkout or original(path),
+    )
+    with pytest.raises(RuntimeError, match="source root must not be linked"):
+        identity._validate_tabarena_source(checkout)
+
+
+def test_tabarena_validation_uses_prevalidated_spec_not_meta_path(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkout = tmp_path / "tabarena"
+    package_root = _mock_tabarena_checkout(checkout, initializer="VALUE = 1\n")
+    _mock_clean_tabarena_git(monkeypatch)
+    sentinel = tmp_path / "meta-path-executed.txt"
+
+    class SentinelLoader(importlib.abc.Loader):
+        def exec_module(self, module: ModuleType) -> None:
+            del module
+            sentinel.write_text("executed", encoding="utf-8")
+
+    class SentinelFinder(importlib.abc.MetaPathFinder):
+        def find_spec(
+            self,
+            fullname: str,
+            path: object = None,
+            target: ModuleType | None = None,
+        ) -> object:
+            del path, target
+            if fullname == "tabarena":
+                return importlib.util.spec_from_loader(fullname, SentinelLoader())
+            return None
+
+    saved_modules = {
+        name: module
+        for name, module in sys.modules.items()
+        if name == "tabarena" or name.startswith("tabarena.")
+    }
+    for name in saved_modules:
+        sys.modules.pop(name, None)
+    package_source = package_root.parent.resolve()
+    monkeypatch.setattr(sys, "meta_path", [SentinelFinder(), *sys.meta_path])
+    try:
+        identity._validate_tabarena_source(checkout)
+        assert not sentinel.exists()
+        assert sys.modules["tabarena"].VALUE == 1
+        identity._validate_loaded_tabarena_modules(package_root)
+    finally:
+        sys.path[:] = [
+            entry
+            for entry in sys.path
+            if not entry or Path(entry).resolve() != package_source
+        ]
+        for name in tuple(sys.modules):
+            if name == "tabarena" or name.startswith("tabarena."):
+                sys.modules.pop(name, None)
+        sys.modules.update(saved_modules)
+
+
+def test_tabarena_validation_cleans_up_when_module_creation_is_interrupted(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkout = tmp_path / "tabarena"
+    package_root = _mock_tabarena_checkout(checkout)
+    _mock_clean_tabarena_git(monkeypatch)
+    package_source = package_root.parent.resolve()
+    monkeypatch.setattr(
+        identity.importlib.util,
+        "module_from_spec",
+        lambda _spec: (_ for _ in ()).throw(KeyboardInterrupt()),
+    )
+    with pytest.raises(KeyboardInterrupt):
+        identity._validate_tabarena_source(checkout)
+    assert "tabarena" not in sys.modules
+    assert str(package_source) not in sys.path
+
+
+def test_tabarena_validation_imports_exact_source_modules_after_scan(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkout = tmp_path / "tabarena"
+    package_root = _mock_tabarena_checkout(
+        checkout,
+        initializer="from . import child\n",
+    )
+    child_file = package_root / "child.py"
+    child_file.write_text("VALUE = 1\n", encoding="utf-8")
+    _mock_clean_tabarena_git(
+        monkeypatch,
+        tracked_files=("__init__.py", "child.py"),
+    )
+    saved_modules = {
+        name: module
+        for name, module in sys.modules.items()
+        if name == "tabarena" or name.startswith("tabarena.")
+    }
+    for name in saved_modules:
+        sys.modules.pop(name, None)
+    package_source = package_root.parent.resolve()
+    try:
+        observed = identity._validate_tabarena_source(checkout)
+        assert observed["source_import_root_clean"] is True
+        assert sys.path[0] == str(package_source)
+        identity._validate_loaded_tabarena_modules(package_root)
+        for name, expected_file in {
+            "tabarena": package_root / "__init__.py",
+            "tabarena.child": child_file,
+        }.items():
+            module = sys.modules[name]
+            assert isinstance(
+                module.__loader__, identity.importlib.machinery.SourceFileLoader
+            )
+            assert module.__spec__.loader is module.__loader__
+            assert Path(module.__spec__.origin).resolve() == expected_file.resolve()
+
+        child = sys.modules["tabarena.child"]
+        child.__spec__.loader = None
+        with pytest.raises(RuntimeError, match="exact source loader"):
+            identity._validate_loaded_tabarena_modules(package_root)
+    finally:
+        sys.path[:] = [
+            entry
+            for entry in sys.path
+            if not entry or Path(entry).resolve() != package_source
+        ]
+        for name in tuple(sys.modules):
+            if name == "tabarena" or name.startswith("tabarena."):
+                sys.modules.pop(name, None)
+        sys.modules.update(saved_modules)
 
 
 def test_harness_validation_rejects_symlinked_runtime_file(
@@ -968,9 +1415,61 @@ def test_existing_sealed_namespace_counts_and_rejects_every_stale_file(
     inventory = namespace_inventory(
         raw_dir=raw_dir, report_dir=report_dir, phase="run_input"
     )
-    assert inventory["stale_or_unexpected"] == 3
+    assert inventory["stale_or_unexpected"] == 7
     with pytest.raises(RuntimeError, match="stale, unexpected, or linked"):
         validate_namespace(raw_dir=raw_dir, report_dir=report_dir, phase="run_input")
+
+
+@pytest.mark.parametrize(
+    "relative",
+    [".g8s1-success-abandoned", ".g8s1-failure-abandoned", "sanitized"],
+)
+def test_preflight_rejects_unexpected_empty_report_directory(
+    tmp_path: Path, relative: str
+) -> None:
+    raw_dir = tmp_path / "raw"
+    report_dir = tmp_path / "report"
+    (report_dir / relative).mkdir(parents=True)
+    inventory = namespace_inventory(
+        raw_dir=raw_dir,
+        report_dir=report_dir,
+        phase="preflight",
+    )
+    assert inventory["stale_or_unexpected"] == 1
+    assert inventory["complete"] is False
+    with pytest.raises(RuntimeError, match="stale, unexpected, or linked"):
+        validate_namespace(
+            raw_dir=raw_dir,
+            report_dir=report_dir,
+            phase="preflight",
+        )
+
+
+def test_preflight_rejects_report_directory_junction(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    raw_dir = tmp_path / "raw"
+    report_dir = tmp_path / "report"
+    junction = report_dir / "abandoned"
+    junction.mkdir(parents=True)
+    original = getattr(Path, "is_junction", None)
+
+    def fake_is_junction(path: Path) -> bool:
+        return path == junction or bool(original is not None and original(path))
+
+    monkeypatch.setattr(Path, "is_junction", fake_is_junction, raising=False)
+    inventory = namespace_inventory(
+        raw_dir=raw_dir,
+        report_dir=report_dir,
+        phase="preflight",
+    )
+    assert inventory["stale_or_unexpected"] == 1
+    with pytest.raises(RuntimeError, match="stale, unexpected, or linked"):
+        validate_namespace(
+            raw_dir=raw_dir,
+            report_dir=report_dir,
+            phase="preflight",
+        )
 
 
 def test_summary_coverage_uses_observed_namespace_inventory(
