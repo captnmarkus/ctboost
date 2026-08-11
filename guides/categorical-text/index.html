@@ -823,6 +823,14 @@ serialized with the estimator and reused for validation and prediction.</p>
 <p>Available categorical transforms include one-hot values, smoothed target statistics,
 ordered CTRs, feature combinations, and per-feature CTR configuration. Unknown and
 missing values have deterministic routes.</p>
+<p>Fitted pipelines record <code>categorical_key_encoding_version</code> in their state and
+inference manifest. New fits use version 2, which keeps actual missing values,
+literal strings such as <code>__ctboost_missing__</code> and <code>__ctboost_other__</code>, synthetic
+"other" buckets, backslashes, and categorical-combination delimiters distinct.
+Pipelines saved before this field existed load as version 1 and retain their
+historical key behavior for prediction and warm starts. CTBoost model documents use
+schema version 2 for new saves while the current runtime continues to read schema
+version 1 artifacts.</p>
 <h2 id="text-features">Text features<a class="headerlink" href="#text-features" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">model</span> <span class="o">=</span> <span class="n">CTBoostClassifier</span><span class="p">(</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">text_features</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">],</span>
