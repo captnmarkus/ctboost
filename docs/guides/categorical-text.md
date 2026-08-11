@@ -18,6 +18,15 @@ Available categorical transforms include one-hot values, smoothed target statist
 ordered CTRs, feature combinations, and per-feature CTR configuration. Unknown and
 missing values have deterministic routes.
 
+Fitted pipelines record `categorical_key_encoding_version` in their state and
+inference manifest. New fits use version 2, which keeps actual missing values,
+literal strings such as `__ctboost_missing__` and `__ctboost_other__`, synthetic
+"other" buckets, backslashes, and categorical-combination delimiters distinct.
+Pipelines saved before this field existed load as version 1 and retain their
+historical key behavior for prediction and warm starts. CTBoost model documents use
+schema version 2 for new saves while the current runtime continues to read schema
+version 1 artifacts.
+
 ## Text features
 
 ```python

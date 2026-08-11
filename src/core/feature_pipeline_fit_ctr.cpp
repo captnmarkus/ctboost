@@ -76,7 +76,8 @@ void NativeFeaturePipeline::FitCtrState(pybind11::array object_matrix,
     std::unordered_map<std::string, int> feature_counts;
     feature_counts.reserve(matrix.rows);
     for (std::size_t row = 0; row < matrix.rows; ++row) {
-      ++feature_counts[detail::JoinNormalizedKey(matrix, row, source.source_indices)];
+      ++feature_counts[detail::JoinNormalizedKey(
+          matrix, row, source.source_indices, categorical_key_encoding_version_)];
     }
 
     for (const std::string& ctr_type : ctr_types) {
@@ -92,6 +93,9 @@ void NativeFeaturePipeline::FitCtrState(pybind11::array object_matrix,
       } else {
         output_names.push_back(source.output_prefix + "_freq_ctr");
       }
+      for (std::string& output_name : output_names) {
+        output_name = AllocateOutputFeatureName(output_name);
+      }
 
       std::unordered_map<std::string, int> total_counts;
       std::unordered_map<std::string, std::vector<float>> total_sums;
@@ -102,7 +106,8 @@ void NativeFeaturePipeline::FitCtrState(pybind11::array object_matrix,
       std::size_t seen_rows = 0;
 
       for (std::size_t row : permutation) {
-        const std::string key = detail::JoinNormalizedKey(matrix, row, source.source_indices);
+        const std::string key = detail::JoinNormalizedKey(
+            matrix, row, source.source_indices, categorical_key_encoding_version_);
         const float current_count = static_cast<float>(running_counts[key]);
         auto& current_sums = running_sums[key];
         if (ctr_type == "Mean" && current_sums.empty()) {

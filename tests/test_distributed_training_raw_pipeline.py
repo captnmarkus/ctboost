@@ -25,9 +25,21 @@ def test_distributed_tcp_training_fits_raw_feature_pipeline_across_ranks(tmp_pat
     pd = pytest.importorskip("pandas")
 
     rng = np.random.default_rng(79)
+    city_values = np.asarray(
+        [
+            "berlin",
+            "rome",
+            None,
+            "__ctboost_missing__",
+            r"\m",
+            "__ctboost_other__",
+            r"\o",
+        ],
+        dtype=object,
+    )
     frame = pd.DataFrame(
         {
-            "city": rng.choice(["berlin", "rome", "oslo"], size=72),
+            "city": rng.choice(city_values, size=72),
             "text": rng.choice(["red quick fox", "blue slow fox"], size=72),
             "value": rng.normal(size=72).astype(np.float32),
         }
@@ -51,6 +63,7 @@ def test_distributed_tcp_training_fits_raw_feature_pipeline_across_ranks(tmp_pat
         textwrap.dedent(
             """
             from pathlib import Path
+            import json
             import sys
             import numpy as np
             import pandas as pd
@@ -87,6 +100,19 @@ def test_distributed_tcp_training_fits_raw_feature_pipeline_across_ranks(tmp_pat
                 num_boost_round=8,
             )
             np.save(root / f"raw_pipeline_pred_{rank}.npy", booster.predict(frame_full))
+            (root / f"raw_pipeline_codec_{rank}.json").write_text(
+                json.dumps(
+                    {
+                        "feature_pipeline_format_version": booster._feature_pipeline.to_state()[
+                            "feature_pipeline_format_version"
+                        ],
+                        "categorical_key_encoding_version": booster._feature_pipeline.to_state()[
+                            "categorical_key_encoding_version"
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
             """
         ),
         encoding="utf-8",
@@ -108,6 +134,14 @@ def test_distributed_tcp_training_fits_raw_feature_pipeline_across_ranks(tmp_pat
 
     distributed_pred_0 = np.load(tmp_path / "raw_pipeline_pred_0.npy")
     distributed_pred_1 = np.load(tmp_path / "raw_pipeline_pred_1.npy")
+    for rank in range(2):
+        codec = json.loads(
+            (tmp_path / f"raw_pipeline_codec_{rank}.json").read_text(encoding="utf-8")
+        )
+        assert codec == {
+            "feature_pipeline_format_version": 3,
+            "categorical_key_encoding_version": 2,
+        }
 
     central = ctboost.train(
         frame,

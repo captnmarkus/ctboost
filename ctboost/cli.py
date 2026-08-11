@@ -465,12 +465,14 @@ def _load_any_model(
             return ctboost.Booster(loaded), "Booster"
         if isinstance(loaded, dict) and loaded.get("artifact_type") == "ctboost.booster":
             from ctboost._serialization import (
-                MODEL_SCHEMA_VERSION,
                 _deserialize_json_value,
+                _validate_model_document,
             )
 
-            if loaded.get("schema_version") != MODEL_SCHEMA_VERSION:
-                raise CLIError("unsupported CTBoost model schema version")
+            try:
+                _validate_model_document(loaded)
+            except ValueError as exc:
+                raise CLIError(str(exc)) from exc
             pipeline_state = loaded.get("feature_pipeline_state")
             training_state = loaded.get("training_state")
             booster = ctboost.Booster(

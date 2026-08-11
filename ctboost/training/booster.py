@@ -23,6 +23,9 @@ from .schema import _baseline_matrix_for_prediction
 
 PathLike = Union[str, Path]
 
+_BOOSTER_PICKLE_MAGIC = b"CTBOOST_BOOSTER_PICKLE\x00"
+_BOOSTER_PICKLE_VERSION = 1
+
 class Booster:
     """Small Python wrapper around the native gradient booster."""
 
@@ -76,23 +79,42 @@ class Booster:
             metadata["learning_rate_history"] = [float(value) for value in learning_rate_history]
         self._training_metadata = metadata
 
-    def __getstate__(self) -> Dict[str, Any]:
+    def __getstate__(self) -> Any:
         """Return a pickle-safe representation of the native booster."""
-        return {
-            "handle_state": dict(self._handle.export_state()),
-            "feature_pipeline_state": (
-                None if self._feature_pipeline is None else self._feature_pipeline.to_state()
-            ),
-            "training_metadata": self._training_metadata,
-        }
+        return (
+            _BOOSTER_PICKLE_MAGIC,
+            _BOOSTER_PICKLE_VERSION,
+            {
+                "handle_state": dict(self._handle.export_state()),
+                "feature_pipeline_state": (
+                    None if self._feature_pipeline is None else self._feature_pipeline.to_state()
+                ),
+                "training_metadata": self._training_metadata,
+            },
+        )
 
-    def __setstate__(self, state: Mapping[str, Any]) -> None:
-        self._handle = _core.GradientBooster.from_state(dict(state["handle_state"]))
-        pipeline_state = state.get("feature_pipeline_state")
+    def __setstate__(self, state: Any) -> None:
+        if isinstance(state, Mapping):
+            # Historical CTBoost pickles used the payload mapping directly.
+            payload = state
+        else:
+            if not isinstance(state, tuple) or len(state) != 3:
+                raise TypeError("invalid CTBoost Booster pickle envelope")
+            magic, version, payload = state
+            if magic != _BOOSTER_PICKLE_MAGIC:
+                raise ValueError("invalid CTBoost Booster pickle magic")
+            if version != _BOOSTER_PICKLE_VERSION:
+                raise ValueError(
+                    f"unsupported CTBoost Booster pickle version: {version!r}"
+                )
+            if not isinstance(payload, Mapping):
+                raise TypeError("CTBoost Booster pickle payload must be a mapping")
+        self._handle = _core.GradientBooster.from_state(dict(payload["handle_state"]))
+        pipeline_state = payload.get("feature_pipeline_state")
         self._feature_pipeline = (
             None if pipeline_state is None else FeaturePipeline.from_state(pipeline_state)
         )
-        training_metadata = state.get("training_metadata")
+        training_metadata = payload.get("training_metadata")
         self._training_metadata = (
             None if training_metadata is None else dict(training_metadata)
         )

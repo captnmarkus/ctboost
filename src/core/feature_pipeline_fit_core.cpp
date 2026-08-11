@@ -65,7 +65,7 @@ void NativeFeaturePipeline::FitCoreFeatureState(py::array object_matrix,
   for (int feature_index : numeric_indices_) {
     const std::string name = feature_name(feature_index);
     if (cat_index_set.find(feature_index) == cat_index_set.end()) {
-      output_feature_names_.push_back(name);
+      output_feature_names_.push_back(AllocateOutputFeatureName(name));
       continue;
     }
 
@@ -73,12 +73,16 @@ void NativeFeaturePipeline::FitCoreFeatureState(py::array object_matrix,
     key_counts.reserve(matrix.rows);
     for (std::size_t row = 0; row < matrix.rows; ++row) {
       ++key_counts[detail::NormalizeKey(
-          detail::MatrixValue(matrix, row, static_cast<std::size_t>(feature_index)))];
+          detail::MatrixValue(matrix, row, static_cast<std::size_t>(feature_index)),
+          categorical_key_encoding_version_)];
     }
 
     bool has_other_bucket = false;
     const std::vector<std::string> bucket_keys =
-        detail::BuildBucketKeys(key_counts, max_cat_threshold_, &has_other_bucket);
+        detail::BuildBucketKeys(key_counts,
+                                max_cat_threshold_,
+                                categorical_key_encoding_version_,
+                                &has_other_bucket);
 
     if (one_hot_max_size_ > 0 &&
         bucket_keys.size() <= static_cast<std::size_t>(one_hot_max_size_) &&
@@ -88,10 +92,11 @@ void NativeFeaturePipeline::FitCoreFeatureState(py::array object_matrix,
       state.prefix = name;
       state.category_keys = bucket_keys;
       state.has_other_bucket = has_other_bucket ? 1U : 0U;
-      state.output_names.reserve(bucket_keys.size());
-      for (const std::string& key : bucket_keys) {
-        state.output_names.push_back(detail::OneHotOutputName(name, key));
-        output_feature_names_.push_back(state.output_names.back());
+      state.output_names = detail::BuildOneHotOutputNames(
+          name, bucket_keys, categorical_key_encoding_version_);
+      for (std::string& output_name : state.output_names) {
+        output_name = AllocateOutputFeatureName(output_name);
+        output_feature_names_.push_back(output_name);
       }
       one_hot_states_.push_back(std::move(state));
       continue;
@@ -99,17 +104,17 @@ void NativeFeaturePipeline::FitCoreFeatureState(py::array object_matrix,
 
     CategoricalEncoderState state;
     state.source_index = feature_index;
-    state.output_name = name;
+    state.output_name = AllocateOutputFeatureName(name);
     state.has_other_bucket = has_other_bucket ? 1U : 0U;
     for (std::size_t code = 0; code < bucket_keys.size(); ++code) {
       state.mapping.emplace(bucket_keys[code], static_cast<float>(code));
-      if (bucket_keys[code] == detail::kOtherKey) {
+      if (bucket_keys[code] == detail::OtherKey(categorical_key_encoding_version_)) {
         state.other_value = static_cast<float>(code);
       }
     }
     categorical_states_.push_back(std::move(state));
     cat_feature_indices_.push_back(static_cast<int>(output_feature_names_.size()));
-    output_feature_names_.push_back(name);
+    output_feature_names_.push_back(categorical_states_.back().output_name);
   }
 
   RefreshCombinationSourceIndices();
@@ -117,12 +122,16 @@ void NativeFeaturePipeline::FitCoreFeatureState(py::array object_matrix,
     std::unordered_map<std::string, std::size_t> key_counts;
     key_counts.reserve(matrix.rows);
     for (std::size_t row = 0; row < matrix.rows; ++row) {
-      ++key_counts[detail::JoinNormalizedKey(matrix, row, source_indices)];
+      ++key_counts[detail::JoinNormalizedKey(
+          matrix, row, source_indices, categorical_key_encoding_version_)];
     }
 
     bool has_other_bucket = false;
     const std::vector<std::string> bucket_keys =
-        detail::BuildBucketKeys(key_counts, max_cat_threshold_, &has_other_bucket);
+        detail::BuildBucketKeys(key_counts,
+                                max_cat_threshold_,
+                                categorical_key_encoding_version_,
+                                &has_other_bucket);
 
     CategoricalEncoderState state;
     for (std::size_t index = 0; index < source_indices.size(); ++index) {
@@ -131,10 +140,11 @@ void NativeFeaturePipeline::FitCoreFeatureState(py::array object_matrix,
       }
       state.output_name += feature_name(source_indices[index]);
     }
+    state.output_name = AllocateOutputFeatureName(state.output_name);
     state.has_other_bucket = has_other_bucket ? 1U : 0U;
     for (std::size_t code = 0; code < bucket_keys.size(); ++code) {
       state.mapping.emplace(bucket_keys[code], static_cast<float>(code));
-      if (bucket_keys[code] == detail::kOtherKey) {
+      if (bucket_keys[code] == detail::OtherKey(categorical_key_encoding_version_)) {
         state.other_value = static_cast<float>(code);
       }
     }
@@ -271,11 +281,13 @@ void NativeFeaturePipeline::FitTextAndEmbeddingState(py::array object_matrix,
     if (state.uses_dictionary != 0U) {
       for (std::size_t index = 0; index < state.vocabulary.size(); ++index) {
         output_feature_names_.push_back(
-            detail::TextOutputName(state.prefix, state.vocabulary[index], index));
+            AllocateOutputFeatureName(
+                detail::TextOutputName(state.prefix, state.vocabulary[index], index)));
       }
     } else {
       for (int hash_index = 0; hash_index < state.output_dim; ++hash_index) {
-        output_feature_names_.push_back(state.prefix + "_hash" + std::to_string(hash_index));
+        output_feature_names_.push_back(AllocateOutputFeatureName(
+            state.prefix + "_hash" + std::to_string(hash_index)));
       }
     }
     text_states_.push_back(std::move(state));
@@ -288,7 +300,8 @@ void NativeFeaturePipeline::FitTextAndEmbeddingState(py::array object_matrix,
     state.prefix = feature_name(feature_index);
     state.stats = embedding_stats;
     for (const std::string& stat : state.stats) {
-      output_feature_names_.push_back(state.prefix + "_" + stat);
+      output_feature_names_.push_back(
+          AllocateOutputFeatureName(state.prefix + "_" + stat));
     }
 
     if (embedding_target_features_) {
@@ -364,10 +377,10 @@ void NativeFeaturePipeline::FitTextAndEmbeddingState(py::array object_matrix,
           }
         }
         state.target_projection_weights.push_back(std::move(weights));
-        const std::string output_name =
+        const std::string output_name = AllocateOutputFeatureName(
             num_classes > 1
                 ? state.prefix + "_target_projection_class" + std::to_string(projection_index)
-                : state.prefix + "_target_projection";
+                : state.prefix + "_target_projection");
         state.target_output_names.push_back(output_name);
         output_feature_names_.push_back(output_name);
       }
