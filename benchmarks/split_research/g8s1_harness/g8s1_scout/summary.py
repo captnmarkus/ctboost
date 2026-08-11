@@ -429,8 +429,13 @@ def load_and_validate_artifacts(
 
     raw_dir = raw_dir.resolve()
     expected_paths = _expected_raw_paths()
-    raw_files, invalid_raw = _namespace_files(raw_dir)
-    stale = (raw_files - expected_paths) | invalid_raw
+    raw_files, raw_directories, invalid_raw = _namespace_files(raw_dir)
+    allowed_raw_directories = _parent_directories(expected_paths)
+    stale = (
+        (raw_files - expected_paths)
+        | (raw_directories - allowed_raw_directories)
+        | invalid_raw
+    )
     missing = expected_paths - raw_files
     raw_inventory = {
         "expected_outer_artifacts": len(expected_paths),

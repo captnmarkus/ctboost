@@ -503,6 +503,16 @@ class _TaskMetadataCollection:
         return {dataset: task_id for task_id, dataset, _problem, _metric in TASKS}
 
 
+class _PinnedTaskShape:
+    def __init__(self, *, dataset: str, fold: int, repeat: int) -> None:
+        self.dataset = dataset
+        self.fold = fold
+        self.repeat = repeat
+
+    def as_triple(self) -> tuple[str, int, int]:
+        return self.dataset, self.fold, self.repeat
+
+
 def _frozen_chunks() -> tuple[SimpleNamespace, list[list[SimpleNamespace]]]:
     context = SimpleNamespace(task_metadata_collection=_TaskMetadataCollection())
     chunks: list[list[SimpleNamespace]] = []
@@ -515,9 +525,7 @@ def _frozen_chunks() -> tuple[SimpleNamespace, list[list[SimpleNamespace]]]:
                         experiment=SimpleNamespace(
                             name=experiment_name(treatment, index)
                         ),
-                        task=SimpleNamespace(
-                            dataset=dataset, repeat=0, fold=0, sample=0
-                        ),
+                        task=_PinnedTaskShape(dataset=dataset, repeat=0, fold=0),
                     )
                 )
         chunks.append(jobs)
@@ -534,12 +542,55 @@ def test_mocked_schedule_matches_every_frozen_identity() -> None:
     }
 
 
-@pytest.mark.parametrize("field", ["repeat", "fold", "sample"])
+@pytest.mark.parametrize("field", ["repeat", "fold"])
 def test_mocked_schedule_rejects_nonzero_split_coordinates(field: str) -> None:
     context, chunks = _frozen_chunks()
     setattr(chunks[0][0].task, field, 1)
     with pytest.raises(RuntimeError, match="nonzero repeat/fold/sample"):
         schedule.validate_job_chunks(context, chunks)
+
+
+def test_mocked_schedule_rejects_invented_task_sample_field() -> None:
+    context, chunks = _frozen_chunks()
+    chunks[0][0].task.sample = 0
+    with pytest.raises(RuntimeError, match="Task API shape drift"):
+        schedule.validate_job_chunks(context, chunks)
+
+
+def test_pinned_tabarena_real_schedule_uses_implicit_protocol_sample_zero(
+    tmp_path: Path,
+) -> None:
+    experiment_api = pytest.importorskip(
+        "tabarena.benchmark.experiment",
+        reason="real pinned TabArena API is only present in the scout environment",
+    )
+    contexts = pytest.importorskip("tabarena.contexts")
+    args = schedule.fixed_args(
+        stage="preflight",
+        results_dir=tmp_path / "raw",
+        output_dir=tmp_path / "report",
+    )
+    experiments, _effective_time_limit = schedule.build_frozen_experiments(
+        args, experiment_api.TabArenaV0pt1ExperimentBundle
+    )
+    schedule.validate_experiments(experiments)
+    context = contexts.TabArenaContext()
+    chunks = [
+        context.build_jobs(experiments, subset="lite", dataset_names=[dataset])
+        for _task_id, dataset, _problem, _metric in TASKS
+    ]
+    first_task = chunks[0][0].task
+    assert type(first_task).__module__ == "tabarena.benchmark.experiment.job"
+    assert type(first_task).__name__ == "Task"
+    assert vars(first_task) == {"dataset": TASKS[0][1], "fold": 0, "repeat": 0}
+    assert first_task.as_triple() == (TASKS[0][1], 0, 0)
+    assert not hasattr(first_task, "sample")
+
+    assert schedule.validate_job_chunks(context, chunks) == {
+        "jobs": EXPECTED_ARTIFACTS,
+        "schedule_sha256": EXPECTED_SCHEDULE_SHA256,
+        "chunks": list(EXPECTED_CHUNKS),
+    }
 
 
 def test_mocked_schedule_rejects_identity_and_chunk_tampering() -> None:
@@ -1577,6 +1628,132 @@ def test_namespace_inventory_enforces_exact_files_at_every_phase(
     assert validate_namespace(
         raw_dir=raw_dir, report_dir=failure_report, phase="summary_failure"
     )["complete"]
+
+
+def test_real_artifact_loading_and_summarize_use_sealed_directory_inventory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    raw_dir = tmp_path / "raw"
+    output_dir = tmp_path / "report" / "sanitized"
+    expected_paths = _expected_raw_paths()
+    _write_relative_files(raw_dir, expected_paths)
+
+    loaded_paths: list[Path] = []
+    task_by_id = {
+        task_id: (dataset, problem_type, metric)
+        for task_id, dataset, problem_type, metric in TASKS
+    }
+
+    def load_and_align(path: Path) -> SimpleNamespace:
+        loaded_paths.append(path)
+        relative = path.relative_to(raw_dir)
+        method = relative.parts[1]
+        task_id = int(relative.parts[2])
+        dataset, problem_type, metric = task_by_id[task_id]
+        return SimpleNamespace(
+            result={
+                "framework": method,
+                "task_metadata": {
+                    "tid": task_id,
+                    "name": dataset,
+                    "repeat": 0,
+                    "fold": 0,
+                    "sample": 0,
+                },
+                "problem_type": problem_type,
+                "metric": metric,
+                "metric_error": 0.25,
+                "metric_error_val": 0.25,
+                "time_train_s": 1.0,
+                "time_infer_s": 0.1,
+            }
+        )
+
+    public_tabarena = ModuleType("tabarena")
+    public_tabarena.__path__ = []
+    public_benchmark = ModuleType("tabarena.benchmark")
+    public_benchmark.__path__ = []
+    public_result = ModuleType("tabarena.benchmark.result")
+    public_raw_loading = ModuleType("tabarena.benchmark.result.raw_loading")
+    public_raw_loading.load_and_align = load_and_align
+    public_result.raw_loading = public_raw_loading
+    public_benchmark.result = public_result
+    public_tabarena.benchmark = public_benchmark
+    for name, module in (
+        ("tabarena", public_tabarena),
+        ("tabarena.benchmark", public_benchmark),
+        ("tabarena.benchmark.result", public_result),
+        ("tabarena.benchmark.result.raw_loading", public_raw_loading),
+    ):
+        monkeypatch.setitem(sys.modules, name, module)
+
+    unexpected_empty = raw_dir / "unexpected-empty"
+    unexpected_empty.mkdir()
+    with pytest.raises(RuntimeError, match="stale, unexpected, or linked"):
+        scout_summary.load_and_validate_artifacts(raw_dir)
+    unexpected_empty.rmdir()
+
+    special_directory = (raw_dir / Path(min(expected_paths))).parent
+    original_is_link_or_junction = scout_summary._is_link_or_junction
+    with monkeypatch.context() as special_patch:
+        special_patch.setattr(
+            scout_summary,
+            "_is_link_or_junction",
+            lambda path: (
+                path == special_directory or original_is_link_or_junction(path)
+            ),
+        )
+        with pytest.raises(RuntimeError, match="stale, unexpected, or linked"):
+            scout_summary.load_and_validate_artifacts(raw_dir)
+
+    monkeypatch.setattr(scout_summary, "_validate_predictions", lambda _result: None)
+    monkeypatch.setattr(
+        scout_summary,
+        "_validate_method_metadata",
+        lambda _result, **_kwargs: (1024, 512, 256),
+    )
+    monkeypatch.setattr(scout_summary, "_endpoint_rows", lambda _loaded: ([], {}))
+    monkeypatch.setattr(
+        scout_summary,
+        "_decorate_endpoint_selections",
+        lambda _rows, _records, _selected: None,
+    )
+    monkeypatch.setattr(
+        scout_summary,
+        "_decision_summary",
+        lambda _endpoint_rows, _records: {"integration": "sealed"},
+    )
+    monkeypatch.setattr(
+        scout_summary,
+        "_resource_summary",
+        lambda _records: {"integration": "sealed"},
+    )
+    summary = scout_summary.summarize(
+        raw_dir=raw_dir,
+        output_dir=output_dir,
+        provenance={"identity": "sealed"},
+        schedule={"schedule_sha256": EXPECTED_SCHEDULE_SHA256},
+        namespace_state={"stale_or_unexpected": 0, "complete": True},
+    )
+
+    assert len(loaded_paths) == EXPECTED_ARTIFACTS
+    assert len(set(loaded_paths)) == EXPECTED_ARTIFACTS
+    assert summary["coverage"] == {
+        "expected_outer_artifacts": EXPECTED_ARTIFACTS,
+        "observed_outer_artifacts": EXPECTED_ARTIFACTS,
+        "expected_bagged_child_fits": EXPECTED_ARTIFACTS * 8,
+        "failures": 0,
+        "timeouts": 0,
+        "duplicates": 0,
+        "stale_or_unexpected": 0,
+        "complete": True,
+    }
+    assert {path.name for path in output_dir.iterdir()} == {
+        "scout_summary.json",
+        "paired_configs.json",
+        "config_results.csv",
+        "endpoint_results.csv",
+    }
 
 
 def test_existing_sealed_namespace_counts_and_rejects_every_stale_file(

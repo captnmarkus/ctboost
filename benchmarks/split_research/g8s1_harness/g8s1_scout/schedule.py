@@ -168,6 +168,26 @@ def validate_experiments(experiments: list[Any]) -> None:
             raise RuntimeError(f"{experiment.name}: fit-resource contract drift")
 
 
+def _pinned_task_triple(task: Any) -> tuple[str, int, int]:
+    try:
+        state = vars(task)
+    except TypeError as error:
+        raise RuntimeError("pinned TabArena Task API shape drift") from error
+    if set(state) != {"dataset", "fold", "repeat"} or hasattr(task, "sample"):
+        raise RuntimeError("pinned TabArena Task API shape drift")
+    as_triple = getattr(task, "as_triple", None)
+    if not callable(as_triple):
+        raise TypeError("pinned TabArena Task API is missing as_triple")
+    coordinates = as_triple()
+    expected = (state["dataset"], state["fold"], state["repeat"])
+    if type(coordinates) is not tuple or coordinates != expected:
+        raise RuntimeError("pinned TabArena Task triple drift")
+    dataset, fold, repeat = coordinates
+    if type(dataset) is not str or type(fold) is not int or type(repeat) is not int:
+        raise TypeError("pinned TabArena Task coordinate type drift")
+    return dataset, fold, repeat
+
+
 def validate_job_chunks(context: Any, chunks: Iterable[list[Any]]) -> dict[str, Any]:
     materialized = [list(chunk) for chunk in chunks]
     chunk_sizes = tuple(len(chunk) for chunk in materialized)
@@ -192,15 +212,13 @@ def validate_job_chunks(context: Any, chunks: Iterable[list[Any]]) -> dict[str, 
     observed: Counter[tuple[str, int, int, int, int]] = Counter()
     schedule_rows: list[dict[str, Any]] = []
     for job in jobs:
-        dataset = str(job.task.dataset)
+        dataset, fold, repeat = _pinned_task_triple(job.task)
         if (
             dataset not in task_lookup
             or dataset_to_tid.get(dataset) != task_lookup[dataset]
         ):
             raise RuntimeError(f"unexpected TabArena task in schedule: {dataset}")
-        repeat = int(job.task.repeat)
-        fold = int(job.task.fold)
-        sample = int(job.task.sample)
+        sample = 0
         if repeat != 0 or fold != 0 or sample != 0:
             raise RuntimeError("scout schedule contains a nonzero repeat/fold/sample")
         method = str(job.experiment.name)
