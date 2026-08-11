@@ -370,6 +370,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#optional-grouped-feature-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      Optional grouped feature test
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#pandas-categoricals" class="md-nav__link">
     <span class="md-ellipsis">
       pandas categoricals
@@ -500,6 +509,8 @@
       
         
       
+        
+      
     
     
     
@@ -549,6 +560,29 @@
   
   <span class="md-ellipsis">
     Categorical, text, and embeddings
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/split-statistics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Conditional split statistics
     
   </span>
   
@@ -800,6 +834,15 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#optional-grouped-feature-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      Optional grouped feature test
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#pandas-categoricals" class="md-nav__link">
     <span class="md-ellipsis">
       pandas categoricals
@@ -895,22 +938,36 @@ changing it).</p>
 per-class diagonal Newton steps can overshoot because softmax classes are
 coupled. This fails closed until a coupled, safeguarded multiclass solver is
 available.</p>
+<h2 id="optional-grouped-feature-test">Optional grouped feature test<a class="headerlink" href="#optional-grouped-feature-test" title="Permanent link">&para;</a></h2>
+<p>High-resolution numeric histograms can opt into an approximately
+equal-node-weight grouped independence test while retaining the original bins
+for the final cut search:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">model</span> <span class="o">=</span> <span class="n">CTBoostClassifier</span><span class="p">(</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">feature_test</span><span class="o">=</span><span class="s2">&quot;grouped&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">feature_test_bins</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">feature_test_adjustment</span><span class="o">=</span><span class="s2">&quot;bonferroni&quot;</span><span class="p">,</span>  <span class="c1"># optional; default is &quot;none&quot;</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="p">)</span>
+</code></pre></div>
+<p>The legacy <code>feature_test="quadratic"</code> path remains the default. Categorical
+features always retain that nominal quadratic test. See
+<a href="../guides/split-statistics/">Conditional split statistics</a> for semantics,
+persistence, and current GPU limits.</p>
 <h2 id="pandas-categoricals">pandas categoricals<a class="headerlink" href="#pandas-categoricals" title="Permanent link">&para;</a></h2>
 <p>Keep categorical values as strings or pandas <code>category</code> columns and identify them
 by name or position:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">model</span> <span class="o">=</span> <span class="n">CTBoostClassifier</span><span class="p">(</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="n">cat_features</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;country&quot;</span><span class="p">,</span> <span class="s2">&quot;plan&quot;</span><span class="p">],</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">ordered_ctr</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="p">)</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">model</span> <span class="o">=</span> <span class="n">CTBoostClassifier</span><span class="p">(</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="n">cat_features</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;country&quot;</span><span class="p">,</span> <span class="s2">&quot;plan&quot;</span><span class="p">],</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">ordered_ctr</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="p">)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
 </code></pre></div>
 <p>The fitted feature pipeline is stored with the estimator, including category
 dictionaries, CTR statistics, text dictionaries, and embedding transforms.</p>
 <h2 id="check-the-build">Check the build<a class="headerlink" href="#check-the-build" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">ctboost</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">ctboost</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">ctboost</span><span class="o">.</span><span class="n">build_info</span><span class="p">())</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">ctboost</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="nb">print</span><span class="p">(</span><span class="n">ctboost</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">ctboost</span><span class="o">.</span><span class="n">build_info</span><span class="p">())</span>
 </code></pre></div>
 <p><code>build_info()</code> reports the compiled version, compiler, C++ standard, and whether
 the installed wheel contains CUDA support.</p>
