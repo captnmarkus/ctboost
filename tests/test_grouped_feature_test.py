@@ -677,6 +677,36 @@ def test_gpu_grouped_statistics_fail_closed():
         _core.GradientBooster(task_type="GPU", feature_test="grouped")
 
 
+@pytest.mark.parametrize(
+    ("grouped", "bonferroni"),
+    [(True, False), (False, True), (True, True)],
+)
+def test_public_tree_build_boundary_rejects_unsupported_gpu_feature_tests(
+    grouped, bonferroni
+):
+    with pytest.raises(ValueError, match="GPU tree building currently supports only"):
+        _core._debug_tree_build_options_boundary(
+            use_gpu=True,
+            grouped=grouped,
+            bonferroni=bonferroni,
+        )
+
+
+def test_public_tree_build_boundary_keeps_legacy_gpu_dispatch():
+    with pytest.raises(ValueError, match="GPU histogram workspace must be provided"):
+        _core._debug_tree_build_options_boundary(use_gpu=True)
+
+
+@pytest.mark.parametrize("feature_test_bins", [1, 65])
+def test_public_tree_build_boundary_validates_grouped_bin_count(feature_test_bins):
+    with pytest.raises(ValueError, match=r"feature_test_bins must be in \[2, 64\]"):
+        _core._debug_tree_build_options_boundary(
+            use_gpu=False,
+            grouped=True,
+            feature_test_bins=feature_test_bins,
+        )
+
+
 @pytest.mark.parametrize("nan_mode", ["Min", "Max"])
 def test_distributed_grouping_uses_global_missing_schema_when_only_one_shard_has_nans(
     tmp_path: Path, nan_mode

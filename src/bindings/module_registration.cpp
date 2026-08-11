@@ -239,6 +239,29 @@ void BindModuleFunctions(py::module_& m) {
         py::arg("requested_groups") = 8,
         py::arg("missing_bin") = -1);
 
+  m.def("_debug_tree_build_options_boundary",
+        [](bool use_gpu,
+           bool grouped,
+           bool bonferroni,
+           std::size_t feature_test_bins) {
+          ctboost::TreeBuildOptions options;
+          options.use_gpu = use_gpu;
+          options.feature_test = grouped ? ctboost::FeatureTest::Grouped
+                                         : ctboost::FeatureTest::Quadratic;
+          options.feature_test_adjustment =
+              bonferroni ? ctboost::FeatureTestAdjustment::Bonferroni
+                          : ctboost::FeatureTestAdjustment::None;
+          options.feature_test_bins = feature_test_bins;
+
+          const ctboost::HistMatrix empty_histogram;
+          ctboost::Tree tree;
+          tree.Build(empty_histogram, {}, {}, {}, options);
+        },
+        py::arg("use_gpu"),
+        py::arg("grouped") = false,
+        py::arg("bonferroni") = false,
+        py::arg("feature_test_bins") = 8);
+
   m.def("_debug_build_histogram",
         [](const ctboost::Pool& pool,
            std::size_t max_bins,
