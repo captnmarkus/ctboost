@@ -16,6 +16,16 @@
 #include <type_traits>
 #include <vector>
 
+#if defined(_WIN32)
+// CUDA 12.8's libcu++ expands the UCRT INFINITY macro through an overflowing
+// float expression while Thrust headers are parsed by NVCC. Provide the same
+// float infinity through libcu++ while those headers are parsed.
+#include <cuda/std/limits>
+#pragma push_macro("INFINITY")
+#undef INFINITY
+#define INFINITY (::cuda::std::numeric_limits<float>::infinity())
+#endif
+
 #include <thrust/copy.h>
 #include <thrust/device_ptr.h>
 #include <thrust/device_vector.h>
@@ -23,6 +33,10 @@
 #include <thrust/partition.h>
 #include <thrust/sequence.h>
 #include <thrust/system_error.h>
+
+#if defined(_WIN32)
+#pragma pop_macro("INFINITY")
+#endif
 
 #define CTBOOST_CUDA_CHECK(expr)                                                            \
   do {                                                                                      \
@@ -1011,12 +1025,13 @@ void SearchBestNodeSplitGpu(GpuHistogramWorkspace* workspace,
     GpuBestFeatureResult host_best_result{};
     host_best_result.feature_id = -1;
     host_best_result.search_result.p_value = 1.0;
-    host_best_result.search_result.chi_square = -INFINITY;
+    host_best_result.search_result.chi_square = -std::numeric_limits<double>::infinity();
     GpuBestFeatureResult host_best_adjusted_result{};
     host_best_adjusted_result.feature_id = -1;
     host_best_adjusted_result.adjusted_gain = 0.0;
     host_best_adjusted_result.search_result.p_value = 1.0;
-    host_best_adjusted_result.search_result.chi_square = -INFINITY;
+    host_best_adjusted_result.search_result.chi_square =
+        -std::numeric_limits<double>::infinity();
 
     for (DeviceWorkspace& device_workspace : workspace->devices) {
       DeviceGuard device_guard(device_workspace.device_id);
