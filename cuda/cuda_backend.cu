@@ -1011,12 +1011,13 @@ void SearchBestNodeSplitGpu(GpuHistogramWorkspace* workspace,
     GpuBestFeatureResult host_best_result{};
     host_best_result.feature_id = -1;
     host_best_result.search_result.p_value = 1.0;
-    host_best_result.search_result.chi_square = -INFINITY;
+    host_best_result.search_result.chi_square = -std::numeric_limits<double>::infinity();
     GpuBestFeatureResult host_best_adjusted_result{};
     host_best_adjusted_result.feature_id = -1;
     host_best_adjusted_result.adjusted_gain = 0.0;
     host_best_adjusted_result.search_result.p_value = 1.0;
-    host_best_adjusted_result.search_result.chi_square = -INFINITY;
+    host_best_adjusted_result.search_result.chi_square =
+        -std::numeric_limits<double>::infinity();
 
     for (DeviceWorkspace& device_workspace : workspace->devices) {
       DeviceGuard device_guard(device_workspace.device_id);
