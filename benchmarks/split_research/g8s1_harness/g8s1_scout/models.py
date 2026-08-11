@@ -5,6 +5,8 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import math
+import struct
 from typing import Any
 
 from .constants import (
@@ -16,6 +18,7 @@ from .constants import (
     P201_SHA256,
     TREATMENT_COMMON,
     TREATMENTS,
+    canonical_p200_path,
 )
 from .loader import load_benchmark_module
 
@@ -45,17 +48,69 @@ def _validate_base_configs(configs: list[dict[str, Any]], *, label: str) -> None
             raise RuntimeError(f"{label}[{index}] hard-codes a model seed")
 
 
-def base_random_p200() -> list[dict[str, Any]]:
-    configs = generate_configs_ctboost(200)
-    if len(configs) != 200:
+def _load_canonical_p200() -> list[dict[str, Any]]:
+    path = canonical_p200_path()
+    if not path.is_file() or path.is_symlink():
+        raise RuntimeError("sealed canonical P200 document is missing or linked")
+    configs = json.loads(path.read_text(encoding="utf-8"))
+    if (
+        not isinstance(configs, list)
+        or len(configs) != 200
+        or any(not isinstance(config, dict) for config in configs)
+    ):
+        raise RuntimeError("sealed canonical P200 document has invalid structure")
+    return configs
+
+
+def _float_ulp_distance(left: float, right: float) -> int:
+    if not math.isfinite(left) or not math.isfinite(right):
+        raise RuntimeError("live adapter P200 contains a non-finite float")
+
+    def ordered_bits(value: float) -> int:
+        bits = int.from_bytes(struct.pack(">d", value), byteorder="big")
+        return bits ^ ((bits >> 63) * 0x7FFFFFFFFFFFFFFF)
+
+    return abs(ordered_bits(left) - ordered_bits(right))
+
+
+def _validate_live_adapter_p200(
+    canonical: list[dict[str, Any]], live: list[dict[str, Any]]
+) -> None:
+    if len(live) != len(canonical):
         raise RuntimeError(
-            f"P200 cardinality drift: expected 200, observed {len(configs)}"
+            "live adapter P200 cardinality drift: "
+            f"expected {len(canonical)}, observed {len(live)}"
         )
+    for index, (expected, observed) in enumerate(zip(canonical, live, strict=True)):
+        if tuple(observed) != tuple(expected):
+            raise RuntimeError(f"live adapter P200[{index}] key/order drift")
+        for key, expected_value in expected.items():
+            observed_value = observed[key]
+            if type(expected_value) is float:
+                if type(observed_value) is not float:
+                    raise RuntimeError(f"live adapter P200[{index}].{key} type drift")
+                distance = _float_ulp_distance(expected_value, observed_value)
+                if distance > 1:
+                    raise RuntimeError(
+                        f"live adapter P200[{index}].{key} drifted by {distance} ULPs"
+                    )
+            elif (
+                type(observed_value) is not type(expected_value)
+                or observed_value != expected_value
+            ):
+                raise RuntimeError(
+                    f"live adapter P200[{index}].{key} discrete value drift"
+                )
+
+
+def base_random_p200() -> list[dict[str, Any]]:
+    configs = _load_canonical_p200()
     digest = hashlib.sha256(canonical_json_bytes(configs)).hexdigest()
     if digest != P200_RANDOM_SHA256:
         raise RuntimeError(
             f"P200 identity drift: expected {P200_RANDOM_SHA256}, observed {digest}"
         )
+    _validate_live_adapter_p200(configs, generate_configs_ctboost(200))
     _validate_base_configs(configs, label="P200")
     return copy.deepcopy(configs)
 

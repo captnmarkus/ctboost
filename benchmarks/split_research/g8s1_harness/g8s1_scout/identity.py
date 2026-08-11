@@ -37,6 +37,7 @@ from .constants import (
     PROTOCOL_TABARENA_COMMIT,
     RUNBOOK_LF_NORMALIZED_SHA256,
     RUNBOOK_RELATIVE,
+    RUNTIME_FILES,
     RUNTIME_MODULE_FILES,
     TIME_LIMIT_SECONDS,
     bootstrap_path,
@@ -331,7 +332,8 @@ def _validate_harness_source(
         raise RuntimeError("tracked grouped-scout runbook hash drifted")
 
     prefix = package_relative.as_posix()
-    expected_package_paths = {f"{prefix}/{name}" for name in RUNTIME_MODULE_FILES}
+    expected_module_paths = {f"{prefix}/{name}" for name in RUNTIME_MODULE_FILES}
+    expected_package_paths = {f"{prefix}/{name}" for name in RUNTIME_FILES}
     expected_paths = expected_package_paths | {BOOTSTRAP_RELATIVE}
     runtime_files = dict(manifest.get("runtime_files", {}))
     if set(runtime_files) != expected_paths:
@@ -341,18 +343,18 @@ def _validate_harness_source(
         for path in package_root.rglob("*.py")
         if path.is_file() or path.is_symlink()
     }
-    if actual_paths != expected_package_paths:
+    if actual_paths != expected_module_paths:
         raise RuntimeError("tracked grouped-scout runtime file set drifted")
     if {path.name for path in import_root.iterdir()} != {package_root.name}:
         raise RuntimeError(
             "tracked grouped-scout import root contains an unexpected importable file, entry, or symlink"
         )
-    if {path.name for path in package_root.iterdir()} != set(RUNTIME_MODULE_FILES):
+    if {path.name for path in package_root.iterdir()} != set(RUNTIME_FILES):
         raise RuntimeError(
             "tracked grouped-scout import root contains an unexpected importable file, entry, or symlink"
         )
     allowed_sources = {
-        (root / Path(relative)).resolve() for relative in expected_package_paths
+        (root / Path(relative)).resolve() for relative in expected_module_paths
     }
     unexpected_importables = set()
     for path in import_root.rglob("*"):
