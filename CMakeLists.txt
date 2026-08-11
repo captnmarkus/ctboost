@@ -137,6 +137,15 @@ add_library(ctboost_core STATIC
   src/core/tree_split_scoring.cpp
 )
 
+# ``ctboost_core`` is an implementation-only static archive linked into the
+# pybind11 extension.  Keep its symbols hidden just like the extension target:
+# several internal classes own pybind11 types, which are intentionally hidden
+# on ELF platforms and otherwise trigger GCC's greater-visibility warnings.
+set_target_properties(ctboost_core PROPERTIES
+  CXX_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN ON
+)
+
 target_include_directories(ctboost_core
   PUBLIC
     ${PROJECT_SOURCE_DIR}/include
