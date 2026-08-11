@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-from pathlib import Path
+import os
 import pickle
 import time
+from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional
 
 import numpy as np
@@ -17,6 +18,21 @@ from ._distributed_config import (
     _serialize_raw_feature_pipeline_shard,
 )
 from ._distributed_payloads import _distributed_allgather_value
+
+
+def _atomic_pickle_dump(path: Path, value: Any) -> None:
+    """Publish a pickle only after its complete payload is durable."""
+
+    temporary_path = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    try:
+        with temporary_path.open("wb") as stream:
+            pickle.dump(value, stream, protocol=pickle.HIGHEST_PROTOCOL)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary_path, path)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+
 
 def _prepare_transformed_training_pool(
     data: Any,
@@ -84,8 +100,7 @@ def _prepare_distributed_feature_pipeline_pool(
         run_root = Path(distributed["root"]) / distributed["run_id"]
         run_root.mkdir(parents=True, exist_ok=True)
         shard_path = run_root / f"feature_pipeline_rank_{distributed['rank']:05d}.pkl"
-        with shard_path.open("wb") as stream:
-            pickle.dump(local_shard, stream, protocol=pickle.HIGHEST_PROTOCOL)
+        _atomic_pickle_dump(shard_path, local_shard)
 
         shard_paths = [
             run_root / f"feature_pipeline_rank_{rank:05d}.pkl"
