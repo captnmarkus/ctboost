@@ -120,6 +120,9 @@ struct FitLoopContext {
   double gamma{0.0};
   double max_leaf_weight{0.0};
   int leaf_estimation_iterations{1};
+  const std::string* feature_test{nullptr};
+  std::size_t feature_test_bins{8};
+  const std::string* feature_test_adjustment{nullptr};
   double random_strength{0.0};
   const std::vector<int>* monotone_constraints{nullptr};
   const std::vector<double>* feature_weights{nullptr};

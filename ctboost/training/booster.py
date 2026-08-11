@@ -645,6 +645,21 @@ class Booster:
         return int(self._handle.leaf_estimation_iterations())
 
     @property
+    def feature_test(self) -> str:
+        """Feature-independence test used before the within-feature split search."""
+        return str(self._handle.feature_test())
+
+    @property
+    def feature_test_bins(self) -> int:
+        """Maximum non-missing numeric groups used by the grouped feature test."""
+        return int(self._handle.feature_test_bins())
+
+    @property
+    def feature_test_adjustment(self) -> str:
+        """Across-feature adjustment applied only to the alpha stopping test."""
+        return str(self._handle.feature_test_adjustment())
+
+    @property
     def configured_base_score(self) -> List[float]:
         """Return the optional user-configured raw-margin intercept."""
         return [float(value) for value in self._handle.configured_base_score()]

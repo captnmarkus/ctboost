@@ -131,7 +131,9 @@ int Tree::BuildNodeGpu(const HistMatrix& hist,
                               0,
                               feature_ms,
                               split_ms,
-                              0.0);
+                              0.0,
+                              node_search.p_value,
+                              0U);
     }
     return return_leaf();
   }
@@ -162,7 +164,9 @@ int Tree::BuildNodeGpu(const HistMatrix& hist,
                             right_count,
                             feature_ms,
                             split_ms,
-                            partition_ms);
+                            partition_ms,
+                            node_search.p_value,
+                            0U);
   }
   if (options.distributed == nullptr && (left_end == row_begin || left_end == row_end)) {
     return return_leaf();

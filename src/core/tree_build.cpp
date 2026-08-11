@@ -20,6 +20,16 @@ void Tree::Build(const HistMatrix& hist,
                  std::vector<std::size_t>* row_indices_out,
                  std::vector<LeafRowRange>* leaf_row_ranges_out,
                  const QuantizationSchemaPtr& quantization_schema) {
+  if (options.feature_test_bins < 2U || options.feature_test_bins > 64U) {
+    throw std::invalid_argument("feature_test_bins must be in [2, 64]");
+  }
+  if (options.use_gpu &&
+      (options.feature_test != FeatureTest::Quadratic ||
+       options.feature_test_adjustment != FeatureTestAdjustment::None)) {
+    throw std::invalid_argument(
+        "GPU tree building currently supports only FeatureTest::Quadratic with "
+        "FeatureTestAdjustment::None");
+  }
   if (weights.size() != hist.num_rows) {
     throw std::invalid_argument("weight size must match the histogram row count");
   }

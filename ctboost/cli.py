@@ -626,6 +626,9 @@ def _training_parameters(args: argparse.Namespace) -> Dict[str, Any]:
         "learning_rate": args.learning_rate,
         "max_depth": args.max_depth,
         "leaf_estimation_iterations": args.leaf_estimation_iterations,
+        "feature_test": args.feature_test,
+        "feature_test_bins": args.feature_test_bins,
+        "feature_test_adjustment": args.feature_test_adjustment,
         "random_seed": args.random_seed,
         "task_type": args.task_type,
         "devices": args.devices,
@@ -961,6 +964,22 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         choices=range(1, 6),
         help="Override fixed-structure leaf estimation steps for single-output objectives (1-5)",
+    )
+    train_parser.add_argument(
+        "--feature-test",
+        choices=("quadratic", "grouped"),
+        help="Override the conditional-inference feature test",
+    )
+    train_parser.add_argument(
+        "--feature-test-bins",
+        type=int,
+        choices=range(2, 65),
+        help="Override grouped-test numeric bins (2-64)",
+    )
+    train_parser.add_argument(
+        "--feature-test-adjustment",
+        choices=("none", "bonferroni"),
+        help="Override the alpha stopping multiplicity adjustment",
     )
     train_parser.add_argument("--random-seed", type=int, help="Override random_seed")
     train_parser.add_argument("--task-type", choices=("CPU", "GPU"), help="Override task_type")
