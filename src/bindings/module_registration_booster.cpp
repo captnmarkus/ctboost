@@ -30,9 +30,9 @@ class PythonObjective final : public ctboost::ObjectiveFunction {
         static_cast<py::ssize_t>(predictions.size() / labels.size());
 
     py::array_t<float> prediction_array = prediction_dimension == 1
-                                              ? py::array_t<float>({row_count})
+                                              ? py::array_t<float>(row_count)
                                               : py::array_t<float>({row_count, prediction_dimension});
-    py::array_t<float> label_array({row_count});
+    py::array_t<float> label_array(row_count);
     std::memcpy(prediction_array.mutable_data(),
                 predictions.data(),
                 predictions.size() * sizeof(float));

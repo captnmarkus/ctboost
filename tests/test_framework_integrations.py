@@ -66,17 +66,27 @@ def _params():
 
 
 def test_partition_concat_and_frame_split_preserve_dataframe_schema():
+    city_dtype = pd.CategoricalDtype(categories=["berlin", "oslo", "rome"])
     left = pd.DataFrame(
-        {"city": pd.Categorical(["berlin", "oslo"]), "value": [1.0, 2.0], "y": [0.0, 1.0]}
+        {
+            "city": pd.Categorical(["berlin", "oslo"], dtype=city_dtype),
+            "value": [1.0, 2.0],
+            "y": [0.0, 1.0],
+        }
     )
     right = pd.DataFrame(
-        {"city": pd.Categorical(["rome"], categories=left["city"].cat.categories), "value": [3.0], "y": [2.0]}
+        {
+            "city": pd.Categorical(["rome"], dtype=city_dtype),
+            "value": [3.0],
+            "y": [2.0],
+        }
     )
     combined = concat_partitions([left, right])
     features, label, metadata = split_feature_frame(combined, label="y")
 
     assert list(features.columns) == ["city", "value"]
     assert str(features["city"].dtype) == "category"
+    assert features["city"].tolist() == ["berlin", "oslo", "rome"]
     np.testing.assert_array_equal(label.to_numpy(), [0.0, 1.0, 2.0])
     assert metadata == {}
     np.testing.assert_array_equal(
