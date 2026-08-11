@@ -31,10 +31,11 @@ _ADAPTER = _SOURCE_ROOT / "benchmarks" / "tabarena" / "ctboost_model.py"
 _EXPECTED_RUNTIME_HASHES = {
     "__init__.py": "52c4a1b7167d24027e1b301423f84d7d5656290c79b447e020cfce9b5c6b34a1",
     "__main__.py": "01f5b72fa7c1e25c30001eaf3725aa2bb4f4d6a522da656ca4464f6b52d4e780",
-    "constants.py": "b9fa89ada11842870e939cdd0e5b2a86cbf70c81d6500065f3ad05f9c8b81757",
-    "identity.py": "082fb28a353c8b0b59444ec4c889b80ba2e045c953a5e5eceac9a6d782b02d6f",
+    "constants.py": "2935aae37e7b6c667e95b25710898b53c08a9e5454b22d2f75e9326895cc4bd1",
+    "identity.py": "5f82c0c7adad36eb5229358b2c71df8510a418bf27092d4532df3d75f181dc06",
     "loader.py": "c00e18a318ef3f3ff6765fe003dedcd6013c464c76d65581c62a279689567efd",
-    "models.py": "3a1f0833cda78e526cd9526e50034c44d14f7a2562db33d81d285610d6f2111d",
+    "models.py": "855d93a1d810a9d73e16f193366bd6fbf8ca39d7084bdf2943f079c96ecfc901",
+    "p200.json": "62575768f9cc68d3746d00675b81b71e8b0287bd0ab81a721321137c9605942b",
     "schedule.py": "f3128dff07e825c81d4abbb50e52cbe1b03f726e5c06600b50244aab61bc3a97",
     "summary.py": "84bcfb3d33e06b4409a702d93b4f6628bfe33c37c8ffc44a02f1fee394b9a985",
 }
@@ -42,7 +43,7 @@ _EXPECTED_ADAPTER_SHA256 = (
     "c5e1edccd155f70cad52e9fd514e01233f074c4db4e982363363c317c4db90d8"
 )
 _EXPECTED_RUNBOOK_SHA256 = (
-    "e393765efa18cf031a0bdc60ebf6475cd3e79a93b363757cb3679dae89d26e45"
+    "87e1418458ae3c695071488fc0133539f84edadf1f1f5f39144ffe4b4ef1585a"
 )
 
 
@@ -98,7 +99,9 @@ def _validate_source_only_import_root() -> None:
     ):
         _abort("grouped-scout import root is missing, linked, or not a directory")
     expected_sources = {
-        (_PACKAGE_ROOT / name).resolve() for name in _EXPECTED_RUNTIME_HASHES
+        (_PACKAGE_ROOT / name).resolve()
+        for name in _EXPECTED_RUNTIME_HASHES
+        if Path(name).suffix == ".py"
     }
     if {path.name for path in _IMPORT_ROOT.iterdir()} != {_PACKAGE_ROOT.name}:
         _abort("grouped-scout import root is not the exact source-only runtime")

@@ -39,6 +39,21 @@ install residue such as `tabarena.egg-info`; the pinned environment's installed
 entry with the pinned commit before adding the root to `sys.path` or importing
 any TabArena module.
 
+## Frozen portfolio portability
+
+The exact P200 schedule source is the hash-sealed `g8s1_scout/p200.json`
+document. The live adapter generator is checked against that document for
+identical configuration/key order and exact non-floating values; every float
+must be equal or at most one IEEE-754 binary64 ULP away. It is never used as
+the schedule source.
+
+This boundary is required because the current adapter's logarithmic sampler
+uses the host `libm`. Linux and Windows differ by one ULP at P200 cells 87
+(`ctr_prior_strength`) and 197 (`alpha`), despite identical source, seed, and
+NumPy 2.5.2. A separate adapter portability fix is required before the 0.1.55
+release; do not replace the frozen document with platform-generated output or
+allowlist platform-specific portfolio hashes.
+
 ## Canonical invocation
 
 Set `PYTHONDONTWRITEBYTECODE=1` and invoke every `preflight`, `run`, and

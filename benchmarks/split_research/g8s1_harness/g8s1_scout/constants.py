@@ -26,10 +26,13 @@ RUNTIME_MODULE_FILES = (
     "schedule.py",
     "summary.py",
 )
+RUNTIME_DATA_FILES = ("p200.json",)
+RUNTIME_FILES = (*RUNTIME_MODULE_FILES, *RUNTIME_DATA_FILES)
+CANONICAL_P200_FILE = RUNTIME_DATA_FILES[0]
 BOOTSTRAP_RELATIVE = "benchmarks/split_research/g8s1_scout_bootstrap.py"
 RUNBOOK_RELATIVE = "benchmarks/split_research/G8S1_SCOUT_RUNBOOK.md"
 RUNBOOK_LF_NORMALIZED_SHA256 = (
-    "e393765efa18cf031a0bdc60ebf6475cd3e79a93b363757cb3679dae89d26e45"
+    "87e1418458ae3c695071488fc0133539f84edadf1f1f5f39144ffe4b4ef1585a"
 )
 
 TASKS = (
@@ -87,6 +90,10 @@ def harness_package_root() -> Path:
 
 def manifest_path() -> Path:
     return source_root() / "benchmarks" / "split_research" / "G8S1_SCOUT_MANIFEST.json"
+
+
+def canonical_p200_path() -> Path:
+    return harness_package_root() / CANONICAL_P200_FILE
 
 
 def bootstrap_path() -> Path:
