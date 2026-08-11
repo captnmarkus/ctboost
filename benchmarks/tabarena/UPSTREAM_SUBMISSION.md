@@ -17,8 +17,11 @@ rejects the former override-method model API. Add:
 5. Lazy `CTBoostModel` export in `packages/tabarena/src/tabarena/models/__init__.py`
 6. `ctboost = ["ctboost>=0.1.54"]` and `tabarena[ctboost]` in the `extended`
    extra in `packages/tabarena/pyproject.toml`
-7. `CTB` in the tree-model prefix/display mappings in
-   `packages/tabarena/src/tabarena/website/website_format.py`
+7. `CTB` in the tree-model family mapping in
+   `packages/tabarena/src/tabarena/website/website_format.py`. Do not add it to
+   the raw display-prefix rename map: `ag_name="CTBoost"` already supplies the
+   display name, and a raw `CTB -> CTBoost` replacement corrupts `CTBoost` into
+   `CTBoostoost`.
 8. A small-iteration `CTBoost` entry in `tests/tabarena/models/smoke_configs.py`
 
 After a complete run is processed and hosted, maintainers add the verified method
@@ -30,12 +33,16 @@ The wrapper contract is:
 - `ag_key = "CTB"`, `ag_name = "CTBoost"`, `ag_priority = 65`
 - `_supported_problem_types = ["binary", "multiclass", "regression"]`
 - `_default_auxiliary_params_extra` for bool/int/float/category/object inputs
+- native pandas category/object/string, missing-value, boolean, and unseen-value
+  semantics preserved without sentinel replacement or string coercion
 - `default_resources_physical_cores_only = True`, CPU compute
 - AutoGluon validation data used for CTBoost early stopping
 - `num_cpus` applied through `CTBOOST_HIST_THREADS`
 - `random_seed` supplied by AutoGluon's fold/config seed contract
 - finite `time_limit` enforced by the between-tree callback
 - a conservative static memory estimate for fold-parallel scheduling
+- no explicit warm-up: after AutoGluon, NumPy, and pandas are loaded, CTBoost's
+  import is small and it has no JIT or separate warm-up API
 
 The HPO generator is the frozen deterministic portfolio in `ctboost_model.py`:
 one manual default plus a progressively ordered 200-point Latin-hypercube
