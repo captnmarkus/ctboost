@@ -31,7 +31,7 @@ _ADAPTER = _SOURCE_ROOT / "benchmarks" / "tabarena" / "ctboost_model.py"
 _EXPECTED_RUNTIME_HASHES = {
     "__init__.py": "52c4a1b7167d24027e1b301423f84d7d5656290c79b447e020cfce9b5c6b34a1",
     "__main__.py": "01f5b72fa7c1e25c30001eaf3725aa2bb4f4d6a522da656ca4464f6b52d4e780",
-    "constants.py": "2935aae37e7b6c667e95b25710898b53c08a9e5454b22d2f75e9326895cc4bd1",
+    "constants.py": "4615892d19a9b5457f172007eb05db9e3da60770e08f65abcadacae25c1cb9c1",
     "identity.py": "5f82c0c7adad36eb5229358b2c71df8510a418bf27092d4532df3d75f181dc06",
     "loader.py": "c00e18a318ef3f3ff6765fe003dedcd6013c464c76d65581c62a279689567efd",
     "models.py": "855d93a1d810a9d73e16f193366bd6fbf8ca39d7084bdf2943f079c96ecfc901",
@@ -43,7 +43,7 @@ _EXPECTED_ADAPTER_SHA256 = (
     "4d16ec2d72ad2f208ec7d5e27b59f7e87dd423704c9b538bacb5aa38a947f7fb"
 )
 _EXPECTED_RUNBOOK_SHA256 = (
-    "87e1418458ae3c695071488fc0133539f84edadf1f1f5f39144ffe4b4ef1585a"
+    "d97454c737df423504291d39352d8f07df0d355de7af8962a8140dafb0551d3d"
 )
 
 

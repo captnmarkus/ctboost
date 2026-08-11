@@ -47,12 +47,14 @@ identical configuration/key order and exact non-floating values; every float
 must be equal or at most one IEEE-754 binary64 ULP away. It is never used as
 the schedule source.
 
-This boundary is required because the current adapter's logarithmic sampler
-uses the host `libm`. Linux and Windows differ by one ULP at P200 cells 87
-(`ctr_prior_strength`) and 197 (`alpha`), despite identical source, seed, and
-NumPy 2.5.2. A separate adapter portability fix is required before the 0.1.55
-release; do not replace the frozen document with platform-generated output or
-allowlist platform-specific portfolio hashes.
+Before PR #17, the adapter's logarithmic sampler exposed host `libm` drift:
+Linux and Windows differed by one ULP at P200 cells 87 (`ctr_prior_strength`)
+and 197 (`alpha`), despite identical source, seed, and NumPy 2.5.2. PR #17,
+now included in current `master`, supplies exact tuple canonicalization for
+those two frozen samples. The hash-sealed P200 document remains the schedule
+source, and the live adapter generator remains audited against it; do not
+replace the document with platform-generated output or allowlist
+platform-specific portfolio hashes.
 
 ## Canonical invocation
 
