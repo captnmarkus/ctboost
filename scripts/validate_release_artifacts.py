@@ -37,6 +37,24 @@ _MAX_SDIST_MEMBERS = 20_000
 _MAX_SDIST_UNCOMPRESSED_BYTES = 512 * 1024 * 1024
 _MAX_METADATA_BYTES = 2 * 1024 * 1024
 _MAX_CMAKE_BYTES = 2 * 1024 * 1024
+_REQUIRED_GROUPED_SCOUT_FILES = frozenset(
+    {
+        "benchmarks/tabarena/ctboost_model.py",
+        "benchmarks/split_research/TABARENA_GROUPED_SCOUT.md",
+        "benchmarks/split_research/G8S1_SCOUT_MANIFEST.json",
+        "benchmarks/split_research/G8S1_SCOUT_RUNBOOK.md",
+        "benchmarks/split_research/g8s1_scout_bootstrap.py",
+        "benchmarks/split_research/g8s1_harness/g8s1_scout/__init__.py",
+        "benchmarks/split_research/g8s1_harness/g8s1_scout/__main__.py",
+        "benchmarks/split_research/g8s1_harness/g8s1_scout/constants.py",
+        "benchmarks/split_research/g8s1_harness/g8s1_scout/identity.py",
+        "benchmarks/split_research/g8s1_harness/g8s1_scout/loader.py",
+        "benchmarks/split_research/g8s1_harness/g8s1_scout/models.py",
+        "benchmarks/split_research/g8s1_harness/g8s1_scout/schedule.py",
+        "benchmarks/split_research/g8s1_harness/g8s1_scout/summary.py",
+        "benchmarks/split_research/g8s1_harness/g8s1_scout/p200.json",
+    }
+)
 _REQUIRED_SDIST_FILES = frozenset(
     {
         "CMakeLists.txt",
@@ -49,7 +67,7 @@ _REQUIRED_SDIST_FILES = frozenset(
         "scripts/prepare_cuda_runtime_license.py",
         "scripts/validate_release_artifacts.py",
     }
-)
+).union(_REQUIRED_GROUPED_SCOUT_FILES)
 _RELEASE_SCRIPT_FILES = frozenset(
     {
         "scripts/prepare_cuda_runtime_license.py",
@@ -351,6 +369,16 @@ def _wheel_errors(
             )
             for duplicate_name in duplicate_names:
                 errors.append(f"duplicate wheel member path: {duplicate_name!r}")
+
+            missing_scout_files = sorted(
+                required
+                for required in _REQUIRED_GROUPED_SCOUT_FILES
+                if required not in names or wheel.getinfo(required).is_dir()
+            )
+            for missing_scout_file in missing_scout_files:
+                errors.append(
+                    f"wheel is missing required grouped scout file {missing_scout_file}"
+                )
 
             try:
                 wheel_metadata_name = _single_entry(names, ".dist-info/WHEEL")
