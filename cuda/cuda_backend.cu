@@ -10,6 +10,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <deque>
 #include <limits>
 #include <stdexcept>
 #include <string>
@@ -140,13 +141,38 @@ class DeviceGuard {
     CTBOOST_CUDA_CHECK(cudaSetDevice(device_id));
   }
 
-  ~DeviceGuard() noexcept { cudaSetDevice(previous_device_); }
+  ~DeviceGuard() noexcept { (void)cudaSetDevice(previous_device_); }
 
  private:
   int previous_device_{0};
 };
 
+class CurrentDeviceRestorer {
+ public:
+  CurrentDeviceRestorer() noexcept : valid_(cudaGetDevice(&device_) == cudaSuccess) {}
+  CurrentDeviceRestorer(const CurrentDeviceRestorer&) = delete;
+  CurrentDeviceRestorer& operator=(const CurrentDeviceRestorer&) = delete;
+  CurrentDeviceRestorer(CurrentDeviceRestorer&&) = delete;
+  CurrentDeviceRestorer& operator=(CurrentDeviceRestorer&&) = delete;
+
+  ~CurrentDeviceRestorer() noexcept {
+    if (valid_) {
+      (void)cudaSetDevice(device_);
+    }
+  }
+
+ private:
+  int device_{0};
+  bool valid_{false};
+};
+
 struct DeviceWorkspace {
+  DeviceWorkspace() = default;
+  DeviceWorkspace(const DeviceWorkspace&) = delete;
+  DeviceWorkspace& operator=(const DeviceWorkspace&) = delete;
+  DeviceWorkspace(DeviceWorkspace&&) = delete;
+  DeviceWorkspace& operator=(DeviceWorkspace&&) = delete;
+
   int device_id{0};
   std::vector<std::size_t> assigned_features;
   thrust::device_vector<std::uint8_t> bins_u8;
@@ -178,8 +204,13 @@ struct DeviceWorkspace {
   thrust::device_vector<std::uint32_t> chunk_bin_counts;
   thrust::device_vector<std::uint32_t> chunk_output_offsets;
 
-  ~DeviceWorkspace() noexcept { cudaSetDevice(device_id); }
+  ~DeviceWorkspace() noexcept { (void)cudaSetDevice(device_id); }
 };
+
+static_assert(!std::is_copy_constructible_v<DeviceWorkspace>);
+static_assert(!std::is_copy_assignable_v<DeviceWorkspace>);
+static_assert(!std::is_move_constructible_v<DeviceWorkspace>);
+static_assert(!std::is_move_assignable_v<DeviceWorkspace>);
 
 struct GpuHistogramWorkspace {
   std::size_t num_rows{0};
@@ -190,7 +221,7 @@ struct GpuHistogramWorkspace {
   std::uint8_t bin_index_bytes{2};
   std::vector<std::size_t> feature_offsets;
   std::vector<int> device_ids;
-  std::vector<DeviceWorkspace> devices;
+  std::deque<DeviceWorkspace> devices;
 };
 
 namespace {
@@ -475,6 +506,10 @@ std::string CudaRuntimeVersionString() {
 }
 
 void DestroyGpuHistogramWorkspace(GpuHistogramWorkspace* workspace) noexcept {
+  if (workspace == nullptr) {
+    return;
+  }
+  CurrentDeviceRestorer restore_caller_device;
   delete workspace;
 }
 
@@ -494,8 +529,10 @@ GpuHistogramWorkspacePtr CreateGpuHistogramWorkspace(const HistMatrix& hist,
     throw std::invalid_argument("GPU histogram bins must have num_rows * num_cols elements");
   }
 
+  CurrentDeviceRestorer restore_caller_device;
   try {
-    auto workspace = std::make_unique<GpuHistogramWorkspace>();
+    GpuHistogramWorkspacePtr workspace(new GpuHistogramWorkspace,
+                                       DestroyGpuHistogramWorkspace);
     workspace->num_rows = hist.num_rows;
     workspace->num_features = hist.num_cols;
     workspace->bin_index_bytes = hist.bin_storage_bytes();
@@ -537,7 +574,7 @@ GpuHistogramWorkspacePtr CreateGpuHistogramWorkspace(const HistMatrix& hist,
           "GPU histogram workspace could not assign features to any CUDA device");
     }
 
-    return GpuHistogramWorkspacePtr(workspace.release(), DestroyGpuHistogramWorkspace);
+    return workspace;
   } catch (const thrust::system_error& error) {
     throw std::runtime_error(std::string("CUDA thrust failure: ") + error.what());
   }
