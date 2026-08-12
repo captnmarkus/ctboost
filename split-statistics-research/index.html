@@ -1266,10 +1266,22 @@ non-negotiable if any target-derived ordering is exposed.</p>
 </tr>
 </tbody>
 </table>
-<p>The next gate for grouped 8 is a native, opt-in implementation followed by the
+<p>The required evaluation sequence for grouped 8 is a native, opt-in
+implementation followed by the
 <a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/split_research/EXTERNAL_PANEL.md">pre-registered external panel</a>
-and only then a frozen TabArena ablation. Synthetic results alone are
-insufficient to change CTBoost defaults or claim an Elo improvement.</p>
+and, only if every panel promotion gate passes, a frozen TabArena ablation.
+Synthetic results alone are insufficient to change CTBoost defaults or claim
+an Elo improvement.</p>
+<p>The final-source CTBoost 0.1.55 external panel is now complete. Its
+<a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/split_research/results/grouped_external_panel_v2_fb65b685.json">sanitized release evidence</a>
+records 294/294 successful isolated fits and 42/42 exact implicit-control
+checks. Grouped-8 won nine of twelve decision datasets and improved median
+primary loss by 5.63%, but its 1.1708 median paired fit-time ratio exceeded the
+frozen 1.15 ceiling. Because every promotion gate is conjunctive, grouped-8
+does not advance; the frozen TabArena scout was not triggered under the
+protocol and therefore was not run. This 0.1.55 result supersedes the earlier
+0.1.54 positive artifact only for release qualification; the earlier sealed
+result remains historical evidence.</p>
 
 
 
