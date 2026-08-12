@@ -40,6 +40,16 @@ python -m benchmarks.split_research.external_panel preflight
 The result-producing `run` command is documented in the frozen panel ledger and
 is intentionally not part of the synthetic reference experiment above.
 
+The final-source CTBoost 0.1.55 panel completed all 294 jobs, with all 42
+implicit-control checks exact. Its
+[sanitized release evidence](results/grouped_external_panel_v2_fb65b685.json)
+records nine wins, no ties, three losses, and a 5.63% median primary-loss
+improvement, but the 1.1708 median paired fit-time ratio exceeded the frozen
+1.15 ceiling. Grouped-8 therefore does not advance; the TabArena scout was not
+triggered under the frozen protocol and therefore was not run. This result
+supersedes the earlier 0.1.54 positive artifact only for 0.1.55 release
+qualification; the earlier sealed artifact remains historical evidence.
+
 The original [multiclass bounded-screen protocol](MULTICLASS_PROTOCOL.md)
 separately froze a reference-only comparison of the current highest-variance
 class coordinate against a full K-1 quadratic score test. Its completed v1
