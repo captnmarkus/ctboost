@@ -4,6 +4,14 @@ CTBoost's native distributed coordinator uses authenticated per-run TCP roots. D
 and Ray adapters distribute data shards into that training path. Tokens are ephemeral
 and removed from persisted model state.
 
+Install only the integration you need:
+
+```bash
+python -m pip install "ctboost[dask]"
+python -m pip install "ctboost[ray]"
+python -m pip install "ctboost[spark]"
+```
+
 ## Dask
 
 ```python

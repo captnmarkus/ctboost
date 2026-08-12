@@ -17,32 +17,44 @@ help(CTBoostClassifier.fit)
 - `CTBoostClassifier`
 - `CTBoostRanker`
 - `CTBoostMultiOutputRegressor`
-- `CTBoostMultiOutputClassifier`
+- `CTBoostMultiLabelClassifier`
 - `CTBoostAFTSurvivalRegressor`
 
-The sklearn-style estimators provide `fit`, `predict`, staged prediction, persistence,
-feature importance, SHAP, plotting, grid/random search, feature selection, and estimator
-comparison. Classifiers also provide `predict_proba`; positive-link regressors provide
-raw and response-scale prediction helpers.
+`CTBoostAFTRegressor` is an alias of `CTBoostAFTSurvivalRegressor`. The
+`CBoostClassifier`, `CBoostRegressor`, and `CBoostRanker` names are compatibility
+aliases for their `CTBoost...` counterparts.
+
+The primary estimators provide `fit`, `predict`, staged prediction, persistence,
+feature importance, SHAP, plotting, grid/random search, feature selection, and
+estimator comparison. Classifiers also provide `predict_proba`; positive-link
+regressors provide raw and response-scale prediction helpers. The independent-output
+and survival wrappers expose the subset appropriate to their target semantics. See
+[Training workflows](../guides/training.md) for custom objectives, callbacks, model
+selection, multi-output targets, and AFT censoring.
 
 ## Low-level API
 
-- `Pool` and `PoolBatch`
-- `train`
-- `cv`
-- `Booster`
-- `FeaturePipeline`
-- inference-manifest and export helpers
+- Data: `Pool`, `PoolBatch`, `pool_from_batches`, `FeaturePipeline`,
+  `PreparedTrainingData`, `prepare_training_data`, and `prepare_pool`
+- Training: `train`, `cv`, `Booster`, and `load_model`
+- Customization: `ObjectiveSpec`, `make_objective`, `EvalMetricSpec`,
+  `make_eval_metric`, `TrainingCallbackEnv`, `log_evaluation`, and
+  `checkpoint_callback`
+- Inference contracts: `load_exported_predictor`, `load_inference_manifest`, and
+  `validate_inference_manifest`
+- Runtime identity: `build_info` and `__version__`
 
 Use the low-level API when you need explicit Pools, ranking groups, survival metadata,
-distributed roots, custom objectives, or direct booster-state control.
+distributed roots, custom objectives, streaming input, or direct booster-state control.
+Most of these names are available directly from `ctboost`; inspect the corresponding
+object for its installed-version signature.
 
-## Optional modules
+## Framework integrations
 
 - `ctboost.dask`
 - `ctboost.ray`
 - `ctboost.spark`
-- `ctboost.streaming`
 
 These modules import their framework dependencies lazily and provide actionable errors
-when an optional extra is absent.
+when an optional extra is absent. Streaming helpers are part of the base package under
+`ctboost.streaming` and are also exported as `PoolBatch` and `pool_from_batches`.

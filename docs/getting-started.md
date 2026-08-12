@@ -50,6 +50,31 @@ model.fit(
 predictions = model.predict(X_test)
 ```
 
+## Low-level training
+
+Use `Pool` and `train` when you need explicit ranking groups, survival
+metadata, custom objectives, distributed roots, or direct booster state:
+
+```python
+import numpy as np
+import ctboost
+
+X = np.array([[0.0, 1.0], [1.0, 0.0], [0.5, 0.5]], dtype=np.float32)
+y = np.array([0.0, 1.0, 0.5], dtype=np.float32)
+
+pool = ctboost.Pool(X, y)
+booster = ctboost.train(
+    pool,
+    {"objective": "RMSE", "learning_rate": 0.1, "max_depth": 3},
+    num_boost_round=32,
+)
+predictions = booster.predict(pool)
+```
+
+Labels are optional for inference-only Pools. See the
+[API reference](reference/api.md) and [training workflows](guides/training.md)
+for custom metrics, schedules, wrappers, and persistence.
+
 ## Fixed-structure leaf refinement
 
 For single-output objectives, `leaf_estimation_iterations` can run 1–5 Newton
@@ -123,3 +148,14 @@ print(ctboost.build_info())
 
 `build_info()` reports the compiled version, compiler, C++ standard, and whether
 the installed wheel contains CUDA support.
+
+## Examples
+
+The repository includes local, auditable examples under
+[`demo/`](https://github.com/captnmarkus/ctboost/tree/master/demo):
+
+- `kaggle_titanic.py` for binary classification;
+- `kaggle_house_prices.py` for regression.
+
+Their expected data layouts and commands are documented in
+[`demo/README.md`](https://github.com/captnmarkus/ctboost/blob/master/demo/README.md).
