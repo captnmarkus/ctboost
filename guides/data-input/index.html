@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://captnmarkus.github.io/ctboost/guides/categorical-text/">
+        <link rel="canonical" href="https://captnmarkus.github.io/ctboost/guides/data-input/">
       
       
-        <link rel="prev" href="../data-input/">
+        <link rel="prev" href="../training/">
       
       
-        <link rel="next" href="../split-statistics/">
+        <link rel="next" href="../categorical-text/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -24,7 +24,7 @@
     
     
       
-        <title>Categorical, text, and embeddings - CTBoost</title>
+        <title>Data input and schemas - CTBoost</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#categorical-text-and-embedding-features" class="md-skip">
+        <a href="#data-input" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Categorical, text, and embeddings
+              Data input and schemas
             
           </span>
         </div>
@@ -475,29 +475,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../data-input/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    Data input and schemas
-    
-  </span>
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -515,7 +492,7 @@
   
   
   <span class="md-ellipsis">
-    Categorical, text, and embeddings
+    Data input and schemas
     
   </span>
   
@@ -528,7 +505,7 @@
   
   
   <span class="md-ellipsis">
-    Categorical, text, and embeddings
+    Data input and schemas
     
   </span>
   
@@ -551,27 +528,27 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#categorical-features" class="md-nav__link">
+  <a href="#eager-matrices-and-columnar-frames" class="md-nav__link">
     <span class="md-ellipsis">
-      Categorical features
+      Eager matrices and columnar frames
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#text-features" class="md-nav__link">
+  <a href="#streaming-numeric-batches" class="md-nav__link">
     <span class="md-ellipsis">
-      Text features
+      Streaming numeric batches
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#embeddings" class="md-nav__link">
+  <a href="#schema-metadata" class="md-nav__link">
     <span class="md-ellipsis">
-      Embeddings
+      Schema metadata
     </span>
   </a>
   
@@ -581,6 +558,29 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../categorical-text/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Categorical, text, and embeddings
+    
+  </span>
+  
+
+      </a>
     </li>
   
 
@@ -836,27 +836,27 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#categorical-features" class="md-nav__link">
+  <a href="#eager-matrices-and-columnar-frames" class="md-nav__link">
     <span class="md-ellipsis">
-      Categorical features
+      Eager matrices and columnar frames
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#text-features" class="md-nav__link">
+  <a href="#streaming-numeric-batches" class="md-nav__link">
     <span class="md-ellipsis">
-      Text features
+      Streaming numeric batches
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#embeddings" class="md-nav__link">
+  <a href="#schema-metadata" class="md-nav__link">
     <span class="md-ellipsis">
-      Embeddings
+      Schema metadata
     </span>
   </a>
   
@@ -881,50 +881,57 @@
   
 
 
-<h1 id="categorical-text-and-embedding-features">Categorical, text, and embedding features<a class="headerlink" href="#categorical-text-and-embedding-features" title="Permanent link">&para;</a></h1>
-<p>CTBoost can fit a preprocessing pipeline together with the booster. The pipeline is
-serialized with the estimator and reused for validation and prediction.</p>
-<p>These transformations add or prepare input features; they do not replace the
-conditional-inference feature-selection and split-search mechanism used by
-the tree learner.</p>
-<h2 id="categorical-features">Categorical features<a class="headerlink" href="#categorical-features" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">model</span> <span class="o">=</span> <span class="n">CTBoostClassifier</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">cat_features</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;city&quot;</span><span class="p">,</span> <span class="s2">&quot;segment&quot;</span><span class="p">],</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">ordered_ctr</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">one_hot_max_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">max_cat_threshold</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span>
+<h1 id="data-input">Data input<a class="headerlink" href="#data-input" title="Permanent link">&para;</a></h1>
+<h2 id="eager-matrices-and-columnar-frames">Eager matrices and columnar frames<a class="headerlink" href="#eager-matrices-and-columnar-frames" title="Permanent link">&para;</a></h2>
+<p><code>Pool</code> accepts NumPy and CPU DLPack arrays, pandas DataFrames, SciPy sparse
+matrices, PyArrow tables, Polars DataFrames, and cuDF DataFrames. Arrow and
+Polars support can be installed together with:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;ctboost[dataframes]&quot;</span>
 </code></pre></div>
-<p>Available categorical transforms include one-hot values, smoothed target statistics,
-ordered CTRs, feature combinations, and per-feature CTR configuration. Unknown and
-missing values have deterministic routes.</p>
-<p>Fitted pipelines record <code>categorical_key_encoding_version</code> in their state and
-inference manifest. New fits use version 2, which keeps actual missing values,
-literal strings such as <code>__ctboost_missing__</code> and <code>__ctboost_other__</code>, synthetic
-"other" buckets, backslashes, and categorical-combination delimiters distinct.
-Pipelines saved before this field existed load as version 1 and retain their
-historical key behavior for prediction and warm starts. CTBoost model documents use
-schema version 2 for new saves while the current runtime continues to read schema
-version 1 artifacts.</p>
-<h2 id="text-features">Text features<a class="headerlink" href="#text-features" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">model</span> <span class="o">=</span> <span class="n">CTBoostClassifier</span><span class="p">(</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">text_features</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">],</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">text_tokenizer</span><span class="o">=</span><span class="s2">&quot;word&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">text_ngram_range</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">text_lowercase</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">text_feature_calcer</span><span class="o">=</span><span class="s2">&quot;tfidf&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">text_min_token_count</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">text_max_dictionary_size</span><span class="o">=</span><span class="mi">50_000</span><span class="p">,</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="p">)</span>
+<p>Pass feature names and training metadata when constructing the pool. The same
+schema is then available to training, persistence, and deployment tooling.</p>
+<h2 id="streaming-numeric-batches">Streaming numeric batches<a class="headerlink" href="#streaming-numeric-batches" title="Permanent link">&para;</a></h2>
+<p>For a one-pass source, build a disk-backed numeric pool without retaining every
+source batch in memory:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ctboost</span><span class="w"> </span><span class="kn">import</span> <span class="n">PoolBatch</span><span class="p">,</span> <span class="n">pool_from_batches</span><span class="p">,</span> <span class="n">train</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="k">def</span><span class="w"> </span><span class="nf">batches</span><span class="p">():</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="k">for</span> <span class="n">features</span><span class="p">,</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">source</span><span class="p">:</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>        <span class="k">yield</span> <span class="n">PoolBatch</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="n">pool</span> <span class="o">=</span> <span class="n">pool_from_batches</span><span class="p">(</span><span class="n">batches</span><span class="p">(),</span> <span class="n">directory</span><span class="o">=</span><span class="s2">&quot;./ctboost-spill&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="n">model</span> <span class="o">=</span> <span class="n">train</span><span class="p">(</span><span class="n">pool</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;iterations&quot;</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span> <span class="s2">&quot;depth&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">})</span>
 </code></pre></div>
-<p>Tokenizers are intentionally deterministic and dependency-free. CTBoost currently
-provides word, whitespace, and character tokenization; count, binary, and raw
-count-times-IDF features. It does not claim CatBoost's tokenizer/dictionary breadth.</p>
-<h2 id="embeddings">Embeddings<a class="headerlink" href="#embeddings" title="Permanent link">&para;</a></h2>
-<p>Fixed-width embedding columns can produce descriptive statistics and optional
-target-supervised projections. Supervised projections must be fitted only on training
-data. They are regularized correlation/ridge-style transforms, not ordered or
-leave-one-out target encoders.</p>
+<p>Batch items may also be <code>(data, label)</code> tuples, mappings, existing pools, or
+feature matrices. The column count, feature names, categorical indices, and
+baseline width must agree across batches. Labels, weights, group metadata, and
+baselines must each be present in every batch or absent from every batch.</p>
+<p>The streaming bridge is numeric. Apply categorical, text, or embedding
+preprocessing before yielding batches. <code>Pool.from_batches(...)</code> is the
+equivalent convenience constructor.</p>
+<h2 id="schema-metadata">Schema metadata<a class="headerlink" href="#schema-metadata" title="Permanent link">&para;</a></h2>
+<p>Attach stable names, roles, and application metadata directly to a pool:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">ctboost</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">pool</span> <span class="o">=</span> <span class="n">ctboost</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">X</span><span class="p">,</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">y</span><span class="p">,</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">feature_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;score&quot;</span><span class="p">,</span> <span class="s2">&quot;ratio&quot;</span><span class="p">,</span> <span class="s2">&quot;city_code&quot;</span><span class="p">],</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">column_roles</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;numeric&quot;</span><span class="p">,</span> <span class="s2">&quot;numeric&quot;</span><span class="p">,</span> <span class="s2">&quot;categorical&quot;</span><span class="p">],</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">feature_metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;normalized score&quot;</span><span class="p">}},</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="n">categorical_schema</span><span class="o">=</span><span class="p">{</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>        <span class="s2">&quot;city_code&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;categories&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;berlin&quot;</span><span class="p">,</span> <span class="s2">&quot;paris&quot;</span><span class="p">,</span> <span class="s2">&quot;rome&quot;</span><span class="p">]}</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>    <span class="p">},</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="p">)</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="n">booster</span> <span class="o">=</span> <span class="n">ctboost</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">pool</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;objective&quot;</span><span class="p">:</span> <span class="s2">&quot;RMSE&quot;</span><span class="p">},</span> <span class="n">num_boost_round</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="nb">print</span><span class="p">(</span><span class="n">booster</span><span class="o">.</span><span class="n">data_schema</span><span class="p">)</span>
+</code></pre></div>
+<p>The scikit-learn estimators expose the persisted schema through
+<code>data_schema_</code>. Schema metadata also participates in snapshot/resume validation
+and is included in inference manifests.</p>
 
 
 

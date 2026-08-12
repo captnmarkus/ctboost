@@ -10,28 +10,28 @@
       
       
       
-        <link rel="canonical" href="https://captnmarkus.github.io/ctboost/guides/categorical-text/">
+        <link rel="canonical" href="https://captnmarkus.github.io/ctboost/development/">
       
       
-        <link rel="prev" href="../data-input/">
+        <link rel="prev" href="../guides/deployment/">
       
       
-        <link rel="next" href="../split-statistics/">
+        <link rel="next" href="../reference/api/">
       
       
-      <link rel="icon" href="../../assets/images/favicon.png">
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.20">
     
     
       
-        <title>Categorical, text, and embeddings - CTBoost</title>
+        <title>Development - CTBoost</title>
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.e53b48f4.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.e53b48f4.min.css">
       
         
-        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -50,9 +50,9 @@
       
     
     
-      <link rel="stylesheet" href="../../stylesheets/extra.css">
+      <link rel="stylesheet" href="../stylesheets/extra.css">
     
-    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#categorical-text-and-embedding-features" class="md-skip">
+        <a href="#development" class="md-skip">
           Skip to content
         </a>
       
@@ -94,7 +94,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="../.." title="CTBoost" class="md-header__button md-logo" aria-label="CTBoost" data-md-component="logo">
+    <a href=".." title="CTBoost" class="md-header__button md-logo" aria-label="CTBoost" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Categorical, text, and embeddings
+              Development
             
           </span>
         </div>
@@ -232,7 +232,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="../.." title="CTBoost" class="md-nav__button md-logo" aria-label="CTBoost" data-md-component="logo">
+    <a href=".." title="CTBoost" class="md-nav__button md-logo" aria-label="CTBoost" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -262,7 +262,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../.." class="md-nav__link">
+      <a href=".." class="md-nav__link">
         
   
   
@@ -284,7 +284,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../getting-started/" class="md-nav__link">
+      <a href="../getting-started/" class="md-nav__link">
         
   
   
@@ -306,7 +306,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../why-ctboost/" class="md-nav__link">
+      <a href="../why-ctboost/" class="md-nav__link">
         
   
   
@@ -328,7 +328,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../benchmarks/" class="md-nav__link">
+      <a href="../benchmarks/" class="md-nav__link">
         
   
   
@@ -350,7 +350,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../split-statistics-research/" class="md-nav__link">
+      <a href="../split-statistics-research/" class="md-nav__link">
         
   
   
@@ -372,7 +372,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../gpu/" class="md-nav__link">
+      <a href="../gpu/" class="md-nav__link">
         
   
   
@@ -391,10 +391,8 @@
       
   
   
-    
   
   
-  
     
     
       
@@ -421,11 +419,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
         
           
           <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
@@ -441,7 +439,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_7">
             <span class="md-nav__icon md-icon"></span>
             Guides
@@ -455,7 +453,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../training/" class="md-nav__link">
+      <a href="../guides/training/" class="md-nav__link">
         
   
   
@@ -478,7 +476,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../data-input/" class="md-nav__link">
+      <a href="../guides/data-input/" class="md-nav__link">
         
   
   
@@ -498,32 +496,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    Categorical, text, and embeddings
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../guides/categorical-text/" class="md-nav__link">
         
   
   
@@ -534,53 +510,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#categorical-features" class="md-nav__link">
-    <span class="md-ellipsis">
-      Categorical features
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#text-features" class="md-nav__link">
-    <span class="md-ellipsis">
-      Text features
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#embeddings" class="md-nav__link">
-    <span class="md-ellipsis">
-      Embeddings
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -593,7 +522,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../split-statistics/" class="md-nav__link">
+      <a href="../guides/split-statistics/" class="md-nav__link">
         
   
   
@@ -616,7 +545,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../explainability/" class="md-nav__link">
+      <a href="../guides/explainability/" class="md-nav__link">
         
   
   
@@ -639,7 +568,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../distributed/" class="md-nav__link">
+      <a href="../guides/distributed/" class="md-nav__link">
         
   
   
@@ -662,7 +591,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../deployment/" class="md-nav__link">
+      <a href="../guides/deployment/" class="md-nav__link">
         
   
   
@@ -689,10 +618,32 @@
       
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../../development/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -703,6 +654,71 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#install-from-source" class="md-nav__link">
+    <span class="md-ellipsis">
+      Install from source
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#direct-cmake-build" class="md-nav__link">
+    <span class="md-ellipsis">
+      Direct CMake build
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tests-and-distributions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Tests and distributions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      Project layout
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Documentation
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -763,7 +779,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/api/" class="md-nav__link">
+      <a href="../reference/api/" class="md-nav__link">
         
   
   
@@ -786,7 +802,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/compatibility/" class="md-nav__link">
+      <a href="../reference/compatibility/" class="md-nav__link">
         
   
   
@@ -836,27 +852,45 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#categorical-features" class="md-nav__link">
+  <a href="#install-from-source" class="md-nav__link">
     <span class="md-ellipsis">
-      Categorical features
+      Install from source
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#text-features" class="md-nav__link">
+  <a href="#direct-cmake-build" class="md-nav__link">
     <span class="md-ellipsis">
-      Text features
+      Direct CMake build
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#embeddings" class="md-nav__link">
+  <a href="#tests-and-distributions" class="md-nav__link">
     <span class="md-ellipsis">
-      Embeddings
+      Tests and distributions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#project-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      Project layout
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      Documentation
     </span>
   </a>
   
@@ -881,50 +915,61 @@
   
 
 
-<h1 id="categorical-text-and-embedding-features">Categorical, text, and embedding features<a class="headerlink" href="#categorical-text-and-embedding-features" title="Permanent link">&para;</a></h1>
-<p>CTBoost can fit a preprocessing pipeline together with the booster. The pipeline is
-serialized with the estimator and reused for validation and prediction.</p>
-<p>These transformations add or prepare input features; they do not replace the
-conditional-inference feature-selection and split-search mechanism used by
-the tree learner.</p>
-<h2 id="categorical-features">Categorical features<a class="headerlink" href="#categorical-features" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">model</span> <span class="o">=</span> <span class="n">CTBoostClassifier</span><span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">cat_features</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;city&quot;</span><span class="p">,</span> <span class="s2">&quot;segment&quot;</span><span class="p">],</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">ordered_ctr</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">one_hot_max_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">max_cat_threshold</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="p">)</span>
+<h1 id="development">Development<a class="headerlink" href="#development" title="Permanent link">&para;</a></h1>
+<h2 id="install-from-source">Install from source<a class="headerlink" href="#install-from-source" title="Permanent link">&para;</a></h2>
+<p>From a checkout, build and install CTBoost with:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>.
 </code></pre></div>
-<p>Available categorical transforms include one-hot values, smoothed target statistics,
-ordered CTRs, feature combinations, and per-feature CTR configuration. Unknown and
-missing values have deterministic routes.</p>
-<p>Fitted pipelines record <code>categorical_key_encoding_version</code> in their state and
-inference manifest. New fits use version 2, which keeps actual missing values,
-literal strings such as <code>__ctboost_missing__</code> and <code>__ctboost_other__</code>, synthetic
-"other" buckets, backslashes, and categorical-combination delimiters distinct.
-Pipelines saved before this field existed load as version 1 and retain their
-historical key behavior for prediction and warm starts. CTBoost model documents use
-schema version 2 for new saves while the current runtime continues to read schema
-version 1 artifacts.</p>
-<h2 id="text-features">Text features<a class="headerlink" href="#text-features" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">model</span> <span class="o">=</span> <span class="n">CTBoostClassifier</span><span class="p">(</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">text_features</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">],</span>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">text_tokenizer</span><span class="o">=</span><span class="s2">&quot;word&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">text_ngram_range</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">text_lowercase</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">text_feature_calcer</span><span class="o">=</span><span class="s2">&quot;tfidf&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">text_min_token_count</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>    <span class="n">text_max_dictionary_size</span><span class="o">=</span><span class="mi">50_000</span><span class="p">,</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="p">)</span>
+<p>For an editable checkout with the test dependencies:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">&quot;.[dev]&quot;</span>
 </code></pre></div>
-<p>Tokenizers are intentionally deterministic and dependency-free. CTBoost currently
-provides word, whitespace, and character tokenization; count, binary, and raw
-count-times-IDF features. It does not claim CatBoost's tokenizer/dictionary breadth.</p>
-<h2 id="embeddings">Embeddings<a class="headerlink" href="#embeddings" title="Permanent link">&para;</a></h2>
-<p>Fixed-width embedding columns can produce descriptive statistics and optional
-target-supervised projections. Supervised projections must be fitted only on training
-data. They are regularized correlation/ridge-style transforms, not ordered or
-leave-one-out target encoders.</p>
+<p>Force a CPU-only source build on POSIX shells with:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nv">CMAKE_ARGS</span><span class="o">=</span><span class="s2">&quot;-DCTBOOST_ENABLE_CUDA=OFF&quot;</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>.
+</code></pre></div>
+<p>On PowerShell:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nv">$env:CMAKE_ARGS</span><span class="p">=</span><span class="s2">&quot;-DCTBOOST_ENABLE_CUDA=OFF&quot;</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="p">.</span>
+</code></pre></div>
+<p>See <a href="../gpu/">GPU installation</a> before attempting a CUDA source build.</p>
+<h2 id="direct-cmake-build">Direct CMake build<a class="headerlink" href="#direct-cmake-build" title="Permanent link">&para;</a></h2>
+<p>Install the native build and test dependencies, then point CMake at the
+pybind11 package installed for the active Python interpreter:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;pybind11&gt;=2.12,&lt;3&quot;</span><span class="w"> </span>numpy<span class="w"> </span>pandas<span class="w"> </span>scikit-learn<span class="w"> </span>scipy<span class="w"> </span>pytest
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>cmake<span class="w"> </span>-S<span class="w"> </span>.<span class="w"> </span>-B<span class="w"> </span>build<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>-DCMAKE_BUILD_TYPE<span class="o">=</span>Release<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>-DCTBOOST_ENABLE_CUDA<span class="o">=</span>OFF<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span>-Dpybind11_DIR<span class="o">=</span><span class="s2">&quot;</span><span class="k">$(</span>python<span class="w"> </span>-m<span class="w"> </span>pybind11<span class="w"> </span>--cmakedir<span class="k">)</span><span class="s2">&quot;</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>cmake<span class="w"> </span>--build<span class="w"> </span>build<span class="w"> </span>--config<span class="w"> </span>Release<span class="w"> </span>--parallel
+</code></pre></div>
+<p>CTBoost requires CMake 3.24 or newer and a C++17 compiler. Use the same Python
+interpreter for dependency installation, configuration, and tests.</p>
+<h2 id="tests-and-distributions">Tests and distributions<a class="headerlink" href="#tests-and-distributions" title="Permanent link">&para;</a></h2>
+<p>Run the Python suite from the repository root:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pytest<span class="w"> </span>tests
+</code></pre></div>
+<p>Build a source distribution with the <code>build</code> frontend:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>build
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>python<span class="w"> </span>-m<span class="w"> </span>build<span class="w"> </span>--sdist
+</code></pre></div>
+<h2 id="project-layout">Project layout<a class="headerlink" href="#project-layout" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>ctboost/       Python API surface
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>include/       public C++ headers
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>src/core/      core training, data, objectives, trees, and statistics
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>src/bindings/  pybind11 extension bindings
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>cuda/          optional CUDA backend
+<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>tests/         Python test suite
+<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>demo/          local example workflows
+<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>docs/          documentation sources
+</code></pre></div>
+<h2 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h2>
+<p>Install the pinned documentation dependencies and run the same strict build
+used in CI:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--requirement<span class="w"> </span>requirements-docs.txt
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>python<span class="w"> </span>-m<span class="w"> </span>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict
+</code></pre></div>
+<p>For a local preview with automatic rebuilding:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>python<span class="w"> </span>-m<span class="w"> </span>mkdocs<span class="w"> </span>serve
+</code></pre></div>
 
 
 
@@ -983,10 +1028,10 @@ leave-one-out target encoders.</p>
     
     
       
-      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.sections", "navigation.indexes", "navigation.top", "navigation.tracking", "content.code.copy", "search.highlight", "search.suggest", "toc.follow"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.sections", "navigation.indexes", "navigation.top", "navigation.tracking", "content.code.copy", "search.highlight", "search.suggest", "toc.follow"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      <script src="../assets/javascripts/bundle.f55a23d4.min.js"></script>
       
     
   </body>

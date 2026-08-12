@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://captnmarkus.github.io/ctboost/reference/api/">
       
       
-        <link rel="prev" href="../../guides/deployment/">
+        <link rel="prev" href="../../development/">
       
       
         <link rel="next" href="../compatibility/">
@@ -406,6 +406,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -441,6 +445,52 @@
             Guides
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/training/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Training workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/data-input/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data input and schemas
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -568,6 +618,28 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -592,10 +664,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
         
           
-          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
             
   
   
@@ -608,8 +680,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_8">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             Reference
           </label>
@@ -690,9 +762,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#optional-modules" class="md-nav__link">
+  <a href="#framework-integrations" class="md-nav__link">
     <span class="md-ellipsis">
-      Optional modules
+      Framework integrations
     </span>
   </a>
   
@@ -782,9 +854,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#optional-modules" class="md-nav__link">
+  <a href="#framework-integrations" class="md-nav__link">
     <span class="md-ellipsis">
-      Optional modules
+      Framework integrations
     </span>
   </a>
   
@@ -824,33 +896,44 @@ Python's standard help and inspection tools:</p>
 <li><code>CTBoostClassifier</code></li>
 <li><code>CTBoostRanker</code></li>
 <li><code>CTBoostMultiOutputRegressor</code></li>
-<li><code>CTBoostMultiOutputClassifier</code></li>
+<li><code>CTBoostMultiLabelClassifier</code></li>
 <li><code>CTBoostAFTSurvivalRegressor</code></li>
 </ul>
-<p>The sklearn-style estimators provide <code>fit</code>, <code>predict</code>, staged prediction, persistence,
-feature importance, SHAP, plotting, grid/random search, feature selection, and estimator
-comparison. Classifiers also provide <code>predict_proba</code>; positive-link regressors provide
-raw and response-scale prediction helpers.</p>
+<p><code>CTBoostAFTRegressor</code> is an alias of <code>CTBoostAFTSurvivalRegressor</code>. The
+<code>CBoostClassifier</code>, <code>CBoostRegressor</code>, and <code>CBoostRanker</code> names are compatibility
+aliases for their <code>CTBoost...</code> counterparts.</p>
+<p>The primary estimators provide <code>fit</code>, <code>predict</code>, staged prediction, persistence,
+feature importance, SHAP, plotting, grid/random search, feature selection, and
+estimator comparison. Classifiers also provide <code>predict_proba</code>; positive-link
+regressors provide raw and response-scale prediction helpers. The independent-output
+and survival wrappers expose the subset appropriate to their target semantics. See
+<a href="../../guides/training/">Training workflows</a> for custom objectives, callbacks, model
+selection, multi-output targets, and AFT censoring.</p>
 <h2 id="low-level-api">Low-level API<a class="headerlink" href="#low-level-api" title="Permanent link">&para;</a></h2>
 <ul>
-<li><code>Pool</code> and <code>PoolBatch</code></li>
-<li><code>train</code></li>
-<li><code>cv</code></li>
-<li><code>Booster</code></li>
-<li><code>FeaturePipeline</code></li>
-<li>inference-manifest and export helpers</li>
+<li>Data: <code>Pool</code>, <code>PoolBatch</code>, <code>pool_from_batches</code>, <code>FeaturePipeline</code>,
+  <code>PreparedTrainingData</code>, <code>prepare_training_data</code>, and <code>prepare_pool</code></li>
+<li>Training: <code>train</code>, <code>cv</code>, <code>Booster</code>, and <code>load_model</code></li>
+<li>Customization: <code>ObjectiveSpec</code>, <code>make_objective</code>, <code>EvalMetricSpec</code>,
+  <code>make_eval_metric</code>, <code>TrainingCallbackEnv</code>, <code>log_evaluation</code>, and
+  <code>checkpoint_callback</code></li>
+<li>Inference contracts: <code>load_exported_predictor</code>, <code>load_inference_manifest</code>, and
+  <code>validate_inference_manifest</code></li>
+<li>Runtime identity: <code>build_info</code> and <code>__version__</code></li>
 </ul>
 <p>Use the low-level API when you need explicit Pools, ranking groups, survival metadata,
-distributed roots, custom objectives, or direct booster-state control.</p>
-<h2 id="optional-modules">Optional modules<a class="headerlink" href="#optional-modules" title="Permanent link">&para;</a></h2>
+distributed roots, custom objectives, streaming input, or direct booster-state control.
+Most of these names are available directly from <code>ctboost</code>; inspect the corresponding
+object for its installed-version signature.</p>
+<h2 id="framework-integrations">Framework integrations<a class="headerlink" href="#framework-integrations" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>ctboost.dask</code></li>
 <li><code>ctboost.ray</code></li>
 <li><code>ctboost.spark</code></li>
-<li><code>ctboost.streaming</code></li>
 </ul>
 <p>These modules import their framework dependencies lazily and provide actionable errors
-when an optional extra is absent.</p>
+when an optional extra is absent. Streaming helpers are part of the base package under
+<code>ctboost.streaming</code> and are also exported as <code>PoolBatch</code> and <code>pool_from_batches</code>.</p>
 
 
 

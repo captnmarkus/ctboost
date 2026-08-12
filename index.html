@@ -464,6 +464,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -499,6 +503,52 @@
             Guides
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="guides/training/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Training workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="guides/data-input/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data input and schemas
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -628,6 +678,28 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     
     
       
@@ -648,10 +720,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
         
           
-          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
             
   
   
@@ -664,8 +736,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_8">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             Reference
           </label>
@@ -790,8 +862,9 @@
 <h1 id="conditional-inference-boosted">Conditional inference, boosted<a class="headerlink" href="#conditional-inference-boosted" title="Permanent link">&para;</a></h1>
 <div class="ctb-hero">
 <p>CTBoost is a gradient-boosting library built around <strong>conditional-inference trees</strong>.
-It combines statistically controlled split selection with a familiar Python and
-scikit-learn interface, native C++ training, and optional CUDA acceleration.</p>
+It combines alpha-stopped feature-test selection, optional per-node Bonferroni
+adjustment, a familiar Python and scikit-learn interface, native C++ training,
+and optional CUDA acceleration.</p>
 <p><a class="md-button md-button--primary" href="getting-started/">Install CTBoost</a>
 <a class="md-button" href="benchmarks/">See benchmark status</a></p>
 </div>
@@ -847,11 +920,7 @@ scikit-learn helpers, and Dask/Ray/Spark integration surfaces.</p>
 <a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="p">)</span>
 <a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
 <a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="n">probability</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="n">explanation</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_feature_importance</span><span class="p">(</span>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>    <span class="n">data</span><span class="o">=</span><span class="n">X_test</span><span class="p">,</span>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;ShapValues&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    <span class="n">reference_data</span><span class="o">=</span><span class="n">X_train</span><span class="p">,</span>
-<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="p">)</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="n">explanation</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict_shap_values</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">X_train</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="where-to-go-next">Where to go next<a class="headerlink" href="#where-to-go-next" title="Permanent link">&para;</a></h2>
 <ul>

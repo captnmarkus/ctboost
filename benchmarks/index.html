@@ -388,9 +388,33 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#tabarena-adapter-smoke" class="md-nav__link">
+    <span class="md-ellipsis">
+      TabArena adapter smoke
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="TabArena adapter smoke">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#smoke-task-metrics" class="md-nav__link">
     <span class="md-ellipsis">
       Smoke-task metrics
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#grouped-split-statistic-qualification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Grouped split-statistic qualification
     </span>
   </a>
   
@@ -499,6 +523,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -534,6 +562,52 @@
             Guides
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/training/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Training workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/data-input/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data input and schemas
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -663,6 +737,28 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     
     
       
@@ -683,10 +779,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
         
           
-          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
             
   
   
@@ -699,8 +795,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_8">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             Reference
           </label>
@@ -796,9 +892,33 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#tabarena-adapter-smoke" class="md-nav__link">
+    <span class="md-ellipsis">
+      TabArena adapter smoke
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="TabArena adapter smoke">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
   <a href="#smoke-task-metrics" class="md-nav__link">
     <span class="md-ellipsis">
       Smoke-task metrics
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#grouped-split-statistic-qualification" class="md-nav__link">
+    <span class="md-ellipsis">
+      Grouped split-statistic qualification
     </span>
   </a>
   
@@ -857,6 +977,13 @@
 
 <h1 id="benchmarks">Benchmarks<a class="headerlink" href="#benchmarks" title="Permanent link">&para;</a></h1>
 <h2 id="current-public-evidence-status">Current public-evidence status<a class="headerlink" href="#current-public-evidence-status" title="Permanent link">&para;</a></h2>
+<p>CTBoost has two separate evidence tracks. They must not be combined into one
+score:</p>
+<ol>
+<li>a small TabArena integration smoke test for the ordinary adapter; and</li>
+<li>a pre-registered external panel for the opt-in grouped split statistic.</li>
+</ol>
+<h3 id="tabarena-adapter-smoke">TabArena adapter smoke<a class="headerlink" href="#tabarena-adapter-smoke" title="Permanent link">&para;</a></h3>
 <p>CTBoost has a committed adapter for the official TabArena protocol. It delegates
 folds, task metrics, bagging, tuning, ensembling, timing, and memory measurement to
 TabArena rather than recreating them locally.</p>
@@ -901,7 +1028,7 @@ TabArena rather than recreating them locally.</p>
 dataset produce extremely wide uncertainty. CTBoost does not yet have an official
 full TabArena Elo.</p>
 </div>
-<h3 id="smoke-task-metrics">Smoke-task metrics<a class="headerlink" href="#smoke-task-metrics" title="Permanent link">&para;</a></h3>
+<h4 id="smoke-task-metrics">Smoke-task metrics<a class="headerlink" href="#smoke-task-metrics" title="Permanent link">&para;</a></h4>
 <table>
 <thead>
 <tr>
@@ -945,6 +1072,20 @@ full TabArena Elo.</p>
 <p>The sanitized <a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/smoke_fd187da.json">machine-readable smoke record</a>
 contains the exact per-split metrics, timing, memory, package versions, and commit
 identities without machine-local artifact paths.</p>
+<h3 id="grouped-split-statistic-qualification">Grouped split-statistic qualification<a class="headerlink" href="#grouped-split-statistic-qualification" title="Permanent link">&para;</a></h3>
+<p>The final-source 0.1.55 grouped-statistic panel completed 294/294 isolated
+fits and 42/42 exact implicit-control checks. It recorded nine wins, no ties,
+and three losses across the twelve decision datasets, with an observed 5.63%
+median primary-loss improvement. Its task-bootstrap 95% interval was -1.23%
+to +13.64%, so the point estimate is not a claim of a uniformly positive
+population effect.</p>
+<p>The frozen promotion rule was conjunctive. Its median paired fit-time ratio
+was 1.1708, above the pre-registered 1.15 ceiling, so grouped-8 did not advance.
+The conditional grouped TabArena scout was therefore not applicable and was
+not run. There is no grouped-8 TabArena Elo to report, and the quadratic test
+remains the production default.</p>
+<p>See the <a href="../split-statistics-research/">research ledger</a> and the
+<a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/split_research/results/grouped_external_panel_v2_fb65b685.json">sanitized machine-readable panel evidence</a>.</p>
 <h2 id="reproduce-the-lite-run">Reproduce the lite run<a class="headerlink" href="#reproduce-the-lite-run" title="Permanent link">&para;</a></h2>
 <p>Follow the pinned environment instructions in
 <a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/README.md"><code>benchmarks/tabarena/README.md</code></a>,

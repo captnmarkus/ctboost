@@ -408,6 +408,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -443,6 +447,52 @@
             Guides
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../training/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Training workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../data-input/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data input and schemas
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -641,6 +691,28 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     
     
       
@@ -661,10 +733,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
         
           
-          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
             
   
   
@@ -677,8 +749,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_8">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             Reference
           </label>
@@ -843,10 +915,13 @@ always use the original nominal quadratic test.</p>
 within-feature gain search still sees every original numeric histogram bin, so
 the final split is not restricted to a grouped boundary.</p>
 <h2 id="multiplicity-adjustment">Multiplicity adjustment<a class="headerlink" href="#multiplicity-adjustment" title="Permanent link">&para;</a></h2>
-<p>Set <code>feature_test_adjustment="bonferroni"</code> to compare the winning raw p-value
-with <code>alpha / m</code>, where <code>m</code> is the number of eligible, non-degenerate features
-tested at that node. Raw p-values still determine feature ranking; the
-adjustment affects only stopping. The default is <code>"none"</code>.</p>
+<p>Set <code>feature_test_adjustment="bonferroni"</code> to compare a raw p-value with
+<code>alpha / m</code>, where <code>m</code> is the number of eligible, non-degenerate features
+tested at that node. Raw p-values and their ranking are unchanged. In the
+ordinary search this changes the node split/no-split decision. In the advanced
+ranked search used with constraints, nonzero random strength, feature weights,
+or first-use penalties, it gates the significant candidate set before the
+feasible adjusted-gain choice. The default is <code>"none"</code>.</p>
 <p>With verbose profiling, <code>node_search</code> retains the existing <code>p_value</code> field for
 the raw value and also reports <code>stopping_p_value</code>. The latter is
 <code>min(1, m * p_value)</code> for Bonferroni and equals the raw value for <code>"none"</code>;
@@ -868,10 +943,13 @@ silent CPU/GPU statistical mismatch. Prediction remains device-independent.</p>
 persist all three settings. Snapshot resume rejects configuration drift;
 <code>init_model</code> can be used when a later stage intentionally changes the test.</p>
 <h2 id="statistical-background">Statistical background<a class="headerlink" href="#statistical-background" title="Permanent link">&para;</a></h2>
-<p>The two-stage design follows the conditional-inference framework of Hothorn,
-Hornik, and Zeileis. Grouping is a power-oriented, lower-degree-of-freedom
-alternative for ordered numeric histograms; it is not presented as an exact
-permutation or maximally selected statistic.</p>
+<p>The two-stage design is inspired by the conditional-inference framework of
+Hothorn, Hornik, and Zeileis. Production CTBoost uses histogram bins, current
+objective gradients, an asymptotic chi-square statistic, missing-as-bin
+semantics, and a later gain-optimal cut search. It is not an exact <code>ctree</code>,
+<code>partykit</code>, permutation, or maximally selected-statistic implementation.
+Grouping is a power-oriented, lower-degree-of-freedom alternative for ordered
+numeric histograms.</p>
 <ul>
 <li><a href="https://www.zeileis.org/papers/Hothorn+Hornik+Zeileis-2006.pdf">Unbiased Recursive Partitioning: A Conditional Inference Framework (2006)</a></li>
 <li><a href="https://www.zeileis.org/papers/Zeileis+Hothorn+Hornik-2008.pdf">Model-Based Recursive Partitioning (2008)</a></li>

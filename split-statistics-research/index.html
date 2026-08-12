@@ -493,6 +493,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Decision record">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-improvedand-what-did-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      What improved—and what did not
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -544,6 +559,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -579,6 +598,52 @@
             Guides
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/training/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Training workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/data-input/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data input and schemas
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -708,6 +773,28 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     
     
       
@@ -728,10 +815,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
         
           
-          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
             
   
   
@@ -744,8 +831,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_8">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             Reference
           </label>
@@ -924,6 +1011,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Decision record">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-improvedand-what-did-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      What improved—and what did not
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
     </ul>
@@ -947,10 +1049,12 @@
 
 <h1 id="split-statistics-research-ledger">Split-statistics research ledger<a class="headerlink" href="#split-statistics-research-ledger" title="Permanent link">&para;</a></h1>
 <h2 id="scope-and-invariant">Scope and invariant<a class="headerlink" href="#scope-and-invariant" title="Permanent link">&para;</a></h2>
-<p>This is synthetic, reference-only evidence. No native C++ code, tree topology,
-default, TabArena configuration, or released model behavior changed. In
-particular, CTBoost still selects features with its conditional-inference
-quadratic test and then searches the chosen feature for a gain-maximizing cut.</p>
+<p>The initial experiments on this page are synthetic, reference-only evidence;
+by themselves they changed no native C++ code, tree topology, default,
+TabArena configuration, or released behavior. The later registered external
+panel evaluates the subsequently added opt-in grouped test. CTBoost's default
+remains the conditional-inference quadratic test followed by a gain-maximizing
+cut search within the selected feature.</p>
 <p>The research question is narrower: can alternative <em>feature tests</em> improve
 power without giving up multiplicity control? Every candidate keeps feature
 selection separate from the later cut search.</p>
@@ -1003,7 +1107,7 @@ ordered and maxstat tests stayed near their null rates (0.048 and 0.076).</p>
 <tr>
 <td><a href="https://www.zeileis.org/papers/Zeileis+Hothorn+Hornik-2008.pdf">Zeileis, Hothorn, and Hornik (2008), <em>Model-Based Recursive Partitioning</em></a></td>
 <td>Tests observation-wise objective scores for parameter instability.</td>
-<td>Boosting gradients/scores are a principled response transformation for split-variable tests.</td>
+<td>Built-in likelihood gradients are score-like response transformations; arbitrary callable-objective gradients need not retain that inferential interpretation.</td>
 </tr>
 <tr>
 <td><a href="https://arxiv.org/abs/1906.10179">Schlosser, Hothorn, and Zeileis (2019), <em>The Power of Unbiased Recursive Partitioning</em></a></td>
@@ -1220,6 +1324,37 @@ unseen categories and had correlation 0.000. WoE is therefore not a distinct
 binary ordering gain under matched regularization, and leakage control is
 non-negotiable if any target-derived ordering is exposed.</p>
 <h2 id="decision-record">Decision record<a class="headerlink" href="#decision-record" title="Permanent link">&para;</a></h2>
+<h3 id="what-improvedand-what-did-not">What improved—and what did not<a class="headerlink" href="#what-improvedand-what-did-not" title="Permanent link">&para;</a></h3>
+<p>The corrections answer different questions and should not be described as a
+single scoring improvement:</p>
+<ul>
+<li>The Hothorn/Hornik/Zeileis conditional-inference framework motivates
+  separating variable selection from cut optimization and controlling
+  multiplicity. That addresses selection bias and stopping; it does not by
+  itself promise lower predictive loss.</li>
+<li>The deterministic experiment observed Bonferroni-adjusted feature-family
+  rejection rates of 0.015 nominal, 0.040 ordered, and 0.035 maxstat at alpha
+  0.05. In CTBoost the adjustment changes the stopping threshold,
+  not raw-p-value feature ranking. The experiments do not establish a
+  predictive-score gain caused by Bonferroni.</li>
+<li>Grouping 255 numeric bins into eight selection-only test groups restored
+  power across the tested smooth, abrupt, U-shaped, and missingness-only
+  alternatives. In the external panel its observed median primary-loss point
+  estimate improved by 5.63% (task-bootstrap 95% interval -1.23% to +13.64%),
+  but it missed the frozen speed gate; it therefore remains opt-in.</li>
+<li>In the matched binary reference setting, smoothed-WoE and Newton category
+  orderings had 1.000 pairwise agreement. Same-row WoE leaked target
+  information, while five-fold cross-fitted scores were neutral for unseen
+  categories. WoE supplied no separate demonstrated ordering or score gain
+  and was not advanced.</li>
+<li>The ordered/grouped hybrid and the 16-group variant showed no power gain
+  over grouped-8 in the registered synthetic scenarios, while adding work or
+  multiplicity. They were not advanced.</li>
+</ul>
+<p>These conclusions are deliberately narrower than the literature: score-test
+power depends on the alternative and response transformation, as emphasized
+by Schlosser, Hothorn, and Zeileis. None of the reference results establishes
+a universal best split statistic.</p>
 <table>
 <thead>
 <tr>

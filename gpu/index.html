@@ -16,7 +16,7 @@
         <link rel="prev" href="../split-statistics-research/">
       
       
-        <link rel="next" href="../guides/categorical-text/">
+        <link rel="next" href="../guides/training/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -416,6 +416,10 @@
       
         
       
+        
+      
+        
+      
     
     
     
@@ -451,6 +455,52 @@
             Guides
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/training/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Training workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/data-input/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Data input and schemas
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -580,6 +630,28 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Development
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     
     
       
@@ -600,10 +672,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
         
           
-          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
             
   
   
@@ -616,8 +688,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_8">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             Reference
           </label>
@@ -725,18 +797,25 @@
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
 </code></pre></div>
 <p>Starting with CTBoost 0.1.54, releases use unified Linux x86-64 and Windows
-AMD64 wheels: on supported CPython versions, the ordinary command below installs
+AMD64 wheels for CPython 3.10 through 3.14: the ordinary command below installs
 one wheel that can train on CPU and use CUDA when an NVIDIA device is available.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>ctboost
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">Released artifacts are authoritative</p>
-<p>Check the release notes for the exact Python, operating-system, CUDA-runtime,
-architecture, and minimum-driver matrix. macOS and ARM wheels are CPU-only.
+<p>Check the <a href="https://github.com/captnmarkus/ctboost/releases">GitHub release notes</a>
+for the authoritative Python, operating-system, CUDA-runtime, architecture,
+and minimum-driver matrix. macOS and ARM wheels are CPU-only.
 A CUDA-enabled build still works for CPU training on a machine without an NVIDIA GPU.
 The bundled CUDA runtime remains subject to the NVIDIA CUDA Toolkit license
 included in each CUDA-enabled wheel.</p>
 </div>
+<p>The 0.1.54/0.1.55 unified wheels bundle the CUDA 12.8 runtime. GPU use requires
+an NVIDIA driver compatible with CUDA 12.x (at least 525.60.13 on Linux or
+528.33 on Windows) but does not require a local CUDA toolkit. Released CUDA
+wheels target compute capability 6.0 or newer, with native code through current
+architectures and forward-compatible PTX. Linux aarch64, macOS, and CPython
+3.8/3.9 artifacts are CPU-only.</p>
 <p>Older releases that published CUDA wheels only as GitHub assets retain the legacy
 <code>ctboost-install-gpu</code> command. It verifies the GitHub-provided SHA-256 digest before
 asking pip to replace the installed wheel.</p>
