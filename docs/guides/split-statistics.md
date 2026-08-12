@@ -42,10 +42,13 @@ the final split is not restricted to a grouped boundary.
 
 ## Multiplicity adjustment
 
-Set `feature_test_adjustment="bonferroni"` to compare the winning raw p-value
-with `alpha / m`, where `m` is the number of eligible, non-degenerate features
-tested at that node. Raw p-values still determine feature ranking; the
-adjustment affects only stopping. The default is `"none"`.
+Set `feature_test_adjustment="bonferroni"` to compare a raw p-value with
+`alpha / m`, where `m` is the number of eligible, non-degenerate features
+tested at that node. Raw p-values and their ranking are unchanged. In the
+ordinary search this changes the node split/no-split decision. In the advanced
+ranked search used with constraints, nonzero random strength, feature weights,
+or first-use penalties, it gates the significant candidate set before the
+feasible adjusted-gain choice. The default is `"none"`.
 
 With verbose profiling, `node_search` retains the existing `p_value` field for
 the raw value and also reports `stopping_p_value`. The latter is
@@ -74,10 +77,13 @@ persist all three settings. Snapshot resume rejects configuration drift;
 
 ## Statistical background
 
-The two-stage design follows the conditional-inference framework of Hothorn,
-Hornik, and Zeileis. Grouping is a power-oriented, lower-degree-of-freedom
-alternative for ordered numeric histograms; it is not presented as an exact
-permutation or maximally selected statistic.
+The two-stage design is inspired by the conditional-inference framework of
+Hothorn, Hornik, and Zeileis. Production CTBoost uses histogram bins, current
+objective gradients, an asymptotic chi-square statistic, missing-as-bin
+semantics, and a later gain-optimal cut search. It is not an exact `ctree`,
+`partykit`, permutation, or maximally selected-statistic implementation.
+Grouping is a power-oriented, lower-degree-of-freedom alternative for ordered
+numeric histograms.
 
 - [Unbiased Recursive Partitioning: A Conditional Inference Framework (2006)](https://www.zeileis.org/papers/Hothorn+Hornik+Zeileis-2006.pdf)
 - [Model-Based Recursive Partitioning (2008)](https://www.zeileis.org/papers/Zeileis+Hothorn+Hornik-2008.pdf)

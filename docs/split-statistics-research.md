@@ -2,10 +2,12 @@
 
 ## Scope and invariant
 
-This is synthetic, reference-only evidence. No native C++ code, tree topology,
-default, TabArena configuration, or released model behavior changed. In
-particular, CTBoost still selects features with its conditional-inference
-quadratic test and then searches the chosen feature for a gain-maximizing cut.
+The initial experiments on this page are synthetic, reference-only evidence;
+by themselves they changed no native C++ code, tree topology, default,
+TabArena configuration, or released behavior. The later registered external
+panel evaluates the subsequently added opt-in grouped test. CTBoost's default
+remains the conditional-inference quadratic test followed by a gain-maximizing
+cut search within the selected feature.
 
 The research question is narrower: can alternative *feature tests* improve
 power without giving up multiplicity control? Every candidate keeps feature
@@ -37,7 +39,7 @@ ordered and maxstat tests stayed near their null rates (0.048 and 0.076).
 | [Strasser and Weber (1999), *On the Asymptotic Theory of Permutation Statistics*](https://research.wu.ac.at/ws/portalfiles/portal/19841038/document.pdf) | Supplies the conditional expectation/covariance framework and asymptotic permutation theory used by CTree. | Use score/covariate transformations within the same inferential framework rather than greedy gain for feature selection. |
 | [Hothorn and Zeileis (2008), *Generalized Maximally Selected Statistics*](https://www.zeileis.org/papers/Hothorn+Zeileis-2008.pdf) | Embeds maximally selected statistics in conditional inference and gives efficient asymptotic evaluation over cutpoints. | Maxstat is methodologically valid, but this first implementation uses Monte Carlo permutations as an auditable calibration oracle. |
 | [Lausen and Schumacher (1992), *Maximally Selected Rank Statistics*](https://doi.org/10.2307/2532740) | Restricts cut selection to an inner support interval and derives the null law of the maximum standardized process. | Trim edge cuts before taking a maximum; never report an unadjusted best-cut p-value. |
-| [Zeileis, Hothorn, and Hornik (2008), *Model-Based Recursive Partitioning*](https://www.zeileis.org/papers/Zeileis+Hothorn+Hornik-2008.pdf) | Tests observation-wise objective scores for parameter instability. | Boosting gradients/scores are a principled response transformation for split-variable tests. |
+| [Zeileis, Hothorn, and Hornik (2008), *Model-Based Recursive Partitioning*](https://www.zeileis.org/papers/Zeileis+Hothorn+Hornik-2008.pdf) | Tests observation-wise objective scores for parameter instability. | Built-in likelihood gradients are score-like response transformations; arbitrary callable-objective gradients need not retain that inferential interpretation. |
 | [Schlosser, Hothorn, and Zeileis (2019), *The Power of Unbiased Recursive Partitioning*](https://arxiv.org/abs/1906.10179) | Compares CTree, MOB, and GUIDE components; score tests avoid power lost by dichotomization, while sum-of-squares and max-selected tests favor different alternative shapes. | Test smooth, abrupt, and U-shaped alternatives rather than declaring one statistic universally best. |
 | [Loh (2002), *Regression Trees with Unbiased Variable Selection and Interaction Detection*](https://www3.stat.sinica.edu.tw/statistica/j12n2/j12n21/j12n21.htm) | Uses coarsened residual association tests to avoid variable-selection bias efficiently. | Evaluate selection-only histogram grouping as a cheap GUIDE-like approximation; retain raw bins for the eventual cut. |
 | [Fisher (1958), *On Grouping for Maximum Homogeneity*](https://doi.org/10.1080/01621459.1958.10501479) | Studies optimal grouping of ordered values into homogeneous contiguous groups. | Preserve order when coarsening numeric bins; do not hash them into arbitrary groups. |
@@ -134,6 +136,39 @@ binary ordering gain under matched regularization, and leakage control is
 non-negotiable if any target-derived ordering is exposed.
 
 ## Decision record
+
+### What improved—and what did not
+
+The corrections answer different questions and should not be described as a
+single scoring improvement:
+
+- The Hothorn/Hornik/Zeileis conditional-inference framework motivates
+  separating variable selection from cut optimization and controlling
+  multiplicity. That addresses selection bias and stopping; it does not by
+  itself promise lower predictive loss.
+- The deterministic experiment observed Bonferroni-adjusted feature-family
+  rejection rates of 0.015 nominal, 0.040 ordered, and 0.035 maxstat at alpha
+  0.05. In CTBoost the adjustment changes the stopping threshold,
+  not raw-p-value feature ranking. The experiments do not establish a
+  predictive-score gain caused by Bonferroni.
+- Grouping 255 numeric bins into eight selection-only test groups restored
+  power across the tested smooth, abrupt, U-shaped, and missingness-only
+  alternatives. In the external panel its observed median primary-loss point
+  estimate improved by 5.63% (task-bootstrap 95% interval -1.23% to +13.64%),
+  but it missed the frozen speed gate; it therefore remains opt-in.
+- In the matched binary reference setting, smoothed-WoE and Newton category
+  orderings had 1.000 pairwise agreement. Same-row WoE leaked target
+  information, while five-fold cross-fitted scores were neutral for unseen
+  categories. WoE supplied no separate demonstrated ordering or score gain
+  and was not advanced.
+- The ordered/grouped hybrid and the 16-group variant showed no power gain
+  over grouped-8 in the registered synthetic scenarios, while adding work or
+  multiplicity. They were not advanced.
+
+These conclusions are deliberately narrower than the literature: score-test
+power depends on the alternative and response transformation, as emphasized
+by Schlosser, Hothorn, and Zeileis. None of the reference results establishes
+a universal best split statistic.
 
 | Candidate | Decision | Reason |
 |---|---|---|

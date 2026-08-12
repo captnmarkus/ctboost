@@ -2,6 +2,14 @@
 
 ## Current public-evidence status
 
+CTBoost has two separate evidence tracks. They must not be combined into one
+score:
+
+1. a small TabArena integration smoke test for the ordinary adapter; and
+2. a pre-registered external panel for the opt-in grouped split statistic.
+
+### TabArena adapter smoke
+
 CTBoost has a committed adapter for the official TabArena protocol. It delegates
 folds, task metrics, bagging, tuning, ensembling, timing, and memory measurement to
 TabArena rather than recreating them locally.
@@ -22,7 +30,7 @@ The current completed result is a **protocol smoke test**, not a full leaderboar
     dataset produce extremely wide uncertainty. CTBoost does not yet have an official
     full TabArena Elo.
 
-### Smoke-task metrics
+#### Smoke-task metrics
 
 | Dataset | Task | Metric | Test error | Train time |
 |---|---|---|---:|---:|
@@ -39,6 +47,24 @@ Provenance:
 The sanitized [machine-readable smoke record](https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/smoke_fd187da.json)
 contains the exact per-split metrics, timing, memory, package versions, and commit
 identities without machine-local artifact paths.
+
+### Grouped split-statistic qualification
+
+The final-source 0.1.55 grouped-statistic panel completed 294/294 isolated
+fits and 42/42 exact implicit-control checks. It recorded nine wins, no ties,
+and three losses across the twelve decision datasets, with an observed 5.63%
+median primary-loss improvement. Its task-bootstrap 95% interval was -1.23%
+to +13.64%, so the point estimate is not a claim of a uniformly positive
+population effect.
+
+The frozen promotion rule was conjunctive. Its median paired fit-time ratio
+was 1.1708, above the pre-registered 1.15 ceiling, so grouped-8 did not advance.
+The conditional grouped TabArena scout was therefore not applicable and was
+not run. There is no grouped-8 TabArena Elo to report, and the quadratic test
+remains the production default.
+
+See the [research ledger](split-statistics-research.md) and the
+[sanitized machine-readable panel evidence](https://github.com/captnmarkus/ctboost/blob/master/benchmarks/split_research/results/grouped_external_panel_v2_fb65b685.json).
 
 ## Reproduce the lite run
 

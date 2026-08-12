@@ -3,6 +3,10 @@
 CTBoost can fit a preprocessing pipeline together with the booster. The pipeline is
 serialized with the estimator and reused for validation and prediction.
 
+These transformations add or prepare input features; they do not replace the
+conditional-inference feature-selection and split-search mechanism used by
+the tree learner.
+
 ## Categorical features
 
 ```python
