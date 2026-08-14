@@ -81,10 +81,32 @@ FeatureHistogramResult BuildFeatureHistogram(const Pool& pool,
   result.nan_mode = feature_nan_mode;
   const std::size_t num_rows = pool.num_rows();
 
-  const float* const contiguous_column = pool.is_sparse() ? nullptr : pool.feature_column_ptr(feature);
+  const float* contiguous_column = nullptr;
+  SparseColumnView sparse_column;
+  std::size_t sparse_index = 0;
+  if (pool.is_sparse()) {
+    sparse_column = pool.sparse_column_view(feature);
+  } else {
+    contiguous_column = pool.feature_column_ptr(feature);
+  }
   auto feature_at = [&](std::size_t row) -> float {
-    return contiguous_column != nullptr ? contiguous_column[row] : pool.feature_value(row, feature);
+    if (contiguous_column != nullptr) {
+      return contiguous_column[row];
+    }
+    if (!pool.is_sparse()) {
+      return pool.feature_value(row, feature);
+    }
+    while (sparse_index < sparse_column.size &&
+           static_cast<std::size_t>(sparse_column.row_indices[sparse_index]) < row) {
+      ++sparse_index;
+    }
+    if (sparse_index < sparse_column.size &&
+        static_cast<std::size_t>(sparse_column.row_indices[sparse_index]) == row) {
+      return sparse_column.values[sparse_index];
+    }
+    return 0.0F;
   };
+  auto reset_feature_cursor = [&]() { sparse_index = 0; };
   bool has_missing_values = false;
 
   if (result.is_categorical) {
@@ -189,6 +211,7 @@ FeatureHistogramResult BuildFeatureHistogram(const Pool& pool,
   if (use_approximate_quantiles) {
     quantile_values = std::move(approximate_quantile_values);
   } else {
+    reset_feature_cursor();
     quantile_values.reserve(non_missing_count);
     for (std::size_t row = 0; row < num_rows; ++row) {
       const float value = feature_at(row);

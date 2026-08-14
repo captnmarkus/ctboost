@@ -1,3 +1,4 @@
+import copy
 import importlib.util
 import json
 from pathlib import Path
@@ -166,11 +167,21 @@ def test_feature_pipeline_manifest_distinguishes_raw_and_prepared_inputs(tmp_pat
     raw_manifest = named.get_inference_manifest()
     assert raw_manifest["input"]["representation"] == "raw_features"
     assert raw_manifest["input"]["num_features"] == 2
+    assert raw_manifest["input"]["categorical_feature_indices"] == [1]
     assert raw_manifest["input"]["preprocessing"]["external_preprocessing_required"] is False
     assert raw_manifest["input"]["preprocessing"]["fingerprint"].startswith("sha256:")
 
     with pytest.raises(ValueError, match="prepared_features=True"):
         named.export_model(tmp_path / "unsupported.py")
+
+    raw_path = tmp_path / "raw.json"
+    named.export_model(raw_path, export_format="json_predictor")
+    raw_predictor = ctboost.load_exported_predictor(raw_path)
+    exported_raw_manifest = raw_predictor.get_inference_manifest()
+    assert exported_raw_manifest["input"]["representation"] == "raw_features"
+    assert exported_raw_manifest["input"]["categorical_feature_indices"] == [1]
+    assert exported_raw_manifest["artifact"]["ctboost_runtime_required"] is True
+    np.testing.assert_allclose(raw_predictor.predict(X), named.predict(X), rtol=1e-6, atol=1e-6)
 
     prepared_path = tmp_path / "prepared.json"
     named.export_model(
@@ -181,6 +192,8 @@ def test_feature_pipeline_manifest_distinguishes_raw_and_prepared_inputs(tmp_pat
     prepared_manifest = ctboost.load_inference_manifest(prepared_path)
     assert prepared_manifest["input"]["representation"] == "prepared_numeric_features"
     assert prepared_manifest["input"]["preprocessing"]["external_preprocessing_required"] is True
+    prepared_document = json.loads(prepared_path.read_text(encoding="utf-8"))
+    assert prepared_document["feature_pipeline_state"] is None
 
     assert model.get_inference_manifest()["artifact"]["estimator"] == "CTBoostRegressor"
 
@@ -195,6 +208,33 @@ def test_manifest_loader_and_validator_reject_incompatible_documents(tmp_path: P
         ctboost.validate_inference_manifest(
             {"format": "ctboost-inference-manifest", "schema_version": 99}
         )
+
+
+def test_manifest_validator_rejects_inconsistent_deployment_contract():
+    X, y = make_regression(n_samples=32, n_features=2, random_state=91)
+    model = ctboost.train(
+        X.astype(np.float32),
+        {"objective": "RMSE", "alpha": 1.0, "max_depth": 1},
+        label=y.astype(np.float32),
+        num_boost_round=2,
+    )
+    manifest = model.get_inference_manifest()
+
+    mutations = (
+        lambda value: value["model"].update(prediction_dimension=0, base_score=[]),
+        lambda value: value["model"].update(tree_count=0),
+        lambda value: value["model"].update(iteration_count=999),
+        lambda value: value["input"].update(model_feature_count=True),
+        lambda value: value["output"].update(prediction_dimension=True),
+        lambda value: value["output"].update(objective="Logloss"),
+        lambda value: value["input"].update(representation="raw_features"),
+        lambda value: value["input"].update(training_schema={"invalid": float("nan")}),
+    )
+    for mutate in mutations:
+        invalid = copy.deepcopy(manifest)
+        mutate(invalid)
+        with pytest.raises(ValueError):
+            ctboost.validate_inference_manifest(invalid)
 
 
 @pytest.mark.parametrize("objective", ["LambdaMART", "LambdaRank", "rank:ndcg"])

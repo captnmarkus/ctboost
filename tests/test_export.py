@@ -1,22 +1,15 @@
+import copy
 import importlib.util
 import json
 from pathlib import Path
-import os
-import socket
-import subprocess
-import sys
-import threading
-import time
-import textwrap
+
 import numpy as np
 import pytest
 from sklearn.datasets import make_classification, make_regression
+
 import ctboost
-import ctboost._core as _core
-from ctboost.distributed import (
-    DistributedCollectiveServer,
-    distributed_tcp_request,
-)
+from ctboost.inference_manifest import _model_fingerprint
+
 
 def test_booster_export_model_generates_standalone_python_predictor(tmp_path: Path):
     X, y = make_regression(
@@ -85,6 +78,183 @@ def test_booster_export_model_generates_json_predictor(tmp_path: Path):
     predictor = ctboost.load_exported_predictor(export_path)
     exported_pred = np.asarray(predictor.predict(X), dtype=np.float32)
     np.testing.assert_allclose(exported_pred, booster.predict(X), rtol=1e-6, atol=1e-6)
+
+
+def test_json_predictor_loader_rejects_duplicate_nonfinite_and_oversize_artifacts(
+    tmp_path: Path,
+):
+    fixture = (
+        Path(__file__).parent
+        / "export_conformance"
+        / "prepared_regression_v1.json"
+    )
+    source = fixture.read_text(encoding="utf-8")
+    duplicate = source.replace(
+        '"format": "ctboost-json-predictor",',
+        '"format": "ctboost-json-predictor",\n  "format": "duplicate",',
+        1,
+    )
+    duplicate_path = tmp_path / "duplicate.json"
+    duplicate_path.write_text(duplicate, encoding="utf-8")
+    with pytest.raises(ValueError, match="duplicate key"):
+        ctboost.load_exported_predictor(duplicate_path)
+
+    nonfinite_path = tmp_path / "nonfinite.json"
+    nonfinite_path.write_text(
+        source.replace('"learning_rate": 0.5', '"learning_rate": NaN', 1),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="non-finite"):
+        ctboost.load_exported_predictor(nonfinite_path)
+
+    size = fixture.stat().st_size
+    assert ctboost.load_exported_predictor(
+        fixture, max_artifact_bytes=size
+    ).predict([0.0, 20.0]) == pytest.approx(0.75)
+    with pytest.raises(ValueError, match="size limit"):
+        ctboost.load_exported_predictor(fixture, max_artifact_bytes=size - 1)
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda payload: payload["quantization_schema"]["categorical_mask"].__setitem__(0, "false"),
+        lambda payload: payload["quantization_schema"]["cut_values"].__setitem__(0, float("nan")),
+        lambda payload: payload["trees"][0]["nodes"][0].update(split_feature_id=999),
+        lambda payload: payload["trees"][0]["nodes"][0].update(left_child=0),
+        lambda payload: payload.update(trees=[]),
+        lambda payload: payload.update(prediction_dimension=2, base_score=[0.0, 0.0]),
+    ],
+)
+def test_json_predictor_rejects_malformed_quantization_and_tree_state(mutate):
+    from ctboost.export_runtime import ExportedPredictor
+
+    fixture = (
+        Path(__file__).parent
+        / "export_conformance"
+        / "prepared_regression_v1.json"
+    )
+    payload = json.loads(fixture.read_text(encoding="utf-8"))
+    mutate(payload)
+    with pytest.raises(ValueError):
+        ExportedPredictor(payload)
+
+
+def test_json_predictor_embeds_fitted_categorical_text_and_embedding_pipeline(
+    tmp_path: Path,
+):
+    pd = pytest.importorskip("pandas")
+    rng = np.random.default_rng(20260814)
+    rows = 72
+    category = np.where(np.arange(rows) % 3 == 0, "alpha", "beta")
+    embeddings = [
+        np.asarray([index % 3, index % 5, index % 7], dtype=np.float32)
+        for index in range(rows)
+    ]
+    frame = pd.DataFrame(
+        {
+            "category": category,
+            "text": np.where(category == "alpha", "red quick fox", "blue slow fox"),
+            "embedding": embeddings,
+            "numeric": rng.normal(size=rows).astype(np.float32),
+        }
+    )
+    target = (
+        (category == "alpha").astype(np.float32)
+        + 0.35 * frame["numeric"].to_numpy(dtype=np.float32)
+        + np.asarray([value[0] - 0.1 * value[1] for value in embeddings], dtype=np.float32)
+    )
+    model = ctboost.CTBoostRegressor(
+        iterations=8,
+        learning_rate=0.2,
+        max_depth=2,
+        alpha=1.0,
+        cat_features=["category"],
+        text_features=["text"],
+        text_hash_dim=12,
+        embedding_features=["embedding"],
+        embedding_stats=("mean", "std", "l2"),
+    ).fit(frame, target)
+
+    export_path = tmp_path / "pipeline_predictor.json"
+    model.export_model(export_path, export_format="json_predictor")
+    document = json.loads(export_path.read_text(encoding="utf-8"))
+    assert document["format_version"] == 2
+    assert document["expects_prepared_features"] is False
+    assert document["feature_pipeline_state"]["feature_names_in_"] == list(frame.columns)
+    manifest = document["inference_manifest"]
+    assert manifest["artifact"]["ctboost_runtime_required"] is True
+    assert manifest["input"]["representation"] == "raw_features"
+    assert manifest["input"]["preprocessing"]["external_preprocessing_required"] is False
+
+    predictor = ctboost.load_exported_predictor(export_path)
+    np.testing.assert_allclose(
+        predictor.predict(frame),
+        model.predict(frame),
+        rtol=1e-6,
+        atol=1e-6,
+    )
+    np.testing.assert_allclose(
+        predictor.predict(frame.iloc[0].to_numpy(dtype=object)),
+        model.predict(frame.iloc[[0]])[0],
+        rtol=1e-6,
+        atol=1e-6,
+    )
+    np.testing.assert_allclose(
+        predictor.predict(frame.iloc[0].tolist()),
+        model.predict(frame.iloc[[0]])[0],
+        rtol=1e-6,
+        atol=1e-6,
+    )
+    assert predictor.predict([]) == []
+
+    for mutate in (
+        lambda payload: payload.update(feature_pipeline_state=None),
+        lambda payload: payload.update(expects_prepared_features=True),
+        lambda payload: payload["inference_manifest"]["input"].update(
+            representation="prepared_numeric_features"
+        ),
+        lambda payload: payload["inference_manifest"]["input"][
+            "preprocessing"
+        ].update(raw_feature_count=999),
+        lambda payload: payload["inference_manifest"]["input"][
+            "preprocessing"
+        ].update(transformed_feature_count=999),
+        lambda payload: payload["inference_manifest"]["input"].update(
+            model_feature_count=999
+        ),
+        lambda payload: payload["inference_manifest"]["artifact"].update(
+            ctboost_runtime_required=False
+        ),
+        lambda payload: payload["inference_manifest"]["model"].update(
+            objective="Logloss"
+        ),
+    ):
+        invalid = copy.deepcopy(document)
+        mutate(invalid)
+        invalid_path = tmp_path / f"invalid-envelope-{id(mutate)}.json"
+        invalid_path.write_text(json.dumps(invalid), encoding="utf-8")
+        with pytest.raises(ValueError):
+            ctboost.load_exported_predictor(invalid_path)
+
+    invalid_layout = copy.deepcopy(document)
+    invalid_layout["quantization_schema"]["categorical_mask"] = [
+        0
+        for _ in invalid_layout["quantization_schema"]["categorical_mask"]
+    ]
+    invalid_layout["inference_manifest"]["model"]["fingerprint"] = (
+        _model_fingerprint(invalid_layout, invalid_layout.get("class_labels"))
+    )
+    invalid_layout_path = tmp_path / "invalid-categorical-layout.json"
+    invalid_layout_path.write_text(json.dumps(invalid_layout), encoding="utf-8")
+    with pytest.raises(ValueError):
+        ctboost.load_exported_predictor(invalid_layout_path)
+
+    document["feature_pipeline_state"]["text_hash_dim"] += 1
+    tampered_path = tmp_path / "tampered_pipeline_predictor.json"
+    tampered_path.write_text(json.dumps(document), encoding="utf-8")
+    with pytest.raises(ValueError, match="feature-pipeline fingerprint mismatch"):
+        ctboost.load_exported_predictor(tampered_path)
 
 
 def test_booster_export_model_generates_cpp17_c_api(tmp_path: Path):

@@ -55,6 +55,45 @@ _REQUIRED_GROUPED_SCOUT_FILES = frozenset(
         "benchmarks/split_research/g8s1_harness/g8s1_scout/p200.json",
     }
 )
+_REQUIRED_PORTABLE_INFERENCE_FILES = frozenset(
+    {
+        "bindings/R/ctboost/.Rbuildignore",
+        "bindings/R/ctboost/DESCRIPTION",
+        "bindings/R/ctboost/NAMESPACE",
+        "bindings/R/ctboost/R/json_predictor.R",
+        "bindings/R/ctboost/README.md",
+        "bindings/R/ctboost/inst/extdata/export_conformance/duplicate_prepared_flag_v2.json",
+        "bindings/R/ctboost/inst/extdata/export_conformance/prepared_binary_v2.cases.json",
+        "bindings/R/ctboost/inst/extdata/export_conformance/prepared_binary_v2.json",
+        "bindings/R/ctboost/inst/extdata/export_conformance/prepared_multiclass_v2.cases.json",
+        "bindings/R/ctboost/inst/extdata/export_conformance/prepared_multiclass_v2.json",
+        "bindings/R/ctboost/inst/extdata/export_conformance/prepared_regression_v1.cases.json",
+        "bindings/R/ctboost/inst/extdata/export_conformance/prepared_regression_v1.json",
+        "bindings/R/ctboost/inst/extdata/export_conformance/raw_pipeline_v2.json",
+        "bindings/R/ctboost/man/ctboost_load_predictor.Rd",
+        "bindings/R/ctboost/man/ctboost_predict.Rd",
+        "bindings/R/ctboost/tests/testthat.R",
+        "bindings/R/ctboost/tests/testthat/helper-fixtures.R",
+        "bindings/R/ctboost/tests/testthat/test-conformance.R",
+        "bindings/jvm/README.md",
+        "bindings/jvm/pom.xml",
+        "bindings/jvm/src/main/java/io/github/ctboost/inference/InvalidModelException.java",
+        "bindings/jvm/src/main/java/io/github/ctboost/inference/JsonPredictor.java",
+        "bindings/jvm/src/test/java/io/github/ctboost/inference/JsonPredictorConformanceTest.java",
+        "spec/json-predictor-prepared.md",
+        "spec/json-predictor-prepared.schema.json",
+        "tests/export_conformance/README.md",
+        "tests/export_conformance/duplicate_prepared_flag_v2.json",
+        "tests/export_conformance/prepared_binary_v2.json",
+        "tests/export_conformance/prepared_binary_v2.cases.json",
+        "tests/export_conformance/prepared_multiclass_v2.json",
+        "tests/export_conformance/prepared_multiclass_v2.cases.json",
+        "tests/export_conformance/prepared_regression_v1.json",
+        "tests/export_conformance/prepared_regression_v1.cases.json",
+        "tests/export_conformance/raw_pipeline_v2.json",
+        "tests/test_export_conformance.py",
+    }
+)
 _REQUIRED_SDIST_FILES = frozenset(
     {
         "CMakeLists.txt",
@@ -67,7 +106,7 @@ _REQUIRED_SDIST_FILES = frozenset(
         "scripts/prepare_cuda_runtime_license.py",
         "scripts/validate_release_artifacts.py",
     }
-).union(_REQUIRED_GROUPED_SCOUT_FILES)
+).union(_REQUIRED_GROUPED_SCOUT_FILES, _REQUIRED_PORTABLE_INFERENCE_FILES)
 _RELEASE_SCRIPT_FILES = frozenset(
     {
         "scripts/prepare_cuda_runtime_license.py",

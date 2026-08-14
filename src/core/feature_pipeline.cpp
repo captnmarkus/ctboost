@@ -2,6 +2,7 @@
 
 #include "feature_pipeline_internal.hpp"
 
+#include <cmath>
 #include <stdexcept>
 #include <utility>
 
@@ -75,8 +76,15 @@ NativeFeaturePipeline::NativeFeaturePipeline(py::object cat_features,
   if (text_max_dictionary_size_ < 0) {
     throw std::invalid_argument("text_max_dictionary_size must be non-negative");
   }
-  if (!(embedding_target_regularization_ >= 0.0)) {
-    throw std::invalid_argument("embedding_target_regularization must be non-negative");
+  if (!(embedding_target_regularization_ >= 0.0) ||
+      !std::isfinite(static_cast<float>(embedding_target_regularization_))) {
+    throw std::invalid_argument(
+        "embedding_target_regularization must be a finite non-negative float value");
+  }
+  if (!(ctr_prior_strength_ >= 0.0) ||
+      !std::isfinite(static_cast<float>(ctr_prior_strength_))) {
+    throw std::invalid_argument(
+        "ctr_prior_strength must be a finite non-negative float value");
   }
 }
 

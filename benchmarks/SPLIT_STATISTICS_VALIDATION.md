@@ -4,6 +4,13 @@ This ledger records the staged native gate for the opt-in grouped feature test.
 It does not authorize adding grouped settings to the frozen TabArena portfolio;
 that remains an external validation decision.
 
+The behavioral list below is the historical gate recorded when grouped testing
+was CPU-only. Current development now routes GPU quadratic, grouped, and
+Bonferroni modes through the same host candidate selector while retaining GPU
+histogram construction and partitioning; see `docs/guides/split-statistics.md`.
+The historical fail-closed item is retained as evidence of the earlier boundary,
+not as a description of the current development tree.
+
 ## Legacy-default compatibility
 
 Baseline: `origin/master` at
@@ -49,7 +56,7 @@ match within numerical solver tolerance; grouped weight sums match exactly.
   start, and exact snapshot resume including mixed-case aliases;
 - CPU distributed parity, including a numeric feature whose NaNs occur on only
   one shard for both missing-Min and missing-Max;
-- explicit fail-closed behavior for grouped/adjusted GPU training.
+- explicit fail-closed behavior for grouped/adjusted GPU training at that stage.
 
 ## Dispatch microbenchmark
 

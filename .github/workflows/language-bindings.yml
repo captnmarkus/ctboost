@@ -1,0 +1,88 @@
+name: Language Bindings
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "bindings/R/**"
+      - "bindings/jvm/**"
+      - "ctboost/_export.py"
+      - "ctboost/export_payload.py"
+      - "ctboost/export_runtime.py"
+      - "spec/json-predictor-prepared*"
+      - "tests/export_conformance/**"
+      - "tests/test_export_conformance.py"
+      - "tests/test_export.py"
+      - ".github/workflows/language-bindings.yml"
+  pull_request:
+    paths:
+      - "bindings/R/**"
+      - "bindings/jvm/**"
+      - "ctboost/_export.py"
+      - "ctboost/export_payload.py"
+      - "ctboost/export_runtime.py"
+      - "spec/json-predictor-prepared*"
+      - "tests/export_conformance/**"
+      - "tests/test_export_conformance.py"
+      - "tests/test_export.py"
+      - ".github/workflows/language-bindings.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install the CPU package and Python conformance dependencies
+        run: |
+          python -m pip install jsonschema pytest
+          python -m pip install . --config-settings=cmake.define.CTBOOST_ENABLE_CUDA=OFF
+      - name: Run Python prepared-profile conformance tests
+        working-directory: ${{ runner.temp }}
+        run: >-
+          python -m pytest "$GITHUB_WORKSPACE/tests/test_export_conformance.py"
+          --import-mode=importlib -q
+
+  jvm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+          cache-dependency-path: bindings/jvm/pom.xml
+      - name: Run JVM conformance tests
+        working-directory: bindings/jvm
+        run: mvn --batch-mode --no-transfer-progress test
+
+  r:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: r-lib/actions/setup-r@v2
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: bindings/R/ctboost
+      - name: Verify packaged R fixtures match the canonical conformance corpus
+        run: |
+          for fixture in tests/export_conformance/*.json; do
+            cmp "$fixture" "bindings/R/ctboost/inst/extdata/export_conformance/$(basename "$fixture")"
+          done
+      - name: Build and check R package
+        run: |
+          R CMD build bindings/R/ctboost
+          package_tarball="$(realpath ctboost_*.tar.gz)"
+          check_directory="$(mktemp -d)"
+          cd "$check_directory"
+          R CMD check --no-manual --no-build-vignettes "$package_tarball"

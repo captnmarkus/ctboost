@@ -9,6 +9,8 @@ def test_build_info_smoke():
     info = ctboost.build_info()
 
     assert info["version"] == ctboost.__version__
+    assert info["package_version"] == ctboost.__version__
+    assert ctboost._core.build_info()["version"] == ctboost.__version__
     assert isinstance(info["cuda_enabled"], bool)
     assert isinstance(info["compiler"], str)
     expected_cuda = os.environ.get("CTBOOST_EXPECT_CUDA", "0") == "1"

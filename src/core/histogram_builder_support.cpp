@@ -13,13 +13,11 @@ void MaterializeFeatureBinsToBuffer(const Pool& pool,
                                     const FeatureHistogramResult& feature_result,
                                     BinType* out_bins,
                                     std::size_t out_size) {
-  const float* const contiguous_column = pool.is_sparse() ? nullptr : pool.feature_column_ptr(feature);
-  auto feature_at = [&](std::size_t row) -> float {
-    return contiguous_column != nullptr ? contiguous_column[row] : pool.feature_value(row, feature);
-  };
-
   if (out_size < pool.num_rows()) {
     throw std::invalid_argument("feature bin output buffer is smaller than the row count");
+  }
+  if (pool.num_rows() == 0) {
+    return;
   }
 
   const bool has_missing_values = feature_result.missing_value_mask != 0U;
@@ -27,39 +25,39 @@ void MaterializeFeatureBinsToBuffer(const Pool& pool,
       static_cast<std::size_t>(feature_result.num_bins == 0 ? 1U : feature_result.num_bins);
   const std::uint16_t missing_bin =
       MissingBinIndex(bins_for_feature, has_missing_values, feature_result.nan_mode);
+  const std::uint16_t missing_offset =
+      has_missing_values && feature_result.nan_mode == NanMode::Min ? 1U : 0U;
 
-  if (feature_result.is_categorical) {
-    const std::uint16_t missing_offset =
-        has_missing_values && feature_result.nan_mode == NanMode::Min ? 1U : 0U;
-    for (std::size_t row = 0; row < pool.num_rows(); ++row) {
-      const float value = feature_at(row);
-      if (std::isnan(value)) {
-        out_bins[row] = static_cast<BinType>(missing_bin);
-        continue;
-      }
+  auto bin_value = [&](float value) -> BinType {
+    if (std::isnan(value)) {
+      return static_cast<BinType>(missing_bin);
+    }
+    const auto bin_it = feature_result.is_categorical
+                            ? std::lower_bound(feature_result.cut_values.begin(),
+                                               feature_result.cut_values.end(),
+                                               value)
+                            : std::upper_bound(feature_result.cut_values.begin(),
+                                               feature_result.cut_values.end(),
+                                               value);
+    return static_cast<BinType>(
+        missing_offset + std::distance(feature_result.cut_values.begin(), bin_it));
+  };
 
-      const auto it =
-          std::lower_bound(feature_result.cut_values.begin(), feature_result.cut_values.end(), value);
-      const std::size_t insertion =
-          static_cast<std::size_t>(std::distance(feature_result.cut_values.begin(), it));
-      out_bins[row] = static_cast<BinType>(missing_offset + insertion);
+  if (pool.is_sparse()) {
+    std::fill(out_bins, out_bins + pool.num_rows(), bin_value(0.0F));
+    const SparseColumnView sparse_column = pool.sparse_column_view(feature);
+    for (std::size_t index = 0; index < sparse_column.size; ++index) {
+      out_bins[static_cast<std::size_t>(sparse_column.row_indices[index])] =
+          bin_value(sparse_column.values[index]);
     }
     return;
   }
 
-  const std::uint16_t missing_offset =
-      has_missing_values && feature_result.nan_mode == NanMode::Min ? 1U : 0U;
+  const float* const contiguous_column = pool.feature_column_ptr(feature);
   for (std::size_t row = 0; row < pool.num_rows(); ++row) {
-    const float value = feature_at(row);
-    if (std::isnan(value)) {
-      out_bins[row] = static_cast<BinType>(missing_bin);
-      continue;
-    }
-
-    const auto bin_it =
-        std::upper_bound(feature_result.cut_values.begin(), feature_result.cut_values.end(), value);
-    out_bins[row] =
-        static_cast<BinType>(missing_offset + std::distance(feature_result.cut_values.begin(), bin_it));
+    const float value =
+        contiguous_column != nullptr ? contiguous_column[row] : pool.feature_value(row, feature);
+    out_bins[row] = bin_value(value);
   }
 }
 
@@ -69,6 +67,9 @@ void MaterializeFeatureBins(const Pool& pool,
                             std::size_t feature,
                             const FeatureHistogramResult& feature_result,
                             HistMatrix& hist) {
+  if (pool.num_rows() == 0) {
+    return;
+  }
   const std::size_t offset = feature * hist.num_rows;
   if (hist.bin_index_bytes == 1) {
     MaterializeFeatureBinsToBuffer(pool,
@@ -116,7 +117,17 @@ void ValidateForbiddenNanModeHasNoMissingValues(const Pool& pool,
       continue;
     }
 
-    const float* const contiguous_column = pool.is_sparse() ? nullptr : pool.feature_column_ptr(feature);
+    if (pool.is_sparse()) {
+      const SparseColumnView sparse_column = pool.sparse_column_view(feature);
+      for (std::size_t index = 0; index < sparse_column.size; ++index) {
+        if (std::isnan(sparse_column.values[index])) {
+          throw std::invalid_argument("NaN values are not allowed when nan_mode='Forbidden'");
+        }
+      }
+      continue;
+    }
+
+    const float* const contiguous_column = pool.feature_column_ptr(feature);
     for (std::size_t row = 0; row < pool.num_rows(); ++row) {
       const float value =
           contiguous_column != nullptr ? contiguous_column[row] : pool.feature_value(row, feature);

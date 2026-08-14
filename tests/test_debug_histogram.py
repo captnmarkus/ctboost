@@ -105,3 +105,31 @@ def test_large_histogram_build_paths_are_deterministic(monkeypatch):
     preds_b = model_b.predict(X[:128])
     assert preds_a.shape == (128,)
     np.testing.assert_allclose(preds_a, preds_b, rtol=1e-6, atol=1e-6)
+
+
+def test_node_histogram_thread_count_preserves_exact_tree_state(monkeypatch):
+    rng = np.random.default_rng(20260814)
+    X = rng.normal(size=(2048, 32)).astype(np.float32)
+    y = (1.2 * X[:, 0] - 0.7 * X[:, 1] + 0.4 * X[:, 2] * X[:, 3]).astype(
+        np.float32
+    )
+    pool = ctboost.Pool(X, y)
+    params = {
+        "objective": "RMSE",
+        "iterations": 8,
+        "max_depth": 4,
+        "max_bins": 64,
+        "alpha": 1.0,
+        "random_seed": 37,
+    }
+    monkeypatch.setenv("CTBOOST_HIST_THREADS", "1")
+    monkeypatch.setenv("CTBOOST_NODE_HIST_MIN_PARALLEL_VALUES", "0")
+    monkeypatch.setenv("CTBOOST_NODE_HIST_MIN_VALUES_PER_WORKER", "1")
+
+    monkeypatch.setenv("CTBOOST_NODE_HIST_THREADS", "1")
+    serial = ctboost.train(pool, params, num_boost_round=params["iterations"])
+    monkeypatch.setenv("CTBOOST_NODE_HIST_THREADS", "4")
+    parallel = ctboost.train(pool, params, num_boost_round=params["iterations"])
+
+    assert parallel._handle.export_state()["trees"] == serial._handle.export_state()["trees"]
+    np.testing.assert_array_equal(parallel.predict(pool), serial.predict(pool))

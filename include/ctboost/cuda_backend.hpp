@@ -10,6 +10,7 @@
 namespace ctboost {
 
 struct HistMatrix;
+struct CudaQuantizedMatrixView;
 
 inline constexpr std::size_t kGpuCategoricalRouteBins = 256;
 
@@ -73,6 +74,11 @@ std::string CudaRuntimeVersionString();
 GpuHistogramWorkspacePtr CreateGpuHistogramWorkspace(const HistMatrix& hist,
                                                      const std::vector<float>& weights,
                                                      const std::string& devices = "0");
+GpuHistogramWorkspacePtr CreateGpuHistogramWorkspaceFromCudaQuantized(
+    const HistMatrix& hist,
+    const CudaQuantizedMatrixView& cuda_quantized,
+    const std::vector<float>& weights,
+    const std::string& devices = "0");
 std::size_t EstimateGpuHistogramWorkspaceBytes(const GpuHistogramWorkspace* workspace) noexcept;
 void UploadHistogramTargetsGpu(GpuHistogramWorkspace* workspace,
                                const std::vector<float>& gradients,

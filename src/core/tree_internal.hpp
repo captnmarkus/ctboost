@@ -107,6 +107,8 @@ NodeHistogramSet ComputeNodeHistogramSet(const HistMatrix& hist,
                                          std::size_t row_end,
                                          bool use_gpu,
                                          GpuHistogramWorkspace* gpu_workspace);
+NodeHistogramSet MaterializeGpuHistogramSnapshot(const HistMatrix& hist,
+                                                 const GpuHistogramSnapshot& snapshot);
 NodeHistogramSet SubtractNodeHistogramSet(const NodeHistogramSet& parent,
                                           const NodeHistogramSet& child);
 
@@ -158,8 +160,9 @@ GpuChildHistogramState BuildGpuChildHistogramState(const TreeBuildOptions& optio
                                                    std::size_t row_end,
                                                    const GpuHistogramSnapshot& parent_snapshot,
                                                    bool build_left_direct);
-bool ChooseGpuFirstChild(const TreeBuildOptions& options,
-                         GpuHistogramWorkspace* gpu_workspace,
+bool ChooseGpuFirstChild(const HistMatrix& hist,
+                         const TreeBuildOptions& options,
+                         const LinearStatistic& statistic_engine,
                          const std::vector<int>* child_allowed_features,
                          const ChildLeafBounds& child_bounds,
                          int depth,

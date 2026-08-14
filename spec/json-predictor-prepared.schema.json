@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ctboost.dev/schema/json-predictor-prepared-v1-v2.json",
+  "title": "CTBoost prepared-feature JSON predictor",
+  "type": "object",
+  "required": [
+    "format",
+    "format_version",
+    "objective_name",
+    "learning_rate",
+    "base_score",
+    "prediction_dimension",
+    "num_features",
+    "expects_prepared_features",
+    "quantization_schema",
+    "trees"
+  ],
+  "properties": {
+    "format": {"const": "ctboost-json-predictor"},
+    "format_version": {"enum": [1, 2]},
+    "ctboost_version": {"type": "string"},
+    "objective_name": {"type": "string", "minLength": 1},
+    "learning_rate": {"type": "number"},
+    "tree_learning_rates": {
+      "type": "array",
+      "items": {"type": "number"}
+    },
+    "base_score": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "number"}
+    },
+    "prediction_dimension": {"type": "integer", "minimum": 1},
+    "num_features": {"type": "integer", "minimum": 0},
+    "expects_prepared_features": {"const": true},
+    "feature_pipeline_state": {"type": ["object", "null"]},
+    "class_labels": {"type": ["array", "null"]},
+    "inference_manifest": {"type": ["object", "null"]},
+    "quantization_schema": {"$ref": "#/$defs/quantization"},
+    "trees": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/tree"}
+    }
+  },
+  "additionalProperties": true,
+  "$defs": {
+    "bit": {"enum": [0, 1, false, true]},
+    "quantization": {
+      "type": "object",
+      "required": [
+        "num_bins_per_feature",
+        "cut_offsets",
+        "cut_values",
+        "categorical_mask",
+        "missing_value_mask",
+        "nan_mode"
+      ],
+      "properties": {
+        "num_bins_per_feature": {
+          "type": "array",
+          "items": {"type": "integer", "minimum": 0, "maximum": 65535}
+        },
+        "cut_offsets": {
+          "type": "array",
+          "items": {"type": "integer", "minimum": 0}
+        },
+        "cut_values": {"type": "array", "items": {"type": "number"}},
+        "categorical_mask": {"type": "array", "items": {"$ref": "#/$defs/bit"}},
+        "missing_value_mask": {"type": "array", "items": {"$ref": "#/$defs/bit"}},
+        "nan_mode": {"type": "integer", "minimum": 0, "maximum": 2},
+        "nan_modes": {
+          "type": "array",
+          "items": {"type": "integer", "minimum": 0, "maximum": 2}
+        }
+      },
+      "additionalProperties": true
+    },
+    "tree": {
+      "type": "object",
+      "required": ["nodes"],
+      "properties": {
+        "nodes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"$ref": "#/$defs/node"}
+        }
+      },
+      "additionalProperties": true
+    },
+    "node": {
+      "type": "object",
+      "required": [
+        "is_leaf",
+        "is_categorical_split",
+        "split_feature_id",
+        "split_bin_index",
+        "left_child",
+        "right_child",
+        "leaf_weight",
+        "left_categories"
+      ],
+      "properties": {
+        "is_leaf": {"type": "boolean"},
+        "is_categorical_split": {"type": "boolean"},
+        "split_feature_id": {"type": "integer"},
+        "split_bin_index": {"type": "integer"},
+        "left_child": {"type": "integer"},
+        "right_child": {"type": "integer"},
+        "leaf_weight": {"type": "number"},
+        "left_categories": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/bit"}
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

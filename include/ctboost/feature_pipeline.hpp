@@ -120,6 +120,7 @@ class NativeFeaturePipeline {
                                 const std::vector<int>& embedding_indices);
   std::string AllocateOutputFeatureName(const std::string& proposed_name);
   void LoadState(const pybind11::dict& state);
+  void ValidateFittedState() const;
 
   pybind11::object cat_features_;
   bool ordered_ctr_{false};
