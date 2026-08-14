@@ -53,4 +53,3 @@ to claim a predictive-score improvement. The latest measured TabArena evidence
 remains the 0.1.55 three-dataset default smoke at 1054.0 provisional Elo. It is
 not a full or official leaderboard result and is not evidence of a 0.1.56 Elo
 gain.
-
