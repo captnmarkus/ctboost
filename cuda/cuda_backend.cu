@@ -3,6 +3,7 @@
 #include "hist_kernels.cuh"
 
 #include <cuda.h>
+#include <cudaTypedefs.h>
 #include <cuda_runtime_api.h>
 
 #include <algorithm>
@@ -55,6 +56,43 @@ constexpr int kHistogramThreads = 256;
 constexpr std::size_t kHistogramRowTileSize = 1024;
 constexpr std::size_t kHistogramChunkBins = 256;
 constexpr int kPredictionThreads = 256;
+constexpr unsigned int kCuMemGetAddressRangeAbiVersion = 3020U;
+
+PFN_cuMemGetAddressRange_v3020 ResolveCuMemGetAddressRange() {
+  struct EntryPoint {
+    PFN_cuMemGetAddressRange_v3020 function{nullptr};
+    cudaError_t runtime_status{cudaSuccess};
+    cudaDriverEntryPointQueryResult driver_status{cudaDriverEntryPointSymbolNotFound};
+  };
+
+  static const EntryPoint entry_point = [] {
+    EntryPoint result;
+    void* function = nullptr;
+    result.runtime_status = cudaGetDriverEntryPointByVersion(
+        "cuMemGetAddressRange",
+        &function,
+        kCuMemGetAddressRangeAbiVersion,
+        cudaEnableDefault,
+        &result.driver_status);
+    if (result.runtime_status == cudaSuccess &&
+        result.driver_status == cudaDriverEntryPointSuccess && function != nullptr) {
+      result.function = reinterpret_cast<PFN_cuMemGetAddressRange_v3020>(function);
+    }
+    return result;
+  }();
+
+  if (entry_point.runtime_status != cudaSuccess) {
+    throw std::runtime_error(
+        std::string("CUDA driver entry-point lookup failed: ") +
+        cudaGetErrorString(entry_point.runtime_status));
+  }
+  if (entry_point.driver_status != cudaDriverEntryPointSuccess ||
+      entry_point.function == nullptr) {
+    throw std::runtime_error(
+        "CUDA driver does not expose an ABI-compatible cuMemGetAddressRange entry point");
+  }
+  return entry_point.function;
+}
 
 __host__ __device__ __forceinline__ std::uint16_t ReadWorkspaceBin(const std::uint8_t* bins_u8,
                                                                    const std::uint16_t* bins_u16,
@@ -531,7 +569,7 @@ int ResolveCudaQuantizedPointerDevice(const CudaQuantizedMatrixView& view) {
   DeviceGuard source_device_guard(attributes.device);
   CUdeviceptr allocation_base = 0U;
   std::size_t allocation_size = 0U;
-  const CUresult range_status = cuMemGetAddressRange(
+  const CUresult range_status = ResolveCuMemGetAddressRange()(
       &allocation_base,
       &allocation_size,
       static_cast<CUdeviceptr>(view.data));
