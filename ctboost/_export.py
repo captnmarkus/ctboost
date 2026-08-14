@@ -10,7 +10,10 @@ from .export_codegen import _standalone_python_source
 from .export_cpp import standalone_cpp_source
 from .export_onnx import save_onnx_model
 from .export_payload import _normalize_export_format, _standalone_python_payload
-from .export_runtime import load_exported_predictor as load_exported_predictor
+from .export_runtime import (
+    ExportedPredictor as ExportedPredictor,
+    load_exported_predictor as load_exported_predictor,
+)
 from .inference_manifest import save_inference_manifest
 
 PathLike = Union[str, Path]

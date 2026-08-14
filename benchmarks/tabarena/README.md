@@ -104,7 +104,7 @@ metrics. Do not revise them after inspecting full test metrics; start a newly
 versioned portfolio instead. The adaptive tree caps do not change TabArena's
 3,600-second per-fit limit or its deadline callback.
 
-The current public-wheel 0.1.55 default-only smoke is recorded in
+The latest measured public-wheel 0.1.55 default-only smoke is recorded in
 [`smoke_0155_public_wheel.json`](smoke_0155_public_wheel.json). Its provisional
 three-dataset Elo is `1054.0`, with 3/3 complete raw artifacts and no imputation.
 The file contains exact per-split metrics/resources, raw/report hashes, release-wheel

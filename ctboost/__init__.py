@@ -195,7 +195,7 @@ def _load_sklearn_exports() -> Dict[str, Any]:
 
 def build_info() -> Dict[str, Any]:
     info = dict(_native_build_info())
-    info["version"] = __version__
+    info["package_version"] = __version__
     return info
 
 

@@ -81,7 +81,7 @@ CTBoost is an alpha project. Its API and model formats are tested extensively,
 but it does not yet have the independent production history of CatBoost or
 XGBoost.
 
-The current 0.1.55 public-wheel TabArena result is a three-dataset protocol
+The latest measured 0.1.55 public-wheel TabArena result is a three-dataset protocol
 smoke test: 3/3 successful CTBoost outer splits and 1054.0 provisional Elo.
 It is **not** a full or official leaderboard entry; with only one outer split
 per dataset, its uncertainty is too wide for model-to-model ranking claims.

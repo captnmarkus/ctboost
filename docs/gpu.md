@@ -32,7 +32,7 @@ python -m pip install -U ctboost
     The bundled CUDA runtime remains subject to the NVIDIA CUDA Toolkit license
     included in each CUDA-enabled wheel.
 
-The 0.1.54/0.1.55 unified wheels bundle the CUDA 12.8 runtime. GPU use requires
+The 0.1.54 through 0.1.56 unified wheels bundle the CUDA 12.8 runtime. GPU use requires
 an NVIDIA driver compatible with CUDA 12.x (at least 525.60.13 on Linux or
 528.33 on Windows) but does not require a local CUDA toolkit. Released CUDA
 wheels target compute capability 6.0 or newer, with native code through current

@@ -84,7 +84,7 @@ def _build_details() -> dict[str, Any]:
     from . import _core
 
     details = dict(_core.build_info())
-    details["version"] = __version__
+    details["package_version"] = __version__
     return _json_ready(details)
 
 

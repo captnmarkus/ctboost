@@ -12,6 +12,8 @@ _PROJECT_ROOT = pathlib.Path(__file__).resolve().parents[1]
 def test_build_info_matches_package_version():
     info = ctboost.build_info()
     assert info["version"] == ctboost.__version__
+    assert info["package_version"] == ctboost.__version__
+    assert ctboost._core.build_info()["version"] == ctboost.__version__
     assert info["cxx_standard"] == 17
     assert isinstance(info["cuda_enabled"], bool)
     assert isinstance(info["cuda_runtime"], str)
