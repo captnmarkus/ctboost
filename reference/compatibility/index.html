@@ -391,8 +391,32 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../../release-0.1.56/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Release 0.1.56
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     
     
+      
+        
       
         
       
@@ -421,10 +445,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
         
           
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
             
   
   
@@ -437,8 +461,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_7">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             Guides
           </label>
@@ -605,6 +629,29 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/portable-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Portable R/JVM inference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -662,10 +709,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" checked>
         
           
-          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
             
   
   
@@ -678,8 +725,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_9">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             Reference
           </label>
@@ -894,12 +941,18 @@
 <li>Continuing a callable-objective model requires supplying the callable again.</li>
 <li>Exact SHAP is empirical interventional and currently CPU-oriented.</li>
 <li>Object importance is approximate shared-leaf influence.</li>
-<li>Spark training collects to the driver.</li>
-<li>Arrow/Polars/cuDF/CuPy/DLPack inputs currently materialize into CTBoost-owned host arrays.</li>
+<li>Spark barrier training is an initial native-shard path; <code>mode="collect"</code> remains the
+  explicit driver-memory fallback. Distributed evaluation sets are not supported.</li>
+<li>Ordinary Arrow/Polars/cuDF/CuPy/DLPack inputs materialize into CTBoost-owned host
+  arrays. The explicit quantized-CUDA pool API has a narrower device-resident contract.</li>
 <li>Streaming Pools are numeric-only.</li>
 <li>Generated Python/C++ and ONNX exports require prepared numeric features for models with
   fitted categorical, text, or embedding pipelines.</li>
-<li>No CoreML, PMML, Java, or R binding is currently shipped.</li>
+<li>The repository's R and JVM packages are inference-only and prepared-feature-only;
+  they are not training bindings and are not yet published to CRAN/Maven Central.</li>
+<li>No CoreML or PMML export is currently shipped.</li>
+<li>Multi-node GPU still uses the trusted-network TCP reference coordinator rather than
+  mature NCCL/GPU-direct collectives, elasticity, or fault recovery.</li>
 </ul>
 <h2 id="security-boundary-for-distributed-training">Security boundary for distributed training<a class="headerlink" href="#security-boundary-for-distributed-training" title="Permanent link">&para;</a></h2>
 <p>Authenticated TCP roots contain a high-entropy per-run bearer token. Requests are

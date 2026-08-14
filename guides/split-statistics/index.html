@@ -391,12 +391,36 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../../release-0.1.56/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Release 0.1.56
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
   
     
     
+      
+        
       
         
       
@@ -425,10 +449,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
         
           
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
             
   
   
@@ -441,8 +465,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_7">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             Guides
           </label>
@@ -678,6 +702,29 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../portable-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Portable R/JVM inference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -733,10 +780,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
         
           
-          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
             
   
   
@@ -749,8 +796,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             Reference
           </label>
@@ -925,9 +972,7 @@ feasible adjusted-gain choice. The default is <code>"none"</code>.</p>
 <p>With verbose profiling, <code>node_search</code> retains the existing <code>p_value</code> field for
 the raw value and also reports <code>stopping_p_value</code>. The latter is
 <code>min(1, m * p_value)</code> for Bonferroni and equals the raw value for <code>"none"</code>;
-<code>tested_features</code> reports <code>m</code> on CPU. GPU profiling reports
-<code>tested_features=0</code> because that diagnostic count is not currently returned by
-the GPU search. The raw <code>p_value</code> is the one used for ranking.</p>
+<code>tested_features</code> reports <code>m</code>. The raw <code>p_value</code> is the one used for ranking.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">model</span> <span class="o">=</span> <span class="n">CTBoostRegressor</span><span class="p">(</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">feature_test</span><span class="o">=</span><span class="s2">&quot;grouped&quot;</span><span class="p">,</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">feature_test_bins</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
@@ -935,10 +980,16 @@ the GPU search. The raw <code>p_value</code> is the one used for ranking.</p>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">alpha</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="p">)</span>
 </code></pre></div>
-<p>These experimental options currently support CPU training, including the CPU
-distributed histogram path. GPU training fails closed unless
-<code>feature_test="quadratic"</code> and <code>feature_test_adjustment="none"</code>; this prevents a
-silent CPU/GPU statistical mismatch. Prediction remains device-independent.</p>
+<p>CPU and GPU training use the same candidate selector for quadratic, grouped, and
+Bonferroni modes. On GPU, histogram construction and row partitioning stay on device;
+the already-required host snapshot is converted losslessly to the CPU selector's
+histogram representation. This avoids a second statistical implementation and adds no
+extra device-to-host transfer. The selected feature's gain search still uses every raw
+bin. Prediction remains device-independent.</p>
+<p>This shared-selector route also makes the ordinary unconstrained GPU path obey the same
+minimum-raw-p feature choice as CPU. It is a parity-first implementation; a future
+device-native statistic may reduce host selection overhead only if it reproduces these
+semantics exactly.</p>
 <p>Model state, snapshots, warm starts, the scikit-learn estimators, and the CLI
 persist all three settings. Snapshot resume rejects configuration drift;
 <code>init_model</code> can be used when a later stage intentionally changes the test.</p>

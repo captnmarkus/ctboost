@@ -10,26 +10,28 @@
       
       
       
-        <link rel="canonical" href="https://captnmarkus.github.io/ctboost/">
+        <link rel="canonical" href="https://captnmarkus.github.io/ctboost/guides/portable-inference/">
       
       
+        <link rel="prev" href="../deployment/">
       
-        <link rel="next" href="getting-started/">
+      
+        <link rel="next" href="../../development/">
       
       
-      <link rel="icon" href="assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.20">
     
     
       
-        <title>CTBoost</title>
+        <title>Portable R/JVM inference - CTBoost</title>
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.e53b48f4.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.e53b48f4.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -48,9 +50,9 @@
       
     
     
-      <link rel="stylesheet" href="stylesheets/extra.css">
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
     
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -76,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#conditional-inference-boosted" class="md-skip">
+        <a href="#portable-r-and-jvm-inference" class="md-skip">
           Skip to content
         </a>
       
@@ -92,7 +94,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="CTBoost" class="md-header__button md-logo" aria-label="CTBoost" data-md-component="logo">
+    <a href="../.." title="CTBoost" class="md-header__button md-logo" aria-label="CTBoost" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -112,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Home
+              Portable R/JVM inference
             
           </span>
         </div>
@@ -230,7 +232,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="CTBoost" class="md-nav__button md-logo" aria-label="CTBoost" data-md-component="logo">
+    <a href="../.." title="CTBoost" class="md-nav__button md-logo" aria-label="CTBoost" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -257,32 +259,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    Home
-    
-  </span>
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="." class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -293,44 +273,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#a-small-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      A small example
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#where-to-go-next" class="md-nav__link">
-    <span class="md-ellipsis">
-      Where to go next
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -342,7 +284,7 @@
   
   
     <li class="md-nav__item">
-      <a href="getting-started/" class="md-nav__link">
+      <a href="../../getting-started/" class="md-nav__link">
         
   
   
@@ -364,7 +306,7 @@
   
   
     <li class="md-nav__item">
-      <a href="why-ctboost/" class="md-nav__link">
+      <a href="../../why-ctboost/" class="md-nav__link">
         
   
   
@@ -386,7 +328,7 @@
   
   
     <li class="md-nav__item">
-      <a href="benchmarks/" class="md-nav__link">
+      <a href="../../benchmarks/" class="md-nav__link">
         
   
   
@@ -408,7 +350,7 @@
   
   
     <li class="md-nav__item">
-      <a href="split-statistics-research/" class="md-nav__link">
+      <a href="../../split-statistics-research/" class="md-nav__link">
         
   
   
@@ -430,7 +372,7 @@
   
   
     <li class="md-nav__item">
-      <a href="gpu/" class="md-nav__link">
+      <a href="../../gpu/" class="md-nav__link">
         
   
   
@@ -452,7 +394,7 @@
   
   
     <li class="md-nav__item">
-      <a href="release-0.1.56/" class="md-nav__link">
+      <a href="../../release-0.1.56/" class="md-nav__link">
         
   
   
@@ -471,8 +413,10 @@
       
   
   
+    
   
   
+  
     
     
       
@@ -501,11 +445,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
         
           
           <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
@@ -521,7 +465,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             Guides
@@ -535,7 +479,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guides/training/" class="md-nav__link">
+      <a href="../training/" class="md-nav__link">
         
   
   
@@ -558,7 +502,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guides/data-input/" class="md-nav__link">
+      <a href="../data-input/" class="md-nav__link">
         
   
   
@@ -581,7 +525,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guides/categorical-text/" class="md-nav__link">
+      <a href="../categorical-text/" class="md-nav__link">
         
   
   
@@ -604,7 +548,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guides/split-statistics/" class="md-nav__link">
+      <a href="../split-statistics/" class="md-nav__link">
         
   
   
@@ -627,7 +571,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guides/explainability/" class="md-nav__link">
+      <a href="../explainability/" class="md-nav__link">
         
   
   
@@ -650,7 +594,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guides/distributed/" class="md-nav__link">
+      <a href="../distributed/" class="md-nav__link">
         
   
   
@@ -673,7 +617,7 @@
   
   
     <li class="md-nav__item">
-      <a href="guides/deployment/" class="md-nav__link">
+      <a href="../deployment/" class="md-nav__link">
         
   
   
@@ -693,10 +637,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="guides/portable-inference/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Portable R/JVM inference
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -707,6 +673,62 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#supported-profile" class="md-nav__link">
+    <span class="md-ellipsis">
+      Supported profile
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#jvm" class="md-nav__link">
+    <span class="md-ellipsis">
+      JVM
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#r" class="md-nav__link">
+    <span class="md-ellipsis">
+      R
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-and-conformance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security and conformance
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -726,7 +748,7 @@
   
   
     <li class="md-nav__item">
-      <a href="development/" class="md-nav__link">
+      <a href="../../development/" class="md-nav__link">
         
   
   
@@ -797,7 +819,7 @@
   
   
     <li class="md-nav__item">
-      <a href="reference/api/" class="md-nav__link">
+      <a href="../../reference/api/" class="md-nav__link">
         
   
   
@@ -820,7 +842,7 @@
   
   
     <li class="md-nav__item">
-      <a href="reference/compatibility/" class="md-nav__link">
+      <a href="../../reference/compatibility/" class="md-nav__link">
         
   
   
@@ -870,18 +892,36 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#a-small-example" class="md-nav__link">
+  <a href="#supported-profile" class="md-nav__link">
     <span class="md-ellipsis">
-      A small example
+      Supported profile
     </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#where-to-go-next" class="md-nav__link">
+  <a href="#jvm" class="md-nav__link">
     <span class="md-ellipsis">
-      Where to go next
+      JVM
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#r" class="md-nav__link">
+    <span class="md-ellipsis">
+      R
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-and-conformance" class="md-nav__link">
+    <span class="md-ellipsis">
+      Security and conformance
     </span>
   </a>
   
@@ -906,77 +946,42 @@
   
 
 
-<h1 id="conditional-inference-boosted">Conditional inference, boosted<a class="headerlink" href="#conditional-inference-boosted" title="Permanent link">&para;</a></h1>
-<div class="ctb-hero">
-<p>CTBoost is a gradient-boosting library built around <strong>conditional-inference trees</strong>.
-It combines alpha-stopped feature-test selection, optional per-node Bonferroni
-adjustment, a familiar Python and scikit-learn interface, native C++ training,
-and optional CUDA acceleration.</p>
-<p><a class="md-button md-button--primary" href="getting-started/">Install CTBoost</a>
-<a class="md-button" href="benchmarks/">See benchmark status</a></p>
-</div>
-<div class="admonition info">
-<p class="admonition-title">Project status</p>
-<p>CTBoost is an alpha project. Its API and model format are tested extensively,
-but it does not yet have the independent production history of CatBoost or
-XGBoost. Benchmark claims on this site state their dataset and protocol scope.</p>
-</div>
-<div class="grid cards">
-<ul>
-<li>
-<p>:material-chart-tree:{ .lg .middle } <strong>A different tree learner</strong></p>
-<hr />
-<p>Conditional tests select splits before cut points are optimized. CTBoost keeps
-that defining behavior instead of copying symmetric or conventional greedy trees.</p>
-</li>
-<li>
-<p>:material-speedometer:{ .lg .middle } <strong>Native CPU and CUDA paths</strong></p>
-<hr />
-<p>Histogram training, stochastic boosting, DART, early stopping, callbacks,
-ranking, survival objectives, and task-aware feature preprocessing.</p>
-</li>
-<li>
-<p>:material-shield-check:{ .lg .middle } <strong>Auditable artifacts</strong></p>
-<hr />
-<p>Versioned inference manifests, deterministic fingerprints, JSON/Python/C++/ONNX
-exports, exact empirical interventional TreeSHAP, and reproducible benchmark metadata.</p>
-</li>
-<li>
-<p>:material-language-python:{ .lg .middle } <strong>Python ecosystem fit</strong></p>
-<hr />
-<p>NumPy, pandas, SciPy sparse, Arrow, Polars, cuDF/CuPy/DLPack adapters,
-scikit-learn helpers, and Dask/Ray/Spark integration surfaces.</p>
-</li>
-</ul>
-</div>
-<h2 id="a-small-example">A small example<a class="headerlink" href="#a-small-example" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ctboost</span><span class="w"> </span><span class="kn">import</span> <span class="n">CTBoostClassifier</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">model</span> <span class="o">=</span> <span class="n">CTBoostClassifier</span><span class="p">(</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">iterations</span><span class="o">=</span><span class="mi">800</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">max_depth</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">ordered_ctr</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">random_seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">)</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">X_train</span><span class="p">,</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">y_train</span><span class="p">,</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">eval_set</span><span class="o">=</span><span class="p">(</span><span class="n">X_valid</span><span class="p">,</span> <span class="n">y_valid</span><span class="p">),</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">early_stopping_rounds</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="p">)</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="n">probability</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="n">explanation</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict_shap_values</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">X_train</span><span class="p">)</span>
+<h1 id="portable-r-and-jvm-inference">Portable R and JVM inference<a class="headerlink" href="#portable-r-and-jvm-inference" title="Permanent link">&para;</a></h1>
+<p>CTBoost ships source packages for scoring prepared numeric JSON-predictor artifacts in
+R and Java 17. They are inference runtimes, not training bindings, and they do not alter
+the model's conditional-inference feature selection or split points.</p>
+<h2 id="supported-profile">Supported profile<a class="headerlink" href="#supported-profile" title="Permanent link">&para;</a></h2>
+<p>Both runtimes implement the repository's
+<a href="https://github.com/captnmarkus/ctboost/blob/master/spec/json-predictor-prepared.md"><code>json-predictor-prepared</code></a>
+profile for format versions 1 and 2. They validate the envelope, quantization arrays,
+finite model values, tree dimensions, child and feature indices, reachability, and
+acyclic traversal before scoring. Duplicate JSON keys are rejected.</p>
+<p>The input must already have exactly <code>num_features</code> numeric columns in the order used by
+the exported model. Artifacts with <code>expects_prepared_features=false</code> are rejected before
+the scorer reads fitted-pipeline fields. Use the Python JSON runtime when inference must
+reproduce CTBoost's fitted categorical, text, or embedding preprocessing.</p>
+<h2 id="jvm">JVM<a class="headerlink" href="#jvm" title="Permanent link">&para;</a></h2>
+<p>Build and test the Java 17 module:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nb">cd</span><span class="w"> </span>bindings/jvm
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>mvn<span class="w"> </span><span class="nb">test</span>
 </code></pre></div>
-<h2 id="where-to-go-next">Where to go next<a class="headerlink" href="#where-to-go-next" title="Permanent link">&para;</a></h2>
-<ul>
-<li><a href="getting-started/">Install and train a first model</a>.</li>
-<li><a href="why-ctboost/">Understand what is different</a>.</li>
-<li><a href="benchmarks/">Read the benchmark protocol and current evidence</a>.</li>
-<li><a href="guides/deployment/">Choose a deployment format</a>.</li>
-<li><a href="reference/compatibility/">Check explicit compatibility limits</a>.</li>
-</ul>
+<p>Load <code>JsonPredictor</code> from the package <code>io.github.ctboost.inference</code>, then call its raw,
+probability, or class-prediction methods. The module is source-distributed and has not
+yet been published to Maven Central.</p>
+<h2 id="r">R<a class="headerlink" href="#r" title="Permanent link">&para;</a></h2>
+<p>Build and check the pure-R package:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>R<span class="w"> </span>CMD<span class="w"> </span>build<span class="w"> </span>bindings/R/ctboost
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>R<span class="w"> </span>CMD<span class="w"> </span>check<span class="w"> </span>--no-manual<span class="w"> </span>--no-build-vignettes<span class="w"> </span>ctboost_*.tar.gz
+</code></pre></div>
+<p>Use <code>ctboost_load_predictor(path)</code> followed by <code>ctboost_predict(model, data, type=...)</code>.
+The package is source-distributed and has not yet been published to CRAN.</p>
+<h2 id="security-and-conformance">Security and conformance<a class="headerlink" href="#security-and-conformance" title="Permanent link">&para;</a></h2>
+<p>The JSON model must be trusted. Structural validation and traversal limits make malformed
+artifacts fail closed, but the model fingerprint is a consistency checksum, not a digital
+signature. The shared fixtures under <code>tests/export_conformance</code> bind Python, R, and JVM
+raw/probability/class outputs for regression, binary, and multiclass models.</p>
+<p>Training APIs, JNI/native bindings, raw fitted preprocessing, and model-registry
+authentication are outside this first portable-inference slice.</p>
 
 
 
@@ -1035,10 +1040,10 @@ scikit-learn helpers, and Dask/Ray/Spark integration surfaces.</p>
     
     
       
-      <script id="__config" type="application/json">{"base": ".", "features": ["navigation.sections", "navigation.indexes", "navigation.top", "navigation.tracking", "content.code.copy", "search.highlight", "search.suggest", "toc.follow"], "search": "assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.sections", "navigation.indexes", "navigation.top", "navigation.tracking", "content.code.copy", "search.highlight", "search.suggest", "toc.follow"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="assets/javascripts/bundle.f55a23d4.min.js"></script>
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
       
     
   </body>

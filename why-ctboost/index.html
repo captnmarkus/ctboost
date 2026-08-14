@@ -462,8 +462,32 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../release-0.1.56/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Release 0.1.56
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     
     
+      
+        
       
         
       
@@ -492,10 +516,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
         
           
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
             
   
   
@@ -508,8 +532,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_7">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             Guides
           </label>
@@ -676,6 +700,29 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/portable-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Portable R/JVM inference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -731,10 +778,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
         
           
-          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
             
   
   
@@ -747,8 +794,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             Reference
           </label>
@@ -901,14 +948,17 @@ replace that split mechanism with symmetric trees or a conventional greedy split
 <li>ordered categorical target statistics, text n-grams/TF-IDF, and embedding statistics;</li>
 <li>exact empirical interventional TreeSHAP and SHAP interactions;</li>
 <li>snapshots, warm starts, staged prediction, callbacks, CV and model-selection helpers;</li>
-<li>standalone JSON/Python/C++ predictors, ONNX export, a CLI, and inference manifests;</li>
+<li>standalone JSON/Python/C++ predictors, ONNX export, prepared-feature R/JVM
+  inference packages, a CLI, and inference manifests;</li>
 <li>columnar, streaming, Dask, Ray, and Spark integration surfaces.</li>
 </ul>
 <h2 id="what-is-not-claimed">What is not claimed<a class="headerlink" href="#what-is-not-claimed" title="Permanent link">&para;</a></h2>
-<p>CTBoost does not yet match CatBoost/XGBoost's production history, language bindings,
-cluster integrations, or full objective catalog. Object influence is a shared-leaf
-approximation rather than a deletion/refit counterfactual. Spark training collects to
-the driver. Standalone pipeline-backed exports currently expect prepared numeric input.
+<p>CTBoost does not yet match CatBoost/XGBoost's production history, training-language
+bindings, cluster integrations, or full objective catalog. Object influence is a
+shared-leaf approximation rather than a deletion/refit counterfactual. Spark barrier
+training is an initial native-shard integration, not a mature fault-tolerant collective
+stack. The Python JSON runtime can restore a validated fitted preprocessing pipeline;
+generated Python/C++/ONNX and the R/JVM scorers still require prepared numeric input.
 These limits are tracked explicitly rather than hidden behind broad parity claims.</p>
 
 

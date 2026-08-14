@@ -510,8 +510,32 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../release-0.1.56/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Release 0.1.56
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     
     
+      
+        
       
         
       
@@ -540,10 +564,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
         
           
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
             
   
   
@@ -556,8 +580,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_7">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             Guides
           </label>
@@ -724,6 +748,29 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/portable-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Portable R/JVM inference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -779,10 +826,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
         
           
-          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
             
   
   
@@ -795,8 +842,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             Reference
           </label>
@@ -997,8 +1044,8 @@ TabArena rather than recreating them locally.</p>
 </thead>
 <tbody>
 <tr>
-<td>TabArena-v0.1 lite, three datasets, default configuration</td>
-<td style="text-align: right;">1058.7 provisional Elo</td>
+<td>TabArena-v0.1 lite, three datasets, 0.1.55 default configuration</td>
+<td style="text-align: right;">1054.0 provisional Elo</td>
 </tr>
 <tr>
 <td>Successful CTBoost outer splits</td>
@@ -1044,34 +1091,40 @@ full TabArena Elo.</p>
 <td>anneal</td>
 <td>multiclass</td>
 <td>log loss</td>
-<td style="text-align: right;">0.041871</td>
-<td style="text-align: right;">150.18 s</td>
+<td style="text-align: right;">0.041921</td>
+<td style="text-align: right;">151.76 s</td>
 </tr>
 <tr>
 <td>blood-transfusion-service-center</td>
 <td>binary</td>
 <td>ROC-AUC error</td>
-<td style="text-align: right;">0.314912</td>
-<td style="text-align: right;">2.35 s</td>
+<td style="text-align: right;">0.315614</td>
+<td style="text-align: right;">1.88 s</td>
 </tr>
 <tr>
 <td>QSAR_fish_toxicity</td>
 <td>regression</td>
 <td>RMSE</td>
-<td style="text-align: right;">0.961281</td>
-<td style="text-align: right;">3.94 s</td>
+<td style="text-align: right;">0.968983</td>
+<td style="text-align: right;">2.97 s</td>
 </tr>
 </tbody>
 </table>
 <p>Provenance:</p>
 <ul>
-<li>CTBoost <code>fd187da60ec1844ef8d83c95b2d2ac6ccd839cd3</code>, clean tree;</li>
-<li>TabArena <code>50f8ab1bbc6e7f7e5dd9b19d8b643ac284ae9b3c</code>, clean tree;</li>
-<li>CTBoost 0.1.53, Python 3.12.11, CPU build, Windows AMD64.</li>
+<li>CTBoost 0.1.55 public installed distribution, independently matched to release
+  commit <code>026ccb5b8df50bdd8375f69729820cb8158e5a14</code>, install fingerprint
+  <code>aa7d1e972aca648333a3e14c39f7e30c4906c8a04632223b9d728da23edfdd66</code>;</li>
+<li>Python 3.12.11, Windows AMD64, eight CPU threads and no GPU used;</li>
+<li>TabArena package files independently matched commit
+  <code>50f8ab1bbc6e7f7e5dd9b19d8b643ac284ae9b3c</code>; the run itself used installed
+  distributions rather than live Git worktrees.</li>
 </ul>
-<p>The sanitized <a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/smoke_fd187da.json">machine-readable smoke record</a>
+<p>The sanitized <a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/smoke_0155_public_wheel.json">0.1.55 machine-readable smoke record</a>
 contains the exact per-split metrics, timing, memory, package versions, and commit
-identities without machine-local artifact paths.</p>
+identity limitations without machine-local artifact paths. The older 0.1.53
+<a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/smoke_fd187da.json"><code>smoke_fd187da.json</code></a>
+is retained as historical evidence, not as the current score.</p>
 <h3 id="grouped-split-statistic-qualification">Grouped split-statistic qualification<a class="headerlink" href="#grouped-split-statistic-qualification" title="Permanent link">&para;</a></h3>
 <p>The final-source 0.1.55 grouped-statistic panel completed 294/294 isolated
 fits and 42/42 exact implicit-control checks. It recorded nine wins, no ties,

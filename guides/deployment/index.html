@@ -16,7 +16,7 @@
         <link rel="prev" href="../distributed/">
       
       
-        <link rel="next" href="../../development/">
+        <link rel="next" href="../portable-inference/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -391,12 +391,36 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../../release-0.1.56/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Release 0.1.56
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
   
     
     
+      
+        
       
         
       
@@ -425,10 +449,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
         
           
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
             
   
   
@@ -441,8 +465,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_7">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             Guides
           </label>
@@ -678,6 +702,29 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../portable-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Portable R/JVM inference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -733,10 +780,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
         
           
-          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
             
   
   
@@ -749,8 +796,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             Reference
           </label>
@@ -925,9 +972,9 @@ ONNX export additionally requires <code>python -m pip install "ctboost[onnx]"</c
 <td>Treat files as trusted code/data</td>
 </tr>
 <tr>
-<td>JSON</td>
-<td>inspection and CTBoost reload</td>
-<td>CTBoost runtime required for training</td>
+<td>JSON predictor</td>
+<td>Python inference, including fitted preprocessing</td>
+<td>CTBoost Python runtime; trusted artifact</td>
 </tr>
 <tr>
 <td>generated Python</td>
@@ -944,11 +991,22 @@ ONNX export additionally requires <code>python -m pip install "ctboost[onnx]"</c
 <td>interoperable numeric inference</td>
 <td>prepared numeric features for fitted pipelines</td>
 </tr>
+<tr>
+<td>R/JVM JSON scorers</td>
+<td>portable inference</td>
+<td>prepared numeric features only; inference-only</td>
+</tr>
 </tbody>
 </table>
-<p>Generated predictors and ONNX do not silently reproduce a fitted categorical, text, or
-embedding pipeline. The manifest marks <code>prepared_features=True</code> where preprocessing must
-remain outside the exported scorer.</p>
+<p>The version-2 JSON predictor can embed a fitted categorical, text, or embedding pipeline
+for the Python <code>load_exported_predictor</code> runtime. Raw-feature exports require a matching
+inference manifest and the current pipeline/key-codec versions; fingerprints and the
+full native pipeline state are validated before construction. Treat the JSON as trusted
+input: its SHA-256 fingerprint detects accidental or uncoordinated changes but is not a
+signature or authenticity boundary.</p>
+<p>Generated Python/C++/ONNX predictors and the R/JVM scorers do not silently reproduce a
+fitted pipeline. Their manifest/profile requires prepared features. See
+<a href="../portable-inference/">portable inference</a> for the cross-language boundary.</p>
 <p>Classification exports preserve the fitted class-label order. Standalone
 Python and JSON predictors expose raw prediction; classification helpers also
 provide probabilities/classes where supported. A deterministic model

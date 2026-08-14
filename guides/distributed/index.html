@@ -391,12 +391,36 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../../release-0.1.56/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Release 0.1.56
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
   
     
     
+      
+        
       
         
       
@@ -425,10 +449,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
         
           
-          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
             
   
   
@@ -441,8 +465,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_7">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             Guides
           </label>
@@ -678,6 +702,29 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../portable-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Portable R/JVM inference
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -733,10 +780,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
         
           
-          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
             
   
   
@@ -749,8 +796,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             Reference
           </label>
@@ -905,9 +952,36 @@ native fit occupies the Python call until a shard completes.</p>
 <p>Ray can keep prediction partitioned through <code>map_batches</code>. Validate the exact Ray and
 cluster version used in production; Windows Ray support remains upstream beta.</p>
 <h2 id="spark">Spark<a class="headerlink" href="#spark" title="Permanent link">&para;</a></h2>
-<p>Spark fitting is explicitly collect-to-driver and must be requested as such. Prediction
-uses partitioned pandas UDFs. CTBoost does not currently claim native distributed Spark,
-JVM, Kubernetes, TLS, or coordinator fault-tolerance parity with mature incumbents.</p>
+<p><code>mode="auto"</code> uses native distributed training when both the DataFrame and Spark's
+estimated barrier-task capacity permit at least two workers. It caps the worker count by
+that estimate and otherwise fails closed; it never silently collects rows to the driver.
+Spark remains authoritative when task CPU/GPU resources or dynamic allocation make the
+estimate optimistic. Each barrier task owns one DataFrame partition and one CTBoost TCP
+rank; only the root model returns to the driver. Prediction remains partitioned through
+pandas UDFs.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ctboost.spark</span><span class="w"> </span><span class="kn">import</span> <span class="n">train</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">model</span> <span class="o">=</span> <span class="n">train</span><span class="p">(</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">frame</span><span class="o">.</span><span class="n">repartition</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="p">{</span><span class="s2">&quot;objective&quot;</span><span class="p">:</span> <span class="s2">&quot;RMSE&quot;</span><span class="p">,</span> <span class="s2">&quot;iterations&quot;</span><span class="p">:</span> <span class="mi">200</span><span class="p">},</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">label_col</span><span class="o">=</span><span class="s2">&quot;target&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">feature_cols</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;x0&quot;</span><span class="p">,</span> <span class="s2">&quot;x1&quot;</span><span class="p">,</span> <span class="s2">&quot;x2&quot;</span><span class="p">],</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;distributed&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="n">num_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="p">)</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="n">predicted</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">prediction_col</span><span class="o">=</span><span class="s2">&quot;ctboost_prediction&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>Barrier mode requires at least two process tasks and matching partitions/workers. A
+ranking group is remapped to an opaque, globally unique integer ID, then repartitioned
+round-robin with an exact worker partitioner and sorted so it cannot straddle native
+ranks. Ranking requires at least one distinct query group per requested worker; otherwise
+training fails closed and asks for fewer workers or explicit collection. Spark GPU
+resources are mapped to each task's visible device when the cluster supplies them.
+Distributed evaluation sets are not implemented yet and fail closed.</p>
+<p>Use <code>mode="collect"</code> only as an explicit driver-memory fallback for small data. CTBoost
+does not yet claim mature Spark/JVM training, Kubernetes, TLS, elasticity, coordinator
+fault recovery, or an NCCL/GPU-direct multi-node collective stack. The current native
+coordinator remains a trusted-network TCP reference path.</p>
 
 
 
