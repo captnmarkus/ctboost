@@ -202,6 +202,12 @@ def _write_sdist(
             for scout_file in _GROUPED_SCOUT_FILES
         }
     )
+    payloads.update(
+        {
+            portable_file: b"portable inference conformance asset\n"
+            for portable_file in release_artifacts._REQUIRED_PORTABLE_INFERENCE_FILES
+        }
+    )
     payloads.update(extra_members or {})
     path = directory / f"ctboost-{version}.tar.gz"
     with tarfile.open(path, mode="w:gz") as archive:
@@ -242,6 +248,14 @@ def _write_complete_release(
 
 def test_release_validator_requires_complete_grouped_scout_file_set():
     assert release_artifacts._REQUIRED_GROUPED_SCOUT_FILES == _GROUPED_SCOUT_FILES
+
+
+def test_release_validator_requires_portable_inference_source_files():
+    required = release_artifacts._REQUIRED_PORTABLE_INFERENCE_FILES
+    assert "bindings/R/ctboost/.Rbuildignore" in required
+    assert "bindings/jvm/pom.xml" in required
+    assert "spec/json-predictor-prepared.schema.json" in required
+    assert "tests/export_conformance/prepared_binary_v2.json" in required
 
 
 def test_release_matrix_has_one_wheel_per_tag_and_validates(tmp_path):

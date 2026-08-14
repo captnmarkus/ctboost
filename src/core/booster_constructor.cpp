@@ -214,11 +214,6 @@ GradientBooster::GradientBooster(std::string objective,
   if (normalized_task_type == "cpu") {
     use_gpu_ = false;
   } else if (normalized_task_type == "gpu") {
-    if (feature_test_ != "quadratic" || feature_test_adjustment_ != "none") {
-      throw std::invalid_argument(
-          "GPU training currently supports only feature_test='quadratic' with "
-          "feature_test_adjustment='none'");
-    }
     if (!CudaBackendCompiled()) {
       throw std::runtime_error(
           "task_type='GPU' was requested but CTBoost was compiled without CUDA support");

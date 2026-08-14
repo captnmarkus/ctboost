@@ -27,6 +27,8 @@ def _pool_from_handle(
     releasable_feature_storage: bool,
     dense_data: Optional[np.ndarray],
     sparse_components: Optional[Tuple[np.ndarray, np.ndarray, np.ndarray, Tuple[int, int]]],
+    cuda_quantized_data: Any = None,
+    quantization_schema_state: Any = None,
 ) -> Any:
     self = cls.__new__(cls)
     self._handle = handle
@@ -49,6 +51,8 @@ def _pool_from_handle(
     self._releasable_feature_storage = bool(releasable_feature_storage)
     self._dense_data_ref = dense_data
     self._sparse_csc_components = sparse_components
+    self._cuda_quantized_ref = cuda_quantized_data
+    self._quantization_schema_state = quantization_schema_state
     self._feature_pipeline = None
     self._external_memory_backing = None
     if self.weight is not None and (self.weight.ndim != 1 or self.weight.shape[0] != self.num_rows):

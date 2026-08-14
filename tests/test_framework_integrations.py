@@ -34,12 +34,21 @@ class _SparkFrame:
     def __init__(self, frame):
         self.frame = frame
         self.columns = list(frame.columns)
+        self.rdd = _SparkRDD(2)
 
     def select(self, *columns):
         return _SparkFrame(self.frame[list(columns)])
 
     def toPandas(self):
         return self.frame.copy()
+
+
+class _SparkRDD:
+    def __init__(self, partitions):
+        self.partitions = int(partitions)
+
+    def getNumPartitions(self):
+        return self.partitions
 
 
 def _regression_data():
@@ -224,15 +233,149 @@ def test_spark_collect_adapter_preserves_named_features_and_is_explicit(monkeypa
     assert model.booster.feature_names == list(frame.columns)
     np.testing.assert_array_equal(model.booster.predict(frame), model.booster.predict(frame))
 
-    try:
+    observed = {}
+
+    def distributed_train(dataframe, **kwargs):
+        observed["dataframe"] = dataframe
+        observed.update(kwargs)
+        return model.booster
+
+    monkeypatch.setattr(
+        spark_api,
+        "_train_distributed_spark_frame",
+        distributed_train,
+    )
+    distributed_model = spark_api.train(
+        spark_frame,
+        _params(),
+        label_col="target",
+        feature_cols=list(frame.columns),
+        mode="distributed",
+        num_workers=2,
+    )
+    assert distributed_model.booster is model.booster
+    assert observed["dataframe"] is spark_frame
+    assert observed["num_workers"] == 2
+    assert observed["feature_cols"] == list(frame.columns)
+
+
+def test_spark_auto_never_silently_collects_to_the_driver(monkeypatch):
+    spark_api = importlib.import_module("ctboost.spark")
+    monkeypatch.setattr(spark_api, "_require_pyspark", lambda: object())
+    frame, label = _regression_data()
+    spark_frame = _SparkFrame(frame.assign(target=label))
+    spark_frame.rdd = _SparkRDD(1)
+
+    with pytest.raises(ValueError, match="mode='collect' explicitly"):
         spark_api.train(
             spark_frame,
             _params(),
             label_col="target",
             feature_cols=list(frame.columns),
-            mode="distributed",
+            mode="auto",
         )
-    except ValueError as exc:
-        assert "only mode='collect'" in str(exc)
-    else:
-        raise AssertionError("Spark distributed mode must not silently collect")
+
+
+def test_spark_auto_caps_workers_and_group_ids_are_globally_encoded(monkeypatch):
+    pytest.importorskip("pyspark")
+    from pyspark.sql import SparkSession
+
+    spark_api = importlib.import_module("ctboost.spark")
+    try:
+        session = (
+            SparkSession.builder.master("local[2]")
+            .appName("ctboost-spark-contract-test")
+            .config("spark.ui.enabled", "false")
+            .getOrCreate()
+        )
+    except Exception as error:
+        pytest.skip(f"local Spark runtime is unavailable: {error}")
+
+    try:
+        frame = session.createDataFrame(
+            [
+                (0, "q-a", 0.1, 0.0),
+                (1, "q-a", 0.2, 1.0),
+                (2, "q-b", 0.3, 0.0),
+                (3, None, 0.4, 1.0),
+                (4, None, 0.5, 0.0),
+            ],
+            ["row_id", "query", "feature", "target"],
+        ).repartition(3)
+        encoded = spark_api._encode_distributed_group_ids(frame, "query")
+        group_by_row = {
+            int(row.row_id): int(row.query)
+            for row in encoded.select("row_id", "query").collect()
+        }
+        assert group_by_row[0] == group_by_row[1]
+        assert group_by_row[3] == group_by_row[4]
+        assert len({group_by_row[0], group_by_row[2], group_by_row[3]}) == 3
+        partitioned = spark_api._partition_distributed_group_ids(
+            encoded,
+            "query",
+            2,
+        )
+        partition_counts = partitioned.rdd.mapPartitions(
+            lambda rows: [sum(1 for _ in rows)]
+        ).collect()
+        assert len(partition_counts) == 2
+        assert all(count > 0 for count in partition_counts)
+        group_owners = partitioned.rdd.mapPartitionsWithIndex(
+            lambda partition, rows: [
+                (int(row.query), int(partition)) for row in rows
+            ]
+        ).collect()
+        owners_by_group = {}
+        for group, owner in group_owners:
+            owners_by_group.setdefault(group, set()).add(owner)
+        assert all(len(owners) == 1 for owners in owners_by_group.values())
+        assert all(
+            next(iter(owners)) == group % 2
+            for group, owners in owners_by_group.items()
+        )
+
+        single_group = session.createDataFrame(
+            [
+                (index, "only-query", float(index), float(index % 2))
+                for index in range(8)
+            ],
+            ["row_id", "query", "feature", "target"],
+        ).repartition(2)
+        with pytest.raises(ValueError, match="at least num_workers distinct groups"):
+            spark_api.train(
+                single_group,
+                {**_params(), "objective": "PairLogit"},
+                label_col="target",
+                feature_cols=["feature"],
+                group_id_col="query",
+                mode="distributed",
+                num_workers=2,
+            )
+
+        sentinel = object()
+        observed = {}
+
+        def distributed_train(dataframe, **kwargs):
+            observed.update(kwargs)
+            return sentinel
+
+        monkeypatch.setattr(
+            spark_api,
+            "_train_distributed_spark_frame",
+            distributed_train,
+        )
+        model = spark_api.train(
+            frame,
+            _params(),
+            label_col="target",
+            feature_cols=["feature"],
+            mode="auto",
+        )
+        assert model.booster is sentinel
+        assert observed["num_workers"] == min(
+            frame.rdd.getNumPartitions(),
+            session.sparkContext.defaultParallelism,
+        )
+        assert observed["num_workers"] >= 2
+    finally:
+        session.stop()

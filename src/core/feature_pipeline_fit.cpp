@@ -119,6 +119,15 @@ void NativeFeaturePipeline::FitInternal(py::array raw_matrix,
     feature_names_in_.reset();
   } else {
     feature_names_in_ = py::cast<std::vector<std::string>>(feature_names);
+    if (feature_names_in_->size() != matrix.cols) {
+      throw std::invalid_argument(
+          "feature_names size must match the number of input features");
+    }
+    const std::unordered_set<std::string> unique_feature_names(
+        feature_names_in_->begin(), feature_names_in_->end());
+    if (unique_feature_names.size() != feature_names_in_->size()) {
+      throw std::invalid_argument("feature_names must be unique");
+    }
   }
 
   const std::vector<int> cat_indices = ResolveIndices(cat_features_);
@@ -146,6 +155,7 @@ void NativeFeaturePipeline::FitInternal(py::array raw_matrix,
   FitCoreFeatureState(object_matrix, label_values, cat_indices, text_indices, embedding_indices);
   FitCtrState(object_matrix, label_values);
   FitTextAndEmbeddingState(object_matrix, label_values, text_indices, embedding_indices);
+  ValidateFittedState();
 }
 
 }  // namespace ctboost

@@ -185,7 +185,10 @@ if(CTBOOST_WITH_CUDA)
   )
 
   target_compile_definitions(ctboost_core PUBLIC CTBOOST_WITH_CUDA=1)
-  target_link_libraries(ctboost_cuda_backend PUBLIC CUDA::cudart pybind11::headers Python::Module)
+  target_link_libraries(
+    ctboost_cuda_backend
+    PUBLIC CUDA::cudart CUDA::cuda_driver pybind11::headers Python::Module
+  )
   target_link_libraries(ctboost_core PUBLIC ctboost_cuda_backend)
 else()
   target_sources(ctboost_core PRIVATE src/core/cuda_backend_stub.cpp)

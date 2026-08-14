@@ -1,0 +1,40 @@
+{
+  "format": "ctboost-json-predictor",
+  "format_version": 2,
+  "ctboost_version": "0.1.55",
+  "objective_name": "MultiClass",
+  "learning_rate": 0.2,
+  "tree_learning_rates": [0.4],
+  "base_score": [0.1, -0.2, 0.0],
+  "prediction_dimension": 3,
+  "num_features": 1,
+  "expects_prepared_features": true,
+  "feature_pipeline_state": null,
+  "quantization_schema": {
+    "num_bins_per_feature": [2],
+    "cut_offsets": [0, 1],
+    "cut_values": [0.0],
+    "categorical_mask": [0],
+    "missing_value_mask": [0],
+    "nan_mode": 1,
+    "nan_modes": [1]
+  },
+  "trees": [
+    {"nodes": [
+      {"is_leaf": false, "is_categorical_split": false, "split_feature_id": 0, "split_bin_index": 0, "left_child": 1, "right_child": 2, "leaf_weight": 0.0, "left_categories": []},
+      {"is_leaf": true, "is_categorical_split": false, "split_feature_id": -1, "split_bin_index": 0, "left_child": -1, "right_child": -1, "leaf_weight": 1.0, "left_categories": []},
+      {"is_leaf": true, "is_categorical_split": false, "split_feature_id": -1, "split_bin_index": 0, "left_child": -1, "right_child": -1, "leaf_weight": -1.0, "left_categories": []}
+    ]},
+    {"nodes": [
+      {"is_leaf": false, "is_categorical_split": false, "split_feature_id": 0, "split_bin_index": 0, "left_child": 1, "right_child": 2, "leaf_weight": 0.0, "left_categories": []},
+      {"is_leaf": true, "is_categorical_split": false, "split_feature_id": -1, "split_bin_index": 0, "left_child": -1, "right_child": -1, "leaf_weight": 0.5, "left_categories": []},
+      {"is_leaf": true, "is_categorical_split": false, "split_feature_id": -1, "split_bin_index": 0, "left_child": -1, "right_child": -1, "leaf_weight": 1.5, "left_categories": []}
+    ]},
+    {"nodes": [
+      {"is_leaf": false, "is_categorical_split": false, "split_feature_id": 0, "split_bin_index": 0, "left_child": 1, "right_child": 2, "leaf_weight": 0.0, "left_categories": []},
+      {"is_leaf": true, "is_categorical_split": false, "split_feature_id": -1, "split_bin_index": 0, "left_child": -1, "right_child": -1, "leaf_weight": -0.5, "left_categories": []},
+      {"is_leaf": true, "is_categorical_split": false, "split_feature_id": -1, "split_bin_index": 0, "left_child": -1, "right_child": -1, "leaf_weight": 0.25, "left_categories": []}
+    ]}
+  ],
+  "class_labels": ["red", "green", "blue"]
+}

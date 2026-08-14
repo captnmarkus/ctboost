@@ -56,8 +56,9 @@ GpuChildHistogramState BuildGpuChildHistogramState(const TreeBuildOptions& optio
   return state;
 }
 
-bool ChooseGpuFirstChild(const TreeBuildOptions& options,
-                         GpuHistogramWorkspace* gpu_workspace,
+bool ChooseGpuFirstChild(const HistMatrix& hist,
+                         const TreeBuildOptions& options,
+                         const LinearStatistic& statistic_engine,
                          const std::vector<int>* child_allowed_features,
                          const ChildLeafBounds& child_bounds,
                          int depth,
@@ -69,49 +70,33 @@ bool ChooseGpuFirstChild(const TreeBuildOptions& options,
     return true;
   }
 
-  GpuNodeSearchResult left_selection;
-  UploadHistogramSnapshotGpu(gpu_workspace, child_histograms->left_snapshot);
-  SearchBestNodeSplitGpu(gpu_workspace,
-                         child_allowed_features,
-                         options.lambda_l2,
-                         options.min_data_in_leaf,
-                         options.min_child_weight,
-                         options.min_split_gain,
-                         options.alpha,
-                         depth + 1,
-                         options.distributed == nullptr ? row_begin : 0U,
-                         options.distributed == nullptr
-                             ? left_end
-                             : static_cast<std::size_t>(
-                                   child_histograms->left_snapshot.node_statistics.sample_count),
-                         child_bounds.left_lower_bound,
-                         child_bounds.left_upper_bound,
-                         options.random_seed,
-                         options.random_strength,
-                         &left_selection);
+  const NodeHistogramSet left_stats =
+      MaterializeGpuHistogramSnapshot(hist, child_histograms->left_snapshot);
+  const CandidateSelectionResult left_selection = SelectBestCandidateSplit(
+      hist,
+      left_stats,
+      options,
+      statistic_engine,
+      child_allowed_features,
+      child_bounds.left_lower_bound,
+      child_bounds.left_upper_bound,
+      depth + 1,
+      row_begin,
+      left_end);
 
-  GpuNodeSearchResult right_selection;
-  UploadHistogramSnapshotGpu(gpu_workspace, child_histograms->right_snapshot);
-  SearchBestNodeSplitGpu(gpu_workspace,
-                         child_allowed_features,
-                         options.lambda_l2,
-                         options.min_data_in_leaf,
-                         options.min_child_weight,
-                         options.min_split_gain,
-                         options.alpha,
-                         depth + 1,
-                         options.distributed == nullptr ? left_end : 0U,
-                         options.distributed == nullptr
-                             ? row_end
-                             : static_cast<std::size_t>(
-                                   child_histograms->right_snapshot.node_statistics.sample_count),
-                         child_bounds.right_lower_bound,
-                         child_bounds.right_upper_bound,
-                         options.random_seed,
-                         options.random_strength,
-                         &right_selection);
-  child_histograms->left_snapshot_resident = false;
-  child_histograms->right_snapshot_resident = false;
+  const NodeHistogramSet right_stats =
+      MaterializeGpuHistogramSnapshot(hist, child_histograms->right_snapshot);
+  const CandidateSelectionResult right_selection = SelectBestCandidateSplit(
+      hist,
+      right_stats,
+      options,
+      statistic_engine,
+      child_allowed_features,
+      child_bounds.right_lower_bound,
+      child_bounds.right_upper_bound,
+      depth + 1,
+      left_end,
+      row_end);
   return right_selection.adjusted_gain <= left_selection.adjusted_gain;
 }
 

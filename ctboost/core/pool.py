@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import Any, List, Mapping, Optional, Tuple
 
 import numpy as np
@@ -30,7 +31,19 @@ from .ranking_metadata import (
     _normalize_identifier_array,
     _normalize_pairs,
 )
-from .sparse import _dataframe_to_numpy, _is_scipy_sparse_matrix, _scipy_sparse_to_csc_components
+from .sparse import (
+    _dataframe_to_numpy,
+    _is_scipy_sparse_matrix,
+    _scipy_sparse_to_csc_components,
+)
+
+
+class _CudaQuantizedOwner:
+    """Retain the exporter and freeze its synchronization metadata."""
+
+    def __init__(self, source: Any, interface: Mapping[str, Any]) -> None:
+        self.source = source
+        self.__cuda_array_interface__ = dict(interface)
 
 
 class Pool:
@@ -46,6 +59,175 @@ class Pool:
         from ..streaming import pool_from_batches
 
         return pool_from_batches(batches, **kwargs)
+
+    @classmethod
+    def from_cuda_quantized(
+        cls,
+        data: Any,
+        quantization_schema: Mapping[str, Any],
+        label: Any = None,
+        *,
+        cat_features: Optional[List[int]] = None,
+        weight: Any = None,
+        group_id: Any = None,
+        group_weight: Any = None,
+        subgroup_id: Any = None,
+        baseline: Any = None,
+        pairs: Any = None,
+        pairs_weight: Any = None,
+        feature_names: Optional[List[str]] = None,
+        column_roles: Any = None,
+        feature_metadata: Optional[Mapping[str, Any]] = None,
+        categorical_schema: Optional[Mapping[str, Any]] = None,
+        _releasable_feature_storage: bool = False,
+    ) -> "Pool":
+        """Create a device-only Pool from pre-quantized CUDA bins.
+
+        ``data`` must expose CUDA Array Interface version 3 as a 2D, C- or
+        Fortran-contiguous uint8/uint16 array. The supplied schema is
+        authoritative and must describe every bin exactly. Feature values are
+        never copied to host; GPU training makes an owned device-to-device copy.
+        """
+        interface = getattr(data, "__cuda_array_interface__", None)
+        if not isinstance(interface, dict):
+            raise TypeError(
+                "data must expose __cuda_array_interface__ as a dictionary"
+            )
+        cuda_owner = (
+            data
+            if isinstance(data, _CudaQuantizedOwner)
+            else _CudaQuantizedOwner(data, interface)
+        )
+        shape = interface.get("shape")
+        if not isinstance(shape, tuple) or len(shape) != 2:
+            raise ValueError("CUDA quantized data must have a 2D shape")
+        num_rows, num_cols = (int(shape[0]), int(shape[1]))
+        if num_rows < 0 or num_cols < 0:
+            raise ValueError("CUDA quantized data dimensions must be non-negative")
+
+        if not isinstance(quantization_schema, Mapping):
+            raise TypeError("quantization_schema must be a mapping")
+        required_schema_fields = {
+            "num_bins_per_feature",
+            "cut_offsets",
+            "cut_values",
+            "categorical_mask",
+            "missing_value_mask",
+            "nan_mode",
+        }
+        missing_fields = sorted(required_schema_fields - set(quantization_schema))
+        if missing_fields:
+            raise ValueError(
+                "quantization_schema is missing required fields: "
+                + ", ".join(missing_fields)
+            )
+        schema_state = deepcopy(dict(quantization_schema))
+        schema_categorical = [
+            index
+            for index, value in enumerate(schema_state["categorical_mask"])
+            if int(value) != 0
+        ]
+        resolved_cat_features = (
+            schema_categorical
+            if cat_features is None
+            else _normalize_categorical_features(cat_features)
+        )
+        if resolved_cat_features != schema_categorical:
+            raise ValueError(
+                "cat_features must exactly match quantization_schema['categorical_mask']"
+            )
+
+        resolved_feature_names = (
+            None if feature_names is None else [str(name) for name in feature_names]
+        )
+        resolved_column_roles = _normalize_column_roles(
+            column_roles,
+            num_cols=num_cols,
+            feature_names=resolved_feature_names,
+        )
+        resolved_feature_metadata = _normalize_json_metadata(
+            feature_metadata, name="feature_metadata"
+        )
+        resolved_categorical_schema = _normalize_json_metadata(
+            categorical_schema, name="categorical_schema"
+        )
+
+        label = _columnar_vector_to_numpy(label)
+        weight = _columnar_vector_to_numpy(weight)
+        group_id = _columnar_vector_to_numpy(group_id)
+        group_weight = _columnar_vector_to_numpy(group_weight)
+        subgroup_id = _columnar_vector_to_numpy(subgroup_id)
+        pairs_weight = _columnar_vector_to_numpy(pairs_weight)
+        label_array = (
+            np.empty(0, dtype=np.float32)
+            if label is None
+            else np.ascontiguousarray(label, dtype=np.float32)
+        )
+        native_weight = (
+            np.ones(num_rows, dtype=np.float32)
+            if weight is None
+            else np.ascontiguousarray(weight, dtype=np.float32)
+        )
+        resolved_weight = None if weight is None else native_weight
+        resolved_group_id = _normalize_group_id(group_id)
+        resolved_subgroup_id = _normalize_identifier_array(
+            subgroup_id, name="subgroup_id"
+        )
+        native_group_id = (
+            None
+            if resolved_group_id is None
+            else np.ascontiguousarray(resolved_group_id, dtype=np.int64)
+        )
+        native_group_weight = _normalize_group_weight(
+            group_weight,
+            group_id=resolved_group_id,
+            num_rows=num_rows,
+        )
+        native_subgroup_id = (
+            None
+            if resolved_subgroup_id is None
+            else np.ascontiguousarray(resolved_subgroup_id, dtype=np.int64)
+        )
+        native_baseline = _normalize_baseline(baseline, num_rows=num_rows)
+        native_pairs, native_pairs_weight = _normalize_pairs(
+            pairs,
+            pairs_weight=pairs_weight,
+            group_id=resolved_group_id,
+            num_rows=num_rows,
+        )
+        handle = _core.Pool.from_cuda_quantized(
+            cuda_owner,
+            schema_state,
+            label_array,
+            resolved_cat_features,
+            native_weight,
+            native_group_id,
+            native_group_weight,
+            native_subgroup_id,
+            native_baseline,
+            native_pairs,
+            native_pairs_weight,
+        )
+        return _pool_from_handle(
+            cls,
+            handle,
+            weight=resolved_weight,
+            group_id=native_group_id,
+            group_weight=native_group_weight,
+            subgroup_id=native_subgroup_id,
+            baseline=native_baseline,
+            pairs=native_pairs,
+            pairs_weight=native_pairs_weight,
+            feature_names=resolved_feature_names,
+            column_roles=resolved_column_roles,
+            feature_metadata=resolved_feature_metadata,
+            categorical_schema=resolved_categorical_schema,
+            releasable_feature_storage=_releasable_feature_storage,
+            dense_data=None,
+            sparse_components=None,
+            cuda_quantized_data=cuda_owner,
+            quantization_schema_state=schema_state,
+        )
 
     @classmethod
     def from_csc_components(
@@ -273,6 +455,11 @@ class Pool:
     @property
     def feature_data(self) -> np.ndarray:
         return self._handle.feature_data()
+
+    @property
+    def has_cuda_quantized_features(self) -> bool:
+        """Whether this Pool stores schema-bound quantized bins on a CUDA device."""
+        return bool(self._handle.has_cuda_quantized_features())
 
     @property
     def label(self) -> np.ndarray:

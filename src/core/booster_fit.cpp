@@ -7,6 +7,18 @@
 #include <stdexcept>
 
 namespace ctboost {
+namespace {
+
+bool SameQuantizationSchema(const QuantizationSchema& lhs,
+                            const QuantizationSchema& rhs) {
+  return lhs.num_bins_per_feature == rhs.num_bins_per_feature &&
+         lhs.cut_offsets == rhs.cut_offsets && lhs.cut_values == rhs.cut_values &&
+         lhs.categorical_mask == rhs.categorical_mask &&
+         lhs.missing_value_mask == rhs.missing_value_mask && lhs.nan_mode == rhs.nan_mode &&
+         lhs.nan_modes == rhs.nan_modes;
+}
+
+}  // namespace
 
 void GradientBooster::Fit(Pool& pool,
                           Pool* eval_pool,
@@ -27,6 +39,43 @@ void GradientBooster::FitWithObjective(Pool& pool,
   profiler.LogFitStart(pool.num_rows(), pool.num_cols(), iterations_, use_gpu_, prediction_dimension_);
   if (early_stopping_rounds < 0) {
     early_stopping_rounds = 0;
+  }
+  const bool uses_cuda_quantized_features = pool.has_cuda_quantized_features();
+  if (uses_cuda_quantized_features) {
+    if (!use_gpu_) {
+      throw std::invalid_argument(
+          "CUDA quantized Pool training requires task_type='GPU'");
+    }
+    if (eval_pool != nullptr) {
+      throw std::invalid_argument(
+          "CUDA quantized Pool training does not yet support eval_pool");
+    }
+    if (continue_training) {
+      throw std::invalid_argument(
+          "CUDA quantized Pool training does not yet support warm-start continuation");
+    }
+    if (distributed_world_size_ != 1) {
+      throw std::invalid_argument(
+          "CUDA quantized Pool training does not yet support distributed training");
+    }
+    if (external_memory_) {
+      throw std::invalid_argument(
+          "CUDA quantized Pool training cannot be combined with external_memory");
+    }
+    if (booster_detail::NormalizeToken(boosting_type_) == "dart") {
+      throw std::invalid_argument(
+          "CUDA quantized Pool training does not yet support DART boosting");
+    }
+    const QuantizationSchemaPtr& pool_schema = pool.cuda_quantization_schema();
+    if (pool_schema == nullptr) {
+      throw std::invalid_argument("CUDA quantized Pool is missing its quantization schema");
+    }
+    if (quantization_schema_ != nullptr &&
+        !SameQuantizationSchema(*quantization_schema_, *pool_schema)) {
+      throw std::invalid_argument(
+          "CUDA quantized Pool schema does not match the booster quantization schema");
+    }
+    quantization_schema_ = pool_schema;
   }
   booster_detail::ValidateFitInputs(pool,
                                     eval_pool,
@@ -71,7 +120,13 @@ void GradientBooster::FitWithObjective(Pool& pool,
   booster_detail::FitWorkspace workspace;
   booster_detail::LogFitMemorySnapshot(profiler, "pre_quantize", pool, eval_pool, workspace);
   const auto hist_build_start = std::chrono::steady_clock::now();
-  if (has_existing_state || quantization_schema_ != nullptr) {
+  if (uses_cuda_quantized_features) {
+    workspace.train_hist.num_rows = pool.num_rows();
+    workspace.train_hist.num_cols = pool.num_cols();
+    ApplyQuantizationSchema(
+        booster_detail::RequireQuantizationSchema(quantization_schema_), workspace.train_hist);
+    workspace.train_hist.bin_index_bytes = pool.cuda_quantized_view().element_bytes;
+  } else if (has_existing_state || quantization_schema_ != nullptr) {
     workspace.train_hist =
         booster_detail::BuildPredictionHist(pool, booster_detail::RequireQuantizationSchema(quantization_schema_));
     if (external_memory_) {
@@ -89,7 +144,11 @@ void GradientBooster::FitWithObjective(Pool& pool,
   const auto& labels = pool.labels();
   const auto& weights = pool.weights();
   if (use_gpu_) {
-    workspace.gpu_hist_workspace = CreateGpuHistogramWorkspace(workspace.train_hist, weights, devices_);
+    workspace.gpu_hist_workspace =
+        uses_cuda_quantized_features
+            ? CreateGpuHistogramWorkspaceFromCudaQuantized(
+                  workspace.train_hist, pool.cuda_quantized_view(), weights, devices_)
+            : CreateGpuHistogramWorkspace(workspace.train_hist, weights, devices_);
   }
   booster_detail::LogFitMemorySnapshot(profiler, "post_workspace", pool, eval_pool, workspace);
   const RankingMetadataView ranking = pool.ranking_metadata();

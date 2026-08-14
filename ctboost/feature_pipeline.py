@@ -142,14 +142,28 @@ class FeaturePipeline:
         self.embedding_stats = _embedding_stat_names(embedding_stats)
         self.embedding_target_features = bool(embedding_target_features)
         self.embedding_target_regularization = float(embedding_target_regularization)
-        if self.embedding_target_regularization < 0.0:
-            raise ValueError("embedding_target_regularization must be non-negative")
+        if (
+            not np.isfinite(self.embedding_target_regularization)
+            or self.embedding_target_regularization < 0.0
+            or self.embedding_target_regularization > float(np.finfo(np.float32).max)
+        ):
+            raise ValueError(
+                "embedding_target_regularization must be a finite non-negative float value"
+            )
         self.embedding_target_mode = _choice(
             embedding_target_mode,
             name="embedding_target_mode",
             choices=("auto", "regression", "classification"),
         )
         self.ctr_prior_strength = float(ctr_prior_strength)
+        if (
+            not np.isfinite(self.ctr_prior_strength)
+            or self.ctr_prior_strength < 0.0
+            or self.ctr_prior_strength > float(np.finfo(np.float32).max)
+        ):
+            raise ValueError(
+                "ctr_prior_strength must be a finite non-negative float value"
+            )
         self.random_seed = int(random_seed)
 
         self.feature_names_in_: Optional[List[str]] = None

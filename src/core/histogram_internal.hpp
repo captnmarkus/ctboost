@@ -14,6 +14,8 @@ enum class ExactQuantileStrategy : std::uint8_t {
 bool ValidateMaxBins(std::size_t max_bins);
 std::vector<float> NormalizeCustomBorders(std::vector<float> cuts);
 std::size_t ResolveHistogramThreadCount(std::size_t num_rows, std::size_t num_features);
+std::size_t ResolveNodeHistogramThreadCount(std::size_t num_rows,
+                                            std::size_t num_features);
 
 struct HistogramBuildContext {
   std::size_t approx_threshold_rows{0};

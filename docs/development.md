@@ -84,6 +84,16 @@ python -m pip install --requirement requirements-docs.txt
 python -m mkdocs build --strict
 ```
 
+Prepared-feature portable inference has separate conformance suites:
+
+```bash
+mvn --file bindings/jvm/pom.xml test
+R CMD build bindings/R/ctboost
+R CMD check --no-manual --no-build-vignettes ctboost_*.tar.gz
+```
+
+Both consume the shared artifacts in `tests/export_conformance`.
+
 For a local preview with automatic rebuilding:
 
 ```bash

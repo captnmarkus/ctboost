@@ -1,0 +1,33 @@
+{
+  "format": "ctboost-json-predictor",
+  "format_version": 1,
+  "ctboost_version": "0.1.55",
+  "objective_name": "RMSE",
+  "learning_rate": 0.5,
+  "tree_learning_rates": [],
+  "base_score": [1.0],
+  "prediction_dimension": 1,
+  "num_features": 2,
+  "expects_prepared_features": true,
+  "quantization_schema": {
+    "num_bins_per_feature": [3, 3],
+    "cut_offsets": [0, 2, 5],
+    "cut_values": [0.0, 1.0, 10.0, 20.0, 30.0],
+    "categorical_mask": [0, 1],
+    "missing_value_mask": [0, 0],
+    "nan_mode": 1,
+    "nan_modes": [1, 1]
+  },
+  "trees": [
+    {
+      "nodes": [
+        {"is_leaf": false, "is_categorical_split": false, "split_feature_id": 0, "split_bin_index": 0, "left_child": 1, "right_child": 2, "leaf_weight": 0.0, "left_categories": []},
+        {"is_leaf": true, "is_categorical_split": false, "split_feature_id": -1, "split_bin_index": 0, "left_child": -1, "right_child": -1, "leaf_weight": 1.0, "left_categories": []},
+        {"is_leaf": false, "is_categorical_split": true, "split_feature_id": 1, "split_bin_index": 0, "left_child": 3, "right_child": 4, "leaf_weight": 0.0, "left_categories": [0, 1, 0]},
+        {"is_leaf": true, "is_categorical_split": false, "split_feature_id": -1, "split_bin_index": 0, "left_child": -1, "right_child": -1, "leaf_weight": -0.5, "left_categories": []},
+        {"is_leaf": true, "is_categorical_split": false, "split_feature_id": -1, "split_bin_index": 0, "left_child": -1, "right_child": -1, "leaf_weight": 2.0, "left_categories": []}
+      ]
+    }
+  ],
+  "class_labels": null
+}

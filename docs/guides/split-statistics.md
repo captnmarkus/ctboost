@@ -53,9 +53,7 @@ feasible adjusted-gain choice. The default is `"none"`.
 With verbose profiling, `node_search` retains the existing `p_value` field for
 the raw value and also reports `stopping_p_value`. The latter is
 `min(1, m * p_value)` for Bonferroni and equals the raw value for `"none"`;
-`tested_features` reports `m` on CPU. GPU profiling reports
-`tested_features=0` because that diagnostic count is not currently returned by
-the GPU search. The raw `p_value` is the one used for ranking.
+`tested_features` reports `m`. The raw `p_value` is the one used for ranking.
 
 ```python
 model = CTBoostRegressor(
@@ -66,10 +64,17 @@ model = CTBoostRegressor(
 )
 ```
 
-These experimental options currently support CPU training, including the CPU
-distributed histogram path. GPU training fails closed unless
-`feature_test="quadratic"` and `feature_test_adjustment="none"`; this prevents a
-silent CPU/GPU statistical mismatch. Prediction remains device-independent.
+CPU and GPU training use the same candidate selector for quadratic, grouped, and
+Bonferroni modes. On GPU, histogram construction and row partitioning stay on device;
+the already-required host snapshot is converted losslessly to the CPU selector's
+histogram representation. This avoids a second statistical implementation and adds no
+extra device-to-host transfer. The selected feature's gain search still uses every raw
+bin. Prediction remains device-independent.
+
+This shared-selector route also makes the ordinary unconstrained GPU path obey the same
+minimum-raw-p feature choice as CPU. It is a parity-first implementation; a future
+device-native statistic may reduce host selection overhead only if it reproduces these
+semantics exactly.
 
 Model state, snapshots, warm starts, the scikit-learn estimators, and the CLI
 persist all three settings. Snapshot resume rejects configuration drift;

@@ -1,25 +1,82 @@
+import ctypes
+import ctypes.util
 import hashlib
 import json
 import os
 import pickle
-from pathlib import Path
 import re
 import subprocess
 import sys
 import textwrap
+from pathlib import Path
 
+import ctboost._core as _core
 import numpy as np
 import pytest
 from scipy.stats import chi2
 from sklearn.base import clone
 
 import ctboost
-import ctboost._core as _core
 from ctboost.cli import main as cli_main
+from tests.helpers import authenticated_tcp_root as _authenticated_tcp_root
+from tests.helpers import find_free_tcp_port as _find_free_tcp_port
 
 
 def _root(booster):
     return booster._handle.export_state()["trees"][0]["nodes"][0]
+
+
+def _require_cuda_device_for_hardware_test():
+    package_parent = Path(ctboost.__file__).resolve().parent.parent
+    pattern = "cudart64_*.dll" if os.name == "nt" else "libcudart.so*"
+    candidates = list(package_parent.glob(f"*/{pattern}"))
+    cuda_path = os.environ.get("CUDA_PATH")
+    if cuda_path:
+        runtime_directory = Path(cuda_path) / (
+            "bin" if os.name == "nt" else "lib64"
+        )
+        candidates.extend(sorted(runtime_directory.glob(pattern), reverse=True))
+    if os.name == "nt":
+        for path_entry in os.environ.get("PATH", "").split(os.pathsep):
+            if path_entry:
+                candidates.extend(
+                    sorted(Path(path_entry).glob("cudart64_*.dll"), reverse=True)
+                )
+    else:
+        maps_path = Path("/proc/self/maps")
+        if maps_path.is_file():
+            for line in maps_path.read_text(
+                encoding="utf-8", errors="replace"
+            ).splitlines():
+                mapped_path = line.rsplit(maxsplit=1)[-1]
+                if "libcudart.so" in mapped_path:
+                    candidates.append(mapped_path)
+        candidates.extend(
+            ("libcudart.so", "libcudart.so.12", "/usr/local/cuda/lib64/libcudart.so")
+        )
+    discovered = ctypes.util.find_library("cudart")
+    if discovered:
+        candidates.append(discovered)
+    errors = []
+    seen = set()
+    for candidate in candidates:
+        candidate = str(candidate)
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        try:
+            runtime = ctypes.CDLL(candidate)
+        except OSError as exc:
+            errors.append(f"{candidate}: {exc}")
+            continue
+        runtime.cudaGetDeviceCount.argtypes = [ctypes.POINTER(ctypes.c_int)]
+        runtime.cudaGetDeviceCount.restype = ctypes.c_int
+        count = ctypes.c_int()
+        status = runtime.cudaGetDeviceCount(ctypes.byref(count))
+        if status == 0 and count.value > 0:
+            return
+        errors.append(f"cudaGetDeviceCount returned {status} / {count.value}")
+    pytest.skip("CUDA device unavailable before hardware test: " + "; ".join(errors))
 
 
 def _python_grouped_reference(scores, bins, weights, groups, missing_bin=-1):
@@ -672,19 +729,203 @@ def test_cli_grouped_overrides_reach_persisted_model(tmp_path):
     assert params["feature_test_adjustment"] == "bonferroni"
 
 
-def test_gpu_grouped_statistics_fail_closed():
-    with pytest.raises(ValueError, match="GPU training currently supports only"):
-        _core.GradientBooster(task_type="GPU", feature_test="grouped")
+def test_gpu_grouped_statistics_reach_the_cuda_backend_boundary():
+    if ctboost.build_info()["cuda_enabled"]:
+        booster = _core.GradientBooster(
+            task_type="GPU",
+            feature_test="grouped",
+            feature_test_adjustment="bonferroni",
+        )
+        assert booster.feature_test() == "grouped"
+        assert booster.feature_test_adjustment() == "bonferroni"
+    else:
+        with pytest.raises(RuntimeError, match="compiled without CUDA support"):
+            _core.GradientBooster(
+                task_type="GPU",
+                feature_test="grouped",
+                feature_test_adjustment="bonferroni",
+            )
+
+
+def test_gpu_grouped_bonferroni_matches_cpu_root_selection_when_available():
+    if not ctboost.build_info()["cuda_enabled"]:
+        pytest.skip("CUDA support is not compiled into this build")
+    _require_cuda_device_for_hardware_test()
+
+    rng = np.random.default_rng(15521)
+    signal = np.linspace(-1.0, 1.0, 4096, dtype=np.float32)
+    X = np.column_stack(
+        (
+            rng.normal(size=signal.size),
+            signal,
+            rng.normal(size=signal.size),
+            rng.normal(size=signal.size),
+        )
+    ).astype(np.float32)
+    y = (2.4 * np.square(signal) + 0.04 * rng.normal(size=signal.size)).astype(
+        np.float32
+    )
+    params = {
+        "objective": "RMSE",
+        "learning_rate": 1.0,
+        "max_depth": 1,
+        "alpha": 0.01,
+        "max_bins": 255,
+        "feature_test": "grouped",
+        "feature_test_bins": 8,
+        "feature_test_adjustment": "bonferroni",
+        "random_seed": 15521,
+    }
+    cpu = ctboost.train(X, params, label=y, num_boost_round=1)
+    gpu = ctboost.train(
+        X,
+        {**params, "task_type": "GPU", "devices": "0"},
+        label=y,
+        num_boost_round=1,
+    )
+
+    cpu_root = _root(cpu)
+    gpu_root = _root(gpu)
+    assert cpu_root["is_leaf"] is False
+    assert gpu_root["is_leaf"] is False
+    assert cpu_root["split_feature_id"] == gpu_root["split_feature_id"] == 1
+    assert cpu_root["split_bin_index"] == gpu_root["split_bin_index"]
+    assert gpu_root["split_bin_index"] > params["feature_test_bins"]
+
+
+def test_distributed_gpu_zeroes_an_empty_local_child_histogram_when_available(
+    tmp_path: Path,
+):
+    if not ctboost.build_info()["cuda_enabled"]:
+        pytest.skip("CUDA support is not compiled into this build")
+    _require_cuda_device_for_hardware_test()
+
+    rows_per_rank = 256
+    within_rank = np.linspace(-1.0, 1.0, rows_per_rank, dtype=np.float32)
+    rng = np.random.default_rng(15529)
+    X = np.column_stack(
+        (
+            np.concatenate(
+                (
+                    np.full(rows_per_rank, -2.0, dtype=np.float32),
+                    np.full(rows_per_rank, 2.0, dtype=np.float32),
+                )
+            ),
+            np.tile(within_rank, 2),
+            rng.normal(size=2 * rows_per_rank).astype(np.float32),
+        )
+    ).astype(np.float32)
+    y = (
+        5.0 * np.sign(X[:, 0])
+        + 1.5 * (X[:, 1] > 0.0)
+        + 0.01 * rng.normal(size=X.shape[0])
+    ).astype(np.float32)
+    np.save(tmp_path / "global_X.npy", X)
+    for rank in range(2):
+        begin = rank * rows_per_rank
+        end = begin + rows_per_rank
+        np.save(tmp_path / f"shard_X_{rank}.npy", X[begin:end])
+        np.save(tmp_path / f"shard_y_{rank}.npy", y[begin:end])
+
+    worker = tmp_path / "distributed_gpu_empty_child.py"
+    worker.write_text(
+        textwrap.dedent(
+            """
+            import json
+            from pathlib import Path
+            import sys
+
+            import numpy as np
+            import ctboost
+
+            rank = int(sys.argv[1])
+            root = Path(sys.argv[2])
+            distributed_root = sys.argv[3]
+            X = np.load(root / f"shard_X_{rank}.npy")
+            y = np.load(root / f"shard_y_{rank}.npy")
+            global_X = np.load(root / "global_X.npy")
+            model = ctboost.train(
+                X,
+                {
+                    "objective": "RMSE",
+                    "task_type": "GPU",
+                    "devices": "0",
+                    "learning_rate": 0.5,
+                    "max_depth": 2,
+                    "alpha": 1.0,
+                    "max_bins": 64,
+                    "feature_test": "grouped",
+                    "feature_test_bins": 8,
+                    "feature_test_adjustment": "bonferroni",
+                    "distributed_world_size": 2,
+                    "distributed_rank": rank,
+                    "distributed_root": distributed_root,
+                    "distributed_run_id": "gpu-empty-local-child",
+                    "distributed_timeout": 120.0,
+                },
+                label=y,
+                num_boost_round=1,
+            )
+            np.save(root / f"distributed_gpu_pred_{rank}.npy", model.predict(global_X))
+            with (root / f"distributed_gpu_tree_{rank}.json").open(
+                "w", encoding="utf-8"
+            ) as stream:
+                json.dump(model._handle.export_state()["trees"], stream, sort_keys=True)
+            """
+        ),
+        encoding="utf-8",
+    )
+    environment = os.environ.copy()
+    environment["PYTHONPATH"] = (
+        str(Path.cwd()) + os.pathsep + environment.get("PYTHONPATH", "")
+    )
+    distributed_root = _authenticated_tcp_root(_find_free_tcp_port())
+    processes = [
+        subprocess.Popen(
+            [
+                sys.executable,
+                str(worker),
+                str(rank),
+                str(tmp_path),
+                distributed_root,
+            ],
+            env=environment,
+        )
+        for rank in range(2)
+    ]
+    assert [process.wait(timeout=180) for process in processes] == [0, 0]
+
+    trees = [
+        json.loads(
+            (tmp_path / f"distributed_gpu_tree_{rank}.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        for rank in range(2)
+    ]
+    assert trees[0] == trees[1]
+    predictions = [
+        np.load(tmp_path / f"distributed_gpu_pred_{rank}.npy") for rank in range(2)
+    ]
+    np.testing.assert_array_equal(predictions[0], predictions[1])
+    assert np.isfinite(predictions[0]).all()
+    split_features = [
+        node["split_feature_id"]
+        for node in trees[0][0]["nodes"]
+        if not node["is_leaf"]
+    ]
+    assert split_features[0] == 0
+    assert 1 in split_features[1:]
 
 
 @pytest.mark.parametrize(
     ("grouped", "bonferroni"),
     [(True, False), (False, True), (True, True)],
 )
-def test_public_tree_build_boundary_rejects_unsupported_gpu_feature_tests(
+def test_public_tree_build_boundary_accepts_gpu_feature_tests_before_workspace_validation(
     grouped, bonferroni
 ):
-    with pytest.raises(ValueError, match="GPU tree building currently supports only"):
+    with pytest.raises(ValueError, match="GPU histogram workspace must be provided"):
         _core._debug_tree_build_options_boundary(
             use_gpu=True,
             grouped=grouped,

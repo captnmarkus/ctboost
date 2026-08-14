@@ -1,7 +1,13 @@
 #include "tree_internal.hpp"
 
 #include <algorithm>
+#include <exception>
+#include <limits>
+#include <mutex>
 #include <stdexcept>
+#include <thread>
+
+#include "histogram_internal.hpp"
 
 namespace ctboost::detail {
 namespace {
@@ -77,7 +83,7 @@ NodeHistogramSet ComputeNodeHistogramSet(const HistMatrix& hist,
   stats.gradient_variance = ComputeGradientVariance(
       stats.total_gradient, stats.gradient_square_sum, stats.sample_weight_sum);
 
-  for (std::size_t feature = 0; feature < hist.num_cols; ++feature) {
+  auto build_feature = [&](std::size_t feature) {
     const std::size_t feature_bins_count = hist.num_bins(feature);
     BinStatistics feature_stats;
     feature_stats.gradient_sums.assign(feature_bins_count, 0.0);
@@ -94,6 +100,104 @@ NodeHistogramSet ComputeNodeHistogramSet(const HistMatrix& hist,
       feature_stats.weight_sums[bin] += sample_weight;
     }
 
+    stats.by_feature[feature] = std::move(feature_stats);
+  };
+
+  const std::size_t thread_count =
+      hist.uses_external_bin_storage()
+          ? 1U
+          : ResolveNodeHistogramThreadCount(row_end - row_begin, hist.num_cols);
+  if (thread_count == 1U) {
+    for (std::size_t feature = 0; feature < hist.num_cols; ++feature) {
+      build_feature(feature);
+    }
+    return stats;
+  }
+
+  std::exception_ptr first_error;
+  std::mutex error_mutex;
+  const std::size_t features_per_worker =
+      (hist.num_cols + thread_count - 1U) / thread_count;
+  auto worker = [&](std::size_t worker_index) {
+    const std::size_t begin = worker_index * features_per_worker;
+    const std::size_t end = std::min(hist.num_cols, begin + features_per_worker);
+    try {
+      for (std::size_t feature = begin; feature < end; ++feature) {
+        build_feature(feature);
+      }
+    } catch (...) {
+      std::lock_guard<std::mutex> lock(error_mutex);
+      if (first_error == nullptr) {
+        first_error = std::current_exception();
+      }
+    }
+  };
+
+  std::vector<std::thread> workers;
+  workers.reserve(thread_count - 1U);
+  try {
+    for (std::size_t thread_index = 1; thread_index < thread_count; ++thread_index) {
+      workers.emplace_back(worker, thread_index);
+    }
+  } catch (...) {
+    for (std::thread& worker_thread : workers) {
+      worker_thread.join();
+    }
+    throw;
+  }
+  worker(0U);
+  for (std::thread& worker_thread : workers) {
+    worker_thread.join();
+  }
+  if (first_error != nullptr) {
+    std::rethrow_exception(first_error);
+  }
+  return stats;
+}
+
+NodeHistogramSet MaterializeGpuHistogramSnapshot(const HistMatrix& hist,
+                                                 const GpuHistogramSnapshot& snapshot) {
+  std::size_t expected_bins = 0;
+  for (std::size_t feature = 0; feature < hist.num_cols; ++feature) {
+    const std::size_t feature_bins = hist.num_bins(feature);
+    if (feature_bins > std::numeric_limits<std::size_t>::max() - expected_bins) {
+      throw std::overflow_error("GPU histogram snapshot bin count overflows size_t");
+    }
+    expected_bins += feature_bins;
+  }
+  if (snapshot.gradient_sums.size() != expected_bins ||
+      snapshot.hessian_sums.size() != expected_bins ||
+      snapshot.weight_sums.size() != expected_bins) {
+    throw std::invalid_argument(
+        "GPU histogram snapshot size does not match the histogram schema");
+  }
+
+  NodeHistogramSet stats;
+  stats.by_feature.resize(hist.num_cols);
+  stats.sample_count = snapshot.node_statistics.sample_count;
+  stats.sample_weight_sum = snapshot.node_statistics.sample_weight_sum;
+  stats.total_gradient = snapshot.node_statistics.total_gradient;
+  stats.total_hessian = snapshot.node_statistics.total_hessian;
+  stats.gradient_square_sum = snapshot.node_statistics.gradient_square_sum;
+  stats.gradient_variance = ComputeGradientVariance(
+      stats.total_gradient, stats.gradient_square_sum, stats.sample_weight_sum);
+
+  std::size_t offset = 0;
+  for (std::size_t feature = 0; feature < hist.num_cols; ++feature) {
+    const std::size_t feature_bins = hist.num_bins(feature);
+    BinStatistics feature_stats;
+    feature_stats.gradient_sums.reserve(feature_bins);
+    feature_stats.hessian_sums.reserve(feature_bins);
+    feature_stats.weight_sums.reserve(feature_bins);
+    for (std::size_t bin = 0; bin < feature_bins; ++bin) {
+      feature_stats.gradient_sums.push_back(
+          static_cast<double>(snapshot.gradient_sums[offset + bin]));
+      feature_stats.hessian_sums.push_back(
+          static_cast<double>(snapshot.hessian_sums[offset + bin]));
+      feature_stats.weight_sums.push_back(
+          static_cast<double>(snapshot.weight_sums[offset + bin]));
+    }
+    offset += feature_bins;
     stats.by_feature[feature] = std::move(feature_stats);
   }
   return stats;

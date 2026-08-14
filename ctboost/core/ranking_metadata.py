@@ -122,8 +122,33 @@ def _clone_pool(
     resolved_column_roles = pool.column_roles if column_roles is None else column_roles
     resolved_feature_metadata = pool.feature_metadata if feature_metadata is None else feature_metadata
     resolved_categorical_schema = pool.categorical_schema if categorical_schema is None else categorical_schema
+    cuda_quantized_data = getattr(pool, "_cuda_quantized_ref", None)
     sparse_components = getattr(pool, "_sparse_csc_components", None)
-    if sparse_components is not None:
+    if cuda_quantized_data is not None:
+        quantization_schema_state = getattr(pool, "_quantization_schema_state", None)
+        if quantization_schema_state is None:
+            raise ValueError("CUDA quantized Pool is missing its quantization schema")
+        from .pool import Pool
+
+        cloned = Pool.from_cuda_quantized(
+            cuda_quantized_data,
+            quantization_schema_state,
+            resolved_label,
+            cat_features=pool.cat_features,
+            weight=resolved_weight,
+            group_id=resolved_group_id,
+            group_weight=resolved_group_weight,
+            subgroup_id=resolved_subgroup_id,
+            baseline=resolved_baseline,
+            pairs=resolved_pairs,
+            pairs_weight=resolved_pairs_weight,
+            feature_names=resolved_feature_names,
+            column_roles=resolved_column_roles,
+            feature_metadata=resolved_feature_metadata,
+            categorical_schema=resolved_categorical_schema,
+            _releasable_feature_storage=releasable_feature_storage,
+        )
+    elif sparse_components is not None:
         sparse_data, sparse_indices, sparse_indptr, shape = sparse_components
         from .pool import Pool
 

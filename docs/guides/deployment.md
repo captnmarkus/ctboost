@@ -41,14 +41,22 @@ ONNX export additionally requires `python -m pip install "ctboost[onnx]"`.
 | Format | Best for | Important limit |
 |---|---|---|
 | pickle | Python round-trip | Treat files as trusted code/data |
-| JSON | inspection and CTBoost reload | CTBoost runtime required for training |
+| JSON predictor | Python inference, including fitted preprocessing | CTBoost Python runtime; trusted artifact |
 | generated Python | dependency-free numeric inference | prepared numeric features for fitted pipelines |
 | generated C++ / C ABI | native embedding | model-specific generated interface |
 | ONNX | interoperable numeric inference | prepared numeric features for fitted pipelines |
+| R/JVM JSON scorers | portable inference | prepared numeric features only; inference-only |
 
-Generated predictors and ONNX do not silently reproduce a fitted categorical, text, or
-embedding pipeline. The manifest marks `prepared_features=True` where preprocessing must
-remain outside the exported scorer.
+The version-2 JSON predictor can embed a fitted categorical, text, or embedding pipeline
+for the Python `load_exported_predictor` runtime. Raw-feature exports require a matching
+inference manifest and the current pipeline/key-codec versions; fingerprints and the
+full native pipeline state are validated before construction. Treat the JSON as trusted
+input: its SHA-256 fingerprint detects accidental or uncoordinated changes but is not a
+signature or authenticity boundary.
+
+Generated Python/C++/ONNX predictors and the R/JVM scorers do not silently reproduce a
+fitted pipeline. Their manifest/profile requires prepared features. See
+[portable inference](portable-inference.md) for the cross-language boundary.
 
 Classification exports preserve the fitted class-label order. Standalone
 Python and JSON predictors expose raw prediction; classification helpers also

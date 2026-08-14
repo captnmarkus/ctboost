@@ -18,12 +18,12 @@ Python/scikit-learn interfaces.
 - Low-level `Pool`/`train` APIs plus familiar scikit-learn estimators.
 - NumPy, pandas, SciPy sparse, Arrow, and Polars input, with fitted
   categorical, text, and embedding preprocessing.
-- Native CPU and CUDA training, plus Dask and Ray distributed adapters and an
-  explicit collect-to-driver Spark integration.
+- Native CPU and CUDA training, plus Dask, Ray, and Spark barrier adapters;
+  Spark retains an explicit collect-to-driver fallback for small jobs.
 - Snapshots, warm starts, staged prediction, callbacks, model selection, and
   deterministic inference manifests.
 - Exact empirical interventional TreeSHAP and JSON, Python, C++, C ABI, ONNX,
-  and pickle persistence/export choices.
+  pickle, and prepared-feature R/JVM inference choices.
 
 ## Install
 
@@ -81,9 +81,12 @@ CTBoost is an alpha project. Its API and model formats are tested extensively,
 but it does not yet have the independent production history of CatBoost or
 XGBoost.
 
-The completed public TabArena result is a three-dataset protocol smoke test:
-3/3 successful CTBoost outer splits and 1058.7 provisional Elo. It is **not** a
-full or official leaderboard entry.
+The current 0.1.55 public-wheel TabArena result is a three-dataset protocol
+smoke test: 3/3 successful CTBoost outer splits and 1054.0 provisional Elo.
+It is **not** a full or official leaderboard entry; with only one outer split
+per dataset, its uncertainty is too wide for model-to-model ranking claims.
+The [sanitized record](https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/smoke_0155_public_wheel.json)
+contains the exact scope, hashes, metrics, and resource measurements.
 
 The final-source 0.1.55 pre-registered grouped-statistic panel completed
 294/294 isolated fits and 42/42 exact control checks. Grouped-8 recorded nine
@@ -110,6 +113,7 @@ for protocols, limitations, and machine-readable evidence.
 | SHAP, influence, and diagnostics | [Explainability](https://captnmarkus.github.io/ctboost/guides/explainability/) |
 | Dask, Ray, and Spark | [Distributed training](https://captnmarkus.github.io/ctboost/guides/distributed/) |
 | Persistence, exports, and CLI | [Deployment](https://captnmarkus.github.io/ctboost/guides/deployment/) |
+| Prepared-feature R/JVM inference | [Portable inference](https://captnmarkus.github.io/ctboost/guides/portable-inference/) |
 | Python symbols and signatures | [API reference](https://captnmarkus.github.io/ctboost/reference/api/) |
 | Source builds and tests | [Development](https://captnmarkus.github.io/ctboost/development/) |
 

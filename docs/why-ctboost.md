@@ -23,13 +23,16 @@ replace that split mechanism with symmetric trees or a conventional greedy split
 - ordered categorical target statistics, text n-grams/TF-IDF, and embedding statistics;
 - exact empirical interventional TreeSHAP and SHAP interactions;
 - snapshots, warm starts, staged prediction, callbacks, CV and model-selection helpers;
-- standalone JSON/Python/C++ predictors, ONNX export, a CLI, and inference manifests;
+- standalone JSON/Python/C++ predictors, ONNX export, prepared-feature R/JVM
+  inference packages, a CLI, and inference manifests;
 - columnar, streaming, Dask, Ray, and Spark integration surfaces.
 
 ## What is not claimed
 
-CTBoost does not yet match CatBoost/XGBoost's production history, language bindings,
-cluster integrations, or full objective catalog. Object influence is a shared-leaf
-approximation rather than a deletion/refit counterfactual. Spark training collects to
-the driver. Standalone pipeline-backed exports currently expect prepared numeric input.
+CTBoost does not yet match CatBoost/XGBoost's production history, training-language
+bindings, cluster integrations, or full objective catalog. Object influence is a
+shared-leaf approximation rather than a deletion/refit counterfactual. Spark barrier
+training is an initial native-shard integration, not a mature fault-tolerant collective
+stack. The Python JSON runtime can restore a validated fitted preprocessing pipeline;
+generated Python/C++/ONNX and the R/JVM scorers still require prepared numeric input.
 These limits are tracked explicitly rather than hidden behind broad parity claims.

@@ -2,6 +2,7 @@
 #include "ctboost/histogram.hpp"
 #include "hist_kernels.cuh"
 
+#include <cuda.h>
 #include <cuda_runtime_api.h>
 
 #include <algorithm>
@@ -112,6 +113,35 @@ void CopyHistogramBinsToDevice(const HistMatrix& hist,
     thrust::copy(feature_view.data_u16,
                  feature_view.data_u16 + static_cast<std::ptrdiff_t>(hist.num_rows),
                  bins_u16.begin() + static_cast<std::ptrdiff_t>(feature * hist.num_rows));
+  }
+}
+
+template <typename BinType>
+__global__ void CopyValidateCudaQuantizedBinsKernel(
+    const std::uint8_t* source,
+    std::size_t row_stride_bytes,
+    std::size_t col_stride_bytes,
+    BinType* destination,
+    const std::uint16_t* num_bins_per_feature,
+    std::size_t num_rows,
+    std::size_t num_cols,
+    unsigned long long* first_invalid_index) {
+  const std::size_t total_values = num_rows * num_cols;
+  for (std::size_t destination_index =
+           static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
+       destination_index < total_values;
+       destination_index += static_cast<std::size_t>(blockDim.x) * gridDim.x) {
+    const std::size_t feature = destination_index / num_rows;
+    const std::size_t row = destination_index - feature * num_rows;
+    const auto* source_value = reinterpret_cast<const BinType*>(
+        source + row * row_stride_bytes + feature * col_stride_bytes);
+    const BinType bin = *source_value;
+    destination[destination_index] = bin;
+    if (static_cast<std::uint64_t>(bin) >=
+        static_cast<std::uint64_t>(num_bins_per_feature[feature])) {
+      atomicMin(first_invalid_index,
+                static_cast<unsigned long long>(destination_index));
+    }
   }
 }
 
@@ -440,13 +470,189 @@ bool IsBetterAdjustedHostFeatureResult(const GpuBestFeatureResult& candidate,
          candidate.feature_id < best.feature_id;
 }
 
+int ResolveCudaQuantizedPointerDevice(const CudaQuantizedMatrixView& view) {
+  if (view.element_bytes != 1U && view.element_bytes != 2U) {
+    throw std::invalid_argument("CUDA quantized data must use uint8 or uint16 elements");
+  }
+  if (view.data % view.element_bytes != 0U || view.row_stride_bytes < 0 ||
+      view.col_stride_bytes < 0 ||
+      view.row_stride_bytes % static_cast<std::int64_t>(view.element_bytes) != 0 ||
+      view.col_stride_bytes % static_cast<std::int64_t>(view.element_bytes) != 0) {
+    throw std::invalid_argument(
+        "CUDA quantized data pointer and strides must be non-negative and dtype-aligned");
+  }
+  if (view.num_rows == 0U || view.num_cols == 0U) {
+    return -1;
+  }
+  if (view.num_cols > std::numeric_limits<std::size_t>::max() / view.element_bytes ||
+      view.num_rows > std::numeric_limits<std::size_t>::max() / view.element_bytes) {
+    throw std::invalid_argument("CUDA quantized contiguous strides overflow size_t");
+  }
+  const std::size_t c_row_stride = view.num_cols * view.element_bytes;
+  const std::size_t f_col_stride = view.num_rows * view.element_bytes;
+  const bool c_contiguous =
+      view.col_stride_bytes == static_cast<std::int64_t>(view.element_bytes) &&
+      (view.num_rows <= 1U ||
+       view.row_stride_bytes == static_cast<std::int64_t>(c_row_stride));
+  const bool f_contiguous =
+      view.row_stride_bytes == static_cast<std::int64_t>(view.element_bytes) &&
+      (view.num_cols <= 1U ||
+       view.col_stride_bytes == static_cast<std::int64_t>(f_col_stride));
+  if (!c_contiguous && !f_contiguous) {
+    throw std::invalid_argument(
+        "CUDA quantized data must be C-contiguous or Fortran-contiguous");
+  }
+  cudaPointerAttributes attributes{};
+  CTBOOST_CUDA_CHECK(
+      cudaPointerGetAttributes(&attributes, reinterpret_cast<const void*>(view.data)));
+  if (attributes.type != cudaMemoryTypeDevice) {
+    throw std::invalid_argument(
+        "CUDA quantized data pointer must refer to CUDA device memory");
+  }
+
+  const auto checked_product = [](std::size_t count,
+                                  std::size_t stride) -> std::size_t {
+    if (count != 0U && stride > std::numeric_limits<std::size_t>::max() / count) {
+      throw std::invalid_argument("CUDA quantized data device span overflows size_t");
+    }
+    return count * stride;
+  };
+  const std::size_t row_offset = checked_product(
+      view.num_rows - 1U, static_cast<std::size_t>(view.row_stride_bytes));
+  const std::size_t col_offset = checked_product(
+      view.num_cols - 1U, static_cast<std::size_t>(view.col_stride_bytes));
+  if (row_offset > std::numeric_limits<std::size_t>::max() - col_offset ||
+      row_offset + col_offset >
+          std::numeric_limits<std::size_t>::max() - view.element_bytes) {
+    throw std::invalid_argument("CUDA quantized data device span overflows size_t");
+  }
+  const std::size_t required_span = row_offset + col_offset + view.element_bytes;
+
+  DeviceGuard source_device_guard(attributes.device);
+  CUdeviceptr allocation_base = 0U;
+  std::size_t allocation_size = 0U;
+  const CUresult range_status = cuMemGetAddressRange(
+      &allocation_base,
+      &allocation_size,
+      static_cast<CUdeviceptr>(view.data));
+  if (range_status != CUDA_SUCCESS) {
+    throw std::invalid_argument(
+        "CUDA quantized data pointer must belong to a resolvable CUDA device allocation");
+  }
+  const CUdeviceptr data_pointer = static_cast<CUdeviceptr>(view.data);
+  if (data_pointer < allocation_base) {
+    throw std::invalid_argument(
+        "CUDA quantized data span is outside its CUDA device allocation");
+  }
+  const CUdeviceptr allocation_offset_value = data_pointer - allocation_base;
+  if (allocation_offset_value >
+      static_cast<CUdeviceptr>(std::numeric_limits<std::size_t>::max())) {
+    throw std::invalid_argument(
+        "CUDA quantized data span is outside its CUDA device allocation");
+  }
+  const std::size_t allocation_offset =
+      static_cast<std::size_t>(allocation_offset_value);
+  if (allocation_offset > allocation_size ||
+      required_span > allocation_size - allocation_offset) {
+    throw std::invalid_argument(
+        "CUDA quantized data span is outside its CUDA device allocation");
+  }
+  return attributes.device;
+}
+
+void SynchronizeCudaQuantizedProducer(const CudaQuantizedMatrixView& view) {
+  if (view.producer_stream == 2U) {
+    throw std::invalid_argument(
+        "CUDA Array Interface per-thread default stream marker 2 is not supported by "
+        "deferred CUDA quantized Pool consumption");
+  }
+  if (view.producer_stream == 0U || view.num_rows == 0U || view.num_cols == 0U) {
+    return;
+  }
+  cudaStream_t producer_stream = nullptr;
+  if (view.producer_stream == 1U) {
+    producer_stream = cudaStreamLegacy;
+  } else {
+    producer_stream = reinterpret_cast<cudaStream_t>(view.producer_stream);
+  }
+  CTBOOST_CUDA_CHECK(cudaStreamSynchronize(producer_stream));
+}
+
+template <typename BinType>
+void CopyCudaQuantizedBinsToDevice(
+    const CudaQuantizedMatrixView& view,
+    const thrust::device_vector<std::uint16_t>& num_bins_per_feature,
+    thrust::device_vector<BinType>& destination) {
+  const std::size_t total_values = view.num_rows * view.num_cols;
+  destination.resize(total_values);
+  if (total_values == 0U) {
+    return;
+  }
+
+  thrust::device_vector<unsigned long long> first_invalid_index(
+      1U, std::numeric_limits<unsigned long long>::max());
+  constexpr int kCopyThreads = 256;
+  const std::size_t required_blocks =
+      (total_values + static_cast<std::size_t>(kCopyThreads) - 1U) /
+      static_cast<std::size_t>(kCopyThreads);
+  const int blocks = static_cast<int>(std::min<std::size_t>(required_blocks, 65535U));
+  CopyValidateCudaQuantizedBinsKernel<<<blocks, kCopyThreads>>>(
+      reinterpret_cast<const std::uint8_t*>(view.data),
+      static_cast<std::size_t>(view.row_stride_bytes),
+      static_cast<std::size_t>(view.col_stride_bytes),
+      thrust::raw_pointer_cast(destination.data()),
+      thrust::raw_pointer_cast(num_bins_per_feature.data()),
+      view.num_rows,
+      view.num_cols,
+      thrust::raw_pointer_cast(first_invalid_index.data()));
+  CTBOOST_CUDA_CHECK(cudaGetLastError());
+  CTBOOST_CUDA_CHECK(cudaDeviceSynchronize());
+
+  unsigned long long invalid_index = std::numeric_limits<unsigned long long>::max();
+  CTBOOST_CUDA_CHECK(cudaMemcpy(&invalid_index,
+                                thrust::raw_pointer_cast(first_invalid_index.data()),
+                                sizeof(invalid_index),
+                                cudaMemcpyDeviceToHost));
+  if (invalid_index != std::numeric_limits<unsigned long long>::max()) {
+    const std::size_t feature = static_cast<std::size_t>(invalid_index) / view.num_rows;
+    const std::size_t row = static_cast<std::size_t>(invalid_index) % view.num_rows;
+    throw std::invalid_argument(
+        "CUDA quantized bin is outside its schema range at row " +
+        std::to_string(row) + ", feature " + std::to_string(feature));
+  }
+}
+
+void CopyCudaQuantizedBinsToDevice(const CudaQuantizedMatrixView& view,
+                                   DeviceWorkspace& device_workspace) {
+  SynchronizeCudaQuantizedProducer(view);
+  if (view.element_bytes == 1U) {
+    device_workspace.bins_u16.clear();
+    CopyCudaQuantizedBinsToDevice(
+        view, device_workspace.num_bins_per_feature, device_workspace.bins_u8);
+    return;
+  }
+  if (view.element_bytes == 2U) {
+    device_workspace.bins_u8.clear();
+    CopyCudaQuantizedBinsToDevice(
+        view, device_workspace.num_bins_per_feature, device_workspace.bins_u16);
+    return;
+  }
+  throw std::invalid_argument("CUDA quantized bin element width must be one or two bytes");
+}
+
 void InitializeDeviceWorkspace(DeviceWorkspace& device_workspace,
                                const HistMatrix& hist,
                                const std::vector<float>& weights,
                                const std::vector<std::uint32_t>& feature_offsets_u32,
                                const std::vector<std::size_t>& feature_offsets,
-                               std::size_t histogram_chunk_bins) {
-  CopyHistogramBinsToDevice(hist, device_workspace.bins_u8, device_workspace.bins_u16);
+                               std::size_t histogram_chunk_bins,
+                               const CudaQuantizedMatrixView* cuda_quantized) {
+  CopyHostVectorToDevice(hist.num_bins_per_feature, device_workspace.num_bins_per_feature);
+  if (cuda_quantized == nullptr) {
+    CopyHistogramBinsToDevice(hist, device_workspace.bins_u8, device_workspace.bins_u16);
+  } else {
+    CopyCudaQuantizedBinsToDevice(*cuda_quantized, device_workspace);
+  }
   CopyHostVectorToDevice(weights, device_workspace.weights);
   device_workspace.row_indices.resize(hist.num_rows);
   thrust::sequence(device_workspace.row_indices.begin(),
@@ -461,7 +667,6 @@ void InitializeDeviceWorkspace(DeviceWorkspace& device_workspace,
   device_workspace.feature_search_results.resize(hist.num_cols);
   device_workspace.best_feature_result.resize(1);
   CopyHostVectorToDevice(feature_offsets_u32, device_workspace.feature_offsets_u32);
-  CopyHostVectorToDevice(hist.num_bins_per_feature, device_workspace.num_bins_per_feature);
   CopyHostVectorToDevice(hist.categorical_mask, device_workspace.categorical_mask);
   device_workspace.feature_weights.assign(hist.num_cols, 1.0);
   device_workspace.first_feature_use_penalties.assign(hist.num_cols, 0.0);
@@ -513,20 +718,41 @@ void DestroyGpuHistogramWorkspace(GpuHistogramWorkspace* workspace) noexcept {
   delete workspace;
 }
 
-GpuHistogramWorkspacePtr CreateGpuHistogramWorkspace(const HistMatrix& hist,
-                                                     const std::vector<float>& weights,
-                                                     const std::string& devices) {
+namespace {
+
+GpuHistogramWorkspacePtr CreateGpuHistogramWorkspaceImpl(
+    const HistMatrix& hist,
+    const std::vector<float>& weights,
+    const std::string& devices,
+    const CudaQuantizedMatrixView* cuda_quantized) {
   if (weights.size() != hist.num_rows) {
     throw std::invalid_argument("GPU histogram weights must match the histogram row count");
   }
-  const std::size_t expected_bin_count = hist.num_rows * hist.num_cols;
-  if (hist.uses_compact_bin_storage() && !hist.uses_external_bin_storage()) {
-    if (hist.compact_bin_indices.size() != expected_bin_count) {
-      throw std::invalid_argument("GPU histogram compact bins must have num_rows * num_cols elements");
+  if (cuda_quantized == nullptr) {
+    const std::size_t expected_bin_count = hist.num_rows * hist.num_cols;
+    if (hist.uses_compact_bin_storage() && !hist.uses_external_bin_storage()) {
+      if (hist.compact_bin_indices.size() != expected_bin_count) {
+        throw std::invalid_argument(
+            "GPU histogram compact bins must have num_rows * num_cols elements");
+      }
+    } else if (!hist.uses_compact_bin_storage() && !hist.uses_external_bin_storage() &&
+               hist.bin_indices.size() != expected_bin_count) {
+      throw std::invalid_argument("GPU histogram bins must have num_rows * num_cols elements");
     }
-  } else if (!hist.uses_compact_bin_storage() && !hist.uses_external_bin_storage() &&
-             hist.bin_indices.size() != expected_bin_count) {
-    throw std::invalid_argument("GPU histogram bins must have num_rows * num_cols elements");
+  } else {
+    if (cuda_quantized->num_rows != hist.num_rows ||
+        cuda_quantized->num_cols != hist.num_cols) {
+      throw std::invalid_argument(
+          "CUDA quantized matrix shape must match the histogram shape");
+    }
+    if (cuda_quantized->element_bytes != hist.bin_storage_bytes()) {
+      throw std::invalid_argument(
+          "CUDA quantized matrix dtype must match the histogram bin storage width");
+    }
+    if (ParseDeviceList(devices).size() != 1U) {
+      throw std::invalid_argument(
+          "CUDA quantized training currently supports exactly one CUDA device");
+    }
   }
 
   CurrentDeviceRestorer restore_caller_device;
@@ -550,6 +776,13 @@ GpuHistogramWorkspacePtr CreateGpuHistogramWorkspace(const HistMatrix& hist,
     }
 
     std::vector<int> requested_devices = ResolveRequestedDevices(devices);
+    if (cuda_quantized != nullptr) {
+      const int pointer_device = ResolveCudaQuantizedPointerDevice(*cuda_quantized);
+      if (pointer_device >= 0 && pointer_device != requested_devices.front()) {
+        throw std::invalid_argument(
+            "CUDA quantized data and its training workspace must use the same CUDA device");
+      }
+    }
     std::vector<std::vector<std::size_t>> feature_assignments =
         AssignFeaturesToDevices(hist, requested_devices.size());
     for (std::size_t device_index = 0; device_index < requested_devices.size(); ++device_index) {
@@ -567,7 +800,8 @@ GpuHistogramWorkspacePtr CreateGpuHistogramWorkspace(const HistMatrix& hist,
                                 weights,
                                 feature_offsets_u32,
                                 workspace->feature_offsets,
-                                workspace->histogram_chunk_bins);
+                                workspace->histogram_chunk_bins,
+                                cuda_quantized);
     }
     if (workspace->devices.empty()) {
       throw std::runtime_error(
@@ -578,6 +812,22 @@ GpuHistogramWorkspacePtr CreateGpuHistogramWorkspace(const HistMatrix& hist,
   } catch (const thrust::system_error& error) {
     throw std::runtime_error(std::string("CUDA thrust failure: ") + error.what());
   }
+}
+
+}  // namespace
+
+GpuHistogramWorkspacePtr CreateGpuHistogramWorkspace(const HistMatrix& hist,
+                                                     const std::vector<float>& weights,
+                                                     const std::string& devices) {
+  return CreateGpuHistogramWorkspaceImpl(hist, weights, devices, nullptr);
+}
+
+GpuHistogramWorkspacePtr CreateGpuHistogramWorkspaceFromCudaQuantized(
+    const HistMatrix& hist,
+    const CudaQuantizedMatrixView& cuda_quantized,
+    const std::vector<float>& weights,
+    const std::string& devices) {
+  return CreateGpuHistogramWorkspaceImpl(hist, weights, devices, &cuda_quantized);
 }
 
 std::size_t EstimateGpuHistogramWorkspaceBytes(const GpuHistogramWorkspace* workspace) noexcept {
@@ -944,9 +1194,8 @@ void BuildHistogramsGpu(GpuHistogramWorkspace* workspace,
     throw std::invalid_argument("GPU histogram row range is out of bounds");
   }
   const std::size_t row_count = row_end - row_begin;
-  if (row_count == 0 || workspace->num_features == 0 || workspace->total_bins == 0) {
-    return;
-  }
+  const bool no_histogram_work =
+      row_count == 0 || workspace->num_features == 0 || workspace->total_bins == 0;
 
   try {
     for (std::size_t device_index = 0; device_index < workspace->devices.size(); ++device_index) {
@@ -956,6 +1205,13 @@ void BuildHistogramsGpu(GpuHistogramWorkspace* workspace,
       thrust::fill(device_workspace.hessian_sums.begin(), device_workspace.hessian_sums.end(), 0.0F);
       thrust::fill(device_workspace.weight_sums.begin(), device_workspace.weight_sums.end(), 0.0F);
       thrust::fill(device_workspace.node_statistics.begin(), device_workspace.node_statistics.end(), 0.0);
+
+      // Empty local children are valid in row-sharded distributed training.
+      // Their collective contribution must be zero, never a stale parent or
+      // sibling histogram left in the reusable device buffers.
+      if (no_histogram_work) {
+        continue;
+      }
 
       const float* gradients = ResolveGradientPointer(device_workspace);
       const float* hessians = ResolveHessianPointer(device_workspace);

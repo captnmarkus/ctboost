@@ -8,7 +8,7 @@ from ._version import __version__
 from .inference_manifest import _json_ready, build_inference_manifest
 
 JSON_PREDICTOR_FORMAT = "ctboost-json-predictor"
-JSON_PREDICTOR_FORMAT_VERSION = 1
+JSON_PREDICTOR_FORMAT_VERSION = 2
 
 
 def _normalize_export_format(export_format: Optional[str]) -> str:
@@ -36,6 +36,23 @@ def _standalone_python_payload(
     class_labels: Optional[Sequence[Any]] = None,
     estimator_name: Optional[str] = None,
 ) -> dict[str, Any]:
+    if (
+        artifact_kind == "json_predictor"
+        and feature_pipeline_state is not None
+        and not expects_prepared_features
+    ):
+        pipeline_format = feature_pipeline_state.get(
+            "feature_pipeline_format_version"
+        )
+        key_encoding = feature_pipeline_state.get(
+            "categorical_key_encoding_version"
+        )
+        if pipeline_format != 3 or key_encoding != 2:
+            raise ValueError(
+                "raw-feature JSON export requires feature-pipeline format 3 and "
+                "categorical key encoding 2; export prepared features or refit the "
+                "pipeline with CTBoost 0.1.55 or newer"
+            )
     state = dict(handle.export_state())
     quantization_schema = state.get("quantization_schema")
     if quantization_schema is None:
@@ -81,6 +98,14 @@ def _standalone_python_payload(
         "prediction_dimension": prediction_dimension,
         "num_features": len(list(quantization_schema["num_bins_per_feature"])),
         "expects_prepared_features": bool(expects_prepared_features),
+        # Prepared predictors never execute this state. Keep its descriptive
+        # fingerprint in the manifest without embedding potentially sensitive
+        # fitted preprocessing values in the scoring payload.
+        "feature_pipeline_state": (
+            _json_ready(dict(feature_pipeline_state))
+            if feature_pipeline_state is not None and not expects_prepared_features
+            else None
+        ),
         "quantization_schema": dict(quantization_schema),
         "trees": trees,
         "class_labels": resolved_class_labels,
