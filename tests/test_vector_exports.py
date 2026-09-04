@@ -3,6 +3,7 @@
 import ctypes
 import importlib.util
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -233,6 +234,11 @@ def _compile_predictor(path, tmp_path):
     else:
         command = [compiler, "-std=c++17", "-shared", "-fPIC", str(path), "-o", str(library)]
     subprocess.run(command, cwd=tmp_path, check=True, capture_output=True, text=True)
+    if sys.platform == "win32":
+        # Python's DLL loader does not search PATH for MinGW's C++ runtime DLLs.
+        # Use only the selected compiler's directory, and restore the search path.
+        with os.add_dll_directory(str(Path(compiler).resolve().parent)):
+            return ctypes.CDLL(str(library))
     return ctypes.CDLL(str(library))
 
 

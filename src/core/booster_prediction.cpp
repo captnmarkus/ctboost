@@ -130,8 +130,11 @@ void UpdatePredictionsFromContiguousBins(const Tree& tree,
       const Node& node = nodes[static_cast<std::size_t>(leaf_index)];
       const std::size_t offset = row * static_cast<std::size_t>(prediction_dimension);
       for (int output = 0; output < prediction_dimension; ++output) {
-        predictions[offset + static_cast<std::size_t>(output)] +=
-            static_cast<float>(learning_rate) * node.leaf_weights[static_cast<std::size_t>(output)];
+        // Match the scalar path's float rounding before addition. Combining
+        // these expressions permits FMA contraction on targets such as ARM64.
+        const float update = static_cast<float>(learning_rate) *
+                             node.leaf_weights[static_cast<std::size_t>(output)];
+        predictions[offset + static_cast<std::size_t>(output)] += update;
       }
     }
     return;

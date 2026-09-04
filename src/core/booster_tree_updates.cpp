@@ -28,8 +28,11 @@ void UpdatePredictionsFromLeafRanges(const Tree& tree,
       for (std::size_t position = range.begin; position < range.end; ++position) {
         const std::size_t offset = row_indices[position] * static_cast<std::size_t>(prediction_dimension);
         for (int output = 0; output < prediction_dimension; ++output) {
-          predictions[offset + static_cast<std::size_t>(output)] +=
-              static_cast<float>(learning_rate) * node.leaf_weights[static_cast<std::size_t>(output)];
+          // Preserve the scalar path's separately rounded product. Fusing the
+          // multiply/add changes the gradients and can select another split.
+          const float update = static_cast<float>(learning_rate) *
+                               node.leaf_weights[static_cast<std::size_t>(output)];
+          predictions[offset + static_cast<std::size_t>(output)] += update;
         }
       }
     }
@@ -163,8 +166,11 @@ void UpdatePredictionsFromLeafIndices(const Tree& tree,
       const Node& node = nodes[static_cast<std::size_t>(leaf_index)];
       const std::size_t offset = row * static_cast<std::size_t>(prediction_dimension);
       for (int output = 0; output < prediction_dimension; ++output) {
-        predictions[offset + static_cast<std::size_t>(output)] +=
-            static_cast<float>(learning_rate) * node.leaf_weights[static_cast<std::size_t>(output)];
+        // Keep the same rounding boundary as scalar prediction, including the
+        // external-memory, validation, and DART paths that reuse leaf indices.
+        const float update = static_cast<float>(learning_rate) *
+                             node.leaf_weights[static_cast<std::size_t>(output)];
+        predictions[offset + static_cast<std::size_t>(output)] += update;
       }
     }
     return;
