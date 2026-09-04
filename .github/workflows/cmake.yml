@@ -70,7 +70,12 @@ jobs:
 
       - name: Build
         shell: pwsh
-        run: cmake --build build --config Release --parallel
+        run: |
+          $ctboostBuildJobs = [Math]::Max(1, [Math]::Min(4, [Environment]::ProcessorCount))
+          if ($IsWindows) {
+            $env:CL = "$env:CL /MP$ctboostBuildJobs"
+          }
+          cmake --build build --config Release --parallel $ctboostBuildJobs
 
       - name: Install package
         shell: pwsh
