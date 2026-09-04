@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 #include <pybind11/numpy.h>
@@ -9,6 +10,32 @@
 #include "ctboost/ranking.hpp"
 
 namespace ctboost {
+
+struct QuantizationSchema;
+
+struct SparseColumnView {
+  // Non-owning pointers into a Pool's canonical CSC buffers. The view remains
+  // valid only while the originating Pool retains its feature storage.
+  const float* values{nullptr};
+  const std::int64_t* row_indices{nullptr};
+  std::size_t size{0};
+};
+
+struct CudaQuantizedMatrixView {
+  // Non-owning CUDA pointer described by __cuda_array_interface__. Pool keeps
+  // the exporting Python object alive until the GPU workspace has made its
+  // own device-to-device copy.
+  std::uintptr_t data{0};
+  std::size_t num_rows{0};
+  std::size_t num_cols{0};
+  std::int64_t row_stride_bytes{0};
+  std::int64_t col_stride_bytes{0};
+  std::uint8_t element_bytes{0};
+  // Zero means that the producer reported no synchronization requirement.
+  // Other values follow CUDA Array Interface v3 stream semantics. Deferred
+  // consumption rejects marker 2 because that stream is host-thread-local.
+  std::uintptr_t producer_stream{0};
+};
 
 class Pool {
  public:
@@ -48,6 +75,24 @@ class Pool {
            pybind11::array_t<std::int64_t>(),
        pybind11::array_t<float, pybind11::array::forcecast> pairs_weight =
            pybind11::array_t<float>());
+  Pool(CudaQuantizedMatrixView cuda_quantized_data,
+       pybind11::object cuda_quantized_owner,
+       std::shared_ptr<const QuantizationSchema> quantization_schema,
+       pybind11::array_t<float, pybind11::array::forcecast> label,
+       std::vector<int> cat_features = {},
+       pybind11::array_t<float, pybind11::array::forcecast> weight = pybind11::array_t<float>(),
+       pybind11::array_t<std::int64_t, pybind11::array::forcecast> group_id =
+           pybind11::array_t<std::int64_t>(),
+       pybind11::array_t<float, pybind11::array::forcecast> group_weight =
+           pybind11::array_t<float>(),
+       pybind11::array_t<std::int64_t, pybind11::array::forcecast> subgroup_id =
+           pybind11::array_t<std::int64_t>(),
+       pybind11::array_t<float, pybind11::array::forcecast> baseline =
+           pybind11::array_t<float>(),
+       pybind11::array_t<std::int64_t, pybind11::array::forcecast> pairs =
+           pybind11::array_t<std::int64_t>(),
+       pybind11::array_t<float, pybind11::array::forcecast> pairs_weight =
+           pybind11::array_t<float>());
 
   std::size_t num_rows() const noexcept;
   std::size_t num_cols() const noexcept;
@@ -69,6 +114,10 @@ class Pool {
   const std::vector<int>& cat_features() const noexcept;
   float feature_value(std::size_t row, std::size_t col) const;
   bool is_sparse() const noexcept;
+  SparseColumnView sparse_column_view(std::size_t col) const;
+  bool has_cuda_quantized_features() const noexcept;
+  const CudaQuantizedMatrixView& cuda_quantized_view() const;
+  const std::shared_ptr<const QuantizationSchema>& cuda_quantization_schema() const noexcept;
   bool is_column_major_contiguous() const noexcept;
   const float* feature_column_ptr(std::size_t col) const;
   std::size_t dense_feature_bytes() const noexcept;
@@ -93,6 +142,9 @@ class Pool {
   std::size_t sparse_nnz_{0};
   mutable std::vector<float> sparse_column_cache_;
   mutable std::size_t sparse_cached_column_{static_cast<std::size_t>(-1)};
+  pybind11::object cuda_quantized_owner_;
+  CudaQuantizedMatrixView cuda_quantized_view_;
+  std::shared_ptr<const QuantizationSchema> cuda_quantization_schema_;
   std::vector<float> labels_;
   std::vector<float> weights_;
   std::vector<std::int64_t> group_ids_;
@@ -107,6 +159,7 @@ class Pool {
   bool has_pairs_{false};
   bool has_baseline_{false};
   bool is_sparse_{false};
+  bool has_cuda_quantized_features_{false};
   bool feature_storage_releasable_{false};
   int baseline_dimension_{0};
 };

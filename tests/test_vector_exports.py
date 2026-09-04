@@ -62,7 +62,7 @@ def test_compact_vector_json_and_python_exports_match_native(vector_model, tmp_p
     booster.export_model(json_path)
     booster.export_model(python_path)
     payload = json.loads(json_path.read_text(encoding="utf-8"))
-    assert payload["format_version"] == 2
+    assert payload["format_version"] == 3
     assert payload["multi_strategy"] == "multi_output_tree"
     assert len(payload["trees"]) == booster.num_iterations_trained == 4
     assert len(payload["tree_learning_rates"]) == 4
@@ -80,6 +80,56 @@ def test_compact_vector_json_and_python_exports_match_native(vector_model, tmp_p
         assert predictor.predict_raw([]) == []
 
 
+def test_vector_pipeline_exports_preserve_raw_and_prepared_inputs(tmp_path):
+    pd = pytest.importorskip("pandas")
+    rng = np.random.default_rng(159)
+    numeric = rng.normal(size=72).astype(np.float32)
+    frame = pd.DataFrame({
+        "category": np.asarray(["red", "green", "blue"] * 24),
+        "numeric": numeric,
+        "text": [f"sample group {index % 3}" for index in range(72)],
+        "embedding": [[float(value), float(-value)] for value in numeric],
+    })
+    labels = np.asarray(["low", "middle", "high"])[np.digitize(numeric, [-0.4, 0.4])]
+    model = ctboost.CTBoostClassifier(
+        iterations=4, max_depth=2, alpha=1.0, random_seed=13,
+        multi_strategy="multi_output_tree", cat_features=["category"],
+        text_features=["text"], text_hash_dim=8, embedding_features=["embedding"],
+        embedding_stats=("mean", "std", "l2"),
+    ).fit(frame, labels)
+    booster = model.get_booster()
+    prepared = np.asarray(booster._prediction_pool(frame).data, dtype=np.float32)
+    raw_path = tmp_path / "raw-vector.json"
+    prepared_path = tmp_path / "prepared-vector.json"
+    python_path = tmp_path / "prepared-vector.py"
+    model.export_model(raw_path)
+    model.export_model(prepared_path, prepared_features=True)
+    model.export_model(python_path, prepared_features=True)
+    raw_document = json.loads(raw_path.read_text(encoding="utf-8"))
+    prepared_document = json.loads(prepared_path.read_text(encoding="utf-8"))
+    assert raw_document["format_version"] == prepared_document["format_version"] == 3
+    assert raw_document["expects_prepared_features"] is False
+    assert raw_document["feature_pipeline_state"]["feature_pipeline_format_version"] == 3
+    assert prepared_document["expects_prepared_features"] is True
+    assert prepared_document["feature_pipeline_state"] is None
+    for predictor, values in (
+        (ctboost.load_exported_predictor(raw_path), frame),
+        (ctboost.load_exported_predictor(prepared_path), prepared),
+        (_python_module(python_path), prepared),
+    ):
+        np.testing.assert_allclose(predictor.predict_raw(values), booster.predict(frame), atol=1e-6)
+        np.testing.assert_allclose(predictor.predict_proba(values), model.predict_proba(frame), atol=1e-6)
+        np.testing.assert_array_equal(predictor.predict_class(values), model.predict(frame))
+    raw_predictor = ctboost.load_exported_predictor(raw_path)
+    np.testing.assert_allclose(
+        raw_predictor.predict_raw(frame.iloc[0].tolist()), booster.predict(frame.iloc[[0]])[0], atol=1e-6
+    )
+    changed = deepcopy(raw_document)
+    changed["expects_prepared_features"] = True
+    with pytest.raises(ValueError, match="fingerprint mismatch"):
+        ExportedPredictor(changed)
+
+
 @pytest.mark.parametrize("corruption", ["version", "dimension", "strategy", "nonfinite", "rates"])
 def test_vector_predictor_rejects_incompatible_payloads(vector_model, tmp_path, corruption):
     booster, _ = vector_model
@@ -88,7 +138,7 @@ def test_vector_predictor_rejects_incompatible_payloads(vector_model, tmp_path, 
     payload = json.loads(path.read_text(encoding="utf-8"))
     payload.pop("inference_manifest")
     if corruption == "version":
-        payload["format_version"] = 1
+        payload["format_version"] = 2
     elif corruption == "dimension":
         payload["trees"][0]["nodes"][0]["leaf_weights"].pop()
     elif corruption == "strategy":

@@ -1,3 +1,4 @@
+import hashlib
 import io
 import json
 import os
@@ -263,6 +264,57 @@ def test_tabarena_search_finalizes_only_meaningful_leaf_caps():
     assert leafwise["max_depth"] == 6
     assert leafwise["max_leaves"] == 32
     assert "__leaf_fraction" not in leafwise
+
+
+def test_tabarena_log_sample_bypasses_libm_for_frozen_canonical_values(monkeypatch):
+    def fail_libm(*_args):
+        raise AssertionError("canonical frozen samples must not call host libm")
+
+    monkeypatch.setattr(ctboost_adapter.math, "exp", fail_libm)
+    monkeypatch.setattr(ctboost_adapter.math, "log", fail_libm)
+
+    assert (
+        ctboost_adapter._log_sample(
+            float.fromhex("0x1.4dd35420fef52p-4"),
+            float.fromhex("0x1.999999999999ap-4"),
+            float.fromhex("0x1.4000000000000p+3"),
+        ).hex()
+        == "0x1.2a141a19178d4p-3"
+    )
+    assert (
+        ctboost_adapter._log_sample(
+            float.fromhex("0x1.61f66383ab081p-1"),
+            float.fromhex("0x1.47ae147ae147bp-8"),
+            float.fromhex("0x1.0000000000000p-1"),
+        ).hex()
+        == "0x1.ee4e4f97673a6p-4"
+    )
+
+
+def _canonical_portfolio_sha256(configs):
+    payload = json.dumps(
+        configs,
+        allow_nan=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def test_tabarena_search_has_frozen_cross_platform_identity():
+    configs = generate_configs_ctboost(200)
+
+    assert configs[87]["ctr_prior_strength"].hex() == "0x1.2a141a19178d4p-3"
+    assert configs[197]["alpha"].hex() == "0x1.ee4e4f97673a6p-4"
+    assert _canonical_portfolio_sha256(configs) == (
+        "bd1b81b98a89ab33ac4cea35cb4b7dd7727b3bcfa3bee1b044fd3fb44f965c72"
+    )
+    assert _canonical_portfolio_sha256([{}] + configs) == (
+        "73df0b36b7db41f66adf0dcebd77805e612b579ade1ac8c07ac0399e3ae445b5"
+    )
+    assert _canonical_portfolio_sha256([{}] + configs[:50]) == (
+        "edf9ec119040cf687220737a8410c3406979ced4b6c47b969ca6f4f5a8e8b6fe"
+    )
 
 
 def test_tabarena_search_is_deterministic_unique_and_task_safe():

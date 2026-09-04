@@ -2,15 +2,36 @@
 
 from __future__ import annotations
 
+from functools import lru_cache
+from importlib import import_module
 from typing import Any, Dict, Iterable, Mapping, Optional, Sequence
 
 import numpy as np
 from sklearn.base import clone, is_classifier
 from sklearn.inspection import permutation_importance
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, check_cv, cross_validate
+from sklearn.model_selection import (
+    GridSearchCV,
+    RandomizedSearchCV,
+    check_cv,
+    cross_validate,
+)
 from sklearn.utils.validation import check_is_fitted
 
 from ..core import Pool
+
+
+@lru_cache(maxsize=1)
+def _load_pyplot() -> Any:
+    """Load the optional plotting backend once, only when plotting is requested."""
+
+    return import_module("matplotlib.pyplot")
+
+
+def _require_pyplot(feature: str) -> Any:
+    try:
+        return _load_pyplot()
+    except ImportError as exc:  # pragma: no cover - dependency-specific
+        raise ImportError(f"{feature} requires matplotlib") from exc
 
 
 def _named_estimators(estimators: Any) -> Dict[str, Any]:
@@ -144,10 +165,7 @@ def compare_estimators(
         "results": rows,
     }
     if plot:
-        try:
-            import matplotlib.pyplot as plt
-        except ImportError as exc:  # pragma: no cover - dependency-specific
-            raise ImportError("plot=True requires matplotlib") from exc
+        plt = _require_pyplot("plot=True")
         _, axis = plt.subplots()
         axis.barh(
             [row["name"] for row in reversed(rows)],
@@ -257,10 +275,7 @@ class _ModelSelectionMixin:
 
     @staticmethod
     def _plot_search_scores(cv_results: Mapping[str, Any], *, title: str) -> Any:
-        try:
-            import matplotlib.pyplot as plt
-        except ImportError as exc:  # pragma: no cover - dependency-specific
-            raise ImportError("plot=True requires matplotlib") from exc
+        plt = _require_pyplot("plot=True")
         scores = np.asarray(cv_results["mean_test_score"], dtype=np.float64)
         errors = np.asarray(cv_results.get("std_test_score", np.zeros_like(scores)), dtype=np.float64)
         figure, axis = plt.subplots()
@@ -440,10 +455,7 @@ class _ModelSelectionMixin:
             self._adopt_best_estimator(fitted)
 
         if plot:
-            try:
-                import matplotlib.pyplot as plt
-            except ImportError as exc:  # pragma: no cover - dependency-specific
-                raise ImportError("plot=True requires matplotlib") from exc
+            plt = _require_pyplot("plot=True")
             figure, axis = plt.subplots()
             plot_order = list(reversed(ordered))
             axis.barh(
@@ -465,10 +477,7 @@ class _ModelSelectionMixin:
         """Plot stored training/evaluation histories and return the axes."""
 
         check_is_fitted(self, attributes="_booster")
-        try:
-            import matplotlib.pyplot as plt
-        except ImportError as exc:  # pragma: no cover - dependency-specific
-            raise ImportError("plot_metrics requires matplotlib") from exc
+        plt = _require_pyplot("plot_metrics")
         if ax is None:
             _, ax = plt.subplots()
         metric_filter = None if metrics is None else {str(value) for value in metrics}

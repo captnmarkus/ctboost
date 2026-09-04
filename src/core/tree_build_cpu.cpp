@@ -93,7 +93,7 @@ int Tree::BuildNodeCpu(const HistMatrix& hist,
   const double feature_ms =
       std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - feature_start)
           .count();
-  if (feature_choice.feature_id < 0 || feature_choice.p_value > options.alpha) {
+  if (!selection.feature_test_passed) {
     if (profiler != nullptr && profiler->enabled()) {
       profiler->LogNodeSearch(depth,
                               effective_row_count,
@@ -107,7 +107,9 @@ int Tree::BuildNodeCpu(const HistMatrix& hist,
                               0,
                               feature_ms,
                               0.0,
-                              0.0);
+                              0.0,
+                              selection.stopping_p_value,
+                              selection.tested_features);
     }
     return return_leaf();
   }
@@ -131,7 +133,9 @@ int Tree::BuildNodeCpu(const HistMatrix& hist,
                               0,
                               feature_ms,
                               split_ms,
-                              0.0);
+                              0.0,
+                              selection.stopping_p_value,
+                              selection.tested_features);
     }
     return return_leaf();
   }
@@ -164,7 +168,9 @@ int Tree::BuildNodeCpu(const HistMatrix& hist,
                             right_count,
                             feature_ms,
                             split_ms,
-                            partition_ms);
+                            partition_ms,
+                            selection.stopping_p_value,
+                            selection.tested_features);
   }
   if (options.distributed == nullptr && (left_end == row_begin || left_end == row_end)) {
     return return_leaf();

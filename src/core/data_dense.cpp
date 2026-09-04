@@ -12,6 +12,10 @@ const std::vector<float>& Pool::feature_data() const {
   if (!feature_data_cache_.empty()) {
     return feature_data_cache_;
   }
+  if (has_cuda_quantized_features_) {
+    throw std::runtime_error(
+        "CUDA quantized feature storage is device-only and cannot be materialized implicitly");
+  }
   if (is_sparse_) {
     if (sparse_data_ptr_ == nullptr || sparse_indices_ptr_ == nullptr || sparse_indptr_ptr_ == nullptr) {
       throw std::runtime_error("feature storage has been released from this pool");
@@ -59,6 +63,10 @@ float Pool::feature_value(std::size_t row, std::size_t col) const {
   if (row >= num_rows_ || col >= num_cols_) {
     throw std::out_of_range("feature index is out of bounds");
   }
+  if (has_cuda_quantized_features_) {
+    throw std::runtime_error(
+        "CUDA quantized feature storage is device-only and has no host feature values");
+  }
   if (is_sparse_) {
     if (!feature_data_cache_.empty()) {
       return feature_data_cache_[col * num_rows_ + row];
@@ -90,14 +98,55 @@ float Pool::feature_value(std::size_t row, std::size_t col) const {
 
 bool Pool::is_sparse() const noexcept { return is_sparse_; }
 
+bool Pool::has_cuda_quantized_features() const noexcept {
+  return has_cuda_quantized_features_;
+}
+
+const CudaQuantizedMatrixView& Pool::cuda_quantized_view() const {
+  if (!has_cuda_quantized_features_) {
+    throw std::logic_error("cuda_quantized_view requires a CUDA quantized pool");
+  }
+  if (cuda_quantized_view_.data == 0U && num_rows_ != 0U && num_cols_ != 0U) {
+    throw std::runtime_error("CUDA quantized feature storage has been released from this pool");
+  }
+  return cuda_quantized_view_;
+}
+
+const std::shared_ptr<const QuantizationSchema>& Pool::cuda_quantization_schema() const noexcept {
+  return cuda_quantization_schema_;
+}
+
+SparseColumnView Pool::sparse_column_view(std::size_t col) const {
+  if (!is_sparse_) {
+    throw std::logic_error("sparse_column_view requires a sparse pool");
+  }
+  if (col >= num_cols_) {
+    throw std::out_of_range("feature index is out of bounds");
+  }
+  if (sparse_data_ptr_ == nullptr || sparse_indices_ptr_ == nullptr || sparse_indptr_ptr_ == nullptr) {
+    throw std::runtime_error("feature storage has been released from this pool");
+  }
+  const std::size_t begin = static_cast<std::size_t>(sparse_indptr_ptr_[col]);
+  const std::size_t end = static_cast<std::size_t>(sparse_indptr_ptr_[col + 1U]);
+  return SparseColumnView{
+      sparse_data_ptr_ + begin,
+      sparse_indices_ptr_ + begin,
+      end - begin,
+  };
+}
+
 bool Pool::is_column_major_contiguous() const noexcept {
-  return !is_sparse_ && feature_data_ptr_ != nullptr && feature_row_stride_ == 1 &&
+  return !is_sparse_ && !has_cuda_quantized_features_ && feature_data_ptr_ != nullptr &&
+         feature_row_stride_ == 1 &&
          feature_col_stride_ == static_cast<py::ssize_t>(num_rows_);
 }
 
 const float* Pool::feature_column_ptr(std::size_t col) const {
   if (col >= num_cols_) {
     throw std::out_of_range("feature index is out of bounds");
+  }
+  if (has_cuda_quantized_features_) {
+    return nullptr;
   }
   if (is_sparse_) {
     if (!feature_data_cache_.empty()) {

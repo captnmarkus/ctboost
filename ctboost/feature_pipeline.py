@@ -23,6 +23,10 @@ except ImportError:  # pragma: no cover - pandas is optional at runtime
     pd = None
 
 
+_FEATURE_PIPELINE_PICKLE_MAGIC = b"CTBOOST_FEATURE_PIPELINE_PICKLE\x00"
+_FEATURE_PIPELINE_PICKLE_VERSION = 1
+
+
 def _is_pandas_dataframe(value: Any) -> bool:
     return pd is not None and isinstance(value, pd.DataFrame)
 
@@ -138,14 +142,28 @@ class FeaturePipeline:
         self.embedding_stats = _embedding_stat_names(embedding_stats)
         self.embedding_target_features = bool(embedding_target_features)
         self.embedding_target_regularization = float(embedding_target_regularization)
-        if self.embedding_target_regularization < 0.0:
-            raise ValueError("embedding_target_regularization must be non-negative")
+        if (
+            not np.isfinite(self.embedding_target_regularization)
+            or self.embedding_target_regularization < 0.0
+            or self.embedding_target_regularization > float(np.finfo(np.float32).max)
+        ):
+            raise ValueError(
+                "embedding_target_regularization must be a finite non-negative float value"
+            )
         self.embedding_target_mode = _choice(
             embedding_target_mode,
             name="embedding_target_mode",
             choices=("auto", "regression", "classification"),
         )
         self.ctr_prior_strength = float(ctr_prior_strength)
+        if (
+            not np.isfinite(self.ctr_prior_strength)
+            or self.ctr_prior_strength < 0.0
+            or self.ctr_prior_strength > float(np.finfo(np.float32).max)
+        ):
+            raise ValueError(
+                "ctr_prior_strength must be a finite non-negative float value"
+            )
         self.random_seed = int(random_seed)
 
         self.feature_names_in_: Optional[List[str]] = None
@@ -307,17 +325,37 @@ class FeaturePipeline:
     def to_state(self) -> Dict[str, Any]:
         return dict(self._native.to_state())
 
-    def __getstate__(self) -> Dict[str, Any]:
+    def __getstate__(self) -> Tuple[bytes, int, Dict[str, Any]]:
         """Serialize the native pipeline through its stable state document.
 
         pybind11 extension objects are not pickleable by default.  Keeping the
         Python pickle contract on this wrapper also makes fitted sklearn models
         work with joblib, AutoGluon bagging, and multiprocessing spawn.
         """
-        return {"native_state": self.to_state()}
+        return (
+            _FEATURE_PIPELINE_PICKLE_MAGIC,
+            _FEATURE_PIPELINE_PICKLE_VERSION,
+            self.to_state(),
+        )
 
-    def __setstate__(self, state: Mapping[str, Any]) -> None:
-        native_state = state.get("native_state", state)
+    def __setstate__(self, state: Any) -> None:
+        if isinstance(state, Mapping):
+            # Historical CTBoost pickles stored either the native mapping
+            # directly or wrapped it under ``native_state``.
+            native_state = state.get("native_state", state)
+        else:
+            if not isinstance(state, tuple) or len(state) != 3:
+                raise TypeError("invalid CTBoost FeaturePipeline pickle envelope")
+            magic, version, native_state = state
+            if magic != _FEATURE_PIPELINE_PICKLE_MAGIC:
+                raise ValueError("invalid CTBoost FeaturePipeline pickle magic")
+            if version != _FEATURE_PIPELINE_PICKLE_VERSION:
+                raise ValueError(
+                    "unsupported CTBoost FeaturePipeline pickle version: "
+                    f"{version!r}"
+                )
+            if not isinstance(native_state, Mapping):
+                raise TypeError("CTBoost FeaturePipeline pickle payload must be a mapping")
         restored = type(self).from_state(native_state)
         self.__dict__.update(restored.__dict__)
 

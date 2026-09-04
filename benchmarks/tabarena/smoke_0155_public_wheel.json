@@ -1,0 +1,262 @@
+{
+  "schema_version": 1,
+  "result_kind": "tabarena_smoke",
+  "status": "provisional_not_official",
+  "benchmark": "TabArena-v0.1",
+  "recorded_at_utc": "2026-08-14T11:31:45.370861+00:00",
+  "provenance": {
+    "ctboost_version": "0.1.55",
+    "ctboost_release_tag": "v0.1.55",
+    "ctboost_release_commit": "026ccb5b8df50bdd8375f69729820cb8158e5a14",
+    "ctboost_distribution": {
+      "filename": "ctboost-0.1.55-cp312-cp312-win_amd64.whl",
+      "size_bytes": 3491127,
+      "sha256": "f49b614cb26dfc9dc17c12564d1095d181ab9c14c8321c6127e4d47d9087d69d",
+      "installed_package_fingerprint_sha256": "aa7d1e972aca648333a3e14c39f7e30c4906c8a04632223b9d728da23edfdd66",
+      "fingerprint_matches_wheel_contents": true
+    },
+    "ctboost_build": {
+      "compiler": "MSVC 1944",
+      "cuda_enabled": true,
+      "cuda_runtime": "12.8",
+      "cxx_standard": 17
+    },
+    "tabarena_version": "0.0.1",
+    "tabarena_commit": "50f8ab1bbc6e7f7e5dd9b19d8b643ac284ae9b3c",
+    "tabarena_package_tree_verification": {
+      "tracked_files_compared": 411,
+      "missing_files": 0,
+      "content_mismatches": 0
+    },
+    "autogluon_tabular_version": "1.6.2b20260809",
+    "python_version": "3.12.11",
+    "numpy_version": "2.5.2",
+    "pandas_version": "2.3.3",
+    "platform": "Windows 11 AMD64"
+  },
+  "scope": {
+    "subset": "lite",
+    "datasets_evaluated": 3,
+    "datasets_in_tabarena_v0_1": 51,
+    "datasets": [
+      "blood-transfusion-service-center",
+      "QSAR_fish_toxicity",
+      "anneal"
+    ],
+    "outer_splits_per_dataset": 1,
+    "outer_splits_total": 3,
+    "bag_folds_per_outer_split": 8,
+    "configuration_scope": "default_only",
+    "random_configs": 0,
+    "device": "cpu",
+    "cached_public_competitors": true,
+    "competitors_rerun": false,
+    "raw_coverage": {
+      "expected": 3,
+      "observed": 3,
+      "complete": true,
+      "imputed": 0
+    }
+  },
+  "resources": {
+    "num_cpus_per_fit": 8,
+    "num_gpus_per_fit": 0,
+    "memory_limit_gib": 24,
+    "time_limit_seconds_per_fit": 3600,
+    "logical_cpu_count": 16,
+    "ray_backend": false
+  },
+  "leaderboard": {
+    "method": "CTBoost default",
+    "tabarena_report_label": "[New] CTB (default)",
+    "elo": 1054.0,
+    "elo_95_percent_ci_offset_plus": 2532.1,
+    "elo_95_percent_ci_offset_minus": 20611.2,
+    "rank_mean": 63.333333333333336,
+    "rank_median": 70.0,
+    "winrate": 0.2579365,
+    "improvability": 0.35887544806962035,
+    "improvability_offset_plus": 0.3878919528624247,
+    "improvability_offset_minus": 0.263869200734994,
+    "mean_reciprocal_rank": 0.01742413964636187,
+    "rank_1_count": 0.0,
+    "rank_2_count": 0.0,
+    "rank_3_count": 0.0,
+    "rank_above_3_count": 3.0,
+    "normalized_error": 0.9915735567527951,
+    "normalized_error_task": 0.9915735567527951,
+    "median_normalized_error": 1.0,
+    "median_normalized_error_task": 1.0,
+    "median_improvability": 0.2348526959421896,
+    "median_loss_rescaled": 0.7499912074443231,
+    "median_metric_error": 0.31561403508771924,
+    "mean_time_train_s": 52.20353515942892,
+    "mean_time_infer_s": 0.07563646634419759,
+    "mean_time_train_s_per_1000_rows": 87.39295802064134,
+    "mean_time_infer_s_per_1000_rows": 0.2537107270196882,
+    "median_time_train_s": 2.972543954849243,
+    "median_time_infer_s": 0.008014678955078125,
+    "median_time_train_s_per_1000_rows": 4.916004335472839,
+    "median_time_infer_s_per_1000_rows": 0.026509412199817395,
+    "imputed_fraction": 0.0,
+    "interpretation": "The 95% Elo interval offsets are enormous because the report contains only three dataset outcomes. The point estimate is not an official or statistically stable full-benchmark score."
+  },
+  "metric_recomputation": {
+    "source": "serialized TabArena test targets and predictions in each preserved raw result",
+    "absolute_tolerance": 1e-7,
+    "all_three_metrics_match": true,
+    "methods": {
+      "binary": "1 - sklearn.metrics.roc_auc_score",
+      "multiclass": "sklearn.metrics.log_loss with the serialized class order",
+      "regression": "sqrt(mean((y_test - pred_test)^2))"
+    }
+  },
+  "per_split": [
+    {
+      "dataset": "anneal",
+      "task_id": 363614,
+      "fold": 0,
+      "repeat": 0,
+      "problem_type": "multiclass",
+      "metric": "log_loss",
+      "metric_error": 0.041921213269233704,
+      "recomputed_metric_error": 0.041921213269233704,
+      "metric_recompute_absolute_delta": 0.0,
+      "validation_metric_error": 0.033934615552425385,
+      "test_rows": 300,
+      "validation_rows": 598,
+      "time_train_s": 151.75986766815186,
+      "time_infer_s": 0.2138962745666504,
+      "peak_mem_cpu_bytes": 520204288,
+      "incremental_peak_mem_cpu_bytes": 283615232,
+      "disk_usage_bytes": 265127953,
+      "raw_artifact_id": "data/CTBoost_c1_default_BAG_L1/363614/0_0/results.pkl",
+      "raw_size_bytes": 55945,
+      "raw_sha256": "e7b6aabd6eb156957cd3820c3559d5432d093d8269c92041160a1bfeb81548c2",
+      "pred_test_sha256": "a9a18e3ad033da126f14cccb9145e1e545731dd25824ed0f2b0e467b5b7c8950",
+      "pred_val_sha256": "c4b862e417e50b2b35bfa366542622aba57f3bc06439fc317b70016aac21f597"
+    },
+    {
+      "dataset": "blood-transfusion-service-center",
+      "task_id": 363621,
+      "fold": 0,
+      "repeat": 0,
+      "problem_type": "binary",
+      "metric": "roc_auc_error",
+      "tabarena_metric_label": "roc_auc",
+      "metric_error": 0.31561403508771924,
+      "recomputed_metric_error": 0.31561403508771935,
+      "metric_recompute_absolute_delta": 1.1102230246251565e-16,
+      "validation_metric_error": 0.2659567350579839,
+      "test_rows": 250,
+      "validation_rows": 498,
+      "time_train_s": 1.8781938552856445,
+      "time_infer_s": 0.004998445510864258,
+      "peak_mem_cpu_bytes": 495501312,
+      "incremental_peak_mem_cpu_bytes": 7872512,
+      "disk_usage_bytes": 2409102,
+      "raw_artifact_id": "data/CTBoost_c1_default_BAG_L1/363621/0_0/results.pkl",
+      "raw_size_bytes": 10949,
+      "raw_sha256": "fb1bab898311103705696f37e4e8a56a01d5900a445730900dd5bbe81bbf0788",
+      "pred_test_sha256": "e0792572abdae26be83850417d282854316818d2026896244aeaeeeae312c24d",
+      "pred_val_sha256": "9306d8aae41fb87c3724f2b599df8af8d44a2fdb97bba892cc0ccb6e35877d2c"
+    },
+    {
+      "dataset": "QSAR_fish_toxicity",
+      "task_id": 363698,
+      "fold": 0,
+      "repeat": 0,
+      "problem_type": "regression",
+      "metric": "rmse",
+      "metric_error": 0.968983063604256,
+      "recomputed_metric_error": 0.9689830575116584,
+      "metric_recompute_absolute_delta": 6.092597648610365e-9,
+      "validation_metric_error": 0.8987420583087369,
+      "test_rows": 303,
+      "validation_rows": 604,
+      "time_train_s": 2.972543954849243,
+      "time_infer_s": 0.008014678955078125,
+      "peak_mem_cpu_bytes": 482504704,
+      "incremental_peak_mem_cpu_bytes": 1904640,
+      "disk_usage_bytes": 7296781,
+      "raw_artifact_id": "data/CTBoost_c1_default_BAG_L1/363698/0_0/results.pkl",
+      "raw_size_bytes": 20412,
+      "raw_sha256": "e3446966eeceaded937d2612253f30ebcba1cdf79b43916cee7e9c4c12b751ff",
+      "pred_test_sha256": "87fdab68e95c6713bdadde4455c4f4d4c2d059b311a8fdcee7d5a8e8ffa50dfa",
+      "pred_val_sha256": "a7c0659f1c4207462b7945d8b4bda59465890be3bb4ef45ca8d526cf7ccb6e23"
+    }
+  ],
+  "comparison_to_preserved_0_1_54_default_raw": {
+    "ctboost_version": "0.1.54",
+    "ctboost_commit": "b083570e1d4ac05406821cce40095d7d4615a4ce",
+    "scope": "The same three default-method outer splits only",
+    "arrays_compared_per_split": [
+      "y_test",
+      "y_test_idx",
+      "y_val",
+      "y_val_idx",
+      "pred_test",
+      "pred_val"
+    ],
+    "bitwise_equal_arrays": 18,
+    "arrays_compared": 18,
+    "max_absolute_prediction_delta": 0.0,
+    "per_split": [
+      {
+        "dataset": "anneal",
+        "old_raw_sha256": "a7e20bf41e8bccd47f9286c8f8aab8d066b5a381677fcd0fbca4c978503ae925",
+        "all_six_arrays_bitwise_equal": true
+      },
+      {
+        "dataset": "blood-transfusion-service-center",
+        "old_raw_sha256": "9e10edcd00668721a3326876dfa60c5d8a97f7c05edaaaef915ac923a05c0feb",
+        "all_six_arrays_bitwise_equal": true
+      },
+      {
+        "dataset": "QSAR_fish_toxicity",
+        "old_raw_sha256": "a1dd8a8e1751d808a4347310224653266ad06387d65ce8df6c79397f8a8d9992",
+        "all_six_arrays_bitwise_equal": true
+      }
+    ],
+    "interpretation": "For this default-only three-dataset scope, CTBoost 0.1.55 produced exactly the same serialized validation/test predictions as the preserved 0.1.54 raw results. Elo remains pool-relative, so a separately generated report can have a different Elo despite identical CTBoost predictions."
+  },
+  "evidence_hashes": {
+    "aggregate_algorithm": "SHA-256 over each sorted relative artifact name followed by its bytes",
+    "raw_file_count": 3,
+    "raw_total_bytes": 87306,
+    "raw_aggregate_sha256": "3ace5739cd0b7231c38038ef829eeae6881c6c0dd7e434b90b46ccd4b5725347",
+    "report_file_count": 21,
+    "report_total_bytes": 799800,
+    "report_aggregate_sha256": "7b6bc5746c6c4a7446829dcde8df7bf5bda16ec8e2b86ad58aa90d4ef2ccb0a5",
+    "report_files": [
+      {"name": "leaderboard.tex", "size_bytes": 8341, "sha256": "430ba2240054da11b7116edc799867f873f69eaa035acafb3ec6476daf2c1f5d"},
+      {"name": "method_info.csv", "size_bytes": 24772, "sha256": "8470d1dbc4a4c1bbf813de8ed5277fc8d3ea34c2468656d6b47686bf7087ed4e"},
+      {"name": "pareto_front_elo_vs_time_infer.pdf", "size_bytes": 48680, "sha256": "5aeaa2e881184b07262c084293db1176e551895bb80cb36163971059df2205f3"},
+      {"name": "pareto_front_elo_vs_time_train.pdf", "size_bytes": 49068, "sha256": "5778a9dace3a80ee8e1cf0fffda3b3ef597361c0256f0553bd42a01b1780abbc"},
+      {"name": "pareto_front_explorer.html", "size_bytes": 75802, "sha256": "89761767a5985e9a86ec3d1f222a4d67c67e87a82a4f1a57bdac5cc24f22e262"},
+      {"name": "pareto_front_explorer_time_train.html", "size_bytes": 75952, "sha256": "77ca6a8888b9e1e68bba07519e5e8bd28cd4d74778a831ebcf149c119b84feab"},
+      {"name": "pareto_front_improvability_vs_time_infer.pdf", "size_bytes": 45399, "sha256": "5e7816400f968f5891154f0d8d0f0449e5b58f531c9cb88a53f6ea8662afd4cc"},
+      {"name": "pareto_front_improvability_vs_time_train.pdf", "size_bytes": 52773, "sha256": "0c70bd2bb6a7d84d6f2948a87647a42ef1028eaee799ff9d2a214fc01083238c"},
+      {"name": "pareto_front_points.csv", "size_bytes": 9142, "sha256": "b47e9a44d1122b45ac3a0e1dc6038d196feb2e9b2f847d2855016d07458b215e"},
+      {"name": "resources_per_split.csv", "size_bytes": 1076, "sha256": "329de11a93d7f72a413c01f5666518f27911791d9d307b84f5bed6d3f7e26203"},
+      {"name": "resources_per_split.json", "size_bytes": 1937, "sha256": "785f10aa519ef63f97c66217b935c4692407cb701cab4df48a8b3e8b4f5ebcd3"},
+      {"name": "results_per_split.csv", "size_bytes": 50518, "sha256": "3c92d93f2521220d204f731c728261823d1a5e4fa0a535b3bc71c789f688e2d5"},
+      {"name": "run_manifest.json", "size_bytes": 1824, "sha256": "9e7920face063a2c490c99e7c65bf6a06f8ef7b4a6500907a4026779efa7034f"},
+      {"name": "run_manifest.shard-00000-of-00001.json", "size_bytes": 1771, "sha256": "d38bf76166b0b3c359e628421abc3bc0581aac6932d0e126765a0b00918c376f"},
+      {"name": "tabarena_leaderboard.csv", "size_bytes": 42145, "sha256": "560816ea23e7b130757531dcb557a57b486eb093f530c14b98198e824bc2d2e7"},
+      {"name": "time_plot.pdf", "size_bytes": 15479, "sha256": "a457ccdfa503e403ef132c985d223252d53674e667f7d46a2faf86f44162eb90"},
+      {"name": "tuning-impact-elo-horizontal.pdf", "size_bytes": 58036, "sha256": "748a6782978ea15ea6f2a7292c761743d6f1ab825a41d5d6dfeb649faf798f03"},
+      {"name": "tuning-impact-elo.pdf", "size_bytes": 54608, "sha256": "67f1fbaeb9166d26b4a61afc57254301d86b1a62d0b89e7b9a7f91d2481d7ac4"},
+      {"name": "winrate_explorer.html", "size_bytes": 115971, "sha256": "a83f6ca2065fc4b74e7bc0548ea605b8a885840042a56864052074bf2850b372"},
+      {"name": "winrate_matrix.csv", "size_bytes": 15255, "sha256": "12f3bad659d17330a4eea9d71136a940dde8e9cc3c35b55a3ced2324177c624d"},
+      {"name": "winrate_matrix.pdf", "size_bytes": 51251, "sha256": "33bd8d4636deb881ed9757db0cd96d1a4582cc575c7d277a61d35ad4597091bd"}
+    ]
+  },
+  "limitations": [
+    "This evaluates 3 of 51 TabArena-v0.1 datasets with one outer split per dataset, not TabArena-Full.",
+    "Only the default configuration was evaluated; the frozen 200-configuration portfolio and tuned ensemble were not run.",
+    "The leaderboard used TabArena's cached public competitors rather than rerunning competitors on this machine.",
+    "The 1054.0 Elo has extreme uncertainty and must not be presented as an official leaderboard score.",
+    "Raw pickle and generated report artifacts are intentionally not committed; this sanitized record retains their identities and hashes only."
+  ]
+}

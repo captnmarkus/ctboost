@@ -33,13 +33,10 @@ int Tree::BuildNodeGpu(const HistMatrix& hist,
                        int* leaf_count) {
   const std::size_t row_count = row_end - row_begin;
   (void)precomputed_node_stats;
-  (void)statistic_engine;
 
-  GpuNodeStatistics gpu_node_stats;
   GpuHistogramSnapshot parent_snapshot;
   double histogram_ms = precomputed_histogram_ms;
   if (precomputed_gpu_histogram != nullptr) {
-    gpu_node_stats = precomputed_gpu_histogram->node_statistics;
     parent_snapshot = *precomputed_gpu_histogram;
     if (!precomputed_gpu_histogram_resident) {
       UploadHistogramSnapshotGpu(gpu_workspace, parent_snapshot);
@@ -55,21 +52,22 @@ int Tree::BuildNodeGpu(const HistMatrix& hist,
     } else {
       parent_snapshot = std::move(local_snapshot);
     }
-    gpu_node_stats = parent_snapshot.node_statistics;
     histogram_ms =
         std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - histogram_start)
             .count();
   }
+  const NodeHistogramSet node_stats =
+      detail::MaterializeGpuHistogramSnapshot(hist, parent_snapshot);
   const std::size_t effective_row_count =
       options.distributed == nullptr ? row_count
-                                     : static_cast<std::size_t>(gpu_node_stats.sample_count);
+                                     : static_cast<std::size_t>(node_stats.sample_count);
   if (profiler != nullptr && profiler->enabled()) {
     profiler->LogNodeHistogram(depth, effective_row_count, true, histogram_ms);
   }
 
   Node node;
   node.leaf_weight = static_cast<float>(detail::ClampLeafWeight(
-      detail::ComputeLeafWeight(gpu_node_stats.total_gradient, gpu_node_stats.total_hessian, options.lambda_l2),
+      detail::ComputeLeafWeight(node_stats.total_gradient, node_stats.total_hessian, options.lambda_l2),
       leaf_lower_bound,
       leaf_upper_bound));
 
@@ -92,31 +90,37 @@ int Tree::BuildNodeGpu(const HistMatrix& hist,
   }
 
   const auto search_start = std::chrono::steady_clock::now();
+  const detail::CandidateSelectionResult selection = detail::SelectBestCandidateSplit(
+      hist,
+      node_stats,
+      options,
+      statistic_engine,
+      node_allowed_features,
+      leaf_lower_bound,
+      leaf_upper_bound,
+      depth,
+      row_begin,
+      row_end);
   GpuNodeSearchResult node_search;
-  const std::size_t adjusted_row_begin = options.distributed == nullptr ? row_begin : 0U;
-  const std::size_t adjusted_row_end =
-      options.distributed == nullptr ? row_end : effective_row_count;
-  SearchBestNodeSplitGpu(gpu_workspace,
-                         node_allowed_features,
-                         options.lambda_l2,
-                         options.min_data_in_leaf,
-                         options.min_child_weight,
-                         options.min_split_gain,
-                         options.alpha,
-                         depth,
-                         adjusted_row_begin,
-                         adjusted_row_end,
-                         leaf_lower_bound,
-                         leaf_upper_bound,
-                         options.random_seed,
-                         options.random_strength,
-                         &node_search);
-  node_search.node_statistics = gpu_node_stats;
+  node_search.feature_id = selection.feature_choice.feature_id;
+  node_search.p_value = selection.feature_choice.p_value;
+  node_search.chi_square = selection.feature_choice.chi_square;
+  node_search.split_valid = selection.split_choice.valid;
+  node_search.is_categorical = selection.split_choice.is_categorical;
+  node_search.split_bin = selection.split_choice.split_bin;
+  node_search.gain = selection.split_choice.gain;
+  node_search.adjusted_gain = selection.adjusted_gain;
+  node_search.left_leaf_weight = selection.split_choice.left_leaf_weight;
+  node_search.right_leaf_weight = selection.split_choice.right_leaf_weight;
+  std::copy(selection.split_choice.left_categories.begin(),
+            selection.split_choice.left_categories.end(),
+            node_search.left_categories.begin());
+  node_search.node_statistics = parent_snapshot.node_statistics;
   const double feature_ms =
       std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - search_start)
           .count();
   const double split_ms = 0.0;
-  if (node_search.feature_id < 0 || node_search.p_value > options.alpha ||
+  if (!selection.feature_test_passed || node_search.feature_id < 0 ||
       !node_search.split_valid || node_search.gain <= 0.0) {
     if (profiler != nullptr && profiler->enabled()) {
       profiler->LogNodeSearch(depth,
@@ -131,7 +135,9 @@ int Tree::BuildNodeGpu(const HistMatrix& hist,
                               0,
                               feature_ms,
                               split_ms,
-                              0.0);
+                              0.0,
+                              selection.stopping_p_value,
+                              selection.tested_features);
     }
     return return_leaf();
   }
@@ -162,7 +168,9 @@ int Tree::BuildNodeGpu(const HistMatrix& hist,
                             right_count,
                             feature_ms,
                             split_ms,
-                            partition_ms);
+                            partition_ms,
+                            selection.stopping_p_value,
+                            selection.tested_features);
   }
   if (options.distributed == nullptr && (left_end == row_begin || left_end == row_end)) {
     return return_leaf();
@@ -205,8 +213,9 @@ int Tree::BuildNodeGpu(const HistMatrix& hist,
       node_allowed_features,
       active_interaction_groups,
       child_interaction);
-  const bool build_left_first = detail::ChooseGpuFirstChild(options,
-                                                            gpu_workspace,
+  const bool build_left_first = detail::ChooseGpuFirstChild(hist,
+                                                            options,
+                                                            statistic_engine,
                                                             child_interaction.allowed_features,
                                                             child_bounds,
                                                             depth,
@@ -214,6 +223,14 @@ int Tree::BuildNodeGpu(const HistMatrix& hist,
                                                             left_end,
                                                             row_end,
                                                             &child_histograms);
+  // At most the directly-built child is resident.  If selection chooses the
+  // subtracted sibling first, uploading it invalidates that resident snapshot
+  // before the second recursive call.
+  if (build_left_first && !child_histograms.left_snapshot_resident) {
+    child_histograms.right_snapshot_resident = false;
+  } else if (!build_left_first && !child_histograms.right_snapshot_resident) {
+    child_histograms.left_snapshot_resident = false;
+  }
   const auto build_child = [&](std::size_t child_begin,
                                std::size_t child_end,
                                const GpuHistogramSnapshot& child_snapshot,

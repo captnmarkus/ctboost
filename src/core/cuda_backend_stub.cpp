@@ -29,6 +29,19 @@ GpuHistogramWorkspacePtr CreateGpuHistogramWorkspace(const HistMatrix& hist,
   throw std::runtime_error("CUDA histogram builder requested but CTBoost was compiled without CUDA");
 }
 
+GpuHistogramWorkspacePtr CreateGpuHistogramWorkspaceFromCudaQuantized(
+    const HistMatrix& hist,
+    const CudaQuantizedMatrixView& cuda_quantized,
+    const std::vector<float>& weights,
+    const std::string& devices) {
+  (void)hist;
+  (void)cuda_quantized;
+  (void)weights;
+  (void)devices;
+  throw std::runtime_error(
+      "CUDA quantized training requested but CTBoost was compiled without CUDA");
+}
+
 std::size_t EstimateGpuHistogramWorkspaceBytes(const GpuHistogramWorkspace* workspace) noexcept {
   (void)workspace;
   return 0;

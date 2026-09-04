@@ -84,6 +84,26 @@ void NativeFeaturePipeline::RefreshCombinationSourceIndices() {
       combination_source_indices_.end());
 }
 
+std::string NativeFeaturePipeline::AllocateOutputFeatureName(
+    const std::string& proposed_name) {
+  if (categorical_key_encoding_version_ ==
+      detail::kLegacyCategoricalKeyEncodingVersion) {
+    return proposed_name;
+  }
+  if (categorical_key_encoding_version_ !=
+      detail::kCurrentCategoricalKeyEncodingVersion) {
+    throw std::invalid_argument("unsupported categorical key encoding version: " +
+                                std::to_string(categorical_key_encoding_version_));
+  }
+
+  std::string allocated = proposed_name;
+  std::size_t suffix = 2U;
+  while (!allocated_output_feature_names_.insert(allocated).second) {
+    allocated = proposed_name + "_" + std::to_string(suffix++);
+  }
+  return allocated;
+}
+
 void NativeFeaturePipeline::FitInternal(py::array raw_matrix,
                                         py::array_t<float, py::array::forcecast> labels,
                                         py::object feature_names) {
@@ -99,6 +119,15 @@ void NativeFeaturePipeline::FitInternal(py::array raw_matrix,
     feature_names_in_.reset();
   } else {
     feature_names_in_ = py::cast<std::vector<std::string>>(feature_names);
+    if (feature_names_in_->size() != matrix.cols) {
+      throw std::invalid_argument(
+          "feature_names size must match the number of input features");
+    }
+    const std::unordered_set<std::string> unique_feature_names(
+        feature_names_in_->begin(), feature_names_in_->end());
+    if (unique_feature_names.size() != feature_names_in_->size()) {
+      throw std::invalid_argument("feature_names must be unique");
+    }
   }
 
   const std::vector<int> cat_indices = ResolveIndices(cat_features_);
@@ -112,6 +141,7 @@ void NativeFeaturePipeline::FitInternal(py::array raw_matrix,
   }
 
   output_feature_names_.clear();
+  allocated_output_feature_names_.clear();
   cat_feature_indices_.clear();
   one_hot_states_.clear();
   categorical_states_.clear();
@@ -125,6 +155,7 @@ void NativeFeaturePipeline::FitInternal(py::array raw_matrix,
   FitCoreFeatureState(object_matrix, label_values, cat_indices, text_indices, embedding_indices);
   FitCtrState(object_matrix, label_values);
   FitTextAndEmbeddingState(object_matrix, label_values, text_indices, embedding_indices);
+  ValidateFittedState();
 }
 
 }  // namespace ctboost

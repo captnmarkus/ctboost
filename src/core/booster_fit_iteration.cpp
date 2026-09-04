@@ -35,6 +35,9 @@ TreeBuildOptions MakeTreeBuildOptions(const FitLoopContext& context,
       has_monotone_constraints ? context.monotone_constraints : nullptr,
       context.interaction_constraint_set,
       distributed_coordinator,
+      ParseFeatureTest(*context.feature_test),
+      context.feature_test_bins,
+      ParseFeatureTestAdjustment(*context.feature_test_adjustment),
   };
 }
 

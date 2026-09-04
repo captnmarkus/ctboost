@@ -18,6 +18,8 @@ constexpr std::size_t kExactSelectionThresholdRowsDefault = 1048576;
 constexpr std::size_t kExactLowCardinalityBinsMultiplier = 4;
 constexpr std::size_t kExactLowCardinalityFloor = 1024;
 constexpr std::size_t kMinParallelHistogramValuesDefault = 16384;
+constexpr std::size_t kMinParallelNodeHistogramValuesDefault = 1048576;
+constexpr std::size_t kMinNodeHistogramValuesPerWorkerDefault = 262144;
 
 std::size_t ParseEnvUnsigned(const char* name, std::size_t default_value) {
   const char* raw_value = std::getenv(name);
@@ -191,6 +193,43 @@ std::size_t ResolveHistogramThreadCount(std::size_t num_rows, std::size_t num_fe
   const std::size_t thread_count =
       configured_threads == 0 ? hardware_threads : std::max<std::size_t>(1, configured_threads);
   return std::min(num_features, thread_count);
+}
+
+std::size_t ResolveNodeHistogramThreadCount(std::size_t num_rows,
+                                            std::size_t num_features) {
+  if (num_features <= 1 || num_rows == 0) {
+    return 1;
+  }
+
+  const std::size_t work =
+      num_features > std::numeric_limits<std::size_t>::max() / num_rows
+          ? std::numeric_limits<std::size_t>::max()
+          : num_rows * num_features;
+  const std::size_t minimum_parallel_values = ParseEnvUnsigned(
+      "CTBOOST_NODE_HIST_MIN_PARALLEL_VALUES",
+      kMinParallelNodeHistogramValuesDefault);
+  if (work < minimum_parallel_values) {
+    return 1;
+  }
+
+  const std::size_t configured_node_threads =
+      ParseEnvUnsigned("CTBOOST_NODE_HIST_THREADS", 0);
+  const std::size_t configured_histogram_threads =
+      ParseEnvUnsigned("CTBOOST_HIST_THREADS", 0);
+  const std::size_t hardware_threads =
+      std::max<std::size_t>(1, std::thread::hardware_concurrency());
+  const std::size_t requested_threads =
+      configured_node_threads != 0
+          ? configured_node_threads
+          : configured_histogram_threads != 0 ? configured_histogram_threads
+                                              : hardware_threads;
+  const std::size_t values_per_worker = std::max<std::size_t>(
+      1,
+      ParseEnvUnsigned(
+          "CTBOOST_NODE_HIST_MIN_VALUES_PER_WORKER",
+          kMinNodeHistogramValuesPerWorkerDefault));
+  const std::size_t workers_supported_by_work = std::max<std::size_t>(1, work / values_per_worker);
+  return std::min({num_features, requested_threads, workers_supported_by_work});
 }
 
 HistogramBuildContext ResolveHistogramBuildContext(std::size_t num_rows) {

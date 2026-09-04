@@ -3,6 +3,10 @@
 CTBoost can fit a preprocessing pipeline together with the booster. The pipeline is
 serialized with the estimator and reused for validation and prediction.
 
+These transformations add or prepare input features; they do not replace the
+conditional-inference feature-selection and split-search mechanism used by
+the tree learner.
+
 ## Categorical features
 
 ```python
@@ -17,6 +21,15 @@ model = CTBoostClassifier(
 Available categorical transforms include one-hot values, smoothed target statistics,
 ordered CTRs, feature combinations, and per-feature CTR configuration. Unknown and
 missing values have deterministic routes.
+
+Fitted pipelines record `categorical_key_encoding_version` in their state and
+inference manifest. New fits use version 2, which keeps actual missing values,
+literal strings such as `__ctboost_missing__` and `__ctboost_other__`, synthetic
+"other" buckets, backslashes, and categorical-combination delimiters distinct.
+Pipelines saved before this field existed load as version 1 and retain their
+historical key behavior for prediction and warm starts. CTBoost model documents use
+schema version 2 for new saves while the current runtime continues to read schema
+version 1 artifacts.
 
 ## Text features
 

@@ -32,13 +32,30 @@ std::vector<float> ArrayToFloatVector(py::array_t<float, py::array::forcecast> v
 
 std::string JoinNormalizedKey(const MatrixView& matrix,
                               std::size_t row,
-                              const std::vector<int>& source_indices) {
+                              const std::vector<int>& source_indices,
+                              int encoding_version) {
   std::string key;
   for (std::size_t index = 0; index < source_indices.size(); ++index) {
     if (index > 0) {
       key += "||";
     }
-    key += NormalizeKey(MatrixValue(matrix, row, static_cast<std::size_t>(source_indices[index])));
+    const std::string component = NormalizeKey(
+        MatrixValue(matrix, row, static_cast<std::size_t>(source_indices[index])),
+        encoding_version);
+    if (encoding_version == kLegacyCategoricalKeyEncodingVersion) {
+      key += component;
+      continue;
+    }
+    if (encoding_version != kCurrentCategoricalKeyEncodingVersion) {
+      throw std::invalid_argument("unsupported categorical key encoding version: " +
+                                  std::to_string(encoding_version));
+    }
+    for (char ch : component) {
+      if (ch == '\\' || ch == '|') {
+        key.push_back('\\');
+      }
+      key.push_back(ch);
+    }
   }
   return key;
 }
@@ -164,18 +181,21 @@ std::vector<std::string> ExtractTextTokens(std::string text,
   }
 
   std::vector<std::string> tokens;
-  for (int width = ngram_min; width <= ngram_max; ++width) {
-    if (static_cast<std::size_t>(width) > base_tokens.size()) {
-      continue;
-    }
+  const std::size_t minimum_width = static_cast<std::size_t>(ngram_min);
+  if (minimum_width > base_tokens.size()) {
+    return tokens;
+  }
+  const std::size_t maximum_width = std::min(
+      base_tokens.size(), static_cast<std::size_t>(ngram_max));
+  for (std::size_t width = minimum_width; width <= maximum_width; ++width) {
     for (std::size_t begin = 0;
-         begin + static_cast<std::size_t>(width) <= base_tokens.size(); ++begin) {
+         begin + width <= base_tokens.size(); ++begin) {
       std::string ngram;
-      for (int offset = 0; offset < width; ++offset) {
+      for (std::size_t offset = 0; offset < width; ++offset) {
         if (offset > 0 && tokenizer != "character") {
           ngram.push_back('_');
         }
-        ngram += base_tokens[begin + static_cast<std::size_t>(offset)];
+        ngram += base_tokens[begin + offset];
       }
       tokens.push_back(std::move(ngram));
     }

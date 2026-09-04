@@ -9,6 +9,7 @@ from .inference_manifest import _json_ready, build_inference_manifest
 
 JSON_PREDICTOR_FORMAT = "ctboost-json-predictor"
 JSON_PREDICTOR_FORMAT_VERSION = 2
+VECTOR_JSON_PREDICTOR_FORMAT_VERSION = 3
 
 
 def _scalar_tree_views(
@@ -67,6 +68,23 @@ def _standalone_python_payload(
     class_labels: Optional[Sequence[Any]] = None,
     estimator_name: Optional[str] = None,
 ) -> dict[str, Any]:
+    if (
+        artifact_kind == "json_predictor"
+        and feature_pipeline_state is not None
+        and not expects_prepared_features
+    ):
+        pipeline_format = feature_pipeline_state.get(
+            "feature_pipeline_format_version"
+        )
+        key_encoding = feature_pipeline_state.get(
+            "categorical_key_encoding_version"
+        )
+        if pipeline_format != 3 or key_encoding != 2:
+            raise ValueError(
+                "raw-feature JSON export requires feature-pipeline format 3 and "
+                "categorical key encoding 2; export prepared features or refit the "
+                "pipeline with CTBoost 0.1.55 or newer"
+            )
     state = dict(handle.export_state())
     quantization_schema = state.get("quantization_schema")
     if quantization_schema is None:
@@ -103,7 +121,7 @@ def _standalone_python_payload(
             )
     payload = {
         "format": JSON_PREDICTOR_FORMAT,
-        "format_version": JSON_PREDICTOR_FORMAT_VERSION if vector_leaves else 1,
+        "format_version": VECTOR_JSON_PREDICTOR_FORMAT_VERSION if vector_leaves else JSON_PREDICTOR_FORMAT_VERSION,
         "ctboost_version": __version__,
         "objective_name": objective_name,
         "learning_rate": float(handle.learning_rate()),
@@ -114,6 +132,14 @@ def _standalone_python_payload(
         "prediction_dimension": prediction_dimension,
         "num_features": len(list(quantization_schema["num_bins_per_feature"])),
         "expects_prepared_features": bool(expects_prepared_features),
+        # Prepared predictors never execute this state. Keep its descriptive
+        # fingerprint in the manifest without embedding potentially sensitive
+        # fitted preprocessing values in the scoring payload.
+        "feature_pipeline_state": (
+            _json_ready(dict(feature_pipeline_state))
+            if feature_pipeline_state is not None and not expects_prepared_features
+            else None
+        ),
         "quantization_schema": dict(quantization_schema),
         "trees": trees,
         "class_labels": resolved_class_labels,

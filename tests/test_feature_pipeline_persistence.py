@@ -1,5 +1,6 @@
 import importlib.util
 import json
+from collections.abc import Mapping
 from pathlib import Path
 import os
 import pickle
@@ -14,6 +15,14 @@ import pytest
 from sklearn.datasets import make_classification, make_regression
 import ctboost
 import ctboost._core as _core
+from ctboost.feature_pipeline import (
+    _FEATURE_PIPELINE_PICKLE_MAGIC,
+    _FEATURE_PIPELINE_PICKLE_VERSION,
+)
+from ctboost.training.booster import (
+    _BOOSTER_PICKLE_MAGIC,
+    _BOOSTER_PICKLE_VERSION,
+)
 from ctboost.distributed import (
     DistributedCollectiveServer,
     distributed_tcp_request,
@@ -90,6 +99,42 @@ def test_fitted_pipeline_estimator_is_pickleable_for_bagging_frameworks():
     assert restored._feature_pipeline is restored._booster._feature_pipeline
 
 
+def test_feature_pipeline_pickle_envelope_is_versioned_and_accepts_historical_states():
+    data = np.asarray([["a"], ["b"], ["a"]], dtype=object)
+    pipeline = ctboost.FeaturePipeline(cat_features=[0], one_hot_max_size=4)
+    pipeline.fit(data, np.arange(data.shape[0], dtype=np.float32))
+    expected_state = pipeline.to_state()
+
+    envelope = pipeline.__getstate__()
+    assert isinstance(envelope, tuple)
+    assert not isinstance(envelope, Mapping)
+    assert envelope == (
+        _FEATURE_PIPELINE_PICKLE_MAGIC,
+        _FEATURE_PIPELINE_PICKLE_VERSION,
+        expected_state,
+    )
+    restored = pickle.loads(pickle.dumps(pipeline, protocol=pickle.HIGHEST_PROTOCOL))
+    assert restored.to_state() == expected_state
+
+    for historical_state in (expected_state, {"native_state": expected_state}):
+        historical = object.__new__(ctboost.FeaturePipeline)
+        historical.__setstate__(historical_state)
+        assert historical.to_state() == expected_state
+
+    invalid = object.__new__(ctboost.FeaturePipeline)
+    with pytest.raises(ValueError, match="pickle magic"):
+        invalid.__setstate__((b"wrong", _FEATURE_PIPELINE_PICKLE_VERSION, expected_state))
+    with pytest.raises(ValueError, match="pickle version"):
+        invalid.__setstate__((_FEATURE_PIPELINE_PICKLE_MAGIC, 99, expected_state))
+    with pytest.raises(TypeError, match="payload must be a mapping"):
+        invalid.__setstate__((_FEATURE_PIPELINE_PICKLE_MAGIC, 1, []))
+
+    # CTBoost 0.1.54 called ``state.get`` directly.  Keeping the new envelope
+    # non-mapping makes that runtime fail closed before it can misread codec 2.
+    with pytest.raises(AttributeError):
+        envelope.get("native_state", envelope)
+
+
 def test_low_level_pipeline_booster_is_pickleable():
     data = np.asarray(
         [["a", 0.0], ["b", 1.0], ["a", 2.0], ["c", 3.0]],
@@ -105,6 +150,71 @@ def test_low_level_pipeline_booster_is_pickleable():
 
     restored = pickle.loads(pickle.dumps(booster, protocol=pickle.HIGHEST_PROTOCOL))
     np.testing.assert_allclose(restored.predict(data), booster.predict(data), rtol=1e-6, atol=1e-6)
+
+    envelope = booster.__getstate__()
+    assert isinstance(envelope, tuple)
+    assert not isinstance(envelope, Mapping)
+    assert envelope[0:2] == (_BOOSTER_PICKLE_MAGIC, _BOOSTER_PICKLE_VERSION)
+
+    historical = object.__new__(ctboost.Booster)
+    historical.__setstate__(envelope[2])
+    np.testing.assert_allclose(
+        historical.predict(data), booster.predict(data), rtol=1e-6, atol=1e-6
+    )
+
+    invalid = object.__new__(ctboost.Booster)
+    with pytest.raises(ValueError, match="pickle magic"):
+        invalid.__setstate__((b"wrong", _BOOSTER_PICKLE_VERSION, envelope[2]))
+    with pytest.raises(ValueError, match="pickle version"):
+        invalid.__setstate__((_BOOSTER_PICKLE_MAGIC, 99, envelope[2]))
+    with pytest.raises(TypeError, match="payload must be a mapping"):
+        invalid.__setstate__((_BOOSTER_PICKLE_MAGIC, 1, []))
+
+    # CTBoost 0.1.54 indexed the state as a mapping, so the tuple is rejected
+    # before its codec-2 pipeline state can reach the legacy native loader.
+    with pytest.raises(TypeError):
+        envelope["handle_state"]
+
+
+def test_pipeline_booster_and_estimator_round_trip_through_joblib_and_pickle_file(
+    tmp_path: Path,
+):
+    joblib = pytest.importorskip("joblib")
+    data = np.asarray(
+        [[None, 0.0], ["__ctboost_missing__", 1.0], [r"\m", 2.0], ["a", 3.0]],
+        dtype=object,
+    )
+    label = np.asarray([0.0, 1.0, 1.5, 3.0], dtype=np.float32)
+    estimator = ctboost.CTBoostRegressor(
+        iterations=3,
+        max_depth=1,
+        alpha=1.0,
+        cat_features=[0],
+        random_seed=9,
+    ).fit(data, label)
+    expected = estimator.predict(data)
+
+    estimator_path = tmp_path / "estimator.pkl"
+    estimator.save_model(estimator_path, model_format="pickle")
+    estimator_bytes = estimator_path.read_bytes()
+    assert _FEATURE_PIPELINE_PICKLE_MAGIC in estimator_bytes
+    assert _BOOSTER_PICKLE_MAGIC in estimator_bytes
+    loaded_estimator = ctboost.CTBoostRegressor.load_model(estimator_path)
+    np.testing.assert_array_equal(loaded_estimator.predict(data), expected)
+
+    artifacts = {
+        "pipeline": estimator._feature_pipeline,
+        "booster": estimator._booster,
+        "estimator": estimator,
+    }
+    for name, artifact in artifacts.items():
+        path = tmp_path / f"{name}.joblib"
+        joblib.dump(artifact, path)
+        loaded = joblib.load(path)
+        if name == "pipeline":
+            assert loaded.to_state() == artifact.to_state()
+        else:
+            np.testing.assert_array_equal(loaded.predict(data), expected)
 
 def test_low_level_train_persists_per_feature_ctr_configuration_with_combination_keys(tmp_path: Path):
     pd = pytest.importorskip("pandas")

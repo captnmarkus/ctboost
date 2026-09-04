@@ -67,6 +67,9 @@ class GradientBooster {
                   bool boost_from_average = true,
                   std::vector<double> base_score = {},
                   int leaf_estimation_iterations = 1,
+                  std::string feature_test = "quadratic",
+                  std::size_t feature_test_bins = 8,
+                  std::string feature_test_adjustment = "none",
                   std::string multi_strategy = "one_output_per_tree");
 
   void Fit(Pool& pool,
@@ -135,6 +138,9 @@ class GradientBooster {
   double gamma() const noexcept;
   double max_leaf_weight() const noexcept;
   int leaf_estimation_iterations() const noexcept;
+  const std::string& feature_test() const noexcept;
+  std::size_t feature_test_bins() const noexcept;
+  const std::string& feature_test_adjustment() const noexcept;
   std::size_t max_bins() const noexcept;
   const std::string& nan_mode_name() const noexcept;
   const std::vector<std::uint16_t>& max_bin_by_feature() const noexcept;
@@ -197,6 +203,9 @@ class GradientBooster {
   double gamma_{0.0};
   double max_leaf_weight_{0.0};
   int leaf_estimation_iterations_{1};
+  std::string feature_test_{"quadratic"};
+  std::size_t feature_test_bins_{8};
+  std::string feature_test_adjustment_{"none"};
   int num_classes_{1};
   int prediction_dimension_{1};
   std::string multi_strategy_{"one_output_per_tree"};

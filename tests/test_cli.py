@@ -438,3 +438,48 @@ def test_trusted_estimator_pickle_is_deserialized_exactly_once(tmp_path: Path, m
     assert model_type == "CTBoostRegressor"
     assert len(calls) == 1
     np.testing.assert_array_equal(loaded.predict(features), model.predict(features))
+
+
+def test_trusted_raw_booster_pickle_and_document_use_versioned_validation(
+    tmp_path: Path,
+):
+    features = np.asarray(
+        [[None, 0.0], ["__ctboost_missing__", 1.0], [r"\m", 2.0], ["a", 3.0]],
+        dtype=object,
+    )
+    target = np.asarray([0.0, 1.0, 1.5, 3.0], dtype=np.float32)
+    booster = ctboost.train(
+        features,
+        {
+            "objective": "RMSE",
+            "cat_features": [0],
+            "max_depth": 1,
+            "alpha": 1.0,
+            "random_seed": 11,
+        },
+        label=target,
+        num_boost_round=3,
+    )
+    expected = booster.predict(features)
+
+    raw_path = tmp_path / "raw-booster.pkl"
+    with raw_path.open("wb") as stream:
+        pickle.dump(booster, stream, protocol=pickle.HIGHEST_PROTOCOL)
+    loaded, model_type = _load_any_model(raw_path, allow_unsafe_pickle=True)
+    assert model_type == "Booster"
+    np.testing.assert_array_equal(loaded.predict(features), expected)
+
+    document_path = tmp_path / "booster-document.pkl"
+    booster.save_model(document_path, model_format="pickle")
+    loaded, model_type = _load_any_model(document_path, allow_unsafe_pickle=True)
+    assert model_type == "Booster"
+    np.testing.assert_array_equal(loaded.predict(features), expected)
+
+    with document_path.open("rb") as stream:
+        document = pickle.load(stream)
+    document["schema_version"] = 1
+    tampered_path = tmp_path / "booster-document-schema1.pkl"
+    with tampered_path.open("wb") as stream:
+        pickle.dump(document, stream, protocol=pickle.HIGHEST_PROTOCOL)
+    with pytest.raises(CLIError, match="schema version 1 cannot contain"):
+        _load_any_model(tampered_path, allow_unsafe_pickle=True)

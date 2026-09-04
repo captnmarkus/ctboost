@@ -248,6 +248,38 @@ def train(
     native_params["early_stopping"] = early_stopping
     if native_params["multi_strategy"] == "multi_output_tree" and distributed_config is not None:
         raise ValueError("multi_output_tree does not support distributed training")
+    uses_cuda_quantized_features = bool(
+        pool._handle.has_cuda_quantized_features()
+    )
+    cuda_quantized_eval_indices = [
+        index
+        for index, eval_pool in enumerate(eval_pools)
+        if eval_pool._handle.has_cuda_quantized_features()
+    ]
+    if cuda_quantized_eval_indices:
+        raise ValueError(
+            "CUDA quantized Pools are not yet supported in eval_set; "
+            "use ordinary host-backed eval data"
+        )
+    if uses_cuda_quantized_features:
+        if native_params["task_type"].upper() != "GPU":
+            raise ValueError("CUDA quantized Pool training requires task_type='GPU'")
+        if distributed_config is not None:
+            raise ValueError(
+                "CUDA quantized Pool training does not yet support distributed training"
+            )
+        if eval_pools:
+            raise ValueError(
+                "CUDA quantized Pool training does not yet support eval_set"
+            )
+        if init_state is not None:
+            raise ValueError(
+                "CUDA quantized Pool training does not yet support init_model or snapshot resume"
+            )
+        if native_params["native_external_memory"]:
+            raise ValueError(
+                "CUDA quantized Pool training cannot be combined with external_memory"
+            )
     _validate_objective_labels(native_params["objective"], pool, context="the training pool")
     for eval_index, eval_pool in enumerate(eval_pools):
         _validate_objective_labels(
@@ -279,6 +311,12 @@ def train(
             _validate_ndcg_weights(eval_pool, context=f"eval_set[{eval_index}]")
     if objective_runtime is not None:
         metric_runtime["use_python_eval_surface"] = True
+    if uses_cuda_quantized_features and metric_runtime["use_python_eval_surface"]:
+        raise ValueError(
+            "CUDA quantized Pool training currently requires the native training loop; "
+            "Python callbacks, callable objectives/metrics, learning-rate schedules, and "
+            "snapshot callbacks are not yet supported"
+        )
     filesystem_compat_required = distributed_config is not None and distributed_config["backend"] != "tcp" and (
         native_params["task_type"].upper() == "GPU" or bool(eval_pools) or metric_runtime["use_python_eval_surface"] or pool.group_id is not None
     )

@@ -6,14 +6,29 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <numeric>
 #include <random>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
 namespace ctboost {
+
+namespace {
+
+float CheckedCtrFloat(double value) {
+  if (!std::isfinite(value) ||
+      value < -static_cast<double>(std::numeric_limits<float>::max()) ||
+      value > static_cast<double>(std::numeric_limits<float>::max())) {
+    throw std::invalid_argument("computed CTR value exceeds the finite float range");
+  }
+  return static_cast<float>(value);
+}
+
+}  // namespace
 
 void NativeFeaturePipeline::FitCtrState(pybind11::array object_matrix,
                                         const std::vector<float>& label_values) {
@@ -76,7 +91,8 @@ void NativeFeaturePipeline::FitCtrState(pybind11::array object_matrix,
     std::unordered_map<std::string, int> feature_counts;
     feature_counts.reserve(matrix.rows);
     for (std::size_t row = 0; row < matrix.rows; ++row) {
-      ++feature_counts[detail::JoinNormalizedKey(matrix, row, source.source_indices)];
+      ++feature_counts[detail::JoinNormalizedKey(
+          matrix, row, source.source_indices, categorical_key_encoding_version_)];
     }
 
     for (const std::string& ctr_type : ctr_types) {
@@ -92,6 +108,9 @@ void NativeFeaturePipeline::FitCtrState(pybind11::array object_matrix,
       } else {
         output_names.push_back(source.output_prefix + "_freq_ctr");
       }
+      for (std::string& output_name : output_names) {
+        output_name = AllocateOutputFeatureName(output_name);
+      }
 
       std::unordered_map<std::string, int> total_counts;
       std::unordered_map<std::string, std::vector<float>> total_sums;
@@ -102,7 +121,8 @@ void NativeFeaturePipeline::FitCtrState(pybind11::array object_matrix,
       std::size_t seen_rows = 0;
 
       for (std::size_t row : permutation) {
-        const std::string key = detail::JoinNormalizedKey(matrix, row, source.source_indices);
+        const std::string key = detail::JoinNormalizedKey(
+            matrix, row, source.source_indices, categorical_key_encoding_version_);
         const float current_count = static_cast<float>(running_counts[key]);
         auto& current_sums = running_sums[key];
         if (ctr_type == "Mean" && current_sums.empty()) {
@@ -110,23 +130,29 @@ void NativeFeaturePipeline::FitCtrState(pybind11::array object_matrix,
         }
 
         if (ctr_type == "Mean") {
-          const float denominator = current_count + static_cast<float>(ctr_prior_strength_);
+          const double denominator =
+              static_cast<double>(current_count) + ctr_prior_strength_;
           for (int output_index = 0; output_index < target_width; ++output_index) {
-            const float numerator = current_sums[static_cast<std::size_t>(output_index)] +
-                                    static_cast<float>(ctr_prior_strength_) *
-                                        target_prior[static_cast<std::size_t>(output_index)];
+            const double numerator =
+                static_cast<double>(
+                    current_sums[static_cast<std::size_t>(output_index)]) +
+                ctr_prior_strength_ * static_cast<double>(
+                                          target_prior[static_cast<std::size_t>(output_index)]);
             training_columns[static_cast<std::size_t>(output_index)][row] =
-                numerator / std::max(denominator, 1.0F);
+                CheckedCtrFloat(numerator / std::max(denominator, 1.0));
           }
         } else {
           const float global_frequency =
               matrix.rows == 0
                   ? 0.0F
                   : static_cast<float>(feature_counts[key]) / static_cast<float>(matrix.rows);
-          const float denominator = static_cast<float>(seen_rows) + static_cast<float>(ctr_prior_strength_);
-          const float numerator =
-              current_count + static_cast<float>(ctr_prior_strength_) * global_frequency;
-          training_columns[0][row] = numerator / std::max(denominator, 1.0F);
+          const double denominator =
+              static_cast<double>(seen_rows) + ctr_prior_strength_;
+          const double numerator = static_cast<double>(current_count) +
+                                   ctr_prior_strength_ *
+                                       static_cast<double>(global_frequency);
+          training_columns[0][row] =
+              CheckedCtrFloat(numerator / std::max(denominator, 1.0));
         }
 
         total_counts[key] += 1;

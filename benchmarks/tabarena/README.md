@@ -104,12 +104,15 @@ metrics. Do not revise them after inspecting full test metrics; start a newly
 versioned portfolio instead. The adaptive tree caps do not change TabArena's
 3,600-second per-fit limit or its deadline callback.
 
-The clean default-only smoke behind the provisional `1058.7` three-dataset Elo is
-recorded in [`smoke_fd187da.json`](smoke_fd187da.json). The file contains exact
-per-split metrics, timing, memory, versions, and commits without machine-local
-artifact paths. It is explicitly not a TabArena-Full or official leaderboard result;
-an Elo at or above 1,300 remains an unproven target until the frozen tuned portfolio
-completes the full protocol.
+The latest measured public-wheel 0.1.55 default-only smoke is recorded in
+[`smoke_0155_public_wheel.json`](smoke_0155_public_wheel.json). Its provisional
+three-dataset Elo is `1054.0`, with 3/3 complete raw artifacts and no imputation.
+The file contains exact per-split metrics/resources, raw/report hashes, release-wheel
+identity, and the enormous small-sample Elo uncertainty without machine-local paths.
+It is explicitly not a TabArena-Full or official leaderboard result. The earlier
+0.1.53 [`smoke_fd187da.json`](smoke_fd187da.json) remains historical evidence, not
+the current score. An Elo at or above 1,300 remains an unproven target until the
+frozen tuned portfolio completes the full protocol.
 
 Run the full benchmark only on appropriately provisioned infrastructure:
 

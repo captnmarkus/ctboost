@@ -8,7 +8,8 @@ namespace ctboost {
 
 py::dict NativeFeaturePipeline::to_state() const {
   py::dict state;
-  state["feature_pipeline_format_version"] = 2;
+  state["feature_pipeline_format_version"] = detail::kCurrentFeaturePipelineFormatVersion;
+  state["categorical_key_encoding_version"] = categorical_key_encoding_version_;
   state["cat_features"] = cat_features_;
   state["ordered_ctr"] = ordered_ctr_;
   state["one_hot_max_size"] = one_hot_max_size_;

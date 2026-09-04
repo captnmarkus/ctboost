@@ -75,10 +75,13 @@ bool Pool::ReleaseFeatureStorage() noexcept {
   sparse_data_owner_ = py::object();
   sparse_indices_owner_ = py::object();
   sparse_indptr_owner_ = py::object();
+  cuda_quantized_owner_ = py::object();
   feature_data_ptr_ = nullptr;
   sparse_data_ptr_ = nullptr;
   sparse_indices_ptr_ = nullptr;
   sparse_indptr_ptr_ = nullptr;
+  cuda_quantized_view_.data = 0U;
+  cuda_quantized_view_.producer_stream = 0U;
   feature_row_stride_ = 0;
   feature_col_stride_ = 0;
   feature_data_cache_.clear();

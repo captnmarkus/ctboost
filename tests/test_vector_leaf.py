@@ -42,6 +42,11 @@ def _topology(tree):
     [
         {},
         {"alpha": 0.05},
+        {
+            "feature_test": "grouped",
+            "feature_test_bins": 8,
+            "feature_test_adjustment": "bonferroni",
+        },
         {"bootstrap_type": "Bernoulli", "subsample": 0.8, "colsample_bytree": 0.8},
         {"boosting_type": "DART", "drop_rate": 1.0, "skip_drop": 0.0, "max_drop": 1},
         {"grow_policy": "LeafWise", "max_leaves": 4},
@@ -135,10 +140,13 @@ def test_multiclass_final_leaf_values_respect_max_leaf_weight(strategy):
                 assert max(abs(v) for v in weights) <= 0.01000001
 
 
-def test_vector_leaf_warm_start_snapshot_and_versioned_persistence(tmp_path):
+@pytest.mark.parametrize("feature_test", ["quadratic", "grouped"])
+def test_vector_leaf_warm_start_snapshot_and_versioned_persistence(
+    tmp_path, feature_test
+):
     X, y = _data()
     pool = ctboost.Pool(X, y)
-    params = _params(multi_strategy="multi_output_tree")
+    params = _params(multi_strategy="multi_output_tree", feature_test=feature_test)
     full = ctboost.train(pool, params, num_boost_round=7)
     partial = ctboost.train(pool, params, num_boost_round=3)
     for suffix in ["json", "pkl"]:
@@ -152,7 +160,7 @@ def test_vector_leaf_warm_start_snapshot_and_versioned_persistence(tmp_path):
             pool, params, num_boost_round=7, resume_from_snapshot=path
         )
         np.testing.assert_array_equal(snapshot.predict(X), full.predict(X))
-    assert json.loads((tmp_path / "vector.json").read_text())["schema_version"] == 2
+    assert json.loads((tmp_path / "vector.json").read_text())["schema_version"] == 3
     np.testing.assert_array_equal(
         pickle.loads(pickle.dumps(full)).predict(X), full.predict(X)
     )
@@ -170,7 +178,7 @@ def test_vector_leaf_warm_start_snapshot_and_versioned_persistence(tmp_path):
     legacy = ctboost.Booster(ctboost._core.GradientBooster.from_state(legacy_state))
     np.testing.assert_array_equal(legacy.predict(X), scalar.predict(X))
     scalar.save_model(tmp_path / "scalar.json")
-    assert json.loads((tmp_path / "scalar.json").read_text())["schema_version"] == 1
+    assert json.loads((tmp_path / "scalar.json").read_text())["schema_version"] == 2
 
 
 @pytest.mark.parametrize("python_surface", [False, True])
@@ -214,7 +222,7 @@ def test_vector_classifier_clone_pipeline_and_estimator_persistence(tmp_path):
     np.testing.assert_allclose(model.predict_proba(frame).sum(axis=1), 1.0, atol=1e-6)
     path = tmp_path / "classifier.json"
     model.save_model(path)
-    assert json.loads(path.read_text())["schema_version"] == 2
+    assert json.loads(path.read_text())["schema_version"] == 3
     loaded = ctboost.CTBoostClassifier.load_model(path)
     np.testing.assert_array_equal(
         loaded.predict_proba(frame), model.predict_proba(frame)

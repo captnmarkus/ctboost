@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24...4.3)
 
-project(CTBoost VERSION 0.1.54 LANGUAGES CXX)
+project(CTBoost VERSION 0.1.57 LANGUAGES CXX)
 
 if(DEFINED SKBUILD_PROJECT_VERSION_FULL)
   set(CTBOOST_PACKAGE_VERSION "${SKBUILD_PROJECT_VERSION_FULL}")
@@ -137,6 +137,15 @@ add_library(ctboost_core STATIC
   src/core/tree_split_scoring.cpp
 )
 
+# ``ctboost_core`` is an implementation-only static archive linked into the
+# pybind11 extension.  Keep its symbols hidden just like the extension target:
+# several internal classes own pybind11 types, which are intentionally hidden
+# on ELF platforms and otherwise trigger GCC's greater-visibility warnings.
+set_target_properties(ctboost_core PROPERTIES
+  CXX_VISIBILITY_PRESET hidden
+  VISIBILITY_INLINES_HIDDEN ON
+)
+
 target_include_directories(ctboost_core
   PUBLIC
     ${PROJECT_SOURCE_DIR}/include
@@ -161,6 +170,8 @@ if(CTBOOST_WITH_CUDA)
 
   set_target_properties(ctboost_cuda_backend PROPERTIES
     POSITION_INDEPENDENT_CODE ON
+    CUDA_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN ON
     CUDA_SEPARABLE_COMPILATION ON
     CUDA_RESOLVE_DEVICE_SYMBOLS ON
     CUDA_STANDARD 17
@@ -174,7 +185,10 @@ if(CTBOOST_WITH_CUDA)
   )
 
   target_compile_definitions(ctboost_core PUBLIC CTBOOST_WITH_CUDA=1)
-  target_link_libraries(ctboost_cuda_backend PUBLIC CUDA::cudart pybind11::headers Python::Module)
+  target_link_libraries(
+    ctboost_cuda_backend
+    PUBLIC CUDA::cudart pybind11::headers Python::Module
+  )
   target_link_libraries(ctboost_core PUBLIC ctboost_cuda_backend)
 else()
   target_sources(ctboost_core PRIVATE src/core/cuda_backend_stub.cpp)

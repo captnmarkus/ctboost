@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <vector>
 
 namespace ctboost {
@@ -11,6 +12,14 @@ struct BinStatistics {
   std::vector<double> hessian_sums;
   std::vector<double> weight_sums;
 };
+
+inline constexpr std::size_t kNoMissingStatisticBin =
+    std::numeric_limits<std::size_t>::max();
+
+BinStatistics GroupOrderedBinStatistics(
+    const BinStatistics& stats,
+    std::size_t requested_groups,
+    std::size_t missing_bin = kNoMissingStatisticBin);
 
 struct LinearStatisticResult {
   std::vector<double> statistic;

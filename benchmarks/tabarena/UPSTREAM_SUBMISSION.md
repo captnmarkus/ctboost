@@ -15,7 +15,7 @@ rejects the former override-method model API. Add:
 3. `packages/tabarena/src/tabarena/models/ctboost/hpo.py`
 4. `packages/tabarena/src/tabarena/models/ctboost/info.py`
 5. Lazy `CTBoostModel` export in `packages/tabarena/src/tabarena/models/__init__.py`
-6. `ctboost = ["ctboost>=0.1.54"]` and `tabarena[ctboost]` in the `extended`
+6. `ctboost = ["ctboost>=0.1.55"]` and `tabarena[ctboost]` in the `extended`
    extra in `packages/tabarena/pyproject.toml`
 7. `CTB` in the tree-model family mapping in
    `packages/tabarena/src/tabarena/website/website_format.py`. Do not add it to
@@ -84,8 +84,9 @@ tree caps never replace or extend the official 3,600-second per-fit deadline.
   plus ensemble (`n_iterations=40`) rows. No CTBoost-specific ensemble code is
   required.
 
-The committed three-dataset smoke in `smoke_fd187da.json` is useful integration
-evidence but does not satisfy either full-run gate.
+The latest measured 0.1.55 three-dataset smoke in `smoke_0155_public_wheel.json` is useful
+integration evidence but does not satisfy either full-run gate. The older
+`smoke_fd187da.json` record is retained only for historical comparison.
 
 ## Pull request text
 
@@ -101,7 +102,7 @@ TabArena-Full test results.
 
 Once that PR is merged, request the official run with an issue titled:
 
-`Run CTBoost 0.1.54 on TabArena-v0.1 (default + 200 configs)`
+`Run CTBoost 0.1.56 on TabArena-v0.1 (default + 200 configs)`
 
 Link the merged integration PR and PyPI release; confirm the three-task preflight,
 frozen search space, time/resource behavior, and request the CPU TabArena-Full

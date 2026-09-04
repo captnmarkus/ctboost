@@ -72,6 +72,9 @@ struct CandidateSelectionResult {
   FeatureChoice feature_choice;
   SplitChoice split_choice;
   double adjusted_gain{-std::numeric_limits<double>::infinity()};
+  double stopping_p_value{1.0};
+  std::size_t tested_features{0};
+  bool feature_test_passed{false};
 };
 
 double ComputeLeafWeight(double gradient_sum, double hessian_sum, double lambda_l2);
@@ -104,6 +107,8 @@ NodeHistogramSet ComputeNodeHistogramSet(const HistMatrix& hist,
                                          std::size_t row_end,
                                          bool use_gpu,
                                          GpuHistogramWorkspace* gpu_workspace);
+NodeHistogramSet MaterializeGpuHistogramSnapshot(const HistMatrix& hist,
+                                                 const GpuHistogramSnapshot& snapshot);
 NodeHistogramSet SubtractNodeHistogramSet(const NodeHistogramSet& parent,
                                           const NodeHistogramSet& child);
 
@@ -155,8 +160,9 @@ GpuChildHistogramState BuildGpuChildHistogramState(const TreeBuildOptions& optio
                                                    std::size_t row_end,
                                                    const GpuHistogramSnapshot& parent_snapshot,
                                                    bool build_left_direct);
-bool ChooseGpuFirstChild(const TreeBuildOptions& options,
-                         GpuHistogramWorkspace* gpu_workspace,
+bool ChooseGpuFirstChild(const HistMatrix& hist,
+                         const TreeBuildOptions& options,
+                         const LinearStatistic& statistic_engine,
                          const std::vector<int>* child_allowed_features,
                          const ChildLeafBounds& child_bounds,
                          int depth,

@@ -1,0 +1,360 @@
+{
+  "schema_version": 1,
+  "artifact_type": "ctboost.grouped_feature_test.external_panel_release_evidence",
+  "benchmark": "ctboost-grouped-split-external-panel-v2",
+  "qualification_scope": {
+    "ctboost_version": "0.1.55",
+    "decision": "do_not_advance_grouped_8",
+    "grouped_8_advances": false,
+    "g8_scout": {
+      "status": "not_applicable",
+      "protocol_triggered": false,
+      "reason": "The conjunctive promotion decision failed because the median paired decision-task fit-time ratio exceeded the frozen 1.15 ceiling."
+    }
+  },
+  "lineage": {
+    "evaluated_source": {
+      "git_commit": "fb65b6856aa41d6cb068ebcee5ebb10996a24104",
+      "git_tree": "318082071b6d0d9a6cc769097ecce65e46119634",
+      "git_dirty": false,
+      "working_tree_file_count": 322,
+      "working_tree_sha256": "0ee8678c209bf707f97d446ae30e2e1fed64546b65e26a213e93dddb2887f14a"
+    },
+    "evidence_commit": {
+      "required_parent_commit": "fb65b6856aa41d6cb068ebcee5ebb10996a24104",
+      "relationship": "The commit containing this artifact is an evidence-only direct child of the evaluated source commit; embedding that child commit here would be self-referential.",
+      "panel_rerun_on_evidence_commit": false,
+      "change_allowlist": [
+        "benchmarks/split_research/README.md",
+        "benchmarks/split_research/results/grouped_external_panel_v2_fb65b685.json",
+        "docs/split-statistics-research.md"
+      ]
+    }
+  },
+  "supersession": {
+    "scope": "CTBoost 0.1.55 release qualification only",
+    "supersedes_for_scope": "benchmarks/split_research/results/grouped_external_panel_v2_be9506fb.json",
+    "prior_evidence_ctboost_version": "0.1.54",
+    "prior_evidence_source_commit": "be9506fb8bbc78d4225a55cfd197766d12d2dd51",
+    "prior_evidence_status": "retained byte-for-byte as historical evidence",
+    "reason": "The 0.1.55 final-source rerun produced a different timing observation and is the applicable release-qualification result."
+  },
+  "provenance": {
+    "python": "3.12.11",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "distributions": {
+      "ctboost": "0.1.55",
+      "numpy": "2.5.2",
+      "openml": "0.15.1",
+      "pandas": "2.3.3",
+      "scikit-learn": "1.9.0"
+    },
+    "native_build_info": {
+      "compiler": "MSVC 1944",
+      "cuda_enabled": false,
+      "cuda_runtime": "not compiled",
+      "cxx_standard": 17,
+      "version": "0.1.55"
+    },
+    "qualification_wheel": {
+      "filename": "ctboost-0.1.55-cp312-cp312-win_amd64.whl",
+      "size_bytes": 903706,
+      "sha256": "f904443ff62d5494f09b0a0417c9fcbdcfb6dcba6217f7d0bcabb7fe91b353e5"
+    }
+  },
+  "identities": {
+    "protocol_record_sha256": "048e4bbd560ca8c78b550994c0435fda6c684a22f65e313d22372a1fdc634177",
+    "schedule_sha256": "e4b0e3db6856845912c7710f96cf05f833d2009a16e730d82fccbb65af99007d",
+    "source_identity_record_sha256": "7bcf85bc4cc8de47d2af07ab7be73f287d4dcba9352827d0d284d986cf0b32d9",
+    "ctboost_package_sha256": "3d0b4602ac5287bd4916054129d13a46e916db80ce320e90fd1c793d0ff729ca",
+    "native_extension_sha256": "fe4e3155a42e5c3e8abb0c5a10f2a428ae0cf26a6c8c9c7db3c6daaf8484833d",
+    "manifest_record_sha256": "be61a72db00265112a70dbb84cd4a1e46ad225bb7c12a3d5bdff7a285e914cb7",
+    "result_ledger_record_sha256": "0d77b4e24eaba702963d7ba6b61b81e366cd504e11d545cd76784719f07a86c1",
+    "summary_canonical_json_sha256": "d165ed79e6629d3b7c93db5c9be76b9ea8432a79bec0e6b45fd531592fa7fe7f",
+    "source_files": {
+      "metadata_file_sha256": "57d0d4b0ad6169e0c57c24b7fcdbc8e9c668dd1c47561687836db68221c3da76",
+      "preflight_file_sha256": "e7319d3a2bf136ba68f09dbf0c598de171d46e8a44eb120e5ab893156bc21c3b",
+      "run_manifest_file_sha256": "6d59fe0adb23612dc497b6f38efc2736a178152bbdf96b8ae5f46ea0e61341dc",
+      "result_ledger_file_sha256": "fc65048001e7192c9e08f596a70559e41698ca5d16830581ad066695d00aba88",
+      "summary_file_sha256": "04c1e00d7e64b34d3cd7a31c8af9954f115dfaf335c07b0801218f043ff2837b",
+      "stdout_log_file_sha256": "fb7200e3ec7551d8f26ddc8a675f9f385d2c9d8242ce7bf47046f3c890ff52e2",
+      "stderr_log_file_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "coverage": {
+    "expected_jobs": 294,
+    "completed_jobs": 294,
+    "successful_jobs": 294,
+    "failed_jobs": 0,
+    "missing_jobs": 0,
+    "unexpected_ledger_jobs_ignored": 0,
+    "decision_datasets": 12,
+    "stress_datasets": 2,
+    "paired_treatment_fits": 252,
+    "implicit_control_check_fits": 42
+  },
+  "control_identity_checks": {
+    "expected": 42,
+    "complete": 42,
+    "exact": 42,
+    "all_decision_checks_exact": true,
+    "stress_checks_do_not_affect_promotion": true,
+    "matched_fields": [
+      "raw_prediction_sha256",
+      "canonical_tree_sha256",
+      "best_iteration"
+    ]
+  },
+  "decision": {
+    "complete": true,
+    "protocol_valid": true,
+    "win_tie_loss": {
+      "win": 9,
+      "tie": 0,
+      "loss": 3
+    },
+    "median_relative_primary_loss_improvement": 0.05626197119138934,
+    "task_bootstrap": {
+      "seed": 20260815,
+      "repetitions": 10000,
+      "confidence": 0.95,
+      "unit": "task",
+      "statistic": "median relative primary-loss improvement",
+      "interval": [
+        -0.012309554661154591,
+        0.1364091364091368
+      ],
+      "crosses_zero": true
+    },
+    "datasets_worse_than_one_percent": 3,
+    "median_paired_fit_time_ratio": 1.1708028196740208,
+    "gates": [
+      {
+        "name": "all_decision_fits_complete_finite_and_shaped",
+        "required": true,
+        "observed": true,
+        "passed": true
+      },
+      {
+        "name": "wins_at_least_7_of_12",
+        "operator": ">=",
+        "threshold": 7,
+        "observed": 9,
+        "passed": true
+      },
+      {
+        "name": "median_improvement_at_least_0_25_percent",
+        "operator": ">=",
+        "threshold": 0.0025,
+        "observed": 0.05626197119138934,
+        "passed": true
+      },
+      {
+        "name": "at_most_3_datasets_worse_than_1_percent",
+        "operator": "<=",
+        "threshold": 3,
+        "observed": 3,
+        "passed": true
+      },
+      {
+        "name": "median_fit_time_ratio_at_most_1_15",
+        "operator": "<=",
+        "threshold": 1.15,
+        "observed": 1.1708028196740208,
+        "passed": false
+      }
+    ],
+    "failed_gate_names": [
+      "median_fit_time_ratio_at_most_1_15"
+    ],
+    "grouped_8_advances": false
+  },
+  "resources": {
+    "measurement": {
+      "histogram_threads_per_fit": 8,
+      "one_isolated_subprocess_per_fit": true,
+      "fit_timer": "ctboost.train call only; excludes OpenML/cache, data slicing, Pool construction, serialization, and prediction"
+    },
+    "all_294_isolated_fits": {
+      "fit_seconds_sum": 66.19104799999718,
+      "peak_process_rss_bytes_max": 270376960,
+      "serialized_model_bytes_sum": 8302076684
+    },
+    "decision_paired_treatments": {
+      "fit_count": 216,
+      "fit_seconds_sum": 32.47969099999909,
+      "control_fit_count": 108,
+      "candidate_fit_count": 108,
+      "control_fit_seconds_sum": 10.745605199997954,
+      "candidate_fit_seconds_sum": 21.73408580000114,
+      "candidate_to_control_fit_seconds_sum_ratio": 2.022602300706644,
+      "median_paired_fit_time_ratio": 1.1708028196740208,
+      "peak_process_rss_bytes_max": 270376960,
+      "serialized_model_bytes_sum": 5449089422
+    },
+    "stress_paired_treatments": {
+      "fit_count": 36,
+      "fit_seconds_sum": 25.931098499998825,
+      "control_fit_count": 18,
+      "candidate_fit_count": 18,
+      "control_fit_seconds_sum": 13.30509449999954,
+      "candidate_fit_seconds_sum": 12.626003999999284,
+      "candidate_to_control_fit_seconds_sum_ratio": 0.9489601144884555,
+      "median_paired_fit_time_ratio": 0.9868995519820811,
+      "peak_process_rss_bytes_max": 218181632,
+      "serialized_model_bytes_sum": 1700062297
+    },
+    "implicit_controls": {
+      "fit_count": 42,
+      "fit_seconds_sum": 7.780258499999263,
+      "peak_process_rss_bytes_max": 238297088,
+      "serialized_model_bytes_sum": 1152924965
+    }
+  },
+  "tasks": [
+    {
+      "task_id": 15,
+      "dataset": "breast-w",
+      "problem": "binary",
+      "stress_only": false,
+      "data_identity_sha256": "75c5ccf3cf61acf6fdb1e5eca4c5f96dc9872932bbf02e91498d829ca9880a08",
+      "median_relative_primary_loss_improvement": 0.1111111111111111,
+      "outcome": "win"
+    },
+    {
+      "task_id": 29,
+      "dataset": "credit-approval",
+      "problem": "binary",
+      "stress_only": false,
+      "data_identity_sha256": "e4a673efbda08c20a99e89d367765b6045c15c986a082341b847348b672209d0",
+      "median_relative_primary_loss_improvement": 0.09868421052631546,
+      "outcome": "win"
+    },
+    {
+      "task_id": 9952,
+      "dataset": "phoneme",
+      "problem": "binary",
+      "stress_only": false,
+      "data_identity_sha256": "d0e7fd8f1668bddffbc942bbbfa013c1c365e9e8c42943a83b5ae106f6a8293a",
+      "median_relative_primary_loss_improvement": 0.16170716170716248,
+      "outcome": "win"
+    },
+    {
+      "task_id": 53,
+      "dataset": "vehicle",
+      "problem": "multiclass",
+      "stress_only": false,
+      "data_identity_sha256": "b93ec7f11d3b8a5dc6d87af51dc4bfce78e43d1930f670ddf7557e411ab232ff",
+      "median_relative_primary_loss_improvement": -0.02781766806872321,
+      "outcome": "loss"
+    },
+    {
+      "task_id": 2074,
+      "dataset": "satimage",
+      "problem": "multiclass",
+      "stress_only": false,
+      "data_identity_sha256": "8c1aaab144d6642b559ab08b24549e4cbe69b2e11f5e392b44f78017eda9294a",
+      "median_relative_primary_loss_improvement": 0.20823617404442196,
+      "outcome": "win"
+    },
+    {
+      "task_id": 2079,
+      "dataset": "eucalyptus",
+      "problem": "multiclass",
+      "stress_only": false,
+      "data_identity_sha256": "bd24ec800373639df5b5c9b38c703ca913891892bfce237e0e13e254935949bf",
+      "median_relative_primary_loss_improvement": 0.0398366448674393,
+      "outcome": "win"
+    },
+    {
+      "task_id": 361234,
+      "dataset": "abalone",
+      "problem": "regression",
+      "stress_only": false,
+      "data_identity_sha256": "10a4f67dbb3841983e4f9ff3c0577af0b819675c47c14f2852c5bc61fc26c357",
+      "median_relative_primary_loss_improvement": 0.017115157386395935,
+      "outcome": "win"
+    },
+    {
+      "task_id": 361236,
+      "dataset": "auction_verification",
+      "problem": "regression",
+      "stress_only": false,
+      "data_identity_sha256": "ab563687f9257e9efefba8123a0ef17aa7f9289fe148d5e78125e22911ace5f2",
+      "median_relative_primary_loss_improvement": -0.29101433665238496,
+      "outcome": "loss"
+    },
+    {
+      "task_id": 361243,
+      "dataset": "geographical_origin_of_music",
+      "problem": "regression",
+      "stress_only": false,
+      "data_identity_sha256": "9f34771cef6093c3eef7c3f1fb79c061f645c0c488d3e463a2387540a8002182",
+      "median_relative_primary_loss_improvement": 0.0726872975153394,
+      "outcome": "win"
+    },
+    {
+      "task_id": 361249,
+      "dataset": "white_wine",
+      "problem": "regression",
+      "stress_only": false,
+      "data_identity_sha256": "57dc483f6fcfaa293e4febba07b2bb0da6dde2f85e4a2e78876ecec3cdf3385c",
+      "median_relative_primary_loss_improvement": -0.02643911810673241,
+      "outcome": "loss"
+    },
+    {
+      "task_id": 361258,
+      "dataset": "kin8nm",
+      "problem": "regression",
+      "stress_only": false,
+      "data_identity_sha256": "acf0c88c3c21f6599ebf162f4ed834aff9e1124e4c030400485bb8e941f31d56",
+      "median_relative_primary_loss_improvement": 0.18089035683552018,
+      "outcome": "win"
+    },
+    {
+      "task_id": 361617,
+      "dataset": "energy_efficiency",
+      "problem": "regression",
+      "stress_only": false,
+      "data_identity_sha256": "08e3f73e411998d4006f15374eeb747cafd9606f88b3d87f2837b1b6c2528fa3",
+      "median_relative_primary_loss_improvement": 0.0018200087844232264,
+      "outcome": "win"
+    },
+    {
+      "task_id": 7592,
+      "dataset": "adult",
+      "problem": "binary",
+      "stress_only": true,
+      "data_identity_sha256": "515ed309bcd59dac393f9e2a2753887af8fe5e5126899156346214aefd59620d",
+      "median_relative_primary_loss_improvement": -0.05719964778395055,
+      "outcome": "loss"
+    },
+    {
+      "task_id": 361255,
+      "dataset": "california_housing",
+      "problem": "regression",
+      "stress_only": true,
+      "data_identity_sha256": "8141bbb021c75bba4ef84aaa83e1b44d80a3b8adb751af33cca380b42a28a8d7",
+      "median_relative_primary_loss_improvement": -0.02335652196343724,
+      "outcome": "loss"
+    }
+  ],
+  "integrity_audit": {
+    "method": "Read-only independent recomputation of canonical seals, frozen schedule/config identities, job joins, coverage, control equality, task aggregation, bootstrap, resources, and gates.",
+    "manifest_jobs_revalidated": 294,
+    "ledger_result_seals_revalidated": 294,
+    "absolute_path_leaks_in_public_inputs": 0,
+    "stdout_schedule_lines": 294,
+    "stderr_bytes": 0,
+    "private_files_remaining": 0,
+    "result": "pass"
+  },
+  "caveats": [
+    "The task bootstrap interval crosses zero.",
+    "Exactly three decision datasets worsened by more than one percent, saturating the frozen allowance.",
+    "The summed candidate/control decision-task fit-time ratio was 2.0226, although the frozen gate uses the median of 108 paired ratios.",
+    "Stress-task outcomes and stress control checks do not enter promotion gates.",
+    "All promotion gates are conjunctive; the single timing-gate failure makes this a no-advance result, so the grouped-8 TabArena scout was not triggered and is not applicable."
+  ],
+  "artifact_record_sha256": "12e8fa4901218a3b29d219576afc7f28e9e421f2eb40d2a54d5a26f63f25f481"
+}

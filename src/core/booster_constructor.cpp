@@ -58,6 +58,9 @@ GradientBooster::GradientBooster(std::string objective,
                                  bool boost_from_average,
                                  std::vector<double> base_score,
                                  int leaf_estimation_iterations,
+                                 std::string feature_test,
+                                 std::size_t feature_test_bins,
+                                 std::string feature_test_adjustment,
                                  std::string multi_strategy)
     : objective_name_(std::move(objective)),
       eval_metric_name_(std::move(eval_metric)),
@@ -90,6 +93,10 @@ GradientBooster::GradientBooster(std::string objective,
       gamma_(gamma),
       max_leaf_weight_(max_leaf_weight),
       leaf_estimation_iterations_(leaf_estimation_iterations),
+      feature_test_(booster_detail::CanonicalFeatureTest(std::move(feature_test))),
+      feature_test_bins_(feature_test_bins),
+      feature_test_adjustment_(booster_detail::CanonicalFeatureTestAdjustment(
+          std::move(feature_test_adjustment))),
       num_classes_(num_classes),
       multi_strategy_(std::move(multi_strategy)),
       max_bins_(max_bins),
@@ -144,9 +151,14 @@ GradientBooster::GradientBooster(std::string objective,
   if (leaf_estimation_iterations_ < 1 || leaf_estimation_iterations_ > 5) {
     throw std::invalid_argument("leaf_estimation_iterations must be in [1, 5]");
   }
+  if (feature_test_bins_ < 2 || feature_test_bins_ > 64) {
+    throw std::invalid_argument("feature_test_bins must be in [2, 64]");
+  }
   (void)booster_detail::ParseBootstrapType(bootstrap_type_);
   (void)booster_detail::ParseBoostingType(boosting_type_);
   (void)booster_detail::ParseGrowPolicy(grow_policy_);
+  (void)booster_detail::ParseFeatureTest(feature_test_);
+  (void)booster_detail::ParseFeatureTestAdjustment(feature_test_adjustment_);
   for (const double value : feature_weights_) {
     if (value < 0.0) {
       throw std::invalid_argument("feature_weights entries must be non-negative");

@@ -3,8 +3,9 @@
 <div class="ctb-hero" markdown>
 
 CTBoost is a gradient-boosting library built around **conditional-inference trees**.
-It combines statistically controlled split selection with a familiar Python and
-scikit-learn interface, native C++ training, and optional CUDA acceleration.
+It combines alpha-stopped feature-test selection, optional per-node Bonferroni
+adjustment, a familiar Python and scikit-learn interface, native C++ training,
+and optional CUDA acceleration.
 
 [Install CTBoost](getting-started.md){ .md-button .md-button--primary }
 [See benchmark status](benchmarks.md){ .md-button }
@@ -68,11 +69,7 @@ model.fit(
 )
 
 probability = model.predict_proba(X_test)
-explanation = model.get_feature_importance(
-    data=X_test,
-    type="ShapValues",
-    reference_data=X_train,
-)
+explanation = model.predict_shap_values(X_test, X_train)
 ```
 
 ## Where to go next

@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 
 RESULT_SCHEMA_VERSION = 1
-PROTOCOL_NAME = "ctboost-grouped-split-external-panel-v1"
+PROTOCOL_NAME = "ctboost-grouped-split-external-panel-v2"
 REPEAT = 0
 FOLDS = (0, 1, 2)
 INNER_VALIDATION_FRACTION = 0.20
@@ -156,6 +156,13 @@ COMMON_PARAMS: Dict[str, Any] = {
 }
 
 
+TRAINING_OBJECTIVE_METRICS: Dict[str, Dict[str, str]] = {
+    "binary": {"objective": "Logloss", "eval_metric": "AUC"},
+    "multiclass": {"objective": "MultiClass", "eval_metric": "MultiClass"},
+    "regression": {"objective": "RMSE", "eval_metric": "RMSE"},
+}
+
+
 def json_default(value: Any) -> Any:
     if isinstance(value, Path):
         return value.as_posix()
@@ -291,6 +298,17 @@ def _protocol_core() -> Dict[str, Any]:
             ],
         },
         "common_params": dict(COMMON_PARAMS),
+        "training_objective_metrics": {
+            problem: dict(values)
+            for problem, values in TRAINING_OBJECTIVE_METRICS.items()
+        },
+        "protocol_correction": {
+            "supersedes": "ctboost-grouped-split-external-panel-v1",
+            "reason": (
+                "use CTBoost's multiclass training evaluator name MultiClass; "
+                "held-out multiclass primary scoring remains log loss"
+            ),
+        },
         "inner_validation": {
             "fraction": INNER_VALIDATION_FRACTION,
             "classification": "stratified shuffled split",
@@ -445,13 +463,16 @@ def objective_and_metric(problem: str, class_count: Optional[int]) -> Tuple[str,
     if problem == "binary":
         if class_count != 2:
             raise ValueError("binary task must contain exactly two target classes")
-        return "Logloss", "AUC"
+        values = TRAINING_OBJECTIVE_METRICS[problem]
+        return values["objective"], values["eval_metric"]
     if problem == "multiclass":
         if class_count is None or class_count < 3:
             raise ValueError("multiclass task must contain at least three classes")
-        return "MultiClass", "Logloss"
+        values = TRAINING_OBJECTIVE_METRICS[problem]
+        return values["objective"], values["eval_metric"]
     if problem == "regression":
-        return "RMSE", "RMSE"
+        values = TRAINING_OBJECTIVE_METRICS[problem]
+        return values["objective"], values["eval_metric"]
     raise ValueError("unsupported problem type: {}".format(problem))
 
 
@@ -594,11 +615,12 @@ def validate_frozen_job_config(
     if treatment_name != "implicit-control":
         treatment = next(item for item in TREATMENTS if item["name"] == treatment_name)
         params.update(treatment["params"])
-    objective, eval_metric = {
-        "binary": ("Logloss", "AUC"),
-        "multiclass": ("MultiClass", "Logloss"),
-        "regression": ("RMSE", "RMSE"),
-    }[str(dataset["problem"])]
+    class_count = None
+    if dataset["problem"] == "binary":
+        class_count = 2
+    elif dataset["problem"] == "multiclass":
+        class_count = 3
+    objective, eval_metric = objective_and_metric(str(dataset["problem"]), class_count)
     params.update(
         {
             "objective": objective,

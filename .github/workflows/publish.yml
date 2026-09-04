@@ -9,7 +9,7 @@ on:
       version:
         description: Version to build and validate against pyproject.toml
         required: true
-        default: "0.1.54"
+        default: "0.1.57"
         type: string
       publish:
         description: Publish after validation (requires dispatching a v* tag)
@@ -51,11 +51,58 @@ jobs:
           python - <<'PY'
           import os
           from pathlib import Path
+          import re
           import tomllib
+          import xml.etree.ElementTree as ET
 
           project_version = tomllib.loads(
               Path("pyproject.toml").read_text(encoding="utf-8")
           )["project"]["version"]
+
+          def required_match(path, pattern):
+              text = Path(path).read_text(encoding="utf-8")
+              match = re.search(pattern, text, flags=re.MULTILINE)
+              if match is None:
+                  raise SystemExit(f"could not resolve release version from {path}")
+              return match.group(1)
+
+          pom_root = ET.parse("bindings/jvm/pom.xml").getroot()
+          pom_namespace = ""
+          if pom_root.tag.startswith("{"):
+              pom_namespace = pom_root.tag[1:].split("}", 1)[0]
+          pom_version_node = pom_root.find(
+              f"{{{pom_namespace}}}version" if pom_namespace else "version"
+          )
+          if pom_version_node is None or not (pom_version_node.text or "").strip():
+              raise SystemExit("could not resolve release version from bindings/jvm/pom.xml")
+
+          release_surfaces = {
+              "pyproject.toml": project_version,
+              "CMakeLists.txt": required_match(
+                  "CMakeLists.txt",
+                  r"^project\(CTBoost VERSION ([0-9]+\.[0-9]+\.[0-9]+) LANGUAGES CXX\)$",
+              ),
+              "ctboost/_version.py": required_match(
+                  "ctboost/_version.py",
+                  r'^__version__ = "([0-9]+\.[0-9]+\.[0-9]+)"$',
+              ),
+              "bindings/R/ctboost/DESCRIPTION": required_match(
+                  "bindings/R/ctboost/DESCRIPTION",
+                  r"^Version: ([0-9]+\.[0-9]+\.[0-9]+)$",
+              ),
+              "bindings/jvm/pom.xml": (pom_version_node.text or "").strip(),
+          }
+          mismatched_surfaces = {
+              path: version
+              for path, version in release_surfaces.items()
+              if version != project_version
+          }
+          if mismatched_surfaces:
+              raise SystemExit(
+                  "release version surfaces disagree with pyproject.toml: "
+                  f"{mismatched_surfaces!r}"
+              )
+
           event_name = os.environ["EVENT_NAME"]
           ref = os.environ["REF"]
           ref_name = os.environ["REF_NAME"]
@@ -375,6 +422,22 @@ jobs:
         with:
           python-version: "3.13"
 
+      - name: Set up Java
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+          cache-dependency-path: bindings/jvm/pom.xml
+
+      - name: Set up R
+        uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
+
+      - name: Install R system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes libuv1-dev
+
       - name: Download wheel artifacts
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:
@@ -395,6 +458,37 @@ jobs:
           python -m pip install --upgrade pip "scikit-learn>=1.3" pytest twine
           python scripts/validate_release_artifacts.py dist --version "${RELEASE_VERSION}"
           python -m twine check --strict dist/*
+
+      - name: Validate portable runtimes from the source distribution
+        env:
+          RELEASE_VERSION: ${{ needs.release_context.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir sdist-source
+          tar -xzf "dist/ctboost-${RELEASE_VERSION}.tar.gz" -C sdist-source
+          source_root="sdist-source/ctboost-${RELEASE_VERSION}"
+
+          for fixture in "$source_root"/tests/export_conformance/*.json; do
+            cmp "$fixture" \
+              "$source_root/bindings/R/ctboost/inst/extdata/export_conformance/$(basename "$fixture")"
+          done
+
+          (
+            cd "$source_root/bindings/jvm"
+            mvn --batch-mode --no-transfer-progress test
+          )
+
+          Rscript -e \
+            'install.packages(c("jsonlite", "testthat"), repos="https://cloud.r-project.org")'
+          (
+            cd "$source_root"
+            R CMD build bindings/R/ctboost
+            package_tarball="$(realpath ctboost_${RELEASE_VERSION}.tar.gz)"
+            check_directory="$(mktemp -d)"
+            cd "$check_directory"
+            R CMD check --no-manual --no-build-vignettes "$package_tarball"
+          )
 
       - name: Rebuild and smoke-test the source distribution
         env:
@@ -449,6 +543,9 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Checkout release notes
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
       - name: Download validated release artifacts
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         with:
@@ -459,6 +556,7 @@ jobs:
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           tag_name: ${{ github.ref_name }}
+          body_path: docs/release-0.1.57.md
           files: |
             dist/*.whl
             dist/*.tar.gz

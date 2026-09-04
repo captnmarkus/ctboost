@@ -30,9 +30,9 @@ class PythonObjective final : public ctboost::ObjectiveFunction {
         static_cast<py::ssize_t>(predictions.size() / labels.size());
 
     py::array_t<float> prediction_array = prediction_dimension == 1
-                                              ? py::array_t<float>({row_count})
+                                              ? py::array_t<float>(row_count)
                                               : py::array_t<float>({row_count, prediction_dimension});
-    py::array_t<float> label_array({row_count});
+    py::array_t<float> label_array(row_count);
     std::memcpy(prediction_array.mutable_data(),
                 predictions.data(),
                 predictions.size() * sizeof(float));
@@ -162,6 +162,9 @@ void BindGradientBooster(py::module_& m) {
                     bool,
                     std::vector<double>,
                     int,
+                    std::string,
+                    std::size_t,
+                    std::string,
                     std::string>(),
            py::arg("objective") = "RMSE",
            py::arg("iterations") = 100,
@@ -214,6 +217,9 @@ void BindGradientBooster(py::module_& m) {
            py::arg("boost_from_average") = true,
            py::arg("base_score") = std::vector<double>{},
            py::arg("leaf_estimation_iterations") = 1,
+           py::arg("feature_test") = "quadratic",
+           py::arg("feature_test_bins") = 8,
+           py::arg("feature_test_adjustment") = "none",
            py::arg("multi_strategy") = "one_output_per_tree")
       .def("fit",
            [](ctboost::GradientBooster& booster,

@@ -63,6 +63,9 @@ py::dict BoosterToStateDict(const ctboost::GradientBooster& booster) {
   state["gamma"] = booster.gamma();
   state["max_leaf_weight"] = booster.max_leaf_weight();
   state["leaf_estimation_iterations"] = booster.leaf_estimation_iterations();
+  state["feature_test"] = booster.feature_test();
+  state["feature_test_bins"] = booster.feature_test_bins();
+  state["feature_test_adjustment"] = booster.feature_test_adjustment();
   state["num_classes"] = booster.num_classes();
   state["max_bins"] = booster.max_bins();
   state["nan_mode"] = booster.nan_mode_name();
@@ -252,6 +255,16 @@ ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
                                    state.contains("leaf_estimation_iterations")
                                        ? py::cast<int>(state["leaf_estimation_iterations"])
                                        : 1,
+                                   state.contains("feature_test")
+                                       ? py::cast<std::string>(state["feature_test"])
+                                       : std::string("quadratic"),
+                                   state.contains("feature_test_bins")
+                                       ? py::cast<std::size_t>(state["feature_test_bins"])
+                                       : 8U,
+                                   state.contains("feature_test_adjustment")
+                                       ? py::cast<std::string>(
+                                             state["feature_test_adjustment"])
+                                       : std::string("none"),
                                    state.contains("multi_strategy")
                                        ? py::cast<std::string>(state["multi_strategy"])
                                        : std::string("one_output_per_tree"));

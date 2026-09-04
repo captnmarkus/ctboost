@@ -17,6 +17,19 @@ namespace py = pybind11;
 
 namespace ctboost {
 
+namespace {
+
+float CheckedCtrFloat(double value) {
+  if (!std::isfinite(value) ||
+      value < -static_cast<double>(std::numeric_limits<float>::max()) ||
+      value > static_cast<double>(std::numeric_limits<float>::max())) {
+    throw std::invalid_argument("computed CTR value exceeds the finite float range");
+  }
+  return static_cast<float>(value);
+}
+
+}  // namespace
+
 py::tuple NativeFeaturePipeline::transform_array(py::array raw_matrix,
                                                  py::object feature_names) const {
   return TransformInternal(std::move(raw_matrix), std::move(feature_names), false);
@@ -41,8 +54,18 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
 
   const std::size_t row_count = matrix.rows;
   const std::size_t column_count = output_feature_names_.size();
-  float* data = new float[std::max<std::size_t>(row_count * column_count, 1U)];
-  std::fill(data, data + (row_count * column_count), 0.0F);
+  // The token cache is only an optimization within one transform request.
+  // Do not retain attacker-controlled token strings across requests.
+  text_hash_cache_.clear();
+  if (row_count > static_cast<std::size_t>(std::numeric_limits<py::ssize_t>::max()) ||
+      column_count > static_cast<std::size_t>(std::numeric_limits<py::ssize_t>::max()) ||
+      (row_count != 0U &&
+       column_count > std::numeric_limits<std::size_t>::max() / row_count)) {
+    throw std::invalid_argument("feature-pipeline output dimensions are too large");
+  }
+  const std::size_t value_count = row_count * column_count;
+  float* data = new float[std::max<std::size_t>(value_count, 1U)];
+  std::fill(data, data + value_count, 0.0F);
   py::capsule owner(data, [](void* ptr) { delete[] static_cast<float*>(ptr); });
   py::array_t<float> transformed(
       {static_cast<py::ssize_t>(row_count), static_cast<py::ssize_t>(column_count)},
@@ -69,10 +92,15 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
     const auto one_hot_it = one_hot_by_index.find(feature_index);
     if (one_hot_it != one_hot_by_index.end()) {
       const auto& category_keys = one_hot_it->second->category_keys;
-      const std::string other_key = one_hot_it->second->has_other_bucket != 0U ? detail::kOtherKey : "";
+      const std::string other_key =
+          one_hot_it->second->has_other_bucket != 0U
+              ? detail::OtherKey(categorical_key_encoding_version_)
+              : "";
       for (std::size_t row = 0; row < row_count; ++row) {
         const std::string raw_key =
-            detail::NormalizeKey(detail::MatrixValue(matrix, row, static_cast<std::size_t>(feature_index)));
+            detail::NormalizeKey(
+                detail::MatrixValue(matrix, row, static_cast<std::size_t>(feature_index)),
+                categorical_key_encoding_version_);
         std::string bucket_key = raw_key;
         if (one_hot_it->second->has_other_bucket != 0U &&
             std::find(category_keys.begin(), category_keys.end(), bucket_key) == category_keys.end()) {
@@ -99,7 +127,8 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
       const auto& mapping = categorical_it->second->mapping;
       for (std::size_t row = 0; row < row_count; ++row) {
         const std::string key = detail::NormalizeKey(
-            detail::MatrixValue(matrix, row, static_cast<std::size_t>(feature_index)));
+            detail::MatrixValue(matrix, row, static_cast<std::size_t>(feature_index)),
+            categorical_key_encoding_version_);
         const auto code_it = mapping.find(key);
         write_column_value(
             row,
@@ -118,7 +147,8 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
     const auto& state = combination_states_[combination_index];
     const auto& source_indices = combination_source_indices_[combination_index];
     for (std::size_t row = 0; row < row_count; ++row) {
-      const std::string key = detail::JoinNormalizedKey(matrix, row, source_indices);
+      const std::string key = detail::JoinNormalizedKey(
+          matrix, row, source_indices, categorical_key_encoding_version_);
       const auto code_it = state.mapping.find(key);
       write_column_value(
           row,
@@ -141,7 +171,8 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
     for (const auto& state : ctr_states_) {
       for (std::size_t output_index = 0; output_index < state.output_names.size(); ++output_index) {
         for (std::size_t row = 0; row < row_count; ++row) {
-          const std::string key = detail::JoinNormalizedKey(matrix, row, state.source_indices);
+          const std::string key = detail::JoinNormalizedKey(
+              matrix, row, state.source_indices, categorical_key_encoding_version_);
           const auto count_it = state.total_counts.find(key);
           const float count =
               count_it == state.total_counts.end() ? 0.0F : static_cast<float>(count_it->second);
@@ -150,17 +181,23 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
             const auto sums_it = state.total_sums.find(key);
             const float summed =
                 sums_it == state.total_sums.end() ? 0.0F : sums_it->second[output_index];
-            const float denominator = count + static_cast<float>(ctr_prior_strength_);
-            const float numerator =
-                summed + static_cast<float>(ctr_prior_strength_) * state.prior_values[output_index];
-            value = numerator / std::max(denominator, 1.0F);
+            const double denominator =
+                static_cast<double>(count) + ctr_prior_strength_;
+            const double numerator = static_cast<double>(summed) +
+                                     ctr_prior_strength_ * static_cast<double>(
+                                         state.prior_values[output_index]);
+            value = CheckedCtrFloat(
+                numerator / std::max(denominator, 1.0));
           } else {
             const float total_rows = static_cast<float>(std::max<std::size_t>(state.total_rows, 1U));
             const float global_frequency = count / total_rows;
-            const float denominator = total_rows + static_cast<float>(ctr_prior_strength_);
-            const float numerator =
-                count + static_cast<float>(ctr_prior_strength_) * global_frequency;
-            value = numerator / std::max(denominator, 1.0F);
+            const double denominator =
+                static_cast<double>(total_rows) + ctr_prior_strength_;
+            const double numerator = static_cast<double>(count) +
+                                     ctr_prior_strength_ * static_cast<double>(
+                                         global_frequency);
+            value = CheckedCtrFloat(
+                numerator / std::max(denominator, 1.0));
           }
           write_column_value(row, column_index, value);
         }
@@ -194,17 +231,24 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
               state.vocabulary_indices.find(token) == state.vocabulary_indices.end()) {
             continue;
           }
-          auto cache_it = text_hash_cache_.find(token);
+          const auto cache_it = text_hash_cache_.find(token);
+          std::uint64_t token_hash = 0U;
           if (cache_it == text_hash_cache_.end()) {
             const py::bytes digest =
                 detail::HashlibModule()
                     .attr("blake2b")(py::bytes(token), py::arg("digest_size") = 8)
                     .attr("digest")()
                     .cast<py::bytes>();
-            cache_it = text_hash_cache_.emplace(token, detail::BytesToLittleEndianU64(digest)).first;
+            token_hash = detail::BytesToLittleEndianU64(digest);
+            constexpr std::size_t kMaximumCachedTextTokens = 65536U;
+            if (text_hash_cache_.size() < kMaximumCachedTextTokens) {
+              text_hash_cache_.emplace(token, token_hash);
+            }
+          } else {
+            token_hash = cache_it->second;
           }
           bucket = static_cast<int>(
-              cache_it->second % static_cast<std::uint64_t>(text_hash_dim_));
+              token_hash % static_cast<std::uint64_t>(text_hash_dim_));
         }
         float& value = data[(text_column_start + static_cast<std::size_t>(bucket)) * row_count + row];
         if (text_feature_calcer_ == "binary") {
@@ -285,6 +329,11 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
       }
     }
     column_index += state.stats.size() + state.target_projection_weights.size();
+  }
+
+  if (column_index != column_count) {
+    throw std::runtime_error(
+        "feature-pipeline transform output layout failed its validated contract");
   }
 
   return py::make_tuple(std::move(transformed),

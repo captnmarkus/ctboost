@@ -22,7 +22,7 @@ MODEL = {payload_literal}
 
 ARTIFACT_FORMAT = MODEL.get("format", "ctboost-json-predictor")
 ARTIFACT_FORMAT_VERSION = int(MODEL.get("format_version", 0))
-if ARTIFACT_FORMAT != "ctboost-json-predictor" or ARTIFACT_FORMAT_VERSION not in (0, 1, 2):
+if ARTIFACT_FORMAT != "ctboost-json-predictor" or ARTIFACT_FORMAT_VERSION not in (0, 1, 2, 3):
     raise ValueError("unsupported predictor format or version")
 CTBOOST_VERSION = MODEL["ctboost_version"]
 OBJECTIVE_NAME = MODEL["objective_name"]
@@ -33,8 +33,10 @@ MULTI_STRATEGY = MODEL.get("multi_strategy", "one_output_per_tree")
 VECTOR_LEAVES = MULTI_STRATEGY == "multi_output_tree"
 if MULTI_STRATEGY not in {{"one_output_per_tree", "multi_output_tree"}}:
     raise ValueError("unsupported predictor multi_strategy")
-if VECTOR_LEAVES and (ARTIFACT_FORMAT_VERSION != 2 or PREDICTION_DIMENSION <= 1):
-    raise ValueError("vector predictor requires format_version 2 and multiple outputs")
+if VECTOR_LEAVES and (ARTIFACT_FORMAT_VERSION != 3 or PREDICTION_DIMENSION <= 1):
+    raise ValueError("vector predictor requires format_version 3 and multiple outputs")
+if ARTIFACT_FORMAT_VERSION == 3 and not VECTOR_LEAVES:
+    raise ValueError("vector predictor format 3 requires multi_strategy='multi_output_tree'")
 BASE_SCORE = [float(value) for value in MODEL.get("base_score", [0.0] * PREDICTION_DIMENSION)]
 if len(BASE_SCORE) != PREDICTION_DIMENSION:
     raise ValueError("predictor base_score dimension mismatch")

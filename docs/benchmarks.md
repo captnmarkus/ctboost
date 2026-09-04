@@ -2,6 +2,14 @@
 
 ## Current public-evidence status
 
+CTBoost has two separate evidence tracks. They must not be combined into one
+score:
+
+1. a small TabArena integration smoke test for the ordinary adapter; and
+2. a pre-registered external panel for the opt-in grouped split statistic.
+
+### TabArena adapter smoke
+
 CTBoost has a committed adapter for the official TabArena protocol. It delegates
 folds, task metrics, bagging, tuning, ensembling, timing, and memory measurement to
 TabArena rather than recreating them locally.
@@ -10,7 +18,7 @@ The current completed result is a **protocol smoke test**, not a full leaderboar
 
 | Scope | Result |
 |---|---:|
-| TabArena-v0.1 lite, three datasets, default configuration | 1058.7 provisional Elo |
+| TabArena-v0.1 lite, three datasets, 0.1.55 default configuration | 1054.0 provisional Elo |
 | Successful CTBoost outer splits | 3 / 3 |
 | Imputed CTBoost splits | 0 |
 | CPU allocation | 8 |
@@ -22,23 +30,47 @@ The current completed result is a **protocol smoke test**, not a full leaderboar
     dataset produce extremely wide uncertainty. CTBoost does not yet have an official
     full TabArena Elo.
 
-### Smoke-task metrics
+#### Smoke-task metrics
 
 | Dataset | Task | Metric | Test error | Train time |
 |---|---|---|---:|---:|
-| anneal | multiclass | log loss | 0.041871 | 150.18 s |
-| blood-transfusion-service-center | binary | ROC-AUC error | 0.314912 | 2.35 s |
-| QSAR_fish_toxicity | regression | RMSE | 0.961281 | 3.94 s |
+| anneal | multiclass | log loss | 0.041921 | 151.76 s |
+| blood-transfusion-service-center | binary | ROC-AUC error | 0.315614 | 1.88 s |
+| QSAR_fish_toxicity | regression | RMSE | 0.968983 | 2.97 s |
 
 Provenance:
 
-- CTBoost `fd187da60ec1844ef8d83c95b2d2ac6ccd839cd3`, clean tree;
-- TabArena `50f8ab1bbc6e7f7e5dd9b19d8b643ac284ae9b3c`, clean tree;
-- CTBoost 0.1.53, Python 3.12.11, CPU build, Windows AMD64.
+- CTBoost 0.1.55 public installed distribution, independently matched to release
+  commit `026ccb5b8df50bdd8375f69729820cb8158e5a14`, install fingerprint
+  `aa7d1e972aca648333a3e14c39f7e30c4906c8a04632223b9d728da23edfdd66`;
+- Python 3.12.11, Windows AMD64, eight CPU threads and no GPU used;
+- TabArena package files independently matched commit
+  `50f8ab1bbc6e7f7e5dd9b19d8b643ac284ae9b3c`; the run itself used installed
+  distributions rather than live Git worktrees.
 
-The sanitized [machine-readable smoke record](https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/smoke_fd187da.json)
+The sanitized [0.1.55 machine-readable smoke record](https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/smoke_0155_public_wheel.json)
 contains the exact per-split metrics, timing, memory, package versions, and commit
-identities without machine-local artifact paths.
+identity limitations without machine-local artifact paths. The older 0.1.53
+[`smoke_fd187da.json`](https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/smoke_fd187da.json)
+is retained as historical evidence, not as the current score.
+
+### Grouped split-statistic qualification
+
+The final-source 0.1.55 grouped-statistic panel completed 294/294 isolated
+fits and 42/42 exact implicit-control checks. It recorded nine wins, no ties,
+and three losses across the twelve decision datasets, with an observed 5.63%
+median primary-loss improvement. Its task-bootstrap 95% interval was -1.23%
+to +13.64%, so the point estimate is not a claim of a uniformly positive
+population effect.
+
+The frozen promotion rule was conjunctive. Its median paired fit-time ratio
+was 1.1708, above the pre-registered 1.15 ceiling, so grouped-8 did not advance.
+The conditional grouped TabArena scout was therefore not applicable and was
+not run. There is no grouped-8 TabArena Elo to report, and the quadratic test
+remains the production default.
+
+See the [research ledger](split-statistics-research.md) and the
+[sanitized machine-readable panel evidence](https://github.com/captnmarkus/ctboost/blob/master/benchmarks/split_research/results/grouped_external_panel_v2_fb65b685.json).
 
 ## Reproduce the lite run
 

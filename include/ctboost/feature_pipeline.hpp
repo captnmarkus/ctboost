@@ -4,6 +4,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include <pybind11/numpy.h>
@@ -117,7 +118,9 @@ class NativeFeaturePipeline {
                                 const std::vector<float>& label_values,
                                 const std::vector<int>& text_indices,
                                 const std::vector<int>& embedding_indices);
+  std::string AllocateOutputFeatureName(const std::string& proposed_name);
   void LoadState(const pybind11::dict& state);
+  void ValidateFittedState() const;
 
   pybind11::object cat_features_;
   bool ordered_ctr_{false};
@@ -144,10 +147,16 @@ class NativeFeaturePipeline {
   std::string embedding_target_mode_{"auto"};
   double ctr_prior_strength_{1.0};
   int random_seed_{0};
+  // Version 1 is the historical sentinel/delimiter representation used by
+  // serialized pipelines created before feature-pipeline format 3.  New
+  // pipelines use version 2, while loaded legacy pipelines retain version 1
+  // so their fitted mappings continue to be interpreted byte-for-byte.
+  int categorical_key_encoding_version_{2};
   std::optional<std::vector<std::string>> feature_names_in_;
   int n_features_in_{-1};
   std::vector<int> cat_feature_indices_;
   std::vector<std::string> output_feature_names_;
+  std::unordered_set<std::string> allocated_output_feature_names_;
   std::vector<int> numeric_indices_;
   std::vector<OneHotEncoderState> one_hot_states_;
   std::vector<CategoricalEncoderState> categorical_states_;

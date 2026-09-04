@@ -10,16 +10,25 @@
 ## Explicit limitations
 
 - Multi-output and multilabel wrappers fit independent boosters rather than vector-leaf trees.
+- Compact vector leaves are opt-in for CPU multiclass classification with more
+  than two classes; GPU and distributed vector training are unsupported.
 - AFT uses a Python log-normal objective, numeric/prepared input, and no distributed fit.
 - Continuing a callable-objective model requires supplying the callable again.
 - Exact SHAP is empirical interventional and currently CPU-oriented.
 - Object importance is approximate shared-leaf influence.
-- Spark training collects to the driver.
-- Arrow/Polars/cuDF/CuPy/DLPack inputs currently materialize into CTBoost-owned host arrays.
+- Spark barrier training is an initial native-shard path; `mode="collect"` remains the
+  explicit driver-memory fallback. Distributed evaluation sets are not supported.
+- Ordinary Arrow/Polars/cuDF/CuPy/DLPack inputs materialize into CTBoost-owned host
+  arrays. The explicit quantized-CUDA pool API has a narrower device-resident contract.
 - Streaming Pools are numeric-only.
 - Generated Python/C++ and ONNX exports require prepared numeric features for models with
   fitted categorical, text, or embedding pipelines.
-- No CoreML, PMML, Java, or R binding is currently shipped.
+- The repository's R and JVM packages are inference-only and prepared-feature-only;
+  they are not training bindings and are not yet published to CRAN/Maven Central.
+  They accept scalar JSON predictor versions 1 and 2 and reject vector version 3.
+- No CoreML or PMML export is currently shipped.
+- Multi-node GPU still uses the trusted-network TCP reference coordinator rather than
+  mature NCCL/GPU-direct collectives, elasticity, or fault recovery.
 
 ## Security boundary for distributed training
 

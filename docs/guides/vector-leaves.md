@@ -58,10 +58,18 @@ and shared prediction traversal; timing gains depend on the workload.
 for R vector rounds, versus R × K columns for the default multiclass layout.
 SHAP and contribution output shapes retain the class dimension.
 
-Vector model documents and compact predictor artifacts use schema version 2;
-scalar artifacts remain version 1, and this release still loads old scalar
-models. Older releases cannot read vector artifacts. A warm start or snapshot
-must retain the saved strategy; omitting the low-level parameter inherits it.
+Vector model documents and compact JSON predictors use format version 3;
+vector inference manifests use version 2. Scalar artifacts retain their
+existing versions, and this release still reads scalar model documents and
+predictors from earlier releases. Older readers cannot read vector artifacts.
+A warm start or snapshot must retain the saved strategy; omitting the low-level
+parameter inherits it.
+
+The Python JSON runtime can restore the fitted categorical, text, or embedding
+pipeline for vector models. Generated standalone Python/C++ and ONNX scorers
+require `prepared_features=True` for these models and expect already
+transformed numeric input. The prepared-feature R and JVM source runtimes
+support scalar predictor versions 1 and 2 and reject vector predictor version 3.
 
 GPU and distributed vector training are rejected explicitly. Regression with
 multiple targets and multilabel classification continue to use the independent

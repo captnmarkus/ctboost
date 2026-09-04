@@ -7,7 +7,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "ctboost"
-version = "0.1.54"
+version = "0.1.57"
 description = "A GPU-accelerated gradient boosting library using Conditional Inference Trees."
 readme = "README.md"
 requires-python = ">=3.8"
@@ -87,6 +87,7 @@ onnx = [
   "onnx>=1.16",
 ]
 dev = [
+  "jsonschema>=4.18",
   "pandas",
   "pytest>=8.0",
   "scikit-learn>=1.3",
@@ -163,12 +164,29 @@ sdist.include = [
   "/demo/*.md",
   "/demo/*.py",
   "/benchmarks/*.py",
+  "/benchmarks/*.md",
   "/benchmarks/tabarena/*.md",
   "/benchmarks/tabarena/*.json",
   "/benchmarks/tabarena/*.py",
   "/benchmarks/split_research/*.md",
   "/benchmarks/split_research/*.py",
+  "/benchmarks/split_research/G8S1_SCOUT_MANIFEST.json",
+  "/benchmarks/split_research/g8s1_harness/g8s1_scout/*.py",
+  "/benchmarks/split_research/g8s1_harness/g8s1_scout/p200.json",
   "/benchmarks/split_research/results/*.json",
+  "/bindings/R/ctboost/DESCRIPTION",
+  "/bindings/R/ctboost/.Rbuildignore",
+  "/bindings/R/ctboost/NAMESPACE",
+  "/bindings/R/ctboost/README.md",
+  "/bindings/R/ctboost/R/*.R",
+  "/bindings/R/ctboost/inst/extdata/export_conformance/*.json",
+  "/bindings/R/ctboost/man/*.Rd",
+  "/bindings/R/ctboost/tests/*.R",
+  "/bindings/R/ctboost/tests/testthat/*.R",
+  "/bindings/jvm/README.md",
+  "/bindings/jvm/pom.xml",
+  "/bindings/jvm/src/main/java/**/*.java",
+  "/bindings/jvm/src/test/java/**/*.java",
   "/docs/*.md",
   "/docs/guides/*.md",
   "/docs/reference/*.md",
@@ -182,8 +200,13 @@ sdist.include = [
   "/src/bindings/*.hpp",
   "/src/core/*.cpp",
   "/src/core/*.hpp",
+  "/spec/json-predictor-prepared.md",
+  "/spec/json-predictor-prepared.schema.json",
+  "/spec/json-predictor-vector.md",
   "/tests/*.py",
   "/tests/cpp_export_smoke/CMakeLists.txt",
+  "/tests/export_conformance/*.json",
+  "/tests/export_conformance/*.md",
 ]
 # Build source distributions from an explicit source allowlist.  The backend
 # otherwise walks every non-ignored workspace file, which can accidentally
