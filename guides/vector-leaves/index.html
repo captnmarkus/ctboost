@@ -10,28 +10,28 @@
       
       
       
-        <link rel="canonical" href="https://captnmarkus.github.io/ctboost/gpu/">
+        <link rel="canonical" href="https://captnmarkus.github.io/ctboost/guides/vector-leaves/">
       
       
-        <link rel="prev" href="../split-statistics-research/">
+        <link rel="prev" href="../training/">
       
       
-        <link rel="next" href="../release-0.1.57/">
+        <link rel="next" href="../data-input/">
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.20">
     
     
       
-        <title>GPU installation - CTBoost</title>
+        <title>Multiclass vector leaves - CTBoost</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.e53b48f4.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.e53b48f4.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
       
       
 
@@ -50,9 +50,9 @@
       
     
     
-      <link rel="stylesheet" href="../stylesheets/extra.css">
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#gpu-installation" class="md-skip">
+        <a href="#compact-multiclass-vector-leaves" class="md-skip">
           Skip to content
         </a>
       
@@ -94,7 +94,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="CTBoost" class="md-header__button md-logo" aria-label="CTBoost" data-md-component="logo">
+    <a href="../.." title="CTBoost" class="md-header__button md-logo" aria-label="CTBoost" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              GPU installation
+              Multiclass vector leaves
             
           </span>
         </div>
@@ -232,7 +232,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="CTBoost" class="md-nav__button md-logo" aria-label="CTBoost" data-md-component="logo">
+    <a href="../.." title="CTBoost" class="md-nav__button md-logo" aria-label="CTBoost" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -262,7 +262,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -284,7 +284,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/" class="md-nav__link">
+      <a href="../../getting-started/" class="md-nav__link">
         
   
   
@@ -306,7 +306,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../why-ctboost/" class="md-nav__link">
+      <a href="../../why-ctboost/" class="md-nav__link">
         
   
   
@@ -328,7 +328,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../benchmarks/" class="md-nav__link">
+      <a href="../../benchmarks/" class="md-nav__link">
         
   
   
@@ -350,7 +350,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../split-statistics-research/" class="md-nav__link">
+      <a href="../../split-statistics-research/" class="md-nav__link">
         
   
   
@@ -369,19 +369,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../gpu/" class="md-nav__link">
         
   
   
@@ -392,7 +383,6 @@
   
 
       </a>
-      
     </li>
   
 
@@ -404,7 +394,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../release-0.1.57/" class="md-nav__link">
+      <a href="../../release-0.1.57/" class="md-nav__link">
         
   
   
@@ -426,7 +416,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../release-0.1.56/" class="md-nav__link">
+      <a href="../../release-0.1.56/" class="md-nav__link">
         
   
   
@@ -445,8 +435,10 @@
       
   
   
+    
   
   
+  
     
     
       
@@ -477,11 +469,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
         
           
           <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
@@ -497,7 +489,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             Guides
@@ -511,7 +503,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/training/" class="md-nav__link">
+      <a href="../training/" class="md-nav__link">
         
   
   
@@ -531,10 +523,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../guides/vector-leaves/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Multiclass vector leaves
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -545,6 +559,53 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#preserving-conditional-inference" class="md-nav__link">
+    <span class="md-ellipsis">
+      Preserving conditional inference
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supported-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Supported workflows
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reproducible-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reproducible comparison
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -557,7 +618,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/data-input/" class="md-nav__link">
+      <a href="../data-input/" class="md-nav__link">
         
   
   
@@ -580,7 +641,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/categorical-text/" class="md-nav__link">
+      <a href="../categorical-text/" class="md-nav__link">
         
   
   
@@ -603,7 +664,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/split-statistics/" class="md-nav__link">
+      <a href="../split-statistics/" class="md-nav__link">
         
   
   
@@ -626,7 +687,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/explainability/" class="md-nav__link">
+      <a href="../explainability/" class="md-nav__link">
         
   
   
@@ -649,7 +710,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/distributed/" class="md-nav__link">
+      <a href="../distributed/" class="md-nav__link">
         
   
   
@@ -672,7 +733,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/deployment/" class="md-nav__link">
+      <a href="../deployment/" class="md-nav__link">
         
   
   
@@ -695,7 +756,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/portable-inference/" class="md-nav__link">
+      <a href="../portable-inference/" class="md-nav__link">
         
   
   
@@ -725,7 +786,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../development/" class="md-nav__link">
+      <a href="../../development/" class="md-nav__link">
         
   
   
@@ -796,7 +857,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/api/" class="md-nav__link">
+      <a href="../../reference/api/" class="md-nav__link">
         
   
   
@@ -819,7 +880,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/compatibility/" class="md-nav__link">
+      <a href="../../reference/compatibility/" class="md-nav__link">
         
   
   
@@ -862,6 +923,41 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#preserving-conditional-inference" class="md-nav__link">
+    <span class="md-ellipsis">
+      Preserving conditional inference
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#supported-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Supported workflows
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reproducible-comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reproducible comparison
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -879,40 +975,78 @@
   
 
 
-<h1 id="gpu-installation">GPU installation<a class="headerlink" href="#gpu-installation" title="Permanent link">&para;</a></h1>
-<p>CTBoost reports CUDA support at runtime:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">ctboost</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">ctboost</span><span class="o">.</span><span class="n">build_info</span><span class="p">())</span>
+<h1 id="compact-multiclass-vector-leaves">Compact multiclass vector leaves<a class="headerlink" href="#compact-multiclass-vector-leaves" title="Permanent link">&para;</a></h1>
+<p>Set <code>multi_strategy="multi_output_tree"</code> to store one conditional inference tree
+per boosting round, with one score per class in each leaf:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ctboost</span><span class="w"> </span><span class="kn">import</span> <span class="n">CTBoostClassifier</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">model</span> <span class="o">=</span> <span class="n">CTBoostClassifier</span><span class="p">(</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">iterations</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">max_depth</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">multi_strategy</span><span class="o">=</span><span class="s2">"multi_output_tree"</span><span class="p">,</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="p">)</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">eval_set</span><span class="o">=</span><span class="p">(</span><span class="n">X_valid</span><span class="p">,</span> <span class="n">y_valid</span><span class="p">),</span> <span class="n">early_stopping_rounds</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="n">probabilities</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>  <span class="c1"># (rows, classes)</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">leaves</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>                <span class="c1"># (rows, retained rounds)</span>
 </code></pre></div>
-<p>Train on CUDA by setting <code>task_type="GPU"</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ctboost</span><span class="w"> </span><span class="kn">import</span> <span class="n">CTBoostClassifier</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">model</span> <span class="o">=</span> <span class="n">CTBoostClassifier</span><span class="p">(</span><span class="n">task_type</span><span class="o">=</span><span class="s2">"GPU"</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<p>The low-level API accepts the same parameter with <code>objective="MultiClass"</code>
+and <code>num_classes=K</code>. <code>Booster.predict</code> continues to return raw class scores.
+<code>Booster.multi_strategy</code> reports the fitted layout.</p>
+<h2 id="preserving-conditional-inference">Preserving conditional inference<a class="headerlink" href="#preserving-conditional-inference" title="Permanent link">&para;</a></h2>
+<p>CTBoost already builds a shared multiclass partition. At each round it selects
+the class gradient with the greatest weighted variance as the structure target,
+runs the existing conditional inference feature tests and split selection,
+then estimates a Newton update for each class in each leaf.</p>
+<p>The default <code>one_output_per_tree</code> stores that partition in K scalar trees.
+<code>multi_output_tree</code> stores it once and traverses it once per raw-score prediction row.
+Both layouts use the same structure target, conditional feature tests,
+significance threshold, feature sampling, categorical/missing routing and leaf
+estimates. With the same configuration and seed, their predictions and split
+topologies match. The default remains unchanged.</p>
+<p>This feature is inspired by the <a href="https://xgboost.ai/2026/08/25/introducing-the-xgboost-vector-leaf-model">XGBoost vector-leaf model</a>.
+CTBoost retains its existing conditional inference algorithm. It does not add
+a joint multivariate split statistic or claim the accuracy gains from XGBoost's
+different training algorithm. The benefits here are reduced topology storage
+and shared prediction traversal; timing gains depend on the workload.</p>
+<h2 id="supported-workflows">Supported workflows<a class="headerlink" href="#supported-workflows" title="Permanent link">&para;</a></h2>
+<ul>
+<li>CPU multiclass objectives with more than two classes, including compatible
+  callable derivatives; class/row weights and baselines work as before.</li>
+<li>Native categorical and sparse inputs, missing values, external-memory pools,
+  and the existing categorical/text/embedding feature pipeline.</li>
+<li>Sampling, DART, feature and interaction controls, learning-rate schedules,
+  callbacks, early stopping, warm starts and snapshots.</li>
+<li>Raw/probability predictions, staged prediction, path contributions, exact
+  background-based TreeSHAP, leaf influence and diagnostic plots.</li>
+<li>JSON and pickle persistence, compact standalone Python/JSON predictors,
+  and C++/ONNX exports that expand to scalar trees at the export boundary.</li>
+</ul>
+<p><code>apply</code>/<code>predict_leaf_index</code> returns one column per physical tree: R columns
+for R vector rounds, versus R × K columns for the default multiclass layout.
+SHAP and contribution output shapes retain the class dimension.</p>
+<p>Vector model documents and compact JSON predictors use format version 3;
+vector inference manifests use version 2. Scalar artifacts retain their
+existing versions, and this release still reads scalar model documents and
+predictors from earlier releases. Older readers cannot read vector artifacts.
+A warm start or snapshot must retain the saved strategy; omitting the low-level
+parameter inherits it.</p>
+<p>The Python JSON runtime can restore the fitted categorical, text, or embedding
+pipeline for vector models. Generated standalone Python/C++ and ONNX scorers
+require <code>prepared_features=True</code> for these models and expect already
+transformed numeric input. The prepared-feature R and JVM source runtimes
+support scalar predictor versions 1 and 2 and reject vector predictor version 3.</p>
+<p>GPU and distributed vector training are rejected explicitly. Regression with
+multiple targets and multilabel classification continue to use the independent
+estimator wrappers. <code>leaf_estimation_iterations &gt; 1</code> remains unsupported for
+multiclass, and existing multiclass constraint restrictions still apply.</p>
+<h2 id="reproducible-comparison">Reproducible comparison<a class="headerlink" href="#reproducible-comparison" title="Permanent link">&para;</a></h2>
+<p>From a source checkout, run:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python<span class="w"> </span>-m<span class="w"> </span>benchmarks.vector_leaf<span class="w"> </span>--rows<span class="w"> </span><span class="m">3000</span><span class="w"> </span>--classes<span class="w"> </span><span class="m">8</span><span class="w"> </span>--rounds<span class="w"> </span><span class="m">24</span>
 </code></pre></div>
-<p>Starting with CTBoost 0.1.54, releases use unified Linux x86-64 and Windows
-AMD64 wheels for CPython 3.10 through 3.14: the ordinary command below installs
-one wheel that can train on CPU and use CUDA when an NVIDIA device is available.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>ctboost
-</code></pre></div>
-<div class="admonition note">
-<p class="admonition-title">Released artifacts are authoritative</p>
-<p>Check the <a href="https://github.com/captnmarkus/ctboost/releases">GitHub release notes</a>
-for the authoritative Python, operating-system, CUDA-runtime, architecture,
-and minimum-driver matrix. macOS and ARM wheels are CPU-only.
-A CUDA-enabled build still works for CPU training on a machine without an NVIDIA GPU.
-The bundled CUDA runtime remains subject to the NVIDIA CUDA Toolkit license
-included in each CUDA-enabled wheel.</p>
-</div>
-<p>The 0.1.54 through 0.1.56 unified wheels bundle the CUDA 12.8 runtime. GPU use requires
-an NVIDIA driver compatible with CUDA 12.x (at least 525.60.13 on Linux or
-528.33 on Windows) but does not require a local CUDA toolkit. Released CUDA
-wheels target compute capability 6.0 or newer, with native code through current
-architectures and forward-compatible PTX. Linux aarch64, macOS, and CPython
-3.8/3.9 artifacts are CPU-only.</p>
-<p>Older releases that published CUDA wheels only as GitHub assets retain the legacy
-<code>ctboost-install-gpu</code> command. It verifies the GitHub-provided SHA-256 digest before
-asking pip to replace the installed wheel.</p>
+<p>The benchmark asserts exact prediction equality, then reports held-out log loss,
+physical tree/split counts, serialized state size and local training/prediction
+timings. Compare on your own workload before choosing a layout.</p>
 
 
 
@@ -971,10 +1105,10 @@ asking pip to replace the installed wheel.</p>
     
     
       
-      <script id="__config" type="application/json">{"base": "..", "features": ["navigation.sections", "navigation.indexes", "navigation.top", "navigation.tracking", "content.code.copy", "search.highlight", "search.suggest", "toc.follow"], "search": "../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.sections", "navigation.indexes", "navigation.top", "navigation.tracking", "content.code.copy", "search.highlight", "search.suggest", "toc.follow"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
       
     
   </body>

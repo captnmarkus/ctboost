@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://captnmarkus.github.io/ctboost/guides/data-input/">
       
       
-        <link rel="prev" href="../training/">
+        <link rel="prev" href="../vector-leaves/">
       
       
         <link rel="next" href="../categorical-text/">
@@ -394,6 +394,28 @@
   
   
     <li class="md-nav__item">
+      <a href="../../release-0.1.57/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Release 0.1.57
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../release-0.1.56/" class="md-nav__link">
         
   
@@ -436,6 +458,8 @@
       
         
       
+        
+      
     
     
     
@@ -449,10 +473,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
         
           
-          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
             
   
   
@@ -465,8 +489,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_8">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             Guides
           </label>
@@ -485,6 +509,29 @@
   
   <span class="md-ellipsis">
     Training workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../vector-leaves/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Multiclass vector leaves
     
   </span>
   
@@ -789,10 +836,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
             
   
   
@@ -805,8 +852,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
             <span class="md-nav__icon md-icon"></span>
             Reference
           </label>
@@ -951,7 +998,7 @@
 <p><code>Pool</code> accepts NumPy and CPU DLPack arrays, pandas DataFrames, SciPy sparse
 matrices, PyArrow tables, Polars DataFrames, and cuDF DataFrames. Arrow and
 Polars support can be installed together with:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;ctboost[dataframes]&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"ctboost[dataframes]"</span>
 </code></pre></div>
 <p>Pass feature names and training metadata when constructing the pool. The same
 schema is then available to training, persistence, and deployment tooling.</p>
@@ -973,14 +1020,14 @@ already-quantized CUDA matrix off the host:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">cupy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">cp</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ctboost</span><span class="w"> </span><span class="kn">import</span> <span class="n">Pool</span><span class="p">,</span> <span class="n">train</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># `schema` comes from a compatible model&#39;s get_quantization_schema().</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># `schema` comes from a compatible model's get_quantization_schema().</span>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="c1"># `host_bins` was quantized according to that exact schema.</span>
 <a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="n">device_bins</span> <span class="o">=</span> <span class="n">cp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">host_bins</span><span class="p">)</span>  <span class="c1"># uint8, or uint16 when a feature has &gt;256 bins</span>
 <a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">pool</span> <span class="o">=</span> <span class="n">Pool</span><span class="o">.</span><span class="n">from_cuda_quantized</span><span class="p">(</span><span class="n">device_bins</span><span class="p">,</span> <span class="n">schema</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="n">model</span> <span class="o">=</span> <span class="n">train</span><span class="p">(</span>
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>    <span class="n">pool</span><span class="p">,</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="p">{</span><span class="s2">&quot;objective&quot;</span><span class="p">:</span> <span class="s2">&quot;RMSE&quot;</span><span class="p">,</span> <span class="s2">&quot;task_type&quot;</span><span class="p">:</span> <span class="s2">&quot;GPU&quot;</span><span class="p">,</span> <span class="s2">&quot;devices&quot;</span><span class="p">:</span> <span class="s2">&quot;0&quot;</span><span class="p">},</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>    <span class="p">{</span><span class="s2">"objective"</span><span class="p">:</span> <span class="s2">"RMSE"</span><span class="p">,</span> <span class="s2">"task_type"</span><span class="p">:</span> <span class="s2">"GPU"</span><span class="p">,</span> <span class="s2">"devices"</span><span class="p">:</span> <span class="s2">"0"</span><span class="p">},</span>
 <a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="n">num_boost_round</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="p">)</span>
 </code></pre></div>
@@ -1006,8 +1053,8 @@ source batch in memory:</p>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>        <span class="k">yield</span> <span class="n">PoolBatch</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
 <a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="n">pool</span> <span class="o">=</span> <span class="n">pool_from_batches</span><span class="p">(</span><span class="n">batches</span><span class="p">(),</span> <span class="n">directory</span><span class="o">=</span><span class="s2">&quot;./ctboost-spill&quot;</span><span class="p">)</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="n">model</span> <span class="o">=</span> <span class="n">train</span><span class="p">(</span><span class="n">pool</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;iterations&quot;</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span> <span class="s2">&quot;depth&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">})</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="n">pool</span> <span class="o">=</span> <span class="n">pool_from_batches</span><span class="p">(</span><span class="n">batches</span><span class="p">(),</span> <span class="n">directory</span><span class="o">=</span><span class="s2">"./ctboost-spill"</span><span class="p">)</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="n">model</span> <span class="o">=</span> <span class="n">train</span><span class="p">(</span><span class="n">pool</span><span class="p">,</span> <span class="p">{</span><span class="s2">"iterations"</span><span class="p">:</span> <span class="mi">200</span><span class="p">,</span> <span class="s2">"depth"</span><span class="p">:</span> <span class="mi">7</span><span class="p">})</span>
 </code></pre></div>
 <p>Batch items may also be <code>(data, label)</code> tuples, mappings, existing pools, or
 feature matrices. The column count, feature names, categorical indices, and
@@ -1023,15 +1070,15 @@ equivalent convenience constructor.</p>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">pool</span> <span class="o">=</span> <span class="n">ctboost</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span>
 <a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">X</span><span class="p">,</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">y</span><span class="p">,</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">feature_names</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;score&quot;</span><span class="p">,</span> <span class="s2">&quot;ratio&quot;</span><span class="p">,</span> <span class="s2">&quot;city_code&quot;</span><span class="p">],</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">column_roles</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;numeric&quot;</span><span class="p">,</span> <span class="s2">&quot;numeric&quot;</span><span class="p">,</span> <span class="s2">&quot;categorical&quot;</span><span class="p">],</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="n">feature_metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;normalized score&quot;</span><span class="p">}},</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">feature_names</span><span class="o">=</span><span class="p">[</span><span class="s2">"score"</span><span class="p">,</span> <span class="s2">"ratio"</span><span class="p">,</span> <span class="s2">"city_code"</span><span class="p">],</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">column_roles</span><span class="o">=</span><span class="p">[</span><span class="s2">"numeric"</span><span class="p">,</span> <span class="s2">"numeric"</span><span class="p">,</span> <span class="s2">"categorical"</span><span class="p">],</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="n">feature_metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"score"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"description"</span><span class="p">:</span> <span class="s2">"normalized score"</span><span class="p">}},</span>
 <a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="n">categorical_schema</span><span class="o">=</span><span class="p">{</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        <span class="s2">&quot;city_code&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;categories&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;berlin&quot;</span><span class="p">,</span> <span class="s2">&quot;paris&quot;</span><span class="p">,</span> <span class="s2">&quot;rome&quot;</span><span class="p">]}</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        <span class="s2">"city_code"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"categories"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"berlin"</span><span class="p">,</span> <span class="s2">"paris"</span><span class="p">,</span> <span class="s2">"rome"</span><span class="p">]}</span>
 <a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="p">},</span>
 <a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="p">)</span>
 <a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="n">booster</span> <span class="o">=</span> <span class="n">ctboost</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">pool</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;objective&quot;</span><span class="p">:</span> <span class="s2">&quot;RMSE&quot;</span><span class="p">},</span> <span class="n">num_boost_round</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="n">booster</span> <span class="o">=</span> <span class="n">ctboost</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">pool</span><span class="p">,</span> <span class="p">{</span><span class="s2">"objective"</span><span class="p">:</span> <span class="s2">"RMSE"</span><span class="p">},</span> <span class="n">num_boost_round</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
 <a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a><span class="nb">print</span><span class="p">(</span><span class="n">booster</span><span class="o">.</span><span class="n">data_schema</span><span class="p">)</span>
 </code></pre></div>
 <p>The scikit-learn estimators expose the persisted schema through

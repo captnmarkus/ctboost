@@ -517,6 +517,28 @@
   
   
     <li class="md-nav__item">
+      <a href="../release-0.1.57/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Release 0.1.57
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release-0.1.56/" class="md-nav__link">
         
   
@@ -557,6 +579,8 @@
       
         
       
+        
+      
     
     
     
@@ -570,10 +594,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
         
           
-          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
             
   
   
@@ -586,8 +610,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_8">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             Guides
           </label>
@@ -606,6 +630,29 @@
   
   <span class="md-ellipsis">
     Training workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/vector-leaves/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Multiclass vector leaves
     
   </span>
   
@@ -832,10 +879,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
             
   
   
@@ -848,8 +895,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
             <span class="md-nav__icon md-icon"></span>
             Reference
           </label>
@@ -1039,7 +1086,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>ctboost
 </code></pre></div>
 <p>The base runtime depends only on NumPy. Install optional integrations explicitly:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;ctboost[sklearn,plot,dataframes]&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"ctboost[sklearn,plot,dataframes]"</span>
 </code></pre></div>
 <p>See <a href="../gpu/">GPU installation</a> for the CUDA support matrix.</p>
 <h2 id="classification">Classification<a class="headerlink" href="#classification" title="Permanent link">&para;</a></h2>
@@ -1060,7 +1107,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ctboost</span><span class="w"> </span><span class="kn">import</span> <span class="n">CTBoostRegressor</span>
 <a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
 <a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">model</span> <span class="o">=</span> <span class="n">CTBoostRegressor</span><span class="p">(</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">loss_function</span><span class="o">=</span><span class="s2">&quot;RMSE&quot;</span><span class="p">,</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">loss_function</span><span class="o">=</span><span class="s2">"RMSE"</span><span class="p">,</span>
 <a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">iterations</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">learning_rate</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="p">)</span>
@@ -1084,7 +1131,7 @@ metadata, custom objectives, distributed roots, or direct booster state:</p>
 <a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">pool</span> <span class="o">=</span> <span class="n">ctboost</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 <a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="n">booster</span> <span class="o">=</span> <span class="n">ctboost</span><span class="o">.</span><span class="n">train</span><span class="p">(</span>
 <a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="n">pool</span><span class="p">,</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    <span class="p">{</span><span class="s2">&quot;objective&quot;</span><span class="p">:</span> <span class="s2">&quot;RMSE&quot;</span><span class="p">,</span> <span class="s2">&quot;learning_rate&quot;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="s2">&quot;max_depth&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>    <span class="p">{</span><span class="s2">"objective"</span><span class="p">:</span> <span class="s2">"RMSE"</span><span class="p">,</span> <span class="s2">"learning_rate"</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="s2">"max_depth"</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span>
 <a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="n">num_boost_round</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
 <a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="p">)</span>
 <a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a><span class="n">predictions</span> <span class="o">=</span> <span class="n">booster</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">pool</span><span class="p">)</span>
@@ -1118,9 +1165,9 @@ available.</p>
 equal-node-weight grouped independence test while retaining the original bins
 for the final cut search:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">model</span> <span class="o">=</span> <span class="n">CTBoostClassifier</span><span class="p">(</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="n">feature_test</span><span class="o">=</span><span class="s2">&quot;grouped&quot;</span><span class="p">,</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="n">feature_test</span><span class="o">=</span><span class="s2">"grouped"</span><span class="p">,</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">feature_test_bins</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">feature_test_adjustment</span><span class="o">=</span><span class="s2">&quot;bonferroni&quot;</span><span class="p">,</span>  <span class="c1"># optional; default is &quot;none&quot;</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">feature_test_adjustment</span><span class="o">=</span><span class="s2">"bonferroni"</span><span class="p">,</span>  <span class="c1"># optional; default is "none"</span>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="p">)</span>
 </code></pre></div>
 <p>The legacy <code>feature_test="quadratic"</code> path remains the default. Categorical
@@ -1131,7 +1178,7 @@ persistence, and current GPU limits.</p>
 <p>Keep categorical values as strings or pandas <code>category</code> columns and identify them
 by name or position:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">model</span> <span class="o">=</span> <span class="n">CTBoostClassifier</span><span class="p">(</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">cat_features</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;country&quot;</span><span class="p">,</span> <span class="s2">&quot;plan&quot;</span><span class="p">],</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">cat_features</span><span class="o">=</span><span class="p">[</span><span class="s2">"country"</span><span class="p">,</span> <span class="s2">"plan"</span><span class="p">],</span>
 <a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">ordered_ctr</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="p">)</span>
 <a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">frame</span><span class="p">,</span> <span class="n">target</span><span class="p">)</span>

@@ -392,6 +392,28 @@
   
   
     <li class="md-nav__item">
+      <a href="../../release-0.1.57/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Release 0.1.57
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../release-0.1.56/" class="md-nav__link">
         
   
@@ -432,6 +454,8 @@
       
         
       
+        
+      
     
     
     
@@ -445,10 +469,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
         
           
-          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="">
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
             
   
   
@@ -461,8 +485,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_8">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
             <span class="md-nav__icon md-icon"></span>
             Guides
           </label>
@@ -481,6 +505,29 @@
   
   <span class="md-ellipsis">
     Training workflows
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guides/vector-leaves/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Multiclass vector leaves
     
   </span>
   
@@ -709,10 +756,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" checked>
         
           
-          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
             
   
   
@@ -725,8 +772,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_10">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_11">
             <span class="md-nav__icon md-icon"></span>
             Reference
           </label>
@@ -937,6 +984,8 @@
 <h2 id="explicit-limitations">Explicit limitations<a class="headerlink" href="#explicit-limitations" title="Permanent link">&para;</a></h2>
 <ul>
 <li>Multi-output and multilabel wrappers fit independent boosters rather than vector-leaf trees.</li>
+<li>Compact vector leaves are opt-in for CPU multiclass classification with more
+  than two classes; GPU and distributed vector training are unsupported.</li>
 <li>AFT uses a Python log-normal objective, numeric/prepared input, and no distributed fit.</li>
 <li>Continuing a callable-objective model requires supplying the callable again.</li>
 <li>Exact SHAP is empirical interventional and currently CPU-oriented.</li>
@@ -949,7 +998,8 @@
 <li>Generated Python/C++ and ONNX exports require prepared numeric features for models with
   fitted categorical, text, or embedding pipelines.</li>
 <li>The repository's R and JVM packages are inference-only and prepared-feature-only;
-  they are not training bindings and are not yet published to CRAN/Maven Central.</li>
+  they are not training bindings and are not yet published to CRAN/Maven Central.
+  They accept scalar JSON predictor versions 1 and 2 and reject vector version 3.</li>
 <li>No CoreML or PMML export is currently shipped.</li>
 <li>Multi-node GPU still uses the trusted-network TCP reference coordinator rather than
   mature NCCL/GPU-direct collectives, elasticity, or fault recovery.</li>

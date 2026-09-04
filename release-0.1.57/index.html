@@ -10,13 +10,13 @@
       
       
       
-        <link rel="canonical" href="https://captnmarkus.github.io/ctboost/gpu/">
+        <link rel="canonical" href="https://captnmarkus.github.io/ctboost/release-0.1.57/">
       
       
-        <link rel="prev" href="../split-statistics-research/">
+        <link rel="prev" href="../gpu/">
       
       
-        <link rel="next" href="../release-0.1.57/">
+        <link rel="next" href="../release-0.1.56/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -24,7 +24,7 @@
     
     
       
-        <title>GPU installation - CTBoost</title>
+        <title>Release 0.1.57 - CTBoost</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#gpu-installation" class="md-skip">
+        <a href="#ctboost-0157" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              GPU installation
+              Release 0.1.57
             
           </span>
         </div>
@@ -369,6 +369,28 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../gpu/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    GPU installation
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -381,30 +403,20 @@
         
       
       
-      <a href="./" class="md-nav__link md-nav__link--active">
-        
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
   
   
   <span class="md-ellipsis">
-    GPU installation
+    Release 0.1.57
     
   </span>
   
 
-      </a>
+          <span class="md-nav__icon md-icon"></span>
+        </label>
       
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../release-0.1.57/" class="md-nav__link">
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -415,6 +427,53 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#compact-multiclass-vector-leaves" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compact multiclass vector leaves
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#correctness-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Correctness fixes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compatibility-and-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compatibility and boundaries
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -862,6 +921,41 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#compact-multiclass-vector-leaves" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compact multiclass vector leaves
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#correctness-fixes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Correctness fixes
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#compatibility-and-boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compatibility and boundaries
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -879,40 +973,70 @@
   
 
 
-<h1 id="gpu-installation">GPU installation<a class="headerlink" href="#gpu-installation" title="Permanent link">&para;</a></h1>
-<p>CTBoost reports CUDA support at runtime:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">ctboost</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nb">print</span><span class="p">(</span><span class="n">ctboost</span><span class="o">.</span><span class="n">build_info</span><span class="p">())</span>
+<h1 id="ctboost-0157">CTBoost 0.1.57<a class="headerlink" href="#ctboost-0157" title="Permanent link">&para;</a></h1>
+<p>CTBoost 0.1.57 adds optional compact multiclass vector leaves and fixes training,
+resume, and export correctness issues. It retains the conditional-inference
+feature tests and split selection, including the default quadratic feature test
+and opt-in grouped testing. The default multiclass storage strategy remains
+<code>one_output_per_tree</code>.</p>
+<h2 id="compact-multiclass-vector-leaves">Compact multiclass vector leaves<a class="headerlink" href="#compact-multiclass-vector-leaves" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ctboost</span><span class="w"> </span><span class="kn">import</span> <span class="n">CTBoostClassifier</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">model</span> <span class="o">=</span> <span class="n">CTBoostClassifier</span><span class="p">(</span><span class="n">multi_strategy</span><span class="o">=</span><span class="s2">"multi_output_tree"</span><span class="p">)</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">probabilities</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
 </code></pre></div>
-<p>Train on CUDA by setting <code>task_type="GPU"</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ctboost</span><span class="w"> </span><span class="kn">import</span> <span class="n">CTBoostClassifier</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">model</span> <span class="o">=</span> <span class="n">CTBoostClassifier</span><span class="p">(</span><span class="n">task_type</span><span class="o">=</span><span class="s2">"GPU"</span><span class="p">,</span> <span class="n">iterations</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
-</code></pre></div>
-<p>Starting with CTBoost 0.1.54, releases use unified Linux x86-64 and Windows
-AMD64 wheels for CPython 3.10 through 3.14: the ordinary command below installs
-one wheel that can train on CPU and use CUDA when an NVIDIA device is available.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>ctboost
-</code></pre></div>
-<div class="admonition note">
-<p class="admonition-title">Released artifacts are authoritative</p>
-<p>Check the <a href="https://github.com/captnmarkus/ctboost/releases">GitHub release notes</a>
-for the authoritative Python, operating-system, CUDA-runtime, architecture,
-and minimum-driver matrix. macOS and ARM wheels are CPU-only.
-A CUDA-enabled build still works for CPU training on a machine without an NVIDIA GPU.
-The bundled CUDA runtime remains subject to the NVIDIA CUDA Toolkit license
-included in each CUDA-enabled wheel.</p>
-</div>
-<p>The 0.1.54 through 0.1.56 unified wheels bundle the CUDA 12.8 runtime. GPU use requires
-an NVIDIA driver compatible with CUDA 12.x (at least 525.60.13 on Linux or
-528.33 on Windows) but does not require a local CUDA toolkit. Released CUDA
-wheels target compute capability 6.0 or newer, with native code through current
-architectures and forward-compatible PTX. Linux aarch64, macOS, and CPython
-3.8/3.9 artifacts are CPU-only.</p>
-<p>Older releases that published CUDA wheels only as GitHub assets retain the legacy
-<code>ctboost-install-gpu</code> command. It verifies the GitHub-provided SHA-256 digest before
-asking pip to replace the installed wheel.</p>
+<p>For CPU classification with more than two classes, this strategy stores a
+shared tree once per boosting round and keeps one score per class in each leaf.
+It uses the same multiclass structure target, statistical feature selection,
+split topology, and leaf estimates as the scalar strategy. It reduces repeated
+topology storage and shares prediction traversal without introducing a new
+split statistic or claiming an accuracy improvement.</p>
+<p>Supported workflows include compatible callable objectives, categorical and
+sparse inputs, fitted preprocessing, DART, callbacks, early stopping, snapshots,
+warm starts, staged predictions, and explanations. The
+<a href="../guides/vector-leaves/">vector-leaf guide</a> documents the full contract and a
+reproducible storage and prediction comparison.</p>
+<h2 id="correctness-fixes">Correctness fixes<a class="headerlink" href="#correctness-fixes" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Final multiclass leaf updates now respect <code>max_leaf_weight</code> in both layouts.</li>
+<li>Distributed multiclass training uses globally reduced structure moments and
+  class leaf statistics, including unequal shard weights.</li>
+<li>CPU DART computes gradients from the retained ensemble, base score and row
+  baseline, avoiding cancellation errors when previous trees are dropped.</li>
+<li>Python-controlled DART early stopping restores the weights from the best
+  round along with its retained trees.</li>
+<li>Completed snapshots still validate the requested training configuration,
+  feature schema, and learning-rate schedule before returning a saved model.</li>
+<li>Learning-rate callbacks are no longer invoked for an unused round after
+  callbacks or early stopping have stopped training.</li>
+<li>Empty leaf-index predictions retain the physical tree dimension.</li>
+<li>Generated C++ scorers emit valid floating-point literals for integral values.</li>
+<li>Generated Python scorers enforce <code>nan_mode="Forbidden"</code> for missing input.</li>
+</ul>
+<h2 id="compatibility-and-boundaries">Compatibility and boundaries<a class="headerlink" href="#compatibility-and-boundaries" title="Permanent link">&para;</a></h2>
+<p>Existing scalar model documents and JSON predictors retain their format
+versions and remain readable. Vector model documents and JSON predictors use
+format version 3; vector inference manifests use version 2. Older readers
+cannot consume vector artifacts. The Python JSON runtime supports fitted raw
+preprocessing for vector models, while standalone Python, C++, and ONNX scorers
+require prepared numeric features when a fitted pipeline is present.</p>
+<p>The R and JVM source inference packages continue to support prepared scalar
+predictor versions 1 and 2 and reject version-3 vector predictors. C++ and ONNX
+exports expand vector trees into scalar trees at the export boundary.</p>
+<p><code>apply</code> and <code>predict_leaf_index</code> return one column per physical tree: one per
+vector round, versus one per class per scalar round. Prediction, probability,
+and explanation outputs preserve their class dimension. Warm starts and
+snapshots must retain the saved strategy.</p>
+<p>GPU and distributed vector training are explicitly unsupported. Multi-target
+regression and multilabel wrappers continue to fit independent boosters.
+Existing multiclass constraints and the restriction on
+<code>leaf_estimation_iterations &gt; 1</code> still apply.</p>
+<p>The native tree and booster C++ layouts changed. Applications linking the
+repository's native headers or static core must rebuild; ordinary wheel
+installations receive a matching extension. This release retains the CUDA,
+distributed, preprocessing-validation, and portable-inference foundations from
+0.1.56.</p>
 
 
 
