@@ -99,6 +99,20 @@ def pushed_version(output: str) -> int:
     return int(match.group(1))
 
 
+def pushed_kernel(output: str, *, owner: str) -> str:
+    """Use Kaggle's returned identity: new kernels may be named from their title."""
+    matches = re.findall(
+        r"https://(?:www\.)?kaggle\.com/code/([A-Za-z0-9_-]+)/([A-Za-z0-9_-]+)",
+        output,
+    )
+    identities = {f"{username}/{slug}" for username, slug in matches}
+    if len(identities) != 1 or any(username != owner for username, _ in matches):
+        raise RuntimeError(
+            "Kaggle did not confirm one kernel URL owned by the configured account"
+        )
+    return identities.pop()
+
+
 def load_worker(path: Path):
     spec = importlib.util.spec_from_file_location("ctboost_hpo_worker_plan", path)
     module = importlib.util.module_from_spec(spec)
@@ -107,7 +121,14 @@ def load_worker(path: Path):
 
 
 def prepare_package(
-    worker: Path, destination: Path, *, owner: str, slot: int, shard: int, run_id: str
+    worker: Path,
+    destination: Path,
+    *,
+    owner: str,
+    slot: int,
+    shard: int,
+    run_id: str,
+    existing_kernel: str | None = None,
 ) -> str:
     source = worker.read_text(encoding="utf-8")
     source, replaced = re.subn(
@@ -119,12 +140,18 @@ def prepare_package(
         )
     destination.mkdir(parents=True, exist_ok=True)
     (destination / "worker.py").write_text(source, encoding="utf-8", newline="\n")
-    kernel = f"{owner}/ctboost-0158-lite-hpo25-{run_id}-w{slot}"
+    kernel = existing_kernel or f"{owner}/ctboost-0158-lite-hpo25-{run_id}-w{slot}"
+    if not re.fullmatch(re.escape(owner) + r"/[A-Za-z0-9_-]+", kernel):
+        raise ValueError("Worker kernel must belong to the configured account")
+    slug = kernel.split("/", 1)[1]
+    # Kaggle derives a newly created kernel's slug from the title even when id
+    # supplies another slug. Match both, and retain the returned id on slot reuse.
+    title = slug.replace("-", " ")
     write_json(
         destination / "kernel-metadata.json",
         {
             "id": kernel,
-            "title": f"CTBoost 0.1.58 Lite HPO25 - Worker {slot}",
+            "title": title,
             "code_file": "worker.py",
             "language": "python",
             "kernel_type": "script",
@@ -327,6 +354,7 @@ def run_controller(args: argparse.Namespace) -> None:
                     slot=slot["slot"],
                     shard=shard,
                     run_id=state["run_id"],
+                    existing_kernel=slot.get("kernel"),
                 )
                 slot.update(
                     shard=shard,
@@ -343,6 +371,7 @@ def run_controller(args: argparse.Namespace) -> None:
                     args.kaggle, ["push", "-p", str(package), "-t", "43200"]
                 )
                 slot["kernel_version"] = pushed_version(result)
+                slot["kernel"] = pushed_kernel(result, owner=args.owner)
                 slot["phase"] = "submitted"
                 slot["submission"] = result
                 write_json(state_path, state)

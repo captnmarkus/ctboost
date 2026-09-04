@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -80,6 +81,60 @@ def test_generated_kernel_is_private_cpu_and_selects_shard(tmp_path):
     assert metadata["is_private"] == "true"
     assert metadata["enable_gpu"] == "false"
     assert metadata["id"] == "example/ctboost-0158-lite-hpo25-12345678-w1"
+    assert (
+        re.sub(r"[^a-z0-9]+", "-", metadata["title"].lower()).strip("-")
+        == metadata["id"].split("/")[1]
+    )
+
+
+def test_slot_reuses_confirmed_returned_kernel_and_matching_title(tmp_path):
+    worker = tmp_path / "worker_template.py"
+    worker.write_text("SHARD_INDEX = 0\n", encoding="utf-8")
+    kernel = "example/ctboost-0-1-58-lite-hpo25-worker-0"
+    destination = tmp_path / "package"
+    assert (
+        controller.prepare_package(
+            worker,
+            destination,
+            owner="example",
+            slot=0,
+            shard=5,
+            run_id="12345678",
+            existing_kernel=kernel,
+        )
+        == kernel
+    )
+    metadata = json.loads((destination / "kernel-metadata.json").read_text())
+    assert metadata["id"] == kernel
+    assert (
+        re.sub(r"[^a-z0-9]+", "-", metadata["title"].lower()).strip("-")
+        == kernel.split("/")[1]
+    )
+
+
+def test_submission_adopts_returned_title_slug():
+    output = (
+        "Your kernel title does not resolve to the specified id. "
+        "Kernel version 1 successfully pushed. Please check progress at "
+        "https://www.kaggle.com/code/example/ctboost-0-1-58-lite-hpo25-worker-0"
+    )
+    assert (
+        controller.pushed_kernel(output, owner="example")
+        == "example/ctboost-0-1-58-lite-hpo25-worker-0"
+    )
+
+
+@pytest.mark.parametrize(
+    "output",
+    [
+        "Kernel version 1 successfully pushed.",
+        "https://www.kaggle.com/code/other/worker-0",
+        "https://www.kaggle.com/code/example/worker-0 https://www.kaggle.com/code/example/worker-1",
+    ],
+)
+def test_submission_without_one_confirmed_owned_url_needs_reconciliation(output):
+    with pytest.raises(RuntimeError, match="confirm one kernel URL"):
+        controller.pushed_kernel(output, owner="example")
 
 
 def test_push_requires_explicit_success_even_with_zero_cli_exit():
