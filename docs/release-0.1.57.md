@@ -1,5 +1,9 @@
 # CTBoost 0.1.57
 
+Publication of this version to PyPI and GitHub Releases was withheld after CI
+found a vector rounding discrepancy on macOS and a Windows C++ test-loader
+failure. The Git tag is retained; [0.1.58](release-0.1.58.md) supersedes it.
+
 CTBoost 0.1.57 adds optional compact multiclass vector leaves and fixes training,
 resume, and export correctness issues. It retains the conditional-inference
 feature tests and split selection, including the default quadratic feature test
@@ -74,3 +78,16 @@ repository's native headers or static core must rebuild; ordinary wheel
 installations receive a matching extension. This release retains the CUDA,
 distributed, preprocessing-validation, and portable-inference foundations from
 0.1.56.
+
+## Benchmark evidence
+
+The latest [published TabArena-v0.1 Lite artifacts](https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-0.1.56)
+measure **0.1.56**, not this release: all 51 datasets, one default configuration,
+one outer split per dataset, and eight-fold bagging, with no imputed tasks.
+The local evaluation reports 1166.7 Elo (+52.1 / -67.5), a 0.3957 win rate,
+and position 23/38 among default-configuration rows.
+
+There is no measured 0.1.57 TabArena result yet. The published result is
+default-only Lite, not an official leaderboard entry or an HPO result; Elo
+depends on its comparison roster, and Kaggle timings use non-canonical
+resources. See [benchmark status](benchmarks.md) for provenance and scope.

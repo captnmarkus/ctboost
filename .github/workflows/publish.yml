@@ -9,7 +9,7 @@ on:
       version:
         description: Version to build and validate against pyproject.toml
         required: true
-        default: "0.1.57"
+        default: "0.1.58"
         type: string
       publish:
         description: Publish after validation (requires dispatching a v* tag)
@@ -556,7 +556,7 @@ jobs:
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           tag_name: ${{ github.ref_name }}
-          body_path: docs/release-0.1.57.md
+          body_path: docs/release-0.1.58.md
           files: |
             dist/*.whl
             dist/*.tar.gz

@@ -11,6 +11,11 @@ Python/scikit-learn interfaces.
 [Benchmarks](https://captnmarkus.github.io/ctboost/benchmarks/) ·
 [Compatibility](https://captnmarkus.github.io/ctboost/reference/compatibility/)
 
+Version [0.1.58](https://captnmarkus.github.io/ctboost/release-0.1.58/) fixes vector
+accumulation rounding and the Windows C++ export test loader. It includes the
+vector-leaf functionality from the retained 0.1.57 tag, whose PyPI and GitHub
+release publication was withheld after CI failures.
+
 ## Highlights
 
 - Regression, classification, query-group ranking, survival, multi-output,
@@ -77,7 +82,9 @@ tests, and the low-level API.
 
 ## Compact multiclass vector leaves
 
-Use `CTBoostClassifier(multi_strategy="multi_output_tree")` to store one shared
+CTBoost 0.1.58 includes compact multiclass vector leaves introduced in the
+0.1.57 source tag. Use
+`CTBoostClassifier(multi_strategy="multi_output_tree")` to store one shared
 CPU tree per multiclass boosting round, with one score per class in each leaf.
 It preserves CTBoost's conditional-inference feature tests and split selection;
 the default scalar-tree layout remains unchanged.
@@ -91,12 +98,14 @@ CTBoost is an alpha project. Its API and model formats are tested extensively,
 but it does not yet have the independent production history of CatBoost or
 XGBoost.
 
-The latest measured 0.1.55 public-wheel TabArena result is a three-dataset protocol
-smoke test: 3/3 successful CTBoost outer splits and 1054.0 provisional Elo.
-It is **not** a full or official leaderboard entry; with only one outer split
-per dataset, its uncertainty is too wide for model-to-model ranking claims.
-The [sanitized record](https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/smoke_0155_public_wheel.json)
-contains the exact scope, hashes, metrics, and resource measurements.
+The latest [published TabArena artifacts](https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-0.1.56)
+measure **CTBoost 0.1.56** on all 51 TabArena-v0.1 Lite datasets: one default
+configuration, one outer split per dataset, and eight-fold bagging. The local
+evaluation reports **1166.7 Elo** (+52.1 / -67.5), a 0.3957 win rate, and position
+23/38 among default-configuration rows, with no imputed CTBoost tasks.
+This is a default-only Lite result, not an official leaderboard entry or a
+measurement of 0.1.58. Elo depends on the comparison roster; Kaggle timings use
+different resources from the canonical benchmark and are not directly comparable.
 
 The final-source 0.1.55 pre-registered grouped-statistic panel completed
 294/294 isolated fits and 42/42 exact control checks. Grouped-8 recorded nine
@@ -110,6 +119,8 @@ the default; grouped testing is opt-in.
 Read the [benchmark status](https://captnmarkus.github.io/ctboost/benchmarks/)
 and [split-statistics research ledger](https://captnmarkus.github.io/ctboost/split-statistics-research/)
 for protocols, limitations, and machine-readable evidence.
+See the [0.1.58 release notes](https://captnmarkus.github.io/ctboost/release-0.1.58/)
+for vector-leaf support, correctness fixes, and compatibility boundaries.
 
 ## Documentation
 
