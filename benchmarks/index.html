@@ -388,26 +388,11 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#tabarena-adapter-smoke" class="md-nav__link">
+  <a href="#ctboost-0156-tabarena-v01-lite" class="md-nav__link">
     <span class="md-ellipsis">
-      TabArena adapter smoke
+      CTBoost 0.1.56: TabArena-v0.1 Lite
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="TabArena adapter smoke">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#smoke-task-metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      Smoke-task metrics
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
         
@@ -511,6 +496,28 @@
   
   
     <li class="md-nav__item">
+      <a href="../release-0.1.58/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Release 0.1.58
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release-0.1.57/" class="md-nav__link">
         
   
@@ -588,10 +595,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
         
           
-          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
             
   
   
@@ -604,8 +611,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             Guides
           </label>
@@ -873,10 +880,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" >
         
           
-          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="">
             
   
   
@@ -889,8 +896,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_11">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12">
             <span class="md-nav__icon md-icon"></span>
             Reference
           </label>
@@ -986,26 +993,11 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#tabarena-adapter-smoke" class="md-nav__link">
+  <a href="#ctboost-0156-tabarena-v01-lite" class="md-nav__link">
     <span class="md-ellipsis">
-      TabArena adapter smoke
+      CTBoost 0.1.56: TabArena-v0.1 Lite
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="TabArena adapter smoke">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#smoke-task-metrics" class="md-nav__link">
-    <span class="md-ellipsis">
-      Smoke-task metrics
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
         
@@ -1074,14 +1066,19 @@
 <p>CTBoost has two separate evidence tracks. They must not be combined into one
 score:</p>
 <ol>
-<li>a small TabArena integration smoke test for the ordinary adapter; and</li>
+<li>a default-configuration TabArena-v0.1 Lite evaluation for the ordinary adapter; and</li>
 <li>a pre-registered external panel for the opt-in grouped split statistic.</li>
 </ol>
-<h3 id="tabarena-adapter-smoke">TabArena adapter smoke<a class="headerlink" href="#tabarena-adapter-smoke" title="Permanent link">&para;</a></h3>
+<h3 id="ctboost-0156-tabarena-v01-lite">CTBoost 0.1.56: TabArena-v0.1 Lite<a class="headerlink" href="#ctboost-0156-tabarena-v01-lite" title="Permanent link">&para;</a></h3>
 <p>CTBoost has a committed adapter for the official TabArena protocol. It delegates
 folds, task metrics, bagging, tuning, ensembling, timing, and memory measurement to
 TabArena rather than recreating them locally.</p>
-<p>The current completed result is a <strong>protocol smoke test</strong>, not a full leaderboard entry:</p>
+<p>The latest <a href="https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-0.1.56">published result bundle</a>
+covers all 51 TabArena-v0.1 Lite datasets with <strong>CTBoost 0.1.56</strong>, using one
+default configuration and outer split <code>r0f0</code> only. It contains no measured HPO
+configurations or TabArena-Full results. CTBoost 0.1.58 has no new measured
+TabArena score; the vector-leaf and correctness changes do not inherit this
+version's score.</p>
 <table>
 <thead>
 <tr>
@@ -1091,24 +1088,36 @@ TabArena rather than recreating them locally.</p>
 </thead>
 <tbody>
 <tr>
-<td>TabArena-v0.1 lite, three datasets, 0.1.55 default configuration</td>
-<td style="text-align: right;">1054.0 provisional Elo</td>
+<td>Lite Elo</td>
+<td style="text-align: right;">1166.7 (+52.1 / -67.5)</td>
+</tr>
+<tr>
+<td>Win rate</td>
+<td style="text-align: right;">0.3957</td>
+</tr>
+<tr>
+<td>Position among default-configuration rows</td>
+<td style="text-align: right;">23 / 38</td>
 </tr>
 <tr>
 <td>Successful CTBoost outer splits</td>
-<td style="text-align: right;">3 / 3</td>
+<td style="text-align: right;">51 / 51</td>
 </tr>
 <tr>
-<td>Imputed CTBoost splits</td>
-<td style="text-align: right;">0</td>
+<td>Imputed CTBoost tasks</td>
+<td style="text-align: right;">0 / 51</td>
 </tr>
 <tr>
-<td>CPU allocation</td>
-<td style="text-align: right;">8</td>
+<td>Bagging</td>
+<td style="text-align: right;">8 children per task; 408 child fits</td>
 </tr>
 <tr>
-<td>Memory limit</td>
-<td style="text-align: right;">24 GiB</td>
+<td>Kaggle CPU allocation</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td>Kaggle memory limit</td>
+<td style="text-align: right;">28 GB</td>
 </tr>
 <tr>
 <td>Per-fit limit</td>
@@ -1116,62 +1125,34 @@ TabArena rather than recreating them locally.</p>
 </tr>
 </tbody>
 </table>
-<div class="admonition warning">
-<p class="admonition-title">Do not compare this number with the full leaderboard</p>
-<p>Elo is relative to its entrant and dataset pool. Three datasets and one split per
-dataset produce extremely wide uncertainty. CTBoost does not yet have an official
-full TabArena Elo.</p>
+<div class="admonition note">
+<p class="admonition-title">Scope of the score</p>
+<p>This is a local default-only Lite evaluation, not an official leaderboard
+entry. Elo depends on the dataset and method roster: this evaluation uses
+42 reference-method artifacts and 85 evaluated rows, including defaults,
+tuned configurations, ensembles, and systems. Kaggle's 4 CPUs and 28 GB
+differ from the canonical 8 CPUs and 32 GB, so its recorded timings are not
+directly comparable to official TabArena runtimes.</p>
 </div>
-<h4 id="smoke-task-metrics">Smoke-task metrics<a class="headerlink" href="#smoke-task-metrics" title="Permanent link">&para;</a></h4>
-<table>
-<thead>
-<tr>
-<th>Dataset</th>
-<th>Task</th>
-<th>Metric</th>
-<th style="text-align: right;">Test error</th>
-<th style="text-align: right;">Train time</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>anneal</td>
-<td>multiclass</td>
-<td>log loss</td>
-<td style="text-align: right;">0.041921</td>
-<td style="text-align: right;">151.76 s</td>
-</tr>
-<tr>
-<td>blood-transfusion-service-center</td>
-<td>binary</td>
-<td>ROC-AUC error</td>
-<td style="text-align: right;">0.315614</td>
-<td style="text-align: right;">1.88 s</td>
-</tr>
-<tr>
-<td>QSAR_fish_toxicity</td>
-<td>regression</td>
-<td>RMSE</td>
-<td style="text-align: right;">0.968983</td>
-<td style="text-align: right;">2.97 s</td>
-</tr>
-</tbody>
-</table>
 <p>Provenance:</p>
 <ul>
-<li>CTBoost 0.1.55 public installed distribution, independently matched to release
-  commit <code>026ccb5b8df50bdd8375f69729820cb8158e5a14</code>, install fingerprint
-  <code>aa7d1e972aca648333a3e14c39f7e30c4906c8a04632223b9d728da23edfdd66</code>;</li>
-<li>Python 3.12.11, Windows AMD64, eight CPU threads and no GPU used;</li>
-<li>TabArena package files independently matched commit
-  <code>50f8ab1bbc6e7f7e5dd9b19d8b643ac284ae9b3c</code>; the run itself used installed
-  distributions rather than live Git worktrees.</li>
+<li>Released <code>ctboost==0.1.56</code>, measured as <code>CTBoost_c1_default_BAG_L1</code>;</li>
+<li>30 binary, 8 multiclass, and 13 regression datasets, with no missing or
+  duplicate tasks in the published canonical tables;</li>
+<li>Six Kaggle CPU shards, Python 3.12.13, AutoGluon Tabular 1.6.2b20260821;</li>
+<li>TabArena integration/evaluation commit
+  <a href="https://github.com/captnmarkus/tabarena/commit/31026f7d758390994353eba79fbfa6747616f365"><code>31026f7d758390994353eba79fbfa6747616f365</code></a>,
+  associated with <a href="https://github.com/autogluon/tabarena/pull/479">upstream PR #479</a>.</li>
 </ul>
-<p>The sanitized <a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/smoke_0155_public_wheel.json">0.1.55 machine-readable smoke record</a>
-contains the exact per-split metrics, timing, memory, package versions, and commit
-identity limitations without machine-local artifact paths. The older 0.1.53
-<a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/smoke_fd187da.json"><code>smoke_fd187da.json</code></a>
-is retained as historical evidence, not as the current score.</p>
+<p>The <a href="https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-0.1.56/blob/main/validation/aggregate_manifest.json">aggregate manifest</a>
+records task coverage, resource limits, artifact hashes, and version provenance.
+The <a href="https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-0.1.56/blob/main/reports/leaderboard_lite.csv">evaluation table</a>
+records the score and comparison roster. Despite its canonical filename,
+<code>hpo_results.parquet</code> contains only the measured default configuration.</p>
+<p>The earlier <a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/smoke_0155_public_wheel.json">0.1.55 three-dataset smoke record</a>
+(1054.0 provisional Elo) and <a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/smoke_fd187da.json">0.1.53 smoke record</a>
+remain historical integration checks. Their different task scope prevents
+interpreting the newer Lite score as a version-to-version Elo improvement.</p>
 <h3 id="grouped-split-statistic-qualification">Grouped split-statistic qualification<a class="headerlink" href="#grouped-split-statistic-qualification" title="Permanent link">&para;</a></h3>
 <p>The final-source 0.1.55 grouped-statistic panel completed 294/294 isolated
 fits and 42/42 exact implicit-control checks. It recorded nine wins, no ties,

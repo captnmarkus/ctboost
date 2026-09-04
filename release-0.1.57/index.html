@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://captnmarkus.github.io/ctboost/release-0.1.57/">
       
       
-        <link rel="prev" href="../gpu/">
+        <link rel="prev" href="../release-0.1.58/">
       
       
         <link rel="next" href="../release-0.1.56/">
@@ -391,6 +391,28 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-0.1.58/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Release 0.1.58
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -470,6 +492,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#benchmark-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      Benchmark evidence
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -540,10 +571,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
         
           
-          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="">
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="">
             
   
   
@@ -556,8 +587,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_9">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
             <span class="md-nav__icon md-icon"></span>
             Guides
           </label>
@@ -825,10 +856,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" >
         
           
-          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="">
             
   
   
@@ -841,8 +872,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_11">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12">
             <span class="md-nav__icon md-icon"></span>
             Reference
           </label>
@@ -954,6 +985,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#benchmark-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      Benchmark evidence
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -974,6 +1014,9 @@
 
 
 <h1 id="ctboost-0157">CTBoost 0.1.57<a class="headerlink" href="#ctboost-0157" title="Permanent link">&para;</a></h1>
+<p>Publication of this version to PyPI and GitHub Releases was withheld after CI
+found a vector rounding discrepancy on macOS and a Windows C++ test-loader
+failure. The Git tag is retained; <a href="../release-0.1.58/">0.1.58</a> supersedes it.</p>
 <p>CTBoost 0.1.57 adds optional compact multiclass vector leaves and fixes training,
 resume, and export correctness issues. It retains the conditional-inference
 feature tests and split selection, including the default quadratic feature test
@@ -1037,6 +1080,16 @@ repository's native headers or static core must rebuild; ordinary wheel
 installations receive a matching extension. This release retains the CUDA,
 distributed, preprocessing-validation, and portable-inference foundations from
 0.1.56.</p>
+<h2 id="benchmark-evidence">Benchmark evidence<a class="headerlink" href="#benchmark-evidence" title="Permanent link">&para;</a></h2>
+<p>The latest <a href="https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-0.1.56">published TabArena-v0.1 Lite artifacts</a>
+measure <strong>0.1.56</strong>, not this release: all 51 datasets, one default configuration,
+one outer split per dataset, and eight-fold bagging, with no imputed tasks.
+The local evaluation reports 1166.7 Elo (+52.1 / -67.5), a 0.3957 win rate,
+and position 23/38 among default-configuration rows.</p>
+<p>There is no measured 0.1.57 TabArena result yet. The published result is
+default-only Lite, not an official leaderboard entry or an HPO result; Elo
+depends on its comparison roster, and Kaggle timings use non-canonical
+resources. See <a href="../benchmarks/">benchmark status</a> for provenance and scope.</p>
 
 
 
