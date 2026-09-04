@@ -241,6 +241,18 @@ therefore be uniform within a `group_id`; that common value is treated as a
 query weight (and may be combined with `group_weight`). Nonuniform per-document
 weights are rejected instead of producing an NDCG value outside `[0, 1]`.
 
+### Compact multiclass vector leaves
+
+Use `CTBoostClassifier(multi_strategy="multi_output_tree")`, or the same
+parameter in `train(..., {"objective": "MultiClass", ...})`, to store one shared
+tree with a score vector in each leaf per boosting round. This CPU multiclass
+mode preserves CTBoost's existing conditional inference tests and predictions
+while avoiding duplicated class-tree topology. The default remains
+`multi_strategy="one_output_per_tree"`.
+
+See [vector leaves](docs/guides/vector-leaves.md) for examples, persistence/export
+compatibility, limits, and a reproducible comparison benchmark.
+
 ### Multi-output, multilabel, and AFT estimators
 
 The sklearn API includes independent-tree wrappers for targets that do not fit

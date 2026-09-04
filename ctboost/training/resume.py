@@ -106,6 +106,7 @@ def _resume_snapshot_config_signature(*, pool: Pool, **kwargs: Any) -> Dict[str,
         "boost_from_average": bool(kwargs["boost_from_average"]),
         "configured_base_score": _normalize_resume_signature_value(kwargs["base_score"]),
         "num_classes": int(kwargs["num_classes"]),
+        "multi_strategy": str(kwargs.get("multi_strategy", "one_output_per_tree")),
         "max_bins": int(kwargs["max_bins"]),
         "nan_mode": str(kwargs["nan_mode"]),
         "max_bin_by_feature": _normalize_resume_signature_value(kwargs["max_bin_by_feature"]),
@@ -167,6 +168,7 @@ def _resume_snapshot_state_signature(init_state: Mapping[str, Any], init_model: 
             init_state.get("configured_base_score", [])
         ),
         "num_classes": int(init_state["num_classes"]),
+        "multi_strategy": str(init_state.get("multi_strategy", "one_output_per_tree")),
         "max_bins": int(init_state["max_bins"]),
         "nan_mode": str(init_state["nan_mode"]),
         "max_bin_by_feature": _normalize_resume_signature_value(init_state.get("max_bin_by_feature", [])),
@@ -218,7 +220,10 @@ def _validate_resume_snapshot_contract(
     existing_history = list(getattr(init_model, "learning_rate_history", []))
     if not existing_history:
         prediction_dimension = max(int(init_state.get("num_classes", 1)), 1)
-        trained_iterations = int(len(init_state.get("trees", [])) // prediction_dimension)
+        trees_per_iteration = (
+            1 if init_state.get("multi_strategy") == "multi_output_tree" else prediction_dimension
+        )
+        trained_iterations = int(len(init_state.get("trees", [])) // trees_per_iteration)
         existing_history = [float(init_state["learning_rate"])] * trained_iterations
     for iteration, stored_learning_rate in enumerate(existing_history):
         expected_learning_rate = _resolve_learning_rate_for_iteration(

@@ -243,11 +243,11 @@ def train(
         if requested_iterations < trained_iterations:
             raise ValueError("requested num_boost_round is smaller than the snapshot iteration count")
         iterations = requested_iterations - trained_iterations
-        if iterations == 0:
-            return Booster(init_handle, feature_pipeline=feature_pipeline, training_metadata=getattr(resolved_init_model, "_training_metadata", None))
     _validate_custom_objective_continuation(resolved_init_model, objective_runtime)
     native_params = _resolve_native_training_params(native_config, pool, init_state=init_state)
     native_params["early_stopping"] = early_stopping
+    if native_params["multi_strategy"] == "multi_output_tree" and distributed_config is not None:
+        raise ValueError("multi_output_tree does not support distributed training")
     _validate_objective_labels(native_params["objective"], pool, context="the training pool")
     for eval_index, eval_pool in enumerate(eval_pools):
         _validate_objective_labels(
@@ -316,6 +316,8 @@ def train(
                 raise ValueError("init_model objective must match the current training objective")
             if native_params["num_classes"] != int(init_state["num_classes"]):
                 raise ValueError("init_model num_classes must match the current training configuration")
+            if native_params.get("multi_strategy", "one_output_per_tree") != init_state.get("multi_strategy", "one_output_per_tree"):
+                raise ValueError("init_model multi_strategy must match the current training configuration")
         weighted_pool, weighted_eval_pools = _apply_objective_weights_to_pools(
             pool,
             eval_pools,
@@ -330,6 +332,12 @@ def train(
                 learning_rate_schedule=resolved_learning_rate_schedule,
                 requested_iterations=requested_iterations,
             )
+            if iterations == 0:
+                return Booster(
+                    init_handle,
+                    feature_pipeline=feature_pipeline,
+                    training_metadata=getattr(resolved_init_model, "_training_metadata", None),
+                )
         if not metric_runtime["use_python_eval_surface"]:
             return _train_native_only(
                 native_params=native_params,

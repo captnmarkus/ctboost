@@ -1,5 +1,7 @@
 #include "booster_fit_internal.hpp"
 
+#include <algorithm>
+
 namespace ctboost::booster_detail {
 
 TreeBuildOptions MakeTreeBuildOptions(const FitLoopContext& context,
@@ -67,7 +69,7 @@ void ApplyDroppedTreeAdjustments(const FitLoopContext& context,
     return;
   }
   for (const std::size_t dropped_iteration : dart_state.dropped_iterations) {
-    if (context.prediction_dimension == 1) {
+    if (context.trees_per_iteration == 1) {
       ScaleTreeLeafWeights((*context.trees)[dropped_iteration], dropped_tree_scale);
       continue;
     }
@@ -109,7 +111,36 @@ DartPredictionState PrepareDartPredictionState(const FitLoopContext& context,
     return dart_state;
   }
 
-  dart_state.gradient_predictions = context.workspace->predictions;
+  if (context.use_gpu) {
+    // GPU training can release host histogram bins. Preserve its existing
+    // cached subtraction path until retained-ensemble GPU evaluation is added.
+    dart_state.gradient_predictions = context.workspace->predictions;
+  } else {
+    // Build the retained ensemble directly. Subtracting dropped predictions
+    // from a cached full ensemble introduces cancellation noise (even when
+    // every tree is dropped), which can change tests after a warm start.
+    dart_state.gradient_predictions.assign(context.workspace->predictions.size(), 0.0F);
+    AddBaseScoreToPredictions(*context.base_score,
+                              context.prediction_dimension,
+                              dart_state.gradient_predictions);
+    for (std::size_t iteration = 0;
+         iteration < static_cast<std::size_t>(state.completed_iterations); ++iteration) {
+      if (std::binary_search(dart_state.dropped_iterations.begin(),
+                             dart_state.dropped_iterations.end(), iteration)) {
+        continue;
+      }
+      AccumulateIterationPredictions(*context.trees,
+                                     iteration,
+                                     context.workspace->train_hist,
+                                     *context.tree_learning_rates,
+                                     context.learning_rate,
+                                     context.prediction_dimension,
+                                     dart_state.gradient_predictions);
+    }
+    AddPoolBaselineToPredictions(*context.pool,
+                                 context.prediction_dimension,
+                                 dart_state.gradient_predictions);
+  }
   dart_state.dropped_train_predictions.assign(dart_state.gradient_predictions.size(), 0.0F);
   if (context.eval_pool != nullptr) {
     dart_state.dropped_eval_predictions.assign(context.workspace->eval_predictions.size(), 0.0F);
@@ -132,8 +163,10 @@ DartPredictionState PrepareDartPredictionState(const FitLoopContext& context,
                                      dart_state.dropped_eval_predictions);
     }
   }
-  for (std::size_t index = 0; index < dart_state.gradient_predictions.size(); ++index) {
-    dart_state.gradient_predictions[index] -= dart_state.dropped_train_predictions[index];
+  if (context.use_gpu) {
+    for (std::size_t index = 0; index < dart_state.gradient_predictions.size(); ++index) {
+      dart_state.gradient_predictions[index] -= dart_state.dropped_train_predictions[index];
+    }
   }
   return dart_state;
 }

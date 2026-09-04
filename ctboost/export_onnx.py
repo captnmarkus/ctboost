@@ -8,6 +8,8 @@ from typing import Any, Dict, List, Mapping, Sequence, Tuple
 
 import numpy as np
 
+from .export_payload import _scalar_export_payload
+
 
 class _GraphBuilder:
     def __init__(self, helper: Any, numpy_helper: Any, tensor_proto: Any) -> None:
@@ -157,6 +159,7 @@ def build_onnx_model(payload: Mapping[str, Any]) -> Any:
     except ImportError as exc:  # pragma: no cover - dependency-specific
         raise ImportError("ONNX export requires 'pip install ctboost[onnx]'") from exc
 
+    payload = _scalar_export_payload(payload)
     builder = _GraphBuilder(helper, numpy_helper, TensorProto)
     schema = payload["quantization_schema"]
     trees = list(payload["trees"])

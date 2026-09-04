@@ -50,6 +50,7 @@ py::dict TreeToStateDict(const ctboost::Tree& tree);
 ctboost::Tree TreeFromStateDict(
     const py::handle& handle,
     const ctboost::QuantizationSchemaPtr& shared_quantization_schema = nullptr);
+void ValidateBoosterStateFormat(const py::dict& state);
 py::dict BoosterToStateDict(const ctboost::GradientBooster& booster);
 ctboost::GradientBooster BoosterFromStateDict(const py::dict& state);
 

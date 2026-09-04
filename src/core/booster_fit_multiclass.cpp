@@ -21,7 +21,8 @@ void RunMulticlassIteration(const FitLoopContext& context,
                                context.pool->num_rows(),
                                context.prediction_dimension,
                                structure_gradients,
-                               structure_hessians);
+                               structure_hessians,
+                               distributed_coordinator);
   if (context.use_gpu) {
     PrepareGpuTrainingControls(context, structure_gradients, structure_hessians, iteration_weights);
   }
@@ -61,7 +62,10 @@ void RunMulticlassIteration(const FitLoopContext& context,
                                                                           context.workspace->hessians,
                                                                           iteration_weights,
                                                                           context.prediction_dimension,
-                                                                          context.lambda_l2);
+                                                                          context.lambda_l2,
+                                                                          context.max_leaf_weight,
+                                                                          context.vector_leaves,
+                                                                          distributed_coordinator);
   timing->tree_ms +=
       std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - leaf_fit_start).count();
 
@@ -72,7 +76,7 @@ void RunMulticlassIteration(const FitLoopContext& context,
 
   const auto prediction_start = std::chrono::steady_clock::now();
   ApplyDroppedTreeAdjustments(context, dart_state, dropped_tree_scale);
-  for (int class_index = 0; class_index < context.prediction_dimension; ++class_index) {
+  for (int class_index = 0; class_index < context.trees_per_iteration; ++class_index) {
     Tree& tree = class_trees[static_cast<std::size_t>(class_index)];
     if (new_tree_scale != 1.0) {
       ScaleTreeLeafWeights(tree, new_tree_scale);

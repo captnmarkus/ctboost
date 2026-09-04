@@ -66,7 +66,8 @@ class GradientBooster {
                   bool verbose = false,
                   bool boost_from_average = true,
                   std::vector<double> base_score = {},
-                  int leaf_estimation_iterations = 1);
+                  int leaf_estimation_iterations = 1,
+                  std::string multi_strategy = "one_output_per_tree");
 
   void Fit(Pool& pool,
            Pool* eval_pool = nullptr,
@@ -102,6 +103,8 @@ class GradientBooster {
   std::size_t num_iterations_trained() const noexcept;
   int num_classes() const noexcept;
   int prediction_dimension() const noexcept;
+  const std::string& multi_strategy() const noexcept;
+  int trees_per_iteration() const noexcept;
   int best_iteration() const noexcept;
   double best_score() const noexcept;
   const std::string& objective_name() const noexcept;
@@ -196,6 +199,7 @@ class GradientBooster {
   int leaf_estimation_iterations_{1};
   int num_classes_{1};
   int prediction_dimension_{1};
+  std::string multi_strategy_{"one_output_per_tree"};
   std::size_t max_bins_{256};
   bool external_memory_{false};
   std::string external_memory_dir_;

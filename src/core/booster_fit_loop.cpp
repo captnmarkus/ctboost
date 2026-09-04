@@ -18,7 +18,7 @@ void RunTrainingLoop(const FitLoopContext& context, FitLoopState& state) {
         static_cast<std::size_t>(*context.best_iteration + 1);
     const std::size_t retained_tree_count = std::min(
         context.trees->size(),
-        retained_iterations * static_cast<std::size_t>(context.prediction_dimension));
+        retained_iterations * static_cast<std::size_t>(context.trees_per_iteration));
     best_dart_trees.assign(
         context.trees->begin(), context.trees->begin() + retained_tree_count);
     best_dart_learning_rates.assign(

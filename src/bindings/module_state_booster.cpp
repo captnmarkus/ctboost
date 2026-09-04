@@ -2,7 +2,29 @@
 
 #include "ctboost/distributed_root.hpp"
 
+#include <stdexcept>
+
 namespace ctboost::bindings {
+
+void ValidateBoosterStateFormat(const py::dict& state) {
+  const int version = state.contains("format_version") ? py::cast<int>(state["format_version"]) : 1;
+  if (version != 1 && version != 2) {
+    throw std::invalid_argument("unsupported serialized booster format_version");
+  }
+  const std::string strategy = state.contains("multi_strategy")
+      ? py::cast<std::string>(state["multi_strategy"]) : "one_output_per_tree";
+  if (strategy != "one_output_per_tree" && strategy != "multi_output_tree") {
+    throw std::invalid_argument("invalid serialized multi_strategy");
+  }
+  if (strategy == "multi_output_tree" && version != 2) {
+    throw std::invalid_argument("multi_output_tree requires serialized format_version=2");
+  }
+  if (strategy == "multi_output_tree" &&
+      py::cast<std::string>(state["task_type"]) != "CPU" &&
+      py::cast<std::string>(state["task_type"]) != "cpu") {
+    throw std::invalid_argument("multi_output_tree currently supports task_type='CPU' only");
+  }
+}
 
 py::dict BoosterToStateDict(const ctboost::GradientBooster& booster) {
   py::list tree_states;
@@ -11,6 +33,8 @@ py::dict BoosterToStateDict(const ctboost::GradientBooster& booster) {
   }
 
   py::dict state;
+  state["format_version"] = booster.multi_strategy() == "multi_output_tree" ? 2 : 1;
+  state["multi_strategy"] = booster.multi_strategy();
   state["objective_name"] = booster.objective_name();
   state["iterations"] = booster.iterations();
   state["learning_rate"] = booster.learning_rate();
@@ -78,6 +102,7 @@ py::dict BoosterToStateDict(const ctboost::GradientBooster& booster) {
 }
 
 ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
+  ValidateBoosterStateFormat(state);
   const py::list tree_state_list = py::cast<py::list>(state["trees"]);
   ctboost::QuantizationSchemaPtr quantization_schema;
   if (state.contains("quantization_schema")) {
@@ -226,7 +251,10 @@ ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
                                        : std::vector<double>{},
                                    state.contains("leaf_estimation_iterations")
                                        ? py::cast<int>(state["leaf_estimation_iterations"])
-                                       : 1);
+                                       : 1,
+                                   state.contains("multi_strategy")
+                                       ? py::cast<std::string>(state["multi_strategy"])
+                                       : std::string("one_output_per_tree"));
 
   booster.LoadState(std::move(trees),
                     quantization_schema,

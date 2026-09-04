@@ -8,7 +8,38 @@ from ._version import __version__
 from .inference_manifest import _json_ready, build_inference_manifest
 
 JSON_PREDICTOR_FORMAT = "ctboost-json-predictor"
-JSON_PREDICTOR_FORMAT_VERSION = 1
+JSON_PREDICTOR_FORMAT_VERSION = 2
+
+
+def _scalar_tree_views(
+    trees: Sequence[Mapping[str, Any]], prediction_dimension: int
+) -> list[dict[str, Any]]:
+    """Expand shared topology into per-output views for scalar-only consumers.
+
+    Node indices are preserved, and trees remain ordered by round then output.
+    The original state and node dictionaries are never modified.
+    """
+    return [
+        {
+            **tree,
+            "nodes": [
+                {**node, "leaf_weight": float(node["leaf_weights"][output_index])}
+                for node in tree["nodes"]
+            ],
+        }
+        for tree in trees
+        for output_index in range(prediction_dimension)
+    ]
+
+
+def _scalar_export_payload(payload: Mapping[str, Any]) -> Mapping[str, Any]:
+    """Adapt a vector ensemble at the C++/ONNX export boundary only."""
+    if payload.get("multi_strategy", "one_output_per_tree") != "multi_output_tree":
+        return payload
+    return {
+        **payload,
+        "trees": _scalar_tree_views(payload["trees"], int(payload["prediction_dimension"])),
+    }
 
 
 def _normalize_export_format(export_format: Optional[str]) -> str:
@@ -49,6 +80,8 @@ def _standalone_python_payload(
     objective_name = str(handle.objective_name())
     normalized_objective = objective_name.strip().lower()
     prediction_dimension = int(handle.prediction_dimension())
+    multi_strategy = str(state.get("multi_strategy", "one_output_per_tree"))
+    vector_leaves = multi_strategy == "multi_output_tree"
     base_score = (
         []
         if not hasattr(handle, "base_score")
@@ -70,7 +103,7 @@ def _standalone_python_payload(
             )
     payload = {
         "format": JSON_PREDICTOR_FORMAT,
-        "format_version": JSON_PREDICTOR_FORMAT_VERSION,
+        "format_version": JSON_PREDICTOR_FORMAT_VERSION if vector_leaves else 1,
         "ctboost_version": __version__,
         "objective_name": objective_name,
         "learning_rate": float(handle.learning_rate()),
@@ -85,6 +118,8 @@ def _standalone_python_payload(
         "trees": trees,
         "class_labels": resolved_class_labels,
     }
+    if vector_leaves:
+        payload["multi_strategy"] = multi_strategy
     payload["inference_manifest"] = build_inference_manifest(
         payload,
         data_schema=data_schema,

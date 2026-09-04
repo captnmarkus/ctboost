@@ -72,6 +72,7 @@ def _make_native_booster(
         verbose=native_params["verbose"],
         boost_from_average=native_params["boost_from_average"],
         base_score=native_params["base_score"],
+        multi_strategy=native_params["multi_strategy"],
     )
     if state is not None:
         # Persisted model state deliberately excludes the ephemeral TCP bearer

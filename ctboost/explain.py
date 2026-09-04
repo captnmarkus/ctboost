@@ -22,6 +22,7 @@ from typing import Any, Dict, Iterable, Mapping, Optional, Sequence, Tuple
 import numpy as np
 
 from .core import Pool
+from .export_payload import _scalar_tree_views
 from .training._pool_build import _resolve_num_iteration
 from .training.schema import _baseline_matrix_for_prediction
 
@@ -290,6 +291,10 @@ def explain_booster(
     resolved_iteration = _resolve_num_iteration(num_iteration)
     prediction_dimension = int(booster.prediction_dimension)
     all_trees = list(state.get("trees", ()))
+    if state.get("multi_strategy") == "multi_output_tree":
+        if resolved_iteration >= 0:
+            all_trees = all_trees[:resolved_iteration]
+        all_trees = _scalar_tree_views(all_trees, prediction_dimension)
     tree_limit = len(all_trees)
     if resolved_iteration >= 0:
         tree_limit = min(tree_limit, resolved_iteration * prediction_dimension)
@@ -435,10 +440,11 @@ def calc_leaf_influence(
     state = dict(booster._handle.export_state())
     prediction_dimension = int(booster.prediction_dimension)
     resolved_iteration = _resolve_num_iteration(num_iteration)
+    vector_leaves = state.get("multi_strategy") == "multi_output_tree"
     all_trees = list(state.get("trees", ()))
     tree_limit = len(all_trees)
     if resolved_iteration >= 0:
-        tree_limit = min(tree_limit, resolved_iteration * prediction_dimension)
+        tree_limit = min(tree_limit, resolved_iteration * (1 if vector_leaves else prediction_dimension))
     trees = all_trees[:tree_limit]
 
     foreground_leaves = booster.predict_leaf_index(
@@ -449,6 +455,8 @@ def calc_leaf_influence(
     )
     if foreground_leaves.shape[1] != tree_limit or reference_leaves.shape[1] != tree_limit:
         raise RuntimeError("native leaf-index output does not match the selected tree count")
+    if vector_leaves:
+        trees = _scalar_tree_views(trees, prediction_dimension)
 
     scores = np.zeros(
         (foreground_pool.num_rows, prediction_dimension, reference_pool.num_rows),
@@ -471,8 +479,9 @@ def calc_leaf_influence(
             else default_learning_rate
         )
         nodes = list(tree["nodes"])
-        foreground_column = foreground_leaves[:, tree_index]
-        reference_column = reference_leaves[:, tree_index]
+        physical_tree_index = iteration_index if vector_leaves else tree_index
+        foreground_column = foreground_leaves[:, physical_tree_index]
+        reference_column = reference_leaves[:, physical_tree_index]
         for leaf_index in np.unique(foreground_column):
             explained_rows = np.flatnonzero(foreground_column == leaf_index)
             reference_rows = np.flatnonzero(reference_column == leaf_index)
@@ -641,7 +650,8 @@ def tree_to_dot(
     feature_count = len(schema.get("num_bins_per_feature", ()))
     feature_names = _tree_feature_names(booster, feature_count)
     prediction_dimension = int(booster.prediction_dimension)
-    iteration_index = int(tree_index) // prediction_dimension
+    vector_leaves = state.get("multi_strategy") == "multi_output_tree"
+    iteration_index = int(tree_index) if vector_leaves else int(tree_index) // prediction_dimension
     learning_rates = [float(value) for value in state.get("tree_learning_rates", ())]
     learning_rate = (
         learning_rates[iteration_index]
@@ -658,12 +668,19 @@ def tree_to_dot(
     nodes = list(tree["nodes"])
     for node_index, node in enumerate(nodes):
         if bool(node["is_leaf"]):
-            weight = float(node["leaf_weight"])
-            contribution = learning_rate * weight
-            label = (
-                f"leaf {node_index}\\nweight={weight:.{precision}g}"
-                f"\\ncontribution={contribution:.{precision}g}"
-            )
+            if vector_leaves:
+                weights = ", ".join(f"{float(value):.{precision}g}" for value in node["leaf_weights"])
+                contributions = ", ".join(
+                    f"{learning_rate * float(value):.{precision}g}" for value in node["leaf_weights"]
+                )
+                label = f"leaf {node_index}\\nweights=[{weights}]\\ncontributions=[{contributions}]"
+            else:
+                weight = float(node["leaf_weight"])
+                contribution = learning_rate * weight
+                label = (
+                    f"leaf {node_index}\\nweight={weight:.{precision}g}"
+                    f"\\ncontribution={contribution:.{precision}g}"
+                )
             lines.append(
                 f'  n{node_index} [shape="ellipse", label="{_dot_escape(label)}"];'
             )
@@ -723,7 +740,11 @@ def plot_tree(
     for node_index, node in enumerate(nodes):
         x_position, y_position = positions[node_index]
         if bool(node["is_leaf"]):
-            label = f"leaf\n{float(node['leaf_weight']):.{precision}g}"
+            if state.get("multi_strategy") == "multi_output_tree":
+                weights = ", ".join(f"{float(value):.{precision}g}" for value in node["leaf_weights"])
+                label = f"leaf\n[{weights}]"
+            else:
+                label = f"leaf\n{float(node['leaf_weight']):.{precision}g}"
             box = {"boxstyle": "round", "facecolor": "#e8f3e8", "edgecolor": "#367c36"}
         else:
             label = _split_label(node, feature_names, precision=precision)

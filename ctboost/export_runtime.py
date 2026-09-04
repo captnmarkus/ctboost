@@ -21,7 +21,7 @@ class ExportedPredictor:
         if artifact_format is not None and artifact_format != JSON_PREDICTOR_FORMAT:
             raise ValueError(f"unsupported predictor format: {artifact_format!r}")
         format_version = self.payload.get("format_version")
-        if format_version is not None and int(format_version) != JSON_PREDICTOR_FORMAT_VERSION:
+        if format_version is not None and int(format_version) not in (1, JSON_PREDICTOR_FORMAT_VERSION):
             raise ValueError(f"unsupported predictor format version: {format_version!r}")
         self.objective_name = str(self.payload["objective_name"])
         self.learning_rate = float(self.payload["learning_rate"])
@@ -30,6 +30,12 @@ class ExportedPredictor:
             [] if tree_learning_rates is None else [float(value) for value in tree_learning_rates]
         )
         self.prediction_dimension = int(self.payload["prediction_dimension"])
+        self.multi_strategy = str(self.payload.get("multi_strategy", "one_output_per_tree"))
+        if self.multi_strategy not in {"one_output_per_tree", "multi_output_tree"}:
+            raise ValueError("unsupported predictor multi_strategy")
+        self._vector_leaves = self.multi_strategy == "multi_output_tree"
+        if self._vector_leaves and (format_version != 2 or self.prediction_dimension <= 1):
+            raise ValueError("vector predictor requires format_version 2 and multiple outputs")
         self.base_score = [
             float(value)
             for value in self.payload.get("base_score", [0.0] * self.prediction_dimension)
@@ -40,6 +46,20 @@ class ExportedPredictor:
         self.expects_prepared_features = bool(self.payload["expects_prepared_features"])
         self.quantization_schema = dict(self.payload["quantization_schema"])
         self.trees = list(self.payload["trees"])
+        if self._vector_leaves:
+            if self.objective_name.lower() not in {"multiclass", "softmax", "softmaxloss"}:
+                raise ValueError("vector predictor requires a multiclass objective")
+            if self.tree_learning_rates and len(self.tree_learning_rates) != len(self.trees):
+                raise ValueError("vector predictor learning rates must match its physical tree count")
+            for tree in self.trees:
+                for node in tree["nodes"]:
+                    weights = node.get("leaf_weights")
+                    if not isinstance(weights, list) or len(weights) != self.prediction_dimension:
+                        raise ValueError("vector predictor leaf_weights dimension mismatch")
+                    if not all(math.isfinite(float(weight)) for weight in weights):
+                        raise ValueError("vector predictor leaf_weights must be finite")
+        elif any(node.get("leaf_weights") for tree in self.trees for node in tree["nodes"]):
+            raise ValueError("vector leaf_weights require multi_strategy='multi_output_tree'")
         class_labels = self.payload.get("class_labels")
         self.class_labels = None if class_labels is None else list(class_labels)
         manifest = self.payload.get("inference_manifest")
@@ -96,6 +116,8 @@ class ExportedPredictor:
         feature_has_missing_values = bool(missing_value_mask[feature_index])
         resolved_nan_mode = int(nan_modes[feature_index]) if nan_modes else default_nan_mode
         if self._is_nan(resolved_value):
+            if resolved_nan_mode == 0:
+                raise ValueError("NaN values are not allowed when nan_mode='Forbidden'")
             return self._missing_bin_index(
                 bins_for_feature,
                 feature_has_missing_values,
@@ -130,7 +152,7 @@ class ExportedPredictor:
         scores = list(self.base_score)
         for tree_index, tree in enumerate(self.trees):
             nodes = tree["nodes"]
-            iteration_index = tree_index // self.prediction_dimension
+            iteration_index = tree_index if self._vector_leaves else tree_index // self.prediction_dimension
             tree_learning_rate = (
                 self.tree_learning_rates[iteration_index]
                 if iteration_index < len(self.tree_learning_rates)
@@ -148,7 +170,11 @@ class ExportedPredictor:
                 else:
                     go_left = split_bin <= int(node["split_bin_index"])
                 node_index = int(node["left_child"] if go_left else node["right_child"])
-            scores[tree_index % self.prediction_dimension] += tree_learning_rate * float(node["leaf_weight"])
+            if self._vector_leaves:
+                for output_index, weight in enumerate(node["leaf_weights"]):
+                    scores[output_index] += tree_learning_rate * float(weight)
+            else:
+                scores[tree_index % self.prediction_dimension] += tree_learning_rate * float(node["leaf_weight"])
         return scores[0] if self.prediction_dimension == 1 else scores
 
     def _coerce_rows(self, data: Any) -> tuple[list[list[Any]], bool]:

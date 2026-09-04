@@ -39,6 +39,7 @@ struct Node {
   int left_child{-1};
   int right_child{-1};
   float leaf_weight{0.0F};
+  std::vector<float> leaf_weights;
   std::array<std::uint8_t, kMaxCategoricalRouteBins> left_categories{};
 };
 
@@ -102,9 +103,12 @@ class Tree {
   void AccumulateBinnedContributions(const HistMatrix& hist,
                                      std::size_t row,
                                      float scale,
-                                     std::vector<float>& row_contributions) const;
+                                     std::vector<float>& row_contributions,
+                                     int output_index = -1) const;
   std::vector<float> Predict(const Pool& pool) const;
   void SetLeafWeight(std::size_t node_index, float leaf_weight);
+  void SetLeafWeights(std::size_t node_index, std::vector<float> leaf_weights);
+  bool is_vector_leaf() const noexcept;
   void SetQuantizationSchema(const QuantizationSchemaPtr& quantization_schema);
   const QuantizationSchemaPtr& shared_quantization_schema() const noexcept;
   void LoadState(std::vector<Node> nodes,

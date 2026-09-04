@@ -181,7 +181,13 @@ class Booster:
             self._handle.predict_leaf_indices(pool._handle, _resolve_num_iteration(num_iteration)),
             dtype=np.int32,
         )
-        tree_count = 0 if pool.num_rows == 0 else values.size // pool.num_rows
+        if pool.num_rows == 0:
+            iterations = self.num_iterations_trained
+            if num_iteration is not None and int(num_iteration) > 0:
+                iterations = min(iterations, int(num_iteration))
+            tree_count = iterations * (1 if self.multi_strategy == "multi_output_tree" else self.prediction_dimension)
+        else:
+            tree_count = values.size // pool.num_rows
         return values.reshape((pool.num_rows, tree_count))
 
     def predict_contrib(self, data: Any, *, num_iteration: Optional[int] = None) -> np.ndarray:
@@ -535,6 +541,8 @@ class Booster:
             for node in tree_state.get("nodes", []):
                 if bool(node.get("is_leaf", False)):
                     node["leaf_weight"] = float(node["leaf_weight"]) * scale
+                    if "leaf_weights" in node:
+                        node["leaf_weights"] = [float(value) * scale for value in node["leaf_weights"]]
         state["learning_rate"] = resolved_learning_rate
         self._handle = _core.GradientBooster.from_state(state)
 
@@ -569,6 +577,11 @@ class Booster:
     @property
     def prediction_dimension(self) -> int:
         return int(self._handle.prediction_dimension())
+
+    @property
+    def multi_strategy(self) -> str:
+        """Multiclass tree layout: scalar class trees or one vector tree per round."""
+        return str(self._handle.multi_strategy())
 
     @property
     def num_iterations_trained(self) -> int:

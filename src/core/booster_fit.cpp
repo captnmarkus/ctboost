@@ -229,6 +229,7 @@ void GradientBooster::FitWithObjective(Pool& pool,
   context.eval_metric = eval_metric_.get();
   context.trees = &trees_;
   context.tree_learning_rates = &tree_learning_rates_;
+  context.base_score = &base_score_;
   context.loss_history = &loss_history_;
   context.eval_loss_history = &eval_loss_history_;
   context.feature_importance_sums = &feature_importance_sums_;
@@ -238,6 +239,8 @@ void GradientBooster::FitWithObjective(Pool& pool,
   context.best_score = &best_score_;
   context.rng_state = &rng_state_;
   context.prediction_dimension = prediction_dimension_;
+  context.vector_leaves = multi_strategy_ == "multi_output_tree";
+  context.trees_per_iteration = trees_per_iteration();
   context.num_classes = num_classes_;
   context.iterations = iterations_;
   context.learning_rate = learning_rate_;
@@ -284,7 +287,7 @@ void GradientBooster::FitWithObjective(Pool& pool,
     best_iteration_ = state.completed_iterations > 0 ? state.completed_iterations - 1 : -1;
   } else if (state.early_stopped && best_iteration_ >= 0) {
     const std::size_t retained_iterations = static_cast<std::size_t>(best_iteration_ + 1);
-    trees_.resize(retained_iterations * static_cast<std::size_t>(prediction_dimension_));
+    trees_.resize(retained_iterations * static_cast<std::size_t>(trees_per_iteration()));
     if (tree_learning_rates_.size() > retained_iterations) {
       tree_learning_rates_.resize(retained_iterations);
     }

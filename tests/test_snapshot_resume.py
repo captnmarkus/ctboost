@@ -102,6 +102,49 @@ def test_resume_from_snapshot_rejects_config_drift(tmp_path: Path):
             resume_from_snapshot=True,
         )
 
+
+@pytest.mark.parametrize("changed_contract", ["config", "schema", "schedule"])
+def test_completed_snapshot_still_validates_resume_contract(tmp_path: Path, changed_contract):
+    X = np.arange(80, dtype=np.float32).reshape(40, 2)
+    y = X[:, 0]
+    pool = ctboost.Pool(X, y, feature_names=["first", "second"])
+    params = {"objective": "RMSE", "alpha": 1.0, "max_depth": 2}
+    schedule = [0.2, 0.1]
+    model = ctboost.train(pool, params, num_boost_round=2, learning_rate_schedule=schedule)
+    snapshot_path = tmp_path / "completed.ctb"
+    model.save_model(snapshot_path)
+
+    if changed_contract == "config":
+        params = {**params, "max_depth": 3}
+    elif changed_contract == "schema":
+        pool = ctboost.Pool(X, y, feature_names=["renamed", "second"])
+    else:
+        schedule = [0.3, 0.1]
+
+    with pytest.raises(ValueError, match="resume_from_snapshot"):
+        ctboost.train(
+            pool,
+            params,
+            num_boost_round=2,
+            learning_rate_schedule=schedule,
+            resume_from_snapshot=snapshot_path,
+        )
+
+
+def test_completed_snapshot_returns_unchanged_model_after_validation(tmp_path: Path):
+    X = np.arange(80, dtype=np.float32).reshape(40, 2)
+    pool = ctboost.Pool(X, X[:, 0])
+    params = {"objective": "RMSE", "alpha": 1.0, "max_depth": 2}
+    model = ctboost.train(pool, params, num_boost_round=2)
+    snapshot_path = tmp_path / "completed.ctb"
+    model.save_model(snapshot_path)
+
+    resumed = ctboost.train(pool, params, num_boost_round=2, resume_from_snapshot=snapshot_path)
+
+    assert resumed.num_iterations_trained == model.num_iterations_trained
+    assert resumed.evals_result_ == model.evals_result_
+    np.testing.assert_array_equal(resumed.predict(pool), model.predict(pool))
+
 def test_estimator_resume_from_snapshot_matches_explicit_warm_start(tmp_path: Path):
     X, y = make_regression(
         n_samples=180,

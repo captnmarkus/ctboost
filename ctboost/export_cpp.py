@@ -6,6 +6,8 @@ import json
 import math
 from typing import Any, Iterable, Mapping, Sequence
 
+from .export_payload import _scalar_export_payload
+
 
 def _float_literal(value: Any) -> str:
     resolved = float(value)
@@ -17,7 +19,10 @@ def _float_literal(value: Any) -> str:
             if resolved > 0.0
             else "-std::numeric_limits<float>::infinity()"
         )
-    return format(resolved, ".9g") + "f"
+    literal = format(resolved, ".9g")
+    if "." not in literal and "e" not in literal.lower():
+        literal += ".0"
+    return literal + "f"
 
 
 def _integer_literal(value: Any) -> str:
@@ -75,6 +80,7 @@ def _flatten_model(payload: Mapping[str, Any]) -> Mapping[str, Any]:
 def standalone_cpp_source(payload: Mapping[str, Any]) -> str:
     """Generate one C++17 translation unit with a small stable C ABI."""
 
+    payload = _scalar_export_payload(payload)
     flattened = _flatten_model(payload)
     schema = flattened["schema"]
     nodes = flattened["nodes"]

@@ -80,6 +80,7 @@ struct FitLoopContext {
   MetricFunction* eval_metric{nullptr};
   std::vector<Tree>* trees{nullptr};
   std::vector<double>* tree_learning_rates{nullptr};
+  const std::vector<double>* base_score{nullptr};
   std::vector<double>* loss_history{nullptr};
   std::vector<double>* eval_loss_history{nullptr};
   std::vector<double>* feature_importance_sums{nullptr};
@@ -89,6 +90,8 @@ struct FitLoopContext {
   double* best_score{nullptr};
   std::uint64_t* rng_state{nullptr};
   int prediction_dimension{1};
+  bool vector_leaves{false};
+  int trees_per_iteration{1};
   int num_classes{1};
   int iterations{0};
   double learning_rate{0.0};

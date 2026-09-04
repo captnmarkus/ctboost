@@ -129,6 +129,16 @@ def _train_with_python_surface(
         monitor_history = []
         best_iteration = begin_iteration - 1 if begin_iteration > 0 else -1
         best_score = float(evals_result["learn"]["loss"][best_iteration]) if best_iteration >= 0 and evals_result["learn"]["loss"] else None
+    snapshot_best_dart_ensemble = (
+        booster.boosting_type() == "DART"
+        and native_params["early_stopping"] > 0
+        and metric_runtime["primary_eval_name"] is not None
+    )
+    best_dart_state = (
+        dict(booster.export_state())
+        if snapshot_best_dart_ensemble and best_iteration >= 0
+        else None
+    )
     wrapped_booster._set_training_metadata(
         evals_result=evals_result,
         eval_loss_history=monitor_history,
@@ -209,6 +219,8 @@ def _train_with_python_surface(
             if improved:
                 best_iteration = current_iteration
                 best_score = current_score
+                if snapshot_best_dart_ensemble:
+                    best_dart_state = dict(booster.export_state())
             elif current_iteration - best_iteration >= native_params["early_stopping"]:
                 stopped_by_early_stopping = native_params["early_stopping"] > 0
         else:
@@ -252,6 +264,8 @@ def _train_with_python_surface(
                         value=callback_stop_requested,
                     )
                 )
+        if stopped_by_early_stopping or callback_stop_requested:
+            break
         next_iteration = current_iteration + 1
         if resolved_learning_rate_schedule is not None and next_iteration < end_iteration:
             wrapped_booster.set_learning_rate(
@@ -261,11 +275,13 @@ def _train_with_python_surface(
                     total_iterations=end_iteration,
                 )
             )
-        if stopped_by_early_stopping or callback_stop_requested:
-            break
     booster = wrapped_booster._handle
     booster.set_iterations(iterations)
     if native_params["early_stopping"] > 0 and best_iteration >= 0 and best_iteration + 1 < booster.num_iterations_trained():
+        if best_dart_state is not None:
+            # Later DART rounds rescale earlier trees, so truncating the current
+            # ensemble cannot recover the weights evaluated at the best round.
+            booster.load_state(best_dart_state)
         wrapped_booster._handle = _prune_booster_to_best_iteration(booster, best_iteration)
         booster = wrapped_booster._handle
         retained_iterations = best_iteration + 1

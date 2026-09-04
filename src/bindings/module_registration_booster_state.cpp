@@ -16,6 +16,13 @@ void BindGradientBoosterStateMethods(py::class_<ctboost::GradientBooster>& boost
       .def("load_state",
            [](ctboost::GradientBooster& booster, const py::dict& state)
                -> ctboost::GradientBooster& {
+             ValidateBoosterStateFormat(state);
+             const std::string strategy = state.contains("multi_strategy")
+                 ? py::cast<std::string>(state["multi_strategy"]) : "one_output_per_tree";
+             if (strategy != booster.multi_strategy() ||
+                 py::cast<int>(state["num_classes"]) != booster.num_classes()) {
+               throw std::invalid_argument("loaded state must match model multi_strategy and num_classes");
+             }
              const bool requested_gpu =
                  py::cast<std::string>(state["task_type"]) == "GPU" ||
                  py::cast<std::string>(state["task_type"]) == "gpu";

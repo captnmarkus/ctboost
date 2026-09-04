@@ -15,6 +15,8 @@ void BindGradientBoosterAccessors(py::class_<ctboost::GradientBooster>& booster_
       .def("best_iteration", &ctboost::GradientBooster::best_iteration)
       .def("num_classes", &ctboost::GradientBooster::num_classes)
       .def("prediction_dimension", &ctboost::GradientBooster::prediction_dimension)
+      .def("multi_strategy", &ctboost::GradientBooster::multi_strategy)
+      .def("trees_per_iteration", &ctboost::GradientBooster::trees_per_iteration)
       .def("objective_name", &ctboost::GradientBooster::objective_name)
       .def("eval_metric_name", &ctboost::GradientBooster::eval_metric_name)
       .def("iterations", &ctboost::GradientBooster::iterations)

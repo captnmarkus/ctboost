@@ -12,7 +12,10 @@ def _prune_booster_to_best_iteration(handle: Any, best_iteration: int) -> Any:
     state = dict(handle.export_state())
     retained_iterations = int(best_iteration) + 1
     prediction_dimension = int(handle.prediction_dimension())
-    state["trees"] = state["trees"][: retained_iterations * prediction_dimension]
+    trees_per_iteration = (
+        1 if state.get("multi_strategy") == "multi_output_tree" else prediction_dimension
+    )
+    state["trees"] = state["trees"][: retained_iterations * trees_per_iteration]
     if "tree_learning_rates" in state:
         state["tree_learning_rates"] = state["tree_learning_rates"][:retained_iterations]
     state["loss_history"] = state["loss_history"][:retained_iterations]

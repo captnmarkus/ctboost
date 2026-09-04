@@ -12,6 +12,15 @@ from . import _core
 JSON_MODEL_SUFFIXES = {".json", ".ctb", ".ctboost"}
 PICKLE_MODEL_SUFFIXES = {".pkl", ".pickle"}
 MODEL_SCHEMA_VERSION = 1
+VECTOR_MODEL_SCHEMA_VERSION = 2
+
+
+def _model_schema_version(state: dict[str, Any]) -> int:
+    return (
+        VECTOR_MODEL_SCHEMA_VERSION
+        if state.get("multi_strategy") == "multi_output_tree"
+        else MODEL_SCHEMA_VERSION
+    )
 
 
 def _serialize_json_value(value: Any) -> Any:
@@ -73,10 +82,11 @@ def _booster_document(
     feature_pipeline_state: Optional[Dict[str, Any]] = None,
     training_state: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
+    state = dict(handle.export_state())
     document = {
-        "schema_version": MODEL_SCHEMA_VERSION,
+        "schema_version": _model_schema_version(state),
         "artifact_type": "ctboost.booster",
-        "booster_state": dict(handle.export_state()),
+        "booster_state": state,
     }
     if feature_pipeline_state is not None:
         document["feature_pipeline_state"] = _serialize_json_value(feature_pipeline_state)
@@ -86,7 +96,7 @@ def _booster_document(
 
 
 def _booster_from_document(document: Dict[str, Any]) -> Any:
-    if document.get("schema_version") != MODEL_SCHEMA_VERSION:
+    if document.get("schema_version") not in {MODEL_SCHEMA_VERSION, VECTOR_MODEL_SCHEMA_VERSION}:
         raise ValueError("unsupported CTBoost model schema version")
     if document.get("artifact_type") != "ctboost.booster":
         raise ValueError("JSON model does not contain a CTBoost booster")
@@ -134,7 +144,7 @@ def load_booster_document(path: Path) -> Dict[str, Any]:
         else:
             raise TypeError("serialized model does not contain a CTBoost booster")
 
-    if document.get("schema_version") != MODEL_SCHEMA_VERSION:
+    if document.get("schema_version") not in {MODEL_SCHEMA_VERSION, VECTOR_MODEL_SCHEMA_VERSION}:
         raise ValueError("unsupported CTBoost model schema version")
     if document.get("artifact_type") != "ctboost.booster":
         raise ValueError("JSON model does not contain a CTBoost booster")
@@ -162,7 +172,7 @@ def save_estimator(
     if resolved_format == "json":
         serializable_state = {key: value for key, value in fitted_state.items() if key != "python_object"}
         document = {
-            "schema_version": MODEL_SCHEMA_VERSION,
+            "schema_version": _model_schema_version(serializable_state.get("booster_state", {})),
             "artifact_type": "ctboost.estimator",
             "estimator_class": estimator_class,
             "init_params": init_params,
@@ -185,7 +195,7 @@ def load_estimator_document(path: Path) -> Optional[Dict[str, Any]]:
 
     with path.open("r", encoding="utf-8") as stream:
         document = json.load(stream)
-    if document.get("schema_version") != MODEL_SCHEMA_VERSION:
+    if document.get("schema_version") not in {MODEL_SCHEMA_VERSION, VECTOR_MODEL_SCHEMA_VERSION}:
         raise ValueError("unsupported CTBoost model schema version")
     if document.get("artifact_type") != "ctboost.estimator":
         raise ValueError("JSON model does not contain a CTBoost estimator")

@@ -22,11 +22,19 @@ MODEL = {payload_literal}
 
 ARTIFACT_FORMAT = MODEL.get("format", "ctboost-json-predictor")
 ARTIFACT_FORMAT_VERSION = int(MODEL.get("format_version", 0))
+if ARTIFACT_FORMAT != "ctboost-json-predictor" or ARTIFACT_FORMAT_VERSION not in (0, 1, 2):
+    raise ValueError("unsupported predictor format or version")
 CTBOOST_VERSION = MODEL["ctboost_version"]
 OBJECTIVE_NAME = MODEL["objective_name"]
 LEARNING_RATE = float(MODEL["learning_rate"])
 TREE_LEARNING_RATES = [float(value) for value in MODEL.get("tree_learning_rates", [])]
 PREDICTION_DIMENSION = int(MODEL["prediction_dimension"])
+MULTI_STRATEGY = MODEL.get("multi_strategy", "one_output_per_tree")
+VECTOR_LEAVES = MULTI_STRATEGY == "multi_output_tree"
+if MULTI_STRATEGY not in {{"one_output_per_tree", "multi_output_tree"}}:
+    raise ValueError("unsupported predictor multi_strategy")
+if VECTOR_LEAVES and (ARTIFACT_FORMAT_VERSION != 2 or PREDICTION_DIMENSION <= 1):
+    raise ValueError("vector predictor requires format_version 2 and multiple outputs")
 BASE_SCORE = [float(value) for value in MODEL.get("base_score", [0.0] * PREDICTION_DIMENSION)]
 if len(BASE_SCORE) != PREDICTION_DIMENSION:
     raise ValueError("predictor base_score dimension mismatch")
@@ -34,6 +42,20 @@ NUM_FEATURES = int(MODEL["num_features"])
 EXPECTS_PREPARED_FEATURES = bool(MODEL["expects_prepared_features"])
 QUANTIZATION_SCHEMA = MODEL["quantization_schema"]
 TREES = MODEL["trees"]
+if VECTOR_LEAVES:
+    if OBJECTIVE_NAME.lower() not in {{"multiclass", "softmax", "softmaxloss"}}:
+        raise ValueError("vector predictor requires a multiclass objective")
+    if TREE_LEARNING_RATES and len(TREE_LEARNING_RATES) != len(TREES):
+        raise ValueError("vector predictor learning rates must match its physical tree count")
+    for tree in TREES:
+        for node in tree["nodes"]:
+            weights = node.get("leaf_weights")
+            if not isinstance(weights, list) or len(weights) != PREDICTION_DIMENSION:
+                raise ValueError("vector predictor leaf_weights dimension mismatch")
+            if not all(math.isfinite(float(weight)) for weight in weights):
+                raise ValueError("vector predictor leaf_weights must be finite")
+elif any(node.get("leaf_weights") for tree in TREES for node in tree["nodes"]):
+    raise ValueError("vector leaf_weights require multi_strategy='multi_output_tree'")
 CLASS_LABELS = MODEL.get("class_labels")
 INFERENCE_MANIFEST = MODEL.get("inference_manifest")
 
@@ -80,6 +102,8 @@ def _bin_value(feature_index, value):
         int(nan_modes[feature_index]) if nan_modes else default_nan_mode
     )
     if _is_nan(resolved_value):
+        if resolved_nan_mode == 0:
+            raise ValueError("NaN values are not allowed when nan_mode='Forbidden'")
         return _missing_bin_index(
             bins_for_feature,
             feature_has_missing_values,
@@ -117,7 +141,7 @@ def _row_scores(row):
     scores = list(BASE_SCORE)
     for tree_index, tree in enumerate(TREES):
         nodes = tree["nodes"]
-        iteration_index = tree_index // PREDICTION_DIMENSION
+        iteration_index = tree_index if VECTOR_LEAVES else tree_index // PREDICTION_DIMENSION
         tree_learning_rate = (
             TREE_LEARNING_RATES[iteration_index]
             if iteration_index < len(TREE_LEARNING_RATES)
@@ -135,7 +159,11 @@ def _row_scores(row):
             else:
                 go_left = split_bin <= int(node["split_bin_index"])
             node_index = int(node["left_child"] if go_left else node["right_child"])
-        scores[tree_index % PREDICTION_DIMENSION] += tree_learning_rate * float(node["leaf_weight"])
+        if VECTOR_LEAVES:
+            for output_index, weight in enumerate(node["leaf_weights"]):
+                scores[output_index] += tree_learning_rate * float(weight)
+        else:
+            scores[tree_index % PREDICTION_DIMENSION] += tree_learning_rate * float(node["leaf_weight"])
     return scores[0] if PREDICTION_DIMENSION == 1 else scores
 
 

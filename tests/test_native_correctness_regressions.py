@@ -12,6 +12,68 @@ def _multiclass_logloss(raw_predictions, labels):
     return float(-np.mean(np.log(np.clip(target_probabilities, 1e-12, 1.0))))
 
 
+@pytest.mark.parametrize("objective,strategy", [
+    ("RMSE", "one_output_per_tree"),
+    ("MultiClass", "one_output_per_tree"),
+    ("MultiClass", "multi_output_tree"),
+])
+def test_dart_dropping_all_trees_uses_exact_base_score_and_baseline(objective, strategy):
+    rng = np.random.default_rng(418)
+    X = rng.normal(size=(180, 5)).astype(np.float32)
+    multiclass = objective == "MultiClass"
+    dimension = 3 if multiclass else 1
+    labels = (
+        np.argmax(X[:, :3], axis=1) if multiclass else 2 * X[:, 0] - X[:, 1]
+    ).astype(np.float32)
+    base_score = [0.22589735785534915, 0.12509265873338382, -0.35099001658873275] if multiclass else [0.22589735785534915]
+    baseline = rng.normal(scale=0.05, size=(len(X), dimension)).astype(np.float32)
+    if not multiclass:
+        baseline = baseline[:, 0]
+    pool = ctboost.Pool(X, labels, baseline=baseline)
+    captured_predictions = []
+
+    def objective_callback(prediction, label):
+        captured_predictions.append(prediction.copy())
+        gradient, hessian = ctboost._core._debug_compute_objective(
+            objective, prediction.ravel(), label, num_classes=dimension
+        )
+        return gradient.reshape(prediction.shape), hessian.reshape(prediction.shape)
+
+    native = ctboost._core.GradientBooster(
+        objective=objective, num_classes=dimension, multi_strategy=strategy,
+        iterations=4, alpha=1.0, max_depth=3, learning_rate=0.15,
+        boosting_type="DART", drop_rate=1.0, skip_drop=0.0,
+        base_score=base_score,
+    )
+    native.fit_custom_objective(pool._handle, objective_callback)
+
+    expected = baseline + np.asarray(base_score, dtype=np.float32)
+    assert len(captured_predictions) == 4
+    for prediction in captured_predictions:
+        np.testing.assert_array_equal(prediction, expected)
+
+
+@pytest.mark.parametrize("strategy", ["one_output_per_tree", "multi_output_tree"])
+def test_dart_warm_start_keeps_topology_when_all_prior_trees_are_dropped(strategy):
+    rng = np.random.default_rng(418)
+    X = rng.normal(size=(180, 5)).astype(np.float32)
+    labels = np.argmax(
+        np.column_stack([X[:, 0] - X[:, 1], X[:, 1], -X[:, 0]]), axis=1
+    ).astype(np.float32)
+    pool = ctboost.Pool(X, labels)
+    params = {
+        "objective": "MultiClass", "num_classes": 3, "multi_strategy": strategy,
+        "alpha": 1.0, "max_depth": 3, "learning_rate": 0.15, "random_seed": 11,
+        "boosting_type": "DART", "drop_rate": 1.0, "skip_drop": 0.0,
+    }
+    full = ctboost.train(pool, params, num_boost_round=4)
+    partial = ctboost.train(pool, params, num_boost_round=2)
+    resumed = ctboost.train(pool, {}, num_boost_round=2, init_model=partial)
+
+    assert full._handle.export_state()["trees"] == resumed._handle.export_state()["trees"]
+    np.testing.assert_array_equal(full.predict(pool), resumed.predict(pool))
+
+
 def test_dart_training_history_matches_stored_single_output_model():
     rng = np.random.default_rng(123)
     data = rng.normal(size=(200, 6)).astype(np.float32)

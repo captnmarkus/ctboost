@@ -54,6 +54,13 @@ ctboost::QuantizationSchemaPtr QuantizationSchemaFromTreeStateDict(const py::dic
 }
 
 py::tuple NodeToState(const ctboost::Node& node) {
+  if (!node.leaf_weights.empty()) {
+    return py::make_tuple(node.is_leaf, node.is_categorical_split, node.split_feature_id,
+                          node.split_bin_index, node.left_child, node.right_child,
+                          node.leaf_weight,
+                          std::vector<std::uint8_t>(node.left_categories.begin(), node.left_categories.end()),
+                          node.leaf_weights);
+  }
   return py::make_tuple(node.is_leaf,
                         node.is_categorical_split,
                         node.split_feature_id,
@@ -67,7 +74,7 @@ py::tuple NodeToState(const ctboost::Node& node) {
 
 ctboost::Node NodeFromState(const py::handle& handle) {
   const py::tuple state = handle.cast<py::tuple>();
-  if (state.size() != 8) {
+  if (state.size() != 8 && state.size() != 9) {
     throw std::runtime_error("invalid serialized tree node state");
   }
 
@@ -79,6 +86,7 @@ ctboost::Node NodeFromState(const py::handle& handle) {
   node.left_child = state[4].cast<int>();
   node.right_child = state[5].cast<int>();
   node.leaf_weight = state[6].cast<float>();
+  if (state.size() == 9) node.leaf_weights = state[8].cast<std::vector<float>>();
 
   const auto categories = state[7].cast<std::vector<std::uint8_t>>();
   if (categories.size() != ctboost::kMaxCategoricalRouteBins) {
@@ -97,6 +105,7 @@ py::dict NodeToStateDict(const ctboost::Node& node) {
   state["left_child"] = node.left_child;
   state["right_child"] = node.right_child;
   state["leaf_weight"] = node.leaf_weight;
+  if (!node.leaf_weights.empty()) state["leaf_weights"] = node.leaf_weights;
   state["left_categories"] =
       std::vector<std::uint8_t>(node.left_categories.begin(), node.left_categories.end());
   return state;
@@ -112,6 +121,9 @@ ctboost::Node NodeFromStateDict(const py::handle& handle) {
   node.left_child = py::cast<int>(state["left_child"]);
   node.right_child = py::cast<int>(state["right_child"]);
   node.leaf_weight = py::cast<float>(state["leaf_weight"]);
+  if (state.contains("leaf_weights")) {
+    node.leaf_weights = py::cast<std::vector<float>>(state["leaf_weights"]);
+  }
 
   const auto categories = py::cast<std::vector<std::uint8_t>>(state["left_categories"]);
   if (categories.size() != ctboost::kMaxCategoricalRouteBins) {

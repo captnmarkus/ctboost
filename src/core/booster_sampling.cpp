@@ -102,8 +102,16 @@ void ScaleTreeLeafWeights(Tree& tree, double scale) {
     if (!nodes[node_index].is_leaf) {
       continue;
     }
-    tree.SetLeafWeight(node_index,
-                       static_cast<float>(static_cast<double>(nodes[node_index].leaf_weight) * scale));
+    if (tree.is_vector_leaf()) {
+      std::vector<float> leaf_weights = nodes[node_index].leaf_weights;
+      for (float& weight : leaf_weights) {
+        weight = static_cast<float>(static_cast<double>(weight) * scale);
+      }
+      tree.SetLeafWeights(node_index, std::move(leaf_weights));
+    } else {
+      tree.SetLeafWeight(node_index,
+                         static_cast<float>(static_cast<double>(nodes[node_index].leaf_weight) * scale));
+    }
   }
 }
 

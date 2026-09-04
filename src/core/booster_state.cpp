@@ -32,6 +32,30 @@ void GradientBooster::LoadState(std::vector<Tree> trees,
                                 bool use_gpu,
                                 std::uint64_t rng_state,
                                 std::vector<double> base_score) {
+  const bool vector_leaves = multi_strategy_ == "multi_output_tree";
+  if (vector_leaves && use_gpu) {
+    throw std::invalid_argument("multi_output_tree currently supports CPU prediction only");
+  }
+  if (trees.size() % static_cast<std::size_t>(trees_per_iteration()) != 0U) {
+    throw std::invalid_argument("serialized tree count must match trees per iteration");
+  }
+  for (const Tree& tree : trees) {
+    if (vector_leaves && tree.nodes().empty()) {
+      throw std::invalid_argument("serialized vector trees must contain nodes");
+    }
+    for (const Node& node : tree.nodes()) {
+      const std::size_t expected_width = vector_leaves
+          ? static_cast<std::size_t>(prediction_dimension_) : 0U;
+      if (node.leaf_weights.size() != expected_width) {
+        throw std::invalid_argument("serialized leaf_weights dimension must match multi_strategy and num_classes");
+      }
+      for (const float weight : node.leaf_weights) {
+        if (!std::isfinite(weight)) {
+          throw std::invalid_argument("serialized leaf_weights must be finite");
+        }
+      }
+    }
+  }
   trees_ = std::move(trees);
   tree_learning_rates_ = std::move(tree_learning_rates);
   if (quantization_schema == nullptr && !trees_.empty()) {

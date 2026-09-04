@@ -161,7 +161,8 @@ void BindGradientBooster(py::module_& m) {
                     bool,
                     bool,
                     std::vector<double>,
-                    int>(),
+                    int,
+                    std::string>(),
            py::arg("objective") = "RMSE",
            py::arg("iterations") = 100,
            py::arg("learning_rate") = 0.1,
@@ -212,7 +213,8 @@ void BindGradientBooster(py::module_& m) {
            py::arg("verbose") = false,
            py::arg("boost_from_average") = true,
            py::arg("base_score") = std::vector<double>{},
-           py::arg("leaf_estimation_iterations") = 1)
+           py::arg("leaf_estimation_iterations") = 1,
+           py::arg("multi_strategy") = "one_output_per_tree")
       .def("fit",
            [](ctboost::GradientBooster& booster,
               py::object pool_obj,

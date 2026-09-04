@@ -57,6 +57,11 @@ def _resolve_native_training_params(
     )
     params = {
         "objective": objective,
+        "multi_strategy": str(config.get(
+            "multi_strategy",
+            "one_output_per_tree" if init_state is None
+            else init_state.get("multi_strategy", "one_output_per_tree"),
+        )),
         "learning_rate": float(config.get("learning_rate", 0.1 if init_state is None else init_state["learning_rate"])),
         "max_depth": int(config.get("max_depth", 6 if init_state is None else init_state["max_depth"])),
         "alpha": float(config.get("alpha", 0.05 if init_state is None else init_state["alpha"])),

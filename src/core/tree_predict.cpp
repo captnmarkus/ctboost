@@ -42,7 +42,8 @@ void AccumulateContiguousContributions(const std::vector<Node>& nodes,
                                        std::size_t num_rows,
                                        std::size_t row,
                                        float scale,
-                                       std::vector<float>& row_contributions) {
+                                       std::vector<float>& row_contributions,
+                                       int output_index) {
   std::size_t path_length = 0;
   int node_index = 0;
   while (!nodes[static_cast<std::size_t>(node_index)].is_leaf) {
@@ -57,7 +58,9 @@ void AccumulateContiguousContributions(const std::vector<Node>& nodes,
   }
 
   const float leaf_value =
-      scale * nodes[static_cast<std::size_t>(node_index)].leaf_weight;
+      scale * (output_index < 0
+                   ? nodes[static_cast<std::size_t>(node_index)].leaf_weight
+                   : nodes[static_cast<std::size_t>(node_index)].leaf_weights[static_cast<std::size_t>(output_index)]);
   if (path_length == 0) {
     row_contributions.back() += leaf_value;
     return;
@@ -141,7 +144,8 @@ void Tree::AccumulateBinnedContributions(
     const HistMatrix& hist,
     std::size_t row,
     float scale,
-    std::vector<float>& row_contributions) const {
+    std::vector<float>& row_contributions,
+    int output_index) const {
   if (row_contributions.empty()) {
     return;
   }
@@ -156,7 +160,8 @@ void Tree::AccumulateBinnedContributions(
                                       hist.num_rows,
                                       row,
                                       scale,
-                                      row_contributions);
+                                      row_contributions,
+                                      output_index);
     return;
   }
   if (hist.bin_storage_bytes() == 2 &&
@@ -166,7 +171,8 @@ void Tree::AccumulateBinnedContributions(
                                       hist.num_rows,
                                       row,
                                       scale,
-                                      row_contributions);
+                                      row_contributions,
+                                      output_index);
     return;
   }
 
@@ -183,7 +189,8 @@ void Tree::AccumulateBinnedContributions(
                      : (bin <= node.split_bin_index ? node.left_child : node.right_child);
   }
 
-  const float leaf_value = scale * nodes_[node_index].leaf_weight;
+  const float leaf_value = scale * (output_index < 0 ? nodes_[node_index].leaf_weight
+      : nodes_[node_index].leaf_weights[static_cast<std::size_t>(output_index)]);
   if (path_features.empty()) {
     row_contributions.back() += leaf_value;
     return;
@@ -243,6 +250,20 @@ void Tree::SetLeafWeight(std::size_t node_index, float leaf_weight) {
     throw std::invalid_argument("leaf weight can only be set on leaf nodes");
   }
   nodes_[node_index].leaf_weight = leaf_weight;
+}
+
+void Tree::SetLeafWeights(std::size_t node_index, std::vector<float> leaf_weights) {
+  if (node_index >= nodes_.size()) {
+    throw std::out_of_range("node index is out of bounds");
+  }
+  if (!nodes_[node_index].is_leaf || leaf_weights.empty()) {
+    throw std::invalid_argument("nonempty vector weights can only be set on leaf nodes");
+  }
+  nodes_[node_index].leaf_weights = std::move(leaf_weights);
+}
+
+bool Tree::is_vector_leaf() const noexcept {
+  return !nodes_.empty() && !nodes_.front().leaf_weights.empty();
 }
 
 void Tree::SetQuantizationSchema(const QuantizationSchemaPtr& quantization_schema) {

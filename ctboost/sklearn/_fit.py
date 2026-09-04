@@ -164,6 +164,7 @@ class _BaseFitMixin:
                 "gamma": self.gamma,
                 "max_leaf_weight": self.max_leaf_weight,
                 "leaf_estimation_iterations": self.leaf_estimation_iterations,
+                "multi_strategy": self.multi_strategy,
                 "max_bins": self.max_bins,
                 "max_bin_by_feature": self.max_bin_by_feature,
                 "border_selection_method": self.border_selection_method,

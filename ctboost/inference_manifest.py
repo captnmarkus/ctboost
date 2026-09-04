@@ -13,7 +13,7 @@ from ._version import __version__
 PathLike = Union[str, Path]
 
 INFERENCE_MANIFEST_FORMAT = "ctboost-inference-manifest"
-INFERENCE_MANIFEST_SCHEMA_VERSION = 1
+INFERENCE_MANIFEST_SCHEMA_VERSION = 2
 _FINGERPRINT_PREFIX = "sha256:"
 _MODEL_IDENTITY_KEYS = (
     "objective_name",
@@ -21,6 +21,7 @@ _MODEL_IDENTITY_KEYS = (
     "tree_learning_rates",
     "base_score",
     "prediction_dimension",
+    "multi_strategy",
     "num_features",
     "quantization_schema",
     "trees",
@@ -321,10 +322,12 @@ def build_inference_manifest(
     """Build a stable, JSON-serializable inference contract for a trained model."""
     objective_name = str(scoring_payload["objective_name"])
     prediction_dimension = int(scoring_payload["prediction_dimension"])
+    vector_leaves = scoring_payload.get("multi_strategy") == "multi_output_tree"
+    trees_per_iteration = 1 if vector_leaves else prediction_dimension
     build = _build_details()
     manifest = {
         "format": INFERENCE_MANIFEST_FORMAT,
-        "schema_version": INFERENCE_MANIFEST_SCHEMA_VERSION,
+        "schema_version": INFERENCE_MANIFEST_SCHEMA_VERSION if vector_leaves else 1,
         "producer": {
             "name": "ctboost",
             "version": __version__,
@@ -342,7 +345,7 @@ def build_inference_manifest(
             "objective": objective_name,
             "tree_count": len(scoring_payload["trees"]),
             "iteration_count": len(scoring_payload.get("tree_learning_rates", []))
-            or len(scoring_payload["trees"]) // prediction_dimension,
+            or len(scoring_payload["trees"]) // trees_per_iteration,
             "prediction_dimension": prediction_dimension,
             "base_score": [float(value) for value in scoring_payload.get("base_score", ())],
         },
@@ -360,15 +363,26 @@ def build_inference_manifest(
             estimator_name=estimator_name,
         ),
     }
+    if vector_leaves:
+        expanded = artifact_kind in {"standalone_cpp", "onnx"}
+        manifest["model"].update({
+            "multi_strategy": "multi_output_tree",
+            "tree_representation": "shared_topology_vector_leaves",
+            "trees_per_iteration": 1,
+        })
+        manifest["artifact"].update({
+            "tree_representation": "expanded_scalar_trees" if expanded else "shared_topology_vector_leaves",
+            "exported_tree_count": len(scoring_payload["trees"]) * (prediction_dimension if expanded else 1),
+        })
     return validate_inference_manifest(manifest)
 
 
 def validate_inference_manifest(manifest: Mapping[str, Any]) -> dict[str, Any]:
-    """Validate and return a defensive copy of a version-1 manifest."""
+    """Validate and return a defensive copy of a supported manifest."""
     document = _json_ready(manifest)
     if document.get("format") != INFERENCE_MANIFEST_FORMAT:
         raise ValueError("not a CTBoost inference manifest")
-    if document.get("schema_version") != INFERENCE_MANIFEST_SCHEMA_VERSION:
+    if document.get("schema_version") not in (1, INFERENCE_MANIFEST_SCHEMA_VERSION):
         raise ValueError(
             "unsupported CTBoost inference manifest schema version: "
             f"{document.get('schema_version')!r}"
@@ -376,6 +390,28 @@ def validate_inference_manifest(manifest: Mapping[str, Any]) -> dict[str, Any]:
     for section in ("producer", "artifact", "model", "input", "output"):
         if not isinstance(document.get(section), dict):
             raise ValueError(f"inference manifest is missing the {section!r} section")
+    if document["schema_version"] == 2:
+        model = document["model"]
+        if (
+            model.get("multi_strategy") != "multi_output_tree"
+            or model.get("tree_representation") != "shared_topology_vector_leaves"
+            or model.get("trees_per_iteration") != 1
+            or model.get("tree_count") != model.get("iteration_count")
+            or not isinstance(model.get("tree_count"), int)
+            or model["tree_count"] < 0
+            or not isinstance(model.get("prediction_dimension"), int)
+            or model["prediction_dimension"] <= 1
+        ):
+            raise ValueError("inference manifest vector tree layout is inconsistent")
+        artifact = document["artifact"]
+        expanded = artifact.get("tree_representation") == "expanded_scalar_trees"
+        if artifact.get("tree_representation") not in {
+            "shared_topology_vector_leaves", "expanded_scalar_trees"
+        }:
+            raise ValueError("inference manifest vector artifact representation is invalid")
+        expected_count = model["tree_count"] * (model["prediction_dimension"] if expanded else 1)
+        if artifact.get("exported_tree_count") != expected_count:
+            raise ValueError("inference manifest vector exported tree count is inconsistent")
     for path, value in (
         ("producer.build_fingerprint", document["producer"].get("build_fingerprint")),
         ("model.fingerprint", document["model"].get("fingerprint")),

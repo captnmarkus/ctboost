@@ -124,6 +124,18 @@ void UpdatePredictionsFromContiguousBins(const Tree& tree,
   if (nodes.empty()) {
     return;
   }
+  if (tree.is_vector_leaf()) {
+    for (std::size_t row = 0; row < num_rows; ++row) {
+      const int leaf_index = PredictContiguousLeafIndex(nodes, bin_indices, num_rows, row);
+      const Node& node = nodes[static_cast<std::size_t>(leaf_index)];
+      const std::size_t offset = row * static_cast<std::size_t>(prediction_dimension);
+      for (int output = 0; output < prediction_dimension; ++output) {
+        predictions[offset + static_cast<std::size_t>(output)] +=
+            static_cast<float>(learning_rate) * node.leaf_weights[static_cast<std::size_t>(output)];
+      }
+    }
+    return;
+  }
   if (prediction_dimension == 1) {
     for (std::size_t row = 0; row < num_rows; ++row) {
       const int leaf_index = PredictContiguousLeafIndex(nodes, bin_indices, num_rows, row);
@@ -275,6 +287,11 @@ void UpdatePredictions(const Tree& tree,
                                         predictions);
     return;
   }
+  if (tree.is_vector_leaf()) {
+    UpdatePredictionsFromLeafIndices(tree, PredictLeafIndicesFromHist(tree, hist), learning_rate,
+                                     prediction_dimension, class_index, predictions);
+    return;
+  }
   if (prediction_dimension == 1) {
     for (std::size_t row = 0; row < hist.num_rows; ++row) {
       const float update =
@@ -298,11 +315,13 @@ void AccumulateIterationPredictions(const std::vector<Tree>& trees,
                                     double default_learning_rate,
                                     int prediction_dimension,
                                     std::vector<float>& predictions) {
-  const std::size_t tree_begin = iteration_index * static_cast<std::size_t>(prediction_dimension);
-  const std::size_t tree_end = tree_begin + static_cast<std::size_t>(prediction_dimension);
+  const int trees_per_iteration =
+      !trees.empty() && trees.front().is_vector_leaf() ? 1 : prediction_dimension;
+  const std::size_t tree_begin = iteration_index * static_cast<std::size_t>(trees_per_iteration);
+  const std::size_t tree_end = tree_begin + static_cast<std::size_t>(trees_per_iteration);
   for (std::size_t tree_index = tree_begin; tree_index < tree_end; ++tree_index) {
     const double tree_learning_rate = ResolveIterationLearningRate(
-        tree_learning_rates, tree_index, prediction_dimension, default_learning_rate);
+        tree_learning_rates, tree_index, trees_per_iteration, default_learning_rate);
     const int class_index =
         prediction_dimension == 1 ? 0 : static_cast<int>(tree_index % static_cast<std::size_t>(prediction_dimension));
     UpdatePredictions(trees[tree_index],
@@ -323,6 +342,11 @@ std::vector<float> PredictFromHist(const std::vector<Tree>& trees,
                                    int prediction_dimension,
                                    const std::string& devices,
                                    const std::vector<double>& initial_score) {
+  const bool vector_leaves = !trees.empty() && trees.front().is_vector_leaf();
+  if (vector_leaves && use_gpu) {
+    throw std::invalid_argument("multi_output_tree currently supports CPU prediction only");
+  }
+  const int trees_per_iteration = vector_leaves ? 1 : prediction_dimension;
   std::vector<float> predictions(hist.num_rows * static_cast<std::size_t>(prediction_dimension), 0.0F);
   if (!initial_score.empty() && !(use_gpu && CudaBackendCompiled())) {
     AddBaseScoreToPredictions(initial_score, prediction_dimension, predictions);
@@ -345,7 +369,7 @@ std::vector<float> PredictFromHist(const std::vector<Tree>& trees,
   }
   for (std::size_t tree_index = 0; tree_index < tree_limit; ++tree_index) {
     const double tree_learning_rate = ResolveIterationLearningRate(
-        tree_learning_rates, tree_index, prediction_dimension, default_learning_rate);
+        tree_learning_rates, tree_index, trees_per_iteration, default_learning_rate);
     const int class_index =
         prediction_dimension == 1 ? 0 : static_cast<int>(tree_index % static_cast<std::size_t>(prediction_dimension));
     UpdatePredictions(trees[tree_index],
@@ -364,6 +388,15 @@ void UpdatePredictions(const Tree& tree,
                        int prediction_dimension,
                        int class_index,
                        std::vector<float>& predictions) {
+  if (tree.is_vector_leaf()) {
+    std::vector<int> leaf_indices(pool.num_rows(), -1);
+    for (std::size_t row = 0; row < pool.num_rows(); ++row) {
+      leaf_indices[row] = tree.PredictLeafIndex(pool, row);
+    }
+    UpdatePredictionsFromLeafIndices(tree, leaf_indices, learning_rate,
+                                     prediction_dimension, class_index, predictions);
+    return;
+  }
   if (prediction_dimension == 1) {
     for (std::size_t row = 0; row < pool.num_rows(); ++row) {
       const float update = static_cast<float>(learning_rate) * tree.PredictRow(pool, row);

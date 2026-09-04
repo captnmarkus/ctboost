@@ -4,6 +4,85 @@ from sklearn.datasets import make_classification, make_regression
 from sklearn.metrics import balanced_accuracy_score
 import ctboost
 
+
+@pytest.mark.parametrize("stop_mode", ["callback", "early_stopping"])
+def test_stopped_training_does_not_request_unused_learning_rate(stop_mode):
+    X = np.arange(80, dtype=np.float32).reshape(40, 2)
+    pool = ctboost.Pool(X, X[:, 0])
+    requested_iterations = []
+    stopping_iteration = 0 if stop_mode == "callback" else 1
+
+    def schedule(iteration):
+        requested_iterations.append(iteration)
+        if iteration > stopping_iteration:
+            raise AssertionError("schedule called after training stopped")
+        return 0.1
+
+    kwargs = (
+        {"callbacks": [lambda env: True]}
+        if stop_mode == "callback"
+        else {"eval_set": pool, "early_stopping_rounds": 1}
+    )
+    params = {"objective": "RMSE", "alpha": 1.0, "max_depth": 2}
+    if stop_mode == "early_stopping":
+        params["eval_metric"] = ctboost.make_eval_metric(
+            lambda prediction, label: 1.0,
+            name="constant",
+            higher_is_better=False,
+            allow_early_stopping=True,
+        )
+
+    model = ctboost.train(
+        pool, params, num_boost_round=5, learning_rate_schedule=schedule, **kwargs
+    )
+
+    assert requested_iterations == list(range(stopping_iteration + 1))
+    assert model.learning_rate == pytest.approx(0.1)
+    assert model.num_iterations_trained == 1
+
+
+@pytest.mark.parametrize("multi_strategy", ["one_output_per_tree", "multi_output_tree"])
+def test_python_dart_early_stopping_restores_weights_from_best_round(multi_strategy):
+    rng = np.random.default_rng(173)
+    X = rng.normal(size=(120, 4)).astype(np.float32)
+    y = np.argmax(X[:, :3], axis=1).astype(np.float32)
+    pool = ctboost.Pool(X, y)
+    predictions_by_round = []
+
+    def record_predictions(env):
+        predictions_by_round.append(env.model.predict(pool).copy())
+
+    constant_metric = ctboost.make_eval_metric(
+        lambda prediction, label: 1.0,
+        name="constant",
+        higher_is_better=False,
+        allow_early_stopping=True,
+    )
+    model = ctboost.train(
+        pool,
+        {
+            "objective": "MultiClass",
+            "num_classes": 3,
+            "multi_strategy": multi_strategy,
+            "boosting_type": "DART",
+            "drop_rate": 1.0,
+            "skip_drop": 0.0,
+            "learning_rate": 0.2,
+            "alpha": 1.0,
+            "max_depth": 2,
+            "eval_metric": constant_metric,
+        },
+        num_boost_round=8,
+        eval_set=pool,
+        early_stopping_rounds=2,
+        callbacks=[record_predictions],
+    )
+
+    assert len(predictions_by_round) == 3
+    assert model.best_iteration == 0
+    assert model.num_iterations_trained == 1
+    np.testing.assert_array_equal(model.predict(pool), predictions_by_round[0])
+
 def test_learning_rate_schedule_matches_manual_warm_start_and_export(tmp_path):
     X, y = make_regression(
         n_samples=160,

@@ -168,7 +168,8 @@ void BuildSharedMulticlassTargets(const std::vector<float>& gradients,
                                   std::size_t num_rows,
                                   int prediction_dimension,
                                   std::vector<float>& structure_gradients,
-                                  std::vector<float>& structure_hessians);
+                                  std::vector<float>& structure_hessians,
+                                  const DistributedCoordinator* distributed_coordinator = nullptr);
 std::vector<int> PredictLeafIndicesFromHist(const Tree& tree, const HistMatrix& hist);
 void UpdatePredictionsFromLeafIndices(const Tree& tree,
                                       const std::vector<int>& leaf_indices,
@@ -184,7 +185,10 @@ std::vector<Tree> MaterializeMulticlassTreesFromStructure(
     const std::vector<float>& hessians,
     const std::vector<float>& weights,
     int prediction_dimension,
-    double lambda_l2);
+    double lambda_l2,
+    double max_leaf_weight,
+    bool vector_leaves,
+    const DistributedCoordinator* distributed_coordinator = nullptr);
 void UpdatePredictions(const Tree& tree,
                        const Pool& pool,
                        double learning_rate,

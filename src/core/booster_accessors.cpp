@@ -6,7 +6,11 @@ const std::vector<double>& GradientBooster::loss_history() const noexcept { retu
 const std::vector<double>& GradientBooster::eval_loss_history() const noexcept { return eval_loss_history_; }
 std::size_t GradientBooster::num_trees() const noexcept { return trees_.size(); }
 std::size_t GradientBooster::num_iterations_trained() const noexcept {
-  return prediction_dimension_ <= 0 ? 0 : trees_.size() / static_cast<std::size_t>(prediction_dimension_);
+  return trees_.size() / static_cast<std::size_t>(trees_per_iteration());
+}
+const std::string& GradientBooster::multi_strategy() const noexcept { return multi_strategy_; }
+int GradientBooster::trees_per_iteration() const noexcept {
+  return multi_strategy_ == "multi_output_tree" ? 1 : prediction_dimension_;
 }
 int GradientBooster::num_classes() const noexcept { return num_classes_; }
 int GradientBooster::prediction_dimension() const noexcept { return prediction_dimension_; }

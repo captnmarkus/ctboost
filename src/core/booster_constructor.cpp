@@ -57,7 +57,8 @@ GradientBooster::GradientBooster(std::string objective,
                                  bool verbose,
                                  bool boost_from_average,
                                  std::vector<double> base_score,
-                                 int leaf_estimation_iterations)
+                                 int leaf_estimation_iterations,
+                                 std::string multi_strategy)
     : objective_name_(std::move(objective)),
       eval_metric_name_(std::move(eval_metric)),
       objective_config_{huber_delta, quantile_alpha, tweedie_variance_power},
@@ -90,6 +91,7 @@ GradientBooster::GradientBooster(std::string objective,
       max_leaf_weight_(max_leaf_weight),
       leaf_estimation_iterations_(leaf_estimation_iterations),
       num_classes_(num_classes),
+      multi_strategy_(std::move(multi_strategy)),
       max_bins_(max_bins),
       external_memory_(external_memory),
       external_memory_dir_(std::move(external_memory_dir)),
@@ -177,6 +179,21 @@ GradientBooster::GradientBooster(std::string objective,
       throw std::invalid_argument("binary objectives require num_classes equal to one or two");
     }
     prediction_dimension_ = 1;
+  }
+
+  if (multi_strategy_ != "one_output_per_tree" && multi_strategy_ != "multi_output_tree") {
+    throw std::invalid_argument("multi_strategy must be 'one_output_per_tree' or 'multi_output_tree'");
+  }
+  if (multi_strategy_ == "multi_output_tree") {
+    if (prediction_dimension_ <= 1) {
+      throw std::invalid_argument("multi_output_tree requires a multiclass objective");
+    }
+    if (distributed_world_size_ > 1) {
+      throw std::invalid_argument("multi_output_tree does not support distributed training");
+    }
+    if (booster_detail::NormalizeTaskType(task_type) != "cpu") {
+      throw std::invalid_argument("multi_output_tree currently supports task_type='CPU' only");
+    }
   }
 
   if (configured_base_score_.size() != 0U && configured_base_score_.size() != 1U &&

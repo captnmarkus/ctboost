@@ -9,6 +9,7 @@ iterative error-correction behavior of gradient boosting.
 ## What CTBoost deliberately keeps
 
 - conditional-inference feature selection at every tree node;
+- optional compact multiclass vector leaves that reuse the same conditional tree topology;
 - honest missing-value and categorical routing;
 - objective gradients and Hessians feeding the same tree builder;
 - reproducible CPU execution and explicit stochastic seeds.

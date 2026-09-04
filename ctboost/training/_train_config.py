@@ -53,6 +53,7 @@ _NATIVE_TRAIN_PARAM_KEYS = {
     "min_data_in_leaf",
     "min_samples_split",
     "monotone_constraints",
+    "multi_strategy",
     "nan_mode",
     "nan_mode_by_feature",
     "num_classes",
