@@ -24,6 +24,10 @@ SHARD_COUNT = 156
 ACTIVE_STATUSES = {"RUNNING", "QUEUED"}
 
 
+class KernelIdentityUnavailable(RuntimeError):
+    """The push response did not include a recognized canonical kernel URL."""
+
+
 @contextmanager
 def controller_lock(root: Path):
     """Release the exclusive queue lock automatically even after a process crash."""
@@ -105,12 +109,147 @@ def pushed_kernel(output: str, *, owner: str) -> str:
         r"https://(?:www\.)?kaggle\.com/code/([A-Za-z0-9_-]+)/([A-Za-z0-9_-]+)",
         output,
     )
+    if not matches:
+        raise KernelIdentityUnavailable(
+            "Kaggle did not confirm one kernel URL owned by the configured account"
+        )
     identities = {f"{username}/{slug}" for username, slug in matches}
     if len(identities) != 1 or any(username != owner for username, _ in matches):
         raise RuntimeError(
             "Kaggle did not confirm one kernel URL owned by the configured account"
         )
     return identities.pop()
+
+
+def verify_uploaded_worker(
+    executable: str,
+    kernel: str,
+    version: int,
+    worker_hash: str,
+    destination: Path,
+) -> None:
+    """Confirm an existing kernel by its latest uploaded source and metadata.
+
+    Each shard has a unique rendered source hash. The exclusive controller does
+    not reuse a slot until its results are collected, so matching that hash and
+    owned identity binds this worker to the numerically confirmed push receipt.
+    This does not assume version isolation from Kaggle's read APIs.
+    """
+    for attempt in range(3):
+        try:
+            kaggle_command(
+                executable,
+                ["pull", kernel, "-p", str(destination), "--metadata"],
+            )
+            break
+        except (RuntimeError, subprocess.TimeoutExpired):
+            if attempt == 2:
+                raise
+            time.sleep(2)
+    metadata = json.loads(
+        (destination / "kernel-metadata.json").read_text(encoding="utf-8")
+    )
+    if metadata.get("id") != kernel:
+        raise ValueError("Source pull returned another kernel identity")
+    if (
+        metadata.get("is_private") is not True
+        or metadata.get("enable_gpu") is not False
+    ):
+        raise ValueError("Source pull does not match the private CPU worker")
+    code_file = metadata.get("code_file")
+    if not isinstance(code_file, str) or not code_file:
+        raise ValueError("Source pull did not identify its code file")
+    source_path = (destination / code_file).resolve()
+    try:
+        source_path.relative_to(destination.resolve())
+    except ValueError as exc:
+        raise ValueError("Source pull identified an unsafe code path") from exc
+    # CLI pull writes text using the submitting OS's newline convention. Kaggle
+    # executes the LF source that prepare_package uploads.
+    source = source_path.read_text(encoding="utf-8")
+    if hashlib.sha256(source.encode("utf-8")).hexdigest() != worker_hash:
+        raise ValueError("Source pull does not match the submitted worker SHA-256")
+    write_json(
+        destination / "verified-submission.json",
+        {
+            "kernel": kernel,
+            "push_confirmed_version": version,
+            "worker_sha256": worker_hash,
+            "identity_source": "latest_source_pull",
+        },
+    )
+
+
+def record_submission(
+    root: Path,
+    state: dict,
+    slot: dict,
+    output: str,
+    *,
+    owner: str,
+    executable: str,
+    existing_kernel: str | None,
+) -> None:
+    """Durably record a push response before interpreting its version or URL."""
+    response = redact(output)
+    receipt = (
+        root / "submissions" / f"shard-{slot['shard']:03d}-slot-{slot['slot']}.json"
+    )
+    write_json(
+        receipt,
+        {
+            "received_at": datetime.now(timezone.utc).isoformat(),
+            "requested_kernel": slot["kernel"],
+            "shard": slot["shard"],
+            "worker_sha256": slot["worker_sha256"],
+            "output": response,
+        },
+    )
+    slot.update(
+        submission=response,
+        submission_receipt=receipt.relative_to(root).as_posix(),
+        kernel_version=None,
+    )
+    write_json(root / "state.json", state)
+    try:
+        slot["kernel_version"] = pushed_version(response)
+        write_json(root / "state.json", state)
+        try:
+            kernel = pushed_kernel(response, owner=owner)
+            confirmation = "push_response_url"
+        except RuntimeError:
+            if existing_kernel is None:
+                raise
+            if not re.fullmatch(re.escape(owner) + r"/[A-Za-z0-9_-]+", existing_kernel):
+                raise ValueError(
+                    "Existing worker does not belong to the configured account"
+                )
+            # Source identity is stronger than the presentation of the CLI URL.
+            verify_uploaded_worker(
+                executable,
+                existing_kernel,
+                slot["kernel_version"],
+                slot["worker_sha256"],
+                receipt.with_suffix(".source"),
+            )
+            kernel = existing_kernel
+            confirmation = "latest_source_pull"
+    except (RuntimeError, ValueError, OSError, subprocess.TimeoutExpired) as exc:
+        slot["submission_parse_error"] = redact(str(exc))
+        write_json(root / "state.json", state)
+        log(
+            root,
+            f"Submission for shard {slot['shard']} needs reconciliation; response saved to {receipt.name}",
+        )
+        raise
+    slot.update(
+        kernel=kernel,
+        phase="submitted",
+        identity_confirmation=confirmation,
+        submission_parse_error=None,
+    )
+    write_json(root / "state.json", state)
+    log(root, f"Submitted shard {slot['shard']} on slot {slot['slot']}: {response}")
 
 
 def load_worker(path: Path):
@@ -347,6 +486,7 @@ def run_controller(args: argparse.Namespace) -> None:
             if slot["shard"] is None and state["pending"] and not state["failed"]:
                 shard = state["pending"][0]
                 package = root / "packages" / str(slot["slot"])
+                existing_kernel = slot.get("kernel")
                 kernel = prepare_package(
                     worker,
                     package,
@@ -354,7 +494,7 @@ def run_controller(args: argparse.Namespace) -> None:
                     slot=slot["slot"],
                     shard=shard,
                     run_id=state["run_id"],
-                    existing_kernel=slot.get("kernel"),
+                    existing_kernel=existing_kernel,
                 )
                 slot.update(
                     shard=shard,
@@ -362,6 +502,12 @@ def run_controller(args: argparse.Namespace) -> None:
                     phase="submitting",
                     collection_errors=0,
                     worker_sha256=file_hash(package / "worker.py"),
+                    previous_kernel_version=slot.get("kernel_version"),
+                    kernel_version=None,
+                    submission=None,
+                    submission_receipt=None,
+                    submission_parse_error=None,
+                    identity_confirmation=None,
                 )
                 state["pending"].pop(0)
                 write_json(state_path, state)
@@ -370,12 +516,15 @@ def run_controller(args: argparse.Namespace) -> None:
                 result = kaggle_command(
                     args.kaggle, ["push", "-p", str(package), "-t", "43200"]
                 )
-                slot["kernel_version"] = pushed_version(result)
-                slot["kernel"] = pushed_kernel(result, owner=args.owner)
-                slot["phase"] = "submitted"
-                slot["submission"] = result
-                write_json(state_path, state)
-                log(root, f"Submitted shard {shard} on slot {slot['slot']}: {result}")
+                record_submission(
+                    root,
+                    state,
+                    slot,
+                    result,
+                    owner=args.owner,
+                    executable=args.kaggle,
+                    existing_kernel=existing_kernel,
+                )
         if state["failed"] and all(slot["shard"] is None for slot in state["slots"]):
             raise RuntimeError(f"Stopped after failed shards: {state['failed']}")
         if len(state["completed"]) == SHARD_COUNT:

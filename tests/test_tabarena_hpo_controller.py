@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import re
@@ -135,6 +136,201 @@ def test_submission_adopts_returned_title_slug():
 def test_submission_without_one_confirmed_owned_url_needs_reconciliation(output):
     with pytest.raises(RuntimeError, match="confirm one kernel URL"):
         controller.pushed_kernel(output, owner="example")
+
+
+def pending_submission():
+    source = "SHARD_INDEX = 5\n"
+    slot = {
+        "slot": 1,
+        "shard": 5,
+        "kernel": "example/worker-1",
+        "phase": "submitting",
+        "kernel_version": 1,
+        "worker_sha256": hashlib.sha256(source.encode()).hexdigest(),
+    }
+    return {"slots": [slot]}, slot, source
+
+
+def pull_response(destination, source, *, kernel="example/worker-1"):
+    destination.mkdir(parents=True, exist_ok=True)
+    (destination / "worker.py").write_bytes(source.replace("\n", "\r\n").encode())
+    controller.write_json(
+        destination / "kernel-metadata.json",
+        {
+            "id": kernel,
+            "code_file": "worker.py",
+            "is_private": True,
+            "enable_gpu": False,
+        },
+    )
+
+
+def test_existing_push_without_recognized_url_requires_exact_source_proof(
+    tmp_path, monkeypatch
+):
+    state, slot, source = pending_submission()
+    calls = []
+
+    def command(executable, arguments):
+        calls.append(arguments)
+        saved = json.loads((tmp_path / "state.json").read_text())
+        assert saved["slots"][0]["kernel_version"] == 2
+        receipt = tmp_path / saved["slots"][0]["submission_receipt"]
+        assert json.loads(receipt.read_text())["output"].startswith(
+            "Kernel version 2 successfully pushed."
+        )
+        assert arguments[:2] == ["pull", "example/worker-1"]
+        pull_response(Path(arguments[3]), source)
+        return "Pulled successfully"
+
+    monkeypatch.setattr(controller, "kaggle_command", command)
+    controller.record_submission(
+        tmp_path,
+        state,
+        slot,
+        "Kernel version 2 successfully pushed. Please check progress at ",
+        owner="example",
+        executable="kaggle",
+        existing_kernel="example/worker-1",
+    )
+    assert len(calls) == 1
+    assert slot["phase"] == "submitted"
+    assert slot["kernel"] == "example/worker-1"
+    assert slot["kernel_version"] == 2
+    assert slot["identity_confirmation"] == "latest_source_pull"
+
+
+@pytest.mark.parametrize("corruption", ["source", "identity"])
+def test_existing_push_source_or_identity_mismatch_remains_pending(
+    tmp_path, monkeypatch, corruption
+):
+    state, slot, source = pending_submission()
+
+    def command(executable, arguments):
+        pull_response(
+            Path(arguments[3]),
+            source + "# wrong" if corruption == "source" else source,
+            kernel="other/worker" if corruption == "identity" else "example/worker-1",
+        )
+        return "Pulled successfully"
+
+    monkeypatch.setattr(controller, "kaggle_command", command)
+    with pytest.raises(ValueError, match="Source pull"):
+        controller.record_submission(
+            tmp_path,
+            state,
+            slot,
+            "Kernel version 2 successfully pushed.",
+            owner="example",
+            executable="kaggle",
+            existing_kernel="example/worker-1",
+        )
+    saved = json.loads((tmp_path / "state.json").read_text())["slots"][0]
+    assert saved["phase"] == "submitting"
+    assert saved["kernel_version"] == 2
+    assert saved["submission_parse_error"]
+    assert (tmp_path / saved["submission_receipt"]).is_file()
+
+
+def test_read_only_source_confirmation_retries_without_pushing(tmp_path, monkeypatch):
+    state, slot, source = pending_submission()
+    calls = []
+
+    def command(executable, arguments):
+        calls.append(arguments)
+        assert arguments[0] == "pull"
+        if len(calls) == 1:
+            raise RuntimeError("Temporary read failure")
+        pull_response(Path(arguments[3]), source)
+        return "Pulled successfully"
+
+    monkeypatch.setattr(controller, "kaggle_command", command)
+    monkeypatch.setattr(controller.time, "sleep", lambda seconds: None)
+    controller.record_submission(
+        tmp_path,
+        state,
+        slot,
+        "Kernel version 2 successfully pushed.",
+        owner="example",
+        executable="kaggle",
+        existing_kernel="example/worker-1",
+    )
+    assert len(calls) == 2
+    assert slot["phase"] == "submitted"
+
+
+def test_unrecognized_new_kernel_preserves_receipt_and_confirmed_version(tmp_path):
+    state, slot, _ = pending_submission()
+    output = "Kernel version 2 successfully pushed. KGAT_test_secret"
+    with pytest.raises(controller.KernelIdentityUnavailable):
+        controller.record_submission(
+            tmp_path,
+            state,
+            slot,
+            output,
+            owner="example",
+            executable="kaggle",
+            existing_kernel=None,
+        )
+    saved = json.loads((tmp_path / "state.json").read_text())["slots"][0]
+    assert saved["phase"] == "submitting"
+    assert saved["kernel_version"] == 2
+    assert "KGAT_test_secret" not in json.dumps(saved)
+    assert "[redacted]" in (tmp_path / saved["submission_receipt"]).read_text()
+
+
+def test_unconfirmed_push_preserves_receipt_without_stale_version(tmp_path):
+    state, slot, _ = pending_submission()
+    with pytest.raises(RuntimeError, match="did not confirm submission"):
+        controller.record_submission(
+            tmp_path,
+            state,
+            slot,
+            "Kernel push error: Busy",
+            owner="example",
+            executable="kaggle",
+            existing_kernel="example/worker-1",
+        )
+    saved = json.loads((tmp_path / "state.json").read_text())["slots"][0]
+    assert saved["kernel_version"] is None
+    assert saved["phase"] == "submitting"
+    assert (tmp_path / saved["submission_receipt"]).is_file()
+
+
+@pytest.mark.parametrize(
+    "url_text",
+    [
+        "https://www.kaggle.com/code/Example/worker-1",
+        "https://www.kaggle.com/code/other/worker-1",
+        "https://www.kaggle.com/code/example/worker-1 https://www.kaggle.com/code/example/worker-2",
+    ],
+)
+def test_mismatched_url_requires_exact_existing_source_proof(
+    tmp_path, monkeypatch, url_text
+):
+    state, slot, source = pending_submission()
+    calls = []
+
+    def pull(executable, arguments):
+        calls.append(arguments)
+        assert arguments[:2] == ["pull", "example/worker-1"]
+        pull_response(Path(arguments[3]), source)
+        return "Pulled successfully"
+
+    monkeypatch.setattr(controller, "kaggle_command", pull)
+    controller.record_submission(
+        tmp_path,
+        state,
+        slot,
+        "Kernel version 2 successfully pushed. " + url_text,
+        owner="example",
+        executable="kaggle",
+        existing_kernel="example/worker-1",
+    )
+    assert len(calls) == 1
+    assert slot["phase"] == "submitted"
+    assert slot["kernel"] == "example/worker-1"
+    assert slot["identity_confirmation"] == "latest_source_pull"
 
 
 def test_push_requires_explicit_success_even_with_zero_cli_exit():
