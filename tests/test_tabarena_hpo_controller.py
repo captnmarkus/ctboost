@@ -165,10 +165,21 @@ def pull_response(destination, source, *, kernel="example/worker-1"):
     )
 
 
+@pytest.mark.parametrize(
+    "kernel, progress_url",
+    [
+        ("example/worker-1", ""),
+        (
+            "maiernator/ctboost-0-1-58-lite-hpo25-worker-0",
+            "https://www.kaggle.com/maiernator/ctboost-0-1-58-lite-hpo25-worker-0",
+        ),
+    ],
+)
 def test_existing_push_without_recognized_url_requires_exact_source_proof(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, kernel, progress_url
 ):
     state, slot, source = pending_submission()
+    slot["kernel"] = kernel
     calls = []
 
     def command(executable, arguments):
@@ -179,8 +190,8 @@ def test_existing_push_without_recognized_url_requires_exact_source_proof(
         assert json.loads(receipt.read_text())["output"].startswith(
             "Kernel version 2 successfully pushed."
         )
-        assert arguments[:2] == ["pull", "example/worker-1"]
-        pull_response(Path(arguments[3]), source)
+        assert arguments[:2] == ["pull", kernel]
+        pull_response(Path(arguments[3]), source, kernel=kernel)
         return "Pulled successfully"
 
     monkeypatch.setattr(controller, "kaggle_command", command)
@@ -188,14 +199,15 @@ def test_existing_push_without_recognized_url_requires_exact_source_proof(
         tmp_path,
         state,
         slot,
-        "Kernel version 2 successfully pushed. Please check progress at ",
-        owner="example",
+        "Kernel version 2 successfully pushed. Please check progress at "
+        + progress_url,
+        owner=kernel.split("/")[0],
         executable="kaggle",
-        existing_kernel="example/worker-1",
+        existing_kernel=kernel,
     )
     assert len(calls) == 1
     assert slot["phase"] == "submitted"
-    assert slot["kernel"] == "example/worker-1"
+    assert slot["kernel"] == kernel
     assert slot["kernel_version"] == 2
     assert slot["identity_confirmation"] == "latest_source_pull"
 
