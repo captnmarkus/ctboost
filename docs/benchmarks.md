@@ -5,54 +5,62 @@
 CTBoost has two separate evidence tracks. They must not be combined into one
 score:
 
-1. a small TabArena integration smoke test for the ordinary adapter; and
+1. a default-configuration TabArena-v0.1 Lite evaluation for the ordinary adapter; and
 2. a pre-registered external panel for the opt-in grouped split statistic.
 
-### TabArena adapter smoke
+### CTBoost 0.1.56: TabArena-v0.1 Lite
 
 CTBoost has a committed adapter for the official TabArena protocol. It delegates
 folds, task metrics, bagging, tuning, ensembling, timing, and memory measurement to
 TabArena rather than recreating them locally.
 
-The current completed result is a **protocol smoke test**, not a full leaderboard entry:
+The latest [published result bundle](https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-0.1.56)
+covers all 51 TabArena-v0.1 Lite datasets with **CTBoost 0.1.56**, using one
+default configuration and outer split `r0f0` only. It contains no measured HPO
+configurations or TabArena-Full results. CTBoost 0.1.58 has no new measured
+TabArena score; the vector-leaf and correctness changes do not inherit this
+version's score.
 
 | Scope | Result |
 |---|---:|
-| TabArena-v0.1 lite, three datasets, 0.1.55 default configuration | 1054.0 provisional Elo |
-| Successful CTBoost outer splits | 3 / 3 |
-| Imputed CTBoost splits | 0 |
-| CPU allocation | 8 |
-| Memory limit | 24 GiB |
+| Lite Elo | 1166.7 (+52.1 / -67.5) |
+| Win rate | 0.3957 |
+| Position among default-configuration rows | 23 / 38 |
+| Successful CTBoost outer splits | 51 / 51 |
+| Imputed CTBoost tasks | 0 / 51 |
+| Bagging | 8 children per task; 408 child fits |
+| Kaggle CPU allocation | 4 |
+| Kaggle memory limit | 28 GB |
 | Per-fit limit | 3,600 seconds |
 
-!!! warning "Do not compare this number with the full leaderboard"
-    Elo is relative to its entrant and dataset pool. Three datasets and one split per
-    dataset produce extremely wide uncertainty. CTBoost does not yet have an official
-    full TabArena Elo.
-
-#### Smoke-task metrics
-
-| Dataset | Task | Metric | Test error | Train time |
-|---|---|---|---:|---:|
-| anneal | multiclass | log loss | 0.041921 | 151.76 s |
-| blood-transfusion-service-center | binary | ROC-AUC error | 0.315614 | 1.88 s |
-| QSAR_fish_toxicity | regression | RMSE | 0.968983 | 2.97 s |
+!!! note "Scope of the score"
+    This is a local default-only Lite evaluation, not an official leaderboard
+    entry. Elo depends on the dataset and method roster: this evaluation uses
+    42 reference-method artifacts and 85 evaluated rows, including defaults,
+    tuned configurations, ensembles, and systems. Kaggle's 4 CPUs and 28 GB
+    differ from the canonical 8 CPUs and 32 GB, so its recorded timings are not
+    directly comparable to official TabArena runtimes.
 
 Provenance:
 
-- CTBoost 0.1.55 public installed distribution, independently matched to release
-  commit `026ccb5b8df50bdd8375f69729820cb8158e5a14`, install fingerprint
-  `aa7d1e972aca648333a3e14c39f7e30c4906c8a04632223b9d728da23edfdd66`;
-- Python 3.12.11, Windows AMD64, eight CPU threads and no GPU used;
-- TabArena package files independently matched commit
-  `50f8ab1bbc6e7f7e5dd9b19d8b643ac284ae9b3c`; the run itself used installed
-  distributions rather than live Git worktrees.
+- Released `ctboost==0.1.56`, measured as `CTBoost_c1_default_BAG_L1`;
+- 30 binary, 8 multiclass, and 13 regression datasets, with no missing or
+  duplicate tasks in the published canonical tables;
+- Six Kaggle CPU shards, Python 3.12.13, AutoGluon Tabular 1.6.2b20260821;
+- TabArena integration/evaluation commit
+  [`31026f7d758390994353eba79fbfa6747616f365`](https://github.com/captnmarkus/tabarena/commit/31026f7d758390994353eba79fbfa6747616f365),
+  associated with [upstream PR #479](https://github.com/autogluon/tabarena/pull/479).
 
-The sanitized [0.1.55 machine-readable smoke record](https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/smoke_0155_public_wheel.json)
-contains the exact per-split metrics, timing, memory, package versions, and commit
-identity limitations without machine-local artifact paths. The older 0.1.53
-[`smoke_fd187da.json`](https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/smoke_fd187da.json)
-is retained as historical evidence, not as the current score.
+The [aggregate manifest](https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-0.1.56/blob/main/validation/aggregate_manifest.json)
+records task coverage, resource limits, artifact hashes, and version provenance.
+The [evaluation table](https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-0.1.56/blob/main/reports/leaderboard_lite.csv)
+records the score and comparison roster. Despite its canonical filename,
+`hpo_results.parquet` contains only the measured default configuration.
+
+The earlier [0.1.55 three-dataset smoke record](https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/smoke_0155_public_wheel.json)
+(1054.0 provisional Elo) and [0.1.53 smoke record](https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/smoke_fd187da.json)
+remain historical integration checks. Their different task scope prevents
+interpreting the newer Lite score as a version-to-version Elo improvement.
 
 ### Grouped split-statistic qualification
 

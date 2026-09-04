@@ -15,7 +15,7 @@ rejects the former override-method model API. Add:
 3. `packages/tabarena/src/tabarena/models/ctboost/hpo.py`
 4. `packages/tabarena/src/tabarena/models/ctboost/info.py`
 5. Lazy `CTBoostModel` export in `packages/tabarena/src/tabarena/models/__init__.py`
-6. `ctboost = ["ctboost>=0.1.55"]` and `tabarena[ctboost]` in the `extended`
+6. `ctboost = ["ctboost>=0.1.58"]` and `tabarena[ctboost]` in the `extended`
    extra in `packages/tabarena/pyproject.toml`
 7. `CTB` in the tree-model family mapping in
    `packages/tabarena/src/tabarena/website/website_format.py`. Do not add it to
@@ -84,9 +84,10 @@ tree caps never replace or extend the official 3,600-second per-fit deadline.
   plus ensemble (`n_iterations=40`) rows. No CTBoost-specific ensemble code is
   required.
 
-The latest measured 0.1.55 three-dataset smoke in `smoke_0155_public_wheel.json` is useful
-integration evidence but does not satisfy either full-run gate. The older
-`smoke_fd187da.json` record is retained only for historical comparison.
+The published [0.1.56 Lite artifacts](https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-0.1.56)
+cover all 51 datasets at `r0f0`, with one default configuration and no imputed
+tasks. They do not satisfy the full-run gates or establish a 0.1.58 score.
+The older smoke JSON files remain historical integration evidence.
 
 ## Pull request text
 
@@ -100,17 +101,13 @@ count, hardware/resources, and the contribution license statement used by other
 TabArena model PRs. Explicitly say that the search space was frozen without using
 TabArena-Full test results.
 
-Once that PR is merged, request the official run with an issue titled:
-
-`Run CTBoost 0.1.56 on TabArena-v0.1 (default + 200 configs)`
-
-Link the merged integration PR and PyPI release; confirm the three-task preflight,
-frozen search space, time/resource behavior, and request the CPU TabArena-Full
-cluster run. [Issue 463](https://github.com/autogluon/tabarena/issues/463) was
-sufficient for ChimeraBoost only because its wrapper, search space, metadata, and
-prior official artifacts had already landed in
-[PR 358](https://github.com/autogluon/tabarena/pull/358). CTBoost needs the model
-integration PR first.
+The integration is under review in [PR #479](https://github.com/autogluon/tabarena/pull/479).
+Lennart requested a limited HPO check of about 25 configurations and offered to
+review full-suite results for leaderboard inclusion. Complete that check using
+the frozen portfolio, then report the version, coverage, failures, and artifact
+link briefly in the existing PR. Ask which full-suite artifact set and transfer
+channel the maintainers need for 0.1.58. Benchmark execution is the contributor's
+responsibility unless maintainers explicitly offer compute.
 
 No Hugging Face token is needed to download public TabArena data or run the CPU
 benchmark. Publication to TabArena's artifact storage is a maintainer step and may
