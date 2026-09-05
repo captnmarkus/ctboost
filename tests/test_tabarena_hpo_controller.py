@@ -6,6 +6,7 @@ import hashlib
 import importlib.util
 import json
 import re
+import subprocess
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
@@ -72,7 +73,7 @@ def test_reject_stale_or_incomplete_output(tmp_path, overrides):
         controller.validate_download(tmp_path, 3)
 
 
-def setup_failure(tmp_path):
+def setup_failure(tmp_path, *, endpoint="data/qualities/46907"):
     worker = controller.load_worker(
         Path(__file__).parents[1] / "benchmarks/tabarena/kaggle_hpo_worker.py"
     )
@@ -84,7 +85,7 @@ def setup_failure(tmp_path):
         status="incomplete",
         fatal_error=(
             "OpenMLServerError: Unexpected server error when calling "
-            "https://www.openml.org/api/v1/xml/data/qualities/46907. "
+            f"https://www.openml.org/api/v1/xml/{endpoint}. "
             "Please contact the developers!\nStatus code: 503\n<html>503</html>"
         ),
         result_file_count=0,
@@ -120,8 +121,15 @@ def setup_failure(tmp_path):
     return state, slot, destination, worker, archive
 
 
-def test_pretraining_openml_503_preserves_attempt_before_same_shard_retry(tmp_path):
-    state, slot, destination, worker, archive = setup_failure(tmp_path)
+@pytest.mark.parametrize(
+    "endpoint", ["data/qualities/46907", "data/46907", "task/363681"]
+)
+def test_pretraining_openml_503_preserves_attempt_before_same_shard_retry(
+    tmp_path, endpoint
+):
+    state, slot, destination, worker, archive = setup_failure(
+        tmp_path, endpoint=endpoint
+    )
     manifest_hash = controller.file_hash(archive.parent / "manifest.json")
     assert controller.retry_openml_setup_failure(
         tmp_path, state, slot, destination, worker=worker
@@ -148,6 +156,28 @@ def test_pretraining_openml_503_preserves_attempt_before_same_shard_retry(tmp_pa
 
 
 @pytest.mark.parametrize(
+    "endpoint",
+    [
+        "data/list",
+        "task/list",
+        "data/features/46907",
+        "data/46907/extra",
+        "task/363681?retry=true",
+        "task/not-an-id",
+    ],
+)
+def test_openml_retry_rejects_other_endpoints(tmp_path, endpoint):
+    state, slot, destination, worker, _ = setup_failure(tmp_path, endpoint=endpoint)
+    original = json.dumps(state, sort_keys=True)
+    assert not controller.retry_openml_setup_failure(
+        tmp_path, state, slot, destination, worker=worker
+    )
+    assert json.dumps(state, sort_keys=True) == original
+    assert destination.exists()
+    assert not (tmp_path / "failed-attempts").exists()
+
+
+@pytest.mark.parametrize(
     "change",
     [
         {"fatal_error": "OpenMLServerError: Status code: 503"},
@@ -166,8 +196,15 @@ def test_pretraining_openml_503_preserves_attempt_before_same_shard_retry(tmp_pa
         {"validation": []},
     ],
 )
-def test_only_verified_openml_failure_before_any_training_is_retried(tmp_path, change):
-    state, slot, destination, worker, archive = setup_failure(tmp_path)
+@pytest.mark.parametrize(
+    "endpoint", ["data/qualities/46907", "data/46907", "task/363681"]
+)
+def test_only_verified_openml_failure_before_any_training_is_retried(
+    tmp_path, change, endpoint
+):
+    state, slot, destination, worker, archive = setup_failure(
+        tmp_path, endpoint=endpoint
+    )
     path = archive.parent / "manifest.json"
     manifest = json.loads(path.read_text())
     manifest.update(change)
@@ -182,8 +219,13 @@ def test_only_verified_openml_failure_before_any_training_is_retried(tmp_path, c
 
 
 @pytest.mark.parametrize("prior_shard", [3, "3"])
-def test_manual_retry_history_already_exhausts_single_retry(tmp_path, prior_shard):
-    state, slot, destination, worker, _ = setup_failure(tmp_path)
+@pytest.mark.parametrize(
+    "endpoint", ["data/qualities/46907", "data/46907", "task/363681"]
+)
+def test_manual_retry_history_already_exhausts_single_retry(
+    tmp_path, prior_shard, endpoint
+):
+    state, slot, destination, worker, _ = setup_failure(tmp_path, endpoint=endpoint)
     state["retry_history"] = [
         {"shard": prior_shard, "previous_attempt": "failed-attempts/manual"}
     ]
@@ -307,6 +349,83 @@ def test_controller_retries_same_frozen_shard_and_records_next_check(
     assert len([call for call in calls if call[0] == "push"]) == (
         0 if status_error else 1
     )
+
+
+def active_queue(tmp_path):
+    template = tmp_path / "worker_template.py"
+    source = Path(controller.__file__).with_name("kaggle_hpo_worker.py")
+    template.write_bytes(source.read_bytes())
+    state = {
+        "owner": "example",
+        "worker_sha256": controller.file_hash(template),
+        "pending": [4],
+        "completed": {},
+        "failed": {},
+        "slots": [
+            {
+                "slot": 0,
+                "shard": 3,
+                "kernel": "example/worker-0",
+                "kernel_version": 2,
+                "phase": "submitted",
+                "collection_errors": 2,
+            }
+        ],
+    }
+    controller.write_json(tmp_path / "state.json", state)
+    args = SimpleNamespace(
+        output_root=tmp_path,
+        owner="example",
+        slots=1,
+        prepare_only=False,
+        kaggle=str(tmp_path / "missing-kaggle.exe"),
+        poll_seconds=1800,
+    )
+    return state, args
+
+
+def test_missing_kaggle_cli_preflight_preserves_queue(tmp_path):
+    state, args = active_queue(tmp_path)
+    with pytest.raises(RuntimeError, match="Cannot launch Kaggle CLI") as error:
+        controller.run_controller(args)
+    assert isinstance(error.value.__cause__, FileNotFoundError)
+    assert json.loads((tmp_path / "state.json").read_text()) == state
+
+
+@pytest.mark.parametrize("missing_during", ["status", "output"])
+def test_disappearing_cli_does_not_consume_artifact_retries(
+    tmp_path, monkeypatch, missing_during
+):
+    state, args = active_queue(tmp_path)
+    failed_launches = []
+
+    def run(command, **kwargs):
+        arguments = command[2:]
+        if arguments == ["output", "--help"]:
+            return subprocess.CompletedProcess(command, 0, "--file-pattern", "")
+        if arguments[0] == missing_during:
+            failed_launches.append(arguments)
+            raise FileNotFoundError("Kaggle CLI disappeared after preflight")
+        assert arguments[0] == "status"
+        return subprocess.CompletedProcess(
+            command, 0, "KernelWorkerStatus.COMPLETE", ""
+        )
+
+    class CheckedThreeTimes(Exception):
+        pass
+
+    def sleep(seconds):
+        assert seconds == 1800
+        assert json.loads((tmp_path / "state.json").read_text()) == state
+        if len(failed_launches) == 3:
+            raise CheckedThreeTimes
+
+    monkeypatch.setattr(controller.subprocess, "run", run)
+    monkeypatch.setattr(controller.time, "sleep", sleep)
+    with pytest.raises(CheckedThreeTimes):
+        controller.run_controller(args)
+    assert len(failed_launches) == 3
+    assert json.loads((tmp_path / "state.json").read_text()) == state
 
 
 def test_generated_kernel_is_private_cpu_and_selects_shard(tmp_path):

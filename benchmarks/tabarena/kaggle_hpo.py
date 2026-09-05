@@ -77,15 +77,21 @@ def redact(value: str) -> str:
 
 
 def kaggle_command(executable: str, arguments: list[str], *, timeout: int = 300) -> str:
-    process = subprocess.run(
-        [executable, "kernels", *arguments],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        timeout=timeout,
-        check=False,
-    )
+    try:
+        process = subprocess.run(
+            [executable, "kernels", *arguments],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=timeout,
+            check=False,
+        )
+    except OSError as exc:
+        # A missing or unusable local CLI says nothing about remote shard results.
+        raise RuntimeError(
+            f"Cannot launch Kaggle CLI {executable!r}: {redact(str(exc))}"
+        ) from exc
     output = redact(process.stdout + process.stderr).strip()
     if process.returncode:
         raise RuntimeError(
@@ -398,7 +404,7 @@ def retry_openml_setup_failure(
             or manifest.get("status") != "incomplete"
             or not re.match(
                 r"^OpenMLServerError: Unexpected server error when calling "
-                r"https://www\.openml\.org/api/v1/xml/data/qualities/[0-9]+\. "
+                r"https://www\.openml\.org/api/v1/xml/(?:data(?:/qualities)?|task)/[0-9]+\. "
                 r"Please contact the developers!\nStatus code: 503\n",
                 manifest.get("fatal_error") or "",
             )
