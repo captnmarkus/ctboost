@@ -6,7 +6,9 @@ import hashlib
 import importlib.util
 import json
 import re
+from datetime import datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -68,6 +70,243 @@ def test_reject_stale_or_incomplete_output(tmp_path, overrides):
     artifact(tmp_path, **overrides)
     with pytest.raises(ValueError):
         controller.validate_download(tmp_path, 3)
+
+
+def setup_failure(tmp_path):
+    worker = controller.load_worker(
+        Path(__file__).parents[1] / "benchmarks/tabarena/kaggle_hpo_worker.py"
+    )
+    destination = tmp_path / "shards" / "s003"
+    source_hash = "frozen-shard-source-hash"
+    archive = artifact(
+        destination,
+        worker_sha256=source_hash,
+        status="incomplete",
+        fatal_error=(
+            "OpenMLServerError: Unexpected server error when calling "
+            "https://www.openml.org/api/v1/xml/data/qualities/46907. "
+            "Please contact the developers!\nStatus code: 503\n<html>503</html>"
+        ),
+        result_file_count=0,
+        result_files=[],
+        failures=[],
+        benchmark_exit_code=None,
+        validation={
+            "bag_children_verified": 0,
+            "valid_result_count": 0,
+            "invalid_results": [],
+            "missing_datasets": sorted(worker.shard_spec(3)["datasets"]),
+        },
+    )
+    slot = {
+        "slot": 0,
+        "shard": 3,
+        "phase": "submitted",
+        "kernel": "example/worker-0",
+        "kernel_version": 2,
+        "worker_sha256": source_hash,
+        "submission_receipt": "submissions/shard-003-slot-0.json",
+    }
+    controller.write_json(
+        tmp_path / slot["submission_receipt"],
+        {
+            "requested_kernel": slot["kernel"],
+            "shard": 3,
+            "worker_sha256": source_hash,
+            "output": "Kernel version 2 successfully pushed.",
+        },
+    )
+    state = {"completed": {}, "pending": [4], "failed": {}, "slots": [slot]}
+    return state, slot, destination, worker, archive
+
+
+def test_pretraining_openml_503_preserves_attempt_before_same_shard_retry(tmp_path):
+    state, slot, destination, worker, archive = setup_failure(tmp_path)
+    manifest_hash = controller.file_hash(archive.parent / "manifest.json")
+    assert controller.retry_openml_setup_failure(
+        tmp_path, state, slot, destination, worker=worker
+    )
+    saved = json.loads((tmp_path / "state.json").read_text())
+    assert saved["pending"] == [3, 4]
+    assert saved["completed"] == saved["failed"] == {}
+    assert saved["slots"][0]["phase"] == "idle"
+    assert saved["slots"][0]["shard"] is None
+    record = saved["retry_history"][0]
+    assert record["worker_sha256"] == slot["worker_sha256"]
+    assert record["kernel_version"] == 2
+    assert record["manifest_sha256"] == manifest_hash
+    backup = tmp_path / record["previous_attempt"]
+    assert (
+        controller.file_hash(backup / "submission.json")
+        == record["submission_receipt_sha256"]
+    )
+    prior_slot = json.loads((backup / "retry.json").read_text())["previous_slot"]
+    assert prior_slot["shard"] == 3
+    assert prior_slot["kernel_version"] == 2
+    assert (backup / "download" / "run" / "artifacts" / "raw.tar.gz").is_file()
+    assert not destination.exists()
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"fatal_error": "OpenMLServerError: Status code: 503"},
+        {"fatal_error": "RuntimeError: model failed"},
+        {"result_file_count": 1},
+        {"result_files": [{"path": "results.pkl"}]},
+        {"failures": [{"exit_code": 1}]},
+        {"benchmark_exit_code": 0},
+        {"run_commands": []},
+        {"generated_job_json": "job.json"},
+        {"worker_sha256": "different"},
+        {"config_index": 1},
+        {"status": "complete"},
+        {"validation": {"bag_children_verified": 1}},
+        {"validation": {"invalid_results": ["bad metrics"]}},
+        {"validation": []},
+    ],
+)
+def test_only_verified_openml_failure_before_any_training_is_retried(tmp_path, change):
+    state, slot, destination, worker, archive = setup_failure(tmp_path)
+    path = archive.parent / "manifest.json"
+    manifest = json.loads(path.read_text())
+    manifest.update(change)
+    controller.write_json(path, manifest)
+    original = json.dumps(state, sort_keys=True)
+    assert not controller.retry_openml_setup_failure(
+        tmp_path, state, slot, destination, worker=worker
+    )
+    assert json.dumps(state, sort_keys=True) == original
+    assert destination.exists()
+    assert not (tmp_path / "failed-attempts").exists()
+
+
+@pytest.mark.parametrize("prior_shard", [3, "3"])
+def test_manual_retry_history_already_exhausts_single_retry(tmp_path, prior_shard):
+    state, slot, destination, worker, _ = setup_failure(tmp_path)
+    state["retry_history"] = [
+        {"shard": prior_shard, "previous_attempt": "failed-attempts/manual"}
+    ]
+    assert not controller.retry_openml_setup_failure(
+        tmp_path, state, slot, destination, worker=worker
+    )
+    assert destination.exists()
+    assert state["pending"] == [4]
+
+
+def test_corrupt_failed_archive_cannot_trigger_retry(tmp_path):
+    state, slot, destination, worker, archive = setup_failure(tmp_path)
+    archive.write_bytes(b"corrupt")
+    assert not controller.retry_openml_setup_failure(
+        tmp_path, state, slot, destination, worker=worker
+    )
+    assert state["pending"] == [4]
+
+
+@pytest.mark.parametrize("failure", ["receipt", "existing_backup", "move"])
+def test_retry_archival_failure_does_not_change_queue(tmp_path, monkeypatch, failure):
+    state, slot, destination, worker, _ = setup_failure(tmp_path)
+    if failure == "receipt":
+        controller.write_json(tmp_path / slot["submission_receipt"], {})
+    elif failure == "existing_backup":
+        (tmp_path / "failed-attempts" / "s003-v2-openml503").mkdir(parents=True)
+    else:
+
+        def denied(*args):
+            raise OSError("Archive move denied")
+
+        monkeypatch.setattr(Path, "rename", denied)
+    original = json.dumps(state, sort_keys=True)
+    with pytest.raises((ValueError, OSError)):
+        controller.retry_openml_setup_failure(
+            tmp_path, state, slot, destination, worker=worker
+        )
+    assert json.dumps(state, sort_keys=True) == original
+    assert destination.exists()
+
+
+@pytest.mark.parametrize("status_error", [False, True])
+def test_controller_retries_same_frozen_shard_and_records_next_check(
+    tmp_path, monkeypatch, status_error
+):
+    state, slot, _, _, archive = setup_failure(tmp_path)
+    source = Path(controller.__file__).with_name("kaggle_hpo_worker.py")
+    template = tmp_path / "worker_template.py"
+    template.write_bytes(source.read_text(encoding="utf-8").encode("utf-8"))
+    state.update(
+        owner="example", worker_sha256=controller.file_hash(template), run_id="test"
+    )
+    controller.prepare_package(
+        template,
+        tmp_path / "packages" / "0",
+        owner="example",
+        slot=0,
+        shard=3,
+        run_id="test",
+        existing_kernel=slot["kernel"],
+    )
+    source_hash = controller.file_hash(tmp_path / "packages" / "0" / "worker.py")
+    slot["worker_sha256"] = source_hash
+    for path in (
+        archive.parent / "manifest.json",
+        tmp_path / slot["submission_receipt"],
+    ):
+        record = json.loads(path.read_text())
+        record["worker_sha256"] = source_hash
+        controller.write_json(path, record)
+    controller.write_json(tmp_path / "state.json", state)
+    calls = []
+
+    def command(executable, arguments, **kwargs):
+        calls.append(arguments)
+        if arguments == ["output", "--help"]:
+            return "--file-pattern"
+        if arguments[0] == "status":
+            if status_error:
+                raise OSError("Cannot start status command")
+            return "KernelWorkerStatus.COMPLETE"
+        if arguments[0] == "output":
+            return "Downloaded"
+        assert arguments[0] == "push"
+        assert controller.file_hash(Path(arguments[2]) / "worker.py") == source_hash
+        return (
+            "Kernel version 3 successfully pushed. Please check progress at "
+            "https://www.kaggle.com/code/example/worker-0"
+        )
+
+    class CheckedOnce(Exception):
+        pass
+
+    def sleep(seconds):
+        assert seconds == 1800
+        progress = json.loads((tmp_path / "progress.json").read_text())
+        assert progress["poll_seconds"] == 1800
+        elapsed = datetime.fromisoformat(
+            progress["next_check_at"]
+        ) - datetime.fromisoformat(progress["updated_at"])
+        assert elapsed.total_seconds() == 1800
+        raise CheckedOnce
+
+    monkeypatch.setattr(controller, "kaggle_command", command)
+    monkeypatch.setattr(controller.time, "sleep", sleep)
+    with pytest.raises(CheckedOnce):
+        controller.run_controller(
+            SimpleNamespace(
+                output_root=tmp_path,
+                owner="example",
+                slots=1,
+                prepare_only=False,
+                kaggle="kaggle",
+                poll_seconds=1800,
+            )
+        )
+    saved = json.loads((tmp_path / "state.json").read_text())
+    assert saved["slots"][0]["shard"] == 3
+    assert saved["slots"][0]["kernel_version"] == (2 if status_error else 3)
+    assert saved["pending"] == [4]
+    assert len([call for call in calls if call[0] == "push"]) == (
+        0 if status_error else 1
+    )
 
 
 def test_generated_kernel_is_private_cpu_and_selects_shard(tmp_path):

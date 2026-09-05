@@ -17,7 +17,7 @@ import shutil
 import subprocess
 import time
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 SHARD_COUNT = 156
@@ -307,9 +307,9 @@ def prepare_package(
     return kernel
 
 
-def validate_download(
+def read_download_manifest(
     destination: Path, shard: int, *, worker=None, worker_hash: str | None = None
-) -> dict:
+) -> tuple[Path, dict]:
     if worker is None:
         worker = load_worker(Path(__file__).with_name("kaggle_hpo_worker.py"))
     identity = worker.shard_spec(shard)
@@ -330,11 +330,10 @@ def validate_download(
     for key, value in identity.items():
         if manifest.get(key) != value:
             raise ValueError(f"Shard {shard}: output identity mismatch for {key}")
-    if manifest.get("status") != "complete":
-        raise ValueError(f"Shard {shard} incomplete: {manifest.get('fatal_error')}")
-    expected = manifest.get("expected_parent_results_in_shard")
-    if not expected or manifest.get("result_file_count") != expected:
-        raise ValueError(f"Shard {shard}: result count mismatch")
+    return manifests[0], manifest
+
+
+def validate_archive(manifest_path: Path, manifest: dict, shard: int) -> None:
     record = manifest["workspace_archive"]
     relative = Path(record["path"])
     if (
@@ -344,18 +343,124 @@ def validate_download(
         or ":" in record["path"]
     ):
         raise ValueError("Unsafe archive path in manifest")
-    archive = manifests[0].parent.parent / relative
+    archive = manifest_path.parent.parent / relative
     if (
         archive.stat().st_size != record["size_bytes"]
         or file_hash(archive) != record["sha256"]
     ):
         raise ValueError(f"Shard {shard}: archive checksum mismatch")
+
+
+def validate_download(
+    destination: Path, shard: int, *, worker=None, worker_hash: str | None = None
+) -> dict:
+    manifest_path, manifest = read_download_manifest(
+        destination, shard, worker=worker, worker_hash=worker_hash
+    )
+    if manifest.get("status") != "complete":
+        raise ValueError(f"Shard {shard} incomplete: {manifest.get('fatal_error')}")
+    expected = manifest.get("expected_parent_results_in_shard")
+    if not expected or manifest.get("result_file_count") != expected:
+        raise ValueError(f"Shard {shard}: result count mismatch")
+    validate_archive(manifest_path, manifest, shard)
     return {
         "shard_index": shard,
-        "manifest": str(manifests[0].relative_to(destination)),
-        "manifest_sha256": file_hash(manifests[0]),
+        "manifest": str(manifest_path.relative_to(destination)),
+        "manifest_sha256": file_hash(manifest_path),
         "result_count": expected,
     }
+
+
+def retry_openml_setup_failure(
+    root: Path, state: dict, slot: dict, destination: Path, *, worker
+) -> bool:
+    """Retry one verified pre-training 503 without changing the frozen worker.
+
+    Evidence is archived before queue state changes. An interrupted archive or
+    state write leaves the controller stopped rather than risking another push.
+    """
+    shard = slot["shard"]
+    history = state.get("retry_history", [])
+    if not isinstance(history, list) or any(
+        not isinstance(entry, dict) or str(entry.get("shard")) == str(shard)
+        for entry in history
+    ):
+        return False
+    if str(shard) in state["completed"] or shard in state["pending"]:
+        return False
+    try:
+        manifest_path, manifest = read_download_manifest(
+            destination, shard, worker=worker, worker_hash=slot["worker_sha256"]
+        )
+        validation = manifest["validation"]
+        if (
+            not isinstance(validation, dict)
+            or manifest.get("status") != "incomplete"
+            or not re.match(
+                r"^OpenMLServerError: Unexpected server error when calling "
+                r"https://www\.openml\.org/api/v1/xml/data/qualities/[0-9]+\. "
+                r"Please contact the developers!\nStatus code: 503\n",
+                manifest.get("fatal_error") or "",
+            )
+            or manifest.get("result_file_count") != 0
+            or manifest.get("result_files") != []
+            or manifest.get("failures") != []
+            or "benchmark_exit_code" not in manifest
+            or manifest["benchmark_exit_code"] is not None
+            or "run_commands" in manifest
+            or "generated_job_json" in manifest
+            or validation.get("bag_children_verified") != 0
+            or validation.get("valid_result_count") != 0
+            or validation.get("invalid_results") != []
+            or validation.get("missing_datasets") != sorted(manifest["datasets"])
+        ):
+            return False
+        validate_archive(manifest_path, manifest, shard)
+    except (ValueError, KeyError, OSError, TypeError):
+        return False
+
+    version = slot["kernel_version"]
+    if not isinstance(version, int) or isinstance(version, bool) or version < 1:
+        raise ValueError("Cannot retry without a confirmed failed kernel version")
+    root = root.resolve()
+    receipt = (root / slot["submission_receipt"]).resolve()
+    destination = destination.resolve()
+    backup = root / "failed-attempts" / f"s{shard:03d}-v{version}-openml503"
+    if not all(
+        path.is_relative_to(root) and path != root
+        for path in (receipt, destination, backup.resolve())
+    ):
+        raise ValueError("Retry evidence must stay inside the run directory")
+    submission = json.loads(receipt.read_text(encoding="utf-8"))
+    if (
+        submission.get("requested_kernel") != slot["kernel"]
+        or submission.get("shard") != shard
+        or submission.get("worker_sha256") != slot["worker_sha256"]
+        or pushed_version(submission.get("output", "")) != version
+    ):
+        raise ValueError("Retry receipt does not match the failed attempt")
+    record = {
+        "shard": shard,
+        "retried_at": datetime.now(timezone.utc).isoformat(),
+        "reason": manifest["fatal_error"],
+        "training_started": False,
+        "previous_attempt": backup.relative_to(root).as_posix(),
+        "kernel": slot["kernel"],
+        "kernel_version": version,
+        "worker_sha256": slot["worker_sha256"],
+        "manifest_sha256": file_hash(manifest_path),
+        "submission_receipt_sha256": file_hash(receipt),
+    }
+    backup.mkdir(parents=True, exist_ok=False)
+    shutil.copy2(receipt, backup / "submission.json")
+    write_json(backup / "retry.json", {**record, "previous_slot": dict(slot)})
+    destination.rename(backup / "download")
+    state["retry_history"] = [*history, record]
+    state["pending"].insert(0, shard)
+    slot.update(shard=None, phase="idle", collection_errors=0)
+    write_json(root / "state.json", state)
+    log(root, f"Requeued shard {shard} once after verified OpenML 503 before training")
+    return True
 
 
 def run_controller(args: argparse.Namespace) -> None:
@@ -417,6 +522,7 @@ def run_controller(args: argparse.Namespace) -> None:
         for slot in state["slots"]:
             shard = slot["shard"]
             if shard is not None:
+                status = None
                 try:
                     status_text = kaggle_command(
                         args.kaggle, ["status", slot["kernel"]]
@@ -467,22 +573,27 @@ def run_controller(args: argparse.Namespace) -> None:
                     )
                     continue
                 except (ValueError, KeyError, OSError) as exc:
-                    slot["collection_errors"] = slot.get("collection_errors", 0) + 1
-                    if slot["collection_errors"] < 3:
+                    if status == "COMPLETE" and retry_openml_setup_failure(
+                        root, state, slot, destination, worker=worker_plan
+                    ):
+                        pass
+                    else:
+                        slot["collection_errors"] = slot.get("collection_errors", 0) + 1
+                        if slot["collection_errors"] < 3:
+                            write_json(state_path, state)
+                            log(
+                                root,
+                                f"Retrying artifact download for shard {shard}: {redact(str(exc))}",
+                            )
+                            continue
+                        state["failed"][str(shard)] = redact(str(exc))
+                        slot["shard"] = None
+                        slot["phase"] = "failed"
                         write_json(state_path, state)
                         log(
                             root,
-                            f"Retrying artifact download for shard {shard}: {redact(str(exc))}",
+                            f"Shard {shard} failed: {redact(str(exc))}; stopping new submissions",
                         )
-                        continue
-                    state["failed"][str(shard)] = redact(str(exc))
-                    slot["shard"] = None
-                    slot["phase"] = "failed"
-                    write_json(state_path, state)
-                    log(
-                        root,
-                        f"Shard {shard} failed: {redact(str(exc))}; stopping new submissions",
-                    )
             if slot["shard"] is None and state["pending"] and not state["failed"]:
                 shard = state["pending"][0]
                 package = root / "packages" / str(slot["slot"])
@@ -529,10 +640,15 @@ def run_controller(args: argparse.Namespace) -> None:
             raise RuntimeError(f"Stopped after failed shards: {state['failed']}")
         if len(state["completed"]) == SHARD_COUNT:
             break
+        checked_at = datetime.now(timezone.utc)
         write_json(
             root / "progress.json",
             {
-                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "updated_at": checked_at.isoformat(),
+                "poll_seconds": args.poll_seconds,
+                "next_check_at": (
+                    checked_at + timedelta(seconds=args.poll_seconds)
+                ).isoformat(),
                 "completed": len(state["completed"]),
                 "total": SHARD_COUNT,
                 "active": [
