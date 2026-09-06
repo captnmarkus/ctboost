@@ -388,9 +388,18 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#ctboost-0156-tabarena-v01-lite" class="md-nav__link">
+  <a href="#ctboost-0158-tabarena-v01-lite-with-25-hpo-configurations" class="md-nav__link">
     <span class="md-ellipsis">
-      CTBoost 0.1.56: TabArena-v0.1 Lite
+      CTBoost 0.1.58: TabArena-v0.1 Lite with 25 HPO configurations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#historical-tabarena-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Historical TabArena results
     </span>
   </a>
   
@@ -411,9 +420,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#reproduce-the-lite-run" class="md-nav__link">
+  <a href="#reproduce-the-evaluations" class="md-nav__link">
     <span class="md-ellipsis">
-      Reproduce the lite run
+      Reproduce the evaluations
     </span>
   </a>
   
@@ -993,9 +1002,18 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#ctboost-0156-tabarena-v01-lite" class="md-nav__link">
+  <a href="#ctboost-0158-tabarena-v01-lite-with-25-hpo-configurations" class="md-nav__link">
     <span class="md-ellipsis">
-      CTBoost 0.1.56: TabArena-v0.1 Lite
+      CTBoost 0.1.58: TabArena-v0.1 Lite with 25 HPO configurations
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#historical-tabarena-results" class="md-nav__link">
+    <span class="md-ellipsis">
+      Historical TabArena results
     </span>
   </a>
   
@@ -1016,9 +1034,9 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#reproduce-the-lite-run" class="md-nav__link">
+  <a href="#reproduce-the-evaluations" class="md-nav__link">
     <span class="md-ellipsis">
-      Reproduce the lite run
+      Reproduce the evaluations
     </span>
   </a>
   
@@ -1066,50 +1084,69 @@
 <p>CTBoost has two separate evidence tracks. They must not be combined into one
 score:</p>
 <ol>
-<li>a default-configuration TabArena-v0.1 Lite evaluation for the ordinary adapter; and</li>
+<li>a default-plus-25-configuration TabArena-v0.1 Lite evaluation for the ordinary adapter; and</li>
 <li>a pre-registered external panel for the opt-in grouped split statistic.</li>
 </ol>
-<h3 id="ctboost-0156-tabarena-v01-lite">CTBoost 0.1.56: TabArena-v0.1 Lite<a class="headerlink" href="#ctboost-0156-tabarena-v01-lite" title="Permanent link">&para;</a></h3>
+<h3 id="ctboost-0158-tabarena-v01-lite-with-25-hpo-configurations">CTBoost 0.1.58: TabArena-v0.1 Lite with 25 HPO configurations<a class="headerlink" href="#ctboost-0158-tabarena-v01-lite-with-25-hpo-configurations" title="Permanent link">&para;</a></h3>
 <p>CTBoost has a committed adapter for the official TabArena protocol. It delegates
 folds, task metrics, bagging, tuning, ensembling, timing, and memory measurement to
 TabArena rather than recreating them locally.</p>
-<p>The latest <a href="https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-0.1.56">published result bundle</a>
-covers all 51 TabArena-v0.1 Lite datasets with <strong>CTBoost 0.1.56</strong>, using one
-default configuration and outer split <code>r0f0</code> only. It contains no measured HPO
-configurations or TabArena-Full results. CTBoost 0.1.58 has no new measured
-TabArena score; the vector-leaf and correctness changes do not inherit this
-version's score.</p>
+<p>The latest <a href="https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-hpo25-0.1.58">published result bundle</a>
+covers all 51 TabArena-v0.1 Lite datasets with <strong>CTBoost 0.1.58</strong>, using the
+manual default plus the first 25 configurations of the frozen 200-configuration
+portfolio. Each configuration uses outer split <code>r0f0</code> and eight-fold bagging.
+All 156 shards completed: 1,326 parent results and 10,608 child fits, with zero
+imputed CTBoost tasks. TabArena selects configurations and ensemble weights
+using validation predictions; test outcomes do not change the frozen portfolio.</p>
 <table>
 <thead>
 <tr>
-<th>Scope</th>
-<th style="text-align: right;">Result</th>
+<th>Evaluation</th>
+<th style="text-align: right;">Lite Elo</th>
+<th style="text-align: right;">Win rate</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Lite Elo</td>
-<td style="text-align: right;">1166.7 (+52.1 / -67.5)</td>
+<td>Default</td>
+<td style="text-align: right;">1161.9 (+52.2 / -66.8)</td>
+<td style="text-align: right;">0.3900</td>
 </tr>
 <tr>
-<td>Win rate</td>
-<td style="text-align: right;">0.3957</td>
+<td>Tuned</td>
+<td style="text-align: right;">1262.8 (+44.3 / -53.8)</td>
+<td style="text-align: right;">0.5006</td>
 </tr>
 <tr>
-<td>Position among default-configuration rows</td>
-<td style="text-align: right;">23 / 38</td>
+<td>Tuned + ensemble</td>
+<td style="text-align: right;">1296.9 (+47.8 / -58.2)</td>
+<td style="text-align: right;">0.5383</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Run scope</th>
+<th style="text-align: right;">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Datasets</td>
+<td style="text-align: right;">51</td>
 </tr>
 <tr>
-<td>Successful CTBoost outer splits</td>
-<td style="text-align: right;">51 / 51</td>
+<td>Measured configurations</td>
+<td style="text-align: right;">26 (default + 25 HPO)</td>
 </tr>
 <tr>
-<td>Imputed CTBoost tasks</td>
-<td style="text-align: right;">0 / 51</td>
+<td>Successful parent results</td>
+<td style="text-align: right;">1,326 / 1,326</td>
 </tr>
 <tr>
 <td>Bagging</td>
-<td style="text-align: right;">8 children per task; 408 child fits</td>
+<td style="text-align: right;">8 children per parent; 10,608 child fits</td>
 </tr>
 <tr>
 <td>Kaggle CPU allocation</td>
@@ -1127,28 +1164,38 @@ version's score.</p>
 </table>
 <div class="admonition note">
 <p class="admonition-title">Scope of the score</p>
-<p>This is a local default-only Lite evaluation, not an official leaderboard
-entry. Elo depends on the dataset and method roster: this evaluation uses
-42 reference-method artifacts and 85 evaluated rows, including defaults,
-tuned configurations, ensembles, and systems. Kaggle's 4 CPUs and 28 GB
+<p>This is a local Lite evaluation with 25 HPO configurations, not a full
+200-configuration run, TabArena-Full result, or official leaderboard entry.
+Elo depends on the dataset and method roster: this evaluation uses 87 rows,
+including defaults, tuned configurations, ensembles, and systems. Kaggle's 4 CPUs and 28 GB
 differ from the canonical 8 CPUs and 32 GB, so its recorded timings are not
 directly comparable to official TabArena runtimes.</p>
 </div>
 <p>Provenance:</p>
 <ul>
-<li>Released <code>ctboost==0.1.56</code>, measured as <code>CTBoost_c1_default_BAG_L1</code>;</li>
+<li>Released <code>ctboost==0.1.58</code>, measured as <code>CTBoost_c1_default_BAG_L1</code> and
+  <code>CTBoost_r1_default_BAG_L1</code> through <code>CTBoost_r25_default_BAG_L1</code>;</li>
 <li>30 binary, 8 multiclass, and 13 regression datasets, with no missing or
   duplicate tasks in the published canonical tables;</li>
-<li>Six Kaggle CPU shards, Python 3.12.13, AutoGluon Tabular 1.6.2b20260821;</li>
+<li>156 Kaggle CPU shards, AutoGluon Tabular 1.6.2b20260821;</li>
 <li>TabArena integration/evaluation commit
   <a href="https://github.com/captnmarkus/tabarena/commit/31026f7d758390994353eba79fbfa6747616f365"><code>31026f7d758390994353eba79fbfa6747616f365</code></a>,
   associated with <a href="https://github.com/autogluon/tabarena/pull/479">upstream PR #479</a>.</li>
 </ul>
-<p>The <a href="https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-0.1.56/blob/main/validation/aggregate_manifest.json">aggregate manifest</a>
+<p>The <a href="https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-hpo25-0.1.58/blob/main/validation/aggregate_manifest.json">aggregate manifest</a>
 records task coverage, resource limits, artifact hashes, and version provenance.
-The <a href="https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-0.1.56/blob/main/reports/leaderboard_lite.csv">evaluation table</a>
-records the score and comparison roster. Despite its canonical filename,
-<code>hpo_results.parquet</code> contains only the measured default configuration.</p>
+The <a href="https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-hpo25-0.1.58/blob/main/reports/leaderboard_lite.csv">evaluation table</a>
+records the scores and comparison roster. Canonical result tables contain all
+26 measured configurations and the default, tuned, and tuned-plus-ensemble
+evaluation results.</p>
+<h3 id="historical-tabarena-results">Historical TabArena results<a class="headerlink" href="#historical-tabarena-results" title="Permanent link">&para;</a></h3>
+<p>The <a href="https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-0.1.56">0.1.56 default-only Lite result</a>
+covered the same 51 datasets and reported 1166.7 Elo (+52.1 / -67.5), a 0.3957
+win rate, and position 23/38 among default-configuration rows, with no imputation.
+Its comparison roster contained 85 rows, versus 87 in the 0.1.58 evaluation.
+The two Elo values therefore do not quantify a version-to-version change in
+accuracy. The historical bundle contains only the default configuration and
+408 child fits; its <code>hpo_results.parquet</code> filename does not imply an HPO run.</p>
 <p>The earlier <a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/smoke_0155_public_wheel.json">0.1.55 three-dataset smoke record</a>
 (1054.0 provisional Elo) and <a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/smoke_fd187da.json">0.1.53 smoke record</a>
 remain historical integration checks. Their different task scope prevents
@@ -1167,15 +1214,17 @@ not run. There is no grouped-8 TabArena Elo to report, and the quadratic test
 remains the production default.</p>
 <p>See the <a href="../split-statistics-research/">research ledger</a> and the
 <a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/split_research/results/grouped_external_panel_v2_fb65b685.json">sanitized machine-readable panel evidence</a>.</p>
-<h2 id="reproduce-the-lite-run">Reproduce the lite run<a class="headerlink" href="#reproduce-the-lite-run" title="Permanent link">&para;</a></h2>
-<p>Follow the pinned environment instructions in
-<a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/README.md"><code>benchmarks/tabarena/README.md</code></a>,
-then run:</p>
+<h2 id="reproduce-the-evaluations">Reproduce the evaluations<a class="headerlink" href="#reproduce-the-evaluations" title="Permanent link">&para;</a></h2>
+<p>The frozen 25-configuration Kaggle protocol, collection, and validation commands
+are documented in
+<a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/README.md"><code>benchmarks/tabarena/README.md</code></a>.
+That workflow produces the complete result bundle above. For a local default-only
+Lite run, follow the pinned environment instructions there, then run:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ctboost-tabarena<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--subset<span class="w"> </span>lite<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--device<span class="w"> </span>cpu<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">  </span>--num-cpus<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--memory-limit-gb<span class="w"> </span><span class="m">24</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="w">  </span>--memory-limit-gb<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="w">  </span>--time-limit<span class="w"> </span><span class="m">3600</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="w">  </span>--results-dir<span class="w"> </span>benchmark-results/tabarena/raw<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="w">  </span>--output-dir<span class="w"> </span>benchmark-results/tabarena/report
