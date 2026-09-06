@@ -13,6 +13,7 @@ void ValidateStatisticSizes(const std::vector<float>& gradients,
                             std::size_t num_bins);
 std::vector<double> SolveStatisticLinearSystem(std::vector<double> matrix,
                                                std::vector<double> rhs);
+void SolveStatisticLinearSystemInPlace(double* matrix, double* rhs, std::size_t n);
 double RegularizedGammaQ(double a, double x);
 
 }  // namespace ctboost::detail

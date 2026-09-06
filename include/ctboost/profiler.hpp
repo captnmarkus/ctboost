@@ -60,7 +60,10 @@ class TrainingProfiler {
                      double split_ms,
                      double partition_ms,
                      double stopping_p_value,
-                     std::size_t tested_features) const;
+                     std::size_t tested_features,
+                     int minimum_p_feature = -1,
+                     double minimum_p_value = 1.0,
+                     std::size_t degrees_of_freedom = 0) const;
   void LogTreeBuild(int iteration,
                     int total_iterations,
                     int class_index,

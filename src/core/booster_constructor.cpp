@@ -61,7 +61,10 @@ GradientBooster::GradientBooster(std::string objective,
                                  std::string feature_test,
                                  std::size_t feature_test_bins,
                                  std::string feature_test_adjustment,
-                                 std::string multi_strategy)
+                                 std::string multi_strategy,
+                                 bool leaf_estimation_backtracking,
+                                 std::string multiclass_leaf_solver,
+                                 std::string multiclass_feature_test)
     : objective_name_(std::move(objective)),
       eval_metric_name_(std::move(eval_metric)),
       objective_config_{huber_delta, quantile_alpha, tweedie_variance_power},
@@ -93,6 +96,9 @@ GradientBooster::GradientBooster(std::string objective,
       gamma_(gamma),
       max_leaf_weight_(max_leaf_weight),
       leaf_estimation_iterations_(leaf_estimation_iterations),
+      leaf_estimation_backtracking_(leaf_estimation_backtracking),
+      multiclass_leaf_solver_(std::move(multiclass_leaf_solver)),
+      multiclass_feature_test_(std::move(multiclass_feature_test)),
       feature_test_(booster_detail::CanonicalFeatureTest(std::move(feature_test))),
       feature_test_bins_(feature_test_bins),
       feature_test_adjustment_(booster_detail::CanonicalFeatureTestAdjustment(
@@ -175,7 +181,7 @@ GradientBooster::GradientBooster(std::string objective,
     if (num_classes_ <= 2) {
       throw std::invalid_argument("multiclass objective requires num_classes greater than two");
     }
-    if (leaf_estimation_iterations_ > 1) {
+    if (leaf_estimation_iterations_ > 1 && multiclass_leaf_solver_ != "full") {
       throw std::invalid_argument(
           "leaf_estimation_iterations greater than 1 is not supported for multiclass objectives");
     }
@@ -191,6 +197,37 @@ GradientBooster::GradientBooster(std::string objective,
       throw std::invalid_argument("binary objectives require num_classes equal to one or two");
     }
     prediction_dimension_ = 1;
+  }
+
+  if (multiclass_leaf_solver_ != "diagonal" && multiclass_leaf_solver_ != "full") {
+    throw std::invalid_argument("multiclass_leaf_solver must be 'diagonal' or 'full'");
+  }
+  if (multiclass_feature_test_ != "single" && multiclass_feature_test_ != "joint") {
+    throw std::invalid_argument("multiclass_feature_test must be 'single' or 'joint'");
+  }
+  const bool advanced_multiclass =
+      multiclass_leaf_solver_ == "full" || multiclass_feature_test_ == "joint";
+  if (advanced_multiclass && (prediction_dimension_ <= 1 || num_classes_ > 32)) {
+    throw std::invalid_argument(
+        "full multiclass leaf solver and joint feature test require a multiclass objective with 3-32 classes");
+  }
+  if (leaf_estimation_backtracking_ &&
+      !booster_detail::IsSquaredErrorObjective(normalized_objective) &&
+      !booster_detail::IsBinaryObjective(normalized_objective)) {
+    throw std::invalid_argument(
+        "leaf_estimation_backtracking supports RMSE/SquaredError and LogLoss only; the full multiclass solver always backtracks");
+  }
+  if (leaf_estimation_backtracking_ || advanced_multiclass) {
+    if (booster_detail::NormalizeTaskType(task_type) != "cpu" || distributed_world_size_ != 1) {
+      throw std::invalid_argument(
+          "leaf backtracking, full multiclass leaf solver and joint feature test require non-distributed CPU training");
+    }
+  }
+  if (multiclass_feature_test_ == "joint" && bootstrap_type_ == "Bayesian" &&
+      (bagging_temperature_ > 0.0 || !std::isfinite(bagging_temperature_))) {
+    throw std::invalid_argument(
+        "joint feature test requires integer frequency weights; "
+        "fractional sample/class/bootstrap weights are unsupported");
   }
 
   if (multi_strategy_ != "one_output_per_tree" && multi_strategy_ != "multi_output_tree") {

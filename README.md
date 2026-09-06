@@ -11,10 +11,11 @@ Python/scikit-learn interfaces.
 [Benchmarks](https://captnmarkus.github.io/ctboost/benchmarks/) ·
 [Compatibility](https://captnmarkus.github.io/ctboost/reference/compatibility/)
 
-Version [0.1.58](https://captnmarkus.github.io/ctboost/release-0.1.58/) fixes vector
-accumulation rounding and the Windows C++ export test loader. It includes the
-vector-leaf functionality from the retained 0.1.57 tag, whose PyPI and GitHub
-release publication was withheld after CI failures.
+Version [0.1.59](https://captnmarkus.github.io/ctboost/release-0.1.59/) adds
+optional loss backtracking, coupled multiclass leaf fitting, and joint
+multiclass feature tests. It also reduces grouped-test allocation overhead
+and corrects feature-test versus cut-search profiling. Existing learning
+defaults and the statistical feature-selection-before-cut contract remain.
 
 ## Highlights
 
@@ -94,6 +95,10 @@ for supported workflows, artifact compatibility, and a reproducible comparison.
 
 ## Evidence and project status
 
+For the new CPU learning controls, see
+[safeguarded leaves and joint multiclass tests](https://captnmarkus.github.io/ctboost/guides/learning-options/).
+The full solver and joint test support 3–32 classes and remain opt-in.
+
 CTBoost is an alpha project. Its API and model formats are tested extensively,
 but it does not yet have the independent production history of CatBoost or
 XGBoost.
@@ -128,8 +133,9 @@ the default; grouped testing is opt-in.
 Read the [benchmark status](https://captnmarkus.github.io/ctboost/benchmarks/)
 and [split-statistics research ledger](https://captnmarkus.github.io/ctboost/split-statistics-research/)
 for protocols, limitations, and machine-readable evidence.
-See the [0.1.58 release notes](https://captnmarkus.github.io/ctboost/release-0.1.58/)
-for vector-leaf support, correctness fixes, and compatibility boundaries.
+See the [0.1.59 release notes](https://captnmarkus.github.io/ctboost/release-0.1.59/)
+for the new learning controls and their validation. The TabArena scores above
+belong to 0.1.58; 0.1.59 has not yet been evaluated on that benchmark.
 
 ## Documentation
 

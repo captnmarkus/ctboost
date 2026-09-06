@@ -3,12 +3,46 @@
 #include "statistics_internal.hpp"
 
 #include <algorithm>
+#include <array>
 #include <limits>
 #include <numeric>
 #include <stdexcept>
 #include <vector>
 
 namespace ctboost {
+namespace {
+
+// Same reduced covariance and elimination order as EvaluateFromBinStatistics.
+// Grouping has at most 64 non-missing groups and one missing group.
+double EvaluateGroupedDenseScore(const double* gradient_sums,
+                                 const double* weight_sums,
+                                 std::size_t degrees_of_freedom,
+                                 double gradient_mean,
+                                 double diagonal_scale,
+                                 double outer_scale,
+                                 double epsilon) {
+  std::array<double, 64U * 64U> covariance;
+  std::array<double, 64U> difference;
+  std::array<double, 64U> solved;
+  for (std::size_t i = 0; i < degrees_of_freedom; ++i) {
+    difference[i] = gradient_sums[i] - weight_sums[i] * gradient_mean;
+    solved[i] = difference[i];
+    for (std::size_t j = 0; j < degrees_of_freedom; ++j) {
+      double value = -outer_scale * weight_sums[i] * weight_sums[j];
+      if (i == j) {
+        value += diagonal_scale * weight_sums[i];
+        value += epsilon;
+      }
+      covariance[i * degrees_of_freedom + j] = value;
+    }
+  }
+  detail::SolveStatisticLinearSystemInPlace(
+      covariance.data(), solved.data(), degrees_of_freedom);
+  return std::inner_product(difference.begin(), difference.begin() + degrees_of_freedom,
+                            solved.begin(), 0.0);
+}
+
+}  // namespace
 
 BinStatistics GroupOrderedBinStatistics(const BinStatistics& stats,
                                          std::size_t requested_groups,
@@ -165,6 +199,97 @@ LinearStatisticScore LinearStatistic::EvaluateScoreFromBinStatistics(const BinSt
 
   result.chi_square =
       diff_quadratic + outer_scale * weighted_projection * weighted_projection / denominator;
+  result.p_value = ChiSquareSurvival(result.chi_square, result.degrees_of_freedom);
+  return result;
+}
+
+LinearStatisticScore LinearStatistic::EvaluateGroupedScoreFromBinStatistics(
+    const BinStatistics& stats,
+    double total_gradient,
+    double sample_weight_sum,
+    double gradient_variance,
+    std::size_t requested_groups,
+    std::size_t missing_bin) const {
+  const std::size_t num_bins = stats.weight_sums.size();
+  if (stats.gradient_sums.size() != num_bins || stats.hessian_sums.size() != num_bins) {
+    throw std::invalid_argument("bin statistics vectors must have the same size");
+  }
+  if (requested_groups < 2U || requested_groups > 64U) {
+    throw std::invalid_argument("requested grouped statistic bins must be in [2, 64]");
+  }
+  const bool has_missing = missing_bin != kNoMissingStatisticBin;
+  if (has_missing && missing_bin >= num_bins) {
+    throw std::invalid_argument("missing statistic bin is out of range");
+  }
+  double total_non_missing_weight = 0.0;
+  for (std::size_t bin = 0; bin < num_bins; ++bin) {
+    if ((!has_missing || bin != missing_bin) && stats.weight_sums[bin] > 0.0) {
+      total_non_missing_weight += stats.weight_sums[bin];
+    }
+  }
+
+  // Preserve the diagnostic grouping's midpoint rule and summation order, but
+  // keep only the two sufficient-statistic arrays consumed by feature testing.
+  std::array<double, 65U> gradient_sums{};
+  std::array<double, 65U> weight_sums{};
+  std::size_t active_bins = 0;
+  std::size_t previous_raw_group = kNoMissingStatisticBin;
+  double cumulative_before = 0.0;
+  for (std::size_t bin = 0; bin < num_bins; ++bin) {
+    if ((has_missing && bin == missing_bin) || stats.weight_sums[bin] <= 0.0) {
+      continue;
+    }
+    const double bin_weight = stats.weight_sums[bin];
+    const double midpoint = cumulative_before + 0.5 * bin_weight;
+    std::size_t raw_group = static_cast<std::size_t>(
+        static_cast<double>(requested_groups) * midpoint / total_non_missing_weight);
+    raw_group = std::min(raw_group, requested_groups - 1U);
+    if (raw_group != previous_raw_group) {
+      ++active_bins;
+      previous_raw_group = raw_group;
+    }
+    gradient_sums[active_bins - 1U] += stats.gradient_sums[bin];
+    weight_sums[active_bins - 1U] += bin_weight;
+    cumulative_before += bin_weight;
+  }
+  if (has_missing && stats.weight_sums[missing_bin] > 0.0) {
+    gradient_sums[active_bins] = stats.gradient_sums[missing_bin];
+    weight_sums[active_bins] = stats.weight_sums[missing_bin];
+    ++active_bins;
+  }
+
+  LinearStatisticScore result;
+  if (sample_weight_sum <= 1.0 || active_bins <= 1) {
+    return result;
+  }
+  result.degrees_of_freedom = active_bins - 1U;
+  if (gradient_variance <= std::numeric_limits<double>::epsilon()) {
+    return result;
+  }
+  const double node_count = sample_weight_sum;
+  const double gradient_mean = total_gradient / node_count;
+  const double diagonal_scale = (node_count / (node_count - 1.0)) * gradient_variance;
+  const double outer_scale = gradient_variance / (node_count - 1.0);
+  double diff_quadratic = 0.0;
+  double weighted_projection = 0.0;
+  double diagonal_projection = 0.0;
+  for (std::size_t bin = 0; bin < result.degrees_of_freedom; ++bin) {
+    const double bin_weight = weight_sums[bin];
+    const double diff = gradient_sums[bin] - bin_weight * gradient_mean;
+    const double diagonal = diagonal_scale * bin_weight + epsilon_;
+    diff_quadratic += (diff * diff) / diagonal;
+    weighted_projection += (bin_weight * diff) / diagonal;
+    diagonal_projection += (bin_weight * bin_weight) / diagonal;
+  }
+  const double denominator = 1.0 - outer_scale * diagonal_projection;
+  if (denominator <= epsilon_) {
+    result.chi_square = EvaluateGroupedDenseScore(
+        gradient_sums.data(), weight_sums.data(), result.degrees_of_freedom,
+        gradient_mean, diagonal_scale, outer_scale, epsilon_);
+  } else {
+    result.chi_square =
+        diff_quadratic + outer_scale * weighted_projection * weighted_projection / denominator;
+  }
   result.p_value = ChiSquareSurvival(result.chi_square, result.degrees_of_freedom);
   return result;
 }

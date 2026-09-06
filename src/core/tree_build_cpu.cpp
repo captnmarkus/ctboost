@@ -78,7 +78,6 @@ int Tree::BuildNodeCpu(const HistMatrix& hist,
     return return_leaf();
   }
 
-  const auto feature_start = std::chrono::steady_clock::now();
   const detail::CandidateSelectionResult selection = detail::SelectBestCandidateSplit(hist,
                                                                                       node_stats,
                                                                                       options,
@@ -88,11 +87,10 @@ int Tree::BuildNodeCpu(const HistMatrix& hist,
                                                                                       leaf_upper_bound,
                                                                                       depth,
                                                                                       row_begin,
-                                                                                      row_end);
+                                                                                      row_end,
+                                                                                      profiler != nullptr && profiler->enabled());
   const detail::FeatureChoice& feature_choice = selection.feature_choice;
-  const double feature_ms =
-      std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - feature_start)
-          .count();
+  const double feature_ms = selection.feature_ms;
   if (!selection.feature_test_passed) {
     if (profiler != nullptr && profiler->enabled()) {
       profiler->LogNodeSearch(depth,
@@ -109,16 +107,16 @@ int Tree::BuildNodeCpu(const HistMatrix& hist,
                               0.0,
                               0.0,
                               selection.stopping_p_value,
-                              selection.tested_features);
+                              selection.tested_features,
+                              selection.minimum_p_feature.feature_id,
+                              selection.minimum_p_feature.p_value,
+                              selection.feature_choice.degrees_of_freedom);
     }
     return return_leaf();
   }
 
-  const auto split_start = std::chrono::steady_clock::now();
   const detail::SplitChoice& split_choice = selection.split_choice;
-  const double split_ms =
-      std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - split_start)
-          .count();
+  const double split_ms = selection.split_ms;
   if (!split_choice.valid || split_choice.gain <= 0.0) {
     if (profiler != nullptr && profiler->enabled()) {
       profiler->LogNodeSearch(depth,
@@ -135,7 +133,10 @@ int Tree::BuildNodeCpu(const HistMatrix& hist,
                               split_ms,
                               0.0,
                               selection.stopping_p_value,
-                              selection.tested_features);
+                              selection.tested_features,
+                              selection.minimum_p_feature.feature_id,
+                              selection.minimum_p_feature.p_value,
+                              selection.feature_choice.degrees_of_freedom);
     }
     return return_leaf();
   }
@@ -170,7 +171,10 @@ int Tree::BuildNodeCpu(const HistMatrix& hist,
                             split_ms,
                             partition_ms,
                             selection.stopping_p_value,
-                            selection.tested_features);
+                            selection.tested_features,
+                            selection.minimum_p_feature.feature_id,
+                            selection.minimum_p_feature.p_value,
+                            selection.feature_choice.degrees_of_freedom);
   }
   if (options.distributed == nullptr && (left_end == row_begin || left_end == row_end)) {
     return return_leaf();

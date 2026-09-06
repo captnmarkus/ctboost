@@ -55,6 +55,13 @@ class LinearStatistic {
                                                       double total_gradient,
                                                       double sample_weight_sum,
                                                       double gradient_variance) const;
+  LinearStatisticScore EvaluateGroupedScoreFromBinStatistics(
+      const BinStatistics& stats,
+      double total_gradient,
+      double sample_weight_sum,
+      double gradient_variance,
+      std::size_t requested_groups,
+      std::size_t missing_bin = kNoMissingStatisticBin) const;
 
   LinearStatisticResult Evaluate(const std::vector<float>& gradients,
                                  const std::vector<float>& hessians,

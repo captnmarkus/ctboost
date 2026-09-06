@@ -1,4 +1,5 @@
 #include "booster_fit_internal.hpp"
+#include "booster_leaf_solver.hpp"
 
 #include <chrono>
 
@@ -8,6 +9,7 @@ void RunMulticlassIteration(const FitLoopContext& context,
                             const FitLoopState& state,
                             DistributedCoordinator* distributed_coordinator,
                             const std::vector<float>& iteration_weights,
+                            const std::vector<float>& gradient_predictions,
                             const DartPredictionState& dart_state,
                             double dropped_tree_scale,
                             double new_tree_scale,
@@ -30,8 +32,12 @@ void RunMulticlassIteration(const FitLoopContext& context,
   Tree structure_tree;
   const std::vector<int> allowed_features = SampleFeatureSubset(
       context.pool->num_cols(), context.colsample_bytree, context.feature_weights, *context.rng_state);
-  const TreeBuildOptions build_options = MakeTreeBuildOptions(
+  TreeBuildOptions build_options = MakeTreeBuildOptions(
       context, allowed_features.empty() ? nullptr : &allowed_features, distributed_coordinator);
+  if (context.joint_multiclass_feature_test) {
+    build_options.multivariate_gradients = &context.workspace->gradients;
+    build_options.multivariate_dimension = static_cast<std::size_t>(context.prediction_dimension);
+  }
   std::vector<std::size_t> training_row_indices;
   std::vector<LeafRowRange> training_leaf_ranges;
   const auto tree_start = std::chrono::steady_clock::now();
@@ -66,6 +72,13 @@ void RunMulticlassIteration(const FitLoopContext& context,
                                                                           context.max_leaf_weight,
                                                                           context.vector_leaves,
                                                                           distributed_coordinator);
+  if (context.full_multiclass_leaf_solver) {
+    FitFullSoftmaxTreeLeaves(class_trees, training_row_indices, training_leaf_ranges,
+                            gradient_predictions, *context.labels, iteration_weights,
+                            context.prediction_dimension, context.lambda_l2,
+                            context.max_leaf_weight, context.leaf_estimation_iterations,
+                            context.vector_leaves);
+  }
   timing->tree_ms +=
       std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - leaf_fit_start).count();
 

@@ -89,7 +89,6 @@ int Tree::BuildNodeGpu(const HistMatrix& hist,
     return return_leaf();
   }
 
-  const auto search_start = std::chrono::steady_clock::now();
   const detail::CandidateSelectionResult selection = detail::SelectBestCandidateSplit(
       hist,
       node_stats,
@@ -100,7 +99,8 @@ int Tree::BuildNodeGpu(const HistMatrix& hist,
       leaf_upper_bound,
       depth,
       row_begin,
-      row_end);
+      row_end,
+      profiler != nullptr && profiler->enabled());
   GpuNodeSearchResult node_search;
   node_search.feature_id = selection.feature_choice.feature_id;
   node_search.p_value = selection.feature_choice.p_value;
@@ -116,10 +116,8 @@ int Tree::BuildNodeGpu(const HistMatrix& hist,
             selection.split_choice.left_categories.end(),
             node_search.left_categories.begin());
   node_search.node_statistics = parent_snapshot.node_statistics;
-  const double feature_ms =
-      std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - search_start)
-          .count();
-  const double split_ms = 0.0;
+  const double feature_ms = selection.feature_ms;
+  const double split_ms = selection.split_ms;
   if (!selection.feature_test_passed || node_search.feature_id < 0 ||
       !node_search.split_valid || node_search.gain <= 0.0) {
     if (profiler != nullptr && profiler->enabled()) {
@@ -137,7 +135,10 @@ int Tree::BuildNodeGpu(const HistMatrix& hist,
                               split_ms,
                               0.0,
                               selection.stopping_p_value,
-                              selection.tested_features);
+                              selection.tested_features,
+                              selection.minimum_p_feature.feature_id,
+                              selection.minimum_p_feature.p_value,
+                              selection.feature_choice.degrees_of_freedom);
     }
     return return_leaf();
   }
@@ -170,7 +171,10 @@ int Tree::BuildNodeGpu(const HistMatrix& hist,
                             split_ms,
                             partition_ms,
                             selection.stopping_p_value,
-                            selection.tested_features);
+                            selection.tested_features,
+                            selection.minimum_p_feature.feature_id,
+                            selection.minimum_p_feature.p_value,
+                            selection.feature_choice.degrees_of_freedom);
   }
   if (options.distributed == nullptr && (left_end == row_begin || left_end == row_end)) {
     return return_leaf();

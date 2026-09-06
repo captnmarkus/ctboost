@@ -1,5 +1,6 @@
 #include "tree_internal.hpp"
 
+#include <cmath>
 #include <limits>
 #include <memory>
 #include <numeric>
@@ -25,6 +26,27 @@ void Tree::Build(const HistMatrix& hist,
   }
   if (weights.size() != hist.num_rows) {
     throw std::invalid_argument("weight size must match the histogram row count");
+  }
+  if (options.multivariate_gradients != nullptr &&
+      (options.use_gpu || options.distributed != nullptr ||
+       options.multivariate_dimension < 2U || options.multivariate_dimension > 32U ||
+       options.multivariate_gradients->size() != hist.num_rows * options.multivariate_dimension)) {
+    throw std::invalid_argument("joint feature statistics require complete 2-32 dimensional CPU responses");
+  }
+  if (options.multivariate_gradients != nullptr) {
+    // Validate the effective weights after sampling too. Joint conditional
+    // covariance uses a literal frequency interpretation in training; the
+    // diagnostic API alone permits the fractional-weight approximation.
+    for (const float weight : weights) {
+      if (!std::isfinite(weight) || weight < 0.0F) {
+        throw std::invalid_argument("joint feature test weights must be finite and nonnegative");
+      }
+      if (std::floor(weight) != weight) {
+        throw std::invalid_argument(
+            "joint feature test requires integer frequency weights; "
+            "fractional sample/class/bootstrap weights are unsupported");
+      }
+    }
   }
   if (options.use_gpu) {
     if (gpu_workspace == nullptr) {
@@ -65,6 +87,9 @@ void Tree::Build(const HistMatrix& hist,
   }
 
   int leaf_count = 1;
+  TreeBuildOptions node_options = options;
+  node_options.statistic_row_indices = &row_indices;
+  node_options.statistic_weights = &weights;
   const LinearStatistic statistic_engine;
   const double root_leaf_lower_bound =
       options.max_leaf_weight > 0.0 ? -options.max_leaf_weight : -std::numeric_limits<double>::infinity();
@@ -78,7 +103,7 @@ void Tree::Build(const HistMatrix& hist,
             0,
             initial_row_count,
             0,
-            options,
+            node_options,
             gpu_workspace,
             nullptr,
             false,

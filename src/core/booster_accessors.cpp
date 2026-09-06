@@ -46,6 +46,15 @@ double GradientBooster::max_leaf_weight() const noexcept { return max_leaf_weigh
 int GradientBooster::leaf_estimation_iterations() const noexcept {
   return leaf_estimation_iterations_;
 }
+bool GradientBooster::leaf_estimation_backtracking() const noexcept {
+  return leaf_estimation_backtracking_;
+}
+const std::string& GradientBooster::multiclass_leaf_solver() const noexcept {
+  return multiclass_leaf_solver_;
+}
+const std::string& GradientBooster::multiclass_feature_test() const noexcept {
+  return multiclass_feature_test_;
+}
 const std::string& GradientBooster::feature_test() const noexcept { return feature_test_; }
 std::size_t GradientBooster::feature_test_bins() const noexcept { return feature_test_bins_; }
 const std::string& GradientBooster::feature_test_adjustment() const noexcept {

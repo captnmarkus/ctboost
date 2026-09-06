@@ -103,3 +103,11 @@ Reference implementations include:
 Integer weights mean literal frequency counts. The permutation reference
 rejects non-integer case weights because arbitrary real weights do not define
 an exchangeable replicated sample.
+
+The [0.1.59 grouped-score diagnostics](GROUPED_CALIBRATION_V1.md) record exact
+legacy/optimized p-values in 20,000 fixed-node cases and the separate
+32-case published-wheel compatibility check. They also expose the existing
+sensitivity of the frequency-based statistic to arbitrary fractional weights:
+the same observations reject 0%, 54.95%, or 99.90% of the time when mean weights
+are 0.1, 1, or 10. This evidence does not establish adaptive-tree error control
+or reopen the external panel's promotion decision.

@@ -73,8 +73,10 @@ support scalar predictor versions 1 and 2 and reject vector predictor version 3.
 
 GPU and distributed vector training are rejected explicitly. Regression with
 multiple targets and multilabel classification continue to use the independent
-estimator wrappers. `leaf_estimation_iterations > 1` remains unsupported for
-multiclass, and existing multiclass constraint restrictions still apply.
+estimator wrappers. Multiclass `leaf_estimation_iterations > 1` requires the
+optional `multiclass_leaf_solver="full"` introduced in 0.1.59, on CPU with
+3–32 classes. Existing multiclass constraint restrictions still apply. See
+[learning options](learning-options.md) for the coupled solver and joint feature test.
 
 ## Reproducible comparison
 

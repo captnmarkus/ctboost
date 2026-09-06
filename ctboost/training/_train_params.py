@@ -130,6 +130,15 @@ def _resolve_native_training_params(
                 1 if init_state is None else init_state.get("leaf_estimation_iterations", 1),
             )
         ),
+        "leaf_estimation_backtracking": bool(config.get(
+            "leaf_estimation_backtracking", False if init_state is None else init_state.get("leaf_estimation_backtracking", False),
+        )),
+        "multiclass_leaf_solver": str(config.get(
+            "multiclass_leaf_solver", "diagonal" if init_state is None else init_state.get("multiclass_leaf_solver", "diagonal"),
+        )),
+        "multiclass_feature_test": str(config.get(
+            "multiclass_feature_test", "single" if init_state is None else init_state.get("multiclass_feature_test", "single"),
+        )),
         "feature_test": feature_test or "quadratic",
         "feature_test_bins": int(
             config.get(

@@ -653,6 +653,21 @@ class Booster:
         return bool(self._handle.boost_from_average())
 
     @property
+    def leaf_estimation_backtracking(self) -> bool:
+        """Return the configured leaf estimation backtracking."""
+        return bool(self._handle.leaf_estimation_backtracking())
+
+    @property
+    def multiclass_leaf_solver(self) -> str:
+        """Return the configured multiclass leaf solver."""
+        return str(self._handle.multiclass_leaf_solver())
+
+    @property
+    def multiclass_feature_test(self) -> str:
+        """Return the configured multiclass feature test."""
+        return str(self._handle.multiclass_feature_test())
+
+    @property
     def leaf_estimation_iterations(self) -> int:
         """Number of fixed-structure leaf-value estimation steps per tree."""
         return int(self._handle.leaf_estimation_iterations())

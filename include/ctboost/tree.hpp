@@ -92,6 +92,12 @@ struct TreeBuildOptions {
   FeatureTest feature_test{FeatureTest::Quadratic};
   std::size_t feature_test_bins{8};
   FeatureTestAdjustment feature_test_adjustment{FeatureTestAdjustment::None};
+  // Optional complete response vectors for CPU joint feature selection.
+  const std::vector<float>* multivariate_gradients{nullptr};
+  std::size_t multivariate_dimension{0};
+  // Set internally by Build; valid only for the duration of that tree build.
+  const std::vector<std::size_t>* statistic_row_indices{nullptr};
+  const std::vector<float>* statistic_weights{nullptr};
 };
 
 class Tree {

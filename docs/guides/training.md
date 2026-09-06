@@ -6,6 +6,9 @@ scikit-learn-compatible estimators. Start with the
 you need custom optimization, training control, model selection, or structured
 targets.
 
+For safeguarded Newton updates and coupled multiclass learning, see
+[leaf backtracking and joint feature tests](learning-options.md).
+
 The estimator examples require the scikit-learn extra:
 
 ```bash

@@ -81,7 +81,11 @@ std::vector<double> SolveStatisticLinearSystem(std::vector<double> matrix,
   if (matrix.size() != n * n) {
     throw std::invalid_argument("matrix dimensions do not match the RHS");
   }
+  SolveStatisticLinearSystemInPlace(matrix.data(), rhs.data(), n);
+  return rhs;
+}
 
+void SolveStatisticLinearSystemInPlace(double* matrix, double* rhs, std::size_t n) {
   for (std::size_t pivot = 0; pivot < n; ++pivot) {
     std::size_t best_row = pivot;
     double best_value = std::fabs(matrix[pivot * n + pivot]);
@@ -124,8 +128,6 @@ std::vector<double> SolveStatisticLinearSystem(std::vector<double> matrix,
       rhs[row] -= factor * rhs[pivot];
     }
   }
-
-  return rhs;
 }
 
 double RegularizedGammaQ(double a, double x) {

@@ -1,4 +1,5 @@
 #include "module_internal.hpp"
+#include "ctboost/multivariate_statistics.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -229,6 +230,12 @@ void BindModuleFunctions(py::module_& m) {
           out["chi_square"] = result.chi_square;
           out["degrees_of_freedom"] = result.degrees_of_freedom;
           out["gradient_sums"] = grouped_stats.gradient_sums;
+          const auto optimized = statistic.EvaluateGroupedScoreFromBinStatistics(
+              raw_stats, total_gradient, total_weight, gradient_variance,
+              requested_groups, resolved_missing_bin);
+          out["optimized_p_value"] = optimized.p_value;
+          out["optimized_chi_square"] = optimized.chi_square;
+          out["optimized_degrees_of_freedom"] = optimized.degrees_of_freedom;
           out["hessian_sums"] = grouped_stats.hessian_sums;
           out["weight_sums"] = grouped_stats.weight_sums;
           return out;
@@ -238,6 +245,49 @@ void BindModuleFunctions(py::module_& m) {
         py::arg("weights"),
         py::arg("requested_groups") = 8,
         py::arg("missing_bin") = -1);
+
+  m.def("_debug_compute_multivariate_pvalue",
+        [](py::array_t<float, py::array::forcecast> gradients,
+           py::array_t<std::int64_t, py::array::forcecast> bins,
+           py::object weights, std::size_t num_bins, std::size_t groups,
+           std::int64_t missing_bin) {
+          const auto info = gradients.request();
+          if (info.ndim != 2) throw std::invalid_argument("gradients must have shape [N, K]");
+          const std::size_t rows = static_cast<std::size_t>(info.shape[0]);
+          const std::size_t dimension = static_cast<std::size_t>(info.shape[1]);
+          const auto gradient_values = ArrayToFlatFloatVector(gradients, "gradients");
+          const auto bin_values = ArrayToBinVector(bins, "bins");
+          const auto weight_values = weights.is_none() ? std::vector<float>(rows, 1.0F)
+              : ArrayToVector(weights.cast<py::array_t<float, py::array::forcecast>>(), "weights");
+          if (bin_values.size() != rows || weight_values.size() != rows) {
+            throw std::invalid_argument("gradients, bins and weights must have matching row counts");
+          }
+          if (num_bins == 0U) {
+            num_bins = bin_values.empty() ? 0U
+                : static_cast<std::size_t>(*std::max_element(bin_values.begin(), bin_values.end())) + 1U;
+          }
+          const auto response = ComputeMultivariateResponseStatistics(
+              gradient_values, weight_values, dimension);
+          auto feature = ComputeMultivariateBinStatistics(
+              gradient_values, weight_values, bin_values, dimension, num_bins);
+          if (groups != 0U) {
+            feature = GroupOrderedMultivariateBinStatistics(feature, groups,
+                missing_bin < 0 ? kNoMissingStatisticBin : static_cast<std::size_t>(missing_bin));
+          }
+          const auto score = EvaluateMultivariateStatisticFromBins(feature, response);
+          py::dict out;
+          out["p_value"] = score.p_value;
+          out["chi_square"] = score.chi_square;
+          out["degrees_of_freedom"] = score.degrees_of_freedom;
+          out["response_rank"] = response.covariance_rank;
+          out["frequency_weights"] = response.frequency_weights;
+          out["mean"] = response.mean;
+          out["covariance"] = response.covariance;
+          out["gradient_sums"] = feature.gradient_sums;
+          out["weight_sums"] = feature.weight_sums;
+          return out;
+        }, py::arg("gradients"), py::arg("bins"), py::arg("weights") = py::none(),
+        py::arg("num_bins") = 0, py::arg("groups") = 0, py::arg("missing_bin") = -1);
 
   m.def("_debug_tree_build_options_boundary",
         [](bool use_gpu,

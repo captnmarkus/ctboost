@@ -185,14 +185,36 @@ def test_tabarena_output_falls_back_when_markdown_extra_is_missing():
     assert _format_table(FrameWithoutTabulate()) == "plain leaderboard"
 
 
-def test_tabarena_manifest_records_checkout_identity_when_available():
+def test_tabarena_manifest_records_checkout_identity_when_available(monkeypatch, tmp_path):
+    # Installed wheels intentionally have no checkout identity. Exercise a real
+    # source checkout without depending on where this test or package was copied.
+    import shutil
+    import subprocess
+
+    if shutil.which("git") is None:
+        pytest.skip("Git is needed for checkout identity integration")
+    repository = tmp_path / "source"
+    repository.mkdir()
+    subprocess.run(["git", "init", "--quiet", str(repository)], check=True)
+    tracked = repository / "model.txt"
+    tracked.write_text("initial\n", encoding="utf-8")
+    subprocess.run(["git", "add", "model.txt"], cwd=repository, check=True)
+    subprocess.run(
+        ["git", "-c", "user.name=CTBoost Test", "-c", "user.email=test@example.invalid",
+         "-c", "commit.gpgsign=false", "commit", "--quiet", "-m", "fixture"],
+        cwd=repository, check=True,
+    )
+    monkeypatch.setattr(tabarena_run, "_local_distribution_checkout", lambda _name: repository)
     identity = _git_source_identity()
     assert identity is not None
     assert len(identity["commit"]) == 40
-    assert isinstance(identity["dirty"], bool)
-    assert isinstance(identity["status"], list)
-    if identity["dirty"]:
-        assert len(identity["dirty_fingerprint_sha256"]) == 64
+    assert identity["dirty"] is False
+    assert identity["status"] == []
+    tracked.write_text("changed\n", encoding="utf-8")
+    dirty = _git_source_identity()
+    assert dirty["commit"] == identity["commit"]
+    assert dirty["dirty"] is True
+    assert len(dirty["dirty_fingerprint_sha256"]) == 64
 
 
 def test_tabarena_cpu_and_gpu_models_have_distinct_resource_contracts():

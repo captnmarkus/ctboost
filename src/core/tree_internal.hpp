@@ -56,6 +56,7 @@ struct FeatureChoice {
   int feature_id{-1};
   double p_value{1.0};
   double chi_square{-std::numeric_limits<double>::infinity()};
+  std::size_t degrees_of_freedom{0};
 };
 
 struct SplitChoice {
@@ -70,11 +71,14 @@ struct SplitChoice {
 
 struct CandidateSelectionResult {
   FeatureChoice feature_choice;
+  FeatureChoice minimum_p_feature;
   SplitChoice split_choice;
   double adjusted_gain{-std::numeric_limits<double>::infinity()};
   double stopping_p_value{1.0};
   std::size_t tested_features{0};
   bool feature_test_passed{false};
+  double feature_ms{0.0};
+  double split_ms{0.0};
 };
 
 double ComputeLeafWeight(double gradient_sum, double hessian_sum, double lambda_l2);
@@ -204,7 +208,8 @@ CandidateSelectionResult SelectBestCandidateSplit(const HistMatrix& hist,
                                                   double leaf_upper_bound,
                                                   int depth,
                                                   std::size_t row_begin,
-                                                  std::size_t row_end);
+                                                  std::size_t row_end,
+                                                  bool measure_timing = false);
 
 }  // namespace detail
 }  // namespace ctboost

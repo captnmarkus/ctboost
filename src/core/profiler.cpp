@@ -158,6 +158,9 @@ void TrainingProfiler::LogNodeSearch(int depth,
                 split_ms,
                 partition_ms,
                 p_value,
+                0U,
+                feature_id,
+                p_value,
                 0U);
 }
 
@@ -175,12 +178,15 @@ void TrainingProfiler::LogNodeSearch(int depth,
                                      double split_ms,
                                      double partition_ms,
                                      double stopping_p_value,
-                                     std::size_t tested_features) const {
+                                     std::size_t tested_features,
+                                     int minimum_p_feature,
+                                     double minimum_p_value,
+                                     std::size_t degrees_of_freedom) const {
   if (!enabled_) {
     return;
   }
   LogLine(
-      "node_search depth=%d rows=%zu feature=%d p_value=%.6g stopping_p_value=%.6g tested_features=%zu chi_square=%.6g split_valid=%d categorical=%d gain=%.6g left_rows=%zu right_rows=%zu feature_ms=%.3f split_ms=%.3f partition_ms=%.3f",
+      "node_search depth=%d rows=%zu feature=%d p_value=%.6g stopping_p_value=%.6g tested_features=%zu chi_square=%.6g split_valid=%d categorical=%d gain=%.6g left_rows=%zu right_rows=%zu feature_ms=%.3f split_ms=%.3f partition_ms=%.3f minimum_p_feature=%d minimum_p_value=%.6g degrees_of_freedom=%zu",
       depth,
       rows,
       feature_id,
@@ -195,7 +201,10 @@ void TrainingProfiler::LogNodeSearch(int depth,
       right_rows,
       feature_ms,
       split_ms,
-      partition_ms);
+      partition_ms,
+      minimum_p_feature,
+      minimum_p_value,
+      degrees_of_freedom);
 }
 
 void TrainingProfiler::LogTreeBuild(int iteration,

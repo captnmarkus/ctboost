@@ -1,7 +1,10 @@
 #include "tree_internal.hpp"
+#include "tree_multivariate.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
+#include <optional>
 
 namespace ctboost::detail {
 namespace {
@@ -10,7 +13,9 @@ LinearStatisticScore EvaluateFeatureStatistic(const HistMatrix& hist,
                                                std::size_t feature,
                                                const NodeHistogramSet& node_stats,
                                                const TreeBuildOptions& options,
-                                               const LinearStatistic& statistic_engine) {
+                                               const LinearStatistic& statistic_engine,
+                                               const JointFeatureStatistic* joint_statistic) {
+  if (joint_statistic != nullptr) return joint_statistic->Evaluate(feature);
   const BinStatistics& raw_stats = node_stats.by_feature[feature];
   if (options.feature_test == FeatureTest::Quadratic || hist.is_categorical(feature)) {
     return statistic_engine.EvaluateScoreFromBinStatistics(raw_stats,
@@ -25,12 +30,9 @@ LinearStatisticScore EvaluateFeatureStatistic(const HistMatrix& hist,
           : (hist.nan_mode_for_feature(feature) == NanMode::Min
                  ? 0U
                  : raw_stats.weight_sums.size() - 1U);
-  const BinStatistics grouped_stats =
-      GroupOrderedBinStatistics(raw_stats, options.feature_test_bins, missing_bin);
-  return statistic_engine.EvaluateScoreFromBinStatistics(grouped_stats,
-                                                         node_stats.total_gradient,
-                                                         node_stats.sample_weight_sum,
-                                                         node_stats.gradient_variance);
+  return statistic_engine.EvaluateGroupedScoreFromBinStatistics(
+      raw_stats, node_stats.total_gradient, node_stats.sample_weight_sum,
+      node_stats.gradient_variance, options.feature_test_bins, missing_bin);
 }
 
 double AdjustFeatureTestPValue(double raw_p_value,
@@ -47,7 +49,8 @@ std::vector<FeatureChoice> RankFeaturesByStatistic(const HistMatrix& hist,
                                                    const NodeHistogramSet& node_stats,
                                                    const TreeBuildOptions& options,
                                                    const LinearStatistic& statistic_engine,
-                                                   const std::vector<int>* allowed_features) {
+                                                   const std::vector<int>* allowed_features,
+                                                   const JointFeatureStatistic* joint_statistic) {
   std::vector<FeatureChoice> ranked_features;
 
   const auto evaluate_feature = [&](std::size_t feature) {
@@ -57,7 +60,7 @@ std::vector<FeatureChoice> RankFeaturesByStatistic(const HistMatrix& hist,
     }
 
     const auto result =
-        EvaluateFeatureStatistic(hist, feature, node_stats, options, statistic_engine);
+        EvaluateFeatureStatistic(hist, feature, node_stats, options, statistic_engine, joint_statistic);
     if (result.degrees_of_freedom == 0) {
       return;
     }
@@ -67,6 +70,7 @@ std::vector<FeatureChoice> RankFeaturesByStatistic(const HistMatrix& hist,
             static_cast<int>(feature),
             result.p_value,
             result.chi_square,
+            result.degrees_of_freedom,
         });
   };
 
@@ -122,7 +126,8 @@ FeatureChoice SelectBestFeature(const HistMatrix& hist,
                                 const TreeBuildOptions& options,
                                 const LinearStatistic& statistic_engine,
                                 const std::vector<int>* allowed_features,
-                                std::size_t& tested_features) {
+                                std::size_t& tested_features,
+                                const JointFeatureStatistic* joint_statistic) {
   FeatureChoice best;
 
   const auto evaluate_feature = [&](std::size_t feature) {
@@ -132,7 +137,7 @@ FeatureChoice SelectBestFeature(const HistMatrix& hist,
     }
 
     const auto result =
-        EvaluateFeatureStatistic(hist, feature, node_stats, options, statistic_engine);
+        EvaluateFeatureStatistic(hist, feature, node_stats, options, statistic_engine, joint_statistic);
     if (result.degrees_of_freedom == 0) {
       return;
     }
@@ -144,6 +149,7 @@ FeatureChoice SelectBestFeature(const HistMatrix& hist,
       best.feature_id = static_cast<int>(feature);
       best.p_value = result.p_value;
       best.chi_square = result.chi_square;
+      best.degrees_of_freedom = result.degrees_of_freedom;
     }
   };
 
@@ -211,8 +217,22 @@ CandidateSelectionResult SelectBestCandidateSplit(const HistMatrix& hist,
                                                   double leaf_upper_bound,
                                                   int depth,
                                                   std::size_t row_begin,
-                                                  std::size_t row_end) {
+                                                  std::size_t row_end,
+                                                  bool measure_timing) {
   CandidateSelectionResult best;
+  using Clock = std::chrono::steady_clock;
+  const auto feature_start = measure_timing ? Clock::now() : Clock::time_point{};
+  std::optional<JointFeatureStatistic> joint_statistic;
+  if (options.multivariate_gradients != nullptr) {
+    joint_statistic.emplace(hist, options, row_begin, row_end);
+  }
+  const auto* joint = joint_statistic ? &*joint_statistic : nullptr;
+  const auto finish_feature_timing = [&]() {
+    if (measure_timing) {
+      best.feature_ms =
+          std::chrono::duration<double, std::milli>(Clock::now() - feature_start).count();
+    }
+  };
   const bool constrained_search =
       (options.monotone_constraints != nullptr && !options.monotone_constraints->empty()) ||
       options.interaction_constraints != nullptr;
@@ -223,16 +243,19 @@ CandidateSelectionResult SelectBestCandidateSplit(const HistMatrix& hist,
   if (!use_ranked_search) {
     std::size_t tested_features = 0;
     best.feature_choice = SelectBestFeature(
-        hist, node_stats, options, statistic_engine, node_allowed_features, tested_features);
+        hist, node_stats, options, statistic_engine, node_allowed_features, tested_features, joint);
+    best.minimum_p_feature = best.feature_choice;
     best.tested_features = tested_features;
     best.stopping_p_value = AdjustFeatureTestPValue(
         best.feature_choice.p_value, tested_features, options);
     best.feature_test_passed =
         best.feature_choice.feature_id >= 0 && best.stopping_p_value <= options.alpha;
+    finish_feature_timing();
     if (!best.feature_test_passed) {
       return best;
     }
 
+    const auto split_start = measure_timing ? Clock::now() : Clock::time_point{};
     best.split_choice = SelectBestSplit(
         node_stats.by_feature[static_cast<std::size_t>(best.feature_choice.feature_id)],
         node_stats.total_gradient,
@@ -247,22 +270,29 @@ CandidateSelectionResult SelectBestCandidateSplit(const HistMatrix& hist,
         leaf_lower_bound,
         leaf_upper_bound);
     best.adjusted_gain = best.split_choice.gain;
+    if (measure_timing) {
+      best.split_ms =
+          std::chrono::duration<double, std::milli>(Clock::now() - split_start).count();
+    }
     return best;
   }
 
   const std::vector<FeatureChoice> ranked_features =
-      RankFeaturesByStatistic(hist, node_stats, options, statistic_engine, node_allowed_features);
+      RankFeaturesByStatistic(hist, node_stats, options, statistic_engine, node_allowed_features, joint);
   if (!ranked_features.empty()) {
     best.feature_choice = ranked_features.front();
+    best.minimum_p_feature = best.feature_choice;
     best.tested_features = ranked_features.size();
     best.stopping_p_value = AdjustFeatureTestPValue(
         best.feature_choice.p_value, best.tested_features, options);
     best.feature_test_passed = best.stopping_p_value <= options.alpha;
   }
+  finish_feature_timing();
   if (!best.feature_test_passed) {
     return best;
   }
 
+  const auto split_start = measure_timing ? Clock::now() : Clock::time_point{};
   for (const FeatureChoice& candidate : ranked_features) {
     if (AdjustFeatureTestPValue(candidate.p_value, ranked_features.size(), options) >
         options.alpha) {
@@ -307,6 +337,10 @@ CandidateSelectionResult SelectBestCandidateSplit(const HistMatrix& hist,
       best.split_choice = candidate_split;
       best.adjusted_gain = adjusted_gain;
     }
+  }
+  if (measure_timing) {
+    best.split_ms =
+        std::chrono::duration<double, std::milli>(Clock::now() - split_start).count();
   }
 
   return best;

@@ -1,0 +1,268 @@
+{
+  "build_info": {
+    "compiler": "MSVC 1950",
+    "cuda_enabled": false,
+    "cuda_runtime": "not compiled",
+    "cxx_standard": 17,
+    "package_version": "0.1.59",
+    "version": "0.1.59"
+  },
+  "ctboost_version": "0.1.59",
+  "harness_sha256": "00d514b7d5ca5a442a8773c96487492246b9f1cd6a2559747d0fd3f1242fcf2c",
+  "native_extension_sha256": "a3502b37d7d5f500522432b8af193ab08a074641fd943d1df22696dd4c3dc8fb",
+  "numpy_version": "2.5.3",
+  "protocol": {
+    "alpha": 0.05,
+    "cases": [
+      {
+        "bins": 255,
+        "name": "small_24",
+        "rows": 24
+      },
+      {
+        "bins": 255,
+        "name": "small_96",
+        "rows": 96
+      },
+      {
+        "bins": 255,
+        "name": "reference_320",
+        "rows": 320
+      },
+      {
+        "bins": 255,
+        "name": "sparse_96",
+        "rows": 96,
+        "sparse": true
+      },
+      {
+        "bins": 255,
+        "missing": "min",
+        "name": "missing_min_96",
+        "rows": 96
+      },
+      {
+        "bins": 255,
+        "missing": "max",
+        "name": "missing_max_96",
+        "rows": 96
+      },
+      {
+        "bins": 32,
+        "name": "frequency_320",
+        "rows": 320,
+        "weights": "frequency"
+      },
+      {
+        "bins": 255,
+        "name": "fractional_unit",
+        "rows": 96,
+        "weight_scale": 1.0
+      },
+      {
+        "bins": 255,
+        "name": "fractional_small",
+        "rows": 96,
+        "weight_scale": 0.1
+      },
+      {
+        "bins": 255,
+        "name": "fractional_large",
+        "rows": 96,
+        "weight_scale": 10.0
+      }
+    ],
+    "decision": "Descriptive diagnostics only; no post-hoc default or threshold changes",
+    "groups": 8,
+    "interval": "95% Wilson interval for each scenario's marginal rejection rate",
+    "name": "ctboost-grouped-node-calibration-v1",
+    "repetitions": 2000,
+    "seed": 20260907
+  },
+  "protocol_sha256": "a6e716c4a0bd44fe866467a688dab0c5b7c193c102720a7c2e11c650c62850d6",
+  "python_version": "3.12.11",
+  "registered_repetitions_used": true,
+  "scenarios": [
+    {
+      "degrees_of_freedom_range": [
+        7,
+        7
+      ],
+      "interpretation": "Marginal fixed-node null; not adaptive-tree FWER",
+      "legacy_optimized_exact": true,
+      "median_p_value": 0.45159821978012293,
+      "median_weight_effective_size_diagnostic": 24.0,
+      "name": "small_24",
+      "rejection_rate": 0.012,
+      "rejection_rate_interval": [
+        0.008077154276022635,
+        0.017793883870480226
+      ],
+      "rejections": 24,
+      "replicates": 2000
+    },
+    {
+      "degrees_of_freedom_range": [
+        7,
+        7
+      ],
+      "interpretation": "Marginal fixed-node null; not adaptive-tree FWER",
+      "legacy_optimized_exact": true,
+      "median_p_value": 0.5204283405989112,
+      "median_weight_effective_size_diagnostic": 96.0,
+      "name": "small_96",
+      "rejection_rate": 0.034,
+      "rejection_rate_interval": [
+        0.026908260159560583,
+        0.042878427906567144
+      ],
+      "rejections": 68,
+      "replicates": 2000
+    },
+    {
+      "degrees_of_freedom_range": [
+        7,
+        7
+      ],
+      "interpretation": "Marginal fixed-node null; not adaptive-tree FWER",
+      "legacy_optimized_exact": true,
+      "median_p_value": 0.48977719973637823,
+      "median_weight_effective_size_diagnostic": 320.0,
+      "name": "reference_320",
+      "rejection_rate": 0.045,
+      "rejection_rate_interval": [
+        0.03675381704471326,
+        0.05499069598122689
+      ],
+      "rejections": 90,
+      "replicates": 2000
+    },
+    {
+      "degrees_of_freedom_range": [
+        1,
+        2
+      ],
+      "interpretation": "Marginal fixed-node null; not adaptive-tree FWER",
+      "legacy_optimized_exact": true,
+      "median_p_value": 0.5019685829233417,
+      "median_weight_effective_size_diagnostic": 96.0,
+      "name": "sparse_96",
+      "rejection_rate": 0.053,
+      "rejection_rate_interval": [
+        0.04401045720579706,
+        0.06370338306364304
+      ],
+      "rejections": 106,
+      "replicates": 2000
+    },
+    {
+      "degrees_of_freedom_range": [
+        8,
+        8
+      ],
+      "interpretation": "Marginal fixed-node null; not adaptive-tree FWER",
+      "legacy_optimized_exact": true,
+      "median_p_value": 0.5013514548689211,
+      "median_weight_effective_size_diagnostic": 96.0,
+      "name": "missing_min_96",
+      "rejection_rate": 0.038,
+      "rejection_rate_interval": [
+        0.030467599928741894,
+        0.04730375175913581
+      ],
+      "rejections": 76,
+      "replicates": 2000
+    },
+    {
+      "degrees_of_freedom_range": [
+        8,
+        8
+      ],
+      "interpretation": "Marginal fixed-node null; not adaptive-tree FWER",
+      "legacy_optimized_exact": true,
+      "median_p_value": 0.5006829639351411,
+      "median_weight_effective_size_diagnostic": 96.0,
+      "name": "missing_max_96",
+      "rejection_rate": 0.0425,
+      "rejection_rate_interval": [
+        0.03450117971009799,
+        0.05225291855224844
+      ],
+      "rejections": 85,
+      "replicates": 2000
+    },
+    {
+      "degrees_of_freedom_range": [
+        7,
+        7
+      ],
+      "interpretation": "Marginal fixed-node null; not adaptive-tree FWER",
+      "legacy_optimized_exact": true,
+      "median_p_value": 0.5011354593406199,
+      "median_weight_effective_size_diagnostic": 53.55648535564853,
+      "name": "frequency_320",
+      "rejection_rate": 0.044,
+      "rejection_rate_interval": [
+        0.03585182041641652,
+        0.05389652670408614
+      ],
+      "rejections": 88,
+      "replicates": 2000
+    },
+    {
+      "degrees_of_freedom_range": [
+        6,
+        7
+      ],
+      "interpretation": "Fractional-weight sensitivity only; not a calibrated frequency null",
+      "legacy_optimized_exact": true,
+      "median_p_value": 0.03511355893687818,
+      "median_weight_effective_size_diagnostic": 40.705915650019904,
+      "name": "fractional_unit",
+      "rejection_rate": 0.5495,
+      "rejection_rate_interval": [
+        0.5276203963829182,
+        0.5711898159362376
+      ],
+      "rejections": 1099,
+      "replicates": 2000
+    },
+    {
+      "degrees_of_freedom_range": [
+        6,
+        7
+      ],
+      "interpretation": "Fractional-weight sensitivity only; not a calibrated frequency null",
+      "legacy_optimized_exact": true,
+      "median_p_value": 0.9866419415168262,
+      "median_weight_effective_size_diagnostic": 40.705916405760235,
+      "name": "fractional_small",
+      "rejection_rate": 0.0,
+      "rejection_rate_interval": [
+        0.0,
+        0.001917047281252934
+      ],
+      "rejections": 0,
+      "replicates": 2000
+    },
+    {
+      "degrees_of_freedom_range": [
+        6,
+        7
+      ],
+      "interpretation": "Fractional-weight sensitivity only; not a calibrated frequency null",
+      "legacy_optimized_exact": true,
+      "median_p_value": 1.4513245608561264e-29,
+      "median_weight_effective_size_diagnostic": 40.70591594397659,
+      "name": "fractional_large",
+      "rejection_rate": 0.999,
+      "rejection_rate_interval": [
+        0.9963610657309615,
+        0.9997257210823479
+      ],
+      "rejections": 1998,
+      "replicates": 2000
+    }
+  ],
+  "scope": "Fixed-node diagnostics; no fits, no topology changes, no full-tree FWER claim"
+}

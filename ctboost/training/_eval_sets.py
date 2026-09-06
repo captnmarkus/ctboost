@@ -8,6 +8,7 @@ import numpy as np
 
 from ..core import Pool, _clone_pool
 from ..core.sparse import sp
+from ._pool_build import _pool_from_data_and_label
 
 def _load_sklearn_splitters():
     try:

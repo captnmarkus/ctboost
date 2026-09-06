@@ -123,6 +123,9 @@ struct FitLoopContext {
   double gamma{0.0};
   double max_leaf_weight{0.0};
   int leaf_estimation_iterations{1};
+  bool leaf_estimation_backtracking{false};
+  bool full_multiclass_leaf_solver{false};
+  bool joint_multiclass_feature_test{false};
   const std::string* feature_test{nullptr};
   std::size_t feature_test_bins{8};
   const std::string* feature_test_adjustment{nullptr};
@@ -172,6 +175,7 @@ void RunMulticlassIteration(const FitLoopContext& context,
                             const FitLoopState& state,
                             DistributedCoordinator* distributed_coordinator,
                             const std::vector<float>& iteration_weights,
+                            const std::vector<float>& gradient_predictions,
                             const DartPredictionState& dart_state,
                             double dropped_tree_scale,
                             double new_tree_scale,

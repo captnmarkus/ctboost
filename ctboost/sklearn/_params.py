@@ -91,6 +91,9 @@ class _BaseInitMixin:
             max_leaf_weight: float = 0.0,
             leaf_estimation_iterations: int = 1,
             multi_strategy: str = "one_output_per_tree",
+            leaf_estimation_backtracking: bool = False,
+            multiclass_leaf_solver: str = "diagonal",
+            multiclass_feature_test: str = "single",
             feature_test: str = "quadratic",
             feature_test_bins: int = 8,
             feature_test_adjustment: str = "none",
@@ -188,6 +191,9 @@ class _BaseInitMixin:
             self.max_leaf_weight = max_leaf_weight
             self.leaf_estimation_iterations = leaf_estimation_iterations
             self.multi_strategy = multi_strategy
+            self.leaf_estimation_backtracking = leaf_estimation_backtracking
+            self.multiclass_leaf_solver = multiclass_leaf_solver
+            self.multiclass_feature_test = multiclass_feature_test
             self.feature_test = feature_test
             self.feature_test_bins = feature_test_bins
             self.feature_test_adjustment = feature_test_adjustment
@@ -274,6 +280,9 @@ class _BaseInitMixin:
                 "base_score": None,
                 "leaf_estimation_iterations": 1,
                 "multi_strategy": "one_output_per_tree",
+                "leaf_estimation_backtracking": False,
+                "multiclass_leaf_solver": "diagonal",
+                "multiclass_feature_test": "single",
                 "feature_test": "quadratic",
                 "feature_test_bins": 8,
                 "feature_test_adjustment": "none",

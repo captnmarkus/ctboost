@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <limits>
 #include <numeric>
 #include <stdexcept>
@@ -35,6 +36,40 @@ void GradientBooster::FitWithObjective(Pool& pool,
                                        bool continue_training,
                                        bool allow_average_initialization) {
   const auto fit_start = std::chrono::steady_clock::now();
+  if ((leaf_estimation_backtracking_ || multiclass_leaf_solver_ == "full" ||
+       multiclass_feature_test_ == "joint") &&
+      (use_gpu_ || distributed_world_size_ != 1)) {
+    // Recheck at the training boundary: inference-compatible state loading can
+    // restore a GPU flag after the constructor has validated CPU defaults.
+    throw std::invalid_argument(
+        "leaf backtracking, full multiclass leaf solver and joint feature test require non-distributed CPU training");
+  }
+  if (&objective != objective_.get() &&
+      (leaf_estimation_backtracking_ || multiclass_leaf_solver_ == "full" ||
+       multiclass_feature_test_ == "joint")) {
+    throw std::invalid_argument(
+        "leaf backtracking, full multiclass leaf solver and joint feature test require a built-in objective");
+  }
+  if (multiclass_feature_test_ == "joint") {
+    if (bootstrap_type_ == "Bayesian" &&
+        (bagging_temperature_ > 0.0 || !std::isfinite(bagging_temperature_))) {
+      throw std::invalid_argument(
+          "joint feature test requires integer frequency weights; "
+          "fractional sample/class/bootstrap weights are unsupported");
+    }
+    // Check the original effective sample/class weights before subsampling can
+    // mask a fractional row or multiply its weight into an integer frequency.
+    for (const float weight : pool.weights()) {
+      if (!std::isfinite(weight) || weight < 0.0F) {
+        throw std::invalid_argument("joint feature test weights must be finite and nonnegative");
+      }
+      if (std::floor(weight) != weight) {
+        throw std::invalid_argument(
+            "joint feature test requires integer frequency weights; "
+            "fractional sample/class/bootstrap weights are unsupported");
+      }
+    }
+  }
   const TrainingProfiler profiler(verbose_);
   profiler.LogFitStart(pool.num_rows(), pool.num_cols(), iterations_, use_gpu_, prediction_dimension_);
   if (early_stopping_rounds < 0) {
@@ -331,6 +366,9 @@ void GradientBooster::FitWithObjective(Pool& pool,
   context.gamma = gamma_;
   context.max_leaf_weight = max_leaf_weight_;
   context.leaf_estimation_iterations = leaf_estimation_iterations_;
+  context.leaf_estimation_backtracking = leaf_estimation_backtracking_;
+  context.full_multiclass_leaf_solver = multiclass_leaf_solver_ == "full";
+  context.joint_multiclass_feature_test = multiclass_feature_test_ == "joint";
   context.feature_test = &feature_test_;
   context.feature_test_bins = feature_test_bins_;
   context.feature_test_adjustment = &feature_test_adjustment_;

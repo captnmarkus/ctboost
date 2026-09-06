@@ -197,3 +197,32 @@ does not advance; the frozen TabArena scout was not triggered under the
 protocol and therefore was not run. This 0.1.55 result supersedes the earlier
 0.1.54 positive artifact only for release qualification; the earlier sealed
 result remains historical evidence.
+
+### 0.1.59: unchanged-math optimization and calibration limits
+
+The grouped score now uses fixed-size gradient and weight storage and skips
+grouped Hessian accumulation, while preserving its arithmetic and the existing
+diagnostic grouping API. The real feature-testing and cut-search phases are
+timed separately, including the ranked path; profiler output distinguishes the
+minimum-p feature used for stopping from the selected feasible feature.
+
+The [native diagnostic ledger](https://github.com/captnmarkus/ctboost/blob/master/benchmarks/split_research/GROUPED_CALIBRATION_V1.md)
+records 20,000 exact legacy/optimized p-value, chi-square, and degrees-of-freedom
+comparisons, plus 32 exact 0.1.58-to-0.1.59 training comparisons spanning default
+and grouped scalar/vector models. At alpha 0.05, observed fixed-node rejection
+rates ranged from 1.2% to 5.3% across the registered unit- and literal-frequency
+weight scenarios. Small samples were conservative. These are marginal
+fixed-node diagnostics, not a full-tree family-wise error guarantee.
+
+The fractional-weight sensitivity checks expose an existing limitation of
+treating weight sums as frequency counts: independent lognormal importance
+weights with mean one rejected 54.95% of null cases; scaling those same weights
+to mean 0.1 or 10 changed rejection to 0% or 99.90%. Arbitrary importance weights
+therefore do not inherit frequency-null calibration. Their behavior is retained
+for compatibility and is not described as calibrated.
+
+Faster execution of the same score does not remove the additional tree growth
+and cut-search work that improved power can cause. The earlier panel's fit-time
+gate remains failed until a new registered fit-level comparison establishes
+otherwise. This optimization makes no new predictive-score or TabArena claim,
+and grouped-8 remains opt-in.

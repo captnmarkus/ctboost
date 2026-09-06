@@ -63,6 +63,9 @@ py::dict BoosterToStateDict(const ctboost::GradientBooster& booster) {
   state["gamma"] = booster.gamma();
   state["max_leaf_weight"] = booster.max_leaf_weight();
   state["leaf_estimation_iterations"] = booster.leaf_estimation_iterations();
+  state["leaf_estimation_backtracking"] = booster.leaf_estimation_backtracking();
+  state["multiclass_leaf_solver"] = booster.multiclass_leaf_solver();
+  state["multiclass_feature_test"] = booster.multiclass_feature_test();
   state["feature_test"] = booster.feature_test();
   state["feature_test_bins"] = booster.feature_test_bins();
   state["feature_test_adjustment"] = booster.feature_test_adjustment();
@@ -267,7 +270,16 @@ ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
                                        : std::string("none"),
                                    state.contains("multi_strategy")
                                        ? py::cast<std::string>(state["multi_strategy"])
-                                       : std::string("one_output_per_tree"));
+                                       : std::string("one_output_per_tree"),
+                                   state.contains("leaf_estimation_backtracking")
+                                       ? py::cast<bool>(state["leaf_estimation_backtracking"])
+                                       : false,
+                                   state.contains("multiclass_leaf_solver")
+                                       ? py::cast<std::string>(state["multiclass_leaf_solver"])
+                                       : "diagonal",
+                                   state.contains("multiclass_feature_test")
+                                       ? py::cast<std::string>(state["multiclass_feature_test"])
+                                       : "single");
 
   booster.LoadState(std::move(trees),
                     quantization_schema,

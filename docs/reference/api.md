@@ -49,6 +49,15 @@ distributed roots, custom objectives, streaming input, or direct booster-state c
 Most of these names are available directly from `ctboost`; inspect the corresponding
 object for its installed-version signature.
 
+## Optional learning controls
+
+`CTBoostClassifier`, `CTBoostRegressor`, and `train(params=...)` expose
+`leaf_estimation_backtracking`, `multiclass_leaf_solver`, and
+`multiclass_feature_test`. Their defaults preserve previous training behavior.
+See [learning options](../guides/learning-options.md) for objective, device,
+class-count, and statistical boundaries. The fitted `Booster` exposes matching
+read-only properties.
+
 ## Framework integrations
 
 - `ctboost.dask`

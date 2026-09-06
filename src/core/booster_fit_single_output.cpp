@@ -42,7 +42,7 @@ void RunSingleOutputIteration(const FitLoopContext& context,
   context.profiler->LogTreeBuild(
       total_iteration + 1, state.target_total_iterations, 0, context.prediction_dimension, single_tree_ms);
 
-  if (context.leaf_estimation_iterations > 1) {
+  if (context.leaf_estimation_iterations > 1 || context.leaf_estimation_backtracking) {
     const auto leaf_estimation_start = std::chrono::steady_clock::now();
     RefineSingleOutputTreeLeaves(context,
                                  tree,

@@ -1,0 +1,53 @@
+{
+  "classes": 3,
+  "environment": {
+    "build_info": {
+      "compiler": "MSVC 1950",
+      "cuda_enabled": false,
+      "cuda_runtime": "not compiled",
+      "cxx_standard": 17,
+      "version": "0.1.59"
+    },
+    "native_extension_sha256": "a3502b37d7d5f500522432b8af193ab08a074641fd943d1df22696dd4c3dc8fb",
+    "numpy": "2.5.3",
+    "python": "3.12.11"
+  },
+  "feature_bins": 4,
+  "harness_sha256": "142f662b7f8f3e78e326f34e3d512359c4a5549b1d2d7876ce3986674981c797",
+  "limits": [
+    "Chi-square p-values are asymptotic, including for integer frequency weights.",
+    "Fractional weights have no general type-I error guarantee.",
+    "This is a fixed-feature null simulation, not a guarantee for adaptive boosted trees.",
+    "Multiple candidate features require a separate multiplicity policy.",
+    "No predictive or leaderboard improvement is inferred from this calibration."
+  ],
+  "permutation_oracle": {
+    "chi_square_tail": 0.22313016014843035,
+    "covariance_max_error": 0.0,
+    "exact_permutation_tail": 0.6666666666666666,
+    "permutations": 24
+  },
+  "repetitions": 1000,
+  "rows": 480,
+  "scenarios": {
+    "fractional_frequency_approximation": {
+      "finite_pvalues": true,
+      "median_pvalue": 0.3084148610261395,
+      "rejection_rate": 0.157,
+      "rejections_at_0_05": 157
+    },
+    "integer_frequency": {
+      "finite_pvalues": true,
+      "median_pvalue": 0.5212173034098599,
+      "rejection_rate": 0.047,
+      "rejections_at_0_05": 47
+    },
+    "unweighted": {
+      "finite_pvalues": true,
+      "median_pvalue": 0.521217303409861,
+      "rejection_rate": 0.047,
+      "rejections_at_0_05": 47
+    }
+  },
+  "seed": 159
+}
