@@ -105,7 +105,7 @@ nodes and cuts that a more powerful statistic may cause. It cannot establish
 that the previous external panel's fit-time gate now passes.
 
 On the local Ryzen 7 5800X3D/MSVC `/O2` run, optimized score calls took
-55–61% of the previous time for 256 raw bins and eight groups, without/with
+54–57% of the previous time for 256 raw bins and eight groups, without/with
 a separate missing bin. All 12 case comparisons were exact. The
 [timing record](../results/grouped_score_microbenchmark_0159.json) includes
 each measured case and source/executable hashes.

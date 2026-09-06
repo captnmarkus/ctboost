@@ -16,7 +16,8 @@ Existing learning defaults and prediction formats remain unchanged.
   Feature selection remains separate from the existing scalar cut objective.
 - **Faster grouped scoring:** the production grouped statistic avoids temporary
   vectors and unused Hessian aggregation. Bin grouping and score arithmetic
-  retain exact agreement with the previous implementation.
+  retain exact agreement with the previous implementation, including the
+  rounding boundary in the dense fallback on Apple Silicon.
 - **Correct profiling:** feature-statistic and cut-search timings now measure
   their actual phases. Diagnostics distinguish the minimum-p feature from a
   different gain-selected feature in constrained or penalized ranked searches.
@@ -39,7 +40,7 @@ constraints, and the statistical interpretation.
 
 ## Validation and interpretation
 
-The isolated Windows CPU regression suite passed **1,088 tests**, with 22
+The isolated Windows CPU regression suite passed **1,090 tests**, with 22
 skips for unavailable GPU/framework/source-checkout capabilities. This includes
 compiled C++ export prediction checks and ONNX Runtime comparisons. Strict
 documentation builds passed with Material 9.7.7.
@@ -80,7 +81,7 @@ roughly 3–5 times the baseline training time on this small local panel. These
 results support task-specific validation, not changing the defaults.
 
 The isolated grouped-score microbenchmark retained exact results in 12 cases.
-At 256 raw bins and eight groups, score calls took 55–61% of the previous time,
+At 256 raw bins and eight groups, score calls took 54–57% of the previous time,
 with and without a separate missing bin. This does not measure whole-model
 training speed. Reproducible evidence includes the
 [timing record](https://github.com/captnmarkus/ctboost/blob/master/benchmarks/results/grouped_score_microbenchmark_0159.json),

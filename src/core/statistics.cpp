@@ -25,7 +25,11 @@ double EvaluateGroupedDenseScore(const double* gradient_sums,
   std::array<double, 64U> difference;
   std::array<double, 64U> solved;
   for (std::size_t i = 0; i < degrees_of_freedom; ++i) {
-    difference[i] = gradient_sums[i] - weight_sums[i] * gradient_mean;
+    // The legacy path stores each expectation before subtracting it. Preserve
+    // that double rounding boundary on targets that contract multiply/subtract
+    // into FMA; cancellation in a dominant bin magnifies even a tiny change.
+    const volatile double expectation = weight_sums[i] * gradient_mean;
+    difference[i] = gradient_sums[i] - expectation;
     solved[i] = difference[i];
     for (std::size_t j = 0; j < degrees_of_freedom; ++j) {
       double value = -outer_scale * weight_sums[i] * weight_sums[j];

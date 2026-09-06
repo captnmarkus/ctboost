@@ -54,6 +54,8 @@ def test_native_grouped_score_is_exactly_legacy(groups, missing_bin, weight_mode
     elif weight_mode == "extreme":
         # A dominant first bin and tiny final bin exercise the reduced-covariance
         # fallback (the denominator approaches zero), including missing-as-bin.
+        # Exact equality also catches FMA contraction of the stored expectation
+        # before subtraction on Apple Silicon (the legacy path rounds it first).
         bins = np.array([0, 1, 255], dtype=np.int64)
         scores = np.array([-1.0, 1.0, 3.0], dtype=np.float32)
         weights = np.array([1e12, 1.0, 1.0], dtype=np.float32)
