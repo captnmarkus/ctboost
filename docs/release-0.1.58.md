@@ -16,7 +16,19 @@ withheld; its Git tag remains available for provenance.
 Model and predictor formats are unchanged from 0.1.57. See the
 [vector-leaf guide](guides/vector-leaves.md) for supported workflows and boundaries.
 
-The latest [published TabArena-Lite results](https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-0.1.56)
-measure 0.1.56. There is no measured 0.1.58 TabArena result yet; the requested
-25-configuration HPO evaluation is pending. See [benchmark status](benchmarks.md)
-for the scope and provenance of the existing results.
+The completed [0.1.58 TabArena-Lite evaluation](https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-hpo25-0.1.58)
+covers all 51 datasets at `r0f0`, with the default plus 25 frozen HPO
+configurations and eight-fold bagging: 1,326 parent results and 10,608 child
+fits, with zero imputed CTBoost tasks.
+
+| Evaluation | Lite Elo |
+|---|---:|
+| Default | 1161.9 |
+| Tuned | 1262.8 |
+| Tuned + ensemble | 1296.9 |
+
+These scores use an 87-row comparison roster. This is a local Lite HPO25
+evaluation, not a full 200-configuration run, TabArena-Full result, or official
+leaderboard entry. Kaggle's 4 CPUs and 28 GB RAM make its timings non-comparable
+to canonical TabArena runtimes. See [benchmark status](benchmarks.md) for
+provenance and the earlier 0.1.56 result, which used a different comparison roster.

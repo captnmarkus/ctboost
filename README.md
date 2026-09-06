@@ -98,14 +98,23 @@ CTBoost is an alpha project. Its API and model formats are tested extensively,
 but it does not yet have the independent production history of CatBoost or
 XGBoost.
 
-The latest [published TabArena artifacts](https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-0.1.56)
-measure **CTBoost 0.1.56** on all 51 TabArena-v0.1 Lite datasets: one default
-configuration, one outer split per dataset, and eight-fold bagging. The local
-evaluation reports **1166.7 Elo** (+52.1 / -67.5), a 0.3957 win rate, and position
-23/38 among default-configuration rows, with no imputed CTBoost tasks.
-This is a default-only Lite result, not an official leaderboard entry or a
-measurement of 0.1.58. Elo depends on the comparison roster; Kaggle timings use
-different resources from the canonical benchmark and are not directly comparable.
+The latest [published TabArena artifacts](https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-hpo25-0.1.58)
+measure **CTBoost 0.1.58** on all 51 TabArena-v0.1 Lite datasets, using the
+default plus 25 frozen HPO configurations, one outer split (`r0f0`), and
+eight-fold bagging. All 1,326 parent results and 10,608 child fits completed,
+with no imputed CTBoost tasks.
+
+| Evaluation | Lite Elo |
+|---|---:|
+| Default | 1161.9 |
+| Tuned | 1262.8 |
+| Tuned + ensemble | 1296.9 |
+
+These local Lite scores use an 87-row comparison roster; they are not an
+official leaderboard entry or a TabArena-Full result. Kaggle used 4 CPUs and
+28 GB RAM, so its timings are not directly comparable to the canonical
+benchmark. The [benchmark history](https://captnmarkus.github.io/ctboost/benchmarks/)
+retains the earlier 0.1.56 default-only result and explains the different rosters.
 
 The final-source 0.1.55 pre-registered grouped-statistic panel completed
 294/294 isolated fits and 42/42 exact control checks. Grouped-8 recorded nine
