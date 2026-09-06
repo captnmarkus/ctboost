@@ -10,31 +10,31 @@
       
       
       
-        <link rel="canonical" href="https://captnmarkus.github.io/ctboost/development/">
+        <link rel="canonical" href="https://captnmarkus.github.io/ctboost/guides/learning-options/">
       
       
-        <link rel="prev" href="../guides/portable-inference/">
+        <link rel="prev" href="../vector-leaves/">
       
       
-        <link rel="next" href="../reference/api/">
+        <link rel="next" href="../data-input/">
       
       
         
       
       
-      <link rel="icon" href="../assets/images/favicon.png">
+      <link rel="icon" href="../../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
     
     
       
-        <title>Development - CTBoost</title>
+        <title>Safeguarded and multiclass learning - CTBoost</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
       
       
 
@@ -53,9 +53,9 @@
       
     
     
-      <link rel="stylesheet" href="../stylesheets/extra.css">
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
     
-    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -80,7 +80,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#development" class="md-skip">
+        <a href="#safeguarded-leaves-and-joint-multiclass-tests" class="md-skip">
           Skip to content
         </a>
       
@@ -96,7 +96,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href=".." title="CTBoost" class="md-header__button md-logo" aria-label="CTBoost" data-md-component="logo">
+    <a href="../.." title="CTBoost" class="md-header__button md-logo" aria-label="CTBoost" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -116,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Development
+              Safeguarded and multiclass learning
             
           </span>
         </div>
@@ -234,7 +234,7 @@
 
 <nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href=".." title="CTBoost" class="md-nav__button md-logo" aria-label="CTBoost" data-md-component="logo">
+    <a href="../.." title="CTBoost" class="md-nav__button md-logo" aria-label="CTBoost" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
@@ -264,7 +264,7 @@
   
   
     <li class="md-nav__item">
-      <a href=".." class="md-nav__link">
+      <a href="../.." class="md-nav__link">
         
   
   
@@ -291,7 +291,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../getting-started/" class="md-nav__link">
+      <a href="../../getting-started/" class="md-nav__link">
         
   
   
@@ -318,7 +318,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../why-ctboost/" class="md-nav__link">
+      <a href="../../why-ctboost/" class="md-nav__link">
         
   
   
@@ -345,7 +345,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../benchmarks/" class="md-nav__link">
+      <a href="../../benchmarks/" class="md-nav__link">
         
   
   
@@ -372,7 +372,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../split-statistics-research/" class="md-nav__link">
+      <a href="../../split-statistics-research/" class="md-nav__link">
         
   
   
@@ -399,7 +399,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../gpu/" class="md-nav__link">
+      <a href="../../gpu/" class="md-nav__link">
         
   
   
@@ -426,7 +426,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../release-0.1.59/" class="md-nav__link">
+      <a href="../../release-0.1.59/" class="md-nav__link">
         
   
   
@@ -453,7 +453,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../release-0.1.58/" class="md-nav__link">
+      <a href="../../release-0.1.58/" class="md-nav__link">
         
   
   
@@ -480,7 +480,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../release-0.1.57/" class="md-nav__link">
+      <a href="../../release-0.1.57/" class="md-nav__link">
         
   
   
@@ -507,7 +507,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../release-0.1.56/" class="md-nav__link">
+      <a href="../../release-0.1.56/" class="md-nav__link">
         
   
   
@@ -531,8 +531,10 @@
       
   
   
+    
   
   
+  
     
     
       
@@ -565,11 +567,11 @@
       
     
     
-    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" checked>
         
           
           <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
@@ -590,7 +592,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_11">
             <span class="md-nav__icon md-icon"></span>
             
@@ -608,7 +610,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/training/" class="md-nav__link">
+      <a href="../training/" class="md-nav__link">
         
   
   
@@ -636,7 +638,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/vector-leaves/" class="md-nav__link">
+      <a href="../vector-leaves/" class="md-nav__link">
         
   
   
@@ -661,10 +663,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../guides/learning-options/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Safeguarded and multiclass learning
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -680,6 +709,70 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#scalar-leaf-backtracking" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scalar leaf backtracking
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#coupled-multiclass-leaves" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Coupled multiclass leaves
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#joint-feature-selection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Joint feature selection
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#persistence-and-evidence" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Persistence and evidence
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -692,7 +785,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/data-input/" class="md-nav__link">
+      <a href="../data-input/" class="md-nav__link">
         
   
   
@@ -720,7 +813,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/categorical-text/" class="md-nav__link">
+      <a href="../categorical-text/" class="md-nav__link">
         
   
   
@@ -748,7 +841,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/split-statistics/" class="md-nav__link">
+      <a href="../split-statistics/" class="md-nav__link">
         
   
   
@@ -776,7 +869,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/explainability/" class="md-nav__link">
+      <a href="../explainability/" class="md-nav__link">
         
   
   
@@ -804,7 +897,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/distributed/" class="md-nav__link">
+      <a href="../distributed/" class="md-nav__link">
         
   
   
@@ -832,7 +925,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/deployment/" class="md-nav__link">
+      <a href="../deployment/" class="md-nav__link">
         
   
   
@@ -860,7 +953,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../guides/portable-inference/" class="md-nav__link">
+      <a href="../portable-inference/" class="md-nav__link">
         
   
   
@@ -892,37 +985,10 @@
       
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Development
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../../development/" class="md-nav__link">
         
   
   
@@ -938,81 +1004,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#install-from-source" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Install from source
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#direct-cmake-build" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Direct CMake build
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#tests-and-distributions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Tests and distributions
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#project-layout" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Project layout
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#documentation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Documentation
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -1082,7 +1073,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/api/" class="md-nav__link">
+      <a href="../../reference/api/" class="md-nav__link">
         
   
   
@@ -1110,7 +1101,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../reference/compatibility/" class="md-nav__link">
+      <a href="../../reference/compatibility/" class="md-nav__link">
         
   
   
@@ -1165,10 +1156,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#install-from-source" class="md-nav__link">
+  <a href="#scalar-leaf-backtracking" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Install from source
+        Scalar leaf backtracking
       
     </span>
   </a>
@@ -1176,10 +1167,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#direct-cmake-build" class="md-nav__link">
+  <a href="#coupled-multiclass-leaves" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Direct CMake build
+        Coupled multiclass leaves
       
     </span>
   </a>
@@ -1187,10 +1178,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#tests-and-distributions" class="md-nav__link">
+  <a href="#joint-feature-selection" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Tests and distributions
+        Joint feature selection
       
     </span>
   </a>
@@ -1198,21 +1189,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#project-layout" class="md-nav__link">
+  <a href="#persistence-and-evidence" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Project layout
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#documentation" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Documentation
+        Persistence and evidence
       
     </span>
   </a>
@@ -1239,67 +1219,136 @@
   
 
 
-<h1 id="development">Development<a class="headerlink" href="#development" title="Permanent link">&para;</a></h1>
-<h2 id="install-from-source">Install from source<a class="headerlink" href="#install-from-source" title="Permanent link">&para;</a></h2>
-<p>From a checkout, build and install CTBoost with:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>.
+<h1 id="safeguarded-leaves-and-joint-multiclass-tests">Safeguarded leaves and joint multiclass tests<a class="headerlink" href="#safeguarded-leaves-and-joint-multiclass-tests" title="Permanent link">&para;</a></h1>
+<p>Version 0.1.59 adds three optional controls. The existing defaults remain
+<code>leaf_estimation_backtracking=False</code>, <code>multiclass_leaf_solver="diagonal"</code>,
+and <code>multiclass_feature_test="single"</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Control</th>
+<th>Effect</th>
+<th>Supported training</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>leaf_estimation_backtracking=True</code></td>
+<td>Check scalar leaf updates against their actual regularized loss</td>
+<td>Built-in RMSE/SquaredError and LogLoss, CPU</td>
+</tr>
+<tr>
+<td><code>multiclass_leaf_solver="full"</code></td>
+<td>Fit all class scores together with a coupled softmax Hessian</td>
+<td>Built-in multiclass/softmax, CPU, 3–32 classes</td>
+</tr>
+<tr>
+<td><code>multiclass_feature_test="joint"</code></td>
+<td>Test each feature against all class-gradient coordinates</td>
+<td>Built-in multiclass/softmax, CPU, 3–32 classes</td>
+</tr>
+</tbody>
+</table>
+<p>These controls support ordinary CPU training. Scalar backtracking and the full
+multiclass leaf solver support fractional sample weights; joint feature testing
+requires integer frequency weights. All three controls reject distributed
+training, GPU training, and callable objectives explicitly.
+Other existing objective and constraint restrictions still apply. Scalar
+backtracking and the full multiclass solver are separate choices: the full
+solver always performs its own loss checks.</p>
+<h2 id="scalar-leaf-backtracking">Scalar leaf backtracking<a class="headerlink" href="#scalar-leaf-backtracking" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">ctboost</span><span class="w"> </span><span class="kn">import</span> <span class="n">CTBoostClassifier</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">binary_model</span> <span class="o">=</span> <span class="n">CTBoostClassifier</span><span class="p">(</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">leaf_estimation_iterations</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">leaf_estimation_backtracking</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">random_seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="p">)</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">binary_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
 </code></pre></div>
-<p>For an editable checkout with the test dependencies:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span><span class="s2">".[dev]"</span>
+<p>CTBoost first builds the conditional-inference tree as before. It then checks
+the initial Newton leaf proposal and each additional refinement against the
+weighted training objective plus the existing L2 leaf penalty. Overshooting
+steps are repeatedly halved; if no finite candidate with non-increasing loss is found, the
+previous values are retained. Monotone projection precedes acceptance, and
+the check uses the stored float leaf values.</p>
+<p>The loss check evaluates <strong>unshrunk leaf increments</strong>, matching existing leaf
+estimation. Learning-rate shrinkage and DART scaling happen afterward. It
+does not guarantee improvement in validation loss, a chosen evaluation metric,
+or every final ensemble update. <code>leaf_estimation_iterations=1</code> also checks the
+initial proposal when backtracking is enabled.</p>
+<h2 id="coupled-multiclass-leaves">Coupled multiclass leaves<a class="headerlink" href="#coupled-multiclass-leaves" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">multiclass_model</span> <span class="o">=</span> <span class="n">CTBoostClassifier</span><span class="p">(</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">multi_strategy</span><span class="o">=</span><span class="s2">"multi_output_tree"</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">multiclass_leaf_solver</span><span class="o">=</span><span class="s2">"full"</span><span class="p">,</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">leaf_estimation_iterations</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">random_seed</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="p">)</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="n">multiclass_model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>  <span class="c1"># 3–32 classes</span>
 </code></pre></div>
-<p>Force a CPU-only source build on POSIX shells with:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="nv">CMAKE_ARGS</span><span class="o">=</span><span class="s2">"-DCTBOOST_ENABLE_CUDA=OFF"</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>.
+<p>The full solver includes the off-diagonal terms of the softmax Hessian. A
+sum-zero representation removes the unidentifiable common offset; damping,
+L2 regularization, and backtracking stabilize the solve. If <code>max_leaf_weight</code>
+is set, the proposed vector respects both the box bound and sum-zero constraint
+to floating-point precision.</p>
+<p>The solver changes only values on the selected tree structure. It works with
+both <code>one_output_per_tree</code> and <code>multi_output_tree</code> storage. It supports
+1–5 leaf estimation steps; the default diagonal multiclass solver supports
+one. With identical inputs, both storage layouts fit the same class scores.</p>
+<h2 id="joint-feature-selection">Joint feature selection<a class="headerlink" href="#joint-feature-selection" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">multiclass_model</span> <span class="o">=</span> <span class="n">CTBoostClassifier</span><span class="p">(</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="n">multiclass_feature_test</span><span class="o">=</span><span class="s2">"joint"</span><span class="p">,</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">feature_test</span><span class="o">=</span><span class="s2">"grouped"</span><span class="p">,</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">feature_test_bins</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">feature_test_adjustment</span><span class="o">=</span><span class="s2">"bonferroni"</span><span class="p">,</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>    <span class="n">multiclass_leaf_solver</span><span class="o">=</span><span class="s2">"full"</span><span class="p">,</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">leaf_estimation_iterations</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">multi_strategy</span><span class="o">=</span><span class="s2">"multi_output_tree"</span><span class="p">,</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="p">)</span>
 </code></pre></div>
-<p>On PowerShell:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nv">$env:CMAKE_ARGS</span><span class="p">=</span><span class="s2">"-DCTBOOST_ENABLE_CUDA=OFF"</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">python</span> <span class="n">-m</span> <span class="n">pip</span> <span class="n">install</span> <span class="p">.</span>
-</code></pre></div>
-<p>See <a href="../gpu/">GPU installation</a> before attempting a CUDA source build.</p>
-<h2 id="direct-cmake-build">Direct CMake build<a class="headerlink" href="#direct-cmake-build" title="Permanent link">&para;</a></h2>
-<p>Install the native build and test dependencies, then point CMake at the
-pybind11 package installed for the active Python interpreter:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span><span class="s2">"pybind11&gt;=2.12,&lt;3"</span><span class="w"> </span>numpy<span class="w"> </span>pandas<span class="w"> </span>scikit-learn<span class="w"> </span>scipy<span class="w"> </span>pytest
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>cmake<span class="w"> </span>-S<span class="w"> </span>.<span class="w"> </span>-B<span class="w"> </span>build<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">  </span>-DCMAKE_BUILD_TYPE<span class="o">=</span>Release<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="w">  </span>-DCTBOOST_ENABLE_CUDA<span class="o">=</span>OFF<span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">  </span>-Dpybind11_DIR<span class="o">=</span><span class="s2">"</span><span class="k">$(</span>python<span class="w"> </span>-m<span class="w"> </span>pybind11<span class="w"> </span>--cmakedir<span class="k">)</span><span class="s2">"</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>cmake<span class="w"> </span>--build<span class="w"> </span>build<span class="w"> </span>--config<span class="w"> </span>Release<span class="w"> </span>--parallel
-</code></pre></div>
-<p>CTBoost requires CMake 3.24 or newer and a C++17 compiler. Use the same Python
-interpreter for dependency installation, configuration, and tests.</p>
-<h2 id="tests-and-distributions">Tests and distributions<a class="headerlink" href="#tests-and-distributions" title="Permanent link">&para;</a></h2>
-<p>Run the Python suite from the repository root:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>pytest<span class="w"> </span>tests
-</code></pre></div>
-<p>Build a source distribution with the <code>build</code> frontend:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>build
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>python<span class="w"> </span>-m<span class="w"> </span>build<span class="w"> </span>--sdist
-</code></pre></div>
-<h2 id="project-layout">Project layout<a class="headerlink" href="#project-layout" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>ctboost/       Python API surface
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>include/       public C++ headers
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>src/core/      core training, data, objectives, trees, and statistics
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>src/bindings/  pybind11 extension bindings
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>cuda/          optional CUDA backend
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a>tests/         Python test suite
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>demo/          local example workflows
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>docs/          documentation sources
-</code></pre></div>
-<h2 id="documentation">Documentation<a class="headerlink" href="#documentation" title="Permanent link">&para;</a></h2>
-<p>Install the pinned documentation dependencies and run the same strict build
-used in CI:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--requirement<span class="w"> </span>requirements-docs.txt
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>python<span class="w"> </span>-m<span class="w"> </span>mkdocs<span class="w"> </span>build<span class="w"> </span>--strict
-</code></pre></div>
-<p>Prepared-feature portable inference has separate conformance suites:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>mvn<span class="w"> </span>--file<span class="w"> </span>bindings/jvm/pom.xml<span class="w"> </span><span class="nb">test</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>R<span class="w"> </span>CMD<span class="w"> </span>build<span class="w"> </span>bindings/R/ctboost
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>R<span class="w"> </span>CMD<span class="w"> </span>check<span class="w"> </span>--no-manual<span class="w"> </span>--no-build-vignettes<span class="w"> </span>ctboost_*.tar.gz
-</code></pre></div>
-<p>Both consume the shared artifacts in <code>tests/export_conformance</code>.</p>
-<p>For a local preview with automatic rebuilding:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>python<span class="w"> </span>-m<span class="w"> </span>mkdocs<span class="w"> </span>serve
-</code></pre></div>
+<p>The default shared multiclass tree tests one gradient coordinate. The joint
+option uses every coordinate and the effective rank of the weighted response
+covariance. For softmax, the redundant all-ones direction is removed without
+choosing a reference class. The feature statistic is invariant to class
+permutation up to numerical precision. Its covariance decomposition is reused
+across features within a node.</p>
+<p>The statistical test still precedes cut-point optimization. The selected
+feature's cut is scored by the existing scalar structure target; this release
+does not introduce a joint multiclass cut objective. Existing constrained or
+penalized ranked-feature search rules are retained. Numeric grouped tests
+combine adjacent bins by node weight, keep missing values separate, and leave
+the original cut candidates available. Categorical bins are not grouped.</p>
+<p>Joint training requires finite, nonnegative integer frequency weights, including
+the effective product of sample and class weights. Zero weights are allowed.
+The check runs before sampling and again on each tree's sampled weights.
+Bernoulli and Poisson sampling preserve integer frequencies; Bayesian sampling
+with <code>bagging_temperature &gt; 0</code> is rejected. Fractional effective weights from
+sample weighting, class weighting, or automatic class balancing are rejected.
+The default <code>single</code> test and the leaf solvers retain their existing weight
+support. Combining a leaf solver with the joint test applies the joint test's
+integer-weight restriction.</p>
+<p>These are asymptotic chi-square tests. Integer weights have a literal
+frequency-expansion interpretation, and rescaling weights can change the
+p-value. Small, sparse, heavily weighted, or repeatedly selected nodes do not
+acquire an exact type-I guarantee. Per-node Bonferroni adjustment does not
+establish family-wise error control for an entire fitted boosting ensemble.</p>
+<p>The diagnostic statistic API retains the fractional-weight approximation for
+auditing. In 1,000 fixed-feature null trials (480 rows, three classes, four
+feature bins, seed 159), the unweighted and equivalent integer-frequency
+representations both rejected 4.7% at a 5% threshold. Independent fractional
+weights drawn uniformly from 0.25 to 2 instead rejected 15.7%. That inflation
+is why fractional weights are excluded from joint training. This simulation
+does not establish calibration for arbitrary data or adaptive boosted trees.
+Reproduce it from the source checkout with
+<code>python -m benchmarks.multivariate_statistics_calibration --repetitions 1000 --seed 159</code>.</p>
+<h2 id="persistence-and-evidence">Persistence and evidence<a class="headerlink" href="#persistence-and-evidence" title="Permanent link">&para;</a></h2>
+<p>The options round-trip through model state, Python persistence, scikit-learn
+parameters, and snapshots. Older states default to the original behavior.
+Prediction formats are unchanged: the new controls affect training, while
+exports store the resulting tree structure and leaf values.</p>
+<p>Use held-out validation data to compare these options on your task. The
+published <a href="../../benchmarks/">0.1.58 TabArena results</a> remain evidence for that
+version and configuration; they do not measure these new algorithms.</p>
 
 
 
@@ -1359,10 +1408,10 @@ used in CI:</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.indexes", "navigation.top", "navigation.tracking", "content.code.copy", "search.highlight", "search.suggest", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.indexes", "navigation.top", "navigation.tracking", "content.code.copy", "search.highlight", "search.suggest", "toc.follow"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
       
     
   </body>
