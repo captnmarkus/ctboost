@@ -1168,7 +1168,8 @@ Existing learning defaults and prediction formats remain unchanged.</p>
   Feature selection remains separate from the existing scalar cut objective.</li>
 <li><strong>Faster grouped scoring:</strong> the production grouped statistic avoids temporary
   vectors and unused Hessian aggregation. Bin grouping and score arithmetic
-  retain exact agreement with the previous implementation.</li>
+  retain exact agreement with the previous implementation, including the
+  rounding boundary in the dense fallback on Apple Silicon.</li>
 <li><strong>Correct profiling:</strong> feature-statistic and cut-search timings now measure
   their actual phases. Diagnostics distinguish the minimum-p feature from a
   different gain-selected feature in constrained or penalized ranked searches.</li>
@@ -1188,7 +1189,7 @@ scaling. It does not guarantee improved validation loss or every final ensemble
 update. See <a href="https://captnmarkus.github.io/ctboost/guides/learning-options/">learning options</a> for usage, persistence,
 constraints, and the statistical interpretation.</p>
 <h2 id="validation-and-interpretation">Validation and interpretation<a class="headerlink" href="#validation-and-interpretation" title="Permanent link">&para;</a></h2>
-<p>The isolated Windows CPU regression suite passed <strong>1,088 tests</strong>, with 22
+<p>The isolated Windows CPU regression suite passed <strong>1,090 tests</strong>, with 22
 skips for unavailable GPU/framework/source-checkout capabilities. This includes
 compiled C++ export prediction checks and ONNX Runtime comparisons. Strict
 documentation builds passed with Material 9.7.7.</p>
@@ -1248,7 +1249,7 @@ backtracking worsened one of three splits. Combined multiclass fitting took
 roughly 3–5 times the baseline training time on this small local panel. These
 results support task-specific validation, not changing the defaults.</p>
 <p>The isolated grouped-score microbenchmark retained exact results in 12 cases.
-At 256 raw bins and eight groups, score calls took 55–61% of the previous time,
+At 256 raw bins and eight groups, score calls took 54–57% of the previous time,
 with and without a separate missing bin. This does not measure whole-model
 training speed. Reproducible evidence includes the
 <a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/results/grouped_score_microbenchmark_0159.json">timing record</a>,
