@@ -250,9 +250,21 @@ def test_raw_validation_requires_exact_nonzero_outer_split(tmp_path, change):
         )
 
 
+@pytest.mark.parametrize("psutil_unavailable", [False, True])
 def test_worker_passes_true_outer_split_and_revalidates_only_matching_cache(
-    plan_fixture, tmp_path, monkeypatch
+    plan_fixture, tmp_path, monkeypatch, psutil_unavailable
 ):
+    if psutil_unavailable:
+        monkeypatch.setitem(sys.modules, "psutil", None)
+        with pytest.raises(ModuleNotFoundError, match="psutil"):
+            __import__("psutil")
+    # This fixture replaces all resource/process work and supplies explicit affinity.
+    # Its protocol assertions must not depend on optional host monitoring packages.
+    psutil = ModuleType("psutil")
+    psutil.Process = lambda: pytest.fail(
+        "Pure orchestration fixture inspected the host"
+    )
+    monkeypatch.setitem(sys.modules, "psutil", psutil)
     plan, plan_output, experiments = plan_fixture
     parent = next(
         p
@@ -332,6 +344,20 @@ def test_worker_passes_true_outer_split_and_revalidates_only_matching_cache(
     with pytest.raises(ValueError, match="retries are disabled"):
         worker.run_parent(**kwargs)
     assert len(calls) == 1
+
+
+def test_real_worker_reports_missing_psutil_without_fixture_stubs(monkeypatch):
+    monkeypatch.setitem(sys.modules, "psutil", None)
+    with pytest.raises(ModuleNotFoundError, match="psutil"):
+        worker.run_parent(
+            plan_path="must-not-be-read",
+            output="must-not-be-created",
+            parent_id="synthetic",
+            host="local",
+            wheel_path="synthetic",
+            registration_path="synthetic",
+            affinity=[0, 1],
+        )
 
 
 @pytest.mark.parametrize("repeat,fold", [(3, 0), (0, 3), (-1, 0)])

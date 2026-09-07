@@ -5,8 +5,9 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
+import sys
 from pathlib import Path
-from types import SimpleNamespace
+from types import ModuleType, SimpleNamespace
 
 import pandas as pd
 import pytest
@@ -19,7 +20,45 @@ def digest(value):
 
 
 @pytest.fixture
-def study(tmp_path, monkeypatch):
+def optional_api_doubles(monkeypatch):
+    """Core CI has no benchmark extras; real API smoke runs in the pinned env."""
+
+    def get_split_idx(fold=0, repeat=0, sample=0, n_folds=1, n_repeats=1, n_samples=1):
+        assert fold < n_folds and repeat < n_repeats and sample < n_samples
+        return n_folds * n_samples * repeat + n_samples * fold + sample
+
+    for name in ("tabarena", "tabarena.benchmark", "tabarena.benchmark.task"):
+        package = ModuleType(name)
+        package.__path__ = []
+        monkeypatch.setitem(sys.modules, name, package)
+    utils = ModuleType("tabarena.benchmark.task.utils")
+    utils.get_split_idx = get_split_idx
+    monkeypatch.setitem(sys.modules, utils.__name__, utils)
+
+    # JSON is a YAML subset. Only metadata flag rewriting is under test here.
+    yaml = ModuleType("yaml")
+    yaml.safe_load = json.loads
+    yaml.safe_dump = json.dumps
+    monkeypatch.setitem(sys.modules, "yaml", yaml)
+
+    class RepositoryNotFoundError(Exception):
+        pass
+
+    def unexpected_hub_call(*args, **kwargs):
+        pytest.fail("Unexpected Hugging Face access")
+
+    hub = ModuleType("huggingface_hub")
+    hub.HfApi = unexpected_hub_call
+    hub.snapshot_download = unexpected_hub_call
+    errors = ModuleType("huggingface_hub.errors")
+    errors.RepositoryNotFoundError = RepositoryNotFoundError
+    hub.errors = errors
+    monkeypatch.setitem(sys.modules, "huggingface_hub", hub)
+    monkeypatch.setitem(sys.modules, "huggingface_hub.errors", errors)
+
+
+@pytest.fixture
+def study(tmp_path, monkeypatch, optional_api_doubles):
     """Two synthetic configs, two outer repeats, three folds; no actual models."""
     splits = [
         {"dataset": "fixture", "repeat": repeat, "fold": fold}
@@ -336,10 +375,13 @@ def staged(study, monkeypatch):
         canonical = output / "canonical-results"
         (canonical / "results").mkdir(parents=True)
         (canonical / "metadata.yaml").write_text(
-            "can_hpo: true\nhas_raw: true\nhas_processed: true\n"
+            json.dumps({"can_hpo": True, "has_raw": True, "has_processed": True})
         )
-        for name, table in zip(final.TABLES, tables(plan)):
-            table.to_parquet(canonical / "results" / name, index=False)
+        for name in final.TABLES:
+            # Staging copies bytes; Parquet encoding is covered by the real API smoke.
+            (canonical / "results" / name).write_bytes(
+                b"synthetic result-table fixture"
+            )
         return canonical
 
     monkeypatch.setattr(final, "evaluate", evaluate)
@@ -353,7 +395,9 @@ def test_staging_allowlist_and_idempotent_resume(staged, monkeypatch):
     assert set(final.verify_stage(folder)) == final.PUBLIC_FILES
     assert not list(folder.rglob("*.pkl")) and not list(folder.rglob("*.npz"))
     assert all(raw.is_file() for _, raw in study.paths)
-    assert "has_raw: false" in (folder / "canonical-results/metadata.yaml").read_text()
+    assert (
+        final.read_json(folder / "canonical-results/metadata.yaml")["has_raw"] is False
+    )
     original = (folder / "SHA256SUMS").read_bytes()
     monkeypatch.setattr(
         final, "evaluate", lambda *args: pytest.fail("Repeated evaluation")
@@ -382,10 +426,7 @@ def hub(staged, monkeypatch, tmp_path):
     import huggingface_hub
     from huggingface_hub import errors
 
-    class RepositoryNotFoundError(Exception):
-        pass
-
-    monkeypatch.setattr(errors, "RepositoryNotFoundError", RepositoryNotFoundError)
+    RepositoryNotFoundError = errors.RepositoryNotFoundError
 
     study, folder = staged
     remote = tmp_path / "fake-hub"
@@ -491,6 +532,14 @@ def test_pending_cli_check_does_not_publish(study, monkeypatch, capsys, tmp_path
     monkeypatch.setattr(
         final, "publish", lambda *args: pytest.fail("Premature publication")
     )
+    monkeypatch.setattr(
+        final,
+        "sys",
+        SimpleNamespace(flags=SimpleNamespace(isolated=True), path=list(sys.path)),
+    )
+    installed = ModuleType("ctboost")
+    installed.__file__ = str(tmp_path / "site-packages/ctboost/__init__.py")
+    monkeypatch.setitem(sys.modules, "ctboost", installed)
     result = final.main(
         [
             "--plan",
