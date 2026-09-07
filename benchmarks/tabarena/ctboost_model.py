@@ -18,6 +18,13 @@ from typing import Any, Optional, Sequence
 
 import numpy as np
 
+from .learning_options import (
+    LEARNING_INAPPLICABLE_PARAM,
+    LEARNING_VARIANT_PARAM,
+    resolve_cpu_learning_options,
+    validate_learning_modes_by_problem_type,
+)
+
 try:
     from autogluon.core.models import AbstractModel
 except ModuleNotFoundError as exc:  # pragma: no cover - exercised in benchmark env
@@ -347,6 +354,18 @@ class CTBoostTabArenaModel(AbstractModel):
         # particular, a mixed CPU/GPU TabArena run must never turn the CPU
         # leaderboard entry into a GPU fit merely because a GPU is available.
         params["task_type"] = self._ctboost_task_type
+        if LEARNING_VARIANT_PARAM in params or LEARNING_INAPPLICABLE_PARAM in params:
+            params, self._ctboost_learning_options = resolve_cpu_learning_options(
+                params,
+                problem_type=self.problem_type,
+                labels=np.asarray(y),
+                sample_weight=sample_weight,
+            )
+            if params is None:
+                raise ValueError(
+                    "A TabArena fit cannot skip an inapplicable learning variant: "
+                    + self._ctboost_learning_options["reason"]
+                )
 
         if self.problem_type == "regression":
             self.model = CTBoostRegressor(**params)
@@ -649,6 +668,34 @@ def generate_configs_ctboost(num_random_configs: int = 200) -> list[dict[str, An
     return configs
 
 
+def generate_configs_ctboost_learning_options(
+    num_random_configs: int = 25,
+    *,
+    approved_modes_by_problem_type: dict[str, str],
+) -> list[dict[str, Any]]:
+    """Add predeclared CPU variants to the odd slots of the old 25-config prefix.
+
+    A separate pilot decides the family mapping before this function is called.
+    Numeric configurations and their order are unchanged; 1-based odd slots
+    receive the approved mapping with explicit baseline fallback for an
+    ineligible training task. The default configuration and frozen CPU/GPU
+    generators are unaffected. An all-baseline mapping changes nothing.
+    """
+    if (
+        isinstance(num_random_configs, (bool, np.bool_))
+        or not isinstance(num_random_configs, (int, np.integer))
+        or not 0 <= num_random_configs <= 25
+    ):
+        raise ValueError("learning-option portfolio size must be an integer from 0 to 25")
+    modes = validate_learning_modes_by_problem_type(approved_modes_by_problem_type)
+    configs = generate_configs_ctboost(num_random_configs)
+    if any(mode != "baseline" for mode in modes.values()):
+        for index in range(0, len(configs), 2):
+            configs[index][LEARNING_VARIANT_PARAM] = dict(modes)
+            configs[index][LEARNING_INAPPLICABLE_PARAM] = "baseline"
+    return configs
+
+
 def _build_config_generator(model_cls: Any = CTBoostTabArenaModel) -> Any:
     if _AUTOGLUON_IMPORT_ERROR is not None:
         return None
@@ -676,5 +723,6 @@ __all__ = [
     "gen_ctboost_cpu",
     "gen_ctboost_gpu",
     "generate_configs_ctboost",
+    "generate_configs_ctboost_learning_options",
     "normalize_tabarena_frame",
 ]
