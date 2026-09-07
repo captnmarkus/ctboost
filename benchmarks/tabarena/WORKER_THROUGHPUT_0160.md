@@ -26,6 +26,12 @@ parameters, and 128 training iterations. There is no validation set, early
 stopping, test-score selection, or per-job training deadline. A separate
 four-iteration warmup precedes each worker's readiness barrier.
 
+The numeric binary profile uses 32,768 rows and 96 numeric columns, crossing
+CTBoost's default parallel-node-histogram threshold of 1,048,576 values even
+after its fixed 80% row subsample. The other profiles remain smaller, exercising
+serial work as well. This v2 specification supersedes the unused v1 specification
+after static source review; no timing fits were run under v1.
+
 The harness records the workload and source digests, public-wheel runtime,
 actual CPU topology and affinities, per-job results, batch wall time, startup
 overhead, total process-tree memory, and minimum free system memory. It reports

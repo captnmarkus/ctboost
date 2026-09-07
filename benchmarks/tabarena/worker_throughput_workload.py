@@ -13,7 +13,7 @@ from pathlib import Path
 # Immutable specification: parse a fresh copy instead of exposing mutable defaults.
 WORKLOAD_SPEC_JSON = """{
   "schema_version": 1,
-  "name": "ctboost_0160_synthetic_worker_throughput_v1",
+  "name": "ctboost_0160_synthetic_worker_throughput_v2",
   "ctboost_version": "0.1.60",
   "data_seed": 160,
   "model_seed_base": 160000,
@@ -29,7 +29,7 @@ WORKLOAD_SPEC_JSON = """{
     "one_hot_max_size": 2, "max_cat_threshold": 64, "ctr_prior_strength": 0.5
   },
   "profiles": [
-    {"name": "numeric_binary", "problem_type": "binary", "rows": 8192, "numeric_columns": 48, "categorical_columns": 0, "classes": 2},
+    {"name": "numeric_binary", "problem_type": "binary", "rows": 32768, "numeric_columns": 96, "categorical_columns": 0, "classes": 2},
     {"name": "numeric_regression", "problem_type": "regression", "rows": 8192, "numeric_columns": 48, "categorical_columns": 0, "classes": 0},
     {"name": "numeric_multiclass", "problem_type": "multiclass", "rows": 4096, "numeric_columns": 32, "categorical_columns": 0, "classes": 6},
     {"name": "categorical_binary", "problem_type": "binary", "rows": 8192, "numeric_columns": 16, "categorical_columns": 8, "classes": 2}
