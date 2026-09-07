@@ -38,8 +38,9 @@ subject to observed memory needs and a 4 GiB free-memory reserve. Remote workers
 admit up to two parents per four-CPU instance, with the same per-parent limits.
 The fixed partition assigns four of every nine parents locally and five remotely:
 9,431 local parents and 11,785 remote parents. The first remote bundle contains
-one parent to verify transport before the remaining slots activate; subsequent
-bundles contain twelve parents each. Remote collection runs every twenty minutes.
+one parent as a small transport check; subsequent bundles contain twelve parents
+each. Other bundles may start concurrently when account capacity permits, as
+implemented by the frozen controller. Remote collection runs every twenty minutes.
 
 The complete plan is published before fitting. Workers verify its public
 registration, source digests, pinned TabArena checkout, package environment and
