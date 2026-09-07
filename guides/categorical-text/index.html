@@ -426,6 +426,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../../release-0.1.60/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release 0.1.60
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../release-0.1.59/" class="md-nav__link">
         
   
@@ -571,10 +598,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" checked>
         
           
-          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="">
             
   
   
@@ -592,8 +619,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_11">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_12">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1023,10 +1050,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_13" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
         
           
-          <label class="md-nav__link" for="__nav_13" id="__nav_13_label" tabindex="">
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="">
             
   
   
@@ -1044,8 +1071,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_13_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_13">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1214,6 +1241,11 @@ the tree learner.</p>
 <p>Available categorical transforms include one-hot values, smoothed target statistics,
 ordered CTRs, feature combinations, and per-feature CTR configuration. Unknown and
 missing values have deterministic routes.</p>
+<p>Starting in 0.1.60, a positive <code>ctr_prior_strength</code> below one preserves the
+unscaled target prior for first occurrences and unseen categories. Zero-prior
+cold starts retain their previous behavior. New fits use pipeline format 4;
+loaded older pipelines preserve their original smoothing until explicitly
+refitted. See <a href="../deployment/">deployment</a> for saved-model compatibility.</p>
 <p>Fitted pipelines record <code>categorical_key_encoding_version</code> in their state and
 inference manifest. New fits use version 2, which keeps actual missing values,
 literal strings such as <code>__ctboost_missing__</code> and <code>__ctboost_other__</code>, synthetic

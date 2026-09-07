@@ -426,6 +426,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../../release-0.1.60/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release 0.1.60
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../release-0.1.59/" class="md-nav__link">
         
   
@@ -571,10 +598,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" checked>
         
           
-          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="">
             
   
   
@@ -592,8 +619,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_11">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_12">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1023,10 +1050,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_13" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
         
           
-          <label class="md-nav__link" for="__nav_13" id="__nav_13_label" tabindex="">
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="">
             
   
   
@@ -1044,8 +1071,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_13_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_13">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1223,6 +1250,16 @@ data schema before resuming:</p>
 <p>Snapshot resume is a validated warm-start convenience, not a blanket
 bit-for-bit equivalence promise for every training path. Use <code>init_model</code> when
 you intentionally change a later-stage configuration.</p>
+<p>Starting in 0.1.60, enabling early stopping when resuming an
+untrimmed DART model starts selection from the full supplied ensemble if its
+historical best round is no longer recoverable. CTBoost evaluates that ensemble
+on the current validation data before adding rounds. It can then retain that
+checkpoint or a later improvement. DART rescales earlier trees, so taking a
+prefix of the supplied model would not recreate its historical best predictions.
+Already-trimmed DART resumes and Plain boosting keep their existing behavior.
+For the selected model's monitored score, use
+<code>booster.eval_loss_history[booster.best_iteration]</code>. The sklearn <code>best_score_</code>
+dictionary continues to report each metric's historical minimum or maximum.</p>
 <h2 id="export-choices">Export choices<a class="headerlink" href="#export-choices" title="Permanent link">&para;</a></h2>
 <p>Install table-oriented CLI support with <code>python -m pip install "ctboost[cli]"</code>.
 ONNX export additionally requires <code>python -m pip install "ctboost[onnx]"</code>.</p>
@@ -1270,10 +1307,14 @@ ONNX export additionally requires <code>python -m pip install "ctboost[onnx]"</c
 <p>Scalar version-2 and vector version-3 JSON predictors can embed a fitted categorical,
 text, or embedding pipeline for the Python <code>load_exported_predictor</code> runtime.
 Raw-feature exports require a matching
-inference manifest and the current pipeline/key-codec versions; fingerprints and the
+inference manifest, pipeline format 3 or 4, and categorical key encoding 2; fingerprints and the
 full native pipeline state are validated before construction. Treat the JSON as trusted
 input: its SHA-256 fingerprint detects accidental or uncoordinated changes but is not a
 signature or authenticity boundary.</p>
+<p>Starting in 0.1.60, new fitted pipelines use format 4 for
+corrected fractional CTR smoothing. Release 0.1.59 uses format 3. Loaded
+format-3 pipelines retain their original smoothing and re-export as format 3.
+Older CTBoost runtimes that support only format 3 reject format-4 pipelines.</p>
 <p>Generated Python/C++/ONNX predictors and the R/JVM scorers do not silently reproduce a
 fitted pipeline. Their manifest/profile requires prepared features. See
 <a href="../portable-inference/">portable inference</a> for the cross-language boundary.</p>

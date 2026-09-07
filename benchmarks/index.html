@@ -556,6 +556,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../release-0.1.60/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release 0.1.60
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../release-0.1.59/" class="md-nav__link">
         
   
@@ -699,10 +726,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" >
         
           
-          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="">
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="">
             
   
   
@@ -720,8 +747,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_11">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1071,10 +1098,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_13" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
         
           
-          <label class="md-nav__link" for="__nav_13" id="__nav_13_label" tabindex="">
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="">
             
   
   
@@ -1092,8 +1119,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_13_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_13">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1303,6 +1330,13 @@ score:</p>
 <li>a default-plus-25-configuration TabArena-v0.1 Lite evaluation for the ordinary adapter; and</li>
 <li>a pre-registered external panel for the opt-in grouped split statistic.</li>
 </ol>
+<p>The <a href="../release-0.1.60/">0.1.60 corrections</a> have separate development validation.
+The CTR and numeric-bin comparisons found no broad score gain and did not
+change learning defaults. Their
+<a href="https://github.com/captnmarkus/ctboost/tree/master/benchmarks/results/score_audit_20260907">complete audit report</a>
+retains locally frozen plans, reused-baseline disclosures, and every result.
+These checks are not a completed 0.1.60 TabArena evaluation or an independent
+holdout; the published TabArena scores below still measure 0.1.58.</p>
 <h3 id="ctboost-0158-tabarena-v01-lite-with-25-hpo-configurations">CTBoost 0.1.58: TabArena-v0.1 Lite with 25 HPO configurations<a class="headerlink" href="#ctboost-0158-tabarena-v01-lite-with-25-hpo-configurations" title="Permanent link">&para;</a></h3>
 <p>CTBoost has a committed adapter for the official TabArena protocol. It delegates
 folds, task metrics, bagging, tuning, ensembling, timing, and memory measurement to
@@ -1365,11 +1399,11 @@ using validation predictions; test outcomes do not change the frozen portfolio.<
 <td style="text-align: right;">8 children per parent; 10,608 child fits</td>
 </tr>
 <tr>
-<td>Kaggle CPU allocation</td>
+<td>Worker CPU allocation</td>
 <td style="text-align: right;">4</td>
 </tr>
 <tr>
-<td>Kaggle memory limit</td>
+<td>Worker memory limit</td>
 <td style="text-align: right;">28 GB</td>
 </tr>
 <tr>
@@ -1380,10 +1414,10 @@ using validation predictions; test outcomes do not change the frozen portfolio.<
 </table>
 <div class="admonition note">
 <p class="admonition-title">Scope of the score</p>
-<p>This is a local Lite evaluation with 25 HPO configurations, not a full
+<p>This is a author-run Lite evaluation with 25 HPO configurations, not a full
 200-configuration run, TabArena-Full result, or official leaderboard entry.
 Elo depends on the dataset and method roster: this evaluation uses 87 rows,
-including defaults, tuned configurations, ensembles, and systems. Kaggle's 4 CPUs and 28 GB
+including defaults, tuned configurations, ensembles, and systems. The workers' 4 CPUs and 28 GB
 differ from the canonical 8 CPUs and 32 GB, so its recorded timings are not
 directly comparable to official TabArena runtimes.</p>
 </div>
@@ -1393,7 +1427,7 @@ directly comparable to official TabArena runtimes.</p>
   <code>CTBoost_r1_default_BAG_L1</code> through <code>CTBoost_r25_default_BAG_L1</code>;</li>
 <li>30 binary, 8 multiclass, and 13 regression datasets, with no missing or
   duplicate tasks in the published canonical tables;</li>
-<li>156 Kaggle CPU shards, AutoGluon Tabular 1.6.2b20260821;</li>
+<li>156 CPU shards, AutoGluon Tabular 1.6.2b20260821;</li>
 <li>TabArena integration/evaluation commit
   <a href="https://github.com/captnmarkus/tabarena/commit/31026f7d758390994353eba79fbfa6747616f365"><code>31026f7d758390994353eba79fbfa6747616f365</code></a>,
   associated with <a href="https://github.com/autogluon/tabarena/pull/479">upstream PR #479</a>.</li>
@@ -1431,11 +1465,11 @@ remains the production default.</p>
 <p>See the <a href="../split-statistics-research/">research ledger</a> and the
 <a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/split_research/results/grouped_external_panel_v2_fb65b685.json">sanitized machine-readable panel evidence</a>.</p>
 <h2 id="reproduce-the-evaluations">Reproduce the evaluations<a class="headerlink" href="#reproduce-the-evaluations" title="Permanent link">&para;</a></h2>
-<p>The frozen 25-configuration Kaggle protocol, collection, and validation commands
-are documented in
-<a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/README.md"><code>benchmarks/tabarena/README.md</code></a>.
-That workflow produces the complete result bundle above. For a local default-only
-Lite run, follow the pinned environment instructions there, then run:</p>
+<p>The published <a href="https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-hpo25-0.1.58/blob/main/validation/aggregate_manifest.json">aggregate manifest</a>
+preserves the completed evaluation's resource and artifact provenance. For a local
+default-only Lite run, follow the pinned environment instructions in the
+<a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/README.md">adapter guide</a>,
+then run:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>ctboost-tabarena<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">  </span>--subset<span class="w"> </span>lite<span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span>--device<span class="w"> </span>cpu<span class="w"> </span><span class="se">\</span>
