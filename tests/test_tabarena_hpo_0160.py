@@ -5,6 +5,7 @@ import gzip
 import hashlib
 import json
 import pickle
+import sys
 import zipfile
 from types import SimpleNamespace
 
@@ -332,6 +333,7 @@ def test_result_audit_requires_new_version_all_fold_seeds_and_baseline(
 def test_started_parent_never_retrains_after_restart(
     plan_fixture, tmp_path, monkeypatch, status
 ):
+    monkeypatch.setitem(sys.modules, "psutil", None)
     plan, plan_output = plan_fixture
     parent = plan["parents"][0]
     output = tmp_path / "execution"
@@ -363,6 +365,7 @@ def test_started_parent_never_retrains_after_restart(
 
 
 def test_wrong_owner_is_rejected_before_runtime(plan_fixture, monkeypatch):
+    monkeypatch.setitem(sys.modules, "psutil", None)
     plan, output = plan_fixture
     parent = plan["parents"][0]
     monkeypatch.setattr(

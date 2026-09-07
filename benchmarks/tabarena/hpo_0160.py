@@ -690,17 +690,17 @@ def _limits(directory):
 def run_parent(
     *, plan_path, output, parent_id, host, wheel_path, registration_path, affinity=None
 ):
-    import psutil
-
     plan = validate_plan(read_json(plan_path))
     digest = plan_hash(plan)
     matches = [parent for parent in plan["parents"] if parent["parent_id"] == parent_id]
     if len(matches) != 1 or host != matches[0]["owner"]:
         raise ValueError("Parent does not belong to this host in the frozen plan")
     parent = matches[0]
-    affinity = _shared()._configure_process(
-        2, affinity if affinity is not None else psutil.Process().cpu_affinity()[:2]
-    )
+    if affinity is None:
+        import psutil
+
+        affinity = psutil.Process().cpu_affinity()[:2]
+    affinity = _shared()._configure_process(2, affinity)
     output = Path(output).resolve()
     registration = verify_registration(plan, registration_path, output)
     runtime = runtime_provenance(plan, wheel_path)
