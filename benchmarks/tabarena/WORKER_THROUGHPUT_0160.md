@@ -66,3 +66,11 @@ before applying it, preserving the original plan, started-parent evidence and
 source/runtime receipts. Changing CPU resources can change how much training
 fits within the official time limit, so results from differing resource policies
 must remain distinguishable.
+
+## Recorded outcome
+
+The [2026-09-07 v2 results](../results/worker_throughput_20260907_v2/README.md)
+retained A. B improved steady throughput by 6.1% and 18.0%, and C by 5.8% and
+12.0%; neither met the 10% requirement in both repetitions. All 192 timed fits
+completed with bitwise-identical predictions. The original HPO queue resumed
+with eight workers and two CPU threads per parent.
