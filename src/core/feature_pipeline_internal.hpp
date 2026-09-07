@@ -19,7 +19,7 @@ inline constexpr const char* kCodec2LiteralMissingKey = "\\m";
 inline constexpr const char* kCodec2OtherKey = "\\o";
 inline constexpr int kLegacyCategoricalKeyEncodingVersion = 1;
 inline constexpr int kCurrentCategoricalKeyEncodingVersion = 2;
-inline constexpr int kCurrentFeaturePipelineFormatVersion = 3;
+inline constexpr int kCurrentFeaturePipelineFormatVersion = 4;
 
 struct MatrixView {
   py::array array;

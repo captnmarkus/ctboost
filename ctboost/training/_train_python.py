@@ -11,6 +11,7 @@ from ._distributed_payloads import _distributed_allgather_value, _distributed_br
 from ._early_stopping import _prune_booster_to_best_iteration
 from ._eval_runtime import (
     _collect_prediction_metric_inputs,
+    _evaluate_metric_distributed,
     _evaluate_metric_from_inputs,
     _merge_prediction_metric_inputs,
 )
@@ -42,6 +43,7 @@ def _train_with_python_surface(
     distributed_config: Optional[Dict[str, Any]],
     custom_objective: Optional[ObjectiveSpec] = None,
 ) -> Booster:
+    init_booster = getattr(resolved_init_model, "_booster", resolved_init_model)
     booster = _make_native_booster(
         native_params,
         iterations,
@@ -52,7 +54,7 @@ def _train_with_python_surface(
     wrapped_booster = Booster(
         booster,
         feature_pipeline=feature_pipeline,
-        training_metadata=getattr(resolved_init_model, "_training_metadata", None),
+        training_metadata=getattr(init_booster, "_training_metadata", None),
     )
     custom_objective_callable = None
     if custom_objective is not None:
@@ -134,6 +136,39 @@ def _train_with_python_surface(
         and native_params["early_stopping"] > 0
         and metric_runtime["primary_eval_name"] is not None
     )
+    if (
+        snapshot_best_dart_ensemble
+        and begin_iteration > 0
+        and wrapped_booster.best_iteration == begin_iteration - 1
+        and len(monitor_history) >= begin_iteration
+    ):
+        # A previously rebased, retained checkpoint can have better historical
+        # scores from unavailable ensembles. Do not select those again.
+        best_iteration = begin_iteration - 1
+        best_score = float(monitor_history[best_iteration])
+    rebase_dart_checkpoint = (
+        snapshot_best_dart_ensemble and 0 <= best_iteration < begin_iteration - 1
+    )
+    if rebase_dart_checkpoint:
+        # Earlier DART rounds have been rescaled in an untrimmed init_model.
+        # Its full supplied ensemble is the first checkpoint we can restore.
+        eval_index = resolved_eval_names.index(metric_runtime["primary_eval_name"])
+        eval_pool = weighted_eval_pools[eval_index]
+        metric_spec = next(
+            spec for spec in metric_runtime["eval_metric_specs"]
+            if spec["name"] == metric_runtime["primary_eval_metric"]
+        )
+        best_score = _evaluate_metric_distributed(
+            distributed_config,
+            key=f"{native_params['distributed_run_id']}/dart_resume_baseline/{begin_iteration}",
+            metric_name=metric_spec,
+            predictions=wrapped_booster.predict(eval_pool),
+            pool=eval_pool,
+            num_classes=native_params["num_classes"],
+            params=native_params,
+        )
+        best_iteration = begin_iteration - 1
+        monitor_history[-1] = best_score
     best_dart_state = (
         dict(booster.export_state())
         if snapshot_best_dart_ensemble and best_iteration >= 0
@@ -277,6 +312,12 @@ def _train_with_python_surface(
             )
     booster = wrapped_booster._handle
     booster.set_iterations(iterations)
+    if rebase_dart_checkpoint and best_dart_state is not None:
+        # Keep the native snapshot consistent for pruning and later resumes
+        # through the native path, including a changed validation dataset.
+        best_dart_state["best_iteration"] = best_iteration
+        best_dart_state["best_score"] = best_score
+        best_dart_state["eval_loss_history"] = list(monitor_history[:best_iteration + 1])
     if native_params["early_stopping"] > 0 and best_iteration >= 0 and best_iteration + 1 < booster.num_iterations_trained():
         if best_dart_state is not None:
             # Later DART rounds rescale earlier trees, so truncating the current
@@ -290,6 +331,14 @@ def _train_with_python_surface(
         for eval_name in resolved_eval_names:
             for metric_name in metric_runtime["eval_metric_names"]:
                 evals_result[eval_name][metric_name] = evals_result[eval_name][metric_name][:retained_iterations]
+    if rebase_dart_checkpoint:
+        final_state = dict(booster.export_state())
+        final_state["best_iteration"] = best_iteration
+        final_state["best_score"] = best_score
+        final_state["eval_loss_history"] = list(
+            evals_result[metric_runtime["primary_eval_name"]][metric_runtime["primary_eval_metric"]]
+        )
+        booster.load_state(final_state)
     wrapped_booster._set_training_metadata(
         evals_result=evals_result,
         eval_loss_history=(

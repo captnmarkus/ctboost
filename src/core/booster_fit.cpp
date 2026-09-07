@@ -303,7 +303,6 @@ void GradientBooster::FitWithObjective(Pool& pool,
       static_cast<int>(num_iterations_trained()),
       static_cast<int>(num_iterations_trained()),
       static_cast<int>(num_iterations_trained()) + iterations_,
-      false,
   };
   booster_detail::FitLoopContext context;
   context.pool = &pool;
@@ -385,7 +384,8 @@ void GradientBooster::FitWithObjective(Pool& pool,
   };
   if (eval_pool == nullptr) {
     best_iteration_ = state.completed_iterations > 0 ? state.completed_iterations - 1 : -1;
-  } else if (state.early_stopped && best_iteration_ >= 0) {
+  } else if (early_stopping_rounds > 0 && best_iteration_ >= 0 &&
+             best_iteration_ + 1 < state.completed_iterations) {
     const std::size_t retained_iterations = static_cast<std::size_t>(best_iteration_ + 1);
     trees_.resize(retained_iterations * static_cast<std::size_t>(trees_per_iteration()));
     if (tree_learning_rates_.size() > retained_iterations) {

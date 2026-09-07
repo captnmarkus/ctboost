@@ -116,6 +116,19 @@ def _train_native_only(
     native_eval_name: Optional[str],
     reported_eval_metric: str,
 ) -> Booster:
+    init_booster = getattr(resolved_init_model, "_booster", resolved_init_model)
+    if (
+        init_state is not None
+        and isinstance(init_booster, Booster)
+        and init_state.get("boosting_type") == "DART"
+        and early_stopping > 0
+        and 0 <= init_booster.best_iteration < init_booster.num_iterations_trained - 1
+    ):
+        # Callback-trained models store their monitored history in the wrapper.
+        # Supply it to native DART so the same unavailable-best check applies.
+        init_state = dict(init_state)
+        init_state["best_iteration"] = init_booster.best_iteration
+        init_state["eval_loss_history"] = init_booster.eval_loss_history
     booster = _make_native_booster(
         native_params,
         iterations,

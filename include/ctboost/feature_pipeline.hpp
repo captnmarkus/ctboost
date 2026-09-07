@@ -152,6 +152,9 @@ class NativeFeaturePipeline {
   // pipelines use version 2, while loaded legacy pipelines retain version 1
   // so their fitted mappings continue to be interpreted byte-for-byte.
   int categorical_key_encoding_version_{2};
+  // Format 4 corrects fractional-prior smoothing. Loaded older pipelines keep
+  // the historical denominator until explicitly refitted.
+  int ctr_smoothing_version_{2};
   std::optional<std::vector<std::string>> feature_names_in_;
   int n_features_in_{-1};
   std::vector<int> cat_feature_indices_;

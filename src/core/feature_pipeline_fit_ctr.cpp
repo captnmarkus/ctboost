@@ -139,7 +139,7 @@ void NativeFeaturePipeline::FitCtrState(pybind11::array object_matrix,
                 ctr_prior_strength_ * static_cast<double>(
                                           target_prior[static_cast<std::size_t>(output_index)]);
             training_columns[static_cast<std::size_t>(output_index)][row] =
-                CheckedCtrFloat(numerator / std::max(denominator, 1.0));
+                CheckedCtrFloat(numerator / (denominator > 0.0 ? denominator : 1.0));
           }
         } else {
           const float global_frequency =
@@ -152,7 +152,7 @@ void NativeFeaturePipeline::FitCtrState(pybind11::array object_matrix,
                                    ctr_prior_strength_ *
                                        static_cast<double>(global_frequency);
           training_columns[0][row] =
-              CheckedCtrFloat(numerator / std::max(denominator, 1.0));
+              CheckedCtrFloat(numerator / (denominator > 0.0 ? denominator : 1.0));
         }
 
         total_counts[key] += 1;

@@ -140,6 +140,7 @@ void NativeFeaturePipeline::FitInternal(py::array raw_matrix,
     }
   }
 
+  ctr_smoothing_version_ = 2;
   output_feature_names_.clear();
   allocated_output_feature_names_.clear();
   cat_feature_indices_.clear();

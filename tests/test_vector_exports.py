@@ -110,7 +110,7 @@ def test_vector_pipeline_exports_preserve_raw_and_prepared_inputs(tmp_path):
     prepared_document = json.loads(prepared_path.read_text(encoding="utf-8"))
     assert raw_document["format_version"] == prepared_document["format_version"] == 3
     assert raw_document["expects_prepared_features"] is False
-    assert raw_document["feature_pipeline_state"]["feature_pipeline_format_version"] == 3
+    assert raw_document["feature_pipeline_state"]["feature_pipeline_format_version"] == 4
     assert prepared_document["expects_prepared_features"] is True
     assert prepared_document["feature_pipeline_state"] is None
     for predictor, values in (

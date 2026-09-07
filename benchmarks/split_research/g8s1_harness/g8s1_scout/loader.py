@@ -19,7 +19,7 @@ from typing import Any
 from .constants import source_root
 
 _PRIVATE_PACKAGE = "_g8s1_scout_sealed_benchmark"
-_ALLOWED_MODULES = frozenset({"ctboost_model", "run"})
+_ALLOWED_MODULES = frozenset({"learning_options", "ctboost_model", "run"})
 _OWNED_PACKAGE: types.ModuleType | None = None
 _LOADED_MODULES: dict[str, types.ModuleType] = {}
 
@@ -155,6 +155,12 @@ def load_benchmark_module(module_name: str) -> Any:
     package = _ensure_private_package()
     if module_name == "run":
         load_benchmark_module("ctboost_model")
+    elif (
+        module_name == "ctboost_model"
+        and (tabarena_root / "learning_options.py").exists()
+    ):
+        # Older frozen adapters have no learning-options dependency.
+        load_benchmark_module("learning_options")
 
     resolved_file = expected_file.resolve()
     source_loader = importlib.machinery.SourceFileLoader(full_name, str(resolved_file))

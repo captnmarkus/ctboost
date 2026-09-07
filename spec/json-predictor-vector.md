@@ -31,8 +31,16 @@ invalid.
 
 Prepared feature arrays follow the format `2` contract. Python JSON predictors
 also support raw features when `expects_prepared_features` is false, embedding a
-validated feature pipeline of format `3` with categorical key encoding `2` and
+validated feature pipeline of format `3` or `4` with categorical key encoding `2` and
 an inference manifest. This raw-feature mode requires the CTBoost runtime.
+
+Pipeline format `4` uses the exact positive CTR smoothing denominator. Pipeline
+format `3` retains the legacy denominator floor of `1`, including for fractional
+prior strengths. Loading and re-exporting a fitted format `3` pipeline preserves
+that format and its predictions; refitting uses format `4`. These nested pipeline
+versions apply to both scalar and vector raw predictors and do not change their
+outer predictor formats. Readers that support only pipeline format `3` must reject
+format `4` before scoring. Prepared exports are unaffected.
 
 Vector inference manifests use schema version `2`; scalar manifests retain
 schema version `1`. The model section declares one tree per iteration and

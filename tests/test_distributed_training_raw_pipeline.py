@@ -139,7 +139,7 @@ def test_distributed_tcp_training_fits_raw_feature_pipeline_across_ranks(tmp_pat
             (tmp_path / f"raw_pipeline_codec_{rank}.json").read_text(encoding="utf-8")
         )
         assert codec == {
-            "feature_pipeline_format_version": 3,
+            "feature_pipeline_format_version": 4,
             "categorical_key_encoding_version": 2,
         }
 

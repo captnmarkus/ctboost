@@ -24,7 +24,7 @@ _BOOTSTRAP_RELATIVE = "benchmarks/split_research/g8s1_scout_bootstrap.py"
 _RUNBOOK_RELATIVE = "benchmarks/split_research/G8S1_SCOUT_RUNBOOK.md"
 _MANIFEST = _SOURCE_ROOT / "benchmarks" / "split_research" / "G8S1_SCOUT_MANIFEST.json"
 _RUNBOOK = _SOURCE_ROOT / _RUNBOOK_RELATIVE
-_ADAPTER = _SOURCE_ROOT / "benchmarks" / "tabarena" / "ctboost_model.py"
+_ADAPTER_ROOT = _SOURCE_ROOT / "benchmarks" / "tabarena"
 
 # Updated only with reviewed source changes.  These constants are the trust
 # anchor used before any g8s1_scout module is imported.
@@ -33,15 +33,16 @@ _EXPECTED_RUNTIME_HASHES = {
     "__main__.py": "01f5b72fa7c1e25c30001eaf3725aa2bb4f4d6a522da656ca4464f6b52d4e780",
     "constants.py": "4615892d19a9b5457f172007eb05db9e3da60770e08f65abcadacae25c1cb9c1",
     "identity.py": "5f82c0c7adad36eb5229358b2c71df8510a418bf27092d4532df3d75f181dc06",
-    "loader.py": "c00e18a318ef3f3ff6765fe003dedcd6013c464c76d65581c62a279689567efd",
+    "loader.py": "1a5288f8edcf9ac60d1a0b5df6dadb1249e797e2d346b8bfc256770ceb7ec915",
     "models.py": "855d93a1d810a9d73e16f193366bd6fbf8ca39d7084bdf2943f079c96ecfc901",
     "p200.json": "62575768f9cc68d3746d00675b81b71e8b0287bd0ab81a721321137c9605942b",
     "schedule.py": "9430666406cc22f2392f6978443ae42d0d482814dfbd745ffa902ee106090b08",
     "summary.py": "f7bc8ae20ba3044e2c65785e049ee7b000793b096941c2e2da43ca00c4439070",
 }
-_EXPECTED_ADAPTER_SHA256 = (
-    "4d16ec2d72ad2f208ec7d5e27b59f7e87dd423704c9b538bacb5aa38a947f7fb"
-)
+_EXPECTED_ADAPTER_HASHES = {
+    "ctboost_model.py": "2419e6925c5b58f00950fe9653d997355ada27561d7d0851c0d3396654311efc",
+    "learning_options.py": "cc72fc42a5dee7e89fa5282a12c5eddaa854bc324fc89115bddcf5e917c016ce",
+}
 _EXPECTED_RUNBOOK_SHA256 = (
     "d97454c737df423504291d39352d8f07df0d355de7af8962a8140dafb0551d3d"
 )
@@ -126,12 +127,10 @@ def _validate_source_only_import_root() -> None:
         if _lf_sha256(_PACKAGE_ROOT / name) != expected:
             _abort(f"grouped-scout bootstrap source hash drifted: {name}")
 
-    if (
-        _ADAPTER.is_symlink()
-        or not _ADAPTER.is_file()
-        or _lf_sha256(_ADAPTER) != _EXPECTED_ADAPTER_SHA256
-    ):
-        _abort("tracked CTBoost TabArena adapter hash drifted")
+    for name, expected in _EXPECTED_ADAPTER_HASHES.items():
+        path = _ADAPTER_ROOT / name
+        if path.is_symlink() or not path.is_file() or _lf_sha256(path) != expected:
+            _abort(f"tracked CTBoost TabArena adapter source hash drifted: {name}")
     if _lf_sha256(_RUNBOOK) != _EXPECTED_RUNBOOK_SHA256:
         _abort("tracked grouped-scout runbook hash drifted")
 

@@ -2,6 +2,43 @@
 
 namespace ctboost::booster_detail {
 
+double EvaluateValidationMetric(const FitLoopContext& context,
+                                const DistributedCoordinator* distributed_coordinator) {
+  const bool distributed_tcp =
+      distributed_coordinator != nullptr && DistributedRootUsesTcp(distributed_coordinator->root);
+  if (distributed_tcp) {
+    DistributedMetricInputs local_eval_inputs;
+    local_eval_inputs.predictions = context.workspace->eval_predictions;
+    local_eval_inputs.labels = *context.eval_labels;
+    local_eval_inputs.weights = *context.eval_weights;
+    local_eval_inputs.has_group_ids =
+        context.eval_ranking != nullptr && context.eval_ranking->group_ids != nullptr;
+    if (local_eval_inputs.has_group_ids) {
+      local_eval_inputs.group_ids = *context.eval_ranking->group_ids;
+    }
+    const DistributedMetricInputs gathered_eval_inputs =
+        AllGatherDistributedMetricInputs(distributed_coordinator, "eval_metric", local_eval_inputs);
+    const RankingMetadataView gathered_eval_ranking{
+        gathered_eval_inputs.has_group_ids ? &gathered_eval_inputs.group_ids : nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+    };
+    return context.eval_metric->Evaluate(gathered_eval_inputs.predictions,
+                                         gathered_eval_inputs.labels,
+                                         gathered_eval_inputs.weights,
+                                         context.num_classes,
+                                         gathered_eval_inputs.has_group_ids
+                                             ? &gathered_eval_ranking
+                                             : nullptr);
+  }
+  return context.eval_metric->Evaluate(context.workspace->eval_predictions,
+                                       *context.eval_labels,
+                                       *context.eval_weights,
+                                       context.num_classes,
+                                       context.eval_ranking);
+}
+
 MetricSummary EvaluateIterationMetrics(const FitLoopContext& context,
                                       FitLoopState& state,
                                       const DistributedCoordinator* distributed_coordinator,
@@ -53,38 +90,7 @@ MetricSummary EvaluateIterationMetrics(const FitLoopContext& context,
     return summary;
   }
 
-  if (distributed_tcp) {
-    DistributedMetricInputs local_eval_inputs;
-    local_eval_inputs.predictions = context.workspace->eval_predictions;
-    local_eval_inputs.labels = *context.eval_labels;
-    local_eval_inputs.weights = *context.eval_weights;
-    local_eval_inputs.has_group_ids =
-        context.eval_ranking != nullptr && context.eval_ranking->group_ids != nullptr;
-    if (local_eval_inputs.has_group_ids) {
-      local_eval_inputs.group_ids = *context.eval_ranking->group_ids;
-    }
-    const DistributedMetricInputs gathered_eval_inputs =
-        AllGatherDistributedMetricInputs(distributed_coordinator, "eval_metric", local_eval_inputs);
-    const RankingMetadataView gathered_eval_ranking{
-        gathered_eval_inputs.has_group_ids ? &gathered_eval_inputs.group_ids : nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-    };
-    summary.eval_score = context.eval_metric->Evaluate(gathered_eval_inputs.predictions,
-                                                       gathered_eval_inputs.labels,
-                                                       gathered_eval_inputs.weights,
-                                                       context.num_classes,
-                                                       gathered_eval_inputs.has_group_ids
-                                                           ? &gathered_eval_ranking
-                                                           : nullptr);
-  } else {
-    summary.eval_score = context.eval_metric->Evaluate(context.workspace->eval_predictions,
-                                                       *context.eval_labels,
-                                                       *context.eval_weights,
-                                                       context.num_classes,
-                                                       context.eval_ranking);
-  }
+  summary.eval_score = EvaluateValidationMetric(context, distributed_coordinator);
 
   if (distributed_tcp) {
     DistributedMetricControl root_control;

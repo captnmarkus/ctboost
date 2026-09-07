@@ -39,7 +39,7 @@ def test_codec2_scalar_keys_separate_missing_literals_and_escape_markers():
     transformed, categorical, names = pipeline.fit_transform_array(values, labels)
     state = pipeline.to_state()
 
-    assert state["feature_pipeline_format_version"] == 3
+    assert state["feature_pipeline_format_version"] == 4
     assert state["categorical_key_encoding_version"] == 2
     assert categorical == []
     assert transformed.shape == (6, 6)
@@ -302,7 +302,7 @@ def test_golden_codec1_state_load_preserves_historical_missing_sentinel_behavior
 @pytest.mark.parametrize(
     ("updates", "message"),
     [
-        ({"feature_pipeline_format_version": 4}, "format version"),
+        ({"feature_pipeline_format_version": 5}, "format version"),
         (
             {
                 "feature_pipeline_format_version": 3,
@@ -455,16 +455,16 @@ def test_model_schema_outer_inner_consistency_and_codec1_forward_compatibility(
     document = json.loads(codec1_schema2_path.read_text(encoding="utf-8"))
     inner = _deserialize_json_value(document["feature_pipeline_state"])
     assert document["schema_version"] == 2
-    assert inner["feature_pipeline_format_version"] == 3
+    assert inner["feature_pipeline_format_version"] == 4
     assert inner["categorical_key_encoding_version"] == 1
     restored = ctboost.load_model(codec1_schema2_path)
     assert restored._feature_pipeline.to_state()["categorical_key_encoding_version"] == 1
     np.testing.assert_array_equal(restored.predict(values), booster.predict(values))
 
-    # Relabeling a schema-2/format-3 document as schema 1 must fail even when
+    # Relabeling a schema-2/format-4 document as schema 1 must fail even when
     # the embedded codec is legacy codec 1.
     document["schema_version"] = 1
-    reverse_relabel_path = tmp_path / "codec1-format3-schema1.ctb"
+    reverse_relabel_path = tmp_path / "codec1-format4-schema1.ctb"
     reverse_relabel_path.write_text(json.dumps(document), encoding="utf-8")
     with pytest.raises(ValueError, match="schema version 1 cannot contain"):
         ctboost.load_model(reverse_relabel_path)

@@ -187,7 +187,9 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
                                      ctr_prior_strength_ * static_cast<double>(
                                          state.prior_values[output_index]);
             value = CheckedCtrFloat(
-                numerator / std::max(denominator, 1.0));
+                numerator / (ctr_smoothing_version_ == 1
+                                 ? std::max(denominator, 1.0)
+                                 : (denominator > 0.0 ? denominator : 1.0)));
           } else {
             const float total_rows = static_cast<float>(std::max<std::size_t>(state.total_rows, 1U));
             const float global_frequency = count / total_rows;

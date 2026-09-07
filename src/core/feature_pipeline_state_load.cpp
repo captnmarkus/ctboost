@@ -117,11 +117,12 @@ void NativeFeaturePipeline::LoadState(const py::dict& state) {
     throw std::invalid_argument("unsupported categorical key encoding version: " +
                                 std::to_string(categorical_key_encoding_version_));
   }
-  if (format_version < detail::kCurrentFeaturePipelineFormatVersion &&
+  if (format_version < 3 &&
       categorical_key_encoding_version_ != detail::kLegacyCategoricalKeyEncodingVersion) {
     throw std::invalid_argument(
         "feature pipeline formats before version 3 require categorical key encoding version 1");
   }
+  ctr_smoothing_version_ = format_version < 4 ? 1 : 2;
 
   cat_features_ = detail::NormalizeOptionalSequence(
       state.contains("cat_features") ? py::reinterpret_borrow<py::object>(state["cat_features"])

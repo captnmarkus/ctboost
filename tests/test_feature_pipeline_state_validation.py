@@ -151,7 +151,7 @@ def test_raw_json_export_rejects_legacy_pipeline_before_native_construction(tmp_
     state = _fitted_pipeline_state()
     state["feature_pipeline_format_version"] = 2
     state.pop("categorical_key_encoding_version")
-    fixture = Path("tests/export_conformance/prepared_binary_v2.json")
+    fixture = Path(__file__).resolve().parent / "export_conformance/prepared_binary_v2.json"
     payload = json.loads(fixture.read_text(encoding="utf-8"))
     payload.update(
         expects_prepared_features=False,

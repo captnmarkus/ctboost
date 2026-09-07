@@ -59,7 +59,6 @@ struct FitLoopState {
   int initial_completed_iterations{0};
   int completed_iterations{0};
   int target_total_iterations{0};
-  bool early_stopped{false};
 };
 
 struct FitLoopContext {
@@ -181,6 +180,8 @@ void RunMulticlassIteration(const FitLoopContext& context,
                             double new_tree_scale,
                             int total_iteration,
                             IterationTiming* timing);
+double EvaluateValidationMetric(const FitLoopContext& context,
+                                const DistributedCoordinator* distributed_coordinator);
 MetricSummary EvaluateIterationMetrics(const FitLoopContext& context,
                                       FitLoopState& state,
                                       const DistributedCoordinator* distributed_coordinator,

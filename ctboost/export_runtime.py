@@ -138,9 +138,9 @@ class ExportedPredictor:
                 raise ValueError("predictor format version 1 supports prepared features only")
             if self.feature_pipeline_state is None:
                 raise ValueError("raw-feature predictor is missing feature_pipeline_state")
-            if self.feature_pipeline_state.get("feature_pipeline_format_version") != 3:
+            if self.feature_pipeline_state.get("feature_pipeline_format_version") not in (3, 4):
                 raise ValueError(
-                    "raw-feature predictor exports require feature-pipeline format version 3"
+                    "raw-feature predictor exports require feature-pipeline format version 3 or 4"
                 )
             if self.feature_pipeline_state.get("categorical_key_encoding_version") != 2:
                 raise ValueError(
@@ -184,9 +184,9 @@ class ExportedPredictor:
                 raise ValueError(
                     "raw-feature predictor exports require an inference manifest"
                 )
-            if self.feature_pipeline_state.get("feature_pipeline_format_version") != 3:
+            if self.feature_pipeline_state.get("feature_pipeline_format_version") not in (3, 4):
                 raise ValueError(
-                    "raw-feature predictor exports require feature-pipeline format version 3"
+                    "raw-feature predictor exports require feature-pipeline format version 3 or 4"
                 )
             if self.feature_pipeline_state.get("categorical_key_encoding_version") != 2:
                 raise ValueError(
@@ -443,9 +443,9 @@ class ExportedPredictor:
             state = self.feature_pipeline_state
             if state is None:
                 raise ValueError("raw-feature predictor is missing feature_pipeline_state")
-            if state.get("feature_pipeline_format_version") != 3:
+            if state.get("feature_pipeline_format_version") not in (3, 4):
                 raise ValueError(
-                    "raw-feature predictor exports require feature-pipeline format version 3"
+                    "raw-feature predictor exports require feature-pipeline format version 3 or 4"
                 )
             if state.get("categorical_key_encoding_version") != 2:
                 raise ValueError(

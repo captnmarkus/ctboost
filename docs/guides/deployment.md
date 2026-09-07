@@ -33,6 +33,17 @@ Snapshot resume is a validated warm-start convenience, not a blanket
 bit-for-bit equivalence promise for every training path. Use `init_model` when
 you intentionally change a later-stage configuration.
 
+In the development build after 0.1.59, enabling early stopping when resuming an
+untrimmed DART model starts selection from the full supplied ensemble if its
+historical best round is no longer recoverable. CTBoost evaluates that ensemble
+on the current validation data before adding rounds. It can then retain that
+checkpoint or a later improvement. DART rescales earlier trees, so taking a
+prefix of the supplied model would not recreate its historical best predictions.
+Already-trimmed DART resumes and Plain boosting keep their existing behavior.
+For the selected model's monitored score, use
+`booster.eval_loss_history[booster.best_iteration]`. The sklearn `best_score_`
+dictionary continues to report each metric's historical minimum or maximum.
+
 ## Export choices
 
 Install table-oriented CLI support with `python -m pip install "ctboost[cli]"`.
@@ -50,10 +61,15 @@ ONNX export additionally requires `python -m pip install "ctboost[onnx]"`.
 Scalar version-2 and vector version-3 JSON predictors can embed a fitted categorical,
 text, or embedding pipeline for the Python `load_exported_predictor` runtime.
 Raw-feature exports require a matching
-inference manifest and the current pipeline/key-codec versions; fingerprints and the
+inference manifest, pipeline format 3 or 4, and categorical key encoding 2; fingerprints and the
 full native pipeline state are validated before construction. Treat the JSON as trusted
 input: its SHA-256 fingerprint detects accidental or uncoordinated changes but is not a
 signature or authenticity boundary.
+
+In the development build after 0.1.59, new fitted pipelines use format 4 for
+corrected fractional CTR smoothing. The published 0.1.59 release uses format 3. Loaded
+format-3 pipelines retain their original smoothing and re-export as format 3.
+Older CTBoost runtimes that support only format 3 reject format-4 pipelines.
 
 Generated Python/C++/ONNX predictors and the R/JVM scorers do not silently reproduce a
 fitted pipeline. Their manifest/profile requires prepared features. See

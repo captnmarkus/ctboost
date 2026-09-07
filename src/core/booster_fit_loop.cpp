@@ -10,6 +10,28 @@ void RunTrainingLoop(const FitLoopContext& context, FitLoopState& state) {
   const bool snapshot_best_dart_ensemble =
       context.boosting_type == BoostingType::kDart && context.eval_pool != nullptr &&
       context.early_stopping_rounds > 0;
+  if (snapshot_best_dart_ensemble && *context.best_iteration >= 0 &&
+      *context.best_iteration + 1 < state.initial_completed_iterations) {
+    // An untrimmed DART model no longer contains its historical best weights.
+    // Start from the supplied full ensemble, which can actually be restored.
+    DistributedCoordinator resume_coordinator;
+    DistributedCoordinator* resume_ptr = nullptr;
+    if (context.distributed_world_size > 1) {
+      resume_coordinator.world_size = context.distributed_world_size;
+      resume_coordinator.rank = context.distributed_rank;
+      resume_coordinator.root = *context.distributed_root;
+      resume_coordinator.run_id = *context.distributed_run_id + "/dart_resume_baseline";
+      resume_coordinator.timeout_seconds = context.distributed_timeout;
+      resume_coordinator.tree_index =
+          static_cast<std::size_t>(state.initial_completed_iterations - 1);
+      resume_ptr = &resume_coordinator;
+    }
+    *context.best_score = EvaluateValidationMetric(context, resume_ptr);
+    *context.best_iteration = state.initial_completed_iterations - 1;
+    if (!context.eval_loss_history->empty()) {
+      context.eval_loss_history->back() = *context.best_score;
+    }
+  }
   std::vector<Tree> best_dart_trees;
   std::vector<double> best_dart_learning_rates;
   bool has_best_dart_snapshot = false;
@@ -129,13 +151,15 @@ void RunTrainingLoop(const FitLoopContext& context, FitLoopState& state) {
                                    metrics.eval_ms,
                                    iteration_ms);
     if (metrics.early_stopped) {
-      if (snapshot_best_dart_ensemble && has_best_dart_snapshot) {
-        *context.trees = std::move(best_dart_trees);
-        *context.tree_learning_rates = std::move(best_dart_learning_rates);
-      }
-      state.early_stopped = true;
       break;
     }
+  }
+  if (snapshot_best_dart_ensemble && has_best_dart_snapshot &&
+      *context.best_iteration + 1 < state.completed_iterations) {
+    // Later DART rounds rescale earlier trees. Restore the ensemble actually
+    // evaluated at the best round, including when the iteration budget expires.
+    *context.trees = std::move(best_dart_trees);
+    *context.tree_learning_rates = std::move(best_dart_learning_rates);
   }
 }
 

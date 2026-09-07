@@ -219,6 +219,7 @@ def _copy_bootstrap_repo(destination: Path) -> Path:
         Path("benchmarks/__init__.py"),
         Path("benchmarks/tabarena/__init__.py"),
         Path("benchmarks/tabarena/ctboost_model.py"),
+        Path("benchmarks/tabarena/learning_options.py"),
         Path("benchmarks/split_research/G8S1_SCOUT_MANIFEST.json"),
         Path(RUNBOOK_RELATIVE),
         Path("benchmarks/split_research/TABARENA_GROUPED_SCOUT.md"),
@@ -347,6 +348,32 @@ def test_external_bootstrap_rejects_effective_forged_runtime_cache_before_execut
     assert completed.returncode != 0
     assert "exact source-only runtime" in completed.stderr
     assert not sentinel.exists()
+
+
+@pytest.mark.parametrize("change", ["modified", "missing"])
+def test_external_bootstrap_rejects_unsealed_adapter_dependency(
+    tmp_path: Path, change: str
+) -> None:
+    fresh_repo = _copy_bootstrap_repo(tmp_path)
+    dependency = fresh_repo / "benchmarks/tabarena/learning_options.py"
+    if change == "missing":
+        dependency.unlink()
+    else:
+        dependency.write_text(
+            "raise AssertionError('unsealed dependency executed')\n", encoding="utf-8"
+        )
+    bootstrap = fresh_repo / "benchmarks/split_research/g8s1_scout_bootstrap.py"
+    completed = subprocess.run(
+        [sys.executable, "-I", "-B", str(bootstrap), "--help"],
+        cwd=tmp_path,
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=30,
+    )
+    assert completed.returncode != 0
+    assert "adapter source hash drifted: learning_options.py" in completed.stderr
+    assert "unsealed dependency executed" not in completed.stderr
 
 
 def test_provenance_rejects_noncanonical_bytecode_writing_invocation(
@@ -933,6 +960,50 @@ def test_private_loader_coexists_with_public_benchmark_module(
     loader.validate_loaded_benchmark_modules(REPO_ROOT / "benchmarks/tabarena")
 
 
+def test_private_adapter_loads_its_learning_options_dependency(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    public_name = "benchmarks.tabarena.learning_options"
+    unrelated = ModuleType(public_name)
+    monkeypatch.setitem(sys.modules, public_name, unrelated)
+    adapter = loader.load_benchmark_module("ctboost_model")
+    dependency = loader.load_benchmark_module("learning_options")
+    assert (
+        adapter.resolve_cpu_learning_options is dependency.resolve_cpu_learning_options
+    )
+    assert sys.modules[public_name] is unrelated
+    assert sys.modules[loader._private_module_name("learning_options")] is dependency
+    loader.validate_loaded_benchmark_modules(REPO_ROOT / "benchmarks/tabarena")
+
+
+def test_private_loader_accepts_legacy_adapter_without_learning_options(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    tabarena_root = tmp_path / "benchmarks/tabarena"
+    tabarena_root.mkdir(parents=True)
+    (tabarena_root / "ctboost_model.py").write_text("LEGACY = True\n", encoding="utf-8")
+    for name in tuple(sys.modules):
+        if name == loader._PRIVATE_PACKAGE or name.startswith(
+            f"{loader._PRIVATE_PACKAGE}."
+        ):
+            monkeypatch.delitem(sys.modules, name)
+    monkeypatch.setattr(loader, "_OWNED_PACKAGE", None)
+    monkeypatch.setattr(loader, "_LOADED_MODULES", {})
+    monkeypatch.setattr(loader, "source_root", lambda: tmp_path)
+    try:
+        adapter = loader.load_benchmark_module("ctboost_model")
+        assert adapter.LEGACY is True
+        assert loader._private_module_name("learning_options") not in sys.modules
+        loader.validate_loaded_benchmark_modules(tabarena_root)
+    finally:
+        for name in tuple(sys.modules):
+            if name == loader._PRIVATE_PACKAGE or name.startswith(
+                f"{loader._PRIVATE_PACKAGE}."
+            ):
+                sys.modules.pop(name, None)
+
+
 def test_private_run_loader_preserves_complete_public_benchmark_chain(
     tmp_path: Path,
 ) -> None:
@@ -999,10 +1070,12 @@ def test_private_loader_rejects_replaced_owned_package(
         loader.validate_loaded_benchmark_modules(REPO_ROOT / "benchmarks/tabarena")
 
 
+@pytest.mark.parametrize("module_name", ["ctboost_model", "learning_options"])
 def test_benchmark_child_validation_rejects_spoofed_replacement(
     monkeypatch: pytest.MonkeyPatch,
+    module_name: str,
 ) -> None:
-    name = loader._private_module_name("ctboost_model")
+    name = loader._private_module_name(module_name)
     expected_module = loader._LOADED_MODULES[name]
     fake = ModuleType(name)
     fake.__file__ = expected_module.__file__

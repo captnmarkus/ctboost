@@ -1,0 +1,528 @@
+{
+  "analysis": "Report every task/fold, equal-task median relative error change, wins/losses and deadlines; no tuning or default promotion.",
+  "arm_plan_sha256": {
+    "256": "0f5e27bf74b468581078a8a347e02cf1edba37cc809dbdf4357e306d0d668acb",
+    "64": "e2bccb4962526aa6a07278610df3c158bc92638091d31152976fdf0bca5ed842"
+  },
+  "arms": [
+    64,
+    256
+  ],
+  "callback_policy": "Unchanged ctr_prior_scout.fit callback: early stop50; stop when elapsed+2*elapsed/(iteration+1)>=300s;400tree cap.",
+  "datasets": [
+    {
+      "data_sha256": "5a57694313583bd169e11cec185db711e7d59fa74d7e620f591d7f86d32bd305",
+      "dataset_name": "blood-transfusion-service-center",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 4,
+      "num_instances_train_metadata": 498.6666666666667,
+      "problem_type": "binary",
+      "source_sha256": "db5d546327b897cf609ce5f7df669e55b44a6fcc84066626448b75d0909a3c69",
+      "split_sha256": {
+        "2": "35bd54765867dccb5b8cb5f0df6547fd3fbf846fe4626b74ff9f3c10eb7b1df1",
+        "3": "e8283fa0d3cfc6b069199443853c2e1eed993e9595c00b12dd519258f58d1330"
+      },
+      "stratify_on": "DonatedBloodInMarch2007",
+      "task_id": 363621,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "data_sha256": "8ccc0c55f208703d828ef2ed833c78b4aa979788e9eae92252e14d798c02b21f",
+      "dataset_name": "coil2000_insurance_policies",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 85,
+      "num_instances_train_metadata": 6548.0,
+      "problem_type": "binary",
+      "source_sha256": "ca2b6cd3dc9d229eb923bc8db4dbd90c7eac565ca7ec0463aff14e46bdea6e5b",
+      "split_sha256": {
+        "2": "d86251fde1e9cada439c84524985ec9cd1ce821bf4840e0eea95e1510aef0beb",
+        "3": "d4ed8aa2ffbc024d0867ff93584a0dd6f4f008332420fa4122ce3e680942c027"
+      },
+      "stratify_on": "MobileHomePolicy",
+      "task_id": 363624,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "data_sha256": "a93e346402e800ac8ee46f3dba7de8bca4585cc757e1794d8ad34f5793c16a18",
+      "dataset_name": "GiveMeSomeCredit",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 10,
+      "num_instances_train_metadata": 100000.0,
+      "problem_type": "binary",
+      "source_sha256": "0c5aa46c3324c6579ce6ac8bb64ef09025ac6c6dc3b88e35f884d211a3183280",
+      "split_sha256": {
+        "2": "931beb55fa41f2eddde98a6a107b7fdffbbe7dc03bac0248101b080e007f455f",
+        "3": "729621b78985c636f3a7a802648ae8619c9916a85297e1fc6c9ded01da456ba9"
+      },
+      "stratify_on": "FinancialDistressNextTwoYears",
+      "task_id": 363673,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "data_sha256": "6a5e4c0c778a4284b0529e939e64b4a7b9450333993ec42bd331ce75d1f332d8",
+      "dataset_name": "QSAR_fish_toxicity",
+      "eval_metric": "rmse",
+      "group_on": null,
+      "num_classes": -1,
+      "num_features": 6,
+      "num_instances_train_metadata": 604.6666666666666,
+      "problem_type": "regression",
+      "source_sha256": "453ba15dccf00b5e2a3f702a78444c4e9a8bf7b8f4009be939f900bd91c2e86f",
+      "split_sha256": {
+        "2": "2135990300ddbd6e2120a2dbf9fdef7e6437423ded4026a2c0279cc69c26b215",
+        "3": "18860153318fcff0bc9e6d8e3ceadbd0b8c6a1d3a191844a9c72fbce13e54abb"
+      },
+      "stratify_on": null,
+      "task_id": 363698,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "data_sha256": "b4c58a57359a21ecf928dffe826edb42ed67d50ab517c7db410de1da0806ecc8",
+      "dataset_name": "wine_quality",
+      "eval_metric": "rmse",
+      "group_on": null,
+      "num_classes": -1,
+      "num_features": 12,
+      "num_instances_train_metadata": 4331.333333333333,
+      "problem_type": "regression",
+      "source_sha256": "f754ea217b3de6468333e0adb42e9101cc7ed7f38f6f8947bd3ca3da8704592d",
+      "split_sha256": {
+        "2": "36bae3957816f91e8756b43b9806d9f2c3534e4fdac02f4299276cb54a755a45",
+        "3": "8f8a83a4fdf4f5f3bae5d1df31f02557a155cc6c17f7ce0dba86a13d211e0377"
+      },
+      "stratify_on": null,
+      "task_id": 363708,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "data_sha256": "aa596e405ec6ac7a3344eabf03192c34c2607b7d0c20480bf39f32224f2a947e",
+      "dataset_name": "diamonds",
+      "eval_metric": "rmse",
+      "group_on": null,
+      "num_classes": -1,
+      "num_features": 9,
+      "num_instances_train_metadata": 35960.0,
+      "problem_type": "regression",
+      "source_sha256": "c2bc8052f073a196a3ca1c72331eff333c091d822eca1adc5f175f0c116566a0",
+      "split_sha256": {
+        "2": "eb7d81d225dcaa82b9a796699407f7bb95a85b5a289966b162da4de4f4472fb7",
+        "3": "5c38bb31863dd9665a7c3c2a1ac6edae109d43a4e5409b39d4b89f1675bbdd26"
+      },
+      "stratify_on": null,
+      "task_id": 363631,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "data_sha256": "7ed6fd757d455378a9a6a99f48e3bb20ea23748ca57512ac99c6988d16f5d578",
+      "dataset_name": "MIC",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 8,
+      "num_features": 111,
+      "num_instances_train_metadata": 1132.6666666666667,
+      "problem_type": "multiclass",
+      "source_sha256": "964d56703e1a04d6b7619a42d9d98e683a813155c4fd23886208ecee7803ab7c",
+      "split_sha256": {
+        "2": "2c7b5ee64cacd4935912da8262310d4b71bbf9beb4c1d078d1fe4256bc204437",
+        "3": "0258f1287299710da5cd7ae943951e20ed918c1b3bbd68980cc641d581bbe802"
+      },
+      "stratify_on": "LET_IS",
+      "task_id": 363711,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "data_sha256": "985a458c294f7eee8098cd9d18d32417f0517484316d628f88f06848adf87391",
+      "dataset_name": "SDSS17",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 3,
+      "num_features": 11,
+      "num_instances_train_metadata": 52035.333333333336,
+      "problem_type": "multiclass",
+      "source_sha256": "f789e02b5e010a071c9f1121f90cc5c454d91478f14583a16990fee3bdabf32d",
+      "split_sha256": {
+        "2": "c6aeb6db8f36f44e6095f9bf915fb1234d67d323e818bb8ddb8b2223024a874b",
+        "3": "9f946077981f5bd9f5d6c8016e369b5b71a86c07f5a56f82035468305c12dff1"
+      },
+      "stratify_on": "ObjectType",
+      "task_id": 363699,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "data_sha256": "ea4b2b30124cf83584d9685cc2020130f8349b838533ef4d3fccdef9b800e9e4",
+      "dataset_name": "anneal",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 5,
+      "num_features": 38,
+      "num_instances_train_metadata": 598.6666666666666,
+      "problem_type": "multiclass",
+      "source_sha256": "7109f15c4b6cd873b8fffb5dba69deabf76b1e7d90bcc0e3009e66f659f10549",
+      "split_sha256": {
+        "2": "d2faf5e51adbd9fb967abcab33db0b9d8111e34cde6679eb06d23d75eb23dce6",
+        "3": "0fe56edcdd616a1d2c5507e7f94002e24d4fe02e0bec3cd8de951d6483b9a19e"
+      },
+      "stratify_on": "classes",
+      "task_id": 363614,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "data_sha256": "e957eaa26e1fa65abd19e919610c76088f007bed3a3fd337f4b6a6f3d1427126",
+      "dataset_name": "hiva_agnostic",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 3,
+      "num_features": 1617,
+      "num_instances_train_metadata": 2563.3333333333335,
+      "problem_type": "multiclass",
+      "source_sha256": "9e33086fd4bd5c85cef805ce74a98a7a147ed6b01fd247f13fbb44f55ab1951c",
+      "split_sha256": {
+        "2": "53d9177b763c33196476d230e3a9603e3fac775c372a8bcd2912b6f3d455e033",
+        "3": "11813005ea379afaf73476e1f95d890c77e122a65ad79a5d0c073455992cb3ac"
+      },
+      "stratify_on": "CompoundActivity",
+      "task_id": 363677,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "data_sha256": "11378813c6c0e83666ebe39e4817c6aa006ef929015bbc5162bfc0b11c0b5d82",
+      "dataset_name": "maternal_health_risk",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 3,
+      "num_features": 6,
+      "num_instances_train_metadata": 676.0,
+      "problem_type": "multiclass",
+      "source_sha256": "875f1a76acf33a880ddce2a0a400b35e4e5703b33d62411203a4d7e5c622c341",
+      "split_sha256": {
+        "2": "8e124bfabf6bbb2b0f8e500843bcbbed7233e073110391a38dec2fc2e513123a",
+        "3": "7632cf370c2430280b3c056d00430c4476c90aa0a2e8299bfe30ada087a74cf9"
+      },
+      "stratify_on": "RiskLevel",
+      "task_id": 363685,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "data_sha256": "3acff2e68a980b83e640e3b732dd9004a45c3db9680d65ef3d4fad8033d94264",
+      "dataset_name": "splice",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 3,
+      "num_features": 60,
+      "num_instances_train_metadata": 2126.6666666666665,
+      "problem_type": "multiclass",
+      "source_sha256": "6891d8b7ad6306f8bb9cc5becd8bbea4ac437b962a241dc6152c9b45a25b096a",
+      "split_sha256": {
+        "2": "3bf980ff1b54ebc6b43f95865f0e4c814f5cf23eb15937b96d1a45b83514713f",
+        "3": "3b14cf1ca5f8b61cdf724d11d4a91047b4a71a1d6d30cf95de9b7dfd728451bf"
+      },
+      "stratify_on": "SiteType",
+      "task_id": 363702,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "data_sha256": "83ea50016f56f178270805724da59ae93659fe72dd1d779ba2ea8e2b3899f630",
+      "dataset_name": "students_dropout_and_academic_success",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 3,
+      "num_features": 36,
+      "num_instances_train_metadata": 2949.3333333333335,
+      "problem_type": "multiclass",
+      "source_sha256": "1e25713ad7caaaf06a222bf6cd6a36a89e78f79eba77dcd80250cf15a6b58689",
+      "split_sha256": {
+        "2": "8c99842107dc1c8a1908e29b60191d68477c81766b968e0085ab9c18833870b1",
+        "3": "8b8173e763ad835bb9cbffc6aca06f12157268ddc536d1c07b4ba4e6c24b6c82"
+      },
+      "stratify_on": "AcademicOutcome",
+      "task_id": 363704,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "data_sha256": "0e38ec339e96f12729f132d5cdaaed0ebccf9040d0beaa7df7e8e413c1f6f3c7",
+      "dataset_name": "website_phishing",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 3,
+      "num_features": 9,
+      "num_instances_train_metadata": 902.0,
+      "problem_type": "multiclass",
+      "source_sha256": "5e107fcc9935556ecbb818c0bf42f6ec547169419716df5c4ed7400543e85673",
+      "split_sha256": {
+        "2": "ecd377aa29d26c8a3c44c82c3441b41fc093587a73848b0a8039d523579780e0",
+        "3": "f16e02a995459aeda0d99c8378088bcdf1fd7584d655cbe40c99494c4f4b454a"
+      },
+      "stratify_on": "WebsiteType",
+      "task_id": 363707,
+      "task_type": "random",
+      "time_on": null
+    }
+  ],
+  "dependencies": {
+    "C:\\apps\\ctboost\\benchmarks\\ctr_prior_scout.py": "c937c81b5a7089623c6bca0791630b377593ccf75c747fdb1b81268eb987e748",
+    "C:\\apps\\ctboost\\benchmarks\\numeric_bins_scout.py": "ff97242e0bb033440722bf0320d41ea15dac81158d71c0d886f06964c5d89d42",
+    "C:\\apps\\ctboost\\benchmarks\\tabarena\\ctboost_model.py": "a72d7f19eabef9c75511f06b135e3fd2f5fe6361e63c11a37d804a0671c63457",
+    "C:\\apps\\ctboost\\benchmarks\\tabarena\\learning_options.py": "cc72fc42a5dee7e89fa5282a12c5eddaa854bc324fc89115bddcf5e917c016ce",
+    "C:\\apps\\ctboost\\benchmarks\\tabarena\\local_pilot.py": "3bbaf59edc92ffa0b8b09dcfcb9b5740000f9e2c13d84d41e29dfb0a79f4e194",
+    "C:\\apps\\ctboost\\benchmarks\\tabarena\\local_resources.py": "a8d394d4ea445b017bacb350f3a75012a7b1fc75ff63334d32041b516257c1d3",
+    "C:\\apps\\ctboost\\benchmarks\\tabarena\\pilot_0159_v1.json": "1fa7e1b482a9048a52f75d2b554b015ee027da5eddad78bb43908c213c55eff5"
+  },
+  "expected_new_fits": 36,
+  "expected_reused_fits": 20,
+  "expected_total_records": 56,
+  "fit_seconds_limit": 300,
+  "hypothesis": "Fewer numeric bins may improve quadratic CIT power and fit cost.",
+  "jobs": [
+    [
+      256,
+      "blood-transfusion-service-center",
+      2
+    ],
+    [
+      256,
+      "blood-transfusion-service-center",
+      3
+    ],
+    [
+      64,
+      "blood-transfusion-service-center",
+      2
+    ],
+    [
+      64,
+      "blood-transfusion-service-center",
+      3
+    ],
+    [
+      64,
+      "coil2000_insurance_policies",
+      2
+    ],
+    [
+      64,
+      "coil2000_insurance_policies",
+      3
+    ],
+    [
+      256,
+      "GiveMeSomeCredit",
+      2
+    ],
+    [
+      256,
+      "GiveMeSomeCredit",
+      3
+    ],
+    [
+      64,
+      "GiveMeSomeCredit",
+      2
+    ],
+    [
+      64,
+      "GiveMeSomeCredit",
+      3
+    ],
+    [
+      256,
+      "QSAR_fish_toxicity",
+      2
+    ],
+    [
+      256,
+      "QSAR_fish_toxicity",
+      3
+    ],
+    [
+      64,
+      "QSAR_fish_toxicity",
+      2
+    ],
+    [
+      64,
+      "QSAR_fish_toxicity",
+      3
+    ],
+    [
+      64,
+      "wine_quality",
+      2
+    ],
+    [
+      64,
+      "wine_quality",
+      3
+    ],
+    [
+      64,
+      "diamonds",
+      2
+    ],
+    [
+      64,
+      "diamonds",
+      3
+    ],
+    [
+      64,
+      "MIC",
+      2
+    ],
+    [
+      64,
+      "MIC",
+      3
+    ],
+    [
+      64,
+      "SDSS17",
+      2
+    ],
+    [
+      64,
+      "SDSS17",
+      3
+    ],
+    [
+      64,
+      "anneal",
+      2
+    ],
+    [
+      64,
+      "anneal",
+      3
+    ],
+    [
+      64,
+      "hiva_agnostic",
+      2
+    ],
+    [
+      64,
+      "hiva_agnostic",
+      3
+    ],
+    [
+      256,
+      "maternal_health_risk",
+      2
+    ],
+    [
+      256,
+      "maternal_health_risk",
+      3
+    ],
+    [
+      64,
+      "maternal_health_risk",
+      2
+    ],
+    [
+      64,
+      "maternal_health_risk",
+      3
+    ],
+    [
+      64,
+      "splice",
+      2
+    ],
+    [
+      64,
+      "splice",
+      3
+    ],
+    [
+      64,
+      "students_dropout_and_academic_success",
+      2
+    ],
+    [
+      64,
+      "students_dropout_and_academic_success",
+      3
+    ],
+    [
+      64,
+      "website_phishing",
+      2
+    ],
+    [
+      64,
+      "website_phishing",
+      3
+    ]
+  ],
+  "model_seed": "inner fold index",
+  "native_sha256": "e795ace998ac5c8031c7bf714edacec4a8139a8a6746b3fdb0dca00213b90639",
+  "params": {
+    "alpha": 0.05,
+    "bootstrap_type": "Bernoulli",
+    "early_stopping_rounds": 50,
+    "feature_test": "quadratic",
+    "iterations": 400,
+    "lambda_l2": 1.0,
+    "leaf_estimation_backtracking": false,
+    "leaf_estimation_iterations": 1,
+    "learning_rate": 0.05,
+    "max_bins": 256,
+    "max_cat_threshold": 64,
+    "max_depth": 6,
+    "multiclass_feature_test": "single",
+    "multiclass_leaf_solver": "diagonal",
+    "ordered_ctr": true,
+    "subsample": 0.8,
+    "verbose": false
+  },
+  "prior_plan_sha256": "fdbf2e67d86126c61e944eb501a3c5c54029f0495a7c1caec97df2ff77b86fe3",
+  "prior_strength": 1.0,
+  "purpose": "Frozen 64-vs-256-bin development comparison; outer-training rows only.\n\nReuses 20 fixed-wheel, prior-1 baselines. Timings are descriptive, not a paired\nruntime experiment. Neither the production defaults nor HPO admission change.\n",
+  "resolved_fit_params": "base params, max_bins arm, ctr_prior_strength1, random_seed fold2/3, cat_features from unchanged normalizer, eval_metric AUC/MultiClass/RMSE by family.",
+  "reuse": [
+    "C:\\apps\\ctboost\\.tmp\\ctr-prior-audit-20260907-v2\\fits\\coil2000_insurance_policies-f2-s1.0-fixed.json",
+    "C:\\apps\\ctboost\\.tmp\\ctr-prior-audit-20260907-v2\\fits\\coil2000_insurance_policies-f3-s1.0-fixed.json",
+    "C:\\apps\\ctboost\\.tmp\\ctr-prior-audit-20260907-v2\\fits\\wine_quality-f2-s1.0-fixed.json",
+    "C:\\apps\\ctboost\\.tmp\\ctr-prior-audit-20260907-v2\\fits\\wine_quality-f3-s1.0-fixed.json",
+    "C:\\apps\\ctboost\\.tmp\\ctr-prior-audit-20260907-v2\\fits\\diamonds-f2-s1.0-fixed.json",
+    "C:\\apps\\ctboost\\.tmp\\ctr-prior-audit-20260907-v2\\fits\\diamonds-f3-s1.0-fixed.json",
+    "C:\\apps\\ctboost\\.tmp\\ctr-prior-audit-20260907-v2\\fits\\MIC-f2-s1.0-fixed.json",
+    "C:\\apps\\ctboost\\.tmp\\ctr-prior-audit-20260907-v2\\fits\\MIC-f3-s1.0-fixed.json",
+    "C:\\apps\\ctboost\\.tmp\\ctr-prior-audit-20260907-v2\\fits\\SDSS17-f2-s1.0-fixed.json",
+    "C:\\apps\\ctboost\\.tmp\\ctr-prior-audit-20260907-v2\\fits\\SDSS17-f3-s1.0-fixed.json",
+    "C:\\apps\\ctboost\\.tmp\\ctr-prior-audit-20260907-v2\\fits\\anneal-f2-s1.0-fixed.json",
+    "C:\\apps\\ctboost\\.tmp\\ctr-prior-audit-20260907-v2\\fits\\anneal-f3-s1.0-fixed.json",
+    "C:\\apps\\ctboost\\.tmp\\ctr-prior-audit-20260907-v2\\fits\\hiva_agnostic-f2-s1.0-fixed.json",
+    "C:\\apps\\ctboost\\.tmp\\ctr-prior-audit-20260907-v2\\fits\\hiva_agnostic-f3-s1.0-fixed.json",
+    "C:\\apps\\ctboost\\.tmp\\ctr-prior-audit-20260907-v2\\fits\\splice-f2-s1.0-fixed.json",
+    "C:\\apps\\ctboost\\.tmp\\ctr-prior-audit-20260907-v2\\fits\\splice-f3-s1.0-fixed.json",
+    "C:\\apps\\ctboost\\.tmp\\ctr-prior-audit-20260907-v2\\fits\\students_dropout_and_academic_success-f2-s1.0-fixed.json",
+    "C:\\apps\\ctboost\\.tmp\\ctr-prior-audit-20260907-v2\\fits\\students_dropout_and_academic_success-f3-s1.0-fixed.json",
+    "C:\\apps\\ctboost\\.tmp\\ctr-prior-audit-20260907-v2\\fits\\website_phishing-f2-s1.0-fixed.json",
+    "C:\\apps\\ctboost\\.tmp\\ctr-prior-audit-20260907-v2\\fits\\website_phishing-f3-s1.0-fixed.json"
+  ],
+  "reuse_disclosure": "20 prior1 fixed-wheel baselines reused on the same folds; training/validation rows overlap earlier development studies. No independent confirmation or rigorous runtime claim.",
+  "selection": "All 14 original metadata-selected pilot tasks; no score selection.",
+  "split_policy": "Official outer train only; CVSplitter8 seed0, folds2/3, classification stratified.",
+  "threads": 2,
+  "workers": 8
+}
