@@ -33,7 +33,7 @@ Snapshot resume is a validated warm-start convenience, not a blanket
 bit-for-bit equivalence promise for every training path. Use `init_model` when
 you intentionally change a later-stage configuration.
 
-In the development build after 0.1.59, enabling early stopping when resuming an
+Starting in 0.1.60, enabling early stopping when resuming an
 untrimmed DART model starts selection from the full supplied ensemble if its
 historical best round is no longer recoverable. CTBoost evaluates that ensemble
 on the current validation data before adding rounds. It can then retain that
@@ -66,8 +66,8 @@ full native pipeline state are validated before construction. Treat the JSON as 
 input: its SHA-256 fingerprint detects accidental or uncoordinated changes but is not a
 signature or authenticity boundary.
 
-In the development build after 0.1.59, new fitted pipelines use format 4 for
-corrected fractional CTR smoothing. The published 0.1.59 release uses format 3. Loaded
+Starting in 0.1.60, new fitted pipelines use format 4 for
+corrected fractional CTR smoothing. Release 0.1.59 uses format 3. Loaded
 format-3 pipelines retain their original smoothing and re-export as format 3.
 Older CTBoost runtimes that support only format 3 reject format-4 pipelines.
 

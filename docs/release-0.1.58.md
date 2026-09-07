@@ -27,8 +27,8 @@ fits, with zero imputed CTBoost tasks.
 | Tuned | 1262.8 |
 | Tuned + ensemble | 1296.9 |
 
-These scores use an 87-row comparison roster. This is a local Lite HPO25
+These scores use an 87-row comparison roster. This is a author-run Lite HPO25
 evaluation, not a full 200-configuration run, TabArena-Full result, or official
-leaderboard entry. Kaggle's 4 CPUs and 28 GB RAM make its timings non-comparable
+leaderboard entry. The workers' 4 CPUs and 28 GB RAM make their timings non-comparable
 to canonical TabArena runtimes. See [benchmark status](benchmarks.md) for
 provenance and the earlier 0.1.56 result, which used a different comparison roster.

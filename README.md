@@ -11,11 +11,11 @@ Python/scikit-learn interfaces.
 [Benchmarks](https://captnmarkus.github.io/ctboost/benchmarks/) ·
 [Compatibility](https://captnmarkus.github.io/ctboost/reference/compatibility/)
 
-Version [0.1.59](https://captnmarkus.github.io/ctboost/release-0.1.59/) adds
-optional loss backtracking, coupled multiclass leaf fitting, and joint
-multiclass feature tests. It also reduces grouped-test allocation overhead
-and corrects feature-test versus cut-search profiling. Existing learning
-defaults and the statistical feature-selection-before-cut contract remain.
+Version [0.1.60](https://captnmarkus.github.io/ctboost/release-0.1.60/) corrects
+fractional CTR smoothing and best-model selection when early stopping reaches
+the iteration budget, including DART warm starts. Saved preprocessing retains
+its historical predictions. Existing learning defaults and the statistical
+feature-selection-before-cut contract remain unchanged.
 
 ## Highlights
 
@@ -115,9 +115,9 @@ with no imputed CTBoost tasks.
 | Tuned | 1262.8 |
 | Tuned + ensemble | 1296.9 |
 
-These local Lite scores use an 87-row comparison roster; they are not an
-official leaderboard entry or a TabArena-Full result. Kaggle used 4 CPUs and
-28 GB RAM, so its timings are not directly comparable to the canonical
+These author-run Lite scores use an 87-row comparison roster; they are not an
+official leaderboard entry or a TabArena-Full result. The workers used 4 CPUs
+and 28 GB RAM, so their timings are not directly comparable to the canonical
 benchmark. The [benchmark history](https://captnmarkus.github.io/ctboost/benchmarks/)
 retains the earlier 0.1.56 default-only result and explains the different rosters.
 
@@ -133,9 +133,11 @@ the default; grouped testing is opt-in.
 Read the [benchmark status](https://captnmarkus.github.io/ctboost/benchmarks/)
 and [split-statistics research ledger](https://captnmarkus.github.io/ctboost/split-statistics-research/)
 for protocols, limitations, and machine-readable evidence.
-See the [0.1.59 release notes](https://captnmarkus.github.io/ctboost/release-0.1.59/)
-for the new learning controls and their validation. The TabArena scores above
-belong to 0.1.58; 0.1.59 has not yet been evaluated on that benchmark.
+See the [0.1.60 release notes](https://captnmarkus.github.io/ctboost/release-0.1.60/)
+for the fixes, persistence compatibility, and development validation. The
+TabArena scores above belong to 0.1.58; they do not measure 0.1.60. The recent
+CTR and numeric-bin studies found no broad score gain, so learning defaults
+remain unchanged.
 
 ## Documentation
 

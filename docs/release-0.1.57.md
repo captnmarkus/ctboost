@@ -89,5 +89,5 @@ and position 23/38 among default-configuration rows.
 
 There is no measured 0.1.57 TabArena result yet. The published result is
 default-only Lite, not an official leaderboard entry or an HPO result; Elo
-depends on its comparison roster, and Kaggle timings use non-canonical
+depends on its comparison roster, and recorded timings use non-canonical
 resources. See [benchmark status](benchmarks.md) for provenance and scope.

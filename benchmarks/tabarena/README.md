@@ -123,58 +123,19 @@ versioned portfolio instead. The adaptive tree caps do not change TabArena's
 3,600-second per-fit limit or its deadline callback.
 
 The latest completed evaluation is the
-[0.1.56 default-only Lite run](https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-0.1.56):
-all 51 datasets at `r0f0`, eight bag children per dataset, 1166.7 Elo, 0.3957 win
-rate, and zero imputed tasks. It ran on Kaggle with 4 CPUs and 28 GB RAM, so its
-timing is not comparable to canonical TabArena hardware. This score belongs to
-0.1.56; 0.1.58 requires a fresh run. The three-dataset records
-[`smoke_0155_public_wheel.json`](smoke_0155_public_wheel.json) and
-[`smoke_fd187da.json`](smoke_fd187da.json) remain historical smoke evidence.
+[0.1.58 default-plus-25 Lite run](https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-hpo25-0.1.58):
+all 51 datasets at `r0f0`, eight bag children per configuration and dataset,
+1,326 parent results and 10,608 child fits, with zero imputed tasks.
+Default, tuned, and tuned-plus-ensemble Elo were 1161.9, 1262.8, and 1296.9
+respectively on the published 87-row comparison roster. The workers used
+4 CPUs and 28 GB RAM, so their timings are not comparable to canonical
+TabArena hardware. These scores measure 0.1.58; the current 0.1.60 release
+requires a separate evaluation.
 
-## Limited HPO on Kaggle
-
-The maintainer's [PR #479 request](https://github.com/autogluon/tabarena/pull/479#issuecomment-5373024074)
-is a bounded HPO check with about 25 configurations. The reproducible 0.1.58
-runner uses the default plus the first 25 configurations from the unchanged
-200-configuration portfolio. It covers all 51 Lite datasets at `r0f0`:
-1,326 parent results and 10,608 bagged child fits.
-
-The worker pins TabArena integration commit
-`31026f7d758390994353eba79fbfa6747616f365`, `ctboost==0.1.58`, and
-`autogluon.tabular==1.6.2b20260821`. It generates the complete experiment list
-before selecting a shard, preserving configuration names and seeds. The 156
-shards each run one configuration on one of six fixed dataset groups. Requests
-remain 4 CPUs, 28 GB RAM, and 3,600 seconds per parent fit; GPU use is disabled.
-
-Configure Kaggle CLI 2.2.0 using its normal authentication, then run from the
-CTBoost repository root:
-
-```bash
-python benchmarks/tabarena/kaggle_hpo.py --owner YOUR_KAGGLE_USERNAME \
-  --output-root benchmark-results/ctboost-0158-lite-hpo25 --prepare-only
-python benchmarks/tabarena/kaggle_hpo.py --owner YOUR_KAGGLE_USERNAME \
-  --output-root benchmark-results/ctboost-0158-lite-hpo25
-```
-
-Five private CPU worker slots are reused only after their previous outputs have
-been downloaded and checksummed. Keep the controller computer awake and online.
-Re-running the command resumes the persisted queue; an interrupted submission
-requires reconciling its recorded shard with the remote kernel before resuming.
-`state.json`, `progress.json`, and `controller.log` record progress. A failed
-shard stops new submissions and preserves diagnostics. No failed task is imputed.
-
-Once all shards finish, validate and process their outputs in the pinned
-TabArena environment:
-
-```bash
-python -m benchmarks.tabarena.evaluate_kaggle_hpo \
-  --shards-root benchmark-results/ctboost-0158-lite-hpo25/shards \
-  --output-root benchmark-results/ctboost-0158-lite-hpo25/evaluation \
-  --source-repo ../tabarena
-```
-
-This is a limited Lite HPO run. A TabArena-Full result requires the full outer
-split protocol and maintainer review before leaderboard publication.
+The [benchmark documentation](https://captnmarkus.github.io/ctboost/benchmarks/)
+records scope, historical results, and artifact provenance. Execution receipts
+remain in the archived result bundles. A TabArena-Full result requires the full
+outer-split protocol and maintainer review before leaderboard publication.
 
 ## Full benchmark
 

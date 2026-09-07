@@ -8,6 +8,14 @@ score:
 1. a default-plus-25-configuration TabArena-v0.1 Lite evaluation for the ordinary adapter; and
 2. a pre-registered external panel for the opt-in grouped split statistic.
 
+The [0.1.60 corrections](release-0.1.60.md) have separate development validation.
+The CTR and numeric-bin comparisons found no broad score gain and did not
+change learning defaults. Their
+[complete audit report](https://github.com/captnmarkus/ctboost/tree/master/benchmarks/results/score_audit_20260907)
+retains locally frozen plans, reused-baseline disclosures, and every result.
+These checks are not a completed 0.1.60 TabArena evaluation or an independent
+holdout; the published TabArena scores below still measure 0.1.58.
+
 ### CTBoost 0.1.58: TabArena-v0.1 Lite with 25 HPO configurations
 
 CTBoost has a committed adapter for the official TabArena protocol. It delegates
@@ -34,15 +42,15 @@ using validation predictions; test outcomes do not change the frozen portfolio.
 | Measured configurations | 26 (default + 25 HPO) |
 | Successful parent results | 1,326 / 1,326 |
 | Bagging | 8 children per parent; 10,608 child fits |
-| Kaggle CPU allocation | 4 |
-| Kaggle memory limit | 28 GB |
+| Worker CPU allocation | 4 |
+| Worker memory limit | 28 GB |
 | Per-fit limit | 3,600 seconds |
 
 !!! note "Scope of the score"
-    This is a local Lite evaluation with 25 HPO configurations, not a full
+    This is a author-run Lite evaluation with 25 HPO configurations, not a full
     200-configuration run, TabArena-Full result, or official leaderboard entry.
     Elo depends on the dataset and method roster: this evaluation uses 87 rows,
-    including defaults, tuned configurations, ensembles, and systems. Kaggle's 4 CPUs and 28 GB
+    including defaults, tuned configurations, ensembles, and systems. The workers' 4 CPUs and 28 GB
     differ from the canonical 8 CPUs and 32 GB, so its recorded timings are not
     directly comparable to official TabArena runtimes.
 
@@ -52,7 +60,7 @@ Provenance:
   `CTBoost_r1_default_BAG_L1` through `CTBoost_r25_default_BAG_L1`;
 - 30 binary, 8 multiclass, and 13 regression datasets, with no missing or
   duplicate tasks in the published canonical tables;
-- 156 Kaggle CPU shards, AutoGluon Tabular 1.6.2b20260821;
+- 156 CPU shards, AutoGluon Tabular 1.6.2b20260821;
 - TabArena integration/evaluation commit
   [`31026f7d758390994353eba79fbfa6747616f365`](https://github.com/captnmarkus/tabarena/commit/31026f7d758390994353eba79fbfa6747616f365),
   associated with [upstream PR #479](https://github.com/autogluon/tabarena/pull/479).
@@ -99,11 +107,11 @@ See the [research ledger](split-statistics-research.md) and the
 
 ## Reproduce the evaluations
 
-The frozen 25-configuration Kaggle protocol, collection, and validation commands
-are documented in
-[`benchmarks/tabarena/README.md`](https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/README.md).
-That workflow produces the complete result bundle above. For a local default-only
-Lite run, follow the pinned environment instructions there, then run:
+The published [aggregate manifest](https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-hpo25-0.1.58/blob/main/validation/aggregate_manifest.json)
+preserves the completed evaluation's resource and artifact provenance. For a local
+default-only Lite run, follow the pinned environment instructions in the
+[adapter guide](https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/README.md),
+then run:
 
 ```bash
 ctboost-tabarena \

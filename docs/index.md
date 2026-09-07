@@ -12,6 +12,10 @@ and optional CUDA acceleration.
 
 </div>
 
+Version [0.1.60](release-0.1.60.md) fixes fractional CTR smoothing and
+early-stopping best-model selection, including DART warm starts. Existing
+saved-model predictions and conditional-inference feature selection are preserved.
+
 !!! info "Project status"
     CTBoost is an alpha project. Its API and model format are tested extensively,
     but it does not yet have the independent production history of CatBoost or

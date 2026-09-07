@@ -151,11 +151,8 @@ the installed wheel contains CUDA support.
 
 ## Examples
 
-The repository includes local, auditable examples under
-[`demo/`](https://github.com/captnmarkus/ctboost/tree/master/demo):
-
-- `kaggle_titanic.py` for binary classification;
-- `kaggle_house_prices.py` for regression.
+The repository includes local binary-classification and regression examples under
+[`demo/`](https://github.com/captnmarkus/ctboost/tree/master/demo).
 
 Their expected data layouts and commands are documented in
 [`demo/README.md`](https://github.com/captnmarkus/ctboost/blob/master/demo/README.md).

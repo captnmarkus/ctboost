@@ -22,6 +22,12 @@ Available categorical transforms include one-hot values, smoothed target statist
 ordered CTRs, feature combinations, and per-feature CTR configuration. Unknown and
 missing values have deterministic routes.
 
+Starting in 0.1.60, a positive `ctr_prior_strength` below one preserves the
+unscaled target prior for first occurrences and unseen categories. Zero-prior
+cold starts retain their previous behavior. New fits use pipeline format 4;
+loaded older pipelines preserve their original smoothing until explicitly
+refitted. See [deployment](deployment.md) for saved-model compatibility.
+
 Fitted pipelines record `categorical_key_encoding_version` in their state and
 inference manifest. New fits use version 2, which keeps actual missing values,
 literal strings such as `__ctboost_missing__` and `__ctboost_other__`, synthetic
