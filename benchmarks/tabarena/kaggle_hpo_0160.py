@@ -13,12 +13,14 @@ import gzip
 import hashlib
 import io
 import json
+import os
 import re
 import shutil
 import subprocess
 import sys
 import tarfile
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -31,6 +33,43 @@ from benchmarks.tabarena import kaggle_hpo_worker_0160 as worker
 
 ACTIVE_STATUSES = transport.ACTIVE_STATUSES | {"CANCEL_REQUESTED", "NEW_SCRIPT"}
 TERMINAL_STATUSES = {"COMPLETE", "ERROR", "CANCEL_ACKNOWLEDGED"}
+
+
+class QuotaAdmissionRejected(RuntimeError):
+    """The server explicitly rejected admission before confirming any version."""
+
+
+def explicit_quota_rejection(message):
+    # Legacy command errors retain at most 1,500 output characters. Only a
+    # shorter, complete response can establish that no version was confirmed.
+    return (
+        re.fullmatch(r"Kaggle push failed \(\d+\): [\s\S]{0,1499}", message) is not None
+        and not re.search(
+            r"Kernel version\s+\d+|successfully pushed", message, re.IGNORECASE
+        )
+        and re.search(
+            r"maximum number of (?:concurrent )?(?:(?:CPU|GPU|TPU) )?"
+            r"(?:kernel|notebook|session)s?(?: allowed)? (?:has been )?(?:reached|exceeded)"
+            r"|too many (?:concurrent |active |running )?(?:kernel|notebook|session)s",
+            message,
+            re.IGNORECASE,
+        )
+        is not None
+    )
+
+
+def kaggle_command(executable, arguments, *, timeout=300):
+    # The legacy transport decodes UTF-8. Make the CLI emit it as well, including
+    # notebook titles outside the Windows console code page.
+    previous = os.environ.get("PYTHONIOENCODING")
+    os.environ["PYTHONIOENCODING"] = "utf-8"
+    try:
+        return transport.kaggle_command(executable, arguments, timeout=timeout)
+    finally:
+        if previous is None:
+            os.environ.pop("PYTHONIOENCODING", None)
+        else:
+            os.environ["PYTHONIOENCODING"] = previous
 
 
 def shared_worker():
@@ -346,7 +385,7 @@ def validate_download(destination, shard, *, plan, execution, worker_hash):
 
 def collect_slot(root, state, slot, *, executable, plan, execution):
     shard = slot["shard"]
-    status_text = transport.kaggle_command(executable, ["status", slot["kernel"]])
+    status_text = kaggle_command(executable, ["status", slot["kernel"]])
     match = re.search(r"KernelWorkerStatus\.([A-Z_]+)", status_text)
     if not match or match.group(1) not in ACTIVE_STATUSES | TERMINAL_STATUSES:
         raise RuntimeError("Unrecognized remote status")
@@ -354,7 +393,7 @@ def collect_slot(root, state, slot, *, executable, plan, execution):
         return False
     destination = root / "shards" / f"s{shard:03d}"
     destination.mkdir(parents=True, exist_ok=True)
-    transport.kaggle_command(
+    kaggle_command(
         executable,
         [
             "output",
@@ -386,6 +425,7 @@ def collect_slot(root, state, slot, *, executable, plan, execution):
 
 def submit_slot(root, state, slot, *, executable, execution):
     shard = state["pending"][0]
+    previous_slot = dict(slot)
     existing_kernel = slot.get("kernel")
     package, kernel, source_hash = prepare_package(root, state, execution, slot, shard)
     slot.update(
@@ -398,9 +438,40 @@ def submit_slot(root, state, slot, *, executable, execution):
     )
     state["pending"].pop(0)
     transport.write_json(root / "state.json", state)
-    response = transport.kaggle_command(
-        executable, ["push", "-p", str(package), "-t", "43200"]
-    )
+    try:
+        response = kaggle_command(
+            executable, ["push", "-p", str(package), "-t", "43200"]
+        )
+    except RuntimeError as exc:
+        if not explicit_quota_rejection(str(exc)):
+            raise
+        history = state.setdefault("admission_rejections", [])
+        receipt = root / "admission_rejections" / f"rejected-{len(history):06d}.json"
+        transport.write_json(
+            receipt,
+            {
+                "shard": shard,
+                "slot": slot["slot"],
+                "kernel": kernel,
+                "worker_sha256": source_hash,
+                "reason": transport.redact(str(exc)),
+                "no_confirmed_kernel_version": True,
+                "received_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            },
+        )
+        history.append(
+            {
+                "receipt": receipt.relative_to(root).as_posix(),
+                "sha256": transport.file_hash(receipt),
+            }
+        )
+        slot.clear()
+        slot.update(previous_slot)
+        state["pending"].insert(0, shard)
+        transport.write_json(root / "state.json", state)
+        raise QuotaAdmissionRejected(
+            "Server quota rejected admission; unstarted assignment preserved"
+        ) from exc
     transport.record_submission(
         root,
         state,
@@ -413,14 +484,33 @@ def submit_slot(root, state, slot, *, executable, execution):
 
 
 def occupied_kernels(executable, owner, state):
-    """Read account occupancy before admission; never cancel other user work."""
-    refs = set()
+    """Read known activity; disclose unavailable status and defer to server admission."""
+    recent = set()
+    not_queried = {}
+    inventory_count = 0
+    cutoff = time.time() - 24 * 3600
+    durable = {
+        slot["kernel"]
+        for slot in state["slots"]
+        if slot.get("phase") in {"submitted", "submitting", "needs_reconciliation"}
+        and slot.get("kernel")
+    }
+    unresolved = []
+    unresolved_errors = {}
     for page in range(1, 101):
-        output = transport.kaggle_command(
+        output = kaggle_command(
             executable,
             ["list", "--mine", "--csv", "--page-size", "100", "--page", str(page)],
         )
         lines = output.replace("\r\r\n", "\n").splitlines()
+        # The CLI can append its version notice after CSV on combined streams.
+        version_notice = re.compile(
+            r"Warning: Looks like you['’]re using an outdated `kaggle` version "
+            r"\(installed: [0-9A-Za-z.+-]+\), please consider upgrading to the latest "
+            r"version \([0-9A-Za-z.+-]+\)"
+        )
+        while lines and (not lines[-1].strip() or version_notice.fullmatch(lines[-1])):
+            lines.pop()
         if lines and lines[-1].strip() == "Not found":
             break
         header = "ref,title,author,lastRunTime,totalVotes"
@@ -428,34 +518,85 @@ def occupied_kernels(executable, owner, state):
         if len(headers) != 1:
             raise RuntimeError("Could not verify owned-kernel admission inventory")
         rows = list(csv.DictReader(io.StringIO("\n".join(lines[headers[0] :]))))
-        if not rows or any(
-            set(row) != set(header.split(","))
-            or any(value is None for value in row.values())
-            or not re.fullmatch(
-                re.escape(owner) + r"/[A-Za-z0-9_-]+", row.get("ref", "")
-            )
-            for row in rows
-        ):
+        if not rows:
             raise RuntimeError("Could not verify owned-kernel admission inventory")
-        refs.update(row["ref"] for row in rows)
+        inventory_count += len(rows)
+        for index, row in enumerate(rows):
+            if row == {
+                "ref": "",
+                "title": "[Private Notebook]",
+                "author": "",
+                "lastRunTime": "2010-04-01 00:00:00",
+                "totalVotes": "0",
+            }:
+                # This exact API placeholder has no resolvable identity. Keep it
+                # visible without inventing a permanent occupied session.
+                unresolved.append(f"inaccessible-private-notebook:p{page}:r{index}")
+            elif (
+                set(row) != set(header.split(","))
+                or any(value is None for value in row.values())
+                or not re.fullmatch(
+                    re.escape(owner) + r"/[A-Za-z0-9_-]+", row.get("ref", "")
+                )
+            ):
+                raise RuntimeError("Could not verify owned-kernel admission inventory")
+            else:
+                try:
+                    last_run = datetime.fromisoformat(
+                        row["lastRunTime"].replace("Z", "+00:00")
+                    )
+                    if last_run.tzinfo is None:
+                        last_run = last_run.replace(tzinfo=timezone.utc)
+                    if last_run.timestamp() >= cutoff:
+                        recent.add(row["ref"])
+                    else:
+                        not_queried[row["ref"]] = "last_run_before_recent_24h_window"
+                except ValueError:
+                    not_queried[row["ref"]] = "unrecognized_last_run_time"
         if len(rows) < 100:
             break
     else:
         raise RuntimeError("Kernel inventory exceeded its bounded pagination")
     active = set()
-    for ref in sorted(refs):
-        status = transport.kaggle_command(executable, ["status", ref])
+    query_refs = recent | durable
+    not_queried = {
+        ref: reason for ref, reason in not_queried.items() if ref not in query_refs
+    }
+    for ref in sorted(query_refs):
+        try:
+            status = kaggle_command(executable, ["status", ref], timeout=15)
+        except (RuntimeError, subprocess.TimeoutExpired) as exc:
+            # Read failures never authorize retrying a submitted job. They only
+            # make this account-capacity estimate incomplete; server admission
+            # still governs new submissions and durable slots remain occupied.
+            unresolved.append(ref)
+            unresolved_errors[ref] = transport.redact(str(exc))[-500:]
+            continue
         match = re.search(r"KernelWorkerStatus\.([A-Z_]+)", status)
         if not match or match.group(1) not in ACTIVE_STATUSES | TERMINAL_STATUSES:
             raise RuntimeError("Could not verify kernel status for admission")
         if match.group(1) in ACTIVE_STATUSES:
             active.add(ref)
-    active.update(
-        slot["kernel"]
-        for slot in state["slots"]
-        if slot.get("phase") in {"submitted", "submitting", "needs_reconciliation"}
-        and slot.get("kernel")
-    )
+    active.update(durable)
+    state["admission_unresolved"] = unresolved
+    state["admission_status_errors"] = unresolved_errors
+    state["admission_not_queried"] = not_queried
+    state["admission_inventory_count"] = inventory_count
+    state["admission_queried_count"] = len(query_refs)
+    if unresolved or not_queried:
+        print(
+            json.dumps(
+                {
+                    "unresolved_session_status": unresolved,
+                    "status_errors": unresolved_errors,
+                    "inventory_count": inventory_count,
+                    "queried_status_count": len(query_refs),
+                    "not_queried_count": len(not_queried),
+                    "capacity_estimate_requires_server_admission": True,
+                }
+            ),
+            flush=True,
+        )
     return active
 
 
@@ -474,9 +615,7 @@ def run_controller(args):
                 f"Prepared {len(execution['shards'])} fixed bundles; no submissions",
             )
             return
-        if "--file-pattern" not in transport.kaggle_command(
-            args.kaggle, ["output", "--help"]
-        ):
+        if "--file-pattern" not in kaggle_command(args.kaggle, ["output", "--help"]):
             raise RuntimeError(
                 "Kaggle CLI2.2.0 or compatible --file-pattern support is required"
             )
@@ -496,7 +635,8 @@ def run_controller(args):
                     continue
                 if slot["shard"] is not None:
                     try:
-                        collect_slot(
+                        completed_kernel = slot["kernel"]
+                        collected = collect_slot(
                             root,
                             state,
                             slot,
@@ -504,6 +644,8 @@ def run_controller(args):
                             plan=plan,
                             execution=execution,
                         )
+                        if collected and occupied is not None:
+                            occupied.discard(completed_kernel)
                     except (RuntimeError, subprocess.TimeoutExpired) as exc:
                         transport.log(
                             root,
@@ -534,6 +676,10 @@ def run_controller(args):
                             executable=args.kaggle,
                             execution=execution,
                         )
+                    except QuotaAdmissionRejected as exc:
+                        occupied = None
+                        transport.log(root, str(exc))
+                        continue
                     except (
                         RuntimeError,
                         ValueError,
@@ -573,6 +719,11 @@ def run_controller(args):
                     "active": active,
                     "queued_bundles": len(state["pending"]),
                     "needs_reconciliation": state["failed"],
+                    "admission_unresolved": state.get("admission_unresolved", []),
+                    "admission_status_errors": state.get("admission_status_errors", {}),
+                    "admission_not_queried": state.get("admission_not_queried", {}),
+                    "admission_inventory_count": state.get("admission_inventory_count"),
+                    "admission_queried_count": state.get("admission_queried_count"),
                     "paused": (root / "PAUSE").exists(),
                 },
             )

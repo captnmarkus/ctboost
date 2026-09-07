@@ -2,13 +2,21 @@
 
 import hashlib
 import json
+import os
 import sys
+from datetime import datetime, timezone
 from types import SimpleNamespace
 
 import pytest
 
 from benchmarks.tabarena import kaggle_hpo_0160 as controller
 from benchmarks.tabarena import kaggle_hpo_worker_0160 as worker
+
+
+@pytest.fixture(autouse=True)
+def fixed_capacity_clock(monkeypatch):
+    instant = datetime(2026, 9, 7, 12, tzinfo=timezone.utc).timestamp()
+    monkeypatch.setattr(controller.time, "time", lambda: instant)
 
 
 def fake_plan(count=27):
@@ -361,7 +369,7 @@ def test_admission_reads_warning_prefixed_csv_and_other_user_work(
     )
     calls = []
 
-    def remote(_executable, args):
+    def remote(_executable, args, **kwargs):
         calls.append(args)
         if args[0] == "list":
             return csv_output
@@ -389,7 +397,9 @@ def test_admission_reads_warning_prefixed_csv_and_other_user_work(
     ],
 )
 def test_admission_rejects_unknown_inventory(monkeypatch, response):
-    monkeypatch.setattr(controller.transport, "kaggle_command", lambda *args: response)
+    monkeypatch.setattr(
+        controller.transport, "kaggle_command", lambda *args, **kwargs: response
+    )
     with pytest.raises(RuntimeError, match="admission inventory"):
         controller.occupied_kernels("unused", "maiernator", {"slots": []})
 
@@ -398,21 +408,245 @@ def test_admission_no_kernels_with_cli_warning(monkeypatch):
     monkeypatch.setattr(
         controller.transport,
         "kaggle_command",
-        lambda *args: "Warning: update\nNot found\n",
+        lambda *args, **kwargs: "Warning: update\nNot found\n",
     )
     assert controller.occupied_kernels("unused", "maiernator", {"slots": []}) == set()
 
 
+@pytest.mark.parametrize("line_ending", ["\n", "\r\n", "\r\r\n"])
+def test_admission_discloses_inaccessible_placeholder_and_handles_trailing_notice(
+    monkeypatch, line_ending
+):
+    notice = "Warning: Looks like you're using an outdated `kaggle` version (installed: 2.2.0), please consider upgrading to the latest version (2.2.2)"
+    output = line_ending.join(
+        [
+            notice,
+            "ref,title,author,lastRunTime,totalVotes",
+            "",
+            "maiernator/completed,Completed,Markus.JM,2026-09-07,0",
+            "",
+            ",[Private Notebook],,2010-04-01 00:00:00,0",
+            "",
+            notice,
+            "",
+        ]
+    )
+    calls = []
+
+    def remote(_executable, args, **kwargs):
+        calls.append(args)
+        return output if args[0] == "list" else "KernelWorkerStatus.COMPLETE"
+
+    monkeypatch.setattr(controller.transport, "kaggle_command", remote)
+    state = {"slots": []}
+    occupied = controller.occupied_kernels("unused", "maiernator", state)
+    assert occupied == set()
+    assert state["admission_unresolved"] == ["inaccessible-private-notebook:p1:r1"]
+    assert [args for args in calls if args[0] == "status"] == [
+        ["status", "maiernator/completed"]
+    ]
+
+
+@pytest.mark.parametrize("trailer", ["Warning: unknown failure", "malformed row"])
+def test_admission_rejects_unknown_trailing_output(monkeypatch, trailer):
+    response = (
+        "ref,title,author,lastRunTime,totalVotes\nmaiernator/work,Work,author,date,0\n"
+        + trailer
+    )
+    monkeypatch.setattr(
+        controller.transport, "kaggle_command", lambda *args, **kwargs: response
+    )
+    with pytest.raises(RuntimeError, match="admission inventory"):
+        controller.occupied_kernels("unused", "maiernator", {"slots": []})
+
+
 @pytest.mark.parametrize("status", ["unknown status", "KernelWorkerStatus.UNKNOWN"])
 def test_admission_rejects_unknown_kernel_status(monkeypatch, status):
-    def remote(_executable, args):
+    def remote(_executable, args, **kwargs):
         if args[0] == "list":
-            return "ref,title,author,lastRunTime,totalVotes\nmaiernator/work,Work,maiernator,date,0"
+            return "ref,title,author,lastRunTime,totalVotes\nmaiernator/work,Work,maiernator,2026-09-07,0"
         return status
 
     monkeypatch.setattr(controller.transport, "kaggle_command", remote)
     with pytest.raises(RuntimeError, match="kernel status"):
         controller.occupied_kernels("unused", "maiernator", {"slots": []})
+
+
+@pytest.mark.parametrize("previous", [None, "cp1252"])
+@pytest.mark.parametrize("failed", [False, True])
+def test_cli_uses_utf8_and_restores_process_environment(monkeypatch, previous, failed):
+    if previous is None:
+        monkeypatch.delenv("PYTHONIOENCODING", raising=False)
+    else:
+        monkeypatch.setenv("PYTHONIOENCODING", previous)
+
+    def remote(*args, **kwargs):
+        assert os.environ["PYTHONIOENCODING"] == "utf-8"
+        if failed:
+            raise RuntimeError("synthetic transport failure")
+        return "Unicode title: 🏠"
+
+    monkeypatch.setattr(controller.transport, "kaggle_command", remote)
+    if failed:
+        with pytest.raises(RuntimeError, match="synthetic transport failure"):
+            controller.kaggle_command("unused", ["list"])
+    else:
+        assert controller.kaggle_command("unused", ["list"]) == "Unicode title: 🏠"
+    assert os.environ.get("PYTHONIOENCODING") == previous
+
+
+@pytest.mark.parametrize(
+    "failure",
+    [
+        "404 Client Error: Not Found for url: https://api.kaggle.com/v1/kernels.KernelsApiService/GetKernelSessionStatus",
+        "('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))",
+    ],
+)
+def test_missing_session_is_disclosed_without_hiding_known_activity(
+    monkeypatch, failure
+):
+    def remote(_executable, args, **kwargs):
+        if args[0] == "list":
+            return "ref,title,author,lastRunTime,totalVotes\nmaiernator/old,Old,author,2026-09-07,0\nmaiernator/active,Active,author,2026-09-07,0"
+        if args[1].endswith("/old"):
+            raise RuntimeError("Kaggle status failed (1): " + failure)
+        return "KernelWorkerStatus.RUNNING"
+
+    monkeypatch.setattr(controller.transport, "kaggle_command", remote)
+    state = {"slots": []}
+    assert controller.occupied_kernels("unused", "maiernator", state) == {
+        "maiernator/active"
+    }
+    assert state["admission_unresolved"] == ["maiernator/old"]
+    assert failure in state["admission_status_errors"]["maiernator/old"]
+
+
+def test_explicit_quota_rejection_preserves_receipt_and_unstarted_assignment(
+    tmp_path, stub_shared, monkeypatch
+):
+    root, _, _, _, execution, state = prepared_run(tmp_path)
+    initial_pending = list(state["pending"])
+    initial_slot = dict(state["slots"][0])
+
+    def rejected(*args, **kwargs):
+        raise RuntimeError(
+            "Kaggle push failed (1): Maximum number of concurrent CPU sessions reached"
+        )
+
+    monkeypatch.setattr(controller.transport, "kaggle_command", rejected)
+    with pytest.raises(controller.QuotaAdmissionRejected):
+        controller.submit_slot(
+            root, state, state["slots"][0], executable="unused", execution=execution
+        )
+    assert state["pending"] == initial_pending
+    assert state["slots"][0] == initial_slot
+    record = state["admission_rejections"][0]
+    receipt = root / record["receipt"]
+    assert record["sha256"] == worker.file_hash(receipt)
+    assert json.loads(receipt.read_text())["no_confirmed_kernel_version"] is True
+    assert json.loads((root / "state.json").read_text()) == state
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "Kaggle push failed (1): Kernel version 8 successfully pushed; too many active sessions",
+        "Kaggle push failed (1): Kernel version 8: Maximum number of concurrent CPU sessions reached",
+        "Kaggle push failed (1): Connection timed out after push",
+        "quota status: too many active sessions",
+        "Kaggle push failed (1): " + "x" * 1500 + " too many active sessions",
+    ],
+)
+def test_ambiguous_or_unrelated_output_cannot_authorize_readmission(message):
+    assert not controller.explicit_quota_rejection(message)
+
+
+def test_capacity_queries_only_recent_and_durable_slots_with_bounded_timeout(
+    monkeypatch,
+):
+    calls = []
+
+    def remote(_executable, args, **kwargs):
+        if args[0] == "list":
+            return (
+                "ref,title,author,lastRunTime,totalVotes\n"
+                "maiernator/recent,Recent,author,2026-09-07 08:00:00,0\n"
+                "maiernator/historical,Old,author,2020-01-01,0\n"
+                "maiernator/owned,Owned,author,2020-01-01,0\n"
+                "maiernator/unknown,Unknown,author,unavailable,0"
+            )
+        calls.append((args[1], kwargs["timeout"]))
+        return "KernelWorkerStatus.COMPLETE"
+
+    monkeypatch.setattr(controller.transport, "kaggle_command", remote)
+    state = {"slots": [{"kernel": "maiernator/owned", "phase": "submitted"}]}
+    assert controller.occupied_kernels("unused", "maiernator", state) == {
+        "maiernator/owned"
+    }
+    assert calls == [("maiernator/owned", 15), ("maiernator/recent", 15)]
+    assert state["admission_inventory_count"] == 4
+    assert state["admission_queried_count"] == 2
+    assert state["admission_not_queried"] == {
+        "maiernator/historical": "last_run_before_recent_24h_window",
+        "maiernator/unknown": "unrecognized_last_run_time",
+    }
+
+
+def test_controller_refills_verified_completed_slot_in_same_cycle(
+    tmp_path, stub_shared, monkeypatch
+):
+    root, plan_path, registration_path, plan, execution, state = prepared_run(tmp_path)
+    state["pending"] = [5]
+    for index, slot in enumerate(state["slots"]):
+        slot.update(phase="submitted", shard=index, kernel=f"maiernator/worker-{index}")
+    occupied = {slot["kernel"] for slot in state["slots"]}
+    monkeypatch.setattr(
+        controller, "prepare_run", lambda *args, **kwargs: (plan, execution, state)
+    )
+    monkeypatch.setattr(controller, "occupied_kernels", lambda *args: occupied.copy())
+    monkeypatch.setattr(
+        controller, "kaggle_command", lambda *args, **kwargs: "--file-pattern"
+    )
+
+    class ObservedRefill(Exception):
+        pass
+
+    events = []
+
+    def collect(_root, _state, slot, **kwargs):
+        if slot["slot"] != 0:
+            return False
+        events.append("verified_collection")
+        slot.update(phase="idle", shard=None)
+        return True
+
+    def submit(_root, _state, slot, **kwargs):
+        assert slot["slot"] == 0
+        assert events == ["verified_collection"]
+        events.append("same_cycle_refill")
+        raise ObservedRefill
+
+    monkeypatch.setattr(controller, "collect_slot", collect)
+    monkeypatch.setattr(controller, "submit_slot", submit)
+    monkeypatch.setattr(
+        controller.time,
+        "sleep",
+        lambda *args: pytest.fail("Refill waited until another poll"),
+    )
+    with pytest.raises(ObservedRefill):
+        controller.run_controller(
+            SimpleNamespace(
+                output_root=root,
+                plan=plan_path,
+                registration=registration_path,
+                owner="maiernator",
+                slots=5,
+                prepare_only=False,
+                kaggle="unused",
+                poll_seconds=1200,
+            )
+        )
+    assert events == ["verified_collection", "same_cycle_refill"]
 
 
 def test_remote_scheduler_preserves_failures_and_finishes_independent_parents(
