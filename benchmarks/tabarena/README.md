@@ -132,6 +132,12 @@ respectively on the published 87-row comparison roster. The workers used
 TabArena hardware. These scores measure 0.1.58; the current 0.1.60 release
 requires a separate evaluation.
 
+The current 0.1.60 evaluation is a
+[Full default-plus-25 HPO run](FULL_HPO25_0160.md), covering all 816 outer splits
+and 21,216 parent results. Its [plan](full_hpo25_0160_v1.json) was registered
+before fitting. The run is in progress; result publication requires complete
+validation. Its author-run two-CPU/8-GiB timings are not canonical TabArena timings.
+
 The [benchmark documentation](https://captnmarkus.github.io/ctboost/benchmarks/)
 records scope, historical results, and artifact provenance. Execution receipts
 remain in the archived result bundles. A TabArena-Full result requires the full
