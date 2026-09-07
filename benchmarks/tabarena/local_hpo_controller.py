@@ -109,7 +109,10 @@ def controller_lock(output):
 
 
 def parent_key(parent):
-    return f"{parent['config_name']}/{parent['task_id']}/0_0"
+    repeat, fold = parent.get("repeat", 0), parent.get("fold", 0)
+    if any(type(index) is not int or index < 0 for index in (repeat, fold)):
+        raise ValueError("Parent repeat and fold must be nonnegative integers")
+    return f"{parent['config_name']}/{parent['task_id']}/{repeat}_{fold}"
 
 
 def parent_paths(output, parent):
