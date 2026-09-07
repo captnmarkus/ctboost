@@ -195,7 +195,9 @@ def install_runtime(package, workspace, artifacts, plan):
     if head != TABARENA_COMMIT:
         raise ValueError("Downloaded TabArena source commit differs")
     environment = workspace / "venv"
-    run_command([sys.executable, "-m", "venv", str(environment)])
+    # Kaggle's Debian Python cannot seed venv pip through ensurepip. Its host
+    # pip can manage an unseeded venv without installing into the host itself.
+    run_command([sys.executable, "-m", "venv", "--without-pip", str(environment)])
     python = environment / "bin/python"
     pins = [
         f"{name}=={version}"
@@ -204,9 +206,11 @@ def install_runtime(package, workspace, artifacts, plan):
     ]
     run_command(
         [
-            str(python),
+            sys.executable,
             "-m",
             "pip",
+            "--python",
+            str(python),
             "install",
             "--disable-pip-version-check",
             "--no-compile",

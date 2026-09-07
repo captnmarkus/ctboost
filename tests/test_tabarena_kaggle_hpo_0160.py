@@ -1,6 +1,7 @@
 """Offline transport checks; no Kaggle calls, installations, or model fits."""
 
 import hashlib
+import io
 import json
 import os
 import sys
@@ -736,3 +737,77 @@ def test_remote_scheduler_refuses_unavailable_reserved_memory(tmp_path, monkeypa
             tmp_path / "python",
             tmp_path / "wheel.whl",
         )
+
+
+def test_remote_bootstrap_avoids_ensurepip_and_only_installs_into_isolated_venv(
+    tmp_path, monkeypatch
+):
+    payload = b"synthetic approved public wheel"
+    plan = {
+        "public_wheels": [
+            {
+                "filename": "ctboost-0.1.60-cp312-cp312-manylinux_2_28_x86_64.whl",
+                "url": "https://example.invalid/public.whl",
+                "sha256": hashlib.sha256(payload).hexdigest(),
+            }
+        ],
+        "package_pins": {"ctboost": "0.1.60", "psutil": "7.2.2"},
+    }
+    workspace = tmp_path / "workspace"
+    artifacts = tmp_path / "artifacts"
+    environment = workspace / "venv"
+    target_python = environment / "bin/python"
+    monkeypatch.setattr(worker.sys, "executable", "/usr/bin/python3")
+    monkeypatch.setattr(worker.sys, "platform", "linux")
+    monkeypatch.setattr(worker.sys, "version_info", (3, 12, 0))
+    monkeypatch.setattr(worker.platform, "machine", lambda: "x86_64")
+    monkeypatch.setattr(
+        worker.urllib.request, "urlopen", lambda *args, **kwargs: io.BytesIO(payload)
+    )
+    monkeypatch.setattr(
+        worker.subprocess,
+        "check_output",
+        lambda *args, **kwargs: worker.TABARENA_COMMIT + "\n",
+    )
+    commands = []
+
+    def execute(command, **kwargs):
+        commands.append(command)
+        if command[1:3] == ["-m", "venv"]:
+            # Reproduce the remote host's unsupported ensurepip path.
+            if "--without-pip" not in command:
+                raise worker.subprocess.CalledProcessError(
+                    1, command, stderr="ensurepip failed"
+                )
+            assert "--system-site-packages" not in command
+        if "install" in command:
+            assert command[:6] == [
+                "/usr/bin/python3",
+                "-m",
+                "pip",
+                "--python",
+                str(target_python),
+                "install",
+            ]
+            assert not {"--system", "--user", "--target"}.intersection(command)
+
+    monkeypatch.setattr(worker, "run_command", execute)
+    python, wheel = worker.install_runtime(
+        tmp_path / "package", workspace, artifacts, plan
+    )
+    assert python == target_python
+    assert wheel.read_bytes() == payload
+    assert [
+        "/usr/bin/python3",
+        "-m",
+        "venv",
+        "--without-pip",
+        str(environment),
+    ] in commands
+    installs = [command for command in commands if "install" in command]
+    assert len(installs) == 1
+    assert str(wheel) in installs[0]
+    assert "psutil==7.2.2" in installs[0]
+    for package in ("bencheval", "tabarena", "tabflow_slurm"):
+        source = str(workspace / "tabarena-source" / "packages" / package)
+        assert installs[0][installs[0].index(source) - 1] == "-e"
