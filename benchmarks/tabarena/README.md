@@ -16,6 +16,24 @@ enable a gated foundation-model configuration or upload benchmark artifacts.
 
 ## Environment
 
+### CTBoost 0.1.59 local learning-option pilot
+
+The [preregistered pilot](PILOT_0159_V1.md) completed all 88 validation-only
+fits across 14 datasets on a Ryzen 7 5800X3D, using eight workers with two CPU
+threads each. No candidate met the frozen 1% median error-reduction threshold;
+full-Hessian multiclass leaves came closest at 0.60%. The conditional 25-config
+HPO rerun was therefore not started. See the [complete findings](PILOT_0159_RESULTS.md)
+and [audited artifact dataset](https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-pilot-0.1.59).
+
+This study pins CTBoost 0.1.59's public wheel, AutoGluon 1.6.2b20260821 and
+TabArena commit `31026f7d758390994353eba79fbfa6747616f365`; its exact environment,
+protocol and resource contract are preserved with the artifacts. The isolated
+local runners (`local_pilot.py`, `local_hpo.py`, `local_hpo_controller.py`) use
+`python -I`. The HPO planner rejects this nonpassing decision; no override is
+provided. The general adapter setup below targets its separately audited revision.
+
+### General adapter setup
+
 From a fresh checkout of CTBoost, follow TabArena's upstream benchmark install
 path: clone the complete repository, pin the audited revision, and install the
 editable `packages/tabarena[benchmark]` package in an isolated Python 3.12

@@ -6,8 +6,9 @@ import json
 import zipfile
 from pathlib import Path
 
-import psutil
 import pytest
+
+psutil = pytest.importorskip("psutil")
 
 from benchmarks.tabarena import local_pilot as runner
 from benchmarks.tabarena.pilot_evaluation import expected_pilot_jobs
