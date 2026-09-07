@@ -474,15 +474,23 @@ def test_admission_rejects_unknown_kernel_status(monkeypatch, status):
 
 
 @pytest.mark.parametrize("previous", [None, "cp1252"])
+@pytest.mark.parametrize("previous_utf8", [None, "0"])
 @pytest.mark.parametrize("failed", [False, True])
-def test_cli_uses_utf8_and_restores_process_environment(monkeypatch, previous, failed):
+def test_cli_uses_utf8_and_restores_process_environment(
+    monkeypatch, previous, previous_utf8, failed
+):
     if previous is None:
         monkeypatch.delenv("PYTHONIOENCODING", raising=False)
     else:
         monkeypatch.setenv("PYTHONIOENCODING", previous)
+    if previous_utf8 is None:
+        monkeypatch.delenv("PYTHONUTF8", raising=False)
+    else:
+        monkeypatch.setenv("PYTHONUTF8", previous_utf8)
 
     def remote(*args, **kwargs):
         assert os.environ["PYTHONIOENCODING"] == "utf-8"
+        assert os.environ["PYTHONUTF8"] == "1"
         if failed:
             raise RuntimeError("synthetic transport failure")
         return "Unicode title: 🏠"
@@ -494,6 +502,7 @@ def test_cli_uses_utf8_and_restores_process_environment(monkeypatch, previous, f
     else:
         assert controller.kaggle_command("unused", ["list"]) == "Unicode title: 🏠"
     assert os.environ.get("PYTHONIOENCODING") == previous
+    assert os.environ.get("PYTHONUTF8") == previous_utf8
 
 
 @pytest.mark.parametrize(

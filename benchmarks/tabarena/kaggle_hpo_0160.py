@@ -59,17 +59,19 @@ def explicit_quota_rejection(message):
 
 
 def kaggle_command(executable, arguments, *, timeout=300):
-    # The legacy transport decodes UTF-8. Make the CLI emit it as well, including
-    # notebook titles outside the Windows console code page.
-    previous = os.environ.get("PYTHONIOENCODING")
-    os.environ["PYTHONIOENCODING"] = "utf-8"
+    # Match the transport's UTF-8 decoding and the CLI's downloaded log writes;
+    # console encoding alone does not change Python's default file encoding.
+    settings = {"PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1"}
+    previous = {name: os.environ.get(name) for name in settings}
+    os.environ.update(settings)
     try:
         return transport.kaggle_command(executable, arguments, timeout=timeout)
     finally:
-        if previous is None:
-            os.environ.pop("PYTHONIOENCODING", None)
-        else:
-            os.environ["PYTHONIOENCODING"] = previous
+        for name, value in previous.items():
+            if value is None:
+                os.environ.pop(name, None)
+            else:
+                os.environ[name] = value
 
 
 def shared_worker():
