@@ -135,6 +135,20 @@ def test_float32_dataframe_does_not_widen_before_native_conversion(dtype, mixed)
     assert names == ["a", "b"]
 
 
+@pytest.mark.parametrize("dtype", ["f4", ">f4"])
+def test_float32_direct_copy_preserves_quiet_nan_payloads_and_subnormals(dtype):
+    bits = np.array(
+        [0, 0x80000000, 1, 0x80000001, 0x7F800000, 0xFF800000,
+         0x7FC00001, 0xFFC12345, 0x7FFFFFFF, 0xFFFFFFFF],
+        dtype=np.dtype(dtype).str.replace("f", "u"),
+    )
+    values = bits.view(dtype).reshape(5, 2)
+    pipeline = FeaturePipeline().fit(np.zeros((3, 2)), [0, 1, 2])
+    expected = pipeline._native.transform_array(values.astype(object), None)[0]
+    actual = pipeline._native.transform_array(values, None)[0]
+    np.testing.assert_array_equal(actual.view(np.uint32), expected.view(np.uint32))
+
+
 @pytest.mark.parametrize("dtype", ["Int64", "Float64", "boolean", "int64[pyarrow]"])
 @pytest.mark.parametrize("has_missing", [False, True])
 def test_pandas_extension_arrays_keep_object_conversion_contract(dtype, has_missing):

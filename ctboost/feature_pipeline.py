@@ -213,8 +213,8 @@ class FeaturePipeline:
         allow_numeric: bool = False,
     ) -> Tuple[np.ndarray, Optional[List[str]]]:
         if _is_pandas_dataframe(data):
-            # Convert each numeric block through double, just like Python scalar
-            # conversion in the object path (important for large integers).
+            # Keep float32 blocks intact; other numeric blocks go through double
+            # like Python scalar conversion (important for large integers).
             # Tiny batches avoid the fixed cost of inspecting every column dtype.
             dtype = object
             if allow_numeric and len(data) >= 16:
