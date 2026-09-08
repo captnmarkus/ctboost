@@ -101,7 +101,9 @@ correctness fixes. The [pre-release verification](https://github.com/captnmarkus
 records compatibility checks, performance measurements, and remaining limitations.
 The [accuracy studies](https://github.com/captnmarkus/ctboost/tree/8cc75aa/benchmarks/results/inference_accuracy_20260908/accuracy)
 did not justify changing the learning defaults or claiming an Elo increase.
-The ongoing Full HPO25 evaluation uses 0.1.60 and does not measure this release.
+A fresh [Full HPO25 evaluation](benchmarks/tabarena/FULL_HPO25_0161.md) is being
+prepared with 0.1.61 for training, validation and inference on all 816 outer splits;
+results from the unfinished 0.1.60 run remain separate.
 
 For the new CPU learning controls, see
 [safeguarded leaves and joint multiclass tests](https://captnmarkus.github.io/ctboost/guides/learning-options/).

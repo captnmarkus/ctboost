@@ -69,8 +69,10 @@ showed gains on some tasks and regressions on others, so they remain opt-in.
 The experimental joint-cut change failed its quality gate and is excluded.
 The loss fixes above do not explain or close the measured RMSE gap.
 
-The frozen Full HPO25 evaluation continues to measure public **0.1.60**. It
-does not measure 0.1.61, and no historical result has been relabeled.
+The unfinished Full HPO25 evaluation of **0.1.60** remains separate. A fresh
+evaluation is being prepared with public **0.1.61** for training, validation and inference on
+all 816 outer splits, with the same default and 25 HPO configurations.
+No historical result has been relabeled; full-suite 0.1.61 scores are pending.
 
 ## Release validation
 
