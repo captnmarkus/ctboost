@@ -1,0 +1,27 @@
+{
+  "compiler": "GCC 14.2.0 (i686-w64-mingw32), existing w64devkit installation",
+  "common_flags": [
+    "-std=c++17",
+    "-O3",
+    "-mavx2",
+    "-mfpmath=sse",
+    "-static"
+  ],
+  "fma_flags": [
+    "-mfma"
+  ],
+  "control_flags": [
+    "-mno-fma"
+  ],
+  "fma_output": "first row=32 initial=bfd9d812 weight=412277bf scale=3dfcd6ea legacy=bee58736 cached=bee58734 fma=bee58736\nmismatches=86/1000\n",
+  "control_output": "mismatches=0/1000\n",
+  "fma_mismatches": 86,
+  "control_mismatches": 0,
+  "rows": 1000,
+  "source_sha256": "a77a75b3f2b96a2b6734760c48a9a8b428b54620e5dffba5ff895e21b2860feb",
+  "scope": "Faithful indirect-leaf float multiply/add loop versus preweighted cached products; no training or benchmark fit. FMA-enabled custom GCC target, not a claim about default x86_64 public wheels.",
+  "documentation": [
+    "https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html",
+    "https://clang.llvm.org/docs/UsersManual.html"
+  ]
+}

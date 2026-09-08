@@ -1,0 +1,21 @@
+{
+  "compiler": "MSVC 19.50.35717 x64, /std:c++17 /EHsc /MD /O2",
+  "checks": 22,
+  "before_failures": 6,
+  "after_failures": 0,
+  "probe_sha256": "7c27c21bf2298085ea3d3f238d930fb342fe3fd51136323047397ac456495f04",
+  "before_tree_predict_sha256": "eb5899f517d9d4ce5d33dcf911d7f99d1860bfc26253376cd648a2dc7d8910ab",
+  "after_tree_predict_sha256": "301b5ef11ea77c3f6d6d68e14cdd4bc908a6f601e1a7a042e60b116d26c1e915",
+  "before_source_commit": "a4399fd81395420e8cc5b7b4f99a9043e374b7ea (tree_predict.cpp unchanged from c5b6149)",
+  "link_strategy": "Before links the existing isolated prototype static core. After compiles only the fixed tree_predict.cpp alongside the probe, then links the same static core, isolating the Tree change. No model fit or runtime environment modification.",
+  "results": {
+    "before": {
+      "exit_code": 1,
+      "output": "FAIL too few columns leaf exception\nFAIL too few columns row exception\nFAIL too few columns contribution exception\nFAIL too few columns leaf exception\nFAIL too few columns row exception\nFAIL too few columns contribution exception\nchecks=22 failures=6"
+    },
+    "after": {
+      "exit_code": 0,
+      "output": "checks=22 failures=0"
+    }
+  }
+}

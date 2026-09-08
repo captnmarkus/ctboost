@@ -1,0 +1,1496 @@
+{
+  "arms": [
+    "ctboost_default",
+    "ctboost_grouped8",
+    "xgboost_ag_default"
+  ],
+  "cache_provenance_sha256": "7ad469c711f9296d3e77bd965c4150f5c32b84993d0c2b815c471e6cfd38f191",
+  "cached_tasks": 37,
+  "candidate_override": {
+    "feature_test": "grouped",
+    "feature_test_adjustment": "none",
+    "feature_test_bins": 8
+  },
+  "created_at": "2026-09-08T18:06:28.786117+00:00",
+  "ctboost_native_sha256": "06796f386ccbf5b51b3134ca11a391ac6ef719ab92fcb509f3f689e77abbf63c",
+  "ctboost_params": {
+    "alpha": 0.05,
+    "bootstrap_type": "Bernoulli",
+    "iterations": 1000,
+    "lambda_l2": 1.0,
+    "learning_rate": 0.05,
+    "max_cat_threshold": 64,
+    "max_depth": 6,
+    "ordered_ctr": true,
+    "random_seed": 47,
+    "subsample": 0.8,
+    "verbose": false
+  },
+  "datasets": [
+    {
+      "capped_rows": 10000,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46908,
+      "dataset_name": "APSFailure",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 170,
+      "num_instances_train_metadata": 50666.666666666664,
+      "original_rows": 50666,
+      "outer_test_index_sha256": "7a7066cdb65a4c023e3231af90bc49c9c78d8672ab80592b3d54b28fb1bed795",
+      "outer_test_rows": 25334,
+      "outer_train_index_sha256": "0a6280ce79383201e45876baebfc257213da7ea70ffe8e623bd4f8126c625528",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "9611844b6bbb5a6f3d97d2edcaf539021a161e4667b74e9999de376d6446186b",
+          "rows": 2500,
+          "sha256": "f7a21aa2ccb7d526467c6e282a701a693881c73f3a5c777a7a778105146cf503"
+        },
+        "stop": {
+          "index_sha256": "4140eb2975ea36470ec4dd18c515fb394b6c077d66542afb94eb5415007f5848",
+          "rows": 1250,
+          "sha256": "0132302ee4a2a1eae76eb89a17ef2c8f72d9973b4d2d93c318444eb450a71a25"
+        },
+        "train": {
+          "index_sha256": "69d5bf92574779c30d68c3ed61b430b0f6b79192d617425da9c663eb87d5ac77",
+          "rows": 6250,
+          "sha256": "a7721d1bb322315b558ddeeef50671b3d2d795a99df76a133e4e4afc51b92e15"
+        }
+      },
+      "stratify_on": "AirPressureSystemFailure",
+      "task_id": 363616,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 10000,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46905,
+      "dataset_name": "Amazon_employee_access",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 9,
+      "num_instances_train_metadata": 21846.0,
+      "original_rows": 21846,
+      "outer_test_index_sha256": "6b069e2b3eea816640abe6d6360015ccf1f90dfb6ed862ff2026d352c57cd206",
+      "outer_test_rows": 10923,
+      "outer_train_index_sha256": "04d7a07bdab6fb8f974be6f45d3ca616c20c65e2b00347820b7ec867af8c91b8",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "6f7ccef65ed675ccc0d8a3078fc46017d9d90699de0b13400cdabb5da9f48177",
+          "rows": 2500,
+          "sha256": "8dfbfcaf0fc53ddf2b101b1516b4e4f9ffba4536e2046fdac25be7177ddcbc15"
+        },
+        "stop": {
+          "index_sha256": "3bcabe8244fd2964b1a8c53ff202c892a4c4a45579d3b1497a6d0ae88c1af351",
+          "rows": 1250,
+          "sha256": "2252c965210dd68ebb09132b74cae1c349024bca5f3577ed514262b653e8ba69"
+        },
+        "train": {
+          "index_sha256": "e0c6505ebabfe8eab6da528166f92ad4d0d924e4cdc96146e05b6c3d131b06b0",
+          "rows": 6250,
+          "sha256": "a941599ede64fb69476dffb9fc40471b4b6e04bc88eead7fb8385685f73f2f12"
+        }
+      },
+      "stratify_on": "ResourceApproved",
+      "task_id": 363613,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 1025,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46907,
+      "dataset_name": "Another-Dataset-on-used-Fiat-500",
+      "eval_metric": "rmse",
+      "group_on": null,
+      "num_classes": -1,
+      "num_features": 7,
+      "num_instances_train_metadata": 1025.3333333333333,
+      "original_rows": 1025,
+      "outer_test_index_sha256": "50196c59ed422d9aa03604ea3858aa50e18351033420b23186a186f45b4a9f45",
+      "outer_test_rows": 513,
+      "outer_train_index_sha256": "1a1f935b7b0eda367698e2fb85d6395955d224b1d46b3c0da24d32614a068e50",
+      "problem_type": "regression",
+      "roles": {
+        "development": {
+          "index_sha256": "d3d6367347b77b4cc12138b8576887fd40de8a9c6916aea7ed8b3c5010afa970",
+          "rows": 256,
+          "sha256": "9e1d3250dbd91954461c717ec3e447a0e3812cce41b397fce7523eda09c9f4de"
+        },
+        "stop": {
+          "index_sha256": "e4ff5aecc677409e8207582fe0236f8b69960d04dbde04a2f912653c090ef301",
+          "rows": 128,
+          "sha256": "2abb866e9c9ccef26f3c9f6cccdf52540cb045c50dd23830cedcdac07e5e9768"
+        },
+        "train": {
+          "index_sha256": "2cdd25daa6280834253718148c7e690ba1942a7f7b4f38dce8170efc0c67e442",
+          "rows": 641,
+          "sha256": "4971790b94b148ac95999e371a510e4705012e227521497a30803c61b852efff"
+        }
+      },
+      "stratify_on": null,
+      "task_id": 363615,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 6666,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46911,
+      "dataset_name": "Bank_Customer_Churn",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 10,
+      "num_instances_train_metadata": 6666.666666666667,
+      "original_rows": 6666,
+      "outer_test_index_sha256": "a98bf4f6308194f854c0aa26656bc67e617c7da293e30a02def27cf3d247f67b",
+      "outer_test_rows": 3334,
+      "outer_train_index_sha256": "2c1cc212e2e109de183778d3f462aa8837c1d07776adf49a31bd7f178642bb98",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "8465d29dc5b0e838d5d42e40e14568a8064dcd68fc323663394895faa850281f",
+          "rows": 1666,
+          "sha256": "740671a4259395a6a177b5c9cf018b8e591430d6dbe534aa7f5cf77ad3dd5653"
+        },
+        "stop": {
+          "index_sha256": "d8e7a9b6d028995e3c4afc83e39f89406dde03936e21990d989b16ade0b14f91",
+          "rows": 833,
+          "sha256": "4b0e309dc89d778354b092fa5ce0b269c6f58c71a7d6c1d12a255a17de265a0c"
+        },
+        "train": {
+          "index_sha256": "b8acefc010d099f0a163e8e582799f15cdcd1c22fdcfff4218086f91e87ee434",
+          "rows": 4167,
+          "sha256": "8ef5e68d4d83e1195a0e107af4f8f63961e96c384129ac2b8f769f421e6a1e33"
+        }
+      },
+      "stratify_on": "churn",
+      "task_id": 363619,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 2500,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46912,
+      "dataset_name": "Bioresponse",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 1776,
+      "num_instances_train_metadata": 2500.6666666666665,
+      "original_rows": 2500,
+      "outer_test_index_sha256": "3393b1abdde8975660be0301aea37f5adcbbd5dd7ee63148108c486f625f82e4",
+      "outer_test_rows": 1251,
+      "outer_train_index_sha256": "289433a41c8b62fb6a476d5c34b42e4bfd7d0f19dd486d5d960afc8319b00793",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "5d8220bc009bdaebb770070de9d086f858dfa7a18bbc2af16fb82a175ce1deb5",
+          "rows": 624,
+          "sha256": "b123c5ae08c96ef87f28f384f46ae33c5a8b4ffabf595038f0d63ac7ae0ffeee"
+        },
+        "stop": {
+          "index_sha256": "2abdef8d524856c5012d51bacdff5bc03fc5f16f0bb485ca291548ea25e36caf",
+          "rows": 312,
+          "sha256": "74ba04feba2732f327c5adeb41f8fada1163246f7047a30b4d92495aa4503c82"
+        },
+        "train": {
+          "index_sha256": "166a3b7433f49b277dbcf30bb2d8b7498e578a395155cfccefba15a0a341ed8e",
+          "rows": 1564,
+          "sha256": "e6beca60e39acb0673781757781af7af9e47a3fd185d351ffb8cf21fe6a18a37"
+        }
+      },
+      "stratify_on": "MoleculeElicitsResponse",
+      "task_id": 363620,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 10000,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46922,
+      "dataset_name": "Diabetes130US",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 47,
+      "num_instances_train_metadata": 47678.666666666664,
+      "original_rows": 47678,
+      "outer_test_index_sha256": "3224645ea0867844b7918cfa96bae666b33f7fdcebf1822e5c8fc9da278f07d0",
+      "outer_test_rows": 23840,
+      "outer_train_index_sha256": "7130e42b3b6a32c34566687badc66f0d1e537294b06e0a492cda3edb2ea67370",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "02de812b74975b46a42ee4d8d064921f9be25c9578b6a90c561af24cd4b3a782",
+          "rows": 2500,
+          "sha256": "9e3c50cae22d4cbd016e26c8d696f46ce955c917c02837181c052c332fd0d4d0"
+        },
+        "stop": {
+          "index_sha256": "790fd828a9a7bdf50f286835af90a54c9e874da788ee679bee9c1e0f1f0724d4",
+          "rows": 1250,
+          "sha256": "9c0862ac7bfc418c936a97e2d79e1584958bffd98734bf789b371c242101ea96"
+        },
+        "train": {
+          "index_sha256": "db8be5713d2ecbff6fc01afb75ec460d2a4f734c4dbdc5f57598a553aed6e93c",
+          "rows": 6250,
+          "sha256": "156e3851cc501a4bbcbe237576d89759df6475ff08ae3677570848d89fe09136"
+        }
+      },
+      "stratify_on": "EarlyReadmission",
+      "task_id": 363630,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 7332,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46924,
+      "dataset_name": "E-CommereShippingData",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 10,
+      "num_instances_train_metadata": 7332.666666666667,
+      "original_rows": 7332,
+      "outer_test_index_sha256": "b76c66bc12b55cbca42f879bb139444cacf209b20dec83afb078bdfe5fd96c62",
+      "outer_test_rows": 3667,
+      "outer_train_index_sha256": "d2ede98ffb058193ce8ab60e63d465675adea183a38206324a24778e0c0ab4c8",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "a38672d71b14bc5e2c98db3e93e1b5ac8214a73989067350ff40f9af19cb33c8",
+          "rows": 1832,
+          "sha256": "3ec1afbae982d08a923f123f9570d8b6052eb3f14aa420e3654387a38f7050b5"
+        },
+        "stop": {
+          "index_sha256": "f4fb5dd36989e276d1793b958a44d7afff32fbac40aa526dbacd094feb45e281",
+          "rows": 916,
+          "sha256": "65db2338fef5eaae14153db74c33f69e2f24ec72a01fd468e87b35bd0ee93e47"
+        },
+        "train": {
+          "index_sha256": "c11607c636b748925ad7365176dc258e916198a23387d4a5c62b83f8557059ed",
+          "rows": 4584,
+          "sha256": "1dade82eb0324618cd691e3d3ebdc6a8b77db1cefdddafe47d51cd7c38c10ff8"
+        }
+      },
+      "stratify_on": "ArrivedLate",
+      "task_id": 363632,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 1000,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46927,
+      "dataset_name": "Fitness_Club",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 6,
+      "num_instances_train_metadata": 1000.0,
+      "original_rows": 1000,
+      "outer_test_index_sha256": "a430d65aaa35ceb754e4a05b14640f8dcc9332ecb20196f9398b1771a14723c9",
+      "outer_test_rows": 500,
+      "outer_train_index_sha256": "0ff8fdc05a9fb715c5966b878371c6914757113cbe2f0e8b6514d5682524053a",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "1b4e6df5967fad5c7d1c3704f6b174f7c84be806e5b2fa77b974dbcd4e4ba94e",
+          "rows": 250,
+          "sha256": "f9111167f4240933d19f653b7a0618d925b1528860c5fa87d6a6b7d2d5dcd1e5"
+        },
+        "stop": {
+          "index_sha256": "b3f7e67787c9a2c2fe0962d0181424cfcc37565c639d2e747faf941ddc75e213",
+          "rows": 125,
+          "sha256": "d886449f4e20a235e5e6e352e11b0c5ca0df6263bb9678bd2d5e324b670b5290"
+        },
+        "train": {
+          "index_sha256": "6d0cf0fed3b627696ac5532e000ab049145bcd97cebc599b66b5342dc252ff78",
+          "rows": 625,
+          "sha256": "f06711a4688fbb34e1af839282ed3ca727c78347b7ada4ec3f354963b2cad40c"
+        }
+      },
+      "stratify_on": "attended",
+      "task_id": 363671,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 10000,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46928,
+      "dataset_name": "Food_Delivery_Time",
+      "eval_metric": "rmse",
+      "group_on": null,
+      "num_classes": -1,
+      "num_features": 9,
+      "num_instances_train_metadata": 30300.666666666668,
+      "original_rows": 30300,
+      "outer_test_index_sha256": "9e36f6252a319cfb772b0702a6cb22f248c9e18841972f8dfdc79353cea65cbd",
+      "outer_test_rows": 15151,
+      "outer_train_index_sha256": "7aeeb70706be4ad9d6487b62e7d403f303e1d9c8ff0d3bf5b3d4dbf07c76153b",
+      "problem_type": "regression",
+      "roles": {
+        "development": {
+          "index_sha256": "2b9132b562c443f0dd3a7e716e3c452117a8b8a7b2e86e10e9bfdc7e1158785e",
+          "rows": 2500,
+          "sha256": "d82c2af6b72cfd4d85b418d8d50f6a99e6ce364b375010db547a17178c358cc4"
+        },
+        "stop": {
+          "index_sha256": "4d8b91fbbdba4f5a16661d7e77751c20307dd94c45658305184911b42fa2885e",
+          "rows": 1250,
+          "sha256": "9e65bc6c2d06adfe5937734e9f4913f04f6ad8d1b67b16219548ffde812f9f3d"
+        },
+        "train": {
+          "index_sha256": "e5807e9092e726efb0d413c504e923ad7d078769aed82f8149dd8ea7fa19d2a7",
+          "rows": 6250,
+          "sha256": "d8244910bdefecdf9f91a0ced4b105e7bd395d7f50ff5f72271efefcf31d3385"
+        }
+      },
+      "stratify_on": null,
+      "task_id": 363672,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 10000,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46935,
+      "dataset_name": "HR_Analytics_Job_Change_of_Data_Scientists",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 12,
+      "num_instances_train_metadata": 12772.0,
+      "original_rows": 12772,
+      "outer_test_index_sha256": "e18a1ad2153aef4b244b158700ec3007de827025f10e25b00b322b690e37c283",
+      "outer_test_rows": 6386,
+      "outer_train_index_sha256": "441173a1a0153403572a526aa865d6795513b9fd327ccfa839e79acbfb4f44e6",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "433f12c24d959a7de445e357ba0a2ccfb544c76d7fe5400e4e53a94d4c3c8e08",
+          "rows": 2500,
+          "sha256": "9394b29a7360f7a20a56436079493cc51ff238f16c586ebe813a94ae29fba14c"
+        },
+        "stop": {
+          "index_sha256": "6edef677ff18fb11904cfbdea459dd64bf2ceb6724fa3c4a46d2b1c725199b6b",
+          "rows": 1250,
+          "sha256": "13dc537ec5ad1b6f037070d5bbdcabf4b91814d0fcc3c9d961df9844dc347bed"
+        },
+        "train": {
+          "index_sha256": "f50fda7c854896ede8ef8890d00d5f46e0b8b7f9e0810923ddbd3dbf1df3d050",
+          "rows": 6250,
+          "sha256": "629544e2101ea1799c35b2a4c83d55dce90d3b09d0b5b388c758d64517af0b85"
+        }
+      },
+      "stratify_on": "LookingForJobChange",
+      "task_id": 363679,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 1148,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46938,
+      "dataset_name": "Is-this-a-good-customer",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 13,
+      "num_instances_train_metadata": 1148.6666666666667,
+      "original_rows": 1148,
+      "outer_test_index_sha256": "30b9bc78dd5c6ecf27dfbe80836628bd1845f4b458ff46dcf650415bd2ebb39c",
+      "outer_test_rows": 575,
+      "outer_train_index_sha256": "10b7b7dcc832d06bf4452ae4e50060efcaf5a21732817a5da1cd2f48594e211e",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "a1130f5fb383a18fde1bd295f5f613589e5d520e7b6c2e8dd14bb4f980226026",
+          "rows": 286,
+          "sha256": "18401c0a96943122d8c7456930a6ee6cadd785914f69292f90eb00a894fa7e92"
+        },
+        "stop": {
+          "index_sha256": "a5865767b89c5fb91c4e3657989e3713e58fbebf18ae8bf7ae593a0daae1e339",
+          "rows": 143,
+          "sha256": "9288e67fe06caa497178bf39c94caa052bfb3eef145e74fd444333216c7e4b89"
+        },
+        "train": {
+          "index_sha256": "02797a135521286f312a2f41700ad6f88178220393bf15a31728e7c0ec634e77",
+          "rows": 719,
+          "sha256": "e917b1a06a0a9ab019ce37db015d6ffcb54017bbb9e9dc9d71fb38d96ce4b49c"
+        }
+      },
+      "stratify_on": "bad_client_target",
+      "task_id": 363682,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 1493,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46940,
+      "dataset_name": "Marketing_Campaign",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 25,
+      "num_instances_train_metadata": 1493.3333333333333,
+      "original_rows": 1493,
+      "outer_test_index_sha256": "6f37df7c9753432594fb716cec729d0a3172631339e019423ca1eb616beb7986",
+      "outer_test_rows": 747,
+      "outer_train_index_sha256": "52f207b201d0264ab3347df1d82403685847876815d49171b2d9218429136258",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "ab96e8ef5428285cd7013af05be3e8f2b233184842356edf0c2c48117263e6a6",
+          "rows": 372,
+          "sha256": "a0e1b21b0b8e624289378e449ca30114cd99568d7130e07a175bd4c1ba26d55b"
+        },
+        "stop": {
+          "index_sha256": "ef8f0ec77f3b8d1367cffe6ff41872146cea6eb6167c6be3ea0a007981ce3726",
+          "rows": 186,
+          "sha256": "5872bf61fa964ecbc0453ed196a073031f4aff8ee4e986b5f0b712a3e80183a1"
+        },
+        "train": {
+          "index_sha256": "0adf61f1a28998be5d9aef2e883c1a91eb3bd707923e7ab918f145d6deb0cc12",
+          "rows": 935,
+          "sha256": "f7f94f0b638f46aae7715287d88eff9ce4f55cc446ca6f9d214446f80ed9fbfd"
+        }
+      },
+      "stratify_on": "Response",
+      "task_id": 363684,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 4994,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46969,
+      "dataset_name": "NATICUSdroid",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 86,
+      "num_instances_train_metadata": 4994.0,
+      "original_rows": 4994,
+      "outer_test_index_sha256": "42b4e33d8e3a3bfa26be398d1ef1c1cc67297b041ee8bb661b2f591ee67b63f0",
+      "outer_test_rows": 2497,
+      "outer_train_index_sha256": "79ba4e261850d941afff4287235cfa4fcf1f5936643efd7a40b7e62ef4211614",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "c4f8afed00ff5456344a9102a056a72aab7b2d8c7731dac5f27d045c952a4ef7",
+          "rows": 1248,
+          "sha256": "5a6fd42219576734599dcceb23d8f8730c6a00a043e3919edce08083a832ad43"
+        },
+        "stop": {
+          "index_sha256": "22d800151263ac96f49a5f5ca56588117f74710dd266c95acd661a53b4a777ce",
+          "rows": 624,
+          "sha256": "756d844cde0071f331dca53ca6d8bdae3dc71f32094f3d68c7d3635e749aaf64"
+        },
+        "train": {
+          "index_sha256": "5d676158a5028c46f820b70ec05a9f1ff83b95ea4dc9275c6aae1f4d5139c462",
+          "rows": 3122,
+          "sha256": "8579f785fb441255fe947b5173185aa9460dc8d91fefe0b5da524efd0a952497"
+        }
+      },
+      "stratify_on": "Malware",
+      "task_id": 363689,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 3828,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46953,
+      "dataset_name": "QSAR-TID-11",
+      "eval_metric": "rmse",
+      "group_on": null,
+      "num_classes": -1,
+      "num_features": 1024,
+      "num_instances_train_metadata": 3828.0,
+      "original_rows": 3828,
+      "outer_test_index_sha256": "46117a6d1b1b4fb43f879bc2655a23de358245ee1ae7d5acf0acec550a202fc3",
+      "outer_test_rows": 1914,
+      "outer_train_index_sha256": "bd382ad9bb3003717d8b140e3a7695bf44a35c4cfcef4c0c333d6bb514e3dcae",
+      "problem_type": "regression",
+      "roles": {
+        "development": {
+          "index_sha256": "3a82c73b156bf78b12a0c9943f26200dfd7f9647f6c5e3d1826ca4b778c4f7a7",
+          "rows": 956,
+          "sha256": "f6e8604f7f01aebb2bf90d7d79d56b49859b7d82276aa800cecf38cafd9af09c"
+        },
+        "stop": {
+          "index_sha256": "6379b3d19f506948f7d0e0afbda27597940f483b3fa89dc555a20c5cb8fe8364",
+          "rows": 478,
+          "sha256": "da8a1a27ef126b2ded2dada78048e2d79f2d42603addd873d295e8074c925726"
+        },
+        "train": {
+          "index_sha256": "33acb40da01a598da3f76d2688beb8ba3709eac09491454cba1d3df0d8349f61",
+          "rows": 2394,
+          "sha256": "115033d410d23dfe02f0160205188ae203236033aaa880e33506c024f6a3ebd6"
+        }
+      },
+      "stratify_on": null,
+      "task_id": 363697,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 1002,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46904,
+      "dataset_name": "airfoil_self_noise",
+      "eval_metric": "rmse",
+      "group_on": null,
+      "num_classes": -1,
+      "num_features": 5,
+      "num_instances_train_metadata": 1002.0,
+      "original_rows": 1002,
+      "outer_test_index_sha256": "4080aa38fff1b92a9096c4b49184a0ab5ec93d307cf766a9965b018c6474be42",
+      "outer_test_rows": 501,
+      "outer_train_index_sha256": "9b96b0e2a156e393df33f9506dbdb7733c06fad54c9f21597557ab686a98465b",
+      "problem_type": "regression",
+      "roles": {
+        "development": {
+          "index_sha256": "63035c07fee9b5a93df56eb98a217637bd15ae2bf7cf71120bfefe70484aa7f1",
+          "rows": 250,
+          "sha256": "31ca873abe4ebc48a8c5bbe72f61c3b1c38d2a761a4efeb551cbdca80db5e383"
+        },
+        "stop": {
+          "index_sha256": "2a23481b1bdae63d656bc3f7c363e284a3aeee64e3290e021364935cc2be5de4",
+          "rows": 125,
+          "sha256": "738433915f45147b7cc0c0eba380874fbefe486200b00777cb5c001a9a665ad0"
+        },
+        "train": {
+          "index_sha256": "192ce211c976b01160d4a5b2a1e6298fceca13e850d6343f08e7aaa977cf8834",
+          "rows": 627,
+          "sha256": "dfddc3ac84b6824856558ade88bcdecaa2471f67f547ca781f8235e30793ac3b"
+        }
+      },
+      "stratify_on": null,
+      "task_id": 363612,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 10000,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46910,
+      "dataset_name": "bank-marketing",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 13,
+      "num_instances_train_metadata": 30140.666666666668,
+      "original_rows": 30140,
+      "outer_test_index_sha256": "e9dc57c46f12708d78ec4bea062a65d80db1112bc45a9d5b9d30c4b25166f837",
+      "outer_test_rows": 15071,
+      "outer_train_index_sha256": "f958e8988a3266d1ecbafbe38d13c335c89d9f1f7b1a41c37cd0d5fb94eb4352",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "9155c73b7023d54825c08e578c4ea76423264c96bd0989b3dad271107e952c97",
+          "rows": 2500,
+          "sha256": "fa3b10f459efbede0b8ba801673085550e16b1b5c74a8783f5657e71917fa437"
+        },
+        "stop": {
+          "index_sha256": "d788e55cfe1cbbcc00ad004c37f7bab4a67c4a369c374b2661fe6f4519a65cf6",
+          "rows": 1250,
+          "sha256": "45e16611b35eba6b99edcd8888765abc805d05747c823bb79ef48cd01f093644"
+        },
+        "train": {
+          "index_sha256": "883a8f1c484fb769cae6537649fcf3c2c6f1df7e8abaa4795bda78fb60c4c28b",
+          "rows": 6250,
+          "sha256": "98a5a4a3d275da17972e7a9f16982f55653048858d806a1045d9cd643c7708d2"
+        }
+      },
+      "stratify_on": "SubscribeTermDeposit",
+      "task_id": 363618,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 3333,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46915,
+      "dataset_name": "churn",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 19,
+      "num_instances_train_metadata": 3333.3333333333335,
+      "original_rows": 3333,
+      "outer_test_index_sha256": "aa328c0ff99d18d91f5bbfa70829a9f6dea6090d3f4920cb5a9235b2d5059979",
+      "outer_test_rows": 1667,
+      "outer_train_index_sha256": "3d4b381c3dbb911e1f0ae0eea953222e05c4a84be693d7d15ce3eb49b3fc95aa",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "5cadd3d7b740de41f6355294c976582dbc169db4423e0929aad415c2c9a55778",
+          "rows": 832,
+          "sha256": "5af5851c87174ea23ecadfec811e131ec9851c8742ab83208b2f5041c06679dc"
+        },
+        "stop": {
+          "index_sha256": "86cca4564cf26e9a7d4e20eda6a3d98ccc2d40b37adcac57ad52ec52ac6b84fe",
+          "rows": 416,
+          "sha256": "39074b7e402e872977a2c9758a2b7a8cc28c9495860e8ac384c962b1a8633d2f"
+        },
+        "train": {
+          "index_sha256": "ac9963bd0d5ae11b11341d1e0cb332d69a36ef646ecca5f0eb857a96109c4370",
+          "rows": 2085,
+          "sha256": "54578e8d3e6dd9f1cee6edc4a61fcf09510996a5adf063f9b0820376c7935a37"
+        }
+      },
+      "stratify_on": "CustomerChurned",
+      "task_id": 363623,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 686,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46917,
+      "dataset_name": "concrete_compressive_strength",
+      "eval_metric": "rmse",
+      "group_on": null,
+      "num_classes": -1,
+      "num_features": 8,
+      "num_instances_train_metadata": 686.6666666666666,
+      "original_rows": 686,
+      "outer_test_index_sha256": "616d3da45aa2e823c828be6770eb2fd819bede24e51491b2a4b51e6a5830ca8f",
+      "outer_test_rows": 344,
+      "outer_train_index_sha256": "db4f2a57720ca3970ae1d90281e5b793e29a5d69bf933267214c555355888cd3",
+      "problem_type": "regression",
+      "roles": {
+        "development": {
+          "index_sha256": "2ce55f855e19d7f200b107841983e6c1a24afda32caa18ae7bc7cf5c5881aa28",
+          "rows": 170,
+          "sha256": "edbfb1c51f7761dedb176096ede18de5dff64c932ec67ffd737b8233546c7b72"
+        },
+        "stop": {
+          "index_sha256": "42a5c960bc60e7ca11b11bb175e62cc3dc5e720a427cd86cd3c673882bbd94be",
+          "rows": 86,
+          "sha256": "867d6a3c97a598fd4e5618c29e125d6f4e8d7023be37359f7ceaea651654ef0d"
+        },
+        "train": {
+          "index_sha256": "5f749c14e41bd8611cb6fb4df64f4491c08b96f79e9d2713611bed2aa1c095e5",
+          "rows": 430,
+          "sha256": "06eec7f4242baecbd8e76a4840e25b9875d494bbf2972bbf0e9e1659381fd584"
+        }
+      },
+      "stratify_on": null,
+      "task_id": 363625,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 666,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46918,
+      "dataset_name": "credit-g",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 20,
+      "num_instances_train_metadata": 666.6666666666666,
+      "original_rows": 666,
+      "outer_test_index_sha256": "02f454af8bf0c10073b881cdf003de85376fb62afec36f610a56ffc98235c34e",
+      "outer_test_rows": 334,
+      "outer_train_index_sha256": "5251a329fb82d7aca90bd8a20281831792483c6c5cd433ff892b0aac13a6af6c",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "56f8da9ea1a4782817a9afb846a04b31ea1aaa29e379f5db295d130ab4668319",
+          "rows": 166,
+          "sha256": "5e6df23d0de72046faf1734eaeb1a0b5736c6834f3079694147319a958155727"
+        },
+        "stop": {
+          "index_sha256": "772aa05f3dcfb7643a387901e33e46a95d5398f113a218fe2138499e37e0f361",
+          "rows": 83,
+          "sha256": "0d330ec70402919578c3e2a04c1aa64c72c2f8328854df27f3de86d27d0f3d05"
+        },
+        "train": {
+          "index_sha256": "c740de7ac6886309ec008cdc2199ebc5d965ef0c16659ff457ea4d5951b81f91",
+          "rows": 417,
+          "sha256": "0e73a78d59d680e05d437b77322b6e07258c6e0ebb51ed7b9fda8637a0bcd6c5"
+        }
+      },
+      "stratify_on": "good_or_bad_customer",
+      "task_id": 363626,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 10000,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46919,
+      "dataset_name": "credit_card_clients_default",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 23,
+      "num_instances_train_metadata": 20000.0,
+      "original_rows": 20000,
+      "outer_test_index_sha256": "66fb4604fb19fb90eee0a65d6f36fbe51ba07f065d8048193fef81de56fc31eb",
+      "outer_test_rows": 10000,
+      "outer_train_index_sha256": "4ad501c54332c7b43d61815c8c88522783a2a48c7296c90f5ae0b17925993aa0",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "ef6adffea470b6efb497a07f10671f4db40ba2395730998ebb05b730bbab0eac",
+          "rows": 2500,
+          "sha256": "5ff4a65edb7b620bc0ac0afebf523b498c7794c29850c247aaa5bd6ac5c5804c"
+        },
+        "stop": {
+          "index_sha256": "e8a7c294289db3f379494a05616376418534ca75b94a889760448cb06342d953",
+          "rows": 1250,
+          "sha256": "8adea49440be4ff41cecf65dd52515ce516f5eb76e6986162d2e559b88fc6d61"
+        },
+        "train": {
+          "index_sha256": "0531210030dc2e9849a6b10b9e81e89a3abd26f4f5dded8a1f7c80c69c061316",
+          "rows": 6250,
+          "sha256": "16f28b7ca3c8634e5fef0ae5a5941d281bde7957b7baa6466b9aeea9d0f9bf5e"
+        }
+      },
+      "stratify_on": "DefaultOnPaymentNextMonth",
+      "task_id": 363627,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 10000,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46920,
+      "dataset_name": "customer_satisfaction_in_airline",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 21,
+      "num_instances_train_metadata": 86586.66666666667,
+      "original_rows": 86586,
+      "outer_test_index_sha256": "7af0f63dbf81b80c529a06f01e0c0b7200f155a06485f624caa7343bdafc3045",
+      "outer_test_rows": 43294,
+      "outer_train_index_sha256": "6c5a3f8c2be746a74fd26ded42df816a4c1d1c9ecb2b6f077412e7539f310f4b",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "67cb2b0f80dfb5af401d11aa6b590b9dc52a36f6d9790fafed112aabd85fdb8a",
+          "rows": 2500,
+          "sha256": "c09d8c5758f0182ee7b1c1347989fa4e1b8c53af42bf7937b3287450688539a9"
+        },
+        "stop": {
+          "index_sha256": "8777edf2ddb9798a0d464df19b636ea4f3683a12c2329a95731725c36f101f4d",
+          "rows": 1250,
+          "sha256": "42d5b064c21c2fb0ae33d32c7a5407a74fca7c61f2094a8a832b0040dc1aa222"
+        },
+        "train": {
+          "index_sha256": "b6eaa265763163de7ea60ca05986715dad0641b919cccd6691991a07d69f8b11",
+          "rows": 6250,
+          "sha256": "40600036f3375d297f68f81871a5d19f363d3e1b1cae5b49cc3943f99e246f20"
+        }
+      },
+      "stratify_on": "satisfaction",
+      "task_id": 363628,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 512,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46921,
+      "dataset_name": "diabetes",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 8,
+      "num_instances_train_metadata": 512.0,
+      "original_rows": 512,
+      "outer_test_index_sha256": "bad9a16f818f7b522a61955466bf6fe7da1b97c1f0e363db8129b0dcedd64d1e",
+      "outer_test_rows": 256,
+      "outer_train_index_sha256": "4d144f2e548485b421e71bcc544a797911499544a0ae0eb9ba6465e54d77a535",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "64aac37779c102d758f68e97e7c1c20eec559fff18ab6eb796a2bab197dc09d6",
+          "rows": 128,
+          "sha256": "36c569c391414ab39d6ee62c870f8e7e8943f518fa2d32c59ad978482aa40790"
+        },
+        "stop": {
+          "index_sha256": "e210e917f728044e6461142ef068fb68a794b51c365454e6f914f3542fcfffe5",
+          "rows": 64,
+          "sha256": "9f0e750687f387f3788e977a4bca78d1331f3c084f7a512da3243de47db66862"
+        },
+        "train": {
+          "index_sha256": "4d466ed7f2d031f18f9a1762a8e799d36664a1d2e6854f63c232e988dd0d8df3",
+          "rows": 320,
+          "sha256": "e40cb2f72cef78da9f0b7187663945eadc8535840fae92e9d969cd6c0d6c55bb"
+        }
+      },
+      "stratify_on": "TestedPositiveForDiabetes",
+      "task_id": 363629,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 1600,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46930,
+      "dataset_name": "hazelnut-spread-contaminant-detection",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 30,
+      "num_instances_train_metadata": 1600.0,
+      "original_rows": 1600,
+      "outer_test_index_sha256": "deb760047f7a43300fd1612fcc9af77a25bc5d822bada35a821f62e45d123f0d",
+      "outer_test_rows": 800,
+      "outer_train_index_sha256": "aeb1df13d52b96aca82fc6a3be18f3d293fd3141704f0f8784e0aeb8aab86dfd",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "9b9c414de6b40fe8c9b80386cc34c0b8a24ecf63e62ef632260d027618d30f15",
+          "rows": 400,
+          "sha256": "22ed50d4d5f56646e9252509e69f43176ff9b620dce6bb9d3daf208f224e29c9"
+        },
+        "stop": {
+          "index_sha256": "19333dcae4c27697fc0cecb60e9439537b54ca762444f76680c596c17c0f6c80",
+          "rows": 200,
+          "sha256": "7cc89b35272487ccde5bda0efd59e7919604702f553031eddc686dc7c0b44df3"
+        },
+        "train": {
+          "index_sha256": "1234e970ac2d8a0a0fceb8510cfa953a86a9aef426a94b29638cb2518497b95d",
+          "rows": 1000,
+          "sha256": "3b96c55c2545d6f115a1fc9de207117219e9493ed74209ba34b40648239e5640"
+        }
+      },
+      "stratify_on": "Contaminated",
+      "task_id": 363674,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 892,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46931,
+      "dataset_name": "healthcare_insurance_expenses",
+      "eval_metric": "rmse",
+      "group_on": null,
+      "num_classes": -1,
+      "num_features": 6,
+      "num_instances_train_metadata": 892.0,
+      "original_rows": 892,
+      "outer_test_index_sha256": "9f2ec0a0ffa85a59128c381cb1341539ad26660662f0682b1844aeb7f633bd87",
+      "outer_test_rows": 446,
+      "outer_train_index_sha256": "0f0587dd83eed66355886c759c211fb6886a0fad246da1a7e69626eeff0365f5",
+      "problem_type": "regression",
+      "roles": {
+        "development": {
+          "index_sha256": "f477de8d4496f1091c8bda710f267e97b2b4c097029988fabdc40a1dd05c70d3",
+          "rows": 222,
+          "sha256": "2557b0b81c1804044ffe5fcdb6452870c3ffaa945b9c6fc01c00957b7ca45374"
+        },
+        "stop": {
+          "index_sha256": "e6d9e28b63097cc339ab8e7db1c9d1f386a3b24956198d11155c74e14fb42e55",
+          "rows": 111,
+          "sha256": "3d9adc6ac93cf9a4d0d659d48d463d5f335872c8f826f5ae14f1a1f706c8a5cd"
+        },
+        "train": {
+          "index_sha256": "cd28f034ea789f973add980c1dded8f4369e6d53dc547ccd846a7e6ba5e5aba1",
+          "rows": 559,
+          "sha256": "76e11dc07643d2b95d855fe4a613514a66c5918babfc5ca349906940619e7c2f"
+        }
+      },
+      "stratify_on": null,
+      "task_id": 363675,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 6972,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46932,
+      "dataset_name": "heloc",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 23,
+      "num_instances_train_metadata": 6972.666666666667,
+      "original_rows": 6972,
+      "outer_test_index_sha256": "86e87ab764732e77472379898ea04afb2f0254af79697af7aa767213885dca3c",
+      "outer_test_rows": 3487,
+      "outer_train_index_sha256": "983c7825076b100567c1fd731a75e861708f8a14adaa6114feb9b017b04139a6",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "49eeb7e78fce62d5f6b245e449b8cdeddf63be7f8c0b8e3a2778b34d39541870",
+          "rows": 1742,
+          "sha256": "f72bdf91c9267567d2cd35b8c66fa1c377d09d91bfec12b2c8184ba9cf3d68ce"
+        },
+        "stop": {
+          "index_sha256": "9edeb9d2e5a6a107bc74d33d2a69ef31fbeafaf46dc71122ec29dd1e96f1b561",
+          "rows": 871,
+          "sha256": "356d809c7b7955e3ec42a71c98142be65d33714f1bf26623756ab0ad360ab73b"
+        },
+        "train": {
+          "index_sha256": "f8012ef9d966db0ad45ddf969fd91c3262e74e3c9452e69cef3f8d86a99f6d81",
+          "rows": 4359,
+          "sha256": "5990d9baf1a22033f11e4310d22153ac0ed51cc79d44ef339978db3e64832eee"
+        }
+      },
+      "stratify_on": "RiskPerformance",
+      "task_id": 363676,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 10000,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46934,
+      "dataset_name": "houses",
+      "eval_metric": "rmse",
+      "group_on": null,
+      "num_classes": -1,
+      "num_features": 8,
+      "num_instances_train_metadata": 13760.0,
+      "original_rows": 13760,
+      "outer_test_index_sha256": "076f7dd8bb1bec44da511025f073934c7cd1bfb5c359e14a36627a67e5fbee1e",
+      "outer_test_rows": 6880,
+      "outer_train_index_sha256": "a020856167520ec2a4ea3cb34a18d1a3d4102eb8555b2d90af5f70ff2d20dbae",
+      "problem_type": "regression",
+      "roles": {
+        "development": {
+          "index_sha256": "3704346a7562cf3124ab2bbf645c4690de742b0dd6c5aa739c44b04264ff21d8",
+          "rows": 2500,
+          "sha256": "8acf918fb538f827a2c82d44a5544f7734643de4bdc11dffef6d5cd66d51c0aa"
+        },
+        "stop": {
+          "index_sha256": "f164721c3663e300a6127b9aeb570ca8c03ea420efb2a68a90abb490895891b6",
+          "rows": 1250,
+          "sha256": "1da0730eed74fbdd7a0831fa74200d3117b82ea731fdb47ce5fd52b0d0ba30b3"
+        },
+        "train": {
+          "index_sha256": "036bed52ffebff5d0b4a6c9101cde13e1332a6d9038bc668310af3412d831c20",
+          "rows": 6250,
+          "sha256": "757cf06af21d8499a235403d3d23b75e0a7de7d7d5505ac47c3108326b1ac92b"
+        }
+      },
+      "stratify_on": null,
+      "task_id": 363678,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 8456,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46937,
+      "dataset_name": "in_vehicle_coupon_recommendation",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 24,
+      "num_instances_train_metadata": 8456.0,
+      "original_rows": 8456,
+      "outer_test_index_sha256": "b9409767794297edf466759500baceb9224dc6f7b6052d679b9f829721432356",
+      "outer_test_rows": 4228,
+      "outer_train_index_sha256": "cb4af0090c6a69369591cc5f352c1c51dc0a89428cbf6ace8df42d6e0cff01db",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "051da78cb82a58f22c7039b031dd630beb0cca36e5c203c1ad03138b18871b45",
+          "rows": 2114,
+          "sha256": "d4112de0f3a05e1a37ee1356132674758281626528d973fdee8ba67bd000725e"
+        },
+        "stop": {
+          "index_sha256": "046d57cce251fdfdb2c4d5999bb1b3add867fed8c21d77339d5273c99e24a7c6",
+          "rows": 1057,
+          "sha256": "aa8945b3b51c5a8e35e2dedd95fc61952d1d74579a5311d7a29e0941e7b42cde"
+        },
+        "train": {
+          "index_sha256": "a9943111493fdf3fb8fa87727ff777bbeac325ea2e7d51f8d567bd3b2f2d301e",
+          "rows": 5285,
+          "sha256": "a4ffda38caa481cea4b7b79c4615a71cd9e9524005425181a79d7db49a22f9bb"
+        }
+      },
+      "stratify_on": "AcceptCoupon",
+      "task_id": 363681,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 7256,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46979,
+      "dataset_name": "jm1",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 21,
+      "num_instances_train_metadata": 7256.666666666667,
+      "original_rows": 7256,
+      "outer_test_index_sha256": "a6920f3049dc7fd46df07fa9961e6429d3567b80c5c294bf256e61636f457ffa",
+      "outer_test_rows": 3629,
+      "outer_train_index_sha256": "df97f821bb4f24ab3ed2b6cdf8d440b4c285d117dd34c84468eed36f5a01139d",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "f9ff1d6beb6c88c7ce93c8ba4ddf38ee072129d38d5119651f76f42256d03466",
+          "rows": 1814,
+          "sha256": "7bd19d121bf21830ae28ea1491ed7917aaa9b03d7a6965c4c0579e360b013b1d"
+        },
+        "stop": {
+          "index_sha256": "4bdb6e65be97119663bc895e31a54681e6cb30071b2b10985e272decf7e9fb5b",
+          "rows": 907,
+          "sha256": "7b93c7c03d2529745213cc79291be865e60b0fadd888bfc0145c9a4c43c31dd6"
+        },
+        "train": {
+          "index_sha256": "9439321092c2d5b8972fe32ad15ae131fbb6eb69f9fed7f5f8116290d54c163e",
+          "rows": 4535,
+          "sha256": "e4f05ef5c10590288e120f8c400a1ebba2cb2882652466bccf9672010daa1f7b"
+        }
+      },
+      "stratify_on": "defects",
+      "task_id": 363712,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 10000,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46939,
+      "dataset_name": "kddcup09_appetency",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 212,
+      "num_instances_train_metadata": 33333.333333333336,
+      "original_rows": 33333,
+      "outer_test_index_sha256": "edf3d55502a6db73b5039a8c25719eed6bcd6d23708e8f0de5a7acf8f59f821a",
+      "outer_test_rows": 16667,
+      "outer_train_index_sha256": "86fb26610551688fe31acfe59698651de9d9ce896bdb2f7a6a62d7a9910d5778",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "706eb965f66cdda9afeda4caff09b16562f5254c5e5a04f525ef5b36bbe24e46",
+          "rows": 2500,
+          "sha256": "127ceeeb8d7133634d5ec663388aba9d914f15d5308aeff660f3ec6915bc051a"
+        },
+        "stop": {
+          "index_sha256": "b273d9ddc7e2f0628da76ef3be944cd937cee61d7ee280d527526fdf28d44036",
+          "rows": 1250,
+          "sha256": "c5967bfe3f7fb56bbe38fbb4a092250c10126c3c57abb5b6f333bd187c8f09fe"
+        },
+        "train": {
+          "index_sha256": "7b02bd05eaa15bac64154c8dfad5e2152b7231f9c5286cd12a3cbb3c9508f36f",
+          "rows": 6250,
+          "sha256": "7ca9d4cfcadef0f95abdd746b9b3957bcdcb3880059a1f4cdaf1c44f4d1be504"
+        }
+      },
+      "stratify_on": "appetency",
+      "task_id": 363683,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 9184,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46942,
+      "dataset_name": "miami_housing",
+      "eval_metric": "rmse",
+      "group_on": null,
+      "num_classes": -1,
+      "num_features": 15,
+      "num_instances_train_metadata": 9184.0,
+      "original_rows": 9184,
+      "outer_test_index_sha256": "cd19ec00d4ddf54fa08795fa689741b8fb3c96147c185050a53670bb52940940",
+      "outer_test_rows": 4592,
+      "outer_train_index_sha256": "6304ffd631d9a9bcbe5839f397d769d146f4a63266d5f4b8009b49b3d93c9294",
+      "problem_type": "regression",
+      "roles": {
+        "development": {
+          "index_sha256": "90ee4a452795c45c4240dac53e453422ad016285555030833b81c5cbb321fa96",
+          "rows": 2296,
+          "sha256": "9922c47c556a488715cc80abd8d401c8cfe540f979e5aa48150f79e495d069d5"
+        },
+        "stop": {
+          "index_sha256": "b58d32cb1b558c412bc67fe36d22fe95c82b144d7f6c749c0323f92abcf4ec09",
+          "rows": 1148,
+          "sha256": "bf5971ec11e0257a2d4a8a5140e84a5aa04e32c90261f29c4d3686d10d909a7a"
+        },
+        "train": {
+          "index_sha256": "557a0b9ca46a69dbb8d3dbc9d8695935a66e96f63532ccb1596814af3be9dc19",
+          "rows": 5740,
+          "sha256": "a6a90860ceca355df43732027765c4a0ca4173e455dfe095f22238edc0a8511a"
+        }
+      },
+      "stratify_on": null,
+      "task_id": 363686,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 8220,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46947,
+      "dataset_name": "online_shoppers_intention",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 17,
+      "num_instances_train_metadata": 8220.0,
+      "original_rows": 8220,
+      "outer_test_index_sha256": "44e46cfdc98db77497f4fde71b47087b839dccfc02d49ab58c8ae51f9aca7820",
+      "outer_test_rows": 4110,
+      "outer_train_index_sha256": "7ce60603c711bde11f6dd9e55d7d2ff96fb7c71a300f4e43cdafc6c4f1740510",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "47a32e2431138ac3d30f3c3cf369370bbe9759907ce33508ace1e8e4413ca667",
+          "rows": 2054,
+          "sha256": "a182ea5d251ebc2ba12d9121f5e31d0715628073b5a89f2a0fdd9b6d78ff60c3"
+        },
+        "stop": {
+          "index_sha256": "b9e8932e4045877944e6c693725240234bd249234995580ea97b16cdb86457d8",
+          "rows": 1027,
+          "sha256": "d0678e8e4f54d34593cf8cd665c6fbb3d17e86194c1d1c3f42f70c755319d961"
+        },
+        "train": {
+          "index_sha256": "3d90adc309b81e09c3e863372755def9805e11eb5ce845691c8d88ab6f4c56ad",
+          "rows": 5139,
+          "sha256": "057dbc4610f95696d7aea84bcc9f6990ca29edc76c70b4a19eec4932c47b48a2"
+        }
+      },
+      "stratify_on": "Revenue",
+      "task_id": 363691,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 10000,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46949,
+      "dataset_name": "physiochemical_protein",
+      "eval_metric": "rmse",
+      "group_on": null,
+      "num_classes": -1,
+      "num_features": 9,
+      "num_instances_train_metadata": 30486.666666666668,
+      "original_rows": 30486,
+      "outer_test_index_sha256": "0969efcca8200695be14ea65b43821c41a08314e0c7186db7d6068484a40d3de",
+      "outer_test_rows": 15244,
+      "outer_train_index_sha256": "e5cfa1c2e2a47a8e341575eb4fa65b19884cfd0fc82b13bf70ef59d01a72eb5c",
+      "problem_type": "regression",
+      "roles": {
+        "development": {
+          "index_sha256": "931efc327d9e08a84aba3ce9997d92ccc3c16ddd161af348b6776dd0b67b1dc6",
+          "rows": 2500,
+          "sha256": "fc6587669fdd901415be2611e36e8bf712f0e167dff3166d424d74f386cb5f85"
+        },
+        "stop": {
+          "index_sha256": "5d3769fa7bad6971ce7d685db46700ee428b7bf51fc289e19035b4a5b745b383",
+          "rows": 1250,
+          "sha256": "250a132fd6e6b9f9f72d58d91f2c47b0146e155fb665a1a48522f5a0c28587b4"
+        },
+        "train": {
+          "index_sha256": "103c63bf455a6b95c81eb0cdcf46480a93384406f43ae0df34f6d17b96df9f26",
+          "rows": 6250,
+          "sha256": "6fad2690b57b47f7145b5b6413b70ccd2a5058e6cd4b3ff410ce4ac2202c8eb0"
+        }
+      },
+      "stratify_on": null,
+      "task_id": 363693,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 3940,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46950,
+      "dataset_name": "polish_companies_bankruptcy",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 64,
+      "num_instances_train_metadata": 3940.0,
+      "original_rows": 3940,
+      "outer_test_index_sha256": "71224f8a7fb2d00f6a836a828b1d2fa099e3207f1dc3500fb5f9de7cb003503e",
+      "outer_test_rows": 1970,
+      "outer_train_index_sha256": "0a15ad1c59d3af2a852f2b027dccff29b69b372936c0ea8fa472eb731cc07286",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "c6d6c778fd21815846422f5f754c0d668ccb2b032d0de0130ed942e076d67bbf",
+          "rows": 984,
+          "sha256": "15dfeebbf28db76f3c012609edc7886aa16740c75ada0f63143f4735d929b9ea"
+        },
+        "stop": {
+          "index_sha256": "cbac306847ae50cdb1d847689f42a90b66c68325f737e51c5e1826b682ef5d3a",
+          "rows": 492,
+          "sha256": "bf495be96385f31acab4c5663a21031b42a48fc620b33db8084c942fac9fbda3"
+        },
+        "train": {
+          "index_sha256": "b7c0611081bce4cfc2155a2c39cecd31b607862f068f9d79903b5af873c30337",
+          "rows": 2464,
+          "sha256": "82903c8ce1310a16301ff6980fa0ee0613371a56d3d4962ba4180756b0bcfb49"
+        }
+      },
+      "stratify_on": "company_bankrupt",
+      "task_id": 363694,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 702,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46952,
+      "dataset_name": "qsar-biodeg",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 41,
+      "num_instances_train_metadata": 702.6666666666666,
+      "original_rows": 702,
+      "outer_test_index_sha256": "84361f756a51ceb1f1a30d64964037c6a48eeb0524e099faaf3bc6472735fb77",
+      "outer_test_rows": 352,
+      "outer_train_index_sha256": "e063d0e27b9aabdee5e0524ce97eabd87cbcb0a5c48c760316db1627a6379f5c",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "442b27f0cf291319d61576488451be9b1e5375ebea14e39eaed9913cfd0f17bc",
+          "rows": 174,
+          "sha256": "a06c88b27db42b14f65a3c2d204b4ecb983f68f4feac30ec47086e66c5cabd0c"
+        },
+        "stop": {
+          "index_sha256": "94327edfc52a8166f4ec95864f17d95fcff2ca5eec919e57d1d881d44208767d",
+          "rows": 88,
+          "sha256": "8e789a78f865d3528aad96f840c891a3857d6f7cd003dc64c1a6e57565dc789e"
+        },
+        "train": {
+          "index_sha256": "b1d48e6e49211342afb6dc9a40844af66626f0ac0f350a9a28b32396c51e4e78",
+          "rows": 440,
+          "sha256": "eba38001a2f9fac2310844b2fe03ddf9f3b56fa37ec733fb375ee0f7c3480952"
+        }
+      },
+      "stratify_on": "Biodegradable",
+      "task_id": 363696,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 1722,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46956,
+      "dataset_name": "seismic-bumps",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 15,
+      "num_instances_train_metadata": 1722.6666666666667,
+      "original_rows": 1722,
+      "outer_test_index_sha256": "7a6f0de5fd2519bceb3d1bf7f2efa5636b485792be21afa78415d0b933dacbc3",
+      "outer_test_rows": 862,
+      "outer_train_index_sha256": "9b5a107f475565cbb9c4898b9f38d008a623b9ce216af2316dfe9402b6c98b09",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "9e76d03d7de7947ceed647532208f5e0330a976d63375558ff3e89e069bf5873",
+          "rows": 430,
+          "sha256": "e6a014c573f337716469998158fcc614c7660519d7c053de7e316bc0f6c2360e"
+        },
+        "stop": {
+          "index_sha256": "4aeb70e6c0f1b0cd1d0153f8e1c462154a7c3a569394eb1b919dcb44f8c06b38",
+          "rows": 215,
+          "sha256": "a9a3d3385ffcaa684eb970fda7ede54134182543e80cdeec2f2be019905e9b20"
+        },
+        "train": {
+          "index_sha256": "0bcbe4ff5469994ccbc50d1c5d3b77af03635f41c885ee95e24fad88840a658b",
+          "rows": 1077,
+          "sha256": "2182cbc01c1bac42ded2d329b78a9df9303c00b72b7d327a5e45340e7ea8c2cb"
+        }
+      },
+      "stratify_on": "HighEnergySeismicBump",
+      "task_id": 363700,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 10000,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46961,
+      "dataset_name": "superconductivity",
+      "eval_metric": "rmse",
+      "group_on": null,
+      "num_classes": -1,
+      "num_features": 81,
+      "num_instances_train_metadata": 14175.333333333334,
+      "original_rows": 14175,
+      "outer_test_index_sha256": "193e5a36127875c1d4a0a8b2201e7e0e6e0e088e7d77c6c8d08e1319c543070b",
+      "outer_test_rows": 7088,
+      "outer_train_index_sha256": "2903dab7cb214a6f29f1f43d6f8b0a517efab36a76a71eeecf9315d81529e06a",
+      "problem_type": "regression",
+      "roles": {
+        "development": {
+          "index_sha256": "df893556c1c8b798118570976fa5b2a48b51aca4eb76e33829bd047a61a4f03f",
+          "rows": 2500,
+          "sha256": "45a69347713b6381bbf514561c5d0b0a900aba4b32e0f37f4bee1f06d800929f"
+        },
+        "stop": {
+          "index_sha256": "376fd59ca4271d3f3877178b4a348663cfbda87070f9acfa94cc8a2a24638d69",
+          "rows": 1250,
+          "sha256": "9701f5491226591b24d8a91441858e57d0e7b0fb01ff403a6ad10636cb0af924"
+        },
+        "train": {
+          "index_sha256": "742146d30e9a5432ac28a064cc2086d0a0d131e6d2c18cbaed7eddbc77d1910d",
+          "rows": 6250,
+          "sha256": "077e3210d256cb7b11b357c2dd0022658abcea6c9b60287d265555be6bb37a9f"
+        }
+      },
+      "stratify_on": null,
+      "task_id": 363705,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 4546,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46962,
+      "dataset_name": "taiwanese_bankruptcy_prediction",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 94,
+      "num_instances_train_metadata": 4546.0,
+      "original_rows": 4546,
+      "outer_test_index_sha256": "c0c8c87b9b9289f24841b9e4a56f4bb976d6572fdabbe092e7d58c710e6a3417",
+      "outer_test_rows": 2273,
+      "outer_train_index_sha256": "496667e2aff662dd5a4419b0c941500625bc4b5740daad1700c6ad1b7d6f034c",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "41f3c7f60f4e7406480a4780f4e0d8bb7abff7b488d734d324a70e992be925bd",
+          "rows": 1136,
+          "sha256": "48d1b43232fc1fd618132570634f8b972f12adfc70547353369099c34a0c9096"
+        },
+        "stop": {
+          "index_sha256": "52cc08e4093917065b5c55288144fe5b1908ea7e8ba250eccee5fdd6d50bc58b",
+          "rows": 568,
+          "sha256": "ad8a343cc68a274c1fb555cfb8d2b953276a82c9b3e23fdee21e574912fef806"
+        },
+        "train": {
+          "index_sha256": "34b0ab14733f0764274457bb93e98ac92ba3314a7761a503a810dc4cf5f01daa",
+          "rows": 2842,
+          "sha256": "a4af5f249ceca2f2307936ab9cd76ee191c4bbae82133fcf44249061368b7f86"
+        }
+      },
+      "stratify_on": "Bankrupt",
+      "task_id": 363706,
+      "task_type": "random",
+      "time_on": null
+    }
+  ],
+  "excluded_original_tasks": [
+    "GiveMeSomeCredit",
+    "MIC",
+    "QSAR_fish_toxicity",
+    "SDSS17",
+    "anneal",
+    "blood-transfusion-service-center",
+    "coil2000_insurance_policies",
+    "diamonds",
+    "hiva_agnostic",
+    "maternal_health_risk",
+    "splice",
+    "students_dropout_and_academic_success",
+    "website_phishing",
+    "wine_quality"
+  ],
+  "execution_runtime": {
+    "native_sha256": "06796f386ccbf5b51b3134ca11a391ac6ef719ab92fcb509f3f689e77abbf63c",
+    "python": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\baseline-env\\Scripts\\python.exe",
+    "versions": {
+      "autogluon.core": "1.6.2b20260821",
+      "autogluon.tabular": "1.6.2b20260821",
+      "ctboost": "0.1.60",
+      "numpy": "2.0.2",
+      "pandas": "2.3.3",
+      "scikit-learn": "1.6.1",
+      "xgboost": "3.4.1"
+    }
+  },
+  "expected_fits": 111,
+  "gate": {
+    "all111_fits_successful_finite": true,
+    "maximum_geometric_fit_ratio": 3,
+    "maximum_p90_fit_ratio": 5,
+    "maximum_relative_regression": 0.1,
+    "minimum_dataset_wins": 19,
+    "minimum_median_relative_error_gain": 0.01
+  },
+  "metadata_sha256": "1fa7e1b482a9048a52f75d2b554b015ee027da5eddad78bb43908c213c55eff5",
+  "orchestrator_sha256": "5df697d1333cd415535cfcc8f07b0ae5b6b7f8d0f4ca9ea32555924f5956b2cc",
+  "preparation_runtime": {
+    "ctboost_native_sha256": "06796f386ccbf5b51b3134ca11a391ac6ef719ab92fcb509f3f689e77abbf63c",
+    "python": "C:\\apps\\ctboost\\.tmp\\tabarena-hpo0160-venv\\Scripts\\python.exe",
+    "versions": {
+      "autogluon.common": "1.6.2b20260821",
+      "ctboost": "0.1.60",
+      "numpy": "2.0.2",
+      "openml": "0.15.1",
+      "pandas": "2.3.3",
+      "scikit-learn": "1.6.1"
+    }
+  },
+  "problem_type_counts": {
+    "binary": 27,
+    "regression": 10
+  },
+  "protocol_id": "ctboost_grouped8_remaining37_20260908_v1",
+  "resources": {
+    "affinities": [
+      [
+        0,
+        8
+      ],
+      [
+        1,
+        9
+      ]
+    ],
+    "ctboost_early_stop": 50,
+    "fit_seconds": 300,
+    "hard_wall_seconds": 390,
+    "max_workers": 2,
+    "rss_bytes": 8589934592,
+    "threads": 2
+  },
+  "retry_policy": "Started fits are terminal, all failures remain visible, no score-based retries or exclusions.",
+  "reuse_disclosure": "New task panel after the failed14-task grouped and calibration gates. Those failed decisions remain intact; their reservedfold7 is never read. These37 tasks were not selected using score outcomes. This is a capped single-model development assessment, not official outer-test evaluation, eight-child bagging, or Elo.",
+  "runner_sha256": "8aa6b5a3dc422b4a2541ce5578e92ae839119e9e138eee96e79902e4d0550241",
+  "selection": "All 37 metadata tasks excluded from the original14-task scout; no score-based filtering.",
+  "source_loading_disclosure": "OpenML reads the full cached source dataset before selecting official training indices. Only official outer-training rows enter prepared roles, fitting, model selection, or scoring; official test outcomes are not scored or used for decisions. Source cache is snapshotted separately and contains the original full datasets by design.",
+  "source_sha256": {
+    "benchmarks/accuracy_remaining_scout.py": "5df697d1333cd415535cfcc8f07b0ae5b6b7f8d0f4ca9ea32555924f5956b2cc",
+    "benchmarks/tabarena/ctboost_model.py": "a72d7f19eabef9c75511f06b135e3fd2f5fe6361e63c11a37d804a0671c63457",
+    "benchmarks/tabarena/learning_options.py": "cc72fc42a5dee7e89fa5282a12c5eddaa854bc324fc89115bddcf5e917c016ce"
+  },
+  "split_policy": "Official outer repeat0/fold0 training rows only. Cap10000 seed47 first, classification stratified. CV8seed47: trainfolds0-4, stopping5, assessment6+7 combined. The worker's development field denotes this assessment role.",
+  "versions": {
+    "autogluon.core": "1.6.2b20260821",
+    "autogluon.tabular": "1.6.2b20260821",
+    "ctboost": "0.1.60",
+    "numpy": "2.0.2",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.6.1",
+    "xgboost": "3.4.1"
+  },
+  "xgboost": "Unchanged AG XGBoostModel manual default with seed47, same2CPU300s allocation; retain default adaptive patience and tree cap."
+}

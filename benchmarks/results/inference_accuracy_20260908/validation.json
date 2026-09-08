@@ -1,0 +1,74 @@
+{
+  "schema": "ctboost-inference-development-validation-v1",
+  "implementation_commit": "2451e8bc6bf2e4c2dfa7a006c947d8470dfd5977",
+  "base_commit": "a4399fd81395420e8cc5b7b4f99a9043e374b7ea",
+  "runtime": {
+    "wheel": {
+      "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\dist\\ctboost-0.1.60-cp312-cp312-win_amd64.whl",
+      "sha256": "6cb35a24fc1282bae4e85e0538cb06c7889969c2fc1639d5c5d1d48a1b63446b"
+    },
+    "native": {
+      "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\candidate-env\\Lib\\site-packages\\ctboost\\_core.cp312-win_amd64.pyd",
+      "sha256": "68fe6951432644147e6fdd48a40199dc87d4babd8e5cc624bcbdfce170dd82a8"
+    },
+    "feature_pipeline": {
+      "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\candidate-env\\Lib\\site-packages\\ctboost\\feature_pipeline.py",
+      "sha256": "bf5ee77e8837c9c6fb6c43bd0e88b6d73abc98710015c80a2c643ca28cf7d92f"
+    }
+  },
+  "production_and_test_source_sha256": {
+    "ctboost/feature_pipeline.py": "bf5ee77e8837c9c6fb6c43bd0e88b6d73abc98710015c80a2c643ca28cf7d92f",
+    "docs/guides/deployment.md": "6b62ea495b2b159bab63f1685d8f3cc27761fc83a7eddf9d4ed44d24c9e6ef03",
+    "include/ctboost/booster.hpp": "54aba14438bc0d7a641bae26f145b262fa21f3b66c0a468de2b113c872d6740e",
+    "src/bindings/module_registration_booster.cpp": "f60c906fd6388cd05e55aee0b8b47b7e69ca06a249eea1c335020454339b65a6",
+    "src/core/booster_fit.cpp": "8bbe93c554c0074bbafa665eb7c8259ff769189637999ee6fab9908dccdb446c",
+    "src/core/booster_predict.cpp": "a549b03a6bc7d633dad3653b6381020c7311fbdc4ad5ef0cd75d635b8ecd4402",
+    "src/core/booster_state.cpp": "7a67b1f8080e1c2242f9246b351159df67e55d80d537ce0eb0c958ca25699381",
+    "src/core/feature_pipeline_transform.cpp": "5f186ba5235eed3c3487a70909f1c5462c5a43a0d860f61275f81e99b4399851",
+    "src/core/tree_predict.cpp": "301b5ef11ea77c3f6d6d68e14cdd4bc908a6f601e1a7a042e60b116d26c1e915",
+    "tests/test_feature_pipeline_ctr_inference.py": "c1ee9a8a04bf874049c2ceaba0608c71fb8079470531bec3b25e437ce9b3e667",
+    "tests/test_feature_pipeline_numeric_inference.py": "0cab8d47f80823e8c4c0f19bb67f04faf9b6c8752d715286af241f351bdd52ee",
+    "tests/test_prediction_fast_path.py": "434416c4020447fc9116918f0eda4916d7423199eecfea3cd6d28d738a52a573"
+  },
+  "preserved_text_encodings": {
+    "accuracy/requirements.txt": "UTF-16; original pinned-environment file retained byte for byte"
+  },
+  "installed_windows_cpu_suite": {
+    "passed": 1776,
+    "skipped": 35,
+    "warnings": 36,
+    "elapsed_seconds": 190.47,
+    "log_sha256": "ac4609ef628ccfc7dabd562decfabcbc0af29192ece751a769b413ce3d9636ad",
+    "python": "3.12.11",
+    "original_log_sha256": "b3d19411c0117118def275b6be1d842c4063b9b655e98c654f0fe71474dcdfd4",
+    "log_encoding_note": "Original PowerShell UTF-16 log rendered as UTF-8 with normalized line endings; original byte hash preserved.",
+    "native_threads": 2,
+    "logical_cpu_affinity": [
+      2,
+      3,
+      4,
+      10,
+      11,
+      12
+    ],
+    "compiler": "MSVC 19.50.35717 x64",
+    "cpp_dll_exports_executed": true
+  },
+  "direct_cpp_bounds_checks": {
+    "before_failed": 6,
+    "after_passed": 22,
+    "checks": 22
+  },
+  "gcc_fma_probe": {
+    "rows": 1000,
+    "preweighted_legacy_mismatches": 86,
+    "no_fma_control_mismatches": 0
+  },
+  "claim_limits": [
+    "No full Linux or ARM wheel test was performed in this workspace.",
+    "Default compiler modes and GNU FMA/fast-math fallback are covered; unusual custom Clang contraction flags are not detected by a standard macro.",
+    "No official Elo improvement or accuracy-matched universal CatBoost speed claim.",
+    "Prediction-preserving speed changes leave training defaults unchanged.",
+    "The failed joint-cut prototype remains on its separate local experimental branch."
+  ]
+}

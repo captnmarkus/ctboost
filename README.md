@@ -95,6 +95,11 @@ for supported workflows, artifact compatibility, and a reproducible comparison.
 
 ## Evidence and project status
 
+The development branch includes CPU inference optimizations and measured
+accuracy experiments. See the [development results](benchmarks/results/inference_accuracy_20260908/README.md)
+for reproducible comparisons, preserved predictions, and remaining limitations.
+These changes are separate from the published 0.1.60 wheel and its evaluations.
+
 For the new CPU learning controls, see
 [safeguarded leaves and joint multiclass tests](https://captnmarkus.github.io/ctboost/guides/learning-options/).
 The full solver and joint test support 3–32 classes and remain opt-in.

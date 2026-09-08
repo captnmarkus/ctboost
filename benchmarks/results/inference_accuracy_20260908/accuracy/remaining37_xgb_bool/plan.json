@@ -1,0 +1,336 @@
+{
+  "all_task_dtype_inventory": [
+    {
+      "dataset": "APSFailure",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "Amazon_employee_access",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "Another-Dataset-on-used-Fiat-500",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "Bank_Customer_Churn",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "Bioresponse",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "Diabetes130US",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "E-CommereShippingData",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "Fitness_Club",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "Food_Delivery_Time",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "HR_Analytics_Job_Change_of_Data_Scientists",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "Is-this-a-good-customer",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "Marketing_Campaign",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "NATICUSdroid",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "QSAR-TID-11",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "airfoil_self_noise",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "bank-marketing",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "churn",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "concrete_compressive_strength",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "credit-g",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "credit_card_clients_default",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "customer_satisfaction_in_airline",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "diabetes",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "hazelnut-spread-contaminant-detection",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "healthcare_insurance_expenses",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "heloc",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "houses",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "in_vehicle_coupon_recommendation",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "jm1",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "kddcup09_appetency",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "miami_housing",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "online_shoppers_intention",
+      "plain_boolean_columns": [
+        "Weekend"
+      ]
+    },
+    {
+      "dataset": "physiochemical_protein",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "polish_companies_bankruptcy",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "qsar-biodeg",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "seismic-bumps",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "superconductivity",
+      "plain_boolean_columns": []
+    },
+    {
+      "dataset": "taiwanese_bankruptcy_prediction",
+      "plain_boolean_columns": []
+    }
+  ],
+  "amended_gate": {
+    "all111_fits_successful_finite": true,
+    "maximum_geometric_fit_ratio": 3,
+    "maximum_p90_fit_ratio": 5,
+    "maximum_relative_regression": 0.1,
+    "minimum_dataset_wins": 19,
+    "minimum_median_relative_error_gain": 0.01
+  },
+  "amendment_runner_sha256": "35d213f0412eb3f05f2508291818287b3a5d845e6def6d596655104c10f18f43",
+  "arms": [
+    "xgboost_ag_default"
+  ],
+  "cache_provenance_sha256": "7ad469c711f9296d3e77bd965c4150f5c32b84993d0c2b815c471e6cfd38f191",
+  "cached_tasks": 37,
+  "candidate_override": {
+    "feature_test": "grouped",
+    "feature_test_adjustment": "none",
+    "feature_test_bins": 8
+  },
+  "compatibility_rule": "For every task with plain numpy bool columns, convert those columns to uint8 (exact0/1) in training, stopping, and prediction frames. Preserve all columns, categories, missingness in other columns, row IDs, targets, resources, seed, and XGBoost defaults.",
+  "created_at": "2026-09-08T18:16:12.953211+00:00",
+  "ctboost_native_sha256": "06796f386ccbf5b51b3134ca11a391ac6ef719ab92fcb509f3f689e77abbf63c",
+  "ctboost_params": {
+    "alpha": 0.05,
+    "bootstrap_type": "Bernoulli",
+    "iterations": 1000,
+    "lambda_l2": 1.0,
+    "learning_rate": 0.05,
+    "max_cat_threshold": 64,
+    "max_depth": 6,
+    "ordered_ctr": true,
+    "random_seed": 47,
+    "subsample": 0.8,
+    "verbose": false
+  },
+  "datasets": [
+    {
+      "boolean_columns_to_uint8": [
+        "Weekend"
+      ],
+      "capped_rows": 8220,
+      "contains_outer_test_rows": false,
+      "dataset_id": 46947,
+      "dataset_name": "online_shoppers_intention",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 17,
+      "num_instances_train_metadata": 8220.0,
+      "original_rows": 8220,
+      "outer_test_index_sha256": "44e46cfdc98db77497f4fde71b47087b839dccfc02d49ab58c8ae51f9aca7820",
+      "outer_test_rows": 4110,
+      "outer_train_index_sha256": "7ce60603c711bde11f6dd9e55d7d2ff96fb7c71a300f4e43cdafc6c4f1740510",
+      "problem_type": "binary",
+      "roles": {
+        "development": {
+          "index_sha256": "47a32e2431138ac3d30f3c3cf369370bbe9759907ce33508ace1e8e4413ca667",
+          "original_sha256": "a182ea5d251ebc2ba12d9121f5e31d0715628073b5a89f2a0fdd9b6d78ff60c3",
+          "rows": 2054,
+          "sha256": "7f841b9b052807b796bcfdece2b277f951fd09ab8bdb3c83f106363d115c0376"
+        },
+        "stop": {
+          "index_sha256": "b9e8932e4045877944e6c693725240234bd249234995580ea97b16cdb86457d8",
+          "original_sha256": "d0678e8e4f54d34593cf8cd665c6fbb3d17e86194c1d1c3f42f70c755319d961",
+          "rows": 1027,
+          "sha256": "46eead385cc83515e2933d85330f38e034120a4f637f42928830ab66e260917d"
+        },
+        "train": {
+          "index_sha256": "3d90adc309b81e09c3e863372755def9805e11eb5ce845691c8d88ab6f4c56ad",
+          "original_sha256": "057dbc4610f95696d7aea84bcc9f6990ca29edc76c70b4a19eec4932c47b48a2",
+          "rows": 5139,
+          "sha256": "cbe044d6d2c3f5c7f05d8e4dcc3179fef9e0533ee645361b29b14ee74e49055c"
+        }
+      },
+      "stratify_on": "Revenue",
+      "task_id": 363691,
+      "task_type": "random",
+      "time_on": null
+    }
+  ],
+  "excluded_original_tasks": [
+    "GiveMeSomeCredit",
+    "MIC",
+    "QSAR_fish_toxicity",
+    "SDSS17",
+    "anneal",
+    "blood-transfusion-service-center",
+    "coil2000_insurance_policies",
+    "diamonds",
+    "hiva_agnostic",
+    "maternal_health_risk",
+    "splice",
+    "students_dropout_and_academic_success",
+    "website_phishing",
+    "wine_quality"
+  ],
+  "execution_runtime": {
+    "native_sha256": "06796f386ccbf5b51b3134ca11a391ac6ef719ab92fcb509f3f689e77abbf63c",
+    "python": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\baseline-env\\Scripts\\python.exe",
+    "versions": {
+      "autogluon.core": "1.6.2b20260821",
+      "autogluon.tabular": "1.6.2b20260821",
+      "ctboost": "0.1.60",
+      "numpy": "2.0.2",
+      "pandas": "2.3.3",
+      "scikit-learn": "1.6.1",
+      "xgboost": "3.4.1"
+    }
+  },
+  "expected_fits": 1,
+  "gate": {
+    "all111_fits_successful_finite": true,
+    "maximum_geometric_fit_ratio": 3,
+    "maximum_p90_fit_ratio": 5,
+    "maximum_relative_regression": 0.1,
+    "minimum_dataset_wins": 19,
+    "minimum_median_relative_error_gain": 0.01
+  },
+  "metadata_sha256": "1fa7e1b482a9048a52f75d2b554b015ee027da5eddad78bb43908c213c55eff5",
+  "orchestrator_sha256": "5df697d1333cd415535cfcc8f07b0ae5b6b7f8d0f4ca9ea32555924f5956b2cc",
+  "original_expected_fits": 111,
+  "predecessor": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1",
+  "predecessor_plan_sha256": "07cd7841988b2f32cc034470ef295fb54ad68d90c6dcf39a2b81105db1ac2e94",
+  "preparation_runtime": {
+    "ctboost_native_sha256": "06796f386ccbf5b51b3134ca11a391ac6ef719ab92fcb509f3f689e77abbf63c",
+    "python": "C:\\apps\\ctboost\\.tmp\\tabarena-hpo0160-venv\\Scripts\\python.exe",
+    "versions": {
+      "autogluon.common": "1.6.2b20260821",
+      "ctboost": "0.1.60",
+      "numpy": "2.0.2",
+      "openml": "0.15.1",
+      "pandas": "2.3.3",
+      "scikit-learn": "1.6.1"
+    }
+  },
+  "problem_type_counts": {
+    "binary": 27,
+    "regression": 10
+  },
+  "protocol_id": "remaining37_xgb_bool_compatibility_20260908_v1",
+  "reason": "AG OheFeatureGenerator sends mixed bool/numeric frames as object arrays to scipy.csr_matrix; it rejects object dtype. This correction is input representation only, not a CTBoost quality change.",
+  "resources": {
+    "affinities": [
+      [
+        0,
+        8
+      ],
+      [
+        1,
+        9
+      ]
+    ],
+    "ctboost_early_stop": 50,
+    "fit_seconds": 300,
+    "hard_wall_seconds": 390,
+    "max_workers": 1,
+    "rss_bytes": 8589934592,
+    "threads": 2
+  },
+  "retry_policy": "Started fits are terminal, all failures remain visible, no score-based retries or exclusions.",
+  "reuse_disclosure": "Comparator compatibility amendment based solely on input dtypes, after original XGBoost preprocessing failure. Original37-task assessment remains a separate failed-gate run. Unaffected model outputs are reused explicitly; old14-task confirmation remains unscored. No Elo claim.",
+  "reuse_policy": "Amended111-fit analysis reuses every unchanged CTBoost arm and every unaffected XGBoost arm by record/model/prediction hashes. All affected XGBoost arms receive exactly one separately recorded corrected attempt, even if an original had succeeded. Original records and failed original all-success gate remain intact.",
+  "runner_sha256": "8aa6b5a3dc422b4a2541ce5578e92ae839119e9e138eee96e79902e4d0550241",
+  "selection": "Every plain-bool-affected task among all37, regardless of original score or success. No labels or outcomes determine affected membership.",
+  "source_loading_disclosure": "OpenML reads the full cached source dataset before selecting official training indices. Only official outer-training rows enter prepared roles, fitting, model selection, or scoring; official test outcomes are not scored or used for decisions. Source cache is snapshotted separately and contains the original full datasets by design.",
+  "source_sha256": {
+    "benchmarks/accuracy_remaining_scout.py": "5df697d1333cd415535cfcc8f07b0ae5b6b7f8d0f4ca9ea32555924f5956b2cc",
+    "benchmarks/accuracy_xgb_bool_amendment.py": "35d213f0412eb3f05f2508291818287b3a5d845e6def6d596655104c10f18f43",
+    "benchmarks/tabarena/ctboost_model.py": "a72d7f19eabef9c75511f06b135e3fd2f5fe6361e63c11a37d804a0671c63457",
+    "benchmarks/tabarena/learning_options.py": "cc72fc42a5dee7e89fa5282a12c5eddaa854bc324fc89115bddcf5e917c016ce"
+  },
+  "split_policy": "Official outer repeat0/fold0 training rows only. Cap10000 seed47 first, classification stratified. CV8seed47: trainfolds0-4, stopping5, assessment6+7 combined. The worker's development field denotes this assessment role.",
+  "versions": {
+    "autogluon.core": "1.6.2b20260821",
+    "autogluon.tabular": "1.6.2b20260821",
+    "ctboost": "0.1.60",
+    "numpy": "2.0.2",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.6.1",
+    "xgboost": "3.4.1"
+  },
+  "xgboost": "Unchanged AG XGBoostModel manual default with seed47, same2CPU300s allocation; retain default adaptive patience and tree cap."
+}

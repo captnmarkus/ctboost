@@ -1,0 +1,57 @@
+{
+  "purpose": "Synthetic inference diagnostic; no accuracy or Elo claim",
+  "iterations": 400,
+  "depth": 6,
+  "runtime": {
+    "ctboost_path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\baseline-env\\Lib\\site-packages\\ctboost\\__init__.py",
+    "native_sha256": "06796f386ccbf5b51b3134ca11a391ac6ef719ab92fcb509f3f689e77abbf63c",
+    "versions": {
+      "ctboost": "0.1.60",
+      "catboost": "1.2.10",
+      "numpy": "2.0.2",
+      "pandas": "2.3.3"
+    }
+  },
+  "cases": [
+    {
+      "case": "numeric_binary",
+      "train_rows": 3000,
+      "prediction_rows": 1000,
+      "classes": 2,
+      "categorical_cardinality": 0,
+      "ctboost_fit_seconds": 0.1943667000014102,
+      "catboost_fit_seconds": 4.488140900000872
+    },
+    {
+      "case": "categorical_100",
+      "train_rows": 3000,
+      "prediction_rows": 1000,
+      "classes": 2,
+      "categorical_cardinality": 100,
+      "ctboost_fit_seconds": 0.34775269999954617,
+      "catboost_fit_seconds": 20.49519340000552
+    },
+    {
+      "case": "categorical_2000",
+      "train_rows": 3000,
+      "prediction_rows": 1000,
+      "classes": 2,
+      "categorical_cardinality": 2000,
+      "ctboost_fit_seconds": 0.28082310000172583,
+      "catboost_fit_seconds": 17.573429700001725
+    },
+    {
+      "case": "numeric_multiclass",
+      "train_rows": 3000,
+      "prediction_rows": 1000,
+      "classes": 5,
+      "categorical_cardinality": 0,
+      "ctboost_fit_seconds": 0.39995679999992717,
+      "catboost_fit_seconds": 11.737169600004563
+    }
+  ],
+  "cpu_affinity": [
+    6,
+    14
+  ]
+}

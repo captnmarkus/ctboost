@@ -1,0 +1,580 @@
+{
+  "arms": [
+    "ctboost_default",
+    "joint_feature_scalar_cut",
+    "joint_feature_joint_cut"
+  ],
+  "created_at": "2026-09-08T18:27:17.487730+00:00",
+  "datasets": [
+    {
+      "archived_references": {
+        "ctboost_default": {
+          "model_sha256": "611bdb44a3df6c9ba3763ec7d0c474cdca9db6cea30f8d5145dfe20072f84cdf",
+          "prediction_sha256": "96ddc6e52c571ca2b021c01ede678de3efd10454e7655b0f9aafb1b3a0f58e82",
+          "record_sha256": "b3e2e67ce0f1eac03bf7e7ac03589b3e0e7b2affc48401990c1796a12d30a870"
+        },
+        "xgboost_ag_default": {
+          "model_sha256": "4787b86aae14f48e0f4294ff1aa6f02d95fc3c69be007f3e60750d5afb4f704c",
+          "prediction_sha256": "6d7f0ab0eedf5ff51193541267db4663850ee8902a9c20a5c932ae3c5e1e3e63",
+          "record_sha256": "8b3687f20e82f6b388b96531b147a9b56809643872878cf130792f05d6449bc9"
+        }
+      },
+      "capped_rows": 1132,
+      "dataset_name": "MIC",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 8,
+      "num_features": 111,
+      "num_instances_train_metadata": 1132.6666666666667,
+      "original_rows": 1132,
+      "problem_type": "multiclass",
+      "roles": {
+        "development": {
+          "index_sha256": "e6d4d348eedb869d44d0b7edd07c48e61c3ddd46f064a73954c8b0a8d664b4c6",
+          "rows": 141,
+          "sha256": "8854925fdfc61c51b6c54fa220a5abb36c8456934aebd3b5a3d348b0e75da23d"
+        },
+        "stop": {
+          "index_sha256": "04f96732af1f77f378db7d4edf1d7f5323ad168220ef0ad9c8b110e020954f73",
+          "rows": 141,
+          "sha256": "fb2b72bde1d9120904b059a127adfb19a145abe64a578cae468f16141ce410e7"
+        },
+        "train": {
+          "index_sha256": "1a13249e223a8470951625bb87acf828b4bdda48dc6a00e89ac6e8f041e7e510",
+          "rows": 709,
+          "sha256": "8d7f0753c49edd146544d84e5ebe3c21aba2115f379a890d9bae89a6b8475d94"
+        }
+      },
+      "source_sha256": "964d56703e1a04d6b7619a42d9d98e683a813155c4fd23886208ecee7803ab7c",
+      "stratify_on": "LET_IS",
+      "task_id": 363711,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "archived_references": {
+        "ctboost_default": {
+          "model_sha256": "b2fb5e783a8c08317f41e9ed4248c14af2aeddeb0e8a463e69427c534c53a5e3",
+          "prediction_sha256": "75b98ef8fa07565acc1ff6a7faa2aa8001b3a1dcee917de5619fd8d9ca4b6e2d",
+          "record_sha256": "e89510dd362e8931c07c42324793bb6863de9be77221799d04394d0a0ef3f980"
+        },
+        "xgboost_ag_default": {
+          "model_sha256": "eed03c42b055300bcbf9bf6d73b31c42a2a3324fe426818fb541150e3a3a7613",
+          "prediction_sha256": "9c7ab7b9325b1c69579caa0d683047d1cd0a3d5b2e6a263baf5b66c484fd734f",
+          "record_sha256": "35bb6d1cd583fd4c701ed319f631e6959189f1b990a59013793b330fe14b12a8"
+        }
+      },
+      "capped_rows": 10000,
+      "dataset_name": "SDSS17",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 3,
+      "num_features": 11,
+      "num_instances_train_metadata": 52035.333333333336,
+      "original_rows": 52035,
+      "problem_type": "multiclass",
+      "roles": {
+        "development": {
+          "index_sha256": "a2d5c3ae7b38971fffbf6efb19a6918710953f46a9d01b844b9b9f175c58c68f",
+          "rows": 1250,
+          "sha256": "f04fd83a925c5f4fe4de03a13e983bd638ea450d8bc39e034e022559636bb476"
+        },
+        "stop": {
+          "index_sha256": "d9821736c8ceb76ddb2733e406ec6f1869e41be81694c0a160cb2ba97eb14a8b",
+          "rows": 1250,
+          "sha256": "8e54588d8c042eda1ac88c6c9ac1bcec66e16eff36152d5a4e77088dc582d906"
+        },
+        "train": {
+          "index_sha256": "94e134faaca82faf4f922f10033aaf76b1ceeec42989573fc9ef2d1093024181",
+          "rows": 6250,
+          "sha256": "f7b15212eef242cba1a06ffc3e918ba474bdbeab2ded06404dbcefd74e2a5a76"
+        }
+      },
+      "source_sha256": "f789e02b5e010a071c9f1121f90cc5c454d91478f14583a16990fee3bdabf32d",
+      "stratify_on": "ObjectType",
+      "task_id": 363699,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "archived_references": {
+        "ctboost_default": {
+          "model_sha256": "6130608aef0071e49f47b353ff7232432dcaee4b29f230e0b2798b18ddeabd53",
+          "prediction_sha256": "860addab52c403440427673d8d2fc301f25346027781591389e950291c537cdf",
+          "record_sha256": "d89e638cbf7d2965e147e3e36acc674a063a0af822eff746f957368eabb35278"
+        },
+        "xgboost_ag_default": {
+          "model_sha256": "9884841d667649aecb55f04819729f44e0408ffb35d1264287afe7be625ab39c",
+          "prediction_sha256": "063f1b12f51779c70436561bae2db6080af959186cb8958aad01ba8b4e81d98c",
+          "record_sha256": "46a70ab1ee58fdc40b354fb6a773082d05dd72408871d7cab144ddcd009c0987"
+        }
+      },
+      "capped_rows": 598,
+      "dataset_name": "anneal",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 5,
+      "num_features": 38,
+      "num_instances_train_metadata": 598.6666666666666,
+      "original_rows": 598,
+      "problem_type": "multiclass",
+      "roles": {
+        "development": {
+          "index_sha256": "f2129a1bdffd8fbc7898915dc19aca76d5cff6b4f4ad182af984d10f149bf001",
+          "rows": 74,
+          "sha256": "4f7513f73ef64bdf5209644bc097969e79bfe5718633d1700c14535dfca5224d"
+        },
+        "stop": {
+          "index_sha256": "cf502cfa0cc866e69e81ed0bed8a06864b8465ae3a0a3f93700a43a88e201be4",
+          "rows": 75,
+          "sha256": "30b13e5bab6c1df07118414267352353d976f9d9d1fafcd0b3940e7cae3e9f5c"
+        },
+        "train": {
+          "index_sha256": "e233515a6d9a51a8b362d65ee730f2dbcbf8fb1efe1ddb83451383bae2b1b587",
+          "rows": 375,
+          "sha256": "6da6fd01eb1fa6797308e57cded9297fdc25fd361b99a3ca13de7a8298368775"
+        }
+      },
+      "source_sha256": "7109f15c4b6cd873b8fffb5dba69deabf76b1e7d90bcc0e3009e66f659f10549",
+      "stratify_on": "classes",
+      "task_id": 363614,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "archived_references": {
+        "ctboost_default": {
+          "model_sha256": "a83fe0f3b6f4cbda5814501ffef8a8fc2b475d1e93d5a9cb3b942ac8a11c63c0",
+          "prediction_sha256": "23017ee3cb73b31aae6428d822328e60254baeb15a9d331f98d9015f89bf74b3",
+          "record_sha256": "e35a9270b12452b19187e11b34ddff3145a86d2a2f7d595ebbd3cd5a7b13ecfa"
+        },
+        "xgboost_ag_default": {
+          "model_sha256": "6b7a4c8689e2224d299c1a5b2444334f753073f7c3c6c1071acd78ea78db8427",
+          "prediction_sha256": "c35fb9cbdd4e51f547b9d0962da32e864672c9d4507f0fc365ad0d207c039483",
+          "record_sha256": "2494c05d98282520304de235374c7b03acd7afe89126cc9efdb4335cdf6cfc39"
+        }
+      },
+      "capped_rows": 2563,
+      "dataset_name": "hiva_agnostic",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 3,
+      "num_features": 1617,
+      "num_instances_train_metadata": 2563.3333333333335,
+      "original_rows": 2563,
+      "problem_type": "multiclass",
+      "roles": {
+        "development": {
+          "index_sha256": "c16e19d95d39923f823c82502357d4dc37050d86267db30a96c49c7d9b3286ec",
+          "rows": 320,
+          "sha256": "b665ebef74bba981668a934e5bf676a5f0ed15b6a50c7418e84181cda8864efe"
+        },
+        "stop": {
+          "index_sha256": "6d97b995b2dfd3dc50c601518a0b3a0d98c3ec8bdd6cd3c87d5639e6b915c691",
+          "rows": 320,
+          "sha256": "3a8e59af0492739fc57b221d8fa7b88cdb14f2465cddc733df9082a97b51cd3e"
+        },
+        "train": {
+          "index_sha256": "2a80d052a55066a15abfb0462284c66b1e9900578c972bbf608df7236d08cd62",
+          "rows": 1603,
+          "sha256": "1cabb0cf34f8e3a874261eecafee4e7fe745e072eb2f41dfacece714d8a51c64"
+        }
+      },
+      "source_sha256": "9e33086fd4bd5c85cef805ce74a98a7a147ed6b01fd247f13fbb44f55ab1951c",
+      "stratify_on": "CompoundActivity",
+      "task_id": 363677,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "archived_references": {
+        "ctboost_default": {
+          "model_sha256": "ca5283259cffd62c709e4d5f52d40ca58f1c8e6f9a585e7542565852b29eb6d7",
+          "prediction_sha256": "2ab07e9e3c381fa6154ba69b5c15e4fd9f4091c050bba0ffb45a2c5ed60b5878",
+          "record_sha256": "3c606bb919489951536af648ff019da6c74352e2d987456cf36421d8cb59a09c"
+        },
+        "xgboost_ag_default": {
+          "model_sha256": "6be8ce7c0aa56cd39a59d27e1b89b07ec291c187639243cbec81b17d4a2b79e4",
+          "prediction_sha256": "891521aff264883cea3a81060a85769454a1784dda1ddaaa1485cb351418932a",
+          "record_sha256": "587c429db91eeff11cd9e2939b05f790d2bec8906f9d116664ad8ef92619a46a"
+        }
+      },
+      "capped_rows": 676,
+      "dataset_name": "maternal_health_risk",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 3,
+      "num_features": 6,
+      "num_instances_train_metadata": 676.0,
+      "original_rows": 676,
+      "problem_type": "multiclass",
+      "roles": {
+        "development": {
+          "index_sha256": "7d9f5448a306ee86f38cb9d67924fc0030609ddad973af10762afddd63aea05d",
+          "rows": 84,
+          "sha256": "a349d5b94889b33701eb67fda422b83dc3df479ce19a54baa29d57e151e8bea2"
+        },
+        "stop": {
+          "index_sha256": "81e9fe6ec0fa6146d362fbba125df24f4005e6f44d282549a825286638d91208",
+          "rows": 84,
+          "sha256": "d9b2f30382bed6cd8b2f6dcb55ff2271dbd8e6ed45079f45694275d79b1f46c8"
+        },
+        "train": {
+          "index_sha256": "a4f6289d105811ba1f9b6a1e98a46d096e7756fb9f2ab9cd0cb6d85e7a5fed36",
+          "rows": 424,
+          "sha256": "bb8df741cc88ef4a3e1408c5241dc1f12db6c02ddf26a03f8babd20283ad8494"
+        }
+      },
+      "source_sha256": "875f1a76acf33a880ddce2a0a400b35e4e5703b33d62411203a4d7e5c622c341",
+      "stratify_on": "RiskLevel",
+      "task_id": 363685,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "archived_references": {
+        "ctboost_default": {
+          "model_sha256": "046882a53ed41fe29f90889fdf807b8338b4d16748136e832014a43a4d5a0dfb",
+          "prediction_sha256": "567cc9254d1d80da5810169222ea5da2cb35302f0003cac3cf0299e8c853414c",
+          "record_sha256": "7b1b1eeecb1dd7a99f12030452e9ce66672f739924c664e6f699967f6a517931"
+        },
+        "xgboost_ag_default": {
+          "model_sha256": "5739c2856bd389be9026bf3a27ec820efa81643a3eaa94b593a478c0171d9f9c",
+          "prediction_sha256": "b74c0646ae188fe1456f42b9e6eb19a800df865750302cd192c7feafe97232ed",
+          "record_sha256": "b9750558208f1adb559af5acbddeef3f6217ac949e149c199857d2d47ec6aee2"
+        }
+      },
+      "capped_rows": 2126,
+      "dataset_name": "splice",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 3,
+      "num_features": 60,
+      "num_instances_train_metadata": 2126.6666666666665,
+      "original_rows": 2126,
+      "problem_type": "multiclass",
+      "roles": {
+        "development": {
+          "index_sha256": "f2328a71b82e021eaa1aa7cfd97280732fdd2f5f28b06ea9840d05657a408055",
+          "rows": 265,
+          "sha256": "0e3d8eb837856a9de102c6346a68b8b23cfc7442863485b7eb759fe1d7c6ab49"
+        },
+        "stop": {
+          "index_sha256": "97f76c72b9bf98aa7e733b0b4196a7b71c0b329cccd45ec0d7cb35fbe616f11b",
+          "rows": 266,
+          "sha256": "16d8f5af5137f2952c4f6bd2fa01fc31ff57fe1d14c433e4f5d0a0a86dd83511"
+        },
+        "train": {
+          "index_sha256": "042a2a8d404ecf5ca1e7759806eb111106bc947390a62c11ba035c30c3897766",
+          "rows": 1330,
+          "sha256": "df47932ec15cfae3ae2905d96f95bff6ab8f21533a1f423d973545dcdc837e9f"
+        }
+      },
+      "source_sha256": "6891d8b7ad6306f8bb9cc5becd8bbea4ac437b962a241dc6152c9b45a25b096a",
+      "stratify_on": "SiteType",
+      "task_id": 363702,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "archived_references": {
+        "ctboost_default": {
+          "model_sha256": "d55055fe07ce381f214edce113603d73bf2f4c0c3b48f74395c87d9badfc4296",
+          "prediction_sha256": "293a565d02dfb7e9688b677496710a8102fa515f696caebe922274aeeaa3812a",
+          "record_sha256": "6dd39cf618155cea5149547509177976abc12efd718233a1dc11f3d9134e2498"
+        },
+        "xgboost_ag_default": {
+          "model_sha256": "b821daa798a691c25af74cff8c43f095fc99d395f446e673d17cbf2153dd7631",
+          "prediction_sha256": "2de1d4ee6ccd8010f6e9e60a1a457f7da517d4d4d1fee8c2b86b458cabf624e7",
+          "record_sha256": "e0f2457fa6be9b29d52067912ca9103f3bb0ca7df885a6d71d125b88dbbfa51a"
+        }
+      },
+      "capped_rows": 2949,
+      "dataset_name": "students_dropout_and_academic_success",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 3,
+      "num_features": 36,
+      "num_instances_train_metadata": 2949.3333333333335,
+      "original_rows": 2949,
+      "problem_type": "multiclass",
+      "roles": {
+        "development": {
+          "index_sha256": "1e737c1aca82e49d037d8f951fb8f2c5f28f4416a9fb89fcc1868f425ac37043",
+          "rows": 368,
+          "sha256": "9cf802d3dbb66302fb27108c0fce104a0633251089b216f4cdadcbd2dc0f1b26"
+        },
+        "stop": {
+          "index_sha256": "ae887597261ae5a83cd895d54455fab9f6af9e424fa7f2cefc16b1c6d636ea9a",
+          "rows": 368,
+          "sha256": "4634731e414f9c94ea2231ba0d396d30dcc921d614f58448aa7ac0751f533ca0"
+        },
+        "train": {
+          "index_sha256": "9940982de9f0d521c540b54290afb21719060c92e30fbe44f4a501c427a2abed",
+          "rows": 1845,
+          "sha256": "4a48ca8d503e15569fe00b113ae23a01368f7c8a095a446140b52e578b2c129b"
+        }
+      },
+      "source_sha256": "1e25713ad7caaaf06a222bf6cd6a36a89e78f79eba77dcd80250cf15a6b58689",
+      "stratify_on": "AcademicOutcome",
+      "task_id": 363704,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "archived_references": {
+        "ctboost_default": {
+          "model_sha256": "19cbceb528f695b6181f4b902d365a653f3dd89c80132a0c5274a592051ad64b",
+          "prediction_sha256": "61a3aed6ed334379ab6e1f3962aa51abd0dc758463c6a5c637827b2d4a4f73d1",
+          "record_sha256": "802c03168f52673d30129b5a5a600a73b2b85a53f21490bc8fb065f1df88435f"
+        },
+        "xgboost_ag_default": {
+          "model_sha256": "618222de0fd12026bd17a1f43248c636758d495ec5e7a078b9f6cd6b868ee328",
+          "prediction_sha256": "fecb1fd8297cfbab88cba3257d7f29b07e26e1973d239e0c8af80646093e247f",
+          "record_sha256": "6ffae1c3a80cb24dfaf6206577dd8418daeb51f2d7629d9a2a6086565b4581e4"
+        }
+      },
+      "capped_rows": 902,
+      "dataset_name": "website_phishing",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 3,
+      "num_features": 9,
+      "num_instances_train_metadata": 902.0,
+      "original_rows": 902,
+      "problem_type": "multiclass",
+      "roles": {
+        "development": {
+          "index_sha256": "02225c295a85f7c320963ea29a67eb9f63e8ef86e9e429ef6a1f94c4d1feb61a",
+          "rows": 112,
+          "sha256": "cc08139a5cf10147669e766609848f7fd95d3106ff27556534fac4fdaf149302"
+        },
+        "stop": {
+          "index_sha256": "f1e1fc92f5b0d729ec6071939acd7ccc8d60f3133fd02e10d16163b79dad46f2",
+          "rows": 113,
+          "sha256": "33b55b90145e55aedcdfff2c8418ec782225accf2d90bb6b16afc34cf8a1e785"
+        },
+        "train": {
+          "index_sha256": "ee3eee0b7c0c312c9fab03d76edc2b2a89ff8ebf1b1b4b5f5143bd2210d149cc",
+          "rows": 565,
+          "sha256": "ff284a41ad64eae6888d41871274e8ca70f6f0a2c303ed887adff29f3d1a7f9b"
+        }
+      },
+      "source_sha256": "5e107fcc9935556ecbb818c0bf42f6ec547169419716df5c4ed7400543e85673",
+      "stratify_on": "WebsiteType",
+      "task_id": 363707,
+      "task_type": "random",
+      "time_on": null
+    }
+  ],
+  "dependency_sha256": {
+    "benchmarks/accuracy_grouped_scout.py": "8aa6b5a3dc422b4a2541ce5578e92ae839119e9e138eee96e79902e4d0550241",
+    "benchmarks/tabarena/ctboost_model.py": "a72d7f19eabef9c75511f06b135e3fd2f5fe6361e63c11a37d804a0671c63457",
+    "benchmarks/tabarena/learning_options.py": "cc72fc42a5dee7e89fa5282a12c5eddaa854bc324fc89115bddcf5e917c016ce"
+  },
+  "expected_fits": 24,
+  "gate": {
+    "all24_finite_successful": true,
+    "all8_default_prediction_and_iteration_audits_exact": true,
+    "candidate": "joint_feature_joint_cut",
+    "comparator": "joint_feature_scalar_cut",
+    "maximum_geometric_fit_ratio": 3,
+    "maximum_p90_fit_ratio": 5,
+    "maximum_relative_regression": 0.05,
+    "minimum_dataset_wins": 5,
+    "minimum_median_relative_error_gain": 0.01
+  },
+  "installed_python_sha256": {
+    "__init__.py": "46069d59ef78755a7afa04541e30883b7d06663ac6584710775adddc3f055886",
+    "__main__.py": "78c5d462b27088091171c089b045c8efcb844f1c6b5196731ed1e2f82fd40cc9",
+    "_export.py": "f2b59669257d9d973636ae7ccbc7b73d3870d46571b19c87cc82153e004aff11",
+    "_integration_utils.py": "c6e536f5c7ecea15e1355dbe400571aad31b1643e66c66903d132ec7556eab81",
+    "_prepared_data_support.py": "7d474a2fa57e295d23e25b2cf589acd0baaa3746e85c60aa5b7f0ff1b78bb039",
+    "_serialization.py": "c1b237619b16067a3dffe2470a2f0b8f0b7b6d7fac1e55d8562685f41c0e46b5",
+    "_version.py": "8bcf149f10f5fa8931c90ab4c716870a5fb3d4272b5177f5541e1addfb18532b",
+    "cli.py": "a8e67e11e1bcd800dbcca49225202c3b11ee7218232728237c59f26222f40b44",
+    "core\\__init__.py": "bfdaef76ef3cce44b794aecf6f004371b47a0c1c86479d903c9c607405fadf6d",
+    "core\\_handle.py": "18bba476eff17855126520515950ae91f5bfd920af68495c2c2121367d85a36f",
+    "core\\columnar.py": "f1272214cb5314ceb1f9b2dc0c699d22bbe6de72425fea17e9691c4c6a4964d3",
+    "core\\normalization.py": "3e1599f47c5e7c43776f5d5feb600c13139abf85d67b361072900c8c0fb1b9b0",
+    "core\\pool.py": "3e4b6a0a7b55b08dda7120f93e14bc6500d4baf50526934a4b8667d359c9a4e0",
+    "core\\ranking_metadata.py": "2b838ec5f6e43d3e7519423cd65416406fa806343f33358c51895463c6c159c8",
+    "core\\sparse.py": "949fee124737ca2724a8801e6c95f9b6e60e68e15849f5916ef55283bc695f1d",
+    "dask.py": "1f12e589427863bc71a610672beb7f2617fa1c418ad73b331c4c153730e45c6e",
+    "distributed\\__init__.py": "69d4392a4d9466814518b168ca22bf2c64cecc443523986c9a5f8e9644ebea7c",
+    "distributed\\__main__.py": "7f1037d4c47aa84c99abc6eba73eff5e209236a03785c9be7ca00763c343250a",
+    "distributed\\merge.py": "88f58336a4b6ec065c00f4c919eb73d1a85a698085ab6d89d9316c91a8c447b1",
+    "distributed\\payloads.py": "1accc329dc3329d34a7a3db0905e867d40cde5e0769b2e00c0bb841c6ade401c",
+    "distributed\\server.py": "94d91feaa9f59a2e8c1c08987a8c8345a83c475eeed08fd52b6df953c0168433",
+    "distributed\\tcp.py": "0d1184f7a7c51408c987635cbe482cb89a46d31df587580dd09a229acbd2bc72",
+    "explain.py": "0d2b62e90d6818f82b6744082d1c160687f67eb06d01c2e23e57d49b76850b33",
+    "export_codegen.py": "d4116c3adde268716b2dbe9ecab3c882c6fa506309a4fb4e6a75939b20eac829",
+    "export_cpp.py": "ed10e146e175c08040e53f7a35cf3107270cfa9844c03ef044ee3fc935dc68f7",
+    "export_onnx.py": "4bcd532cf25d1067e4c93a059eb1bb58767ae9f67c5dcc668bace13820137604",
+    "export_payload.py": "f377459117080c78b2096dc55de6dc7a6c1891111293d68d0743555655647b14",
+    "export_runtime.py": "066edf8e6aa596909f778f5b5b908ba043e76c765baf7a182cd9c2a2740f8ee6",
+    "feature_pipeline.py": "6896d1bddda9d5f148b8af43f821dfb9956d05b2ca89555159ca9b68ea879ab6",
+    "gpu_install.py": "462e032da8e1dd96a974fc4b5fe7352533959a72fa7f7046264de766aee23d71",
+    "inference_manifest.py": "9cb60440c2adbc90832edbd84b9040874b6ec917c7045b203089163bfe217c7f",
+    "prepared_data.py": "277bbc3d7672d597c18fb51ac94caf1b72fcce065cb6f9e90021c1c3b3962212",
+    "ray.py": "5da35c0382e3d20073976ee3df211f2c17809b7de2080a287e04556d28729c26",
+    "sklearn\\__init__.py": "8606ad7e2943f6cc2ae699452f909de9b5ba9fa709b6ab29e65ee749ff1c3b0f",
+    "sklearn\\_fit.py": "6da270d27ae230526d8b3edab0423cef0d6be866593e464263c2b5ac3ec32d4d",
+    "sklearn\\_independent.py": "123ad42b1e8fdf0295f99c969a286d7b8580dfd20533aad9e06f2429903e24dc",
+    "sklearn\\_params.py": "5e6ceb707587b9f89f45463e642aac4e608e25f4834c867c6bdd3bd902a29fe9",
+    "sklearn\\_predict.py": "610f7bee1f11888e49969d5e5f1540aeec1b38d49856719eb12ee708ac83e479",
+    "sklearn\\aft.py": "2e2db204a32980e8124dbee8add6bae58ba2a3f4da0bfc70e0adc479fcca670f",
+    "sklearn\\base.py": "8f6f66d843f966177c31098410431bfe84ef4d4692045aaec0bc72dbcab7e8b8",
+    "sklearn\\classifier.py": "b162c4630236231f1cdbc09b777165a829f09b4ef56c5e480d28fb3e76d6d259",
+    "sklearn\\labels.py": "0ae2e8d8576d8aebd6914a3014a6f8a821c6490da22de1f8d18c769bbf412d8b",
+    "sklearn\\model_selection.py": "9469748f3599de893099c8d524b11002abbd5c82f4109784c35821591cbd4796",
+    "sklearn\\multioutput.py": "187b2f52a22fcb5631c811bca87962c20140583bb7607b6bc69b76319f6124d1",
+    "sklearn\\ranker.py": "6035f350821f3cac518931106996adadffc9d7714985a73da25dc363fb36f7b4",
+    "sklearn\\regressor.py": "4108ec45e5c3eb6a333603b7e3509fe37ec94da60db183b7478ac5eb20ff80f9",
+    "sklearn\\serialization.py": "35b18d6ccff675f1e51372dec309ab8627d7cb30a3a3152b3964f8aa4d2ba575",
+    "spark.py": "8744c8c48bc5c67bee2f8e6a3b09df14045a00da3c70dafbc969d08f18d5351f",
+    "streaming.py": "1e105d4bd9021c346d41aaa5f38a4a2ff84457f3380bc7f6d2340db6bd955a2f",
+    "training\\__init__.py": "fde806a338c3c749b29f4e1eebc1790702c72bca5b0e7b895b8c415a51bc9a36",
+    "training\\_booster_schema.py": "05b011f73faf01b9acda8d7db48a51eb3a47a00999611d2f63283479ed914c89",
+    "training\\_distributed_config.py": "163e6805a6e45c9f9534e8f993ff6a2930b1348d55a2e6fef23bf24b3a7f0e16",
+    "training\\_distributed_payloads.py": "47bb207a66fc1f55d2137499d5c50b97235da9e04b549dc1f0d74e01944cb170",
+    "training\\_distributed_pool.py": "b18dd898dc7a6db00856374669060f22cfad0e0968d4060a04a19bc7be415c1f",
+    "training\\_distributed_runtime.py": "7af9de1d7f864b981575f5eca7b3442609c614eb7666cddabc90ccb8d22e897e",
+    "training\\_distributed_storage_io.py": "ff09671cad241da31f72f8d4a8073abf7b5714c22eac5af06a182e8cec78b8bf",
+    "training\\_distributed_storage_merge.py": "fb4f0eeeab1d4dc5c719ee731a071b1240ee3214672b91be0e86cfdade46e6dd",
+    "training\\_early_stopping.py": "31593f8568b121966fcf4f1b89b42252f68016a27226d03183a1b623e55a3115",
+    "training\\_eval_runtime.py": "39a19771c95d606e9ca0e1bdbf7cada903b5a50215afcfd31eb0987886278850",
+    "training\\_eval_sets.py": "3f6b2c763a94280371b113a50716d3a272c4d8f82ace8a6ee020f32d9cbc46c3",
+    "training\\_learning_rate_schedule.py": "1189acc379b66eba2052fdbb76d9548ba5cc0bbc8a2ced1d5dfb1b132fcd245e",
+    "training\\_pool_build.py": "7d580296a976ebf0d5366b2eb4125c2b0365d6d98afc595a2cf44bdfd1a7fbb3",
+    "training\\_train_config.py": "cec21cff0dc64acddff61b71d75c9f5e17e6b9052b8f5ecef64a3ef0068d6df2",
+    "training\\_train_metrics.py": "8c383cd8655e5b8a3c190ce701a4c80c6e9dc807f5a8949bf546d54ca1156cc5",
+    "training\\_train_native.py": "f8ac66949536dc3bea3fdff00e096b488330de7c53fcaa15b3fce7ae9efda41a",
+    "training\\_train_params.py": "30f7339995f4282524ee5b7cf531d6960a0dd9ef265a60b443b19633c4c1e287",
+    "training\\_train_python.py": "67b6b7a6486b5948fa41dc68e2163cd3d6fe1f6c371e4dd0a58e3450617bced3",
+    "training\\api.py": "cb21d2c23bc02d2ec3cc7c1bce7402408574d2dd21c7a2e240b38f0715b9a801",
+    "training\\booster.py": "5eef996cc0b1f90c0caf33e73aa263e785e71dcab4f92f7861a40481c759bfa0",
+    "training\\callbacks.py": "9d6dce3581c846f7d9a618ab867782f8f60f1d26c198ae57a279838d421219a2",
+    "training\\distributed.py": "bd564c6785125aa86d420171443004eeb68691d486a23c07bed542499d92e9a4",
+    "training\\eval_metrics.py": "02507cc0e416202e60b39b2116a8551fdd0c89e8b05f1911e7f5f663d1dbfb58",
+    "training\\objectives.py": "4fc37145d58f544182293950a982ebcb4bbe9abe7458626acc60223fb62c4e7b",
+    "training\\pool_io.py": "678d2a3f031eeb34cd05cce866f05e0c68d6dd16541ec20f99d230b22b93333c",
+    "training\\resume.py": "5b0ae4a78f1e68ea726880dea06cda0bba8a365054d2d3f885287966e8d23c96",
+    "training\\schema.py": "e1c29135715932f632dd67705701865618e148d438799e54b251841366418caf",
+    "training\\weights.py": "fad2ac9ecde048740d1e8aa3b0ac776ac149495eb09f5d49d585c39a7cd273d0"
+  },
+  "native_sha256": "197995abd2ea3ea0679d0711c0d3ed7ee0f9fd897c3444cd833a3b4c021a4e8a",
+  "parameters": {
+    "ctboost_default": {
+      "alpha": 0.05,
+      "bootstrap_type": "Bernoulli",
+      "eval_metric": "MultiClass",
+      "feature_test": "quadratic",
+      "feature_test_adjustment": "none",
+      "feature_test_bins": 8,
+      "iterations": 1000,
+      "lambda_l2": 1.0,
+      "leaf_estimation_backtracking": false,
+      "leaf_estimation_iterations": 1,
+      "learning_rate": 0.05,
+      "max_cat_threshold": 64,
+      "max_depth": 6,
+      "multi_strategy": "one_output_per_tree",
+      "multiclass_feature_test": "single",
+      "multiclass_leaf_solver": "diagonal",
+      "multiclass_split_score": "scalar",
+      "ordered_ctr": true,
+      "random_seed": 47,
+      "subsample": 0.8,
+      "verbose": false
+    },
+    "joint_feature_joint_cut": {
+      "alpha": 0.05,
+      "bootstrap_type": "Bernoulli",
+      "eval_metric": "MultiClass",
+      "feature_test": "grouped",
+      "feature_test_adjustment": "none",
+      "feature_test_bins": 8,
+      "iterations": 1000,
+      "lambda_l2": 1.0,
+      "leaf_estimation_backtracking": false,
+      "leaf_estimation_iterations": 1,
+      "learning_rate": 0.05,
+      "max_cat_threshold": 64,
+      "max_depth": 6,
+      "multi_strategy": "one_output_per_tree",
+      "multiclass_feature_test": "joint",
+      "multiclass_leaf_solver": "diagonal",
+      "multiclass_split_score": "joint",
+      "ordered_ctr": true,
+      "random_seed": 47,
+      "subsample": 0.8,
+      "verbose": false
+    },
+    "joint_feature_scalar_cut": {
+      "alpha": 0.05,
+      "bootstrap_type": "Bernoulli",
+      "eval_metric": "MultiClass",
+      "feature_test": "grouped",
+      "feature_test_adjustment": "none",
+      "feature_test_bins": 8,
+      "iterations": 1000,
+      "lambda_l2": 1.0,
+      "leaf_estimation_backtracking": false,
+      "leaf_estimation_iterations": 1,
+      "learning_rate": 0.05,
+      "max_cat_threshold": 64,
+      "max_depth": 6,
+      "multi_strategy": "one_output_per_tree",
+      "multiclass_feature_test": "joint",
+      "multiclass_leaf_solver": "diagonal",
+      "multiclass_split_score": "scalar",
+      "ordered_ctr": true,
+      "random_seed": 47,
+      "subsample": 0.8,
+      "verbose": false
+    }
+  },
+  "predecessor": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1",
+  "predecessor_plan_sha256": "d53e13021fb0d5d7f29353876c9f971ca3d56cb7857937c1b3c3afe436904a7b",
+  "promotion_policy": "Root reviews the complete report before any promotion. No global default changes or confirmation unsealing are authorized by this gate.",
+  "protocol_id": "ctboost_joint_cut_multiclass_development_20260908_v1",
+  "prototype_default_equivalence_sha256": "5e8122ca936b4df189217cb6a6cad65a104485e6ce061cb961fe338ef299de89",
+  "prototype_manifest_sha256": "ae24056071bb8a71ed049d2f522b9d281be3ccd4a98dd1875168a749736b5fc1",
+  "python": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\joint-cut\\env\\Scripts\\python.exe",
+  "resources": {
+    "affinities": [
+      [
+        0,
+        8
+      ],
+      [
+        1,
+        9
+      ]
+    ],
+    "early_stopping_rounds": 50,
+    "fit_seconds": 300,
+    "hard_wall_seconds": 390,
+    "max_workers": 2,
+    "rss_bytes": 8589934592,
+    "threads": 2
+  },
+  "retry_policy": "Each started arm is terminal; preserve errors and resource failures without tuning or retries.",
+  "reuse_disclosure": "New preregistered hypothesis after the failed grouped and temperature studies on these same development tasks/rows. This is staged exploratory development, not independent confirmation or official outer-test/Elo evidence. Archived default predictions audit new-build equivalence; archived XGBoost is a secondary comparison only. All24 CTBoost arms are refitted in the new isolated build.",
+  "roles": "Reuse immutable original trainfolds0-4, stopping5, development6. Original cap10000 and CV8seed47 retained. Fold7 is neither copied nor loaded, regardless of this result.",
+  "runner_sha256": "3fa96a512dc4054d17ef0f06a7737abe50000b6b84d73352f79682eada79714b",
+  "selection": "All eight multiclass tasks from the original14 metadata population; no task or arm selection from development outcomes.",
+  "source_sha256": "66215d90e134d835ca7182aedd8df06f7e3426d9e311ab3aeb996dd248a185d9",
+  "versions": {
+    "autogluon.tabular": "1.6.2b20260821",
+    "ctboost": "0.1.60",
+    "numpy": "2.0.2",
+    "pandas": "2.3.3",
+    "psutil": "7.2.2",
+    "scikit-learn": "1.6.1",
+    "xgboost": "3.4.1"
+  },
+  "wheel": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\joint-cut\\dist\\ctboost-0.1.60-cp312-cp312-win_amd64.whl",
+  "wheel_sha256": "e10c7ca663313fcd92083475741393c8fbe20d9472fa2f8645ec8125298019d7"
+}

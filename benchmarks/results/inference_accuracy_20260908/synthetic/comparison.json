@@ -1,0 +1,115 @@
+{
+  "scope": "Synthetic diagnostic, identical saved CTBoost models; unequal tree topologies and no quality matching across libraries. Sequential measurements under active background HPO; control drift disclosed.",
+  "baseline": "timings-baseline-serial-1.json",
+  "candidate": "timings-candidate-final-serial-2.json",
+  "rows": [
+    {
+      "case": "numeric_binary",
+      "batch_rows": 1,
+      "public_ctboost_ms": 0.16619422443093126,
+      "candidate_ctboost_ms": 0.14659422222326543,
+      "candidate_run_catboost_ms": 0.4185226666676398,
+      "ctboost_speedup": 1.1337024195797751,
+      "catboost_control_drift_ratio": 1.0829474769768357
+    },
+    {
+      "case": "numeric_binary",
+      "batch_rows": 128,
+      "public_ctboost_ms": 0.5213443850454087,
+      "candidate_ctboost_ms": 0.382997333338911,
+      "candidate_run_catboost_ms": 0.47164337898787434,
+      "ctboost_speedup": 1.3612219711829576,
+      "catboost_control_drift_ratio": 1.140971605521857
+    },
+    {
+      "case": "numeric_binary",
+      "batch_rows": 1000,
+      "public_ctboost_ms": 2.9488060606650612,
+      "candidate_ctboost_ms": 1.6745577464257302,
+      "candidate_run_catboost_ms": 1.0786386792117484,
+      "ctboost_speedup": 1.7609461763615843,
+      "catboost_control_drift_ratio": 1.1355521054383264
+    },
+    {
+      "case": "categorical_100",
+      "batch_rows": 1,
+      "public_ctboost_ms": 0.47488360655361395,
+      "candidate_ctboost_ms": 0.33601567398780097,
+      "candidate_run_catboost_ms": 1.1425312499492672,
+      "ctboost_speedup": 1.4132781394324319,
+      "catboost_control_drift_ratio": 1.4858799330241599
+    },
+    {
+      "case": "categorical_100",
+      "batch_rows": 128,
+      "public_ctboost_ms": 0.9738979166134717,
+      "candidate_ctboost_ms": 0.7228840278104245,
+      "candidate_run_catboost_ms": 1.1723594827720984,
+      "ctboost_speedup": 1.347239500592307,
+      "catboost_control_drift_ratio": 1.0214860004520918
+    },
+    {
+      "case": "categorical_100",
+      "batch_rows": 1000,
+      "public_ctboost_ms": 4.084215999755543,
+      "candidate_ctboost_ms": 3.35866206898635,
+      "candidate_run_catboost_ms": 2.508566666663336,
+      "ctboost_speedup": 1.2160246895538873,
+      "catboost_control_drift_ratio": 0.8884481493985078
+    },
+    {
+      "case": "categorical_2000",
+      "batch_rows": 1,
+      "public_ctboost_ms": 2.1811948719028478,
+      "candidate_ctboost_ms": 0.3308461224410816,
+      "candidate_run_catboost_ms": 7.614335714086857,
+      "ctboost_speedup": 6.592777499731114,
+      "catboost_control_drift_ratio": 1.0249030275421158
+    },
+    {
+      "case": "categorical_2000",
+      "batch_rows": 128,
+      "public_ctboost_ms": 2.8399058826514247,
+      "candidate_ctboost_ms": 0.7796208333578155,
+      "candidate_run_catboost_ms": 6.018633333345254,
+      "ctboost_speedup": 3.642675722786924,
+      "catboost_control_drift_ratio": 0.7353033587968236
+    },
+    {
+      "case": "categorical_2000",
+      "batch_rows": 1000,
+      "public_ctboost_ms": 7.286449999810429,
+      "candidate_ctboost_ms": 3.6123108108546838,
+      "candidate_run_catboost_ms": 7.043406666586331,
+      "ctboost_speedup": 2.017116018343514,
+      "catboost_control_drift_ratio": 0.840510195178664
+    },
+    {
+      "case": "numeric_multiclass",
+      "batch_rows": 1,
+      "public_ctboost_ms": 0.2689139726125214,
+      "candidate_ctboost_ms": 0.1480837762266254,
+      "candidate_run_catboost_ms": 0.3948220532204241,
+      "ctboost_speedup": 1.815958368059031,
+      "catboost_control_drift_ratio": 0.9772055680367251
+    },
+    {
+      "case": "numeric_multiclass",
+      "batch_rows": 128,
+      "public_ctboost_ms": 2.1098891892187246,
+      "candidate_ctboost_ms": 0.7608484615607617,
+      "candidate_run_catboost_ms": 0.6945053333765827,
+      "ctboost_speedup": 2.7730741347503245,
+      "catboost_control_drift_ratio": 0.8886488654270618
+    },
+    {
+      "case": "numeric_multiclass",
+      "batch_rows": 1000,
+      "public_ctboost_ms": 15.644883333152393,
+      "candidate_ctboost_ms": 3.6791333334770537,
+      "candidate_run_catboost_ms": 2.225864000065485,
+      "ctboost_speedup": 4.252328446701554,
+      "catboost_control_drift_ratio": 0.7529904054622892
+    }
+  ]
+}

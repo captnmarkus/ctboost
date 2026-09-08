@@ -1,0 +1,608 @@
+{
+  "arms": [
+    "ctboost_default",
+    "ctboost_grouped8",
+    "xgboost_ag_default"
+  ],
+  "candidate_override": {
+    "feature_test": "grouped",
+    "feature_test_adjustment": "none",
+    "feature_test_bins": 8
+  },
+  "confirmation_policy": "Only unseal fold7 if the development gate passes. Apply the same quality gate without retraining or choosing another candidate. A passing reused-data scout supports a separate benchmark, not an automatic library-default change.",
+  "created_at": "2026-09-08T17:40:59.615111+00:00",
+  "ctboost_native_sha256": "06796f386ccbf5b51b3134ca11a391ac6ef719ab92fcb509f3f689e77abbf63c",
+  "ctboost_params": {
+    "alpha": 0.05,
+    "bootstrap_type": "Bernoulli",
+    "iterations": 1000,
+    "lambda_l2": 1.0,
+    "learning_rate": 0.05,
+    "max_cat_threshold": 64,
+    "max_depth": 6,
+    "ordered_ctr": true,
+    "random_seed": 47,
+    "subsample": 0.8,
+    "verbose": false
+  },
+  "datasets": [
+    {
+      "capped_rows": 498,
+      "dataset_name": "blood-transfusion-service-center",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 4,
+      "num_instances_train_metadata": 498.6666666666667,
+      "original_rows": 498,
+      "problem_type": "binary",
+      "roles": {
+        "confirmation": {
+          "index_sha256": "5d58ff120b2f29d21de17d1539070e39fbad3cad6e637458830d9d0197b8eda3",
+          "rows": 62,
+          "sha256": "96ec0e4fedf39a35c81f9dd60ca7c8963fe54f50f6a600e71c50d6acf1aac677"
+        },
+        "development": {
+          "index_sha256": "8724d0009d750bef2ee4c97378c8712963d62e9bde13586054453e183c475ee7",
+          "rows": 62,
+          "sha256": "abb76281c4329f8bb6537c22c8eb151739f354934fe434706efb850f5de1961d"
+        },
+        "stop": {
+          "index_sha256": "71a564af518385779257f7b6cca008a07627dfedd4905925a797260841b5dcdd",
+          "rows": 62,
+          "sha256": "59daf432712096f4ae9724df3db47ed8ac786d8e56b8a48e9ad86a6c0c2ce4c6"
+        },
+        "train": {
+          "index_sha256": "fac9f22e07f5ccbd69e89955d9f2de01cad1246ca69fa962e31753763caa7ea7",
+          "rows": 312,
+          "sha256": "9d676cdf2a05bc27f6a21a9607b5a2d976ba87a5d8f4389356e129d84f17d54c"
+        }
+      },
+      "source_sha256": "db5d546327b897cf609ce5f7df669e55b44a6fcc84066626448b75d0909a3c69",
+      "stratify_on": "DonatedBloodInMarch2007",
+      "task_id": 363621,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 6548,
+      "dataset_name": "coil2000_insurance_policies",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 85,
+      "num_instances_train_metadata": 6548.0,
+      "original_rows": 6548,
+      "problem_type": "binary",
+      "roles": {
+        "confirmation": {
+          "index_sha256": "3f6a46238dba72914a4cb9fc2bbf1ebc0569497c12b46c802ba47a5137b3aac5",
+          "rows": 818,
+          "sha256": "9e0e38e8dc69337087d6c401d57c7766841a9486e37a73d0fc32b1f88a4c4c55"
+        },
+        "development": {
+          "index_sha256": "c476bee026bc8c39e087fa7aa1afb5b4bf70e638e58752000ecfc969cf4f7943",
+          "rows": 818,
+          "sha256": "e40a3f2dcbf1dc67578d0f301af14fe2a4891d8970903c3be10ca75aa412fc7c"
+        },
+        "stop": {
+          "index_sha256": "b45810271b66bcd44a34f1b22470f8547758c5ace6098007e2a9d860be70c8c6",
+          "rows": 818,
+          "sha256": "76ff030ba55e9febf2bc07b154e289452587f7ed36b6cfcbd0d3bf19f4f66678"
+        },
+        "train": {
+          "index_sha256": "436475b089a194ec37b0deba3c08bcb1579548a5dfa4f938ef34871a9ae02ffe",
+          "rows": 4094,
+          "sha256": "8801cb3261fad9596048d8209bc001f6799ff05fdad2c6c14238a1ebdc43d6af"
+        }
+      },
+      "source_sha256": "ca2b6cd3dc9d229eb923bc8db4dbd90c7eac565ca7ec0463aff14e46bdea6e5b",
+      "stratify_on": "MobileHomePolicy",
+      "task_id": 363624,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 10000,
+      "dataset_name": "GiveMeSomeCredit",
+      "eval_metric": "roc_auc",
+      "group_on": null,
+      "num_classes": 2,
+      "num_features": 10,
+      "num_instances_train_metadata": 100000.0,
+      "original_rows": 100000,
+      "problem_type": "binary",
+      "roles": {
+        "confirmation": {
+          "index_sha256": "172c595cf68864dc2031cd0c08601640bee257169c49fcb1977d9ebeeb528d12",
+          "rows": 1250,
+          "sha256": "55dcc6dc4e8c28d8a0a05ffbd1b1728f114b320070b3d7e87ff015e69cb1ce9b"
+        },
+        "development": {
+          "index_sha256": "58cd2d34a9102484c1cb8f8fd5fb9f1e33eaef5315b3f6918c06ce653ecc48fb",
+          "rows": 1250,
+          "sha256": "26085f3e375c80aacbac3b2f1c7f89a275bd7d0e59e9c7a91d48e449d76bdab0"
+        },
+        "stop": {
+          "index_sha256": "95f86bc27511af6fa1201005a0abbd270a05687b2dc0c8dfae0562f1eac9237c",
+          "rows": 1250,
+          "sha256": "f47b44ca78b5a9f4eeb21e24cf673e2dad101b4bb5f585429c57f238883d633c"
+        },
+        "train": {
+          "index_sha256": "dcd223be41a510aa11519a689b24f8807f4deb63a673f010836c73773a74370d",
+          "rows": 6250,
+          "sha256": "7e35bf05917689ae8658a253efeb6c9d0b7788d59071e66bf03a13804937b46d"
+        }
+      },
+      "source_sha256": "0c5aa46c3324c6579ce6ac8bb64ef09025ac6c6dc3b88e35f884d211a3183280",
+      "stratify_on": "FinancialDistressNextTwoYears",
+      "task_id": 363673,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 604,
+      "dataset_name": "QSAR_fish_toxicity",
+      "eval_metric": "rmse",
+      "group_on": null,
+      "num_classes": -1,
+      "num_features": 6,
+      "num_instances_train_metadata": 604.6666666666666,
+      "original_rows": 604,
+      "problem_type": "regression",
+      "roles": {
+        "confirmation": {
+          "index_sha256": "6bba5109f6bd01b461c167c2cd9d3e1606c2f6592570039bedcfbad45fb061f3",
+          "rows": 75,
+          "sha256": "fdcf3d4584d8172ec50d4654ea5326e183dc2a7fcfec57574899e7235d109c3f"
+        },
+        "development": {
+          "index_sha256": "de932fe66bb7ae44a09ea389cc17da5fda798aaff13d223341f20d2498ea71a9",
+          "rows": 75,
+          "sha256": "2d46530f6a7839859fe494de796a99918f9623b4b223a44e03479d12f6f24470"
+        },
+        "stop": {
+          "index_sha256": "de393724061091abc721213073c612a2cb3947c29c7b7dc140f00abffbd62ccf",
+          "rows": 75,
+          "sha256": "43ca4ebb2355030f59be5efac1b974303f0210a3fd60d7fec7b94fb5d7b1b210"
+        },
+        "train": {
+          "index_sha256": "26be8a0042fad36c4a38afc7ead69ffb0cef33bbddb18aa58b2a116ce973d933",
+          "rows": 379,
+          "sha256": "f5e842b299001515cdcfee2cc3b322864cdf0fc244fe067a9e0cc6f88147ea50"
+        }
+      },
+      "source_sha256": "453ba15dccf00b5e2a3f702a78444c4e9a8bf7b8f4009be939f900bd91c2e86f",
+      "stratify_on": null,
+      "task_id": 363698,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 4331,
+      "dataset_name": "wine_quality",
+      "eval_metric": "rmse",
+      "group_on": null,
+      "num_classes": -1,
+      "num_features": 12,
+      "num_instances_train_metadata": 4331.333333333333,
+      "original_rows": 4331,
+      "problem_type": "regression",
+      "roles": {
+        "confirmation": {
+          "index_sha256": "c80b44c999e522f3015bcfd81133aa3ef826f8bb671d90b3179e680bec672193",
+          "rows": 541,
+          "sha256": "fd547d95031822226f3167a8fa8ddd6be05cb61222ee22bb4e8ca4a5f723b206"
+        },
+        "development": {
+          "index_sha256": "8f051b0e6b02c70195214218395f15ab2cdbe3f98e2c47a5aa78dc4197a86acb",
+          "rows": 541,
+          "sha256": "c1f786e0497ec616745a9e3247bb69f2dff24805f7b45b5487003e72baa6d33d"
+        },
+        "stop": {
+          "index_sha256": "c7e7dedc18d5a96095704bd02db915347f111e3f77f4ed95b3e17269d1dfd1c9",
+          "rows": 541,
+          "sha256": "e2dcc44396c027f15a9708702e08bec82e916b084d1fdc5cbf8bdc9d8ece8d44"
+        },
+        "train": {
+          "index_sha256": "d0caac36bc3801bf9f50335b34107e3be051879bd71daf84a1b1e0b9c9dba027",
+          "rows": 2708,
+          "sha256": "8e4c855edcb6f85df502e2e27a37fc813f9ad023ff5ff2bfb6c6dd2bfaf952e8"
+        }
+      },
+      "source_sha256": "f754ea217b3de6468333e0adb42e9101cc7ed7f38f6f8947bd3ca3da8704592d",
+      "stratify_on": null,
+      "task_id": 363708,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 10000,
+      "dataset_name": "diamonds",
+      "eval_metric": "rmse",
+      "group_on": null,
+      "num_classes": -1,
+      "num_features": 9,
+      "num_instances_train_metadata": 35960.0,
+      "original_rows": 35960,
+      "problem_type": "regression",
+      "roles": {
+        "confirmation": {
+          "index_sha256": "3c01c12ad0d9b96baad439c0697d3cd997790632820740c5145157561fa945ca",
+          "rows": 1250,
+          "sha256": "f7d3b038eef19314696aaf543ba83aa3c2f7c23f987abaf15760914a5e8743b4"
+        },
+        "development": {
+          "index_sha256": "e433b4cd4d73ba63497637d582e3424217fab3ed7cc1cda31d5e3e4b9e818739",
+          "rows": 1250,
+          "sha256": "b43f9e4ca7ad15e06c2d928de347d787815dc9517cc8af1f57538fdc9409bbe3"
+        },
+        "stop": {
+          "index_sha256": "3e974c20b4b0dd9787cfa93cf2d14b18177838f3975c31d94f2dbb4d112e4653",
+          "rows": 1250,
+          "sha256": "8aa0a52fd215f4cd95d3e65eaed49176d689e3c2de6c7842c886b3bb19fab9cb"
+        },
+        "train": {
+          "index_sha256": "da7aed652a62c60f83056933aa26a1fcc5aa72cd51f1668a28ecbc8ae4948bb3",
+          "rows": 6250,
+          "sha256": "7179128062904539b97310cd9f9e2e6058c6c17cf9e3a255a5db4e886eecb277"
+        }
+      },
+      "source_sha256": "c2bc8052f073a196a3ca1c72331eff333c091d822eca1adc5f175f0c116566a0",
+      "stratify_on": null,
+      "task_id": 363631,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 1132,
+      "dataset_name": "MIC",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 8,
+      "num_features": 111,
+      "num_instances_train_metadata": 1132.6666666666667,
+      "original_rows": 1132,
+      "problem_type": "multiclass",
+      "roles": {
+        "confirmation": {
+          "index_sha256": "b98cf736b41fbe3d59bc15ec5293830778ef14874f8344c93e4befd7ea022b66",
+          "rows": 141,
+          "sha256": "bc2f83fe3d996cd94e465ff0b41b060326401f3dc40030b5eeaf0e0f45d3c434"
+        },
+        "development": {
+          "index_sha256": "e6d4d348eedb869d44d0b7edd07c48e61c3ddd46f064a73954c8b0a8d664b4c6",
+          "rows": 141,
+          "sha256": "8854925fdfc61c51b6c54fa220a5abb36c8456934aebd3b5a3d348b0e75da23d"
+        },
+        "stop": {
+          "index_sha256": "04f96732af1f77f378db7d4edf1d7f5323ad168220ef0ad9c8b110e020954f73",
+          "rows": 141,
+          "sha256": "fb2b72bde1d9120904b059a127adfb19a145abe64a578cae468f16141ce410e7"
+        },
+        "train": {
+          "index_sha256": "1a13249e223a8470951625bb87acf828b4bdda48dc6a00e89ac6e8f041e7e510",
+          "rows": 709,
+          "sha256": "8d7f0753c49edd146544d84e5ebe3c21aba2115f379a890d9bae89a6b8475d94"
+        }
+      },
+      "source_sha256": "964d56703e1a04d6b7619a42d9d98e683a813155c4fd23886208ecee7803ab7c",
+      "stratify_on": "LET_IS",
+      "task_id": 363711,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 10000,
+      "dataset_name": "SDSS17",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 3,
+      "num_features": 11,
+      "num_instances_train_metadata": 52035.333333333336,
+      "original_rows": 52035,
+      "problem_type": "multiclass",
+      "roles": {
+        "confirmation": {
+          "index_sha256": "1e1177551de36da9c4d290dad91c72730f4b8f4d3ede87228685d720a7db193d",
+          "rows": 1250,
+          "sha256": "f3c866bb14319f7a997458f504d562712eb7b28d4e0ae604fb9a652bf7548955"
+        },
+        "development": {
+          "index_sha256": "a2d5c3ae7b38971fffbf6efb19a6918710953f46a9d01b844b9b9f175c58c68f",
+          "rows": 1250,
+          "sha256": "f04fd83a925c5f4fe4de03a13e983bd638ea450d8bc39e034e022559636bb476"
+        },
+        "stop": {
+          "index_sha256": "d9821736c8ceb76ddb2733e406ec6f1869e41be81694c0a160cb2ba97eb14a8b",
+          "rows": 1250,
+          "sha256": "8e54588d8c042eda1ac88c6c9ac1bcec66e16eff36152d5a4e77088dc582d906"
+        },
+        "train": {
+          "index_sha256": "94e134faaca82faf4f922f10033aaf76b1ceeec42989573fc9ef2d1093024181",
+          "rows": 6250,
+          "sha256": "f7b15212eef242cba1a06ffc3e918ba474bdbeab2ded06404dbcefd74e2a5a76"
+        }
+      },
+      "source_sha256": "f789e02b5e010a071c9f1121f90cc5c454d91478f14583a16990fee3bdabf32d",
+      "stratify_on": "ObjectType",
+      "task_id": 363699,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 598,
+      "dataset_name": "anneal",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 5,
+      "num_features": 38,
+      "num_instances_train_metadata": 598.6666666666666,
+      "original_rows": 598,
+      "problem_type": "multiclass",
+      "roles": {
+        "confirmation": {
+          "index_sha256": "5f966a3370bf40fb8f8a40746661fa969f89f1e2e62daf03b246c6e9e6f6ceb3",
+          "rows": 74,
+          "sha256": "a9e9f9d7798da93f2f7e1d5c9e3ffd6272a2a5a85830dbc18115daf8d2d2bf92"
+        },
+        "development": {
+          "index_sha256": "f2129a1bdffd8fbc7898915dc19aca76d5cff6b4f4ad182af984d10f149bf001",
+          "rows": 74,
+          "sha256": "4f7513f73ef64bdf5209644bc097969e79bfe5718633d1700c14535dfca5224d"
+        },
+        "stop": {
+          "index_sha256": "cf502cfa0cc866e69e81ed0bed8a06864b8465ae3a0a3f93700a43a88e201be4",
+          "rows": 75,
+          "sha256": "30b13e5bab6c1df07118414267352353d976f9d9d1fafcd0b3940e7cae3e9f5c"
+        },
+        "train": {
+          "index_sha256": "e233515a6d9a51a8b362d65ee730f2dbcbf8fb1efe1ddb83451383bae2b1b587",
+          "rows": 375,
+          "sha256": "6da6fd01eb1fa6797308e57cded9297fdc25fd361b99a3ca13de7a8298368775"
+        }
+      },
+      "source_sha256": "7109f15c4b6cd873b8fffb5dba69deabf76b1e7d90bcc0e3009e66f659f10549",
+      "stratify_on": "classes",
+      "task_id": 363614,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 2563,
+      "dataset_name": "hiva_agnostic",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 3,
+      "num_features": 1617,
+      "num_instances_train_metadata": 2563.3333333333335,
+      "original_rows": 2563,
+      "problem_type": "multiclass",
+      "roles": {
+        "confirmation": {
+          "index_sha256": "7e55bab79072dbc0c3d353a8a41a998463ef5f39335269ab9e53cbc853732d5c",
+          "rows": 320,
+          "sha256": "7959cab67cc729f0e0fc373dc7b496992801a7768641fa81912cbbfbf9d3bdeb"
+        },
+        "development": {
+          "index_sha256": "c16e19d95d39923f823c82502357d4dc37050d86267db30a96c49c7d9b3286ec",
+          "rows": 320,
+          "sha256": "b665ebef74bba981668a934e5bf676a5f0ed15b6a50c7418e84181cda8864efe"
+        },
+        "stop": {
+          "index_sha256": "6d97b995b2dfd3dc50c601518a0b3a0d98c3ec8bdd6cd3c87d5639e6b915c691",
+          "rows": 320,
+          "sha256": "3a8e59af0492739fc57b221d8fa7b88cdb14f2465cddc733df9082a97b51cd3e"
+        },
+        "train": {
+          "index_sha256": "2a80d052a55066a15abfb0462284c66b1e9900578c972bbf608df7236d08cd62",
+          "rows": 1603,
+          "sha256": "1cabb0cf34f8e3a874261eecafee4e7fe745e072eb2f41dfacece714d8a51c64"
+        }
+      },
+      "source_sha256": "9e33086fd4bd5c85cef805ce74a98a7a147ed6b01fd247f13fbb44f55ab1951c",
+      "stratify_on": "CompoundActivity",
+      "task_id": 363677,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 676,
+      "dataset_name": "maternal_health_risk",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 3,
+      "num_features": 6,
+      "num_instances_train_metadata": 676.0,
+      "original_rows": 676,
+      "problem_type": "multiclass",
+      "roles": {
+        "confirmation": {
+          "index_sha256": "706ba036fee7e5bda4766287869e39f148fc39bef6525255468b8555b2be485d",
+          "rows": 84,
+          "sha256": "f1ff133502bffcac126d6cc1fd711911df6d71d27528bcfad59792e03cb06005"
+        },
+        "development": {
+          "index_sha256": "7d9f5448a306ee86f38cb9d67924fc0030609ddad973af10762afddd63aea05d",
+          "rows": 84,
+          "sha256": "a349d5b94889b33701eb67fda422b83dc3df479ce19a54baa29d57e151e8bea2"
+        },
+        "stop": {
+          "index_sha256": "81e9fe6ec0fa6146d362fbba125df24f4005e6f44d282549a825286638d91208",
+          "rows": 84,
+          "sha256": "d9b2f30382bed6cd8b2f6dcb55ff2271dbd8e6ed45079f45694275d79b1f46c8"
+        },
+        "train": {
+          "index_sha256": "a4f6289d105811ba1f9b6a1e98a46d096e7756fb9f2ab9cd0cb6d85e7a5fed36",
+          "rows": 424,
+          "sha256": "bb8df741cc88ef4a3e1408c5241dc1f12db6c02ddf26a03f8babd20283ad8494"
+        }
+      },
+      "source_sha256": "875f1a76acf33a880ddce2a0a400b35e4e5703b33d62411203a4d7e5c622c341",
+      "stratify_on": "RiskLevel",
+      "task_id": 363685,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 2126,
+      "dataset_name": "splice",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 3,
+      "num_features": 60,
+      "num_instances_train_metadata": 2126.6666666666665,
+      "original_rows": 2126,
+      "problem_type": "multiclass",
+      "roles": {
+        "confirmation": {
+          "index_sha256": "6d94c50e83336d207afb9094e1ad6013dd97dedb2c4fb011a2ae94828a944e9d",
+          "rows": 265,
+          "sha256": "6d8c75e6e9e58be0e0c059afd8a64d1fb46c6b0a5688777233c1b9715e2bdce7"
+        },
+        "development": {
+          "index_sha256": "f2328a71b82e021eaa1aa7cfd97280732fdd2f5f28b06ea9840d05657a408055",
+          "rows": 265,
+          "sha256": "0e3d8eb837856a9de102c6346a68b8b23cfc7442863485b7eb759fe1d7c6ab49"
+        },
+        "stop": {
+          "index_sha256": "97f76c72b9bf98aa7e733b0b4196a7b71c0b329cccd45ec0d7cb35fbe616f11b",
+          "rows": 266,
+          "sha256": "16d8f5af5137f2952c4f6bd2fa01fc31ff57fe1d14c433e4f5d0a0a86dd83511"
+        },
+        "train": {
+          "index_sha256": "042a2a8d404ecf5ca1e7759806eb111106bc947390a62c11ba035c30c3897766",
+          "rows": 1330,
+          "sha256": "df47932ec15cfae3ae2905d96f95bff6ab8f21533a1f423d973545dcdc837e9f"
+        }
+      },
+      "source_sha256": "6891d8b7ad6306f8bb9cc5becd8bbea4ac437b962a241dc6152c9b45a25b096a",
+      "stratify_on": "SiteType",
+      "task_id": 363702,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 2949,
+      "dataset_name": "students_dropout_and_academic_success",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 3,
+      "num_features": 36,
+      "num_instances_train_metadata": 2949.3333333333335,
+      "original_rows": 2949,
+      "problem_type": "multiclass",
+      "roles": {
+        "confirmation": {
+          "index_sha256": "14b44f7677a8b6258c06df1ecd26640f8ee76d98b9eb737f1fefd0eca20add55",
+          "rows": 368,
+          "sha256": "62f0a47732330e0f8e8fd7c4a60d5a586938387094d9fb9f28bbf91f70a5ddab"
+        },
+        "development": {
+          "index_sha256": "1e737c1aca82e49d037d8f951fb8f2c5f28f4416a9fb89fcc1868f425ac37043",
+          "rows": 368,
+          "sha256": "9cf802d3dbb66302fb27108c0fce104a0633251089b216f4cdadcbd2dc0f1b26"
+        },
+        "stop": {
+          "index_sha256": "ae887597261ae5a83cd895d54455fab9f6af9e424fa7f2cefc16b1c6d636ea9a",
+          "rows": 368,
+          "sha256": "4634731e414f9c94ea2231ba0d396d30dcc921d614f58448aa7ac0751f533ca0"
+        },
+        "train": {
+          "index_sha256": "9940982de9f0d521c540b54290afb21719060c92e30fbe44f4a501c427a2abed",
+          "rows": 1845,
+          "sha256": "4a48ca8d503e15569fe00b113ae23a01368f7c8a095a446140b52e578b2c129b"
+        }
+      },
+      "source_sha256": "1e25713ad7caaaf06a222bf6cd6a36a89e78f79eba77dcd80250cf15a6b58689",
+      "stratify_on": "AcademicOutcome",
+      "task_id": 363704,
+      "task_type": "random",
+      "time_on": null
+    },
+    {
+      "capped_rows": 902,
+      "dataset_name": "website_phishing",
+      "eval_metric": "log_loss",
+      "group_on": null,
+      "num_classes": 3,
+      "num_features": 9,
+      "num_instances_train_metadata": 902.0,
+      "original_rows": 902,
+      "problem_type": "multiclass",
+      "roles": {
+        "confirmation": {
+          "index_sha256": "2e6d3e68e3369801635b8e944cbdf7a61f389c6d8883043a86a42b62431b4d4d",
+          "rows": 112,
+          "sha256": "99d466a013a44489e65a1d053a2d1863d559376d659e0796acda7783d41568e0"
+        },
+        "development": {
+          "index_sha256": "02225c295a85f7c320963ea29a67eb9f63e8ef86e9e429ef6a1f94c4d1feb61a",
+          "rows": 112,
+          "sha256": "cc08139a5cf10147669e766609848f7fd95d3106ff27556534fac4fdaf149302"
+        },
+        "stop": {
+          "index_sha256": "f1e1fc92f5b0d729ec6071939acd7ccc8d60f3133fd02e10d16163b79dad46f2",
+          "rows": 113,
+          "sha256": "33b55b90145e55aedcdfff2c8418ec782225accf2d90bb6b16afc34cf8a1e785"
+        },
+        "train": {
+          "index_sha256": "ee3eee0b7c0c312c9fab03d76edc2b2a89ff8ebf1b1b4b5f5143bd2210d149cc",
+          "rows": 565,
+          "sha256": "ff284a41ad64eae6888d41871274e8ca70f6f0a2c303ed887adff29f3d1a7f9b"
+        }
+      },
+      "source_sha256": "5e107fcc9935556ecbb818c0bf42f6ec547169419716df5c4ed7400543e85673",
+      "stratify_on": "WebsiteType",
+      "task_id": 363707,
+      "task_type": "random",
+      "time_on": null
+    }
+  ],
+  "expected_fits": 42,
+  "gate": {
+    "maximum_geometric_fit_ratio": 3,
+    "maximum_p90_fit_ratio": 5,
+    "maximum_relative_regression": 0.1,
+    "minimum_dataset_wins": 8,
+    "minimum_median_relative_error_gain": 0.01,
+    "require_all_42_fits_finite_without_hard_timeout_or_oom": true
+  },
+  "protocol_id": "ctboost_grouped8_development_20260908_v1",
+  "resources": {
+    "affinities": [
+      [
+        0,
+        8
+      ],
+      [
+        1,
+        9
+      ]
+    ],
+    "ctboost_early_stop": 50,
+    "fit_seconds": 300,
+    "hard_wall_seconds": 390,
+    "max_workers": 2,
+    "rss_bytes": 8589934592,
+    "threads": 2
+  },
+  "reuse_disclosure": "These outer-training datasets were used in previous development studies. New seed47 disjoint role folds do not make dataset reuse independent confirmation. No official outer-test rows or Elo.",
+  "runner_sha256": "8aa6b5a3dc422b4a2541ce5578e92ae839119e9e138eee96e79902e4d0550241",
+  "selection": "All 14 original metadata-selected pilot tasks, without score-based filtering.",
+  "source_sha256": {
+    "benchmarks/tabarena/ctboost_model.py": "a72d7f19eabef9c75511f06b135e3fd2f5fe6361e63c11a37d804a0671c63457",
+    "benchmarks/tabarena/learning_options.py": "cc72fc42a5dee7e89fa5282a12c5eddaa854bc324fc89115bddcf5e917c016ce"
+  },
+  "split_policy": "Cap outer-training rows to10000 first (seed47; classification stratified). CVSplitter8 seed47: train folds0-4, early-stop5, development6, sealed confirmation7.",
+  "versions": {
+    "autogluon.core": "1.6.2b20260821",
+    "autogluon.tabular": "1.6.2b20260821",
+    "ctboost": "0.1.60",
+    "numpy": "2.0.2",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.6.1",
+    "xgboost": "3.4.1"
+  },
+  "xgboost": "AutoGluon XGBoostModel standard defaults, seed47, same early-stopping rows/300s/2CPU; its default adaptive patience and tree cap are retained."
+}

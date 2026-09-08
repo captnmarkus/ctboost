@@ -1,0 +1,17 @@
+{
+  "affinity": [
+    1,
+    9
+  ],
+  "arm": "xgboost_ag_default",
+  "dataset": "online_shoppers_intention",
+  "error": "Traceback (most recent call last):\n  File \"C:\\apps\\ctboost\\benchmarks\\accuracy_grouped_scout.py\", line 245, in fit\n    model.fit(X=X, y=train[\"y\"], X_val=X_stop, y_val=stopping[\"y\"],\n  File \"C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\baseline-env\\Lib\\site-packages\\autogluon\\core\\models\\abstract\\abstract_model.py\", line 1402, in fit\n    out = self._fit(**kwargs)\n          ^^^^^^^^^^^^^^^^^^^\n  File \"C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\baseline-env\\Lib\\site-packages\\autogluon\\tabular\\models\\xgboost\\xgboost_model.py\", line 153, in _fit\n    X = self.preprocess(X, y=y, is_train=True, max_category_levels=max_category_levels)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\baseline-env\\Lib\\site-packages\\autogluon\\core\\models\\abstract\\abstract_model.py\", line 651, in preprocess\n    X = self._preprocess(X, **kwargs)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\baseline-env\\Lib\\site-packages\\autogluon\\tabular\\models\\xgboost\\xgboost_model.py\", line 85, in _preprocess\n    X = self._ohe_generator.transform(X)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\baseline-env\\Lib\\site-packages\\sklearn\\utils\\_set_output.py\", line 319, in wrapped\n    data_to_wrap = f(self, X, *args, **kwargs)\n                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\baseline-env\\Lib\\site-packages\\autogluon\\tabular\\models\\xgboost\\xgboost_utils.py\", line 157, in transform\n    X_list.append(csr_matrix(X[self.other_cols]))\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\baseline-env\\Lib\\site-packages\\scipy\\sparse\\_compressed.py\", line 95, in __init__\n    coo = self._coo_container(arg1, dtype=dtype)\n          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\baseline-env\\Lib\\site-packages\\scipy\\sparse\\_coo.py\", line 95, in __init__\n    self.data = getdata(M[coords], copy=copy, dtype=dtype)\n                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\baseline-env\\Lib\\site-packages\\scipy\\sparse\\_sputils.py\", line 150, in getdata\n    getdtype(data.dtype)\n  File \"C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\baseline-env\\Lib\\site-packages\\scipy\\sparse\\_sputils.py\", line 137, in getdtype\n    raise ValueError(f\"scipy.sparse does not support dtype {newdtype}. \"\nValueError: scipy.sparse does not support dtype object. The only supported types are: bool, int8, uint8, int16, uint16, intc, uintc, int32, uint32, int64, uint64, float32, float64, longdouble, complex64, complex128, clongdouble.\n",
+  "exit_code": 0,
+  "finished_at": "2026-09-08T18:11:18.528871+00:00",
+  "peak_rss_bytes": 176095232,
+  "plan_sha256": "07cd7841988b2f32cc034470ef295fb54ad68d90c6dcf39a2b81105db1ac2e94",
+  "resource_failure": null,
+  "soft_deadline_stopped": false,
+  "started_at": "2026-09-08T18:11:18.492554+00:00",
+  "status": "failed"
+}

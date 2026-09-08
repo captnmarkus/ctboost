@@ -1,0 +1,33 @@
+
+C:\apps\ctboost\.tmp\inference-accuracy-20260908\fp-contract-review\fma.exe:     file format pei-i386
+
+
+Disassembly of section .text:
+
+00401390 <_legacy_update>:
+  401390:	56                   	push   %esi
+  401391:	53                   	push   %ebx
+  401392:	8b 4c 24 14          	mov    0x14(%esp),%ecx
+  401396:	8b 5c 24 0c          	mov    0xc(%esp),%ebx
+  40139a:	c5 fb 10 4c 24 18    	vmovsd 0x18(%esp),%xmm1
+  4013a0:	85 c9                	test   %ecx,%ecx
+  4013a2:	7e 38                	jle    4013dc <_legacy_update+0x4c>
+  4013a4:	8b 44 24 10          	mov    0x10(%esp),%eax
+  4013a8:	8b 54 24 20          	mov    0x20(%esp),%edx
+  4013ac:	c5 f3 5a c9          	vcvtsd2ss %xmm1,%xmm1,%xmm1
+  4013b0:	8d 34 88             	lea    (%eax,%ecx,4),%esi
+  4013b3:	2e 8d b4 26 00 00 00 	lea    %cs:0x0(%esi,%eiz,1),%esi
+  4013ba:	00 
+  4013bb:	2e 8d 74 26 00       	lea    %cs:0x0(%esi,%eiz,1),%esi
+  4013c0:	8b 08                	mov    (%eax),%ecx
+  4013c2:	83 c0 04             	add    $0x4,%eax
+  4013c5:	83 c2 04             	add    $0x4,%edx
+  4013c8:	c5 fa 10 04 8b       	vmovss (%ebx,%ecx,4),%xmm0
+  4013cd:	c4 e2 71 a9 42 fc    	vfmadd213ss -0x4(%edx),%xmm1,%xmm0
+  4013d3:	c5 fa 11 42 fc       	vmovss %xmm0,-0x4(%edx)
+  4013d8:	39 c6                	cmp    %eax,%esi
+  4013da:	75 e4                	jne    4013c0 <_legacy_update+0x30>
+  4013dc:	5b                   	pop    %ebx
+  4013dd:	5e                   	pop    %esi
+  4013de:	c3                   	ret
+  4013df:	90                   	nop

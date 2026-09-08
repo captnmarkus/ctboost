@@ -1,0 +1,1000 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index fcbaf21..c113d6d 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -137,6 +137,7 @@ add_library(ctboost_core STATIC
+   src/core/tree_distributed_payloads.cpp
+   src/core/tree_predict.cpp
+   src/core/tree_split_scoring.cpp
++  src/core/tree_multiclass_split.cpp
+ )
+ 
+ # ``ctboost_core`` is an implementation-only static archive linked into the
+diff --git a/ctboost/cli.py b/ctboost/cli.py
+index 9ae2d57..5b5553e 100644
+--- a/ctboost/cli.py
++++ b/ctboost/cli.py
+@@ -629,6 +629,7 @@ def _training_parameters(args: argparse.Namespace) -> Dict[str, Any]:
+         "leaf_estimation_backtracking": args.leaf_estimation_backtracking,
+         "multiclass_leaf_solver": args.multiclass_leaf_solver,
+         "multiclass_feature_test": args.multiclass_feature_test,
++        "multiclass_split_score": args.multiclass_split_score,
+         "feature_test": args.feature_test,
+         "feature_test_bins": args.feature_test_bins,
+         "feature_test_adjustment": args.feature_test_adjustment,
+@@ -966,6 +967,8 @@ def build_parser() -> argparse.ArgumentParser:
+                               help="Safeguard RMSE/LogLoss leaf updates with loss backtracking")
+     train_parser.add_argument("--multiclass-leaf-solver", choices=("diagonal", "full"),
+                               help="Multiclass leaf solver (full: CPU, 3-32 classes)")
++    train_parser.add_argument("--multiclass-split-score", choices=("scalar", "joint"),
++                              help="Score cuts on the selected feature (joint: CPU, 3-32 classes)")
+     train_parser.add_argument("--multiclass-feature-test", choices=("single", "joint"),
+                               help="Use one class or all class gradients for feature selection")
+     train_parser.add_argument(
+diff --git a/ctboost/sklearn/_fit.py b/ctboost/sklearn/_fit.py
+index 20f0382..3f2b65f 100644
+--- a/ctboost/sklearn/_fit.py
++++ b/ctboost/sklearn/_fit.py
+@@ -191,6 +191,7 @@ class _BaseFitMixin:
+                 "leaf_estimation_backtracking": self.leaf_estimation_backtracking,
+                 "multiclass_leaf_solver": self.multiclass_leaf_solver,
+                 "multiclass_feature_test": self.multiclass_feature_test,
++                "multiclass_split_score": self.multiclass_split_score,
+                 "feature_test": self.feature_test,
+                 "feature_test_bins": self.feature_test_bins,
+                 "feature_test_adjustment": self.feature_test_adjustment,
+diff --git a/ctboost/sklearn/_params.py b/ctboost/sklearn/_params.py
+index d649a7c..d977f77 100644
+--- a/ctboost/sklearn/_params.py
++++ b/ctboost/sklearn/_params.py
+@@ -94,6 +94,7 @@ class _BaseInitMixin:
+             leaf_estimation_backtracking: bool = False,
+             multiclass_leaf_solver: str = "diagonal",
+             multiclass_feature_test: str = "single",
++            multiclass_split_score: str = "scalar",
+             feature_test: str = "quadratic",
+             feature_test_bins: int = 8,
+             feature_test_adjustment: str = "none",
+@@ -194,6 +195,7 @@ class _BaseInitMixin:
+             self.leaf_estimation_backtracking = leaf_estimation_backtracking
+             self.multiclass_leaf_solver = multiclass_leaf_solver
+             self.multiclass_feature_test = multiclass_feature_test
++            self.multiclass_split_score = multiclass_split_score
+             self.feature_test = feature_test
+             self.feature_test_bins = feature_test_bins
+             self.feature_test_adjustment = feature_test_adjustment
+@@ -283,6 +285,7 @@ class _BaseInitMixin:
+                 "leaf_estimation_backtracking": False,
+                 "multiclass_leaf_solver": "diagonal",
+                 "multiclass_feature_test": "single",
++                "multiclass_split_score": "scalar",
+                 "feature_test": "quadratic",
+                 "feature_test_bins": 8,
+                 "feature_test_adjustment": "none",
+diff --git a/ctboost/sklearn/classifier.py b/ctboost/sklearn/classifier.py
+index 45c86a0..bd0b27b 100644
+--- a/ctboost/sklearn/classifier.py
++++ b/ctboost/sklearn/classifier.py
+@@ -71,6 +71,7 @@ class CTBoostClassifier(ClassifierMixin, _BaseCTBoost):
+         leaf_estimation_backtracking: bool = False,
+         multiclass_leaf_solver: str = "diagonal",
+         multiclass_feature_test: str = "single",
++        multiclass_split_score: str = "scalar",
+         feature_test: str = "quadratic",
+         feature_test_bins: int = 8,
+         feature_test_adjustment: str = "none",
+@@ -159,6 +160,7 @@ class CTBoostClassifier(ClassifierMixin, _BaseCTBoost):
+             leaf_estimation_backtracking=leaf_estimation_backtracking,
+             multiclass_leaf_solver=multiclass_leaf_solver,
+             multiclass_feature_test=multiclass_feature_test,
++            multiclass_split_score=multiclass_split_score,
+             feature_test=feature_test,
+             feature_test_bins=feature_test_bins,
+             feature_test_adjustment=feature_test_adjustment,
+diff --git a/ctboost/sklearn/ranker.py b/ctboost/sklearn/ranker.py
+index 064ca4b..4e4a34c 100644
+--- a/ctboost/sklearn/ranker.py
++++ b/ctboost/sklearn/ranker.py
+@@ -69,6 +69,7 @@ class CTBoostRanker(_BaseCTBoost):
+         leaf_estimation_backtracking: bool = False,
+         multiclass_leaf_solver: str = "diagonal",
+         multiclass_feature_test: str = "single",
++        multiclass_split_score: str = "scalar",
+         feature_test: str = "quadratic",
+         feature_test_bins: int = 8,
+         feature_test_adjustment: str = "none",
+@@ -155,6 +156,7 @@ class CTBoostRanker(_BaseCTBoost):
+             leaf_estimation_backtracking=leaf_estimation_backtracking,
+             multiclass_leaf_solver=multiclass_leaf_solver,
+             multiclass_feature_test=multiclass_feature_test,
++            multiclass_split_score=multiclass_split_score,
+             feature_test=feature_test,
+             feature_test_bins=feature_test_bins,
+             feature_test_adjustment=feature_test_adjustment,
+diff --git a/ctboost/sklearn/regressor.py b/ctboost/sklearn/regressor.py
+index b32c80a..1d8f31e 100644
+--- a/ctboost/sklearn/regressor.py
++++ b/ctboost/sklearn/regressor.py
+@@ -67,6 +67,7 @@ class CTBoostRegressor(RegressorMixin, _BaseCTBoost):
+         leaf_estimation_backtracking: bool = False,
+         multiclass_leaf_solver: str = "diagonal",
+         multiclass_feature_test: str = "single",
++        multiclass_split_score: str = "scalar",
+         feature_test: str = "quadratic",
+         feature_test_bins: int = 8,
+         feature_test_adjustment: str = "none",
+@@ -153,6 +154,7 @@ class CTBoostRegressor(RegressorMixin, _BaseCTBoost):
+             leaf_estimation_backtracking=leaf_estimation_backtracking,
+             multiclass_leaf_solver=multiclass_leaf_solver,
+             multiclass_feature_test=multiclass_feature_test,
++            multiclass_split_score=multiclass_split_score,
+             feature_test=feature_test,
+             feature_test_bins=feature_test_bins,
+             feature_test_adjustment=feature_test_adjustment,
+diff --git a/ctboost/training/_train_config.py b/ctboost/training/_train_config.py
+index 324acdb..41a55db 100644
+--- a/ctboost/training/_train_config.py
++++ b/ctboost/training/_train_config.py
+@@ -44,6 +44,7 @@ _NATIVE_TRAIN_PARAM_KEYS = {
+     "leaf_estimation_backtracking",
+     "multiclass_leaf_solver",
+     "multiclass_feature_test",
++    "multiclass_split_score",
+     "feature_test",
+     "feature_test_bins",
+     "feature_test_adjustment",
+diff --git a/ctboost/training/_train_native.py b/ctboost/training/_train_native.py
+index 17a82f0..44c6508 100644
+--- a/ctboost/training/_train_native.py
++++ b/ctboost/training/_train_native.py
+@@ -51,6 +51,7 @@ def _make_native_booster(
+         leaf_estimation_backtracking=native_params["leaf_estimation_backtracking"],
+         multiclass_leaf_solver=native_params["multiclass_leaf_solver"],
+         multiclass_feature_test=native_params["multiclass_feature_test"],
++        multiclass_split_score=native_params["multiclass_split_score"],
+         feature_test=native_params["feature_test"],
+         feature_test_bins=native_params["feature_test_bins"],
+         feature_test_adjustment=native_params["feature_test_adjustment"],
+diff --git a/ctboost/training/_train_params.py b/ctboost/training/_train_params.py
+index ebe706d..2b548c0 100644
+--- a/ctboost/training/_train_params.py
++++ b/ctboost/training/_train_params.py
+@@ -139,6 +139,9 @@ def _resolve_native_training_params(
+         "multiclass_feature_test": str(config.get(
+             "multiclass_feature_test", "single" if init_state is None else init_state.get("multiclass_feature_test", "single"),
+         )),
++        "multiclass_split_score": str(config.get(
++            "multiclass_split_score", "scalar" if init_state is None else init_state.get("multiclass_split_score", "scalar"),
++        )),
+         "feature_test": feature_test or "quadratic",
+         "feature_test_bins": int(
+             config.get(
+diff --git a/ctboost/training/booster.py b/ctboost/training/booster.py
+index d4e4450..8cee3e0 100644
+--- a/ctboost/training/booster.py
++++ b/ctboost/training/booster.py
+@@ -667,6 +667,11 @@ class Booster:
+         """Return the configured multiclass feature test."""
+         return str(self._handle.multiclass_feature_test())
+ 
++    @property
++    def multiclass_split_score(self) -> str:
++        """Return the configured score for cuts on the conditionally selected feature."""
++        return str(self._handle.multiclass_split_score())
++
+     @property
+     def leaf_estimation_iterations(self) -> int:
+         """Number of fixed-structure leaf-value estimation steps per tree."""
+diff --git a/ctboost/training/resume.py b/ctboost/training/resume.py
+index 51336e9..f6cd89e 100644
+--- a/ctboost/training/resume.py
++++ b/ctboost/training/resume.py
+@@ -113,6 +113,7 @@ def _resume_snapshot_config_signature(*, pool: Pool, **kwargs: Any) -> Dict[str,
+         "leaf_estimation_backtracking": bool(kwargs.get("leaf_estimation_backtracking", False)),
+         "multiclass_leaf_solver": str(kwargs.get("multiclass_leaf_solver", "diagonal")),
+         "multiclass_feature_test": str(kwargs.get("multiclass_feature_test", "single")),
++        "multiclass_split_score": str(kwargs.get("multiclass_split_score", "scalar")),
+         "max_bins": int(kwargs["max_bins"]),
+         "nan_mode": str(kwargs["nan_mode"]),
+         "max_bin_by_feature": _normalize_resume_signature_value(kwargs["max_bin_by_feature"]),
+@@ -181,6 +182,7 @@ def _resume_snapshot_state_signature(init_state: Mapping[str, Any], init_model:
+         "leaf_estimation_backtracking": bool(init_state.get("leaf_estimation_backtracking", False)),
+         "multiclass_leaf_solver": str(init_state.get("multiclass_leaf_solver", "diagonal")),
+         "multiclass_feature_test": str(init_state.get("multiclass_feature_test", "single")),
++        "multiclass_split_score": str(init_state.get("multiclass_split_score", "scalar")),
+         "max_bins": int(init_state["max_bins"]),
+         "nan_mode": str(init_state["nan_mode"]),
+         "max_bin_by_feature": _normalize_resume_signature_value(init_state.get("max_bin_by_feature", [])),
+diff --git a/docs/guides/learning-options.md b/docs/guides/learning-options.md
+index 48704e8..58062f2 100644
+--- a/docs/guides/learning-options.md
++++ b/docs/guides/learning-options.md
+@@ -131,3 +131,30 @@ exports store the resulting tree structure and leaf values.
+ Use held-out validation data to compare these options on your task. The
+ published [0.1.58 TabArena results](../benchmarks.md) remain evidence for that
+ version and configuration; they do not measure these new algorithms.
++
++
++## Experimental joint cut score (isolated development prototype)
++
++The opt-in `multiclass_split_score="joint"` scores candidate cuts on the feature
++already accepted by conditional inference. It sums diagonal Newton gains
++`G_left[k]^2/(H_left[k]+lambda_l2) + G_right[k]^2/(H_right[k]+lambda_l2)
++- G_parent[k]^2/(H_parent[k]+lambda_l2)` over classes. The default is `"scalar"`;
++old states without this field restore that default. This prototype is not part
++of the published 0.1.60 release and has no demonstrated validation-score benefit.
++
++Feature selection, its p-value threshold, and candidate feature subsampling stay
++unchanged. `multiclass_feature_test="joint"` is an independent choice: joint cut
++scoring alone cannot recover a feature rejected by the scalar conditional test.
++Numeric cuts use the existing bins. Categorical candidates retain the existing
++scalar structure-coordinate ordering, then score its prefixes jointly; this is
++not an exhaustive search over category partitions. `gamma` applies to the summed
++gain; child weight/count checks retain their existing structure-coordinate rules.
++
++The initial implementation requires a built-in CPU multiclass objective with
++3-32 classes and rejects distributed training, custom objectives, monotone and
++interaction constraints, feature weights, first-use penalties, nonzero
++`random_strength`, and nonzero `max_leaf_weight`. Scalar and vector tree storage
++use the same cut scores and leaves. Fractional sample/bootstrap weights work with
++single-coordinate feature testing; enabling joint feature testing retains its
++integer-frequency-weight restriction. The full leaf solver remains independent:
++its coupled Hessian is not used by this diagonal cut score.
+diff --git a/include/ctboost/booster.hpp b/include/ctboost/booster.hpp
+index f8c3fcf..caafd8e 100644
+--- a/include/ctboost/booster.hpp
++++ b/include/ctboost/booster.hpp
+@@ -73,7 +73,8 @@ class GradientBooster {
+                   std::string multi_strategy = "one_output_per_tree",
+                   bool leaf_estimation_backtracking = false,
+                   std::string multiclass_leaf_solver = "diagonal",
+-                  std::string multiclass_feature_test = "single");
++                  std::string multiclass_feature_test = "single",
++                  std::string multiclass_split_score = "scalar");
+ 
+   void Fit(Pool& pool,
+            Pool* eval_pool = nullptr,
+@@ -144,6 +145,7 @@ class GradientBooster {
+   bool leaf_estimation_backtracking() const noexcept;
+   const std::string& multiclass_leaf_solver() const noexcept;
+   const std::string& multiclass_feature_test() const noexcept;
++  const std::string& multiclass_split_score() const noexcept;
+   const std::string& feature_test() const noexcept;
+   std::size_t feature_test_bins() const noexcept;
+   const std::string& feature_test_adjustment() const noexcept;
+@@ -212,6 +214,7 @@ class GradientBooster {
+   bool leaf_estimation_backtracking_{false};
+   std::string multiclass_leaf_solver_{"diagonal"};
+   std::string multiclass_feature_test_{"single"};
++  std::string multiclass_split_score_{"scalar"};
+   std::string feature_test_{"quadratic"};
+   std::size_t feature_test_bins_{8};
+   std::string feature_test_adjustment_{"none"};
+diff --git a/include/ctboost/tree.hpp b/include/ctboost/tree.hpp
+index 9e2dbc8..fac96aa 100644
+--- a/include/ctboost/tree.hpp
++++ b/include/ctboost/tree.hpp
+@@ -95,6 +95,11 @@ struct TreeBuildOptions {
+   // Optional complete response vectors for CPU joint feature selection.
+   const std::vector<float>* multivariate_gradients{nullptr};
+   std::size_t multivariate_dimension{0};
++  // Optional all-class diagonal Newton responses for scoring cuts only.
++  // These do not enable multivariate conditional feature statistics.
++  const std::vector<float>* split_gradients{nullptr};
++  const std::vector<float>* split_hessians{nullptr};
++  std::size_t split_dimension{0};
+   // Set internally by Build; valid only for the duration of that tree build.
+   const std::vector<std::size_t>* statistic_row_indices{nullptr};
+   const std::vector<float>* statistic_weights{nullptr};
+diff --git a/src/bindings/module_registration_booster.cpp b/src/bindings/module_registration_booster.cpp
+index 178124e..6623e31 100644
+--- a/src/bindings/module_registration_booster.cpp
++++ b/src/bindings/module_registration_booster.cpp
+@@ -168,6 +168,7 @@ void BindGradientBooster(py::module_& m) {
+                     std::string,
+                     bool,
+                     std::string,
++                    std::string,
+                     std::string>(),
+            py::arg("objective") = "RMSE",
+            py::arg("iterations") = 100,
+@@ -226,7 +227,8 @@ void BindGradientBooster(py::module_& m) {
+            py::arg("multi_strategy") = "one_output_per_tree",
+            py::arg("leaf_estimation_backtracking") = false,
+            py::arg("multiclass_leaf_solver") = "diagonal",
+-           py::arg("multiclass_feature_test") = "single")
++           py::arg("multiclass_feature_test") = "single",
++           py::arg("multiclass_split_score") = "scalar")
+       .def("fit",
+            [](ctboost::GradientBooster& booster,
+               py::object pool_obj,
+diff --git a/src/bindings/module_registration_booster_accessors.cpp b/src/bindings/module_registration_booster_accessors.cpp
+index 35dbbcf..659fa70 100644
+--- a/src/bindings/module_registration_booster_accessors.cpp
++++ b/src/bindings/module_registration_booster_accessors.cpp
+@@ -49,6 +49,7 @@ void BindGradientBoosterAccessors(py::class_<ctboost::GradientBooster>& booster_
+       .def("leaf_estimation_backtracking", &ctboost::GradientBooster::leaf_estimation_backtracking)
+       .def("multiclass_leaf_solver", &ctboost::GradientBooster::multiclass_leaf_solver)
+       .def("multiclass_feature_test", &ctboost::GradientBooster::multiclass_feature_test)
++      .def("multiclass_split_score", &ctboost::GradientBooster::multiclass_split_score)
+       .def("feature_test", &ctboost::GradientBooster::feature_test)
+       .def("feature_test_bins", &ctboost::GradientBooster::feature_test_bins)
+       .def("feature_test_adjustment", &ctboost::GradientBooster::feature_test_adjustment)
+diff --git a/src/bindings/module_state_booster.cpp b/src/bindings/module_state_booster.cpp
+index 37f9de6..8bdd369 100644
+--- a/src/bindings/module_state_booster.cpp
++++ b/src/bindings/module_state_booster.cpp
+@@ -66,6 +66,7 @@ py::dict BoosterToStateDict(const ctboost::GradientBooster& booster) {
+   state["leaf_estimation_backtracking"] = booster.leaf_estimation_backtracking();
+   state["multiclass_leaf_solver"] = booster.multiclass_leaf_solver();
+   state["multiclass_feature_test"] = booster.multiclass_feature_test();
++  state["multiclass_split_score"] = booster.multiclass_split_score();
+   state["feature_test"] = booster.feature_test();
+   state["feature_test_bins"] = booster.feature_test_bins();
+   state["feature_test_adjustment"] = booster.feature_test_adjustment();
+@@ -279,7 +280,10 @@ ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
+                                        : "diagonal",
+                                    state.contains("multiclass_feature_test")
+                                        ? py::cast<std::string>(state["multiclass_feature_test"])
+-                                       : "single");
++                                       : "single",
++                                   state.contains("multiclass_split_score")
++                                       ? py::cast<std::string>(state["multiclass_split_score"])
++                                       : "scalar");
+ 
+   booster.LoadState(std::move(trees),
+                     quantization_schema,
+diff --git a/src/core/booster_accessors.cpp b/src/core/booster_accessors.cpp
+index badca12..d3a4aab 100644
+--- a/src/core/booster_accessors.cpp
++++ b/src/core/booster_accessors.cpp
+@@ -55,6 +55,9 @@ const std::string& GradientBooster::multiclass_leaf_solver() const noexcept {
+ const std::string& GradientBooster::multiclass_feature_test() const noexcept {
+   return multiclass_feature_test_;
+ }
++const std::string& GradientBooster::multiclass_split_score() const noexcept {
++  return multiclass_split_score_;
++}
+ const std::string& GradientBooster::feature_test() const noexcept { return feature_test_; }
+ std::size_t GradientBooster::feature_test_bins() const noexcept { return feature_test_bins_; }
+ const std::string& GradientBooster::feature_test_adjustment() const noexcept {
+diff --git a/src/core/booster_constructor.cpp b/src/core/booster_constructor.cpp
+index 5df759a..c9e2975 100644
+--- a/src/core/booster_constructor.cpp
++++ b/src/core/booster_constructor.cpp
+@@ -64,7 +64,8 @@ GradientBooster::GradientBooster(std::string objective,
+                                  std::string multi_strategy,
+                                  bool leaf_estimation_backtracking,
+                                  std::string multiclass_leaf_solver,
+-                                 std::string multiclass_feature_test)
++                                 std::string multiclass_feature_test,
++                                 std::string multiclass_split_score)
+     : objective_name_(std::move(objective)),
+       eval_metric_name_(std::move(eval_metric)),
+       objective_config_{huber_delta, quantile_alpha, tweedie_variance_power},
+@@ -99,6 +100,7 @@ GradientBooster::GradientBooster(std::string objective,
+       leaf_estimation_backtracking_(leaf_estimation_backtracking),
+       multiclass_leaf_solver_(std::move(multiclass_leaf_solver)),
+       multiclass_feature_test_(std::move(multiclass_feature_test)),
++      multiclass_split_score_(std::move(multiclass_split_score)),
+       feature_test_(booster_detail::CanonicalFeatureTest(std::move(feature_test))),
+       feature_test_bins_(feature_test_bins),
+       feature_test_adjustment_(booster_detail::CanonicalFeatureTestAdjustment(
+@@ -205,6 +207,24 @@ GradientBooster::GradientBooster(std::string objective,
+   if (multiclass_feature_test_ != "single" && multiclass_feature_test_ != "joint") {
+     throw std::invalid_argument("multiclass_feature_test must be 'single' or 'joint'");
+   }
++  if (multiclass_split_score_ != "scalar" && multiclass_split_score_ != "joint") {
++    throw std::invalid_argument("multiclass_split_score must be 'scalar' or 'joint'");
++  }
++  if (multiclass_split_score_ == "joint") {
++    if (prediction_dimension_ < 3 || num_classes_ > 32) {
++      throw std::invalid_argument("joint split scoring requires a multiclass objective with 3-32 classes");
++    }
++    if (booster_detail::NormalizeTaskType(task_type) != "cpu" || distributed_world_size_ != 1) {
++      throw std::invalid_argument("joint split scoring requires non-distributed CPU training");
++    }
++    if (!monotone_constraints_.empty() || !interaction_constraints_.empty() ||
++        !feature_weights_.empty() || !first_feature_use_penalties_.empty() ||
++        random_strength_ > 0.0 || max_leaf_weight_ != 0.0) {
++      throw std::invalid_argument(
++          "joint split scoring does not support constraints, feature weights, first-use penalties, "
++          "random_strength or max_leaf_weight");
++    }
++  }
+   const bool advanced_multiclass =
+       multiclass_leaf_solver_ == "full" || multiclass_feature_test_ == "joint";
+   if (advanced_multiclass && (prediction_dimension_ <= 1 || num_classes_ > 32)) {
+diff --git a/src/core/booster_fit.cpp b/src/core/booster_fit.cpp
+index dbae7f0..939b1a2 100644
+--- a/src/core/booster_fit.cpp
++++ b/src/core/booster_fit.cpp
+@@ -36,6 +36,10 @@ void GradientBooster::FitWithObjective(Pool& pool,
+                                        bool continue_training,
+                                        bool allow_average_initialization) {
+   const auto fit_start = std::chrono::steady_clock::now();
++  if (multiclass_split_score_ == "joint" &&
++      (use_gpu_ || distributed_world_size_ != 1 || &objective != objective_.get())) {
++    throw std::invalid_argument("joint split scoring requires a built-in objective and non-distributed CPU training");
++  }
+   if ((leaf_estimation_backtracking_ || multiclass_leaf_solver_ == "full" ||
+        multiclass_feature_test_ == "joint") &&
+       (use_gpu_ || distributed_world_size_ != 1)) {
+@@ -368,6 +372,7 @@ void GradientBooster::FitWithObjective(Pool& pool,
+   context.leaf_estimation_backtracking = leaf_estimation_backtracking_;
+   context.full_multiclass_leaf_solver = multiclass_leaf_solver_ == "full";
+   context.joint_multiclass_feature_test = multiclass_feature_test_ == "joint";
++  context.joint_multiclass_split_score = multiclass_split_score_ == "joint";
+   context.feature_test = &feature_test_;
+   context.feature_test_bins = feature_test_bins_;
+   context.feature_test_adjustment = &feature_test_adjustment_;
+diff --git a/src/core/booster_fit_internal.hpp b/src/core/booster_fit_internal.hpp
+index 5fc7a14..b9f08d4 100644
+--- a/src/core/booster_fit_internal.hpp
++++ b/src/core/booster_fit_internal.hpp
+@@ -125,6 +125,7 @@ struct FitLoopContext {
+   bool leaf_estimation_backtracking{false};
+   bool full_multiclass_leaf_solver{false};
+   bool joint_multiclass_feature_test{false};
++  bool joint_multiclass_split_score{false};
+   const std::string* feature_test{nullptr};
+   std::size_t feature_test_bins{8};
+   const std::string* feature_test_adjustment{nullptr};
+diff --git a/src/core/booster_fit_multiclass.cpp b/src/core/booster_fit_multiclass.cpp
+index f4b812c..fd3d228 100644
+--- a/src/core/booster_fit_multiclass.cpp
++++ b/src/core/booster_fit_multiclass.cpp
+@@ -34,6 +34,11 @@ void RunMulticlassIteration(const FitLoopContext& context,
+       context.pool->num_cols(), context.colsample_bytree, context.feature_weights, *context.rng_state);
+   TreeBuildOptions build_options = MakeTreeBuildOptions(
+       context, allowed_features.empty() ? nullptr : &allowed_features, distributed_coordinator);
++  if (context.joint_multiclass_split_score) {
++    build_options.split_gradients = &context.workspace->gradients;
++    build_options.split_hessians = &context.workspace->hessians;
++    build_options.split_dimension = static_cast<std::size_t>(context.prediction_dimension);
++  }
+   if (context.joint_multiclass_feature_test) {
+     build_options.multivariate_gradients = &context.workspace->gradients;
+     build_options.multivariate_dimension = static_cast<std::size_t>(context.prediction_dimension);
+diff --git a/src/core/tree_build.cpp b/src/core/tree_build.cpp
+index a42e1a8..ed7f8d3 100644
+--- a/src/core/tree_build.cpp
++++ b/src/core/tree_build.cpp
+@@ -27,6 +27,21 @@ void Tree::Build(const HistMatrix& hist,
+   if (weights.size() != hist.num_rows) {
+     throw std::invalid_argument("weight size must match the histogram row count");
+   }
++  if (options.split_gradients != nullptr || options.split_hessians != nullptr) {
++    if (options.use_gpu || options.distributed != nullptr ||
++        options.split_dimension < 3U || options.split_dimension > 32U ||
++        options.split_gradients == nullptr || options.split_hessians == nullptr ||
++        options.split_gradients->size() != hist.num_rows * options.split_dimension ||
++        options.split_hessians->size() != hist.num_rows * options.split_dimension) {
++      throw std::invalid_argument("joint split scoring requires complete 3-32 dimensional CPU gradients and Hessians");
++    }
++    if ((options.monotone_constraints != nullptr && !options.monotone_constraints->empty()) ||
++        options.interaction_constraints != nullptr || options.feature_weights != nullptr ||
++        options.first_feature_use_penalties != nullptr || options.random_strength > 0.0 ||
++        options.max_leaf_weight != 0.0) {
++      throw std::invalid_argument("joint split scoring does not support constrained or gain-ranked feature selection");
++    }
++  }
+   if (options.multivariate_gradients != nullptr &&
+       (options.use_gpu || options.distributed != nullptr ||
+        options.multivariate_dimension < 2U || options.multivariate_dimension > 32U ||
+diff --git a/src/core/tree_candidates.cpp b/src/core/tree_candidates.cpp
+index b02f063..41c0837 100644
+--- a/src/core/tree_candidates.cpp
++++ b/src/core/tree_candidates.cpp
+@@ -256,7 +256,10 @@ CandidateSelectionResult SelectBestCandidateSplit(const HistMatrix& hist,
+     }
+ 
+     const auto split_start = measure_timing ? Clock::now() : Clock::time_point{};
+-    best.split_choice = SelectBestSplit(
++    best.split_choice = options.split_gradients != nullptr
++        ? SelectBestMulticlassSplit(hist, node_stats, best.feature_choice.feature_id,
++                                    options, row_begin, row_end)
++        : SelectBestSplit(
+         node_stats.by_feature[static_cast<std::size_t>(best.feature_choice.feature_id)],
+         node_stats.total_gradient,
+         node_stats.total_hessian,
+diff --git a/src/core/tree_internal.hpp b/src/core/tree_internal.hpp
+index 2eac66a..52ccc53 100644
+--- a/src/core/tree_internal.hpp
++++ b/src/core/tree_internal.hpp
+@@ -181,6 +181,13 @@ std::vector<int> FilterAllowedFeaturesForInteraction(
+     const InteractionConstraintSet& constraints,
+     const std::vector<int>* active_groups);
+ std::vector<int> IntersectSortedVectors(const std::vector<int>& lhs, const std::vector<int>& rhs);
++SplitChoice SelectBestMulticlassSplit(const HistMatrix& hist,
++                                     const NodeHistogramSet& node_stats,
++                                     int feature_id,
++                                     const TreeBuildOptions& options,
++                                     std::size_t row_begin,
++                                     std::size_t row_end);
++
+ SplitChoice SelectBestSplit(const BinStatistics& feature_stats,
+                             double total_gradient,
+                             double total_hessian,
+diff --git a/src/core/tree_multiclass_split.cpp b/src/core/tree_multiclass_split.cpp
+new file mode 100644
+index 0000000..dd50b3a
+--- /dev/null
++++ b/src/core/tree_multiclass_split.cpp
+@@ -0,0 +1,113 @@
++#include "tree_internal.hpp"
++
++#include <algorithm>
++#include <stdexcept>
++
++namespace ctboost::detail {
++
++SplitChoice SelectBestMulticlassSplit(const HistMatrix& hist,
++                                     const NodeHistogramSet& node_stats,
++                                     int feature_id,
++                                     const TreeBuildOptions& options,
++                                     std::size_t row_begin,
++                                     std::size_t row_end) {
++  SplitChoice best;
++  const auto feature = static_cast<std::size_t>(feature_id);
++  const auto& stats = node_stats.by_feature[feature];
++  const std::size_t bins = stats.gradient_sums.size();
++  const std::size_t dimension = options.split_dimension;
++  const bool categorical = hist.is_categorical(feature);
++  if (bins <= 1U) {
++    return best;
++  }
++  if (categorical && bins > kMaxCategoricalRouteBins) {
++    throw std::invalid_argument("categorical split routing supports at most 256 bins");
++  }
++
++  // Aggregate only the feature already accepted by the conditional test.
++  // Feature-test response vectors and their weight contract remain independent.
++  std::vector<double> gradients(bins * dimension, 0.0);
++  std::vector<double> hessians(bins * dimension, 0.0);
++  std::vector<double> total_g(dimension, 0.0), total_h(dimension, 0.0);
++  const auto feature_bins = hist.feature_bins(feature);
++  for (std::size_t index = row_begin; index < row_end; ++index) {
++    const std::size_t row = (*options.statistic_row_indices)[index];
++    const double weight = (*options.statistic_weights)[row];
++    const std::size_t offset = feature_bins[row] * dimension;
++    for (std::size_t k = 0; k < dimension; ++k) {
++      const double g = (*options.split_gradients)[row * dimension + k] * weight;
++      const double h = (*options.split_hessians)[row * dimension + k] * weight;
++      gradients[offset + k] += g;
++      hessians[offset + k] += h;
++      total_g[k] += g;
++      total_h[k] += h;
++    }
++  }
++  std::vector<std::size_t> order;
++  order.reserve(bins);
++  for (std::size_t bin = 0; bin < bins; ++bin) {
++    if (!categorical || stats.weight_sums[bin] > 0.0) {
++      order.push_back(bin);
++    }
++  }
++  if (categorical) {
++    // Preserve the scalar structure-coordinate category ordering. Joint scoring
++    // searches these prefixes, not every possible category partition.
++    const auto scalar_weight = [&](std::size_t bin) {
++      const double denominator = stats.hessian_sums[bin] + options.lambda_l2;
++      return denominator > 0.0 ? stats.gradient_sums[bin] / denominator : 0.0;
++    };
++    std::sort(order.begin(), order.end(), [&](std::size_t lhs, std::size_t rhs) {
++      const double left = scalar_weight(lhs), right = scalar_weight(rhs);
++      return left == right ? lhs < rhs : left < right;
++    });
++  }
++  double parent_gain = 0.0;
++  for (std::size_t k = 0; k < dimension; ++k) {
++    parent_gain += ComputeGain(total_g[k], total_h[k], options.lambda_l2);
++  }
++  std::vector<double> left_g(dimension, 0.0), left_h(dimension, 0.0);
++  double left_gradient = 0.0, left_hessian = 0.0, left_count = 0.0;
++  for (std::size_t cut = 0; cut + 1U < order.size(); ++cut) {
++    const std::size_t bin = order[cut];
++    left_gradient += stats.gradient_sums[bin];
++    left_hessian += stats.hessian_sums[bin];
++    left_count += stats.weight_sums[bin];
++    for (std::size_t k = 0; k < dimension; ++k) {
++      left_g[k] += gradients[bin * dimension + k];
++      left_h[k] += hessians[bin * dimension + k];
++    }
++    const double right_count = node_stats.sample_weight_sum - left_count;
++    const double right_gradient = node_stats.total_gradient - left_gradient;
++    const double right_hessian = node_stats.total_hessian - left_hessian;
++    // Keep the existing structure-coordinate child admissibility rules.
++    if (left_count <= 0.0 || right_count <= 0.0 ||
++        left_count < options.min_data_in_leaf || right_count < options.min_data_in_leaf ||
++        left_hessian < options.min_child_weight || right_hessian < options.min_child_weight) {
++      continue;
++    }
++    double gain = -parent_gain;
++    for (std::size_t k = 0; k < dimension; ++k) {
++      gain += ComputeGain(left_g[k], left_h[k], options.lambda_l2) +
++              ComputeGain(total_g[k] - left_g[k], total_h[k] - left_h[k], options.lambda_l2);
++    }
++    if (gain <= options.min_split_gain || (best.valid && gain <= best.gain)) {
++      continue;
++    }
++    best.valid = true;
++    best.is_categorical = categorical;
++    best.split_bin = static_cast<std::uint16_t>(bin);
++    best.gain = gain;
++    best.left_leaf_weight = ComputeLeafWeight(left_gradient, left_hessian, options.lambda_l2);
++    best.right_leaf_weight = ComputeLeafWeight(right_gradient, right_hessian, options.lambda_l2);
++    if (categorical) {
++      best.left_categories.fill(0);
++      for (std::size_t index = 0; index <= cut; ++index) {
++        best.left_categories[order[index]] = 1;
++      }
++    }
++  }
++  return best;
++}
++
++}  // namespace ctboost::detail
+diff --git a/tests/test_multiclass_joint_cut.py b/tests/test_multiclass_joint_cut.py
+new file mode 100644
+index 0000000..eb56cd1
+--- /dev/null
++++ b/tests/test_multiclass_joint_cut.py
+@@ -0,0 +1,357 @@
++"""Joint cut scoring must not replace conditional feature selection."""
++
++import copy
++import pickle
++
++import numpy as np
++import pytest
++from sklearn.base import clone
++
++import ctboost
++
++
++def _hidden_signal():
++    x = np.repeat([0.0, 1.0], 200).astype(np.float32)[:, None]
++    y = np.concatenate([np.tile([0, 1], 100), np.tile([0, 2], 100)])
++    return x, y.astype(np.float32)
++
++
++def _data():
++    rng = np.random.default_rng(20260908)
++    x = rng.normal(size=(240, 5)).astype(np.float32)
++    y = np.argmax(np.column_stack([x[:, 0], x[:, 1], -x[:, 0] - x[:, 1]]), axis=1)
++    return x, y.astype(np.float32)
++
++
++def _params(**kwargs):
++    return dict(
++        objective="MultiClass",
++        num_classes=3,
++        max_depth=2,
++        alpha=0.05,
++        lambda_l2=1.0,
++        learning_rate=0.2,
++        random_seed=19,
++        multiclass_split_score="joint",
++        **kwargs,
++    )
++
++
++def _fit(x, y, rounds=3, **kwargs):
++    return ctboost.train(x, _params(**kwargs), label=y, num_boost_round=rounds)
++
++
++def _trees(model):
++    return model._handle.export_state()["trees"]
++
++
++def _bits_equal(left, right):
++    np.testing.assert_array_equal(
++        np.asarray(left, dtype=np.float32).view(np.uint32),
++        np.asarray(right, dtype=np.float32).view(np.uint32),
++    )
++
++
++def _topology(tree):
++    return [
++        {k: v for k, v in node.items() if k not in {"leaf_weight", "leaf_weights"}}
++        for node in tree["nodes"]
++    ]
++
++
++def test_joint_cut_recovers_positive_all_class_gain_after_joint_feature_acceptance():
++    x, y = _hidden_signal()
++    params = _params(multiclass_feature_test="joint")
++    scalar = ctboost.train(
++        x, {**params, "multiclass_split_score": "scalar"}, label=y, num_boost_round=1
++    )
++    joint = ctboost.train(x, params, label=y, num_boost_round=1)
++    assert _trees(scalar)[0]["nodes"][0]["is_leaf"]
++    assert not _trees(joint)[0]["nodes"][0]["is_leaf"]
++    assert _trees(joint)[0]["nodes"][0]["split_feature_id"] == 0
++    # Class 0: G_left=G_right=0. Classes 1/2: |G_child|=50,
++    # H_child=200*.25*.75=37.5. No half factor in CTBoost's gain.
++    expected_gain = 4 * 50**2 / (37.5 + 1)
++    assert _trees(joint)[0]["feature_importances"][0] == pytest.approx(
++        expected_gain, rel=2e-6
++    )
++    assert joint.loss_history[-1] < scalar.loss_history[-1]
++
++
++def test_joint_cut_keeps_conditional_rejection_and_feature_winner():
++    x, y = _hidden_signal()
++    # The unchanged single-coordinate conditional test cannot see this signal.
++    rejected = _fit(x, y, rounds=1)
++    assert _trees(rejected)[0]["nodes"][0]["is_leaf"]
++    # The binary feature has the lower scalar conditional p-value; the second
++    # feature perfectly separates all classes and has a larger joint gain.
++    y = np.tile([0, 0, 1, 2], 60).astype(np.float32)
++    x = np.column_stack([y == 0, y]).astype(np.float32)
++    joint = _fit(x, y, rounds=1)
++    params = {**_params(), "multiclass_split_score": "scalar"}
++    scalar = ctboost.train(x, params, label=y, num_boost_round=1)
++    assert _trees(joint)[0]["nodes"][0]["split_feature_id"] == 0
++    assert _trees(scalar)[0]["nodes"][0]["split_feature_id"] == 0
++
++
++@pytest.mark.parametrize(
++    "control",
++    [
++        {},
++        {"multiclass_feature_test": "joint"},
++        {"feature_test": "grouped", "feature_test_adjustment": "bonferroni"},
++        {"bootstrap_type": "Bernoulli", "subsample": 0.8, "colsample_bytree": 0.8},
++        {"bootstrap_type": "Bayesian", "bagging_temperature": 0.5},
++        {"grow_policy": "LeafWise", "max_leaves": 4},
++        {"boosting_type": "DART", "drop_rate": 0.8, "skip_drop": 0.0},
++        {"multiclass_leaf_solver": "full", "leaf_estimation_iterations": 2},
++    ],
++)
++def test_joint_cut_scalar_vector_storage_and_prefix_parity(control):
++    x, y = _data()
++    scalar = _fit(x, y, **control)
++    vector = _fit(x, y, multi_strategy="multi_output_tree", **control)
++    for index, tree in enumerate(_trees(vector)):
++        for k in range(3):
++            scalar_tree = _trees(scalar)[index * 3 + k]
++            assert _topology(tree) == _topology(scalar_tree)
++            _bits_equal(
++                [node["leaf_weights"][k] for node in tree["nodes"]],
++                [node["leaf_weight"] for node in scalar_tree["nodes"]],
++            )
++    for rounds in (1, 2, 3):
++        _bits_equal(
++            scalar.predict(x, num_iteration=rounds),
++            vector.predict(x, num_iteration=rounds),
++        )
++    _bits_equal(scalar.loss_history, vector.loss_history)
++
++
++@pytest.mark.parametrize("nan_mode", ["Min", "Max"])
++def test_joint_cut_categorical_missing_weight_and_sparse_parity(nan_mode):
++    sparse = pytest.importorskip("scipy.sparse")
++    x, y = _data()
++    x[:, 0] = np.round(x[:, 0])
++    x[::11, 1] = np.nan
++    weights = np.linspace(0.25, 1.75, len(y), dtype=np.float32)
++    baseline = np.tile(np.array([0.1, -0.2, 0.3], dtype=np.float32), (len(y), 1))
++    pool = ctboost.Pool(x, y, weight=weights, cat_features=[0], baseline=baseline)
++    params = _params(nan_mode=nan_mode)
++    scalar = ctboost.train(pool, params, num_boost_round=4)
++    vector = ctboost.train(
++        pool, {**params, "multi_strategy": "multi_output_tree"}, num_boost_round=4
++    )
++    _bits_equal(scalar.predict(pool), vector.predict(pool))
++    query = ctboost.Pool(sparse.csr_matrix(x), cat_features=[0], baseline=baseline)
++    _bits_equal(scalar.predict(pool), vector.predict(query))
++    assert any(
++        node["is_categorical_split"]
++        for tree in _trees(scalar)
++        for node in tree["nodes"]
++    )
++    with pytest.raises(ValueError, match="integer frequency weights"):
++        ctboost.train(
++            pool, {**params, "multiclass_feature_test": "joint"}, num_boost_round=1
++        )
++
++
++@pytest.mark.parametrize(
++    "guard", [{"min_data_in_leaf": 201}, {"min_child_weight": 51}, {"gamma": 260}]
++)
++def test_joint_cut_keeps_child_and_gain_guards(guard):
++    x, y = _hidden_signal()
++    model = _fit(x, y, rounds=1, multiclass_feature_test="joint", **guard)
++    assert _trees(model)[0]["nodes"][0]["is_leaf"]
++
++
++@pytest.mark.parametrize(
++    "kwargs, message",
++    [
++        ({"multiclass_split_score": "unknown"}, "multiclass_split_score"),
++        ({"objective": "RMSE", "num_classes": 1}, "3-32"),
++        ({"objective": "LogLoss", "num_classes": 2}, "3-32"),
++        ({"num_classes": 33}, "3-32"),
++        ({"task_type": "GPU"}, "CPU"),
++        ({"distributed_world_size": 2}, "CPU"),
++        ({"monotone_constraints": [0]}, "constraints"),
++        ({"interaction_constraints": [[0]]}, "constraints"),
++        ({"feature_weights": [1.0]}, "feature weights"),
++        ({"first_feature_use_penalties": [0.0]}, "first-use"),
++        ({"random_strength": 0.1}, "random_strength"),
++        ({"max_leaf_weight": 0.1}, "max_leaf_weight"),
++    ],
++)
++def test_joint_cut_rejects_unsupported_native_controls(kwargs, message):
++    with pytest.raises(ValueError, match=message):
++        ctboost._core.GradientBooster(**{**_params(), **kwargs})
++
++
++@pytest.mark.parametrize("strategy", ["one_output_per_tree", "multi_output_tree"])
++def test_joint_cut_state_pickle_export_resume_and_config_guard(tmp_path, strategy):
++    x, y = _data()
++    params = _params(multi_strategy=strategy)
++    first = ctboost.train(x, params, label=y, num_boost_round=2)
++    path = tmp_path / "model.json"
++    first.save_model(path)
++    loaded = ctboost.Booster.load_model(path)
++    assert loaded.multiclass_split_score == "joint"
++    predictor_path = tmp_path / "predictor.json"
++    first.export_model(predictor_path, export_format="json_predictor")
++    predictor = ctboost.load_exported_predictor(predictor_path)
++    np.testing.assert_allclose(
++        predictor.predict(x), first.predict(x), rtol=1e-6, atol=1e-6
++    )
++    _bits_equal(first.predict(x), loaded.predict(x))
++    _bits_equal(first.predict(x), pickle.loads(pickle.dumps(first)).predict(x))
++    resumed = ctboost.train(x, params, label=y, num_boost_round=2, init_model=loaded)
++    full = ctboost.train(x, params, label=y, num_boost_round=4)
++    _bits_equal(full.predict(x), resumed.predict(x))
++    with pytest.raises(ValueError, match="multiclass_split_score"):
++        ctboost.train(
++            x,
++            {**params, "multiclass_split_score": "scalar"},
++            label=y,
++            num_boost_round=4,
++            resume_from_snapshot=path,
++        )
++
++
++def test_scalar_default_and_old_state_remain_equivalent():
++    x, y = _data()
++    params = _params()
++    del params["multiclass_split_score"]
++    default = ctboost.train(x, params, label=y, num_boost_round=3)
++    explicit = ctboost.train(
++        x, {**params, "multiclass_split_score": "scalar"}, label=y, num_boost_round=3
++    )
++    assert default._handle.export_state() == explicit._handle.export_state()
++    state = copy.deepcopy(default._handle.export_state())
++    del state["multiclass_split_score"]
++    legacy = ctboost._core.GradientBooster.from_state(state)
++    assert legacy.multiclass_split_score() == "scalar"
++    _bits_equal(default.predict(x), ctboost.Booster(legacy).predict(x))
++
++
++def test_joint_cut_sklearn_parameter_clone_and_fit():
++    x, y = _data()
++    model = ctboost.CTBoostClassifier(iterations=3, multiclass_split_score="joint")
++    copied = clone(model)
++    assert copied.get_params()["multiclass_split_score"] == "joint"
++    copied.fit(x, y)
++    assert copied.get_booster().multiclass_split_score == "joint"
++
++
++def test_joint_cut_rejects_custom_objective_before_callback():
++    x, y = _data()
++    calls = []
++
++    def custom(predictions, labels):
++        calls.append(True)
++        return np.zeros_like(predictions), np.ones_like(predictions)
++
++    model = ctboost.CTBoostClassifier(
++        iterations=1, loss_function=custom, multiclass_split_score="joint"
++    )
++    with pytest.raises(ValueError, match="built-in objective"):
++        model.fit(x, y)
++    assert calls == []
++
++
++@pytest.mark.parametrize("python_surface", [False, True])
++def test_joint_cut_snapshot_and_validation_paths(tmp_path, python_surface):
++    x, y = _data()
++    pool = ctboost.Pool(x, y)
++    params = _params()
++    callbacks = [lambda info: False] if python_surface else None
++    full = ctboost.train(
++        pool, params, num_boost_round=4, eval_set=pool, callbacks=callbacks
++    )
++    first = ctboost.train(
++        pool, params, num_boost_round=2, eval_set=pool, callbacks=callbacks
++    )
++    path = tmp_path / "snapshot.json"
++    first.save_model(path)
++    resumed = ctboost.train(
++        pool,
++        params,
++        num_boost_round=4,
++        eval_set=pool,
++        resume_from_snapshot=path,
++        callbacks=callbacks,
++    )
++    _bits_equal(full.predict(x), resumed.predict(x))
++    _bits_equal(full.eval_loss_history, resumed.eval_loss_history)
++
++
++@pytest.mark.parametrize("regularization", [0.0, 1.0, 5.0])
++def test_joint_numeric_cut_matches_weighted_all_class_brute_force(regularization):
++    rng = np.random.default_rng(17)
++    x = np.repeat(np.arange(6, dtype=np.float32), 50)[:, None]
++    y = np.concatenate(
++        [
++            rng.choice(3, size=50, p=p)
++            for p in [
++                (0.8, 0.1, 0.1),
++                (0.6, 0.2, 0.2),
++                (0.1, 0.8, 0.1),
++                (0.1, 0.3, 0.6),
++                (0.2, 0.1, 0.7),
++                (0.1, 0.6, 0.3),
++            ]
++        ]
++    )
++    weights = rng.uniform(0.25, 1.75, len(y)).astype(np.float32)
++    pool = ctboost.Pool(x, y.astype(np.float32), weight=weights)
++    params = {
++        **_params(),
++        "lambda_l2": regularization,
++        "max_depth": 1,
++        "alpha": 1.0,
++        "boost_from_average": False,
++        "base_score": [0.0] * 3,
++    }
++    model = ctboost.train(pool, params, num_boost_round=1)
++    # The native softmax objective rounds responses to float before aggregation.
++    gradients = (
++        (np.full((len(y), 3), 1 / 3) - np.eye(3)[y]).astype(np.float32).astype(float)
++    )
++    hessians = np.full_like(gradients, np.float32(2 / 9))
++    gradients *= weights[:, None]
++    hessians *= weights[:, None]
++    total_g, total_h = gradients.sum(axis=0), hessians.sum(axis=0)
++    parent = np.sum(total_g**2 / (total_h + regularization))
++    gains = []
++    for threshold in range(5):
++        left = x[:, 0] <= threshold
++        gl, hl = gradients[left].sum(axis=0), hessians[left].sum(axis=0)
++        gr, hr = total_g - gl, total_h - hl
++        gains.append(
++            np.sum(gl**2 / (hl + regularization) + gr**2 / (hr + regularization))
++            - parent
++        )
++    tree = _trees(model)[0]
++    assert tree["feature_importances"][0] == pytest.approx(max(gains), rel=1e-7)
++    leaves = model.predict_leaf_index(x)[:, 0]
++    np.testing.assert_array_equal(leaves == leaves[0], x[:, 0] <= np.argmax(gains))
++
++
++@pytest.mark.parametrize("classes", [3, 32])
++def test_joint_cut_supported_class_boundaries(classes):
++    y = np.repeat(np.arange(classes), 4).astype(np.float32)
++    x = y[:, None].copy()
++    params = {**_params(), "num_classes": classes, "alpha": 1.0}
++    model = ctboost.train(x, params, label=y, num_boost_round=1)
++    assert model.predict(x).shape == (len(y), classes)
++    assert np.isfinite(model.predict(x)).all()
++
++
++def test_joint_cut_supports_wide_numeric_bins():
++    x = np.arange(512, dtype=np.float32)[:, None]
++    y = np.concatenate([np.zeros(300), np.ones(100), np.full(112, 2)]).astype(
++        np.float32
++    )
++    params = {**_params(), "max_bins": 512, "max_depth": 1, "alpha": 1.0}
++    model = ctboost.train(x, params, label=y, num_boost_round=1)
++    root = _trees(model)[0]["nodes"][0]
++    assert not root["is_leaf"]
++    assert root["split_bin_index"] > 255
