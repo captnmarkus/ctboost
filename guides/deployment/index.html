@@ -426,6 +426,33 @@
   
   
     <li class="md-nav__item">
+      <a href="../../release-0.1.61/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release 0.1.61
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../release-0.1.60/" class="md-nav__link">
         
   
@@ -598,10 +625,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_13" checked>
         
           
-          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="">
+          <label class="md-nav__link" for="__nav_13" id="__nav_13_label" tabindex="">
             
   
   
@@ -619,8 +646,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_12">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_13_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_13">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -932,6 +959,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#cpu-prediction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CPU prediction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#export-choices" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1050,10 +1088,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_15" >
         
           
-          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="">
+          <label class="md-nav__link" for="__nav_15" id="__nav_15_label" tabindex="">
             
   
   
@@ -1071,8 +1109,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_14">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_15_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_15">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -1183,6 +1221,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#cpu-prediction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CPU prediction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#export-choices" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1250,6 +1299,9 @@ data schema before resuming:</p>
 <p>Snapshot resume is a validated warm-start convenience, not a blanket
 bit-for-bit equivalence promise for every training path. Use <code>init_model</code> when
 you intentionally change a later-stage configuration.</p>
+<p>With a nonzero <code>Pool.baseline</code>, resumed and uninterrupted training can add
+floating-point updates in a different order. Small rounding differences can
+change later split decisions, so those runs need not produce identical models.</p>
 <p>Starting in 0.1.60, enabling early stopping when resuming an
 untrimmed DART model starts selection from the full supplied ensemble if its
 historical best round is no longer recoverable. CTBoost evaluates that ensemble
@@ -1260,6 +1312,29 @@ Already-trimmed DART resumes and Plain boosting keep their existing behavior.
 For the selected model's monitored score, use
 <code>booster.eval_loss_history[booster.best_iteration]</code>. The sklearn <code>best_score_</code>
 dictionary continues to report each metric's historical minimum or maximum.</p>
+<h2 id="cpu-prediction">CPU prediction<a class="headerlink" href="#cpu-prediction" title="Permanent link">&para;</a></h2>
+<p>Starting in 0.1.61, CTBoost caches a compact traversal representation on the first
+CPU prediction that uses trees. Matching scalar multiclass trees share a
+traversal, and root-only trees add their leaf updates directly. The cache keeps
+the original floating-point update order, physical tree indices, and
+leaf-index output. It does not change training or statistical feature selection.</p>
+<p>The first call builds the cache for the complete ensemble, even when predicting
+only a prefix. This adds cold-call work and resident memory; later calls reuse
+it. Training, loading model state, or changing the quantization schema or
+learning rate invalidates the cache. The cache is derived state and is not
+written to model files. Saved models keep their existing format and behavior.
+Builds using fast-math, and GCC targets with fused multiply-add instructions,
+retain the previous score-accumulation path to preserve their rounding behavior.</p>
+<p>Fitted preprocessing also avoids serializing its metadata on every prediction.
+Supported numeric arrays and uniform numeric frames use typed conversion.
+Float16 inputs and mixed numeric frames containing float32 columns retain
+object conversion to preserve NumPy warning, callback, and exception behavior.
+Categorical, text, embedding, and nullable values retain their established
+conversion rules.</p>
+<p>Measure both the first prediction and repeated predictions with your actual
+batch sizes. Include preprocessing when comparing libraries, and report the
+model size and prediction quality alongside latency. See the
+<a href="../../release-0.1.61/">0.1.61 release notes</a> for measured results and limitations.</p>
 <h2 id="export-choices">Export choices<a class="headerlink" href="#export-choices" title="Permanent link">&para;</a></h2>
 <p>Install table-oriented CLI support with <code>python -m pip install "ctboost[cli]"</code>.
 ONNX export additionally requires <code>python -m pip install "ctboost[onnx]"</code>.</p>
