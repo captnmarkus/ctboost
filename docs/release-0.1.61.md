@@ -1,6 +1,6 @@
-# CTBoost 0.1.61 (unreleased)
+# CTBoost 0.1.61
 
-This release candidate reduces CPU prediction overhead and corrects two
+This release reduces CPU prediction overhead and corrects two
 regression-loss edge cases. Conditional-inference feature selection still
 precedes cut-point optimization. Learning defaults remain unchanged.
 
@@ -27,7 +27,7 @@ The summary uses geometric means across the two passes and then across tasks.
 CTBoost was faster than the separately fitted CatBoost models on 11 of 14 tasks.
 Model sizes and accuracy differ, and concurrent workloads affected individual
 timings; this is not an accuracy-matched comparison or an official TabArena
-result. The [final protocol, per-task timings and controls](https://github.com/captnmarkus/ctboost/tree/improve/inference-accuracy-20260908/benchmarks/results/release_readiness_20260908/inference_timing_phase3)
+result. The [final protocol, per-task timings and controls](https://github.com/captnmarkus/ctboost/tree/833a775/benchmarks/results/release_readiness_20260908/inference_timing_phase3)
 retain all four public/candidate/candidate/public passes. Earlier development
 measurements remain in the separate historical archive.
 
@@ -70,7 +70,7 @@ The experimental joint-cut change failed its quality gate and is excluded.
 The loss fixes above do not explain or close the measured RMSE gap.
 
 The frozen Full HPO25 evaluation continues to measure public **0.1.60**. It
-does not measure this candidate, and no historical result has been relabeled.
+does not measure 0.1.61, and no historical result has been relabeled.
 
 ## Release validation
 
@@ -83,9 +83,9 @@ with unchanged serialized states.
 Focused preprocessing suites passed 323 cases on both NumPy 1.26/pandas 2.1
 and NumPy 2.5/pandas 3.0. All 13 CPU platform/compiler jobs passed, including
 Linux ARM, GNU FMA with and without contraction, and the scoped MSVC fast-math
-compatibility check. The release dry run built and smoke-tested all 26 wheels,
+compatibility check. The pre-release dry run built and smoke-tested all 26 wheels,
 validated the complete matrix and strict package metadata, passed R/JVM checks,
 and rebuilt and smoke-tested the source distribution. Both publication jobs
 were skipped. CUDA-enabled wheel checks did not execute on GPU hardware. The
-[release verification archive](https://github.com/captnmarkus/ctboost/tree/improve/inference-accuracy-20260908/benchmarks/results/release_readiness_20260908)
+[pre-release verification archive](https://github.com/captnmarkus/ctboost/tree/833a775/benchmarks/results/release_readiness_20260908)
 retains original failures, corrective checks and artifact identities.

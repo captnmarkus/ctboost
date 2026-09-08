@@ -48,9 +48,9 @@ For the selected model's monitored score, use
 `booster.eval_loss_history[booster.best_iteration]`. The sklearn `best_score_`
 dictionary continues to report each metric's historical minimum or maximum.
 
-## CPU prediction in the development build
+## CPU prediction
 
-The development branch caches a compact traversal representation on the first
+Starting in 0.1.61, CTBoost caches a compact traversal representation on the first
 CPU prediction that uses trees. Matching scalar multiclass trees share a
 traversal, and root-only trees add their leaf updates directly. The cache keeps
 the original floating-point update order, physical tree indices, and
@@ -73,8 +73,8 @@ conversion rules.
 
 Measure both the first prediction and repeated predictions with your actual
 batch sizes. Include preprocessing when comparing libraries, and report the
-model size and prediction quality alongside latency. These changes are not
-part of the published 0.1.60 wheel.
+model size and prediction quality alongside latency. See the
+[0.1.61 release notes](../release-0.1.61.md) for measured results and limitations.
 
 ## Export choices
 

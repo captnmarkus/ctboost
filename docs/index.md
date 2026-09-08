@@ -12,9 +12,10 @@ and optional CUDA acceleration.
 
 </div>
 
-Version [0.1.60](release-0.1.60.md) fixes fractional CTR smoothing and
-early-stopping best-model selection, including DART warm starts. Existing
-saved-model predictions and conditional-inference feature selection are preserved.
+Version [0.1.61](release-0.1.61.md) reduces CPU inference overhead and fixes
+Huber/Quantile edge cases, NumPy conversion compatibility, and GNU FMA
+training-rounding differences. Saved-model formats, learning defaults, and
+conditional-inference feature selection are preserved.
 
 !!! info "Project status"
     CTBoost is an alpha project. Its API and model format are tested extensively,

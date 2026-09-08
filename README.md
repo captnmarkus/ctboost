@@ -11,11 +11,11 @@ Python/scikit-learn interfaces.
 [Benchmarks](https://captnmarkus.github.io/ctboost/benchmarks/) ·
 [Compatibility](https://captnmarkus.github.io/ctboost/reference/compatibility/)
 
-Version [0.1.60](https://captnmarkus.github.io/ctboost/release-0.1.60/) corrects
-fractional CTR smoothing and best-model selection when early stopping reaches
-the iteration budget, including DART warm starts. Saved preprocessing retains
-its historical predictions. Existing learning defaults and the statistical
-feature-selection-before-cut contract remain unchanged.
+Version [0.1.61](https://captnmarkus.github.io/ctboost/release-0.1.61/) reduces CPU
+inference overhead and fixes Huber/Quantile edge cases, NumPy conversion
+compatibility, and GNU FMA training-rounding differences. Saved-model formats,
+learning defaults, and the statistical feature-selection-before-cut contract
+remain unchanged.
 
 ## Highlights
 
@@ -95,13 +95,13 @@ for supported workflows, artifact compatibility, and a reproducible comparison.
 
 ## Evidence and project status
 
-The [0.1.61 release candidate](https://github.com/captnmarkus/ctboost/blob/improve/inference-accuracy-20260908/docs/release-0.1.61.md)
+The [0.1.61 release](https://captnmarkus.github.io/ctboost/release-0.1.61/)
 includes CPU inference optimizations and Huber, Quantile, and training-arithmetic
-correctness fixes. The [release verification](https://github.com/captnmarkus/ctboost/tree/improve/inference-accuracy-20260908/benchmarks/results/release_readiness_20260908)
+correctness fixes. The [pre-release verification](https://github.com/captnmarkus/ctboost/tree/833a775/benchmarks/results/release_readiness_20260908)
 records compatibility checks, performance measurements, and remaining limitations.
 The [accuracy studies](https://github.com/captnmarkus/ctboost/tree/8cc75aa/benchmarks/results/inference_accuracy_20260908/accuracy)
 did not justify changing the learning defaults or claiming an Elo increase.
-These changes are separate from the published 0.1.60 wheel and its evaluations.
+The ongoing Full HPO25 evaluation uses 0.1.60 and does not measure this release.
 
 For the new CPU learning controls, see
 [safeguarded leaves and joint multiclass tests](https://captnmarkus.github.io/ctboost/guides/learning-options/).
@@ -141,9 +141,9 @@ the default; grouped testing is opt-in.
 Read the [benchmark status](https://captnmarkus.github.io/ctboost/benchmarks/)
 and [split-statistics research ledger](https://captnmarkus.github.io/ctboost/split-statistics-research/)
 for protocols, limitations, and machine-readable evidence.
-See the [0.1.60 release notes](https://captnmarkus.github.io/ctboost/release-0.1.60/)
+See the [0.1.61 release notes](https://captnmarkus.github.io/ctboost/release-0.1.61/)
 for the fixes, persistence compatibility, and development validation. The
-TabArena scores above belong to 0.1.58; they do not measure 0.1.60. The recent
+TabArena scores above belong to 0.1.58; they do not measure 0.1.61. The recent
 CTR and numeric-bin studies found no broad score gain, so learning defaults
 remain unchanged.
 
