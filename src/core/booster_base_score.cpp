@@ -75,15 +75,24 @@ double WeightedHuberLocation(const std::vector<float>& labels,
   (void)PositiveTotalWeight(weights);
   double lower = std::numeric_limits<double>::infinity();
   double upper = -std::numeric_limits<double>::infinity();
-  for (const float value : labels) {
+  for (std::size_t index = 0; index < labels.size(); ++index) {
+    const float value = labels[index];
     if (!std::isfinite(value)) {
       throw std::invalid_argument("objective labels must be finite");
     }
-    lower = std::min(lower, static_cast<double>(value));
-    upper = std::max(upper, static_cast<double>(value));
+    if (weights[index] > 0.0F) {
+      lower = std::min(lower, static_cast<double>(value));
+      upper = std::max(upper, static_cast<double>(value));
+    }
   }
-  for (int iteration = 0; iteration < 100; ++iteration) {
+  // Zero-weight labels do not bound the optimum. A fixed iteration count
+  // cannot resolve a small optimum when finite float labels span ~1e38;
+  // bisect until the endpoints are adjacent at double precision instead.
+  while (true) {
     const double midpoint = lower + (upper - lower) * 0.5;
+    if (midpoint == lower || midpoint == upper) {
+      break;
+    }
     double gradient = 0.0;
     for (std::size_t index = 0; index < labels.size(); ++index) {
       const double residual = midpoint - static_cast<double>(labels[index]);
@@ -93,6 +102,7 @@ double WeightedHuberLocation(const std::vector<float>& labels,
     if (gradient > 0.0) {
       upper = midpoint;
     } else {
+      // Retain the upper-edge convention when the optimum is an interval.
       lower = midpoint;
     }
   }

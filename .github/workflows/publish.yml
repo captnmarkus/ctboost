@@ -9,7 +9,7 @@ on:
       version:
         description: Version to build and validate against pyproject.toml
         required: true
-        default: "0.1.60"
+        default: "0.1.61"
         type: string
       publish:
         description: Publish after validation (requires dispatching a v* tag)
@@ -264,9 +264,13 @@ jobs:
       CIBW_ARCHS: x86_64
       CIBW_BUILD_VERBOSITY: 3
       CIBW_TEST_REQUIRES: >-
-        pytest
+        pytest scikit-learn>=1.3 pandas>=1.5
       CIBW_TEST_COMMAND: >-
         python {project}/tests/run_installed_smoke.py {project}/tests/test_gpu_wheel_smoke.py
+        {project}/tests/test_prediction_fast_path.py
+        {project}/tests/test_feature_pipeline_numeric_inference.py
+        {project}/tests/test_feature_pipeline_ctr_inference.py
+        {project}/tests/test_loss_optima.py
       CIBW_CONFIG_SETTINGS: >-
         cmake.define.CTBOOST_ENABLE_CUDA=ON
         cmake.define.CTBOOST_REQUIRE_CUDA=ON
@@ -371,9 +375,13 @@ jobs:
           CIBW_ARCHS: AMD64
           CIBW_BUILD_VERBOSITY: 3
           CIBW_TEST_REQUIRES: >-
-            pytest
+            pytest scikit-learn>=1.3 pandas>=1.5
           CIBW_TEST_COMMAND: >-
             python {project}/tests/run_installed_smoke.py {project}/tests/test_gpu_wheel_smoke.py
+            {project}/tests/test_prediction_fast_path.py
+            {project}/tests/test_feature_pipeline_numeric_inference.py
+            {project}/tests/test_feature_pipeline_ctr_inference.py
+            {project}/tests/test_loss_optima.py
           CIBW_BEFORE_BUILD_WINDOWS: >-
             python -m pip install --upgrade "delvewheel>=1.8"
           CIBW_TEST_ENVIRONMENT_WINDOWS: >-
@@ -556,7 +564,7 @@ jobs:
         uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           tag_name: ${{ github.ref_name }}
-          body_path: docs/release-0.1.60.md
+          body_path: docs/release-0.1.61.md
           files: |
             dist/*.whl
             dist/*.tar.gz

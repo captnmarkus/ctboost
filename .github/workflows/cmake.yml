@@ -4,7 +4,9 @@ on:
   push:
     branches:
       - master
+      - "improve/**"
   pull_request:
+  workflow_dispatch:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
@@ -14,11 +16,15 @@ permissions:
 
 jobs:
   cmake-build:
-    name: CMake Build (${{ matrix.os }} / py${{ matrix.python-version }})
+    name: CMake Build (${{ matrix.os }} / py${{ matrix.python-version }} / ${{ matrix.variant || 'default' }})
     runs-on: ${{ matrix.os }}
+    env:
+      CXXFLAGS: ${{ matrix.cxxflags || '' }}
+      CMAKE_BUILD_PARALLEL_LEVEL: "4"
     strategy:
       fail-fast: false
       matrix:
+        variant: [default]
         os:
           - ubuntu-latest
           - windows-latest
@@ -27,6 +33,18 @@ jobs:
           - "3.12"
           - "3.13"
           - "3.14"
+        include:
+          - os: ubuntu-24.04-arm
+            python-version: "3.12"
+            variant: arm64
+          - os: ubuntu-latest
+            python-version: "3.12"
+            variant: gcc-fma
+            cxxflags: "-mavx2 -mfma"
+          - os: windows-latest
+            python-version: "3.12"
+            variant: msvc-fast
+            cxxflags: "/arch:AVX2 /fp:fast"
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -65,6 +83,7 @@ jobs:
           cmake -S . -B build
           -DCMAKE_BUILD_TYPE=Release
           -DCTBOOST_ENABLE_CUDA=OFF
+          -DCTBOOST_BUILD_NATIVE_TESTS=ON
           "-Dpybind11_DIR=$env:PYBIND11_DIR"
           "-DPython_EXECUTABLE=$env:PYTHON_EXECUTABLE"
 
@@ -77,16 +96,27 @@ jobs:
           }
           cmake --build build --config Release --parallel $ctboostBuildJobs
 
+      - name: Test native API
+        if: matrix.variant != 'msvc-fast'
+        run: ctest --test-dir build --build-config Release --output-on-failure
+
       - name: Install package
         shell: pwsh
         run: python -m pip install . --no-deps --config-settings=cmake.define.CTBOOST_ENABLE_CUDA=OFF
 
       - name: Run tests
         shell: pwsh
+        env:
+          CTBOOST_CI_VARIANT: ${{ matrix.variant || 'default' }}
         run: |
           $testRoot = Join-Path $env:RUNNER_TEMP "ctboost-installed-tests"
           if (Test-Path $testRoot) {
-            Remove-Item -Recurse -Force $testRoot
+            $resolvedRoot = (Resolve-Path -LiteralPath $testRoot).Path
+            $resolvedTemp = (Resolve-Path -LiteralPath $env:RUNNER_TEMP).Path
+            if ([IO.Path]::GetDirectoryName($resolvedRoot) -ne $resolvedTemp) {
+              throw "Test cleanup path must be a direct child of RUNNER_TEMP: $resolvedRoot"
+            }
+            Remove-Item -LiteralPath $resolvedRoot -Recurse -Force
           }
           New-Item -ItemType Directory -Force -Path $testRoot | Out-Null
           Copy-Item -Path tests -Destination $testRoot -Recurse
@@ -101,7 +131,14 @@ jobs:
           try {
             python -c "import os, pathlib, ctboost; location = pathlib.Path(ctboost.__file__).resolve(); workspace = pathlib.Path(os.environ['GITHUB_WORKSPACE']).resolve(); print(f'ctboost imported from: {location}'); import sys; assert workspace != location and workspace not in location.parents, f'expected installed ctboost package outside workspace, got {location}'"
 
-            python -X faulthandler -m pytest tests -q
+            if ($env:CTBOOST_CI_VARIANT -eq "msvc-fast") {
+              # Custom fast-math builds have different NaN/training semantics.
+              # Check only preservation of their legacy score arithmetic here;
+              # the ordinary Windows jobs exercise the complete API contract.
+              python -X faulthandler -m pytest tests/test_prediction_fast_path.py -q -k legacy_compiler_math
+            } else {
+              python -X faulthandler -m pytest tests -q
+            }
           } finally {
             Pop-Location
           }

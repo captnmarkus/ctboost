@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.24...4.3)
 
-project(CTBoost VERSION 0.1.60 LANGUAGES CXX)
+project(CTBoost VERSION 0.1.61 LANGUAGES CXX)
 
 if(DEFINED SKBUILD_PROJECT_VERSION_FULL)
   set(CTBOOST_PACKAGE_VERSION "${SKBUILD_PROJECT_VERSION_FULL}")
@@ -19,6 +19,7 @@ option(CTBOOST_ENABLE_CUDA "Build CUDA backends when a CUDA toolkit is available
 option(CTBOOST_REQUIRE_CUDA
        "Fail the build if CUDA was requested but a working toolkit is unavailable"
        OFF)
+option(CTBOOST_BUILD_NATIVE_TESTS "Build native API regression tests" OFF)
 
 include(CheckLanguage)
 
@@ -212,6 +213,14 @@ pybind11_add_module(_core MODULE
 
 target_include_directories(_core PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(_core PRIVATE ctboost_core)
+
+if(CTBOOST_BUILD_NATIVE_TESTS)
+  enable_testing()
+  find_package(Python REQUIRED COMPONENTS Interpreter Development.Module Development.Embed)
+  add_executable(ctboost_prediction_cache_smoke tests/native/prediction_cache_smoke.cpp)
+  target_link_libraries(ctboost_prediction_cache_smoke PRIVATE ctboost_core pybind11::embed)
+  add_test(NAME ctboost_prediction_cache_smoke COMMAND ctboost_prediction_cache_smoke)
+endif()
 
 if(CTBOOST_WITH_CUDA)
   target_link_libraries(_core PRIVATE ctboost_cuda_backend)

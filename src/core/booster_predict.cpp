@@ -47,7 +47,7 @@ namespace {
 // GNU can contract a multiply and a subsequent += across statements when the
 // target has FMA. A preweighted cache forces an extra rounding in that case.
 // Retain the original arithmetic there; do not alter training or global flags.
-#if defined(__FAST_MATH__) || \
+#if defined(__FAST_MATH__) || defined(_M_FP_FAST) || \
     (defined(__GNUC__) && !defined(__clang__) && \
      (defined(__FMA__) || defined(__FMA4__) || defined(__ARM_FEATURE_FMA) || \
       defined(__aarch64__) || defined(__FP_FAST_FMAF)))
@@ -346,13 +346,29 @@ std::vector<std::int32_t> GradientBooster::PredictLeafIndices(const Pool& pool,
   }
   const auto& quantization_schema =
       booster_detail::RequireQuantizationSchema(quantization_schema_);
-  const auto cache = GetPredictionCache();
-  const auto active_features = cache->ActiveFeatures(tree_limit);
+  // GPU leaf indices use the existing CPU traversal, without building a full
+  // CPU score cache that GPU prediction itself never consumes.
+  const auto cache = !use_gpu_
+      ? GetPredictionCache() : std::shared_ptr<const booster_detail::PredictionCache>{};
+  auto active_features = cache != nullptr
+      ? cache->ActiveFeatures(tree_limit) : std::vector<std::uint8_t>(quantization_schema.num_cols(), 0U);
+  if (cache == nullptr) {
+    for (std::size_t tree_index = 0; tree_index < tree_limit; ++tree_index) {
+      booster_detail::MarkUsedFeatures(trees_[tree_index], active_features);
+    }
+  }
   const HistMatrix hist = booster_detail::BuildPredictionHist(
       pool,
       quantization_schema,
       &active_features);
-  if (hist.bin_storage_bytes() == 1) {
+  if (cache == nullptr) {
+    for (std::size_t tree_index = 0; tree_index < tree_limit; ++tree_index) {
+      for (std::size_t row = 0; row < hist.num_rows; ++row) {
+        leaf_indices[row * tree_limit + tree_index] =
+            trees_[tree_index].PredictBinnedLeafIndex(hist, row);
+      }
+    }
+  } else if (hist.bin_storage_bytes() == 1) {
     booster_detail::PredictCachedLeaves(*cache, hist.compact_bin_indices.data(), hist.num_rows,
                                         tree_limit, leaf_indices);
   } else {

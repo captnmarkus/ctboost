@@ -9,11 +9,12 @@ import tempfile
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run a wheel smoke test from a temp copy of tests/."
+        description="Run wheel tests from a temp copy of tests/."
     )
     parser.add_argument(
         "test_file",
-        help="Path to the smoke-test file inside the repository checkout.",
+        nargs="+",
+        help="Paths to test files inside the repository checkout.",
     )
     return parser.parse_args()
 
@@ -43,13 +44,14 @@ def _clean_pythonpath(project_root: pathlib.Path) -> None:
 def main() -> int:
     args = _parse_args()
     project_root = pathlib.Path(__file__).resolve().parents[1]
-    requested = pathlib.Path(args.test_file).resolve()
     tests_root = project_root / "tests"
-
-    try:
-        relative_test = requested.relative_to(tests_root)
-    except ValueError as exc:
-        raise SystemExit(f"expected a test under {tests_root}, got {requested}") from exc
+    relative_tests = []
+    for test_file in args.test_file:
+        requested = pathlib.Path(test_file).resolve()
+        try:
+            relative_tests.append(requested.relative_to(tests_root))
+        except ValueError as exc:
+            raise SystemExit(f"expected a test under {tests_root}, got {requested}") from exc
 
     _clean_pythonpath(project_root)
 
@@ -57,7 +59,7 @@ def main() -> int:
         tmp_root = pathlib.Path(tmp_dir)
         copied_tests = tmp_root / "tests"
         shutil.copytree(tests_root, copied_tests)
-        copied_test = copied_tests / relative_test
+        copied_test_files = [str(copied_tests / test) for test in relative_tests]
 
         import ctboost
 
@@ -70,7 +72,7 @@ def main() -> int:
         print(f"ctboost imported from: {package_path}")
 
         result = subprocess.run(
-            [sys.executable, "-X", "faulthandler", "-m", "pytest", str(copied_test), "-q"],
+            [sys.executable, "-X", "faulthandler", "-m", "pytest", *copied_test_files, "-q"],
             cwd=tmp_root,
             check=False,
         )

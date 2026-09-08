@@ -131,7 +131,7 @@ def test_numeric_dataframe_batch_boundary_keeps_exact_values(rows):
 
 @pytest.mark.parametrize("rows", [1, 15, 16])
 @pytest.mark.parametrize("kind", ["Int64", "Float64", "timestamp"])
-def test_dataframe_nullable_and_timestamp_errors_keep_object_semantics(rows, kind):
+def test_dataframe_nullable_and_timestamp_outcomes_keep_object_semantics(rows, kind):
     pd = pytest.importorskip("pandas")
     values = (
         pd.Series([pd.Timestamp("2020-01-01")] * rows)
@@ -146,10 +146,18 @@ def test_dataframe_nullable_and_timestamp_errors_keep_object_semantics(rows, kin
     assert extracted.dtype == object
     if kind != "timestamp":
         assert extracted[-1, 0] is pd.NA
-    with pytest.raises((RuntimeError, TypeError, ValueError)) as reference:
-        pipeline.transform_array(data.to_numpy(dtype=object), feature_names=["value"])
-    with pytest.raises(type(reference.value)):
-        pipeline.transform_array(data)
+    try:
+        expected = pipeline.transform_array(
+            data.to_numpy(dtype=object), feature_names=["value"]
+        )[0]
+    except (RuntimeError, TypeError, ValueError) as reference:
+        with pytest.raises(type(reference)):
+            pipeline.transform_array(data)
+    else:
+        # Older pandas/native combinations accept their boxed timestamp values.
+        np.testing.assert_array_equal(
+            pipeline.transform_array(data)[0].view(np.uint32), expected.view(np.uint32)
+        )
 
 
 @pytest.mark.parametrize(

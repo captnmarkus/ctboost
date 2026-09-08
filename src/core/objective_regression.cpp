@@ -102,7 +102,14 @@ void QuantileLoss::compute_gradients(const std::vector<float>& preds,
   out_h.resize(preds.size(), 1.0F);
   for (std::size_t i = 0; i < preds.size(); ++i) {
     const double residual = static_cast<double>(labels[i]) - preds[i];
-    out_g[i] = residual > 0.0 ? static_cast<float>(-alpha_) : static_cast<float>(1.0 - alpha_);
+    if (residual > 0.0) {
+      out_g[i] = static_cast<float>(-alpha_);
+    } else if (residual < 0.0) {
+      out_g[i] = static_cast<float>(1.0 - alpha_);
+    } else {
+      // Zero is a valid subgradient at the exact pinball-loss optimum.
+      out_g[i] = 0.0F;
+    }
   }
 }
 

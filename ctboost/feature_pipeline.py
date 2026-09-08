@@ -223,9 +223,15 @@ class FeaturePipeline:
                 and all(_is_plain_numeric_dtype(dtype) for dtype in data.dtypes)
                 else object
             )
-            return data.to_numpy(dtype=dtype, copy=False), [
-                str(name) for name in data.columns
-            ]
+            try:
+                matrix = data.to_numpy(dtype=dtype, copy=False)
+            except (FloatingPointError, RuntimeWarning):
+                if dtype is object:
+                    raise
+                # Vectorized widening can reject signaling NaNs under NumPy's
+                # error policy although the established scalar boxing succeeds.
+                matrix = data.to_numpy(dtype=object, copy=False)
+            return matrix, [str(name) for name in data.columns]
         if _is_columnar_frame(data):
             metadata = _columnar_frame_metadata(data)
             if metadata is None:  # pragma: no cover - guarded by the predicate

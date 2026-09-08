@@ -91,24 +91,25 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
     // Retain that rounding order, including for int64/uint64, without boxing
     // every input value. forcecast also handles non-native byte order.
     const auto numeric = py::array_t<double, py::array::forcecast>::ensure(raw_matrix);
-    if (!numeric) {
-      throw std::invalid_argument("numeric feature-pipeline input cannot be converted to double");
-    }
-    const py::buffer_info info = numeric.request();
-    const auto* source = static_cast<const char*>(info.ptr);
-    for (std::size_t column = 0; column < column_count; ++column) {
-      const py::ssize_t source_column = numeric_indices_[column];
-      for (std::size_t row = 0; row < row_count; ++row) {
-        // NumPy permits unaligned views; memcpy avoids undefined accesses.
-        double value;
-        std::memcpy(&value, source + static_cast<py::ssize_t>(row) * info.strides[0] +
-                                source_column * info.strides[1], sizeof(value));
-        write_column_value(row, column, static_cast<float>(value));
+    if (numeric) {
+      const py::buffer_info info = numeric.request();
+      const auto* source = static_cast<const char*>(info.ptr);
+      for (std::size_t column = 0; column < column_count; ++column) {
+        const py::ssize_t source_column = numeric_indices_[column];
+        for (std::size_t row = 0; row < row_count; ++row) {
+          // NumPy permits unaligned views; memcpy avoids undefined accesses.
+          double value;
+          std::memcpy(&value, source + static_cast<py::ssize_t>(row) * info.strides[0] +
+                                  source_column * info.strides[1], sizeof(value));
+          write_column_value(row, column, static_cast<float>(value));
+        }
       }
+      return py::make_tuple(std::move(transformed),
+                            detail::VectorToPyList(cat_feature_indices_),
+                            detail::VectorToPyList(output_feature_names_));
     }
-    return py::make_tuple(std::move(transformed),
-                          detail::VectorToPyList(cat_feature_indices_),
-                          detail::VectorToPyList(output_feature_names_));
+    // NumPy's vectorized cast can reject signaling NaNs under np.errstate.
+    // Preserve the original scalar conversion's result or exception instead.
   }
 
   const detail::MatrixView matrix =

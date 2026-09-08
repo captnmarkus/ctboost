@@ -95,8 +95,9 @@ for supported workflows, artifact compatibility, and a reproducible comparison.
 
 ## Evidence and project status
 
-The development branch includes CPU inference optimizations and measured
-accuracy experiments. See the [development results](benchmarks/results/inference_accuracy_20260908/README.md)
+The [0.1.61 release candidate](https://github.com/captnmarkus/ctboost/blob/improve/inference-accuracy-20260908/docs/release-0.1.61.md)
+includes CPU inference optimizations and measured
+accuracy experiments. See the [development results](https://github.com/captnmarkus/ctboost/tree/8cc75aa/benchmarks/results/inference_accuracy_20260908)
 for reproducible comparisons, preserved predictions, and remaining limitations.
 These changes are separate from the published 0.1.60 wheel and its evaluations.
 
