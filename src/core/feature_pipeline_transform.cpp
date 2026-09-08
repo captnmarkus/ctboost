@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <limits>
 #include <numeric>
@@ -87,29 +88,67 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
   if (plain_numeric && categorical_states_.empty() && one_hot_states_.empty() &&
       combination_states_.empty() && ctr_states_.empty() && text_states_.empty() &&
       embedding_states_.empty() && numeric_indices_.size() == column_count) {
-    // Python numeric scalars are converted through double by py::cast<float>.
-    // Retain that rounding order, including for int64/uint64, without boxing
-    // every input value. forcecast also handles non-native byte order.
-    const auto numeric = py::array_t<double, py::array::forcecast>::ensure(raw_matrix);
-    if (numeric) {
-      const py::buffer_info info = numeric.request();
+    if (kind == 'f' && raw_matrix.itemsize() == sizeof(float)) {
+      // Inspect float32 bits before any NumPy widening: a signaling NaN must
+      // use the legacy scalar conversion, including its warning/error policy.
+      const py::buffer_info info = raw_matrix.request();
       const auto* source = static_cast<const char*>(info.ptr);
-      for (std::size_t column = 0; column < column_count; ++column) {
+      const std::uint16_t endian_probe = 1U;
+      const bool little_endian = *reinterpret_cast<const unsigned char*>(&endian_probe) == 1U;
+      const char byte_order = raw_matrix.dtype().byteorder();
+      const bool swap_bytes = (byte_order == '>' && little_endian) ||
+                              (byte_order == '<' && !little_endian);
+      bool scalar_fallback = false;
+      for (std::size_t column = 0; column < column_count && !scalar_fallback; ++column) {
         const py::ssize_t source_column = numeric_indices_[column];
         for (std::size_t row = 0; row < row_count; ++row) {
-          // NumPy permits unaligned views; memcpy avoids undefined accesses.
-          double value;
-          std::memcpy(&value, source + static_cast<py::ssize_t>(row) * info.strides[0] +
-                                  source_column * info.strides[1], sizeof(value));
-          write_column_value(row, column, static_cast<float>(value));
+          std::uint32_t bits;
+          std::memcpy(&bits, source + static_cast<py::ssize_t>(row) * info.strides[0] +
+                                 source_column * info.strides[1], sizeof(bits));
+          if (swap_bytes) {
+            bits = (bits >> 24U) | ((bits >> 8U) & 0x0000ff00U) |
+                   ((bits << 8U) & 0x00ff0000U) | (bits << 24U);
+          }
+          if ((bits & 0x7f800000U) == 0x7f800000U && (bits & 0x007fffffU) != 0U &&
+              (bits & 0x00400000U) == 0U) {
+            scalar_fallback = true;
+            break;
+          }
+          float value;
+          std::memcpy(&value, &bits, sizeof(value));
+          write_column_value(row, column, value);
         }
       }
-      return py::make_tuple(std::move(transformed),
-                            detail::VectorToPyList(cat_feature_indices_),
-                            detail::VectorToPyList(output_feature_names_));
+      if (!scalar_fallback) {
+        return py::make_tuple(std::move(transformed),
+                              detail::VectorToPyList(cat_feature_indices_),
+                              detail::VectorToPyList(output_feature_names_));
+      }
+    } else {
+      // Python numeric scalars are converted through double by py::cast<float>.
+      // Retain that rounding order, including for int64/uint64, without boxing
+      // every input value. forcecast also handles non-native byte order.
+      const auto numeric = py::array_t<double, py::array::forcecast>::ensure(raw_matrix);
+      if (numeric) {
+        const py::buffer_info info = numeric.request();
+        const auto* source = static_cast<const char*>(info.ptr);
+        for (std::size_t column = 0; column < column_count; ++column) {
+          const py::ssize_t source_column = numeric_indices_[column];
+          for (std::size_t row = 0; row < row_count; ++row) {
+            // NumPy permits unaligned views; memcpy avoids undefined accesses.
+            double value;
+            std::memcpy(&value, source + static_cast<py::ssize_t>(row) * info.strides[0] +
+                                    source_column * info.strides[1], sizeof(value));
+            write_column_value(row, column, static_cast<float>(value));
+          }
+        }
+        return py::make_tuple(std::move(transformed),
+                              detail::VectorToPyList(cat_feature_indices_),
+                              detail::VectorToPyList(output_feature_names_));
+      }
+      // NumPy's vectorized cast can reject signaling NaNs under np.errstate.
+      // Preserve the original scalar conversion's result or exception instead.
     }
-    // NumPy's vectorized cast can reject signaling NaNs under np.errstate.
-    // Preserve the original scalar conversion's result or exception instead.
   }
 
   const detail::MatrixView matrix =

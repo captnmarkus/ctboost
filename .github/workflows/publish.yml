@@ -270,6 +270,7 @@ jobs:
         {project}/tests/test_prediction_fast_path.py
         {project}/tests/test_feature_pipeline_numeric_inference.py
         {project}/tests/test_feature_pipeline_ctr_inference.py
+        {project}/tests/test_feature_pipeline_optional_input_inference.py
         {project}/tests/test_loss_optima.py
       CIBW_CONFIG_SETTINGS: >-
         cmake.define.CTBOOST_ENABLE_CUDA=ON
@@ -381,6 +382,7 @@ jobs:
             {project}/tests/test_prediction_fast_path.py
             {project}/tests/test_feature_pipeline_numeric_inference.py
             {project}/tests/test_feature_pipeline_ctr_inference.py
+            {project}/tests/test_feature_pipeline_optional_input_inference.py
             {project}/tests/test_loss_optima.py
           CIBW_BEFORE_BUILD_WINDOWS: >-
             python -m pip install --upgrade "delvewheel>=1.8"

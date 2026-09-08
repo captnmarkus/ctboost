@@ -218,7 +218,10 @@ if(CTBOOST_BUILD_NATIVE_TESTS)
   enable_testing()
   find_package(Python REQUIRED COMPONENTS Interpreter Development.Module Development.Embed)
   add_executable(ctboost_prediction_cache_smoke tests/native/prediction_cache_smoke.cpp)
-  target_link_libraries(ctboost_prediction_cache_smoke PRIVATE ctboost_core pybind11::embed)
+  # pybind11 was configured with Development.Module above; its embed target
+  # may therefore lack the interpreter library even after finding Embed.
+  target_link_libraries(ctboost_prediction_cache_smoke
+    PRIVATE ctboost_core pybind11::embed Python::Python)
   add_test(NAME ctboost_prediction_cache_smoke COMMAND ctboost_prediction_cache_smoke)
 endif()
 

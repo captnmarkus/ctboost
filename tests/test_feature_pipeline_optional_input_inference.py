@@ -52,6 +52,89 @@ def test_signaling_nan_preserves_scalar_conversion_under_numpy_error_policy(
     assert np.geterr() == previous
 
 
+@pytest.mark.parametrize("dtype", ["f2", "f4", ">f4", "f8", ">f8"])
+@pytest.mark.parametrize("input_kind", ["numpy", "native", "pandas", "pandas_mixed"])
+@pytest.mark.parametrize("policy", ["warn", "call", "log"])
+def test_signaling_nan_preserves_numpy_warning_and_callback_policy(dtype, input_kind, policy):
+    dtype = np.dtype(dtype)
+    uint = np.dtype(dtype.str.replace("f", "u"))
+    signaling = {2: 0x7C01, 4: 0x7F800001, 8: 0x7FF0000000000001}[dtype.itemsize]
+    values = np.ones((16, 2), dtype=dtype)
+    values.view(uint)[-1, -1] = signaling
+    if input_kind.startswith("pandas"):
+        pd = pytest.importorskip("pandas")
+        data = pd.DataFrame(values, columns=["a", "b"])
+        if input_kind == "pandas_mixed":
+            data["a"] = np.arange(16, dtype=np.int64)
+    else:
+        data = values
+    pipeline = FeaturePipeline().fit(np.zeros((3, 2)), [0, 1, 2], feature_names=["a", "b"])
+
+    class Handler:
+        def __init__(self):
+            self.events = []
+
+        def __call__(self, error, flag):
+            self.events.append((error, flag))
+
+        def write(self, message):
+            self.events.append(message)
+
+    previous = np.geterr()
+    previous_handler = np.geterrcall()
+    outcomes = []
+    try:
+        for reference in [True, False]:
+            handler = Handler()
+            np.seterrcall(handler)
+            with warnings.catch_warnings(record=True) as caught, np.errstate(invalid=policy):
+                warnings.simplefilter("always", RuntimeWarning)
+                if reference:
+                    boxed = data.to_numpy(dtype=object) if input_kind.startswith("pandas") else values.astype(object)
+                    result = pipeline._native.transform_array(boxed, ["a", "b"])[0]
+                elif input_kind == "native":
+                    result = pipeline._native.transform_array(values, ["a", "b"])[0]
+                else:
+                    result = pipeline.transform_array(data, feature_names=["a", "b"])[0]
+                outcomes.append((result.view(np.uint32), [(item.category, str(item.message)) for item in caught], handler.events))
+        np.testing.assert_array_equal(outcomes[0][0], outcomes[1][0])
+        assert outcomes[0][1:] == outcomes[1][1:]
+        assert np.geterr() == previous
+    finally:
+        np.seterrcall(previous_handler)
+
+
+@pytest.mark.parametrize("dtype", ["f4", ">f4"])
+@pytest.mark.parametrize("layout", ["F", "reversed", "unaligned"])
+def test_float32_late_signaling_nan_restores_entire_object_transform(dtype, layout):
+    values = np.arange(32, dtype=np.dtype(dtype)).reshape(16, 2)
+    if layout == "F":
+        values = np.asfortranarray(values)
+    elif layout == "reversed":
+        values = values[::-1, ::-1]
+    else:
+        values = np.ndarray(values.shape, dtype=dtype, buffer=bytearray(values.nbytes + 1), offset=1)
+        values[:] = np.arange(32).reshape(16, 2)
+    values.view(np.dtype(dtype).str.replace("f", "u"))[-1, -1] = 0xFF800001
+    pipeline = FeaturePipeline().fit(np.zeros((3, 2)), [0, 1, 2])
+    with np.errstate(invalid="ignore"):
+        expected = pipeline._native.transform_array(values.astype(object), None)[0]
+        actual = pipeline._native.transform_array(values, None)[0]
+    np.testing.assert_array_equal(actual.view(np.uint32), expected.view(np.uint32))
+
+
+@pytest.mark.parametrize("dtype", ["float32", ">f4"])
+@pytest.mark.parametrize("mixed", [False, True])
+def test_float32_dataframe_does_not_widen_before_native_conversion(dtype, mixed):
+    pd = pytest.importorskip("pandas")
+    data = pd.DataFrame(np.ones((16, 2), dtype=dtype), columns=["a", "b"])
+    if mixed:
+        data["a"] = np.arange(16, dtype=np.int64)
+    extracted, names = FeaturePipeline._extract_frame(data, allow_numeric=True)
+    assert extracted.dtype == (object if mixed else np.dtype(dtype))
+    assert names == ["a", "b"]
+
+
 @pytest.mark.parametrize("dtype", ["Int64", "Float64", "boolean", "int64[pyarrow]"])
 @pytest.mark.parametrize("has_missing", [False, True])
 def test_pandas_extension_arrays_keep_object_conversion_contract(dtype, has_missing):
@@ -90,7 +173,12 @@ def test_columnar_numeric_nulls_and_names_keep_object_fallback(kind):
     reference, reference_names = pipeline._extract_frame(frame, allow_numeric=False)
     extracted, names = pipeline._extract_frame(frame, allow_numeric=True)
     assert extracted.dtype == object and names == reference_names
-    np.testing.assert_array_equal(extracted, reference)
+    assert extracted.shape == reference.shape
+    for actual_value, reference_value in zip(extracted.flat, reference.flat):
+        if isinstance(reference_value, (float, np.floating)) and np.isnan(reference_value):
+            assert isinstance(actual_value, (float, np.floating)) and np.isnan(actual_value)
+        else:
+            assert actual_value == reference_value
     try:
         expected, expected_cat, expected_names = pipeline._native.transform_array(reference, reference_names)
     except (RuntimeError, TypeError, ValueError) as error:

@@ -216,13 +216,17 @@ class FeaturePipeline:
             # Convert each numeric block through double, just like Python scalar
             # conversion in the object path (important for large integers).
             # Tiny batches avoid the fixed cost of inspecting every column dtype.
-            dtype = (
-                np.float64
-                if allow_numeric
-                and len(data) >= 16
-                and all(_is_plain_numeric_dtype(dtype) for dtype in data.dtypes)
-                else object
-            )
+            dtype = object
+            if allow_numeric and len(data) >= 16:
+                dtypes = tuple(data.dtypes)
+                if all(_is_plain_numeric_dtype(item) for item in dtypes):
+                    float32 = [item for item in dtypes if item.kind == "f" and item.itemsize == 4]
+                    if not float32:
+                        dtype = np.float64
+                    elif all(item == float32[0] for item in dtypes):
+                        # Native code handles signaling NaNs without triggering
+                        # NumPy's vectorized widening warnings or callbacks.
+                        dtype = float32[0]
             try:
                 matrix = data.to_numpy(dtype=dtype, copy=False)
             except (FloatingPointError, RuntimeWarning):
