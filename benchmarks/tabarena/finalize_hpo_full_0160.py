@@ -18,6 +18,7 @@ import re
 import shutil
 import subprocess
 import sys
+from datetime import datetime, timedelta
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -134,11 +135,200 @@ def validate_runtime(runtime, plan, worker):
     )
 
 
-def collect(plan, inputs, receipt, *, worker=None):
+def utc_time(value):
+    require(isinstance(value, str), "Missing recovery timestamp")
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    require(
+        parsed.utcoffset() == timedelta(0), "Recovery timestamps must be explicit UTC"
+    )
+    return parsed
+
+
+def projected_runtime(manifest):
+    return {
+        key: value
+        for key, value in manifest["runtime"].items()
+        if key != "python_executable"
+    }
+
+
+def validate_recovery_audit(plan, inputs, receipt, audit, worker):
+    """Validate the public, pre-authorized exception; archives were checked at recovery."""
+    require(audit.get("schema_version") == 1, "Unknown recovery audit schema")
+    declaration = audit.get("declaration", {})
+    identity = registration_identity(plan, receipt, worker)
+    for key, value in {
+        "schema_version": 1,
+        "plan_sha256": worker.plan_hash(plan),
+        "registration_commit": receipt["commit"],
+        "registration_sha256": worker.plan_hash(receipt),
+        "reason": "user_requested_sleep_shutdown",
+        "policy": "one explicit fresh attempt per listed parent; no automatic retries",
+    }.items():
+        require(declaration.get(key) == value, f"Recovery declaration {key} differs")
+    authorized = utc_time(declaration.get("authorized_at_utc"))
+    for key in ("shutdown_receipt_sha256", "controller_state_sha256"):
+        require(
+            re.fullmatch(r"[a-f0-9]{64}", declaration.get(key, "")),
+            "Missing recovery evidence hash",
+        )
+    require(
+        re.fullmatch(r"[a-f0-9]{40}", audit.get("public_declaration_commit", "")),
+        "Recovery needs an immutable public commit",
+    )
+    name = audit.get("public_declaration_path", "")
+    require(
+        name.startswith("benchmarks/tabarena/")
+        and name.endswith(".json")
+        and ".." not in Path(name).parts
+        and "\\" not in name
+        and ":" not in name,
+        "Unsafe public recovery declaration path",
+    )
+    require(
+        audit.get("public_declaration_sha256") == worker.plan_hash(declaration),
+        "Recovery public declaration digest differs",
+    )
+    if audit.get("archive_root"):
+        archive = Path(audit["archive_root"]).resolve()
+        require(
+            all(
+                archive != Path(root).resolve()
+                and Path(root).resolve() not in archive.parents
+                and archive not in Path(root).resolve().parents
+                for root in inputs
+            ),
+            "Interrupted archives must remain outside collection roots",
+        )
+    entries = declaration.get("parents", [])
+    require(
+        len(entries) == 8 and len({entry["parent_id"] for entry in entries}) == 8,
+        "Recovery must list exactly eight distinct interrupted parents",
+    )
+    expected = {parent["parent_id"]: parent for parent in plan["parents"]}
+    archived = set()
+    for entry in entries:
+        parent = expected.get(entry["parent_id"])
+        require(
+            parent is not None and parent["owner"] == "local",
+            "Recovery includes a foreign or remote parent",
+        )
+        key = f"{parent['config_name']}/{parent['task_id']}/{parent['repeat']}_{parent['fold']}"
+        require(entry.get("key") == key, "Recovery parent repeat/fold path differs")
+        previous = entry.get("previous_manifest", {})
+        require(
+            previous.get("parent") == parent
+            and previous.get("plan_sha256") == identity["plan_sha256"]
+            and previous.get("resources") == plan["resources"]
+            and previous.get("host") == "local"
+            and previous.get("status") == "running"
+            and isinstance(previous.get("outer_split"), dict),
+            "Recovery previous parent identity, status, resources, or split differs",
+        )
+        require(
+            all(
+                previous.get("registration", {}).get(k) == v
+                for k, v in identity.items()
+            ),
+            "Recovery previous registration differs",
+        )
+        require(
+            "python_executable" not in previous.get("runtime", {}),
+            "Recovery declaration exposes local executable path",
+        )
+        validate_runtime(previous.get("runtime", {}), plan, worker)
+        require(
+            utc_time(previous.get("started_at"))
+            <= utc_time(previous.get("fit_started_at"))
+            < authorized,
+            "Prior interrupted attempt did not precede recovery authorization",
+        )
+        files = entry.get("archived_files", [])
+        for record in files:
+            path = record.get("path", "")
+            require(
+                isinstance(path, str)
+                and ".." not in Path(path).parts
+                and "\\" not in path
+                and ":" not in path
+                and any(
+                    path.startswith(f"{kind}/{key}/")
+                    for kind in ("artifacts", "controller", "data")
+                ),
+                "Recovery archive path escapes its parent",
+            )
+            require(
+                path not in archived
+                and isinstance(record.get("size_bytes"), int)
+                and record["size_bytes"] >= 0
+                and re.fullmatch(r"[a-f0-9]{64}", record.get("sha256", "")),
+                "Duplicate or invalid recovery archive inventory",
+            )
+            archived.add(path)
+        require(
+            f"artifacts/{key}/manifest.json" in archived
+            and f"controller/{key}/claim.json" in archived,
+            "Recovery lacks archived manifest or execution claim",
+        )
+    return {
+        key: audit[key]
+        for key in (
+            "schema_version",
+            "declaration",
+            "public_declaration_path",
+            "public_declaration_commit",
+            "public_declaration_sha256",
+        )
+    }
+
+
+def validate_replacement(manifest, entry, declaration):
+    previous = entry["previous_manifest"]
+    require(
+        projected_runtime(manifest) == previous["runtime"],
+        "Recovered parent runtime changed",
+    )
+    require(
+        manifest.get("outer_split") == previous["outer_split"],
+        "Recovered parent outer split changed",
+    )
+    require(
+        utc_time(declaration["authorized_at_utc"])
+        <= utc_time(manifest.get("started_at"))
+        <= utc_time(manifest.get("fit_started_at"))
+        <= utc_time(manifest.get("finished_at")),
+        "Replacement did not start after explicit recovery authorization",
+    )
+
+
+def verify_public_recovery(audit, worker):
+    url = (
+        "https://raw.githubusercontent.com/captnmarkus/ctboost/"
+        f"{audit['public_declaration_commit']}/{audit['public_declaration_path']}"
+    )
+    published = worker._base()._fetch_json(url)
+    require(
+        published == audit["declaration"]
+        and worker.plan_hash(published) == audit["public_declaration_sha256"],
+        "Immutable public recovery declaration differs",
+    )
+
+
+def collect(plan, inputs, receipt, *, worker=None, recovery_audit=None):
     """Discover exact parent coverage; deserialize only after all parents complete."""
     worker = worker or protocol()
     worker.validate_plan(plan)
     identity = registration_identity(plan, receipt, worker)
+    recovery = (
+        None
+        if recovery_audit is None
+        else validate_recovery_audit(plan, inputs, receipt, recovery_audit, worker)
+    )
+    recovered = (
+        {}
+        if recovery is None
+        else {entry["parent_id"]: entry for entry in recovery["declaration"]["parents"]}
+    )
     expected = {parent["parent_id"]: parent for parent in plan["parents"]}
     require(len(expected) == plan["expected_parent_count"], "Duplicate expected parent")
     found, raw_paths, roots = {}, set(), [Path(path).resolve() for path in inputs]
@@ -210,6 +400,10 @@ def collect(plan, inputs, receipt, *, worker=None):
                 "Unknown parent status",
             )
             if status == "complete":
+                if parent_id in recovered:
+                    validate_replacement(
+                        manifest, recovered[parent_id], recovery["declaration"]
+                    )
                 require(
                     not (path.parent / "resource_failure.json").exists()
                     and not any(
@@ -263,6 +457,8 @@ def collect(plan, inputs, receipt, *, worker=None):
         if missing or active
         else "complete",
     }
+    if recovery is not None:
+        report["recovery"] = recovery
     records = []
     if report["status"] == "complete":
         for parent in plan["parents"]:
@@ -481,16 +677,18 @@ def verify_stage(folder):
     return entries
 
 
-def stage(plan, inputs, receipt_path, output, source):
+def stage(plan, inputs, receipt_path, output, source, *, recovery_audit=None):
     import yaml
 
     worker = protocol()
     receipt = read_json(receipt_path)
-    report, raw_paths = collect(plan, inputs, receipt)
+    report, raw_paths = collect(plan, inputs, receipt, recovery_audit=recovery_audit)
     require(
         report["status"] == "complete",
         "Full run is incomplete; no evaluation or publication permitted",
     )
+    if recovery_audit is not None:
+        verify_public_recovery(report["recovery"], worker)
     output.mkdir(parents=True, exist_ok=True)
     registration = worker.verify_registration(plan, receipt_path, output)
     binding = {
@@ -584,6 +782,17 @@ included. `SHA256SUMS` covers every public artifact. The result files can be loa
 with `MethodMetadata.from_yaml` and `EndToEndResults.from_cache` from TabArena commit
 `{plan["tabarena_commit"]}` after placing metadata beside its `results/` directory.
 """
+    disclosure = ""
+    if recovery_audit is not None:
+        disclosure = (
+            "Eight prior attempts were interrupted by a user-requested local shutdown, "
+            "archived, and explicitly authorized for one fresh attempt each. The unchanged "
+            "worker still disables automatic retries. The counts above describe retained "
+            "results; interrupted work is excluded from successful-fit timings. The immutable "
+            "declaration and prior-attempt hash inventory are included in "
+            "`validation/completeness.json` under `recovery`.\n"
+        )
+        card += "\n" + disclosure
     (temporary / "README.md").write_text(card, encoding="utf-8")
     inventory = checksums(temporary)
     (temporary / "SHA256SUMS").write_text(
@@ -597,7 +806,8 @@ with `MethodMetadata.from_yaml` and `EndToEndResults.from_cache` from TabArena c
         f"on all 51 datasets / 816 outer splits, with eight bag folds and no imputed failures. "
         f"Validated result tables and provenance: https://huggingface.co/datasets/{REPO_ID}. "
         "These are author-run 2-CPU/8-GiB results on mixed hardware, so timings are not "
-        "canonical. Raw prediction artifacts remain local for an agreed review channel.\n",
+        "canonical. Raw prediction artifacts remain local for an agreed review channel.\n"
+        + disclosure,
         encoding="utf-8",
     )
     return public
@@ -635,6 +845,18 @@ def publish(folder, output):
         "Publication has no complete full-run validation",
     )
     evidence = read_json(folder / "validation/completeness.json")
+    if evidence.get("recovery") is not None:
+        require(
+            "archive_root" not in evidence["recovery"],
+            "Public recovery audit contains a local archive path",
+        )
+        validate_recovery_audit(
+            read_json(folder / "plan.json"),
+            [],
+            read_json(folder / "validation/registration.json")["receipt"],
+            evidence["recovery"],
+            protocol(),
+        )
     require(
         evidence.get("status") == "complete"
         and evidence.get("complete_parents") == evidence.get("expected_parents")
@@ -768,6 +990,7 @@ def main(argv=None):
     parser.add_argument("--registration", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--source", type=Path)
+    parser.add_argument("--recovery-audit", type=Path)
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--check", action="store_true")
     mode.add_argument("--publish", action="store_true")
@@ -781,8 +1004,11 @@ def main(argv=None):
     )
     sys.path.insert(0, str(ROOT))
     plan = read_json(args.plan)
+    recovery = None if args.recovery_audit is None else read_json(args.recovery_audit)
     if args.check:
-        report, _ = collect(plan, args.input, read_json(args.registration))
+        report, _ = collect(
+            plan, args.input, read_json(args.registration), recovery_audit=recovery
+        )
         print(
             json.dumps(
                 {k: v for k, v in report.items() if k != "parents"}, sort_keys=True
@@ -797,6 +1023,7 @@ def main(argv=None):
         args.registration,
         args.output.resolve(),
         args.source.resolve(),
+        recovery_audit=recovery,
     )
     result = (
         publish(folder, args.output.resolve())

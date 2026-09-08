@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import shutil
@@ -570,3 +571,222 @@ def test_changed_publication_completeness_never_reaches_hub(staged, monkeypatch)
     )
     with pytest.raises(ValueError, match="completeness"):
         final.publish(folder, study.output)
+
+
+@pytest.fixture
+def recovery(study, monkeypatch):
+    # These are synthetic local parents; only the first eight were interrupted.
+    for parent in study.plan["parents"]:
+        parent["owner"] = "local"
+    study.receipt["plan_sha256"] = digest(study.plan)
+    final.write_json(study.receipt_path, study.receipt)
+    identity = final.registration_identity(study.plan, study.receipt, study.worker)
+    study.worker.verify_registration = lambda *args: identity
+    entries = []
+    for parent, (path, raw) in zip(study.plan["parents"], study.paths):
+        manifest = final.read_json(path)
+        manifest.update(
+            parent=parent,
+            host="local",
+            plan_sha256=digest(study.plan),
+            registration=identity,
+            started_at="2026-09-08T10:00:00+00:00",
+            fit_started_at="2026-09-08T10:00:01+00:00",
+            finished_at="2026-09-08T10:00:02+00:00",
+        )
+        manifest["runtime"]["python_executable"] = "/local/python"
+        payload = final.read_json(raw)
+        payload["runtime_sha256"] = digest(manifest["runtime"])
+        final.write_json(raw, payload)
+        manifest["validation"] = study.worker.validate_parent_result(
+            raw, parent, digest(study.plan), outer_split=manifest["outer_split"]
+        )
+        final.write_json(path, manifest)
+        if len(entries) < 8:
+            previous = copy.deepcopy(manifest)
+            previous.update(
+                status="running",
+                started_at="2026-09-07T10:00:00+00:00",
+                fit_started_at="2026-09-07T10:00:01+00:00",
+            )
+            for field in ("validation", "elapsed_seconds", "finished_at"):
+                previous.pop(field)
+            previous["runtime"].pop("python_executable")
+            key = f"{parent['config_name']}/{parent['task_id']}/{parent['repeat']}_{parent['fold']}"
+            entries.append(
+                {
+                    "key": key,
+                    "parent_id": parent["parent_id"],
+                    "previous_manifest": previous,
+                    "archived_files": [
+                        {
+                            "path": f"{kind}/{key}/{name}",
+                            "size_bytes": 10,
+                            "sha256": "1" * 64,
+                        }
+                        for kind, name in (
+                            ("artifacts", "manifest.json"),
+                            ("controller", "claim.json"),
+                        )
+                    ],
+                }
+            )
+    declaration = {
+        "schema_version": 1,
+        "plan_sha256": digest(study.plan),
+        "registration_commit": study.receipt["commit"],
+        "registration_sha256": digest(study.receipt),
+        "reason": "user_requested_sleep_shutdown",
+        "authorized_at_utc": "2026-09-08T09:00:00+00:00",
+        "policy": "one explicit fresh attempt per listed parent; no automatic retries",
+        "shutdown_receipt_sha256": "2" * 64,
+        "controller_state_sha256": "3" * 64,
+        "parents": entries,
+    }
+    audit = {
+        "schema_version": 1,
+        "declaration": declaration,
+        "public_declaration_path": "benchmarks/tabarena/fixture-recovery.json",
+        "public_declaration_commit": "4" * 40,
+        "public_declaration_sha256": digest(declaration),
+        "archive_root": str(study.output.parent / "private-archived-attempts"),
+    }
+    study.worker._base = lambda: SimpleNamespace(
+        _fetch_json=lambda url: copy.deepcopy(declaration)
+    )
+    study.calls.clear()
+    return study, audit
+
+
+def test_recovery_audit_binds_history_without_publishing_local_archive_path(recovery):
+    study, audit = recovery
+    report, paths = final.collect(
+        study.plan, study.inputs, study.receipt, recovery_audit=audit
+    )
+    assert report["status"] == "complete" and len(paths) == 12
+    assert report["recovery"]["declaration"] == audit["declaration"]
+    assert "archive_root" not in report["recovery"]
+    assert not Path(
+        audit["archive_root"]
+    ).exists()  # Public verification needs no private archive.
+    final.validate_recovery_audit(
+        study.plan, [], study.receipt, report["recovery"], study.worker
+    )
+
+
+@pytest.mark.parametrize(
+    "mutation,match",
+    [
+        ("duplicate", "distinct"),
+        ("status", "status"),
+        ("registration", "registration"),
+        ("path", "escapes"),
+        ("naive_time", "UTC"),
+        ("early_authorization", "precede"),
+        ("mutable_commit", "immutable"),
+        ("archive_inside", "outside"),
+    ],
+)
+def test_invalid_recovery_declarations_are_rejected(recovery, mutation, match):
+    study, audit = recovery
+    declaration = audit["declaration"]
+    if mutation == "duplicate":
+        declaration["parents"][-1] = copy.deepcopy(declaration["parents"][0])
+    elif mutation == "status":
+        declaration["parents"][0]["previous_manifest"]["status"] = "complete"
+    elif mutation == "registration":
+        declaration["registration_sha256"] = "0" * 64
+    elif mutation == "path":
+        declaration["parents"][0]["archived_files"][0]["path"] = (
+            "../private/manifest.json"
+        )
+    elif mutation == "naive_time":
+        declaration["authorized_at_utc"] = "2026-09-08T09:00:00"
+    elif mutation == "early_authorization":
+        declaration["authorized_at_utc"] = "2026-09-06T09:00:00+00:00"
+    elif mutation == "mutable_commit":
+        audit["public_declaration_commit"] = "master"
+    else:
+        audit["archive_root"] = str(study.inputs[0] / "archive")
+    audit["public_declaration_sha256"] = digest(declaration)
+    with pytest.raises(ValueError, match=match):
+        final.collect(study.plan, study.inputs, study.receipt, recovery_audit=audit)
+
+
+@pytest.mark.parametrize(
+    "mutation,match",
+    [
+        ("runtime", "runtime changed"),
+        ("split", "split changed"),
+        ("start", "after explicit"),
+    ],
+)
+def test_replacement_cannot_change_runtime_split_or_predate_authorization(
+    recovery, mutation, match
+):
+    study, audit = recovery
+
+    def change(manifest):
+        if mutation == "runtime":
+            manifest["runtime"]["processor"] = "different hardware"
+        elif mutation == "split":
+            manifest["outer_split"]["fixture_rows"] = 17
+        else:
+            manifest["started_at"] = "2026-09-07T11:00:00+00:00"
+
+    alter(study.paths[0][0], change)
+    with pytest.raises(ValueError, match=match):
+        final.collect(study.plan, study.inputs, study.receipt, recovery_audit=audit)
+
+
+def test_public_recovery_is_fetched_at_exact_commit_and_rejects_changed_json(recovery):
+    study, audit = recovery
+    calls = []
+
+    def fetch(url):
+        calls.append(url)
+        return copy.deepcopy(audit["declaration"])
+
+    study.worker._base = lambda: SimpleNamespace(_fetch_json=fetch)
+    final.verify_public_recovery(audit, study.worker)
+    assert calls == [
+        f"https://raw.githubusercontent.com/captnmarkus/ctboost/{audit['public_declaration_commit']}/{audit['public_declaration_path']}"
+    ]
+    study.worker._base = lambda: SimpleNamespace(_fetch_json=lambda url: {})
+    with pytest.raises(ValueError, match="Immutable public"):
+        final.verify_public_recovery(audit, study.worker)
+
+
+def test_recovery_disclosure_is_staged_and_covered_by_existing_binding(
+    recovery, monkeypatch
+):
+    study, audit = recovery
+
+    def evaluate(plan, paths, output, source):
+        canonical = output / "canonical-results"
+        (canonical / "results").mkdir(parents=True)
+        (canonical / "metadata.yaml").write_text(json.dumps({"can_hpo": True}))
+        for name in final.TABLES:
+            (canonical / "results" / name).write_bytes(b"synthetic result table")
+        return canonical
+
+    monkeypatch.setattr(final, "evaluate", evaluate)
+    folder = final.stage(
+        study.plan,
+        study.inputs,
+        study.receipt_path,
+        study.output,
+        study.source,
+        recovery_audit=audit,
+    )
+    evidence = final.read_json(folder / "validation/completeness.json")
+    assert evidence["recovery"]["declaration"] == audit["declaration"]
+    assert "archive_root" not in evidence["recovery"]
+    assert "Eight prior attempts" in (folder / "README.md").read_text()
+    assert (
+        "Eight prior attempts" in (study.output / "draft_lennart_reply.md").read_text()
+    )
+    assert final.read_json(folder / final.MARKER)["binding"][
+        "validation_sha256"
+    ] == digest(evidence)
+    final.verify_stage(folder)
