@@ -46,6 +46,10 @@ jobs:
             python-version: "3.12"
             variant: gcc-fma
             cxxflags: "-mavx2 -mfma"
+          - os: ubuntu-latest
+            python-version: "3.12"
+            variant: gcc-fma-contract-off
+            cxxflags: "-mavx2 -mfma -ffp-contract=off"
           - os: windows-latest
             python-version: "3.12"
             variant: msvc-fast

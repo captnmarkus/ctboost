@@ -83,8 +83,9 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
   };
 
   const char kind = raw_matrix.dtype().kind();
+  // float16 must retain scalar conversion's platform-specific error policy.
   const bool plain_numeric = kind == 'b' || kind == 'i' || kind == 'u' ||
-                             (kind == 'f' && raw_matrix.itemsize() <= 8);
+                             (kind == 'f' && (raw_matrix.itemsize() == 4 || raw_matrix.itemsize() == 8));
   if (plain_numeric && categorical_states_.empty() && one_hot_states_.empty() &&
       combination_states_.empty() && ctr_states_.empty() && text_states_.empty() &&
       embedding_states_.empty() && numeric_indices_.size() == column_count) {

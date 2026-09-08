@@ -272,6 +272,7 @@ jobs:
         {project}/tests/test_feature_pipeline_ctr_inference.py
         {project}/tests/test_feature_pipeline_optional_input_inference.py
         {project}/tests/test_loss_optima.py
+        {project}/tests/test_training_prediction_arithmetic.py
       CIBW_CONFIG_SETTINGS: >-
         cmake.define.CTBOOST_ENABLE_CUDA=ON
         cmake.define.CTBOOST_REQUIRE_CUDA=ON
@@ -384,6 +385,7 @@ jobs:
             {project}/tests/test_feature_pipeline_ctr_inference.py
             {project}/tests/test_feature_pipeline_optional_input_inference.py
             {project}/tests/test_loss_optima.py
+            {project}/tests/test_training_prediction_arithmetic.py
           CIBW_BEFORE_BUILD_WINDOWS: >-
             python -m pip install --upgrade "delvewheel>=1.8"
           CIBW_TEST_ENVIRONMENT_WINDOWS: >-

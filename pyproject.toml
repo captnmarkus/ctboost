@@ -226,7 +226,7 @@ skip = ["*-musllinux_*"]
 dependency-versions = "pinned"
 build-verbosity = 1
 test-requires = ["pytest", "scikit-learn>=1.3", "pandas>=1.5"]
-test-command = "python {project}/tests/run_installed_smoke.py {project}/tests/test_wheel_smoke.py {project}/tests/test_prediction_fast_path.py {project}/tests/test_feature_pipeline_numeric_inference.py {project}/tests/test_feature_pipeline_ctr_inference.py {project}/tests/test_feature_pipeline_optional_input_inference.py {project}/tests/test_loss_optima.py"
+test-command = "python {project}/tests/run_installed_smoke.py {project}/tests/test_wheel_smoke.py {project}/tests/test_prediction_fast_path.py {project}/tests/test_feature_pipeline_numeric_inference.py {project}/tests/test_feature_pipeline_ctr_inference.py {project}/tests/test_feature_pipeline_optional_input_inference.py {project}/tests/test_loss_optima.py {project}/tests/test_training_prediction_arithmetic.py"
 
 [tool.cibuildwheel.config-settings]
 "cmake.define.CTBOOST_ENABLE_CUDA" = "OFF"

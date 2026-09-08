@@ -8,6 +8,37 @@
 
 namespace ctboost::booster_detail {
 
+void UpdateTrainingPredictions(const FitLoopContext& context,
+                               const Tree& tree,
+                               const std::vector<std::size_t>& row_indices,
+                               const std::vector<LeafRowRange>& leaf_row_ranges,
+                               int class_index) {
+#if defined(__GNUC__) && !defined(__clang__) && \
+    (defined(__FMA__) || defined(__FMA4__) || defined(__ARM_FEATURE_FMA) || \
+     defined(__aarch64__) || defined(__FP_FAST_FMAF))
+  if (!context.use_gpu) {
+    // GCC can contract the per-row prediction update while the scalar leaf-range
+    // loop rounds its invariant product first. Reuse inference arithmetic so
+    // continued fits reconstruct exactly the predictions used during training.
+    // This also respects builds that explicitly disable FP contraction.
+    UpdatePredictions(tree,
+                      context.workspace->train_hist,
+                      context.learning_rate,
+                      context.prediction_dimension,
+                      class_index,
+                      context.workspace->predictions);
+    return;
+  }
+#endif
+  UpdatePredictionsFromLeafRanges(tree,
+                                  row_indices,
+                                  leaf_row_ranges,
+                                  context.learning_rate,
+                                  context.prediction_dimension,
+                                  class_index,
+                                  context.workspace->predictions);
+}
+
 void LogFitMemorySnapshot(const TrainingProfiler& profiler,
                           const char* stage,
                           const Pool& train_pool,

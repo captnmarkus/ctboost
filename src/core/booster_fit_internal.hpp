@@ -160,6 +160,11 @@ DartPredictionState PrepareDartPredictionState(const FitLoopContext& context,
 void ApplyDroppedTreeAdjustments(const FitLoopContext& context,
                                  const DartPredictionState& dart_state,
                                  double dropped_tree_scale);
+void UpdateTrainingPredictions(const FitLoopContext& context,
+                               const Tree& tree,
+                               const std::vector<std::size_t>& row_indices,
+                               const std::vector<LeafRowRange>& leaf_row_ranges,
+                               int class_index);
 void RunSingleOutputIteration(const FitLoopContext& context,
                               const FitLoopState& state,
                               DistributedCoordinator* distributed_coordinator,

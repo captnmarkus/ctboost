@@ -61,13 +61,7 @@ void RunSingleOutputIteration(const FitLoopContext& context,
   if (new_tree_scale != 1.0) {
     ScaleTreeLeafWeights(tree, new_tree_scale);
   }
-  UpdatePredictionsFromLeafRanges(tree,
-                                  training_row_indices,
-                                  training_leaf_ranges,
-                                  context.learning_rate,
-                                  context.prediction_dimension,
-                                  0,
-                                  context.workspace->predictions);
+  UpdateTrainingPredictions(context, tree, training_row_indices, training_leaf_ranges, 0);
   if (context.eval_pool != nullptr) {
     UpdatePredictions(tree,
                       context.workspace->eval_hist,

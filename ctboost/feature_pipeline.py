@@ -32,8 +32,10 @@ def _is_pandas_dataframe(value: Any) -> bool:
 
 
 def _is_plain_numeric_dtype(dtype: Any) -> bool:
+    # float16 widening can introduce platform-specific NumPy error callbacks.
+    # Keep its established object conversion, also in mixed DataFrames.
     return isinstance(dtype, np.dtype) and (
-        dtype.kind in "biu" or (dtype.kind == "f" and dtype.itemsize <= 8)
+        dtype.kind in "biu" or (dtype.kind == "f" and dtype.itemsize in (4, 8))
     )
 
 
