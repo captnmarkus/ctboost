@@ -1,0 +1,21 @@
+﻿import hashlib
+import json
+from pathlib import Path
+import sys
+import ctboost
+import pytest
+
+root = Path.cwd()
+package = Path(ctboost.__file__).resolve().parent
+expected = (root / '.tmp/release-readiness-20260908/release-env/Lib/site-packages/ctboost').resolve()
+assert package == expected, package
+wheel = root / '.tmp/release-readiness-20260908/dist-portable/ctboost-0.1.61-cp312-cp312-win_amd64.whl'
+sha = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
+assert sha(wheel) == 'b9fb7b598395a64380ee2f5a2395269ef567169edd151916790087dd71177f94'
+native = Path(ctboost._core.__file__).resolve()
+identity = {'phase': 3, 'source_commit': '5780b41c7321c70e508dccf34e2f76f2503d1175', 'python': sys.version, 'version': ctboost.__version__, 'package': str(package), 'wheel_filename': wheel.name, 'wheel_sha256': sha(wheel), 'native_filename': native.name, 'native_sha256': sha(native), 'test_source_sha256': sha(root / 'tests/test_loss_optima.py')}
+print(json.dumps(identity, indent=2), flush=True)
+result = pytest.main(['-q', '--tb=short', '--import-mode=importlib', 'tests/test_loss_optima.py'])
+identity['pytest_exit_code'] = int(result)
+(root / '.tmp/release-readiness-20260908/accuracy_readiness/phase3-loss-verification.json').write_text(json.dumps(identity, indent=2) + '\n', encoding='utf-8')
+raise SystemExit(result)

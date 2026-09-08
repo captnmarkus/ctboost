@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-09-08T20:16:33.870079+00:00",
+  "candidate_version": "0.1.61",
+  "status": "release_candidate_validated_not_published",
+  "runtime_source_git_commit": "5780b41c7321c70e508dccf34e2f76f2503d1175",
+  "branch": "improve/inference-accuracy-20260908",
+  "final_followup_scope": "README, deployment/release notes and archived evidence only; executable source unchanged after successful CI.",
+  "local_cpu_wheel": {
+    "wheel_sha256": "b9fb7b598395a64380ee2f5a2395269ef567169edd151916790087dd71177f94",
+    "members": 182,
+    "uncompressed_bytes": 16962363,
+    "native_sha256": "5b91bb3139dd54ab05f5c8dea2b1bd1caabf0b9dcb2a2e76cafb01b30281e1b5",
+    "pipeline_sha256": "9e5a75e0b4588436371e0752059e8aa676c1407583a9d7dcf83ab32126fbe5bd",
+    "validator_errors": [],
+    "scope": "Local CPU Windows cp312 candidate, not the complete release matrix"
+  },
+  "final_local_sdist": {
+    "archive": "ctboost-0.1.61.tar.gz",
+    "sha256": "be6b67a81b05830c4ac60727a223edfc8fea5b38e3e7255a0620c2320971a61f",
+    "members": 466,
+    "validator_errors": [],
+    "twine_exit": 0,
+    "seconds": 55.6953911781311,
+    "scope": "Final local source archive including updated documentation; runtime source remains 5780b41."
+  },
+  "local_windows_suite": {
+    "passed": 1916,
+    "skipped": 38,
+    "warnings": 36,
+    "pytest_seconds": 186.76,
+    "process": {
+      "exit_code": 0,
+      "seconds": 188.06828689575195
+    },
+    "native_api_checks": 230,
+    "native_failures": 0
+  },
+  "numpy_pipeline_matrix": {
+    "numpy_1_26_pandas_2_1": 323,
+    "numpy_2_5_pandas_3_0": 323,
+    "archive": "pipeline_phase3"
+  },
+  "saved_model_compatibility": {
+    "models": 14,
+    "development_rows": 6610,
+    "predictions_bitwise_equal": true,
+    "archive": "model_compatibility_phase3"
+  },
+  "inference_timing": {
+    "archive": "inference_timing_phase3",
+    "geometric_public_speedup": 1.7917715364085736,
+    "public_wins": 14,
+    "datasets": 14,
+    "geometric_pair_speedups": [
+      1.8255946927573619,
+      1.7585750284116528
+    ],
+    "final_faster_than_catboost_models": 11,
+    "prediction_model_pass_checks": 112,
+    "warm_timing_blocks": 784
+  },
+  "cpu_ci": {
+    "run_id": 34270193368,
+    "url": "https://github.com/captnmarkus/ctboost/actions/runs/34270193368",
+    "conclusion": "success",
+    "jobs": 13,
+    "full_suite_jobs": 12,
+    "per_full_suite_passes": 1816,
+    "per_full_suite_skips": 49,
+    "scoped_msvc_fast_passes": 3
+  },
+  "release_dry_run": {
+    "run_id": 34270927962,
+    "url": "https://github.com/captnmarkus/ctboost/actions/runs/34270927962",
+    "conclusion": "success",
+    "wheels": 26,
+    "cuda_wheels": 10,
+    "cpu_wheels": 16,
+    "sdists": 1,
+    "jvm_tests": 9,
+    "r_check": "OK",
+    "rebuilt_sdist_smoke_passes": 4,
+    "pypi_publish": "skipped",
+    "github_release_publish": "skipped",
+    "artifact_id": 10074783361,
+    "artifact_bytes": 75764206,
+    "artifact_digest": "sha256:f1325aa5289960055aeb657606948f303edc7f8b80a7f10b8cc80dd583f454dd"
+  },
+  "documentation": {
+    "exit_code": 0,
+    "seconds": 7.307749271392822
+  },
+  "limitations": [
+    "No established Elo improvement or general accuracy parity with default XGBoost.",
+    "Timings use a reused development panel, warm1000-row requests and unequal CTBoost/CatBoost models under background workloads.",
+    "GPU-enabled wheels were built and tested on CPU runners; GPU hardware execution was not validated in this pass.",
+    "Nonzero Pool.baseline warm starts can differ from uninterrupted training because summation order can change later splits."
+  ],
+  "scope_protection": {
+    "frozen_0160_full_hpo25_modified": false,
+    "tabarena_pr_modified": false,
+    "external_messages_sent": false,
+    "release_tag_created": false
+  }
+}

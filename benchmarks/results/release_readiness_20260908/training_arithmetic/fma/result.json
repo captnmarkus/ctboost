@@ -1,0 +1,42 @@
+{
+  "scope": "Extracted unchanged native loop bodies with minimal stand-in structs; arithmetic proof, not full-package validation",
+  "compiler": "g++.exe (GCC) 14.2.0",
+  "target": "i686-w64-mingw32",
+  "flags_common": [
+    "-std=c++17",
+    "-O3",
+    "-mavx2",
+    "-mfma",
+    "-mfpmath=sse",
+    "-static"
+  ],
+  "flags_fast": [],
+  "flags_off": [
+    "-ffp-contract=off"
+  ],
+  "results": {
+    "fast": [
+      "scalar_ranges_vs_hist=343/3000",
+      "vector_ranges_vs_hist=0/3000",
+      "scalar_indices_vs_hist=0/3000",
+      "vector_indices_vs_hist=0/3000",
+      "scalar_vs_vector_hist=0/3000",
+      "explicit_fma_vs_hist=0/3000",
+      "scalar_vs_vector_ranges=343/3000"
+    ],
+    "off": [
+      "scalar_ranges_vs_hist=0/3000",
+      "vector_ranges_vs_hist=0/3000",
+      "scalar_indices_vs_hist=0/3000",
+      "vector_indices_vs_hist=0/3000",
+      "scalar_vs_vector_hist=0/3000",
+      "explicit_fma_vs_hist=343/3000",
+      "scalar_vs_vector_ranges=0/3000"
+    ]
+  },
+  "source_sha256": {
+    ".tmp\\release-readiness-20260908\\fma-training-probe\\probe.cpp": "bebd51642108d6d5e5c44fdeeb208ec1d5d76e3b7abb478e3d827e48d266eabc",
+    "src\\core\\booster_prediction.cpp": "1890462709207873978ac459cc0376fabc095cb2564d819b1485ca2c71aafad7",
+    "src\\core\\booster_tree_updates.cpp": "8f2b612dbb6620338775cb069465e267c3668444650ef74783d3a30f55252335"
+  }
+}

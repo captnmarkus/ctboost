@@ -1,0 +1,1055 @@
+{
+  "adapter_sha256": "8bba22e836152e45022fda991d548dfe6dd22111f9048ba82211e9f18f22e496",
+  "all14_complete": true,
+  "arm": "baseline",
+  "finished_at": "2026-09-08T19:59:48.559624+00:00",
+  "pass": 4,
+  "pass_wall_seconds": 173.0077070999978,
+  "plan_sha256": "0abc3d88279266e183a79f8a1c2167229409db5a6a5268e4a16c58c144a5557e",
+  "rows": [
+    {
+      "cycle_index_sha256": "de39f5e7c5e72727978ed0bb5795e8131985c2986ef84ea0177bd5310595c56a",
+      "dataset": "blood-transfusion-service-center",
+      "development_rows": 62,
+      "input_sha256": {
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\blood-transfusion-service-center\\development.pkl": "abb76281c4329f8bb6537c22c8eb151739f354934fe434706efb850f5de1961d",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\blood-transfusion-service-center\\ctboost_default\\model.pkl": "d034b410d5be8e541b511fc433e016bb42b81de70e84b0bce85473295b62215e",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\blood-transfusion-service-center\\ctboost_default\\result.json": "58ce7ef5ee18e5f2a09a1204700f9401fbf9e0cb322d9f21f1bd3948c3c2cdf4",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\blood-transfusion-service-center\\model.pkl": "c910a6f959b587f9122b14d7fdd7f3dbe3dffae28af4610738763e813de66f60",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\blood-transfusion-service-center\\result.json": "6da8dccf88ab21c5cd881bc4fabaa556f721441379dee83da96e98f35ed0e889",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-1\\blood-transfusion-service-center.npz": "568bbcf0689d056d954d43ba0bdd32b733549b609e403959cf30f39660b439e5",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-2\\blood-transfusion-service-center.npz": "568bbcf0689d056d954d43ba0bdd32b733549b609e403959cf30f39660b439e5"
+      },
+      "models": {
+        "catboost_ag_default": {
+          "block_ms": [
+            0.6360714285440006,
+            0.5860582417341532,
+            0.5497043955703982,
+            0.7542802197929052,
+            0.691759340662719,
+            0.5880175823611873,
+            0.7125813186815991
+          ],
+          "calls_per_block": 91,
+          "cold_ms": 2.303199995367322,
+          "median_ms": 0.6360714285440006,
+          "model_sha256": "c910a6f959b587f9122b14d7fdd7f3dbe3dffae28af4610738763e813de66f60",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000
+          ],
+          "prediction_values_sha256": "ab88f519756e6145fa2f6e19c62289d8c96182b43b4cc695bc07038c2b764d62",
+          "public_prediction_bitwise": true,
+          "rounds": 37,
+          "rss_bytes_after_warmup": 197189632,
+          "trees": 37
+        },
+        "ctboost_default": {
+          "block_ms": [
+            0.40067939698928967,
+            0.39262010049146256,
+            0.3877095477398129,
+            0.39773517587788443,
+            0.4231552764157362,
+            0.39299396986970164,
+            0.39341055277539605
+          ],
+          "calls_per_block": 199,
+          "cold_ms": 0.9255999975721352,
+          "median_ms": 0.39341055277539605,
+          "model_sha256": "d034b410d5be8e541b511fc433e016bb42b81de70e84b0bce85473295b62215e",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000
+          ],
+          "prediction_values_sha256": "406dd624a1e8dc8ca34c90f66887e4d2e0bd3e572959ab0ec64e9e02428f0a8d",
+          "public_prediction_bitwise": true,
+          "rounds": 3,
+          "rss_bytes_after_warmup": 169889792,
+          "trees": 3
+        }
+      },
+      "problem_type": "binary",
+      "timed_rows": 1000
+    },
+    {
+      "cycle_index_sha256": "326f9db5ed1dff08f08155568b11c9ef3c486a47f6056ca1a4f425a3f631d0aa",
+      "dataset": "coil2000_insurance_policies",
+      "development_rows": 818,
+      "input_sha256": {
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\coil2000_insurance_policies\\development.pkl": "e40a3f2dcbf1dc67578d0f301af14fe2a4891d8970903c3be10ca75aa412fc7c",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\coil2000_insurance_policies\\ctboost_default\\model.pkl": "a43172592a5bf0e36ce446f73ee970388d11e1b103e4ed622ae71e588e8d710d",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\coil2000_insurance_policies\\ctboost_default\\result.json": "2ae120174ae66c18275e7ea4363152276793f5a41a4b6f1b2386cb55d917b60a",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\coil2000_insurance_policies\\model.pkl": "0a6fea3b139cef3fef3b94e9033406321a6f921f1bafeed867de18bbe96ce7c0",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\coil2000_insurance_policies\\result.json": "1c461391901647a8cce367ed403cde22a799fbf4ae12c6a817cf303398af78b6",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-1\\coil2000_insurance_policies.npz": "62d3e749da4800890732b90a41ec74639f50c655285ddeeb0484fd48ddb059e8",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-2\\coil2000_insurance_policies.npz": "62d3e749da4800890732b90a41ec74639f50c655285ddeeb0484fd48ddb059e8"
+      },
+      "models": {
+        "catboost_ag_default": {
+          "block_ms": [
+            7.578511110397004,
+            8.826044444706188,
+            8.20203333407537,
+            7.707966666202992,
+            7.0479666667072,
+            6.953355555500214,
+            7.331088889461373
+          ],
+          "calls_per_block": 9,
+          "cold_ms": 11.76570000097854,
+          "median_ms": 7.578511110397004,
+          "model_sha256": "0a6fea3b139cef3fef3b94e9033406321a6f921f1bafeed867de18bbe96ce7c0",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000
+          ],
+          "prediction_values_sha256": "c1ef19e7cd5cdbb789faa59abacd3d10c364eff76517de05b4147e4f818babc1",
+          "public_prediction_bitwise": true,
+          "rounds": 205,
+          "rss_bytes_after_warmup": 199782400,
+          "trees": 205
+        },
+        "ctboost_default": {
+          "block_ms": [
+            8.501709090937352,
+            8.199390909629239,
+            7.9296727271866985,
+            6.868981817784846,
+            6.695936363857155,
+            7.134918181691319,
+            6.514245454375421
+          ],
+          "calls_per_block": 11,
+          "cold_ms": 6.998500000918284,
+          "median_ms": 7.134918181691319,
+          "model_sha256": "a43172592a5bf0e36ce446f73ee970388d11e1b103e4ed622ae71e588e8d710d",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000
+          ],
+          "prediction_values_sha256": "65d4f9367697f87ce620959d9eebf12543e326f81c4073a289b2b67c19a83f99",
+          "public_prediction_bitwise": true,
+          "rounds": 129,
+          "rss_bytes_after_warmup": 204443648,
+          "trees": 129
+        }
+      },
+      "problem_type": "binary",
+      "timed_rows": 1000
+    },
+    {
+      "cycle_index_sha256": "702746827e553786bb026ac120cb58745fef3d3f554c33891809001cc37639f0",
+      "dataset": "GiveMeSomeCredit",
+      "development_rows": 1250,
+      "input_sha256": {
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\GiveMeSomeCredit\\development.pkl": "26085f3e375c80aacbac3b2f1c7f89a275bd7d0e59e9c7a91d48e449d76bdab0",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\GiveMeSomeCredit\\ctboost_default\\model.pkl": "88e25c61ec41db36aeda1ba4af90ff3e0f8f3108068fb834ecc575cc2bc7f365",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\GiveMeSomeCredit\\ctboost_default\\result.json": "e1ed7b9df6ff338674bb75ba000b38fdcf29fea6d7e17b0850f1a4e212c6db6d",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\GiveMeSomeCredit\\model.pkl": "f76944687651ab196c9f27d8233ddfd8c402da44d21ad038034d77c40afadf71",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\GiveMeSomeCredit\\result.json": "b6318e711337403be10cf2f230a184bb925b692503af4b081c911bad398ac404",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-1\\GiveMeSomeCredit.npz": "2773e433b15317c683938f7078e0174a453f7376d108ddf003760c2a4aeeff92",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-2\\GiveMeSomeCredit.npz": "2773e433b15317c683938f7078e0174a453f7376d108ddf003760c2a4aeeff92"
+      },
+      "models": {
+        "catboost_ag_default": {
+          "block_ms": [
+            1.0288271186547748,
+            1.0310889830811825,
+            0.9785347457351636,
+            0.8544779661475578,
+            0.8383940677681417,
+            0.818233050838097,
+            0.8174025423906672
+          ],
+          "calls_per_block": 118,
+          "cold_ms": 1.4301999981398694,
+          "median_ms": 0.8544779661475578,
+          "model_sha256": "f76944687651ab196c9f27d8233ddfd8c402da44d21ad038034d77c40afadf71",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000
+          ],
+          "prediction_values_sha256": "04339fe249d9f4058349d35b47257f3f5b02b49b27f8ef8034f4d4cfb10a3cc3",
+          "public_prediction_bitwise": true,
+          "rounds": 60,
+          "rss_bytes_after_warmup": 204214272,
+          "trees": 60
+        },
+        "ctboost_default": {
+          "block_ms": [
+            2.7184824999494595,
+            2.962734999891836,
+            2.8111875000831787,
+            2.760307500102499,
+            2.825354999913543,
+            3.6147049999271985,
+            2.7473800000734627
+          ],
+          "calls_per_block": 40,
+          "cold_ms": 2.7895999955944717,
+          "median_ms": 2.8111875000831787,
+          "model_sha256": "88e25c61ec41db36aeda1ba4af90ff3e0f8f3108068fb834ecc575cc2bc7f365",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000
+          ],
+          "prediction_values_sha256": "022fb474a51ae13d48d2f4b263ed823b096450093930f11d6078c7001ca6d814",
+          "public_prediction_bitwise": true,
+          "rounds": 105,
+          "rss_bytes_after_warmup": 205201408,
+          "trees": 105
+        }
+      },
+      "problem_type": "binary",
+      "timed_rows": 1000
+    },
+    {
+      "cycle_index_sha256": "fb55698dda6ea6717f6897eeb767de43ae618e99af918b79c1d82cf090343e5c",
+      "dataset": "QSAR_fish_toxicity",
+      "development_rows": 75,
+      "input_sha256": {
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\QSAR_fish_toxicity\\development.pkl": "2d46530f6a7839859fe494de796a99918f9623b4b223a44e03479d12f6f24470",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\QSAR_fish_toxicity\\ctboost_default\\model.pkl": "d0cc475c3f8bcd25173a5c952b08eb7e5e48af69d2900993044436f9f70421de",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\QSAR_fish_toxicity\\ctboost_default\\result.json": "2971b14d94cf595fd943153cece856d8974e2a4667092174fc1a37b692c78479",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\QSAR_fish_toxicity\\model.pkl": "4769e8d7884b5d33b024cc9448d968e2f527819144210ed147f69c8d2b4e7913",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\QSAR_fish_toxicity\\result.json": "fc851174300edb4399531badfa7762d77938a774e687e332b7d24af40b50cd76",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-1\\QSAR_fish_toxicity.npz": "7f8e1a771747175e992a3346871da87158ba2858792ae8a1f508ecb6fb407e14",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-2\\QSAR_fish_toxicity.npz": "7f8e1a771747175e992a3346871da87158ba2858792ae8a1f508ecb6fb407e14"
+      },
+      "models": {
+        "catboost_ag_default": {
+          "block_ms": [
+            1.0663698924491332,
+            1.4154322580584595,
+            1.186125806466456,
+            1.1190010752793031,
+            1.0612032257936774,
+            1.0357204300817102,
+            1.3006913978906889
+          ],
+          "calls_per_block": 93,
+          "cold_ms": 1.0562000024947338,
+          "median_ms": 1.1190010752793031,
+          "model_sha256": "4769e8d7884b5d33b024cc9448d968e2f527819144210ed147f69c8d2b4e7913",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000
+          ],
+          "prediction_values_sha256": "7fb0fbd603942cee2ece55ceecec383278cca6bc76bbbab57d1600e11a49b330",
+          "public_prediction_bitwise": true,
+          "rounds": 218,
+          "rss_bytes_after_warmup": 204234752,
+          "trees": 218
+        },
+        "ctboost_default": {
+          "block_ms": [
+            2.037030769338927,
+            2.0262435896140047,
+            2.0466846154960923,
+            2.108158974479944,
+            2.060958974396225,
+            2.1988025641453883,
+            2.5536743590073923
+          ],
+          "calls_per_block": 39,
+          "cold_ms": 2.2825000050943345,
+          "median_ms": 2.060958974396225,
+          "model_sha256": "d0cc475c3f8bcd25173a5c952b08eb7e5e48af69d2900993044436f9f70421de",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000
+          ],
+          "prediction_values_sha256": "968fc1549446ba2cbe73e3fecd0cfee150817e76e4f2a73c0f6d3021715c04fd",
+          "public_prediction_bitwise": true,
+          "rounds": 343,
+          "rss_bytes_after_warmup": 203173888,
+          "trees": 343
+        }
+      },
+      "problem_type": "regression",
+      "timed_rows": 1000
+    },
+    {
+      "cycle_index_sha256": "69677b4e0f26fd2603501419326a9f93eac62a93885a3d0836f9846ad110fb3e",
+      "dataset": "wine_quality",
+      "development_rows": 541,
+      "input_sha256": {
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\wine_quality\\development.pkl": "c1f786e0497ec616745a9e3247bb69f2dff24805f7b45b5487003e72baa6d33d",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\wine_quality\\ctboost_default\\model.pkl": "034a89c13cb02cc9d2a9bcd30e3e7024f7a51e0a9c25bfe40e58c7d88e8ff4a8",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\wine_quality\\ctboost_default\\result.json": "a3902d929b3aa00e0ea9b376d804bad95b00f8e6c4a0a573c6aa21c8c324a0bd",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\wine_quality\\model.pkl": "c541bd4540e1a30a47f72b1a144d3018d9b4865fedbf02c241a42fa37806c90a",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\wine_quality\\result.json": "0c31659a43a335df73da2a2d7d90a93a68d7f2f215391f5ef9a357e6327ef06d",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-1\\wine_quality.npz": "9826be17821a627dd5c1f30954ba8bfb0f58fc3897f85f5e5c5f475919ae611f",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-2\\wine_quality.npz": "9826be17821a627dd5c1f30954ba8bfb0f58fc3897f85f5e5c5f475919ae611f"
+      },
+      "models": {
+        "catboost_ag_default": {
+          "block_ms": [
+            3.323873077114023,
+            3.0679846153921413,
+            3.203307692344354,
+            3.6039923078743206,
+            3.9180192305558683,
+            3.1574384615501354,
+            3.1407923077215227
+          ],
+          "calls_per_block": 26,
+          "cold_ms": 4.279900000256021,
+          "median_ms": 3.203307692344354,
+          "model_sha256": "c541bd4540e1a30a47f72b1a144d3018d9b4865fedbf02c241a42fa37806c90a",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000
+          ],
+          "prediction_values_sha256": "1baec85c39ea66cb896855270302253c0f7f4017ad9f743190f86da135501d73",
+          "public_prediction_bitwise": true,
+          "rounds": 1111,
+          "rss_bytes_after_warmup": 209588224,
+          "trees": 1111
+        },
+        "ctboost_default": {
+          "block_ms": [
+            5.802270588259596,
+            5.7480235293897906,
+            4.264494117866407,
+            4.287905882366056,
+            5.192088235001874,
+            5.574564705859623,
+            5.556558823360213
+          ],
+          "calls_per_block": 17,
+          "cold_ms": 4.62330000300426,
+          "median_ms": 5.556558823360213,
+          "model_sha256": "034a89c13cb02cc9d2a9bcd30e3e7024f7a51e0a9c25bfe40e58c7d88e8ff4a8",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000
+          ],
+          "prediction_values_sha256": "a24aaa968acedf833b7418ed6cbdb2bee19508f88bdbd3aae5a0d59a61426448",
+          "public_prediction_bitwise": true,
+          "rounds": 286,
+          "rss_bytes_after_warmup": 207720448,
+          "trees": 286
+        }
+      },
+      "problem_type": "regression",
+      "timed_rows": 1000
+    },
+    {
+      "cycle_index_sha256": "702746827e553786bb026ac120cb58745fef3d3f554c33891809001cc37639f0",
+      "dataset": "diamonds",
+      "development_rows": 1250,
+      "input_sha256": {
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\diamonds\\development.pkl": "b43f9e4ca7ad15e06c2d928de347d787815dc9517cc8af1f57538fdc9409bbe3",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\diamonds\\ctboost_default\\model.pkl": "e1e4a63d7626bef76105080ed6408ee38d45e31a4e06d9250ecef7320138ad63",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\diamonds\\ctboost_default\\result.json": "c886266e632bc4c28d30f4ee0b0c1aea6ad5530a8c9c88559b81707e0d2b53a7",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\diamonds\\model.pkl": "32327d99bd5a2f2349e5070afff01510193bf9486b213f96bc5d65e7f52924eb",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\diamonds\\result.json": "06eacb26a6231fd2f76815d5ce9b23985272cd066f4d9899a373433fcb31024e",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-1\\diamonds.npz": "2371be9ea000a6cbf2a961ec0bcc5bfc9cb0afeb33c5ac2d2bb9b623dfdf0221",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-2\\diamonds.npz": "2371be9ea000a6cbf2a961ec0bcc5bfc9cb0afeb33c5ac2d2bb9b623dfdf0221"
+      },
+      "models": {
+        "catboost_ag_default": {
+          "block_ms": [
+            7.665341666627985,
+            8.006325000072442,
+            8.244275000227693,
+            10.95815833347539,
+            10.586441666722143,
+            9.786724999988413,
+            8.986433333726987
+          ],
+          "calls_per_block": 12,
+          "cold_ms": 8.999300000141375,
+          "median_ms": 8.986433333726987,
+          "model_sha256": "32327d99bd5a2f2349e5070afff01510193bf9486b213f96bc5d65e7f52924eb",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000
+          ],
+          "prediction_values_sha256": "f75c4584177ddff5b7dc2ed4ebfcffbbfaca04b36b8399d7451d19bae1cea5d0",
+          "public_prediction_bitwise": true,
+          "rounds": 2333,
+          "rss_bytes_after_warmup": 215285760,
+          "trees": 2333
+        },
+        "ctboost_default": {
+          "block_ms": [
+            6.547316666910774,
+            6.64153333309514,
+            6.838416666748041,
+            6.861366666877681,
+            6.862308333438705,
+            6.877341666646923,
+            6.803258333699584
+          ],
+          "calls_per_block": 12,
+          "cold_ms": 8.480600001348648,
+          "median_ms": 6.838416666748041,
+          "model_sha256": "e1e4a63d7626bef76105080ed6408ee38d45e31a4e06d9250ecef7320138ad63",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000
+          ],
+          "prediction_values_sha256": "9071310d7703b9ca09b5bcbc0409f4399de746317ebedd72f509b9f97b83ede6",
+          "public_prediction_bitwise": true,
+          "rounds": 367,
+          "rss_bytes_after_warmup": 216522752,
+          "trees": 367
+        }
+      },
+      "problem_type": "regression",
+      "timed_rows": 1000
+    },
+    {
+      "cycle_index_sha256": "3f63c893316fd3e8fca0d0feb8f684c0939eceb42da1981fa7a0540377fec3dd",
+      "dataset": "MIC",
+      "development_rows": 141,
+      "input_sha256": {
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\MIC\\development.pkl": "8854925fdfc61c51b6c54fa220a5abb36c8456934aebd3b5a3d348b0e75da23d",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\MIC\\ctboost_default\\model.pkl": "611bdb44a3df6c9ba3763ec7d0c474cdca9db6cea30f8d5145dfe20072f84cdf",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\MIC\\ctboost_default\\result.json": "b3e2e67ce0f1eac03bf7e7ac03589b3e0e7b2affc48401990c1796a12d30a870",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\MIC\\model.pkl": "a16322ba2f2a31ba261d3bf814302fe62831c75edfca37a60b9e9468517571fc",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\MIC\\result.json": "4be3dec3fb6051992023966f6805aac99092a1e2a6c14412afd7b1593463e9eb",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-1\\MIC.npz": "655b8a3bae5ad30992472d7e9b8dc438a83dda23a1d8f5eb0c5292a29427a517",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-2\\MIC.npz": "655b8a3bae5ad30992472d7e9b8dc438a83dda23a1d8f5eb0c5292a29427a517"
+      },
+      "models": {
+        "catboost_ag_default": {
+          "block_ms": [
+            104.3582400001469,
+            104.7221000000718,
+            107.75920000014594,
+            98.25894000096014,
+            101.51713999948697,
+            99.56751999998232,
+            100.40657999925315
+          ],
+          "calls_per_block": 5,
+          "cold_ms": 108.71919999772217,
+          "median_ms": 101.51713999948697,
+          "model_sha256": "a16322ba2f2a31ba261d3bf814302fe62831c75edfca37a60b9e9468517571fc",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000,
+            8
+          ],
+          "prediction_values_sha256": "b9ab0749bd0a1de44ddfe09a1483b1bf7086ef918ea76dece5695c92b7cf97e3",
+          "public_prediction_bitwise": true,
+          "rounds": 133,
+          "rss_bytes_after_warmup": 219791360,
+          "trees": 133
+        },
+        "ctboost_default": {
+          "block_ms": [
+            105.61795999965398,
+            113.60883999877842,
+            107.4114400005783,
+            111.81769999966491,
+            130.50946000003023,
+            109.21853999898303,
+            111.92592000006698
+          ],
+          "calls_per_block": 5,
+          "cold_ms": 150.59050000127172,
+          "median_ms": 111.81769999966491,
+          "model_sha256": "611bdb44a3df6c9ba3763ec7d0c474cdca9db6cea30f8d5145dfe20072f84cdf",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000,
+            8
+          ],
+          "prediction_values_sha256": "0b7125d0645e96a013df7c95c9335c2784eeaefd4bab3317afb2859346e766ae",
+          "public_prediction_bitwise": true,
+          "rounds": 100,
+          "rss_bytes_after_warmup": 234471424,
+          "trees": 800
+        }
+      },
+      "problem_type": "multiclass",
+      "timed_rows": 1000
+    },
+    {
+      "cycle_index_sha256": "702746827e553786bb026ac120cb58745fef3d3f554c33891809001cc37639f0",
+      "dataset": "SDSS17",
+      "development_rows": 1250,
+      "input_sha256": {
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\SDSS17\\development.pkl": "f04fd83a925c5f4fe4de03a13e983bd638ea450d8bc39e034e022559636bb476",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\SDSS17\\ctboost_default\\model.pkl": "b2fb5e783a8c08317f41e9ed4248c14af2aeddeb0e8a463e69427c534c53a5e3",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\SDSS17\\ctboost_default\\result.json": "e89510dd362e8931c07c42324793bb6863de9be77221799d04394d0a0ef3f980",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\SDSS17\\model.pkl": "c7f3291cabda2f5c2a69e9f27fd5e1e03454d8977d064cc7d1990eaa5e0950f6",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\SDSS17\\result.json": "5e1497f8aaf4461affbe9aa7d7e10d811f4c76da539bd19713644470cea7f879",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-1\\SDSS17.npz": "9b90bca3de6fe7cf0d0527eac60bd7fabe1040346d00d77480c97d2e5b3ca051",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-2\\SDSS17.npz": "9b90bca3de6fe7cf0d0527eac60bd7fabe1040346d00d77480c97d2e5b3ca051"
+      },
+      "models": {
+        "catboost_ag_default": {
+          "block_ms": [
+            13.452885714026966,
+            13.377871428799283,
+            13.677014285349287,
+            12.885800000471395,
+            12.100242856831755,
+            13.407157142605033,
+            12.338142857645705
+          ],
+          "calls_per_block": 7,
+          "cold_ms": 18.306400001165457,
+          "median_ms": 13.377871428799283,
+          "model_sha256": "c7f3291cabda2f5c2a69e9f27fd5e1e03454d8977d064cc7d1990eaa5e0950f6",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000,
+            3
+          ],
+          "prediction_values_sha256": "383b4c22c68eb627016442bcd72f3eab51bc55036eee13966b58409730fe14d2",
+          "public_prediction_bitwise": true,
+          "rounds": 864,
+          "rss_bytes_after_warmup": 226566144,
+          "trees": 864
+        },
+        "ctboost_default": {
+          "block_ms": [
+            10.437887500302168,
+            13.76846250059316,
+            9.586674999809475,
+            9.62818750031147,
+            9.648700000070676,
+            10.93496249995951,
+            9.575412499543745
+          ],
+          "calls_per_block": 8,
+          "cold_ms": 12.391000003844965,
+          "median_ms": 9.648700000070676,
+          "model_sha256": "b2fb5e783a8c08317f41e9ed4248c14af2aeddeb0e8a463e69427c534c53a5e3",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000,
+            3
+          ],
+          "prediction_values_sha256": "5970bae7a1fda3d0ff3b310b2aa9bfef21f9cb05fe94c8f3212664e7e3b10c41",
+          "public_prediction_bitwise": true,
+          "rounds": 354,
+          "rss_bytes_after_warmup": 224514048,
+          "trees": 1062
+        }
+      },
+      "problem_type": "multiclass",
+      "timed_rows": 1000
+    },
+    {
+      "cycle_index_sha256": "0a03c4c289be07ccbab42a11c3237f4f5f7012a45e7ceeca2b15f6f8ccafc483",
+      "dataset": "anneal",
+      "development_rows": 74,
+      "input_sha256": {
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\anneal\\development.pkl": "4f7513f73ef64bdf5209644bc097969e79bfe5718633d1700c14535dfca5224d",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\anneal\\ctboost_default\\model.pkl": "6130608aef0071e49f47b353ff7232432dcaee4b29f230e0b2798b18ddeabd53",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\anneal\\ctboost_default\\result.json": "d89e638cbf7d2965e147e3e36acc674a063a0af822eff746f957368eabb35278",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\anneal\\model.pkl": "16fc76a563b25d40083e0536c9959e1563b862c503972af296859931851f9d79",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\anneal\\result.json": "b26600e961e82850ba79d075c759212825c302115d14866d72dcb782678c470d",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-1\\anneal.npz": "0c4a29e67f26740ffd721cad9d8e1070521353310d5fb15389c14c25033fdf0a",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-2\\anneal.npz": "0c4a29e67f26740ffd721cad9d8e1070521353310d5fb15389c14c25033fdf0a"
+      },
+      "models": {
+        "catboost_ag_default": {
+          "block_ms": [
+            33.833519999461714,
+            32.227099999727216,
+            32.7975799998967,
+            32.18009999982314,
+            33.15156000026036,
+            28.0510199998389,
+            30.218579999927897
+          ],
+          "calls_per_block": 5,
+          "cold_ms": 30.74120000383118,
+          "median_ms": 32.227099999727216,
+          "model_sha256": "16fc76a563b25d40083e0536c9959e1563b862c503972af296859931851f9d79",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000,
+            5
+          ],
+          "prediction_values_sha256": "ead6ce9e67530fff214da1eeb96146598f2696bd1ee0f7f28598174b9efd177c",
+          "public_prediction_bitwise": true,
+          "rounds": 1078,
+          "rss_bytes_after_warmup": 222060544,
+          "trees": 1078
+        },
+        "ctboost_default": {
+          "block_ms": [
+            50.308559999393765,
+            57.02545999956783,
+            56.2861200000043,
+            49.95834000001196,
+            63.27336000103969,
+            53.06362000119407,
+            74.91826000041328
+          ],
+          "calls_per_block": 5,
+          "cold_ms": 59.20250000053784,
+          "median_ms": 56.2861200000043,
+          "model_sha256": "6130608aef0071e49f47b353ff7232432dcaee4b29f230e0b2798b18ddeabd53",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000,
+            5
+          ],
+          "prediction_values_sha256": "85dc2a7ed63ecd11d194ab210381dc280b1463c2cbc12b53d76d1e47cd3407ab",
+          "public_prediction_bitwise": true,
+          "rounds": 389,
+          "rss_bytes_after_warmup": 237428736,
+          "trees": 1945
+        }
+      },
+      "problem_type": "multiclass",
+      "timed_rows": 1000
+    },
+    {
+      "cycle_index_sha256": "55462e0b32ad5f40608d30b9424a83133c6982e4ee043ab848bbffea821de3ae",
+      "dataset": "hiva_agnostic",
+      "development_rows": 320,
+      "input_sha256": {
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\hiva_agnostic\\development.pkl": "b665ebef74bba981668a934e5bf676a5f0ed15b6a50c7418e84181cda8864efe",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\hiva_agnostic\\ctboost_default\\model.pkl": "a83fe0f3b6f4cbda5814501ffef8a8fc2b475d1e93d5a9cb3b942ac8a11c63c0",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\hiva_agnostic\\ctboost_default\\result.json": "e35a9270b12452b19187e11b34ddff3145a86d2a2f7d595ebbd3cd5a7b13ecfa",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\hiva_agnostic\\model.pkl": "7c4ade590bfa8a19a77e1706becbf0b32d7c05a0113b4679c8889e1fa1a4b669",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\hiva_agnostic\\result.json": "fd2872b87806733b23a554bb8bbac87c73f5c5996968e2670ce3b1486eaebe48",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-1\\hiva_agnostic.npz": "7c3efde08d69ae5cfd8a38fa6f7b11552faad9299fb2886ae5c780486c70241b",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-2\\hiva_agnostic.npz": "7c3efde08d69ae5cfd8a38fa6f7b11552faad9299fb2886ae5c780486c70241b"
+      },
+      "models": {
+        "catboost_ag_default": {
+          "block_ms": [
+            1731.407420001051,
+            1723.6200200000894,
+            1844.8566599996411,
+            1883.8141000000178,
+            1930.065019999165,
+            1876.9532399994205,
+            1878.9022999990266
+          ],
+          "calls_per_block": 5,
+          "cold_ms": 1690.472399997816,
+          "median_ms": 1876.9532399994205,
+          "model_sha256": "7c4ade590bfa8a19a77e1706becbf0b32d7c05a0113b4679c8889e1fa1a4b669",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000,
+            3
+          ],
+          "prediction_values_sha256": "22f8f3720ac9abc2720435c3b9e995dd25093d98a3c2c595ea364a4c41caaa52",
+          "public_prediction_bitwise": true,
+          "rounds": 181,
+          "rss_bytes_after_warmup": 229470208,
+          "trees": 181
+        },
+        "ctboost_default": {
+          "block_ms": [
+            731.4264400003594,
+            795.7630799995968,
+            778.088459999708,
+            685.9886399994139,
+            671.095759999298,
+            739.4562999994378,
+            1122.3162399997818
+          ],
+          "calls_per_block": 5,
+          "cold_ms": 838.8044999956037,
+          "median_ms": 739.4562999994378,
+          "model_sha256": "a83fe0f3b6f4cbda5814501ffef8a8fc2b475d1e93d5a9cb3b942ac8a11c63c0",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000,
+            3
+          ],
+          "prediction_values_sha256": "4e45ffa6894773b150e30ac6d57cd98855ed86b86c113ad4249d03f2605d13c4",
+          "public_prediction_bitwise": true,
+          "rounds": 1,
+          "rss_bytes_after_warmup": 242982912,
+          "trees": 3
+        }
+      },
+      "problem_type": "multiclass",
+      "timed_rows": 1000
+    },
+    {
+      "cycle_index_sha256": "7821dca136141dfcf86c1d2b31508fc51de22e5c9ad1be39763c64f15963f3dc",
+      "dataset": "maternal_health_risk",
+      "development_rows": 84,
+      "input_sha256": {
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\maternal_health_risk\\development.pkl": "a349d5b94889b33701eb67fda422b83dc3df479ce19a54baa29d57e151e8bea2",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\maternal_health_risk\\ctboost_default\\model.pkl": "ca5283259cffd62c709e4d5f52d40ca58f1c8e6f9a585e7542565852b29eb6d7",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\maternal_health_risk\\ctboost_default\\result.json": "3c606bb919489951536af648ff019da6c74352e2d987456cf36421d8cb59a09c",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\maternal_health_risk\\model.pkl": "60febc11d04ef0a8366d9b010cd9f1f16afa5c6b3e3465a07bf62590658f3a04",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\maternal_health_risk\\result.json": "97338221ba7b8d81cb2360535f17895c4f0f26617daded1d6746e5beaefa2da9",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-1\\maternal_health_risk.npz": "02890a8e730686987a3ee905584447589b448121c49953c02613567e7788f3dd",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-2\\maternal_health_risk.npz": "02890a8e730686987a3ee905584447589b448121c49953c02613567e7788f3dd"
+      },
+      "models": {
+        "catboost_ag_default": {
+          "block_ms": [
+            7.65293571436944,
+            10.23149285746123,
+            6.937864285906211,
+            9.473157143345036,
+            6.867385714161044,
+            7.694392856917277,
+            7.112885714117771
+          ],
+          "calls_per_block": 14,
+          "cold_ms": 7.569499997771345,
+          "median_ms": 7.65293571436944,
+          "model_sha256": "60febc11d04ef0a8366d9b010cd9f1f16afa5c6b3e3465a07bf62590658f3a04",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000,
+            3
+          ],
+          "prediction_values_sha256": "f243f412326652a95f9472a4752ff7583c7474cccb68bc32aad61b3bd35f2c8a",
+          "public_prediction_bitwise": true,
+          "rounds": 1015,
+          "rss_bytes_after_warmup": 229896192,
+          "trees": 1015
+        },
+        "ctboost_default": {
+          "block_ms": [
+            3.9699805555654972,
+            3.6212222223386763,
+            2.877788888832179,
+            3.297127777841524,
+            2.9364694443453723,
+            3.2391944443790837,
+            3.6334972222296833
+          ],
+          "calls_per_block": 36,
+          "cold_ms": 2.990700006193947,
+          "median_ms": 3.297127777841524,
+          "model_sha256": "ca5283259cffd62c709e4d5f52d40ca58f1c8e6f9a585e7542565852b29eb6d7",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000,
+            3
+          ],
+          "prediction_values_sha256": "a99a865d7234015fe02d746c4dd1251552fc28cb2eae05b85640ec52e84d2a72",
+          "public_prediction_bitwise": true,
+          "rounds": 134,
+          "rss_bytes_after_warmup": 227467264,
+          "trees": 402
+        }
+      },
+      "problem_type": "multiclass",
+      "timed_rows": 1000
+    },
+    {
+      "cycle_index_sha256": "4cbe411f218b7e3b1ab8f4a3fcf1e7ed8ced1f0078bfa19f18cf66ba6f580bfc",
+      "dataset": "splice",
+      "development_rows": 265,
+      "input_sha256": {
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\splice\\development.pkl": "0e3d8eb837856a9de102c6346a68b8b23cfc7442863485b7eb759fe1d7c6ab49",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\splice\\ctboost_default\\model.pkl": "046882a53ed41fe29f90889fdf807b8338b4d16748136e832014a43a4d5a0dfb",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\splice\\ctboost_default\\result.json": "7b1b1eeecb1dd7a99f12030452e9ce66672f739924c664e6f699967f6a517931",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\splice\\model.pkl": "1ad4301163857e44ad62cce21b80bfe85cf176bf08a051614adf2aca3f487922",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\splice\\result.json": "7850e84322ad48d559d235adaf1c886ee3dbc59c7d6b7272bb83a3fdc9b9ff43",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-1\\splice.npz": "ed1d50b8f9a92c6e456eed802a189ca7353fe66df7a9155169e9b8d3f5953472",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-2\\splice.npz": "ed1d50b8f9a92c6e456eed802a189ca7353fe66df7a9155169e9b8d3f5953472"
+      },
+      "models": {
+        "catboost_ag_default": {
+          "block_ms": [
+            83.72810000000754,
+            97.92183999961708,
+            79.91973999887705,
+            85.29138000012608,
+            95.12591999955475,
+            90.56175999867264,
+            81.92680000065593
+          ],
+          "calls_per_block": 5,
+          "cold_ms": 90.31910000339849,
+          "median_ms": 85.29138000012608,
+          "model_sha256": "1ad4301163857e44ad62cce21b80bfe85cf176bf08a051614adf2aca3f487922",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000,
+            3
+          ],
+          "prediction_values_sha256": "c92a087396b6f33b2c6c646dbe3b9db795a62adad4adbe4b75952bc93398e4c7",
+          "public_prediction_bitwise": true,
+          "rounds": 835,
+          "rss_bytes_after_warmup": 234164224,
+          "trees": 835
+        },
+        "ctboost_default": {
+          "block_ms": [
+            64.06588000099873,
+            54.622699999890756,
+            57.10000000108266,
+            65.62100000010105,
+            57.94256000081077,
+            57.47260000061942,
+            58.57609999948181
+          ],
+          "calls_per_block": 5,
+          "cold_ms": 55.79340000258526,
+          "median_ms": 57.94256000081077,
+          "model_sha256": "046882a53ed41fe29f90889fdf807b8338b4d16748136e832014a43a4d5a0dfb",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000,
+            3
+          ],
+          "prediction_values_sha256": "f4f062e68e0d8b0139ace8370c80e7226d4cfd9d1aaf33f663ef4254bb6b3c4a",
+          "public_prediction_bitwise": true,
+          "rounds": 237,
+          "rss_bytes_after_warmup": 251748352,
+          "trees": 711
+        }
+      },
+      "problem_type": "multiclass",
+      "timed_rows": 1000
+    },
+    {
+      "cycle_index_sha256": "aeb18428dbd0dbed9c1495b0f0b31620c04e5f1519559d94d4f43fe73ce9a476",
+      "dataset": "students_dropout_and_academic_success",
+      "development_rows": 368,
+      "input_sha256": {
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\students_dropout_and_academic_success\\development.pkl": "9cf802d3dbb66302fb27108c0fce104a0633251089b216f4cdadcbd2dc0f1b26",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\students_dropout_and_academic_success\\ctboost_default\\model.pkl": "d55055fe07ce381f214edce113603d73bf2f4c0c3b48f74395c87d9badfc4296",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\students_dropout_and_academic_success\\ctboost_default\\result.json": "6dd39cf618155cea5149547509177976abc12efd718233a1dc11f3d9134e2498",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\students_dropout_and_academic_success\\model.pkl": "942c16d918b48bd8ab3b0a5d6b0b86982a68a0f1154dfc333840b0f7d6d3719a",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\students_dropout_and_academic_success\\result.json": "c24fb5710a65a350a5ed5c65b2c24e0c4b18c46cc7510113e34b320fd026e4eb",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-1\\students_dropout_and_academic_success.npz": "47cdb0846c5f1722256aa99b6482ac00753f2ae750fd79efad4b9b94880dad8c",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-2\\students_dropout_and_academic_success.npz": "47cdb0846c5f1722256aa99b6482ac00753f2ae750fd79efad4b9b94880dad8c"
+      },
+      "models": {
+        "catboost_ag_default": {
+          "block_ms": [
+            34.286859999701846,
+            24.157739999645855,
+            37.70892000029562,
+            24.58694000088144,
+            28.423839999595657,
+            25.77411999955075,
+            34.08977999933995
+          ],
+          "calls_per_block": 5,
+          "cold_ms": 58.80339999566786,
+          "median_ms": 28.423839999595657,
+          "model_sha256": "942c16d918b48bd8ab3b0a5d6b0b86982a68a0f1154dfc333840b0f7d6d3719a",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000,
+            3
+          ],
+          "prediction_values_sha256": "3a0156aa1368525ae4af4fc9f647d7cba2532d826fd8ba065b997b859b0c833c",
+          "public_prediction_bitwise": true,
+          "rounds": 490,
+          "rss_bytes_after_warmup": 229576704,
+          "trees": 490
+        },
+        "ctboost_default": {
+          "block_ms": [
+            27.579559999867342,
+            33.272399999259505,
+            27.798460000485647,
+            28.220439999131486,
+            35.46990000031656,
+            28.33054000075208,
+            32.97632000030717
+          ],
+          "calls_per_block": 5,
+          "cold_ms": 29.243299999507144,
+          "median_ms": 28.33054000075208,
+          "model_sha256": "d55055fe07ce381f214edce113603d73bf2f4c0c3b48f74395c87d9badfc4296",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000,
+            3
+          ],
+          "prediction_values_sha256": "3d18b0395ab00e8872ad1f9cae2d9009e888e0f620a4170ef747226771b97da6",
+          "public_prediction_bitwise": true,
+          "rounds": 132,
+          "rss_bytes_after_warmup": 241426432,
+          "trees": 396
+        }
+      },
+      "problem_type": "multiclass",
+      "timed_rows": 1000
+    },
+    {
+      "cycle_index_sha256": "268229440ad4873107f472786f5f86e14a6350aec04662a4131660540f8813aa",
+      "dataset": "website_phishing",
+      "development_rows": 112,
+      "input_sha256": {
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\website_phishing\\development.pkl": "cc08139a5cf10147669e766609848f7fd95d3106ff27556534fac4fdaf149302",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\website_phishing\\ctboost_default\\model.pkl": "19cbceb528f695b6181f4b902d365a653f3dd89c80132a0c5274a592051ad64b",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\fits\\website_phishing\\ctboost_default\\result.json": "802c03168f52673d30129b5a5a600a73b2b85a53f21490bc8fb065f1df88435f",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\website_phishing\\model.pkl": "a58b2133bcbf970882e81f78e0d9f56ccec28b29af9965c27a174dcf545bf10c",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\catboost\\website_phishing\\result.json": "c5560bcd24c5de47913a2b0defa134cdacecd570bd0beaabcb2ad337de3ba210",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-1\\website_phishing.npz": "7662a83cd85f7af120adf0b543c3776ec65e3015f2534dc7db19b6261bc60454",
+        "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\real-latency\\measurements\\baseline-2\\website_phishing.npz": "7662a83cd85f7af120adf0b543c3776ec65e3015f2534dc7db19b6261bc60454"
+      },
+      "models": {
+        "catboost_ag_default": {
+          "block_ms": [
+            16.815116666596925,
+            16.497750000174467,
+            18.32983333345813,
+            16.4927166661073,
+            13.425200000104573,
+            13.650599999285381,
+            26.172600000184804
+          ],
+          "calls_per_block": 6,
+          "cold_ms": 13.569599999755155,
+          "median_ms": 16.497750000174467,
+          "model_sha256": "a58b2133bcbf970882e81f78e0d9f56ccec28b29af9965c27a174dcf545bf10c",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000,
+            3
+          ],
+          "prediction_values_sha256": "3b8afefe0adaf2cf9dc0e1241d1d27c3e3d4790c47c6ed47212862732b017f26",
+          "public_prediction_bitwise": true,
+          "rounds": 420,
+          "rss_bytes_after_warmup": 231555072,
+          "trees": 420
+        },
+        "ctboost_default": {
+          "block_ms": [
+            10.534499999873029,
+            11.21775555576379,
+            14.91284444394599,
+            10.058366666069357,
+            10.987311110915876,
+            12.312522221893435,
+            12.774844444518546
+          ],
+          "calls_per_block": 9,
+          "cold_ms": 11.883800005307421,
+          "median_ms": 11.21775555576379,
+          "model_sha256": "19cbceb528f695b6181f4b902d365a653f3dd89c80132a0c5274a592051ad64b",
+          "prediction_dtype": "float32",
+          "prediction_shape": [
+            1000,
+            3
+          ],
+          "prediction_values_sha256": "57756d773f38c30e59797d1da858c036beea793434b313661aa5390161fddeff",
+          "public_prediction_bitwise": true,
+          "rounds": 246,
+          "rss_bytes_after_warmup": 229715968,
+          "trees": 738
+        }
+      },
+      "problem_type": "multiclass",
+      "timed_rows": 1000
+    }
+  ],
+  "runtime": {
+    "cpu_affinity": [
+      6
+    ],
+    "ctboost_module_path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\baseline-env\\Lib\\site-packages\\ctboost\\__init__.py",
+    "ctboost_module_version": "0.1.60",
+    "ctboost_python_sha256": {
+      "__init__.py": "c7eb5425030e7ec74bd2db7dc40820181096f321132d32cf93c0693cfde503b5",
+      "__main__.py": "78c5d462b27088091171c089b045c8efcb844f1c6b5196731ed1e2f82fd40cc9",
+      "_export.py": "f2b59669257d9d973636ae7ccbc7b73d3870d46571b19c87cc82153e004aff11",
+      "_integration_utils.py": "c6e536f5c7ecea15e1355dbe400571aad31b1643e66c66903d132ec7556eab81",
+      "_prepared_data_support.py": "7d474a2fa57e295d23e25b2cf589acd0baaa3746e85c60aa5b7f0ff1b78bb039",
+      "_serialization.py": "c1b237619b16067a3dffe2470a2f0b8f0b7b6d7fac1e55d8562685f41c0e46b5",
+      "_version.py": "8bcf149f10f5fa8931c90ab4c716870a5fb3d4272b5177f5541e1addfb18532b",
+      "cli.py": "a8828f97762ece89403f04857548d97fb200c7a34204863942e5090d81cd0733",
+      "core/__init__.py": "bfdaef76ef3cce44b794aecf6f004371b47a0c1c86479d903c9c607405fadf6d",
+      "core/_handle.py": "18bba476eff17855126520515950ae91f5bfd920af68495c2c2121367d85a36f",
+      "core/columnar.py": "f1272214cb5314ceb1f9b2dc0c699d22bbe6de72425fea17e9691c4c6a4964d3",
+      "core/normalization.py": "3e1599f47c5e7c43776f5d5feb600c13139abf85d67b361072900c8c0fb1b9b0",
+      "core/pool.py": "3e4b6a0a7b55b08dda7120f93e14bc6500d4baf50526934a4b8667d359c9a4e0",
+      "core/ranking_metadata.py": "2b838ec5f6e43d3e7519423cd65416406fa806343f33358c51895463c6c159c8",
+      "core/sparse.py": "949fee124737ca2724a8801e6c95f9b6e60e68e15849f5916ef55283bc695f1d",
+      "dask.py": "1f12e589427863bc71a610672beb7f2617fa1c418ad73b331c4c153730e45c6e",
+      "distributed/__init__.py": "69d4392a4d9466814518b168ca22bf2c64cecc443523986c9a5f8e9644ebea7c",
+      "distributed/__main__.py": "7f1037d4c47aa84c99abc6eba73eff5e209236a03785c9be7ca00763c343250a",
+      "distributed/merge.py": "88f58336a4b6ec065c00f4c919eb73d1a85a698085ab6d89d9316c91a8c447b1",
+      "distributed/payloads.py": "1accc329dc3329d34a7a3db0905e867d40cde5e0769b2e00c0bb841c6ade401c",
+      "distributed/server.py": "94d91feaa9f59a2e8c1c08987a8c8345a83c475eeed08fd52b6df953c0168433",
+      "distributed/tcp.py": "0d1184f7a7c51408c987635cbe482cb89a46d31df587580dd09a229acbd2bc72",
+      "explain.py": "0d2b62e90d6818f82b6744082d1c160687f67eb06d01c2e23e57d49b76850b33",
+      "export_codegen.py": "d4116c3adde268716b2dbe9ecab3c882c6fa506309a4fb4e6a75939b20eac829",
+      "export_cpp.py": "ed10e146e175c08040e53f7a35cf3107270cfa9844c03ef044ee3fc935dc68f7",
+      "export_onnx.py": "4bcd532cf25d1067e4c93a059eb1bb58767ae9f67c5dcc668bace13820137604",
+      "export_payload.py": "f377459117080c78b2096dc55de6dc7a6c1891111293d68d0743555655647b14",
+      "export_runtime.py": "066edf8e6aa596909f778f5b5b908ba043e76c765baf7a182cd9c2a2740f8ee6",
+      "feature_pipeline.py": "6896d1bddda9d5f148b8af43f821dfb9956d05b2ca89555159ca9b68ea879ab6",
+      "gpu_install.py": "462e032da8e1dd96a974fc4b5fe7352533959a72fa7f7046264de766aee23d71",
+      "inference_manifest.py": "9cb60440c2adbc90832edbd84b9040874b6ec917c7045b203089163bfe217c7f",
+      "prepared_data.py": "277bbc3d7672d597c18fb51ac94caf1b72fcce065cb6f9e90021c1c3b3962212",
+      "ray.py": "5da35c0382e3d20073976ee3df211f2c17809b7de2080a287e04556d28729c26",
+      "sklearn/__init__.py": "8606ad7e2943f6cc2ae699452f909de9b5ba9fa709b6ab29e65ee749ff1c3b0f",
+      "sklearn/_fit.py": "ff3bd4e3bac812956666054c84e7e108e4d8961cfca8cff6b2c8fa7104290bd3",
+      "sklearn/_independent.py": "123ad42b1e8fdf0295f99c969a286d7b8580dfd20533aad9e06f2429903e24dc",
+      "sklearn/_params.py": "753721b2d421c72875751895d3def2d984743b2e78a9f77faf0edc52d5b525ab",
+      "sklearn/_predict.py": "610f7bee1f11888e49969d5e5f1540aeec1b38d49856719eb12ee708ac83e479",
+      "sklearn/aft.py": "2e2db204a32980e8124dbee8add6bae58ba2a3f4da0bfc70e0adc479fcca670f",
+      "sklearn/base.py": "8f6f66d843f966177c31098410431bfe84ef4d4692045aaec0bc72dbcab7e8b8",
+      "sklearn/classifier.py": "e28738a3204c9ba76fc7a0e778bd0f58b7ee7fa2768c38cf991d7b8cb81d6b82",
+      "sklearn/labels.py": "0ae2e8d8576d8aebd6914a3014a6f8a821c6490da22de1f8d18c769bbf412d8b",
+      "sklearn/model_selection.py": "9469748f3599de893099c8d524b11002abbd5c82f4109784c35821591cbd4796",
+      "sklearn/multioutput.py": "187b2f52a22fcb5631c811bca87962c20140583bb7607b6bc69b76319f6124d1",
+      "sklearn/ranker.py": "f20e4e4511bb02c04ebeb79c4ef9effa4135fcf0bf47207f7a6eef2fecf53eb8",
+      "sklearn/regressor.py": "392b3ae7dda70c0eb9c432f8d7e8816c6ddaca836187b297517ed7bbbd048abe",
+      "sklearn/serialization.py": "35b18d6ccff675f1e51372dec309ab8627d7cb30a3a3152b3964f8aa4d2ba575",
+      "spark.py": "8744c8c48bc5c67bee2f8e6a3b09df14045a00da3c70dafbc969d08f18d5351f",
+      "streaming.py": "1e105d4bd9021c346d41aaa5f38a4a2ff84457f3380bc7f6d2340db6bd955a2f",
+      "training/__init__.py": "fde806a338c3c749b29f4e1eebc1790702c72bca5b0e7b895b8c415a51bc9a36",
+      "training/_booster_schema.py": "05b011f73faf01b9acda8d7db48a51eb3a47a00999611d2f63283479ed914c89",
+      "training/_distributed_config.py": "163e6805a6e45c9f9534e8f993ff6a2930b1348d55a2e6fef23bf24b3a7f0e16",
+      "training/_distributed_payloads.py": "47bb207a66fc1f55d2137499d5c50b97235da9e04b549dc1f0d74e01944cb170",
+      "training/_distributed_pool.py": "b18dd898dc7a6db00856374669060f22cfad0e0968d4060a04a19bc7be415c1f",
+      "training/_distributed_runtime.py": "7af9de1d7f864b981575f5eca7b3442609c614eb7666cddabc90ccb8d22e897e",
+      "training/_distributed_storage_io.py": "ff09671cad241da31f72f8d4a8073abf7b5714c22eac5af06a182e8cec78b8bf",
+      "training/_distributed_storage_merge.py": "fb4f0eeeab1d4dc5c719ee731a071b1240ee3214672b91be0e86cfdade46e6dd",
+      "training/_early_stopping.py": "31593f8568b121966fcf4f1b89b42252f68016a27226d03183a1b623e55a3115",
+      "training/_eval_runtime.py": "39a19771c95d606e9ca0e1bdbf7cada903b5a50215afcfd31eb0987886278850",
+      "training/_eval_sets.py": "3f6b2c763a94280371b113a50716d3a272c4d8f82ace8a6ee020f32d9cbc46c3",
+      "training/_learning_rate_schedule.py": "1189acc379b66eba2052fdbb76d9548ba5cc0bbc8a2ced1d5dfb1b132fcd245e",
+      "training/_pool_build.py": "7d580296a976ebf0d5366b2eb4125c2b0365d6d98afc595a2cf44bdfd1a7fbb3",
+      "training/_train_config.py": "fe125a6393359160ef751292cc7c767d0d6758dcd31ac7c58eb4318f2bf10523",
+      "training/_train_metrics.py": "8c383cd8655e5b8a3c190ce701a4c80c6e9dc807f5a8949bf546d54ca1156cc5",
+      "training/_train_native.py": "7758d889980ae7e6c640f0f1afcea0861e53fb74f246bc8a8852fc1597debc68",
+      "training/_train_params.py": "ba4fc55b8b5e98692ca716c1b06569baeddee746d2753c950bac8786cf97955b",
+      "training/_train_python.py": "67b6b7a6486b5948fa41dc68e2163cd3d6fe1f6c371e4dd0a58e3450617bced3",
+      "training/api.py": "cb21d2c23bc02d2ec3cc7c1bce7402408574d2dd21c7a2e240b38f0715b9a801",
+      "training/booster.py": "a4aed20741696bf65d31681035798b16112428897b70b3f7867236c8fdb8c33d",
+      "training/callbacks.py": "9d6dce3581c846f7d9a618ab867782f8f60f1d26c198ae57a279838d421219a2",
+      "training/distributed.py": "bd564c6785125aa86d420171443004eeb68691d486a23c07bed542499d92e9a4",
+      "training/eval_metrics.py": "02507cc0e416202e60b39b2116a8551fdd0c89e8b05f1911e7f5f663d1dbfb58",
+      "training/objectives.py": "4fc37145d58f544182293950a982ebcb4bbe9abe7458626acc60223fb62c4e7b",
+      "training/pool_io.py": "678d2a3f031eeb34cd05cce866f05e0c68d6dd16541ec20f99d230b22b93333c",
+      "training/resume.py": "c226481401cccbf5e4f4f2928ccb7cd78f5199783e2d1f8e68ab84acd49badf9",
+      "training/schema.py": "e1c29135715932f632dd67705701865618e148d438799e54b251841366418caf",
+      "training/weights.py": "fad2ac9ecde048740d1e8aa3b0ac776ac149495eb09f5d49d585c39a7cd273d0"
+    },
+    "distribution_versions": {
+      "autogluon.core": "1.6.2b20260821",
+      "autogluon.tabular": "1.6.2b20260821",
+      "catboost": "1.2.10",
+      "ctboost": "0.1.60",
+      "numpy": "2.0.2",
+      "pandas": "2.3.3",
+      "scikit-learn": "1.6.1"
+    },
+    "logical_cpus": 16,
+    "metadata_note": "Only the final ctboost package is explicitly loaded; distribution metadata remains the baseline environment's 0.1.60. All other dependencies resolve from that unchanged environment.",
+    "native_sha256": "06796f386ccbf5b51b3134ca11a391ac6ef719ab92fcb509f3f689e77abbf63c",
+    "physical_cpus": 8,
+    "python_executable": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\baseline-env\\Scripts\\python.exe",
+    "python_version": "3.12.11 (main, Jul  8 2025, 21:56:21) [MSC v.1944 64 bit (AMD64)]",
+    "threads": 1,
+    "total_ram_bytes": 34278686720
+  },
+  "started_at": "2026-09-08T19:56:55.550683+00:00"
+}

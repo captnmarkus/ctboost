@@ -1,0 +1,164 @@
+{
+  "scope": "Two deterministic supported-objective correctness fixes. No benchmark fitting/scoring, default changes, CIT changes, official test usage, or RMSE/Elo claim.",
+  "source_commit": "9fc74087ba6cd5f4296b719ae1ac5dddcd6e68fc",
+  "source_files": {
+    "src/core/booster_base_score.cpp": "3ddb3b2ebdb1fb740bccd347f1fe67d019d512a43be447dfdb3690694a108bf7",
+    "src/core/objective_regression.cpp": "b8125e87657328fcc5b6f8ee1e534f43ea90d91cc39e7a63bed69cadd0da4159",
+    "tests/test_loss_optima.py": "9ea7743603400d4e6edd5d6f1275fc82f5d4f0c886f590646eb95d21c37b8bb2"
+  },
+  "public_baseline": {
+    "version": "0.1.60",
+    "python": "3.12",
+    "native_sha256": "06796f386ccbf5b51b3134ca11a391ac6ef719ab92fcb509f3f689e77abbf63c",
+    "command": ".tmp/inference-accuracy-20260908/baseline-env/Scripts/python.exe -I -c \"import ctboost, pytest; raise SystemExit(pytest.main(['-q','--tb=short','--import-mode=importlib','tests/test_loss_optima.py']))\"",
+    "tests_passed": 4,
+    "tests_failed": 14,
+    "passed_controls": "Four ordinary/weighted Huber analytic optima, including existing upper-edge convention.",
+    "failure_breakdown": {
+      "huber_extreme_or_zero_weight": 5,
+      "quantile_exact_fit_gradient": 3,
+      "quantile_constant_optimum": 6
+    },
+    "log": "public-0.1.60-failures.log"
+  },
+  "candidate": {
+    "version": "0.1.61",
+    "platform": "Windows x64",
+    "python_abi": "cp312",
+    "compiler": "MSVC 1950",
+    "installed_suite_status": "phase 3 full installed suite and focused loss recheck passed; registered CPU and release dry-run gates passed",
+    "first_installed_suite": {
+      "passed": 1833,
+      "failed": 3,
+      "skipped": 38,
+      "focused_loss_passed": 18,
+      "focused_tests_sha256": "9ea7743603400d4e6edd5d6f1275fc82f5d4f0c886f590646eb95d21c37b8bb2",
+      "failures": [
+        "test_feature_pipeline_optional_input_inference.py::test_columnar_numeric_nulls_and_names_keep_object_fallback[arrow_table]",
+        "test_feature_pipeline_optional_input_inference.py::test_columnar_numeric_nulls_and_names_keep_object_fallback[arrow_batch]",
+        "test_feature_pipeline_optional_input_inference.py::test_columnar_numeric_nulls_and_names_keep_object_fallback[polars]"
+      ],
+      "log": "candidate-first-suite.log",
+      "runner": "run-installed-tests.py.txt",
+      "seconds_reported_by_pytest": 222.17,
+      "focused_count_basis": "All 18 cases in the identical copied focused test file completed; none appear among failures or skips.",
+      "wheel_sha256": "eabd3197d9bed5eb0267f436200268b847cebc0d6e6edad2eeff43be1ee79bb5",
+      "source_commit": "9fc74087ba6cd5f4296b719ae1ac5dddcd6e68fc"
+    },
+    "final_installed_suite": {
+      "passed": 1908,
+      "failed": 0,
+      "skipped": 38,
+      "warnings": 36,
+      "focused_loss_passed": 18,
+      "source_commit": "aaf50d7a6d40449efc9171a6b3f634156398fad0",
+      "loss_sources_and_tests_unchanged": true,
+      "wheel_filename": "ctboost-0.1.61-cp312-cp312-win_amd64.whl",
+      "wheel_sha256": "9413d08ac1380f0222de639fc73967b233aa9ee67879755d8fb401af43a6dd43",
+      "native_filename": "_core.cp312-win_amd64.pyd",
+      "native_sha256": "3fe462617f2ba45ad1b159b8a6a35808095c441d7e1d2c8d7f1f0aaae139ba65",
+      "focused_tests_sha256": "9ea7743603400d4e6edd5d6f1275fc82f5d4f0c886f590646eb95d21c37b8bb2",
+      "log": "candidate-final-suite.log",
+      "process_receipt": "candidate-final-process.json",
+      "runner": "run-final-installed-tests.py.txt",
+      "seconds_reported_by_pytest": 255.58,
+      "focused_count_basis": "All 18 cases in the identical copied focused test file completed; none appear among skips."
+    },
+    "initial_wheel_filename": "ctboost-0.1.61-cp312-cp312-win_amd64.whl",
+    "initial_wheel_sha256": "eabd3197d9bed5eb0267f436200268b847cebc0d6e6edad2eeff43be1ee79bb5",
+    "phase3_loss_recheck": {
+      "passed": 18,
+      "failed": 0,
+      "skipped": 0,
+      "seconds_reported_by_pytest": 0.12,
+      "source_commit": "5780b41c7321c70e508dccf34e2f76f2503d1175",
+      "wheel_sha256": "b9fb7b598395a64380ee2f5a2395269ef567169edd151916790087dd71177f94",
+      "native_sha256": "5b91bb3139dd54ab05f5c8dea2b1bd1caabf0b9dcb2a2e76cafb01b30281e1b5",
+      "loss_sources_and_tests_unchanged": true,
+      "log": "phase3-loss-tests.log",
+      "original_log": "phase3-loss-tests.raw.log",
+      "original_log_encoding": "utf-16",
+      "display_log_encoding": "utf-8",
+      "receipt": "phase3-loss-verification.json",
+      "wheel_identity": "phase3-wheel-identity.json",
+      "runner": "run-phase3-loss-check.py.txt",
+      "scope": "Focused installed-wheel loss tests only; does not replace complete CPU or wheel-matrix gates."
+    },
+    "phase3_full_installed_suite": {
+      "passed": 1916,
+      "failed": 0,
+      "skipped": 38,
+      "warnings": 36,
+      "focused_loss_passed": 18,
+      "seconds_reported_by_pytest": 186.76,
+      "source_commit": "5780b41c7321c70e508dccf34e2f76f2503d1175",
+      "wheel_sha256": "b9fb7b598395a64380ee2f5a2395269ef567169edd151916790087dd71177f94",
+      "native_sha256": "5b91bb3139dd54ab05f5c8dea2b1bd1caabf0b9dcb2a2e76cafb01b30281e1b5",
+      "loss_sources_and_tests_unchanged": true,
+      "log": "phase3-full-suite.log",
+      "process_receipt": "phase3-full-process.json",
+      "runner": "run-phase3-full-tests.py.txt"
+    }
+  },
+  "independent_review": {
+    "reviewer": "/root/pilot_protocol",
+    "status": "no concrete blocker",
+    "findings": [
+      "Finite float inputs ensure the double bracketing interval does not overflow.",
+      "Midpoint stagnation guarantees bisection termination.",
+      "The previous upper-edge flat-optimum convention is preserved.",
+      "Zero is a valid pinball-loss subgradient at zero residual; off-tie signs and Hessian remain unchanged."
+    ]
+  },
+  "historical_mechanism_note": "The archived numerical transcription predates source implementation. Its native_fix_implemented=false and native_candidate_verified=false fields are preserved as historical statements; it is not the candidate native validation.",
+  "release_scope_status": {
+    "status": "phase 3 local, all 13 CPU jobs, and complete release dry run passed; both publication jobs skipped",
+    "local_pass_is_not_release_approval": true,
+    "known_wheel_failure": {
+      "run": 34268643220,
+      "job": 102204604662,
+      "source_commit": "aaf50d7a6d40449efc9171a6b3f634156398fad0",
+      "url": "https://github.com/captnmarkus/ctboost/actions/runs/34268643220/job/102204604662",
+      "step": "Build wheels (installed wheel smoke command)",
+      "platform": "Linux ARM64",
+      "python_abi": "cp311",
+      "numpy": "2.4.6",
+      "passed": 312,
+      "failed": 12,
+      "skipped": 5,
+      "failure_scope": "Signaling float16 warning/callback policy: warn/call/log across NumPy/native/pandas/pandas_mixed.",
+      "loss_failures": 0,
+      "log": "cross-platform-arm64-smoke-failure.log"
+    },
+    "separate_cpu_contract_note": "Root also identified a training/prediction reconstruction discrepancy on another CPU validation run. That issue is outside this loss archive and requires its own cross-platform validation.",
+    "monitor_state": "Stopped on first concrete failure; superseded workflow cancellation is owned by root.",
+    "phase3_cpu_run": {
+      "id": 34270193368,
+      "source_commit": "5780b41c7321c70e508dccf34e2f76f2503d1175",
+      "status": "success",
+      "url": "https://github.com/captnmarkus/ctboost/actions/runs/34270193368",
+      "successful_jobs": 13,
+      "failed_jobs": 0,
+      "metadata": "../ci_final/cpu-34270193368-metadata.json",
+      "summary": "../ci_final/cpu-34270193368-summary.json"
+    },
+    "phase3_publish_run": {
+      "id": 34270927962,
+      "source_commit": "5780b41c7321c70e508dccf34e2f76f2503d1175",
+      "publish": false,
+      "status": "success",
+      "url": "https://github.com/captnmarkus/ctboost/actions/runs/34270927962",
+      "successful_jobs": 17,
+      "skipped_publication_jobs": 2,
+      "validated_wheels": 26,
+      "jvm_tests": 9,
+      "r_check_status": "OK",
+      "rebuilt_source_smoke_passed": 4,
+      "publication_performed": false,
+      "evidence": "../ci_final/final-gates.json",
+      "release_dist_artifact_id": 10074783361,
+      "release_dist_digest": "sha256:f1325aa5289960055aeb657606948f303edc7f8b80a7f10b8cc80dd583f454dd",
+      "release_dist_size_bytes": 75764206
+    }
+  }
+}

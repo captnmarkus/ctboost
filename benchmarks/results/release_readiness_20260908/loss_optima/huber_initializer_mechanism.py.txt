@@ -1,0 +1,57 @@
+"""Model-free numerical transcription; does not fit or score any model.
+
+Compare the current initializer's exact loop structure with a prospective
+floating-point bracket-convergence rule. This is not a native implementation
+test or an accuracy benchmark.
+"""
+
+import json
+import math
+from pathlib import Path
+
+import numpy as np
+
+
+def location(labels, weights, delta, corrected):
+    labels = [float(x) for x in np.asarray(labels, dtype=np.float32)]
+    weights = [float(x) for x in np.asarray(weights, dtype=np.float32)]
+    supported = [y for y, w in zip(labels, weights) if w > 0] if corrected else labels
+    lower, upper = min(supported), max(supported)
+    iterations = 0
+    while corrected or iterations < 100:
+        midpoint = lower + (upper - lower) * .5
+        if corrected and (midpoint == lower or midpoint == upper):
+            break
+        gradient = sum(w * max(-delta, min(delta, midpoint - y)) for y, w in zip(labels, weights))
+        if gradient > 0:
+            upper = midpoint
+        else:
+            lower = midpoint
+        iterations += 1
+        if iterations > 4096:
+            raise AssertionError("Convergence safeguard in this numerical probe")
+    result = lower + (upper - lower) * .5
+    gradient = sum(w * max(-delta, min(delta, result - y)) for y, w in zip(labels, weights))
+    return {"location": result, "gradient": gradient, "iterations": iterations}
+
+
+cases = []
+for outlier, weight in ((1e38, 0), (1e38, .1), (-1e38, 0), (-1e38, .1), (8., .1)):
+    labels, weights = [7.] * 15 + [outlier], [1.] * 15 + [weight]
+    effective_weight = float(np.float32(weight))
+    expected = 7. if weight == 0 else (
+        7. + math.copysign(effective_weight / 15., outlier - 7.)
+        if abs(outlier - 7.) > 1. else (105. + effective_weight * outlier) / (15. + effective_weight)
+    )
+    current = location(labels, weights, 1., False)
+    prospective = location(labels, weights, 1., True)
+    assert abs(prospective["location"] - expected) <= 2e-14
+    cases.append({"outlier": outlier, "outlier_weight": weight,
+                  "analytic_optimum": expected, "current_loop_transcription": current,
+                  "prospective_loop_transcription": prospective})
+
+result = {"scope": "Model-free mechanism calculation only; no fitted models, benchmark rows, new development scores, or sealed/official test data.",
+          "native_source": "src/core/booster_base_score.cpp:WeightedHuberLocation",
+          "native_fix_implemented": False, "native_candidate_verified": False, "cases": cases}
+Path(__file__).with_suffix(".json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf8")
+print(json.dumps(result, indent=2))

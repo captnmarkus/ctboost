@@ -1,0 +1,13 @@
+@echo off
+call "C:\Program Files\Microsoft Visual Studio\18\Community\VC\Auxiliary\Build\vcvars64.bat"
+if errorlevel 1 exit /b %errorlevel%
+set CMAKE_GENERATOR=Ninja
+set CC=C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\bin\Hostx64\x64\cl.exe
+set CXX=C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\bin\Hostx64\x64\cl.exe
+set INCLUDE=C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\include;%INCLUDE%
+set LIB=C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\lib\x64;%LIB%
+set PATH=C:\Program Files\Microsoft Visual Studio\18\Community\VC\Tools\MSVC\14.50.35717\bin\Hostx64\x64;%PATH%
+set CMAKE_BUILD_PARALLEL_LEVEL=2
+C:\apps\ctboost\.tmp\ctboost-0159-venv\Scripts\python.exe -m build --wheel --no-isolation --outdir C:/apps/ctboost/.tmp/release-readiness-20260908/dist-portable -Cbuild-dir=C:/apps/ctboost/.tmp/release-readiness-20260908/build -Ccmake.define.CTBOOST_ENABLE_CUDA=OFF -Ccmake.define.CTBOOST_BUILD_NATIVE_TESTS=ON
+
+

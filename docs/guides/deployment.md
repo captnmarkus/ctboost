@@ -33,6 +33,10 @@ Snapshot resume is a validated warm-start convenience, not a blanket
 bit-for-bit equivalence promise for every training path. Use `init_model` when
 you intentionally change a later-stage configuration.
 
+With a nonzero `Pool.baseline`, resumed and uninterrupted training can add
+floating-point updates in a different order. Small rounding differences can
+change later split decisions, so those runs need not produce identical models.
+
 Starting in 0.1.60, enabling early stopping when resuming an
 untrimmed DART model starts selection from the full supplied ensemble if its
 historical best round is no longer recoverable. CTBoost evaluates that ensemble
@@ -61,8 +65,11 @@ Builds using fast-math, and GCC targets with fused multiply-add instructions,
 retain the previous score-accumulation path to preserve their rounding behavior.
 
 Fitted preprocessing also avoids serializing its metadata on every prediction.
-Ordinary numeric arrays and frames use a typed conversion path; categorical,
-text, embedding, and nullable values retain their established conversion rules.
+Supported numeric arrays and uniform numeric frames use typed conversion.
+Float16 inputs and mixed numeric frames containing float32 columns retain
+object conversion to preserve NumPy warning, callback, and exception behavior.
+Categorical, text, embedding, and nullable values retain their established
+conversion rules.
 
 Measure both the first prediction and repeated predictions with your actual
 batch sizes. Include preprocessing when comparing libraries, and report the

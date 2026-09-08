@@ -1,0 +1,239 @@
+Installed release candidate: C:\apps\ctboost\.tmp\release-readiness-20260908\release-env\Lib\site-packages\ctboost\__init__.py 0.1.61
+..............s......................................................... [  3%]
+................................sss.............................ssssssss [  7%]
+........................................................................ [ 11%]
+..............................sss....................................... [ 15%]
+........................................................................ [ 19%]
+........................................................................ [ 23%]
+........FFF............................................................. [ 26%]
+.................s....s................................................. [ 30%]
+.............................................ss......................... [ 34%]
+..........sss.....................................s..................... [ 38%]
+........................................................................ [ 42%]
+........................................................................ [ 46%]
+................................sss...........................ss........ [ 49%]
+........................................................................ [ 53%]
+........................................................................ [ 57%]
+........................................................................ [ 61%]
+................................................................s....... [ 65%]
+........................................................................ [ 69%]
+.....................................sss................................ [ 72%]
+........................................................................ [ 76%]
+..................................s..................................... [ 80%]
+........................................................................ [ 84%]
+.........................................................sss............ [ 88%]
+........................................................................ [ 92%]
+......................................................................s. [ 96%]
+.s...................................................................... [ 99%]
+..                                                                       [100%]
+================================== FAILURES ===================================
+___ test_columnar_numeric_nulls_and_names_keep_object_fallback[arrow_table] ___
+
+kind = 'arrow_table'
+
+    @pytest.mark.parametrize("kind", ["arrow_table", "arrow_batch", "polars"])
+    def test_columnar_numeric_nulls_and_names_keep_object_fallback(kind):
+        integer = 2**63 - 2**38 - 1
+        columns = {"integer": [integer, None, 0], "value": [1.25, None, -0.0]}
+        if kind == "polars":
+            pl = pytest.importorskip("polars")
+            frame = pl.DataFrame(columns)
+        else:
+            pa = pytest.importorskip("pyarrow")
+            frame = pa.table(columns)
+            if kind == "arrow_batch":
+                frame = frame.to_batches()[0]
+        pipeline = FeaturePipeline().fit(np.zeros((3, 2)), [0, 1, 2], feature_names=list(columns))
+        reference, reference_names = pipeline._extract_frame(frame, allow_numeric=False)
+        extracted, names = pipeline._extract_frame(frame, allow_numeric=True)
+        assert extracted.dtype == object and names == reference_names
+>       np.testing.assert_array_equal(extracted, reference)
+
+tests\test_feature_pipeline_optional_input_inference.py:93: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\release-env\Lib\site-packages\numpy\_utils\__init__.py:85: in wrapper
+    return fun(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (<built-in function eq>, array([[np.float64(9.223371761976869e+18), np.float64(1.25)],
+       [np.float64(nan), np.flo....float64(1.25)],
+       [np.float64(nan), np.float64(nan)],
+       [np.float64(0.0), np.float64(-0.0)]], dtype=object))
+kwds = {'err_msg': '', 'verbose': True, 'header': 'Arrays are not equal', 'strict': False}
+
+    @wraps(func)
+    def inner(*args, **kwds):
+        with self._recreate_cm():
+>           return func(*args, **kwds)
+                   ^^^^^^^^^^^^^^^^^^^
+E           AssertionError: 
+E           Arrays are not equal
+E           
+E           Mismatched elements: 2 / 6 (33.3%)
+E           Max absolute difference among violations: nan
+E           Max relative difference among violations: nan
+E            ACTUAL: array([[np.float64(9.223371761976869e+18), np.float64(1.25)],
+E                  [np.float64(nan), np.float64(nan)],
+E                  [np.float64(0.0), np.float64(-0.0)]], dtype=object)
+E            DESIRED: array([[np.float64(9.223371761976869e+18), np.float64(1.25)],
+E                  [np.float64(nan), np.float64(nan)],
+E                  [np.float64(0.0), np.float64(-0.0)]], dtype=object)
+
+C:\Users\captn\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\contextlib.py:81: AssertionError
+___ test_columnar_numeric_nulls_and_names_keep_object_fallback[arrow_batch] ___
+
+kind = 'arrow_batch'
+
+    @pytest.mark.parametrize("kind", ["arrow_table", "arrow_batch", "polars"])
+    def test_columnar_numeric_nulls_and_names_keep_object_fallback(kind):
+        integer = 2**63 - 2**38 - 1
+        columns = {"integer": [integer, None, 0], "value": [1.25, None, -0.0]}
+        if kind == "polars":
+            pl = pytest.importorskip("polars")
+            frame = pl.DataFrame(columns)
+        else:
+            pa = pytest.importorskip("pyarrow")
+            frame = pa.table(columns)
+            if kind == "arrow_batch":
+                frame = frame.to_batches()[0]
+        pipeline = FeaturePipeline().fit(np.zeros((3, 2)), [0, 1, 2], feature_names=list(columns))
+        reference, reference_names = pipeline._extract_frame(frame, allow_numeric=False)
+        extracted, names = pipeline._extract_frame(frame, allow_numeric=True)
+        assert extracted.dtype == object and names == reference_names
+>       np.testing.assert_array_equal(extracted, reference)
+
+tests\test_feature_pipeline_optional_input_inference.py:93: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\release-env\Lib\site-packages\numpy\_utils\__init__.py:85: in wrapper
+    return fun(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (<built-in function eq>, array([[np.float64(9.223371761976869e+18), np.float64(1.25)],
+       [np.float64(nan), np.flo....float64(1.25)],
+       [np.float64(nan), np.float64(nan)],
+       [np.float64(0.0), np.float64(-0.0)]], dtype=object))
+kwds = {'err_msg': '', 'verbose': True, 'header': 'Arrays are not equal', 'strict': False}
+
+    @wraps(func)
+    def inner(*args, **kwds):
+        with self._recreate_cm():
+>           return func(*args, **kwds)
+                   ^^^^^^^^^^^^^^^^^^^
+E           AssertionError: 
+E           Arrays are not equal
+E           
+E           Mismatched elements: 2 / 6 (33.3%)
+E           Max absolute difference among violations: nan
+E           Max relative difference among violations: nan
+E            ACTUAL: array([[np.float64(9.223371761976869e+18), np.float64(1.25)],
+E                  [np.float64(nan), np.float64(nan)],
+E                  [np.float64(0.0), np.float64(-0.0)]], dtype=object)
+E            DESIRED: array([[np.float64(9.223371761976869e+18), np.float64(1.25)],
+E                  [np.float64(nan), np.float64(nan)],
+E                  [np.float64(0.0), np.float64(-0.0)]], dtype=object)
+
+C:\Users\captn\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\contextlib.py:81: AssertionError
+_____ test_columnar_numeric_nulls_and_names_keep_object_fallback[polars] ______
+
+kind = 'polars'
+
+    @pytest.mark.parametrize("kind", ["arrow_table", "arrow_batch", "polars"])
+    def test_columnar_numeric_nulls_and_names_keep_object_fallback(kind):
+        integer = 2**63 - 2**38 - 1
+        columns = {"integer": [integer, None, 0], "value": [1.25, None, -0.0]}
+        if kind == "polars":
+            pl = pytest.importorskip("polars")
+            frame = pl.DataFrame(columns)
+        else:
+            pa = pytest.importorskip("pyarrow")
+            frame = pa.table(columns)
+            if kind == "arrow_batch":
+                frame = frame.to_batches()[0]
+        pipeline = FeaturePipeline().fit(np.zeros((3, 2)), [0, 1, 2], feature_names=list(columns))
+        reference, reference_names = pipeline._extract_frame(frame, allow_numeric=False)
+        extracted, names = pipeline._extract_frame(frame, allow_numeric=True)
+        assert extracted.dtype == object and names == reference_names
+>       np.testing.assert_array_equal(extracted, reference)
+
+tests\test_feature_pipeline_optional_input_inference.py:93: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\release-env\Lib\site-packages\numpy\_utils\__init__.py:85: in wrapper
+    return fun(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (<built-in function eq>, array([[np.float64(9.223371761976869e+18), np.float64(1.25)],
+       [np.float64(nan), np.flo....float64(1.25)],
+       [np.float64(nan), np.float64(nan)],
+       [np.float64(0.0), np.float64(-0.0)]], dtype=object))
+kwds = {'err_msg': '', 'verbose': True, 'header': 'Arrays are not equal', 'strict': False}
+
+    @wraps(func)
+    def inner(*args, **kwds):
+        with self._recreate_cm():
+>           return func(*args, **kwds)
+                   ^^^^^^^^^^^^^^^^^^^
+E           AssertionError: 
+E           Arrays are not equal
+E           
+E           Mismatched elements: 2 / 6 (33.3%)
+E           Max absolute difference among violations: nan
+E           Max relative difference among violations: nan
+E            ACTUAL: array([[np.float64(9.223371761976869e+18), np.float64(1.25)],
+E                  [np.float64(nan), np.float64(nan)],
+E                  [np.float64(0.0), np.float64(-0.0)]], dtype=object)
+E            DESIRED: array([[np.float64(9.223371761976869e+18), np.float64(1.25)],
+E                  [np.float64(nan), np.float64(nan)],
+E                  [np.float64(0.0), np.float64(-0.0)]], dtype=object)
+
+C:\Users\captn\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\contextlib.py:81: AssertionError
+============================== warnings summary ===============================
+.tmp/release-readiness-20260908/installed-tests/tests/test_multioutput_aft.py: 11 warnings
+  C:\apps\ctboost\.tmp\release-readiness-20260908\release-env\Lib\site-packages\sklearn\utils\_tags.py:354: DeprecationWarning: The CTBoostMultiOutputRegressor or classes from which it inherits use `_get_tags` and `_more_tags`. Please define the `__sklearn_tags__` method, or inherit from `sklearn.base.BaseEstimator` and/or other appropriate mixins such as `sklearn.base.TransformerMixin`, `sklearn.base.ClassifierMixin`, `sklearn.base.RegressorMixin`, and `sklearn.base.OutlierMixin`. From scikit-learn 1.7, not defining `__sklearn_tags__` will raise an error.
+    warnings.warn(
+
+.tmp/release-readiness-20260908/installed-tests/tests/test_multioutput_aft.py::test_multilabel_classifier_probabilities_persistence_and_exports
+.tmp/release-readiness-20260908/installed-tests/tests/test_multioutput_aft.py::test_multilabel_classifier_probabilities_persistence_and_exports
+.tmp/release-readiness-20260908/installed-tests/tests/test_multioutput_aft.py::test_multilabel_classifier_probabilities_persistence_and_exports
+.tmp/release-readiness-20260908/installed-tests/tests/test_multioutput_aft.py::test_multilabel_classifier_probabilities_persistence_and_exports
+.tmp/release-readiness-20260908/installed-tests/tests/test_multioutput_aft.py::test_multilabel_classifier_probabilities_persistence_and_exports
+.tmp/release-readiness-20260908/installed-tests/tests/test_multioutput_aft.py::test_multilabel_classifier_probabilities_persistence_and_exports
+.tmp/release-readiness-20260908/installed-tests/tests/test_multioutput_aft.py::test_multilabel_classifier_probabilities_persistence_and_exports
+.tmp/release-readiness-20260908/installed-tests/tests/test_multioutput_aft.py::test_multilabel_classifier_probabilities_persistence_and_exports
+  C:\apps\ctboost\.tmp\release-readiness-20260908\release-env\Lib\site-packages\sklearn\utils\_tags.py:354: DeprecationWarning: The CTBoostMultiLabelClassifier or classes from which it inherits use `_get_tags` and `_more_tags`. Please define the `__sklearn_tags__` method, or inherit from `sklearn.base.BaseEstimator` and/or other appropriate mixins such as `sklearn.base.TransformerMixin`, `sklearn.base.ClassifierMixin`, `sklearn.base.RegressorMixin`, and `sklearn.base.OutlierMixin`. From scikit-learn 1.7, not defining `__sklearn_tags__` will raise an error.
+    warnings.warn(
+
+.tmp/release-readiness-20260908/installed-tests/tests/test_multioutput_aft.py: 17 warnings
+  C:\apps\ctboost\.tmp\release-readiness-20260908\release-env\Lib\site-packages\sklearn\utils\_tags.py:354: DeprecationWarning: The CTBoostAFTSurvivalRegressor or classes from which it inherits use `_get_tags` and `_more_tags`. Please define the `__sklearn_tags__` method, or inherit from `sklearn.base.BaseEstimator` and/or other appropriate mixins such as `sklearn.base.TransformerMixin`, `sklearn.base.ClassifierMixin`, `sklearn.base.RegressorMixin`, and `sklearn.base.OutlierMixin`. From scikit-learn 1.7, not defining `__sklearn_tags__` will raise an error.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_booster_constraints.py:238: CUDA support is not compiled into this build
+SKIPPED [2] tests\test_cuda_driver_loader.py:18: CUDA source contract requires a repository checkout
+SKIPPED [1] tests\test_cuda_multi_device_workspace.py:173: CUDA support is not compiled into this build
+SKIPPED [8] tests\test_cuda_quantized_pool.py:346: CUDA support is not compiled into this build
+SKIPPED [1] tests\test_export.py:289: could not import 'onnx': No module named 'onnx'
+SKIPPED [1] tests\test_export.py:319: could not import 'onnx': No module named 'onnx'
+SKIPPED [1] tests\test_export.py:341: could not import 'onnx': No module named 'onnx'
+SKIPPED [1] tests\test_framework_integrations.py:133: could not import 'dask.dataframe': No module named 'dask'
+SKIPPED [1] tests\test_framework_integrations.py:280: could not import 'pyspark': No module named 'pyspark'
+SKIPPED [1] tests\test_grouped_feature_test.py:752: CUDA support is not compiled into this build
+SKIPPED [1] tests\test_grouped_feature_test.py:800: CUDA support is not compiled into this build
+SKIPPED [3] tests\test_hpo_full_0160.py:377: Optional pinned TabArena environment
+SKIPPED [1] tests\test_leaf_estimation.py:440: CUDA support is not compiled into this build
+SKIPPED [3] tests\test_multivariate_statistics.py:271: requires a CUDA-enabled build
+SKIPPED [1] tests\test_object_influence_and_plots.py:143: could not import 'matplotlib': No module named 'matplotlib'
+SKIPPED [1] tests\test_object_influence_and_plots.py:166: could not import 'matplotlib': No module named 'matplotlib'
+SKIPPED [1] tests\test_tabarena_grouped_scout.py:590: real pinned TabArena API is only present in the scout environment
+SKIPPED [3] tests\test_tabarena_hpo_0160.py:427: Optional pinned TabArena benchmark environment
+SKIPPED [1] tests\test_tabarena_kaggle_hpo.py:194: could not import 'tabarena': No module named 'tabarena'
+SKIPPED [3] tests\test_tabarena_local_hpo.py:688: Optional pinned TabArena benchmark environment
+SKIPPED [1] tests\test_vector_exports.py:204: could not import 'matplotlib': No module named 'matplotlib'
+SKIPPED [1] tests\test_vector_exports.py:283: could not import 'onnx': No module named 'onnx'
+FAILED tests\test_feature_pipeline_optional_input_inference.py::test_columnar_numeric_nulls_and_names_keep_object_fallback[arrow_table]
+FAILED tests\test_feature_pipeline_optional_input_inference.py::test_columnar_numeric_nulls_and_names_keep_object_fallback[arrow_batch]
+FAILED tests\test_feature_pipeline_optional_input_inference.py::test_columnar_numeric_nulls_and_names_keep_object_fallback[polars]
+3 failed, 1833 passed, 38 skipped, 36 warnings in 222.17s (0:03:42)

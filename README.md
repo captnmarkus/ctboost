@@ -96,9 +96,11 @@ for supported workflows, artifact compatibility, and a reproducible comparison.
 ## Evidence and project status
 
 The [0.1.61 release candidate](https://github.com/captnmarkus/ctboost/blob/improve/inference-accuracy-20260908/docs/release-0.1.61.md)
-includes CPU inference optimizations and measured
-accuracy experiments. See the [development results](https://github.com/captnmarkus/ctboost/tree/8cc75aa/benchmarks/results/inference_accuracy_20260908)
-for reproducible comparisons, preserved predictions, and remaining limitations.
+includes CPU inference optimizations and Huber, Quantile, and training-arithmetic
+correctness fixes. The [release verification](https://github.com/captnmarkus/ctboost/tree/improve/inference-accuracy-20260908/benchmarks/results/release_readiness_20260908)
+records compatibility checks, performance measurements, and remaining limitations.
+The [accuracy studies](https://github.com/captnmarkus/ctboost/tree/8cc75aa/benchmarks/results/inference_accuracy_20260908/accuracy)
+did not justify changing the learning defaults or claiming an Elo increase.
 These changes are separate from the published 0.1.60 wheel and its evaluations.
 
 For the new CPU learning controls, see

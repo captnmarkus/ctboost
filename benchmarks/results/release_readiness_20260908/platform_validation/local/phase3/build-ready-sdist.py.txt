@@ -1,0 +1,44 @@
+from pathlib import Path
+import hashlib
+import json
+import subprocess
+import sys
+import tarfile
+import time
+
+root = Path(__file__).resolve().parent
+repo = root.parent.parent
+output = root / "dist-ready"
+output.mkdir(exist_ok=True)
+assert not list(output.glob("*.tar.gz")), "Preserve existing source archives"
+started = time.time()
+with (root / "sdist-ready-build.log").open("w", encoding="utf-8") as stream:
+    result = subprocess.run(
+        [sys.executable, "-m", "build", "--sdist", "--no-isolation", "--outdir", str(output)],
+        cwd=repo, stdout=stream, stderr=subprocess.STDOUT,
+    )
+assert result.returncode == 0, result.returncode
+sys.path.insert(0, str(repo))
+from scripts.validate_release_artifacts import _sdist_errors
+archive = next(output.glob("*.tar.gz"))
+errors = _sdist_errors(archive, expected_version="0.1.61")
+with tarfile.open(archive, "r:gz") as source:
+    names = source.getnames()
+    assert not any("inference_release_timing.py" in name for name in names)
+    assert not any("release_readiness_20260908" in name for name in names)
+    assert any(name.endswith("tests/test_training_prediction_arithmetic.py") for name in names)
+    assert any(name.endswith("tests/native/prediction_cache_smoke.cpp") for name in names)
+with (root / "sdist-ready-twine.log").open("w", encoding="utf-8") as stream:
+    check = subprocess.run(
+        [str(root / "release-env/Scripts/python.exe"), "-m", "twine", "check", "--strict", str(archive)],
+        cwd=repo, stdout=stream, stderr=subprocess.STDOUT,
+    )
+report = {
+    "archive": archive.name, "sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
+    "members": len(names), "validator_errors": errors, "twine_exit": check.returncode,
+    "seconds": time.time() - started,
+    "scope": "Final local source archive including updated documentation; runtime source remains 5780b41.",
+}
+(root / "sdist-ready-validation.json").write_text(json.dumps(report, indent=2) + "\n")
+print(json.dumps(report), flush=True)
+assert not errors and check.returncode == 0

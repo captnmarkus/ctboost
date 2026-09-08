@@ -1,0 +1,59 @@
+{
+  "source_commit": "5780b41c7321c70e508dccf34e2f76f2503d1175",
+  "source_branch": "improve/inference-accuracy-20260908",
+  "cpu_run": 34270193368,
+  "cpu_jobs_successful": 13,
+  "publish_run": 34270927962,
+  "publish_run_attempt": 1,
+  "publish_requested": false,
+  "publication_performed_by_this_workflow": false,
+  "published_package_or_release_asset_updated_by_this_workflow": false,
+  "tag_created_or_updated_by_this_workflow": false,
+  "tag_note": "This was a workflow_dispatch dry run on the recorded branch/commit. Both publication jobs were skipped; monitoring used read-only APIs and did not modify tags or source.",
+  "successful_release_jobs": 17,
+  "skipped_release_jobs": 2,
+  "publication_jobs": [
+    {
+      "name": "Publish to PyPI",
+      "conclusion": "skipped",
+      "url": "https://github.com/captnmarkus/ctboost/actions/runs/34270927962/job/102221068039"
+    },
+    {
+      "name": "Publish GitHub Release Assets",
+      "conclusion": "skipped",
+      "url": "https://github.com/captnmarkus/ctboost/actions/runs/34270927962/job/102221068113"
+    }
+  ],
+  "validator_job_url": "https://github.com/captnmarkus/ctboost/actions/runs/34270927962/job/102219032578",
+  "validated_wheels": 26,
+  "cuda_enabled_wheels": 10,
+  "cpu_only_wheels": 16,
+  "source_distributions": 1,
+  "jvm_tests": 9,
+  "jvm_failures": 0,
+  "jvm_errors": 0,
+  "jvm_skips": 0,
+  "r_check_status": "OK",
+  "rebuilt_source_smoke_passed": 4,
+  "required_steps": {
+    "Validate matrix and package metadata": "success",
+    "Validate portable runtimes from the source distribution": "success",
+    "Rebuild and smoke-test the source distribution": "success",
+    "Upload validated release artifacts": "success"
+  },
+  "exact_validator_log_excerpts": [
+    "2026-09-08T20:09:31.9442095Z Validated 26 wheels (10 CUDA-enabled, 16 CPU-only) and one source distribution for CTBoost 0.1.61.",
+    "2026-09-08T20:09:43.1120555Z [INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.271 s -- in io.github.ctboost.inference.JsonPredictorConformanceTest",
+    "2026-09-08T20:09:43.1571962Z [INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0",
+    "2026-09-08T20:09:43.1595982Z [INFO] BUILD SUCCESS",
+    "2026-09-08T20:11:41.9985180Z * checking tests ...",
+    "2026-09-08T20:11:42.7102164Z Status: OK",
+    "2026-09-08T20:14:00.7570899Z 4 passed in 1.77s"
+  ],
+  "release_dist_artifact_id": 10074783361,
+  "release_dist_digest": "sha256:f1325aa5289960055aeb657606948f303edc7f8b80a7f10b8cc80dd583f454dd",
+  "release_dist_size_bytes": 75764206,
+  "release_dist_url": "https://github.com/captnmarkus/ctboost/actions/runs/34270927962/artifacts/10074783361",
+  "artifact_metadata": "release-dist-artifact.json",
+  "scope": "Recorded CI gates passed for source 5780b41. This is build, package and correctness validation; it does not establish new TabArena Elo or imply publication."
+}

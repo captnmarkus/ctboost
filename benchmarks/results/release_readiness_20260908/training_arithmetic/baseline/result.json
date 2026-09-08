@@ -1,0 +1,255 @@
+{
+  "purpose": "Deferred nonzero Pool.baseline warm-start rounding limitation; no production change",
+  "synthetic_only": true,
+  "no_benchmark_data": true,
+  "ctboost_version": "0.1.61",
+  "numpy_version": "2.0.2",
+  "python": "3.12.11 (main, Jul  8 2025, 21:56:21) [MSC v.1944 64 bit (AMD64)]",
+  "ctboost_path": "C:\\apps\\ctboost\\.tmp\\release-readiness-20260908\\release-env\\Lib\\site-packages\\ctboost\\__init__.py",
+  "native_path": "C:\\apps\\ctboost\\.tmp\\release-readiness-20260908\\release-env\\Lib\\site-packages\\ctboost\\_core.cp312-win_amd64.pyd",
+  "native_sha256": "3fe462617f2ba45ad1b159b8a6a35808095c441d7e1d2c8d7f1f0aaae139ba65",
+  "verifier_sha256": "06980b4f44d70ca3c63b033110df1720b09a6581eef4b6bb0448a6b14b66700c",
+  "mechanism": "Fresh training starts with baseline then adds tree updates; resume reconstructs trees then adds baseline. Float addition order differs.",
+  "cases": [
+    {
+      "objective": "RMSE",
+      "strategy": "one_output_per_tree",
+      "root_only": false,
+      "prediction_elements": 96,
+      "prediction_bit_mismatches": 4,
+      "max_absolute_prediction_difference": 0.48253047466278076,
+      "max_absolute_loss_history_difference": 0.0017748180491223842,
+      "trees_equal": false,
+      "uninterrupted_loss_history": [
+        3.1778331838112392,
+        3.1293234354361594,
+        3.0879704736559765,
+        3.054988316122122,
+        3.0244060227907674,
+        2.9981188797487035,
+        2.9832438440113243
+      ],
+      "resumed_loss_history": [
+        3.1778331838112392,
+        3.1293234354361594,
+        3.0879704736559765,
+        3.0549883177146335,
+        3.024406023263939,
+        2.999893697797826,
+        2.984942025996629
+      ],
+      "uninterrupted_train_eval_equal": true,
+      "resumed_train_eval_equal": true
+    },
+    {
+      "objective": "LogLoss",
+      "strategy": "one_output_per_tree",
+      "root_only": false,
+      "prediction_elements": 96,
+      "prediction_bit_mismatches": 28,
+      "max_absolute_prediction_difference": 1.4901161193847656e-08,
+      "max_absolute_loss_history_difference": 4.796347985447369e-09,
+      "trees_equal": false,
+      "uninterrupted_loss_history": [
+        0.7012615965505199,
+        0.6860483732371168,
+        0.6706387293509893,
+        0.659329734916364,
+        0.6523392241232667,
+        0.6436557070573751,
+        0.6329185009193351
+      ],
+      "resumed_loss_history": [
+        0.7012615965505199,
+        0.6860483732371168,
+        0.6706387293509893,
+        0.659329734916364,
+        0.6523392193269187,
+        0.6436557056933091,
+        0.6329185049735614
+      ],
+      "uninterrupted_train_eval_equal": true,
+      "resumed_train_eval_equal": true
+    },
+    {
+      "objective": "MultiClass",
+      "strategy": "one_output_per_tree",
+      "root_only": false,
+      "prediction_elements": 288,
+      "prediction_bit_mismatches": 26,
+      "max_absolute_prediction_difference": 5.960464477539063e-08,
+      "max_absolute_loss_history_difference": 5.72168024071118e-09,
+      "trees_equal": false,
+      "uninterrupted_loss_history": [
+        1.039101863560864,
+        0.9439384929992194,
+        0.8864777562769651,
+        0.8447998009123688,
+        0.7996939237082997,
+        0.7524822772676013,
+        0.7204941758332254
+      ],
+      "resumed_loss_history": [
+        1.039101863560864,
+        0.9439384929992194,
+        0.8864777562769651,
+        0.8447997951906886,
+        0.7996939200440546,
+        0.7524822754207904,
+        0.7204941748514656
+      ],
+      "uninterrupted_train_eval_equal": true,
+      "resumed_train_eval_equal": true
+    },
+    {
+      "objective": "MultiClass",
+      "strategy": "multi_output_tree",
+      "root_only": false,
+      "prediction_elements": 288,
+      "prediction_bit_mismatches": 26,
+      "max_absolute_prediction_difference": 5.960464477539063e-08,
+      "max_absolute_loss_history_difference": 5.72168024071118e-09,
+      "trees_equal": false,
+      "uninterrupted_loss_history": [
+        1.039101863560864,
+        0.9439384929992194,
+        0.8864777562769651,
+        0.8447998009123688,
+        0.7996939237082997,
+        0.7524822772676013,
+        0.7204941758332254
+      ],
+      "resumed_loss_history": [
+        1.039101863560864,
+        0.9439384929992194,
+        0.8864777562769651,
+        0.8447997951906886,
+        0.7996939200440546,
+        0.7524822754207904,
+        0.7204941748514656
+      ],
+      "uninterrupted_train_eval_equal": true,
+      "resumed_train_eval_equal": true
+    },
+    {
+      "objective": "RMSE",
+      "strategy": "one_output_per_tree",
+      "root_only": true,
+      "prediction_elements": 96,
+      "prediction_bit_mismatches": 96,
+      "max_absolute_prediction_difference": 2.9802322387695312e-08,
+      "max_absolute_loss_history_difference": 2.761804118733835e-09,
+      "trees_equal": false,
+      "uninterrupted_loss_history": [
+        3.2218533666805595,
+        3.2149783819241344,
+        3.2096707417688153,
+        3.205574887000156,
+        3.2024152075747523,
+        3.199978354174604,
+        3.1980993438500596
+      ],
+      "resumed_loss_history": [
+        3.2218533666805595,
+        3.2149783819241344,
+        3.2096707417688153,
+        3.205574884238352,
+        3.2024152051480046,
+        3.1999783520427445,
+        3.1980993419775783
+      ],
+      "uninterrupted_train_eval_equal": true,
+      "resumed_train_eval_equal": true
+    },
+    {
+      "objective": "LogLoss",
+      "strategy": "one_output_per_tree",
+      "root_only": true,
+      "prediction_elements": 96,
+      "prediction_bit_mismatches": 0,
+      "max_absolute_prediction_difference": 0.0,
+      "max_absolute_loss_history_difference": 0.0,
+      "trees_equal": true,
+      "uninterrupted_loss_history": [
+        0.714415610591193,
+        0.7089751043821604,
+        0.7047786294022959,
+        0.7015349263625489,
+        0.6990237412183365,
+        0.6970774014938225,
+        0.6955675698982474
+      ],
+      "resumed_loss_history": [
+        0.714415610591193,
+        0.7089751043821604,
+        0.7047786294022959,
+        0.7015349263625489,
+        0.6990237412183365,
+        0.6970774014938225,
+        0.6955675698982474
+      ],
+      "uninterrupted_train_eval_equal": true,
+      "resumed_train_eval_equal": true
+    },
+    {
+      "objective": "MultiClass",
+      "strategy": "one_output_per_tree",
+      "root_only": true,
+      "prediction_elements": 288,
+      "prediction_bit_mismatches": 0,
+      "max_absolute_prediction_difference": 0.0,
+      "max_absolute_loss_history_difference": 0.0,
+      "trees_equal": true,
+      "uninterrupted_loss_history": [
+        1.1250345646844133,
+        1.1157824901438134,
+        1.1095634605453077,
+        1.1053713335148652,
+        1.102541829835958,
+        1.100631243335235,
+        1.099341249044584
+      ],
+      "resumed_loss_history": [
+        1.1250345646844133,
+        1.1157824901438134,
+        1.1095634605453077,
+        1.1053713335148652,
+        1.102541829835958,
+        1.100631243335235,
+        1.099341249044584
+      ],
+      "uninterrupted_train_eval_equal": true,
+      "resumed_train_eval_equal": true
+    },
+    {
+      "objective": "MultiClass",
+      "strategy": "multi_output_tree",
+      "root_only": true,
+      "prediction_elements": 288,
+      "prediction_bit_mismatches": 0,
+      "max_absolute_prediction_difference": 0.0,
+      "max_absolute_loss_history_difference": 0.0,
+      "trees_equal": true,
+      "uninterrupted_loss_history": [
+        1.1250345646844133,
+        1.1157824901438134,
+        1.1095634605453077,
+        1.1053713335148652,
+        1.102541829835958,
+        1.100631243335235,
+        1.099341249044584
+      ],
+      "resumed_loss_history": [
+        1.1250345646844133,
+        1.1157824901438134,
+        1.1095634605453077,
+        1.1053713335148652,
+        1.102541829835958,
+        1.100631243335235,
+        1.099341249044584
+      ],
+      "uninterrupted_train_eval_equal": true,
+      "resumed_train_eval_equal": true
+    }
+  ]
+}

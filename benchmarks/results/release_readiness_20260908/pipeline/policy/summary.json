@@ -1,0 +1,73 @@
+{
+  "final_wheel_verification": {
+    "method": "60 warning/callback policy regression cases inside each successful 323-test native suite",
+    "passed_native_environments": [
+      "NumPy1.26.4",
+      "NumPy2.5.3"
+    ],
+    "standalone_probe_rerun": false,
+    "test": "tests/test_feature_pipeline_optional_input_inference.py::test_signaling_nan_preserves_numpy_warning_and_callback_policy"
+  },
+  "first_wheel_standalone_probe": {
+    "np1": {
+      "cases": 27,
+      "differences": [],
+      "different_prediction_cases": 0,
+      "different_side_effect_cases": 0,
+      "numpy": "1.26.4"
+    },
+    "np2": {
+      "cases": 27,
+      "differences": [
+        {
+          "dtype": "f4",
+          "kind": "numpy",
+          "policy": "warn"
+        },
+        {
+          "dtype": "f4",
+          "kind": "numpy",
+          "policy": "call"
+        },
+        {
+          "dtype": "f4",
+          "kind": "numpy",
+          "policy": "log"
+        },
+        {
+          "dtype": "f4",
+          "kind": "native",
+          "policy": "warn"
+        },
+        {
+          "dtype": "f4",
+          "kind": "native",
+          "policy": "call"
+        },
+        {
+          "dtype": "f4",
+          "kind": "native",
+          "policy": "log"
+        },
+        {
+          "dtype": "f4",
+          "kind": "pandas",
+          "policy": "warn"
+        },
+        {
+          "dtype": "f4",
+          "kind": "pandas",
+          "policy": "call"
+        },
+        {
+          "dtype": "f4",
+          "kind": "pandas",
+          "policy": "log"
+        }
+      ],
+      "different_prediction_cases": 0,
+      "different_side_effect_cases": 9,
+      "numpy": "2.5.3"
+    }
+  }
+}
