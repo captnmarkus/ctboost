@@ -18,6 +18,7 @@ void GradientBooster::SetLearningRate(double learning_rate) {
   if (learning_rate <= 0.0) {
     throw std::invalid_argument("learning_rate must be positive");
   }
+  InvalidatePredictionCache();
   learning_rate_ = learning_rate;
 }
 
@@ -32,6 +33,7 @@ void GradientBooster::LoadState(std::vector<Tree> trees,
                                 bool use_gpu,
                                 std::uint64_t rng_state,
                                 std::vector<double> base_score) {
+  InvalidatePredictionCache();
   const bool vector_leaves = multi_strategy_ == "multi_output_tree";
   if (vector_leaves && use_gpu) {
     throw std::invalid_argument("multi_output_tree currently supports CPU prediction only");
@@ -112,6 +114,7 @@ void GradientBooster::LoadState(std::vector<Tree> trees,
 }
 
 void GradientBooster::LoadQuantizationSchema(QuantizationSchemaPtr quantization_schema) {
+  InvalidatePredictionCache();
   quantization_schema_ = std::move(quantization_schema);
   if (quantization_schema_ != nullptr) {
     for (Tree& tree : trees_) {

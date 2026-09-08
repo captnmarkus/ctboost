@@ -31,6 +31,12 @@ def _is_pandas_dataframe(value: Any) -> bool:
     return pd is not None and isinstance(value, pd.DataFrame)
 
 
+def _is_plain_numeric_dtype(dtype: Any) -> bool:
+    return isinstance(dtype, np.dtype) and (
+        dtype.kind in "biu" or (dtype.kind == "f" and dtype.itemsize <= 8)
+    )
+
+
 def _embedding_stat_names(stats: Sequence[str]) -> Tuple[str, ...]:
     supported = {"mean", "std", "min", "max", "l2", "sum", "dim"}
     resolved = tuple(str(stat).lower() for stat in stats)
@@ -170,6 +176,7 @@ class FeaturePipeline:
         self.n_features_in_: Optional[int] = None
         self.cat_feature_indices_: List[int] = []
         self.output_feature_names_: List[str] = []
+        self._numeric_only = False
 
         self._native = _core.NativeFeaturePipeline(
             cat_features=self.cat_features,
@@ -202,15 +209,31 @@ class FeaturePipeline:
     def _extract_frame(
         data: Any,
         feature_names: Optional[Sequence[str]] = None,
+        *,
+        allow_numeric: bool = False,
     ) -> Tuple[np.ndarray, Optional[List[str]]]:
         if _is_pandas_dataframe(data):
-            return data.to_numpy(dtype=object, copy=False), [str(name) for name in data.columns]
+            # Convert each numeric block through double, just like Python scalar
+            # conversion in the object path (important for large integers).
+            # Tiny batches avoid the fixed cost of inspecting every column dtype.
+            dtype = (
+                np.float64
+                if allow_numeric
+                and len(data) >= 16
+                and all(_is_plain_numeric_dtype(dtype) for dtype in data.dtypes)
+                else object
+            )
+            return data.to_numpy(dtype=dtype, copy=False), [
+                str(name) for name in data.columns
+            ]
         if _is_columnar_frame(data):
             metadata = _columnar_frame_metadata(data)
             if metadata is None:  # pragma: no cover - guarded by the predicate
                 raise TypeError("unsupported columnar frame")
             resolved_feature_names = (
-                metadata[2] if feature_names is None else [str(name) for name in feature_names]
+                metadata[2]
+                if feature_names is None
+                else [str(name) for name in feature_names]
             )
             return (
                 _columnar_frame_to_numpy(data, dtype=object),
@@ -220,10 +243,18 @@ class FeaturePipeline:
             raise TypeError(
                 "Polars LazyFrame input is not eager; call collect() before passing it to CTBoost"
             )
-        array = np.asarray(_array_protocol_to_numpy(data), dtype=object)
+        array = _array_protocol_to_numpy(data)
+        if not (
+            allow_numeric
+            and isinstance(array, np.ndarray)
+            and _is_plain_numeric_dtype(array.dtype)
+        ):
+            array = np.asarray(array, dtype=object)
         if array.ndim != 2:
             raise ValueError("feature pipelines expect a 2D array-like input")
-        resolved_feature_names = None if feature_names is None else [str(name) for name in feature_names]
+        resolved_feature_names = (
+            None if feature_names is None else [str(name) for name in feature_names]
+        )
         return array, resolved_feature_names
 
     def _refresh_metadata(self) -> None:
@@ -232,6 +263,17 @@ class FeaturePipeline:
         self.n_features_in_ = state.get("n_features_in_")
         self.cat_feature_indices_ = list(state.get("cat_feature_indices_", []))
         self.output_feature_names_ = list(state.get("output_feature_names_", []))
+        self._numeric_only = self.n_features_in_ is not None and not any(
+            state.get(key)
+            for key in (
+                "categorical_states",
+                "one_hot_states",
+                "combination_states",
+                "ctr_states",
+                "text_states",
+                "embedding_states",
+            )
+        )
 
     def fit(
         self,
@@ -254,12 +296,13 @@ class FeaturePipeline:
         *,
         feature_names: Optional[Sequence[str]] = None,
     ) -> Tuple[np.ndarray, List[int], List[str]]:
-        raw_matrix, resolved_feature_names = self._extract_frame(data, feature_names)
+        raw_matrix, resolved_feature_names = self._extract_frame(
+            data, feature_names, allow_numeric=self._numeric_only
+        )
         transformed, cat_features, output_feature_names = self._native.transform_array(
             raw_matrix,
             resolved_feature_names,
         )
-        self._refresh_metadata()
         return transformed, list(cat_features), list(output_feature_names)
 
     def fit_transform_array(

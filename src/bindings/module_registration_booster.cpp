@@ -282,6 +282,16 @@ void BindGradientBooster(py::module_& m) {
            },
            py::arg("pool"),
            py::arg("num_iteration") = -1)
+      // Private testing hook: compare arithmetic with the original helper on
+      // this compiler/target, including targets that contract multiply/add.
+      .def("_predict_uncached",
+           [](const ctboost::GradientBooster& booster,
+              const ctboost::Pool& pool,
+              int num_iteration) {
+             return VectorToArray(booster.PredictUncached(pool, num_iteration));
+           },
+           py::arg("pool"),
+           py::arg("num_iteration") = -1)
       .def("predict_leaf_indices",
            [](const ctboost::GradientBooster& booster,
               const ctboost::Pool& pool,

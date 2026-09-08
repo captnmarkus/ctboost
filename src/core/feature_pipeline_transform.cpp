@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <cstring>
 #include <limits>
 #include <numeric>
 #include <stdexcept>
@@ -42,8 +43,10 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
     throw std::invalid_argument("feature pipeline must be fitted before calling transform");
   }
 
-  const detail::MatrixView matrix = detail::MakeMatrixView(detail::EnsureObjectMatrix(std::move(raw_matrix)));
-  if (static_cast<int>(matrix.cols) != n_features_in_) {
+  if (raw_matrix.ndim() != 2) {
+    throw std::invalid_argument("feature pipelines expect a 2D array-like input");
+  }
+  if (raw_matrix.shape(1) != n_features_in_) {
     throw std::invalid_argument("input feature count does not match the fitted feature pipeline");
   }
   if (feature_names_in_.has_value() && !feature_names.is_none()) {
@@ -52,7 +55,7 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
     }
   }
 
-  const std::size_t row_count = matrix.rows;
+  const std::size_t row_count = static_cast<std::size_t>(raw_matrix.shape(0));
   const std::size_t column_count = output_feature_names_.size();
   // The token cache is only an optimization within one transform request.
   // Do not retain attacker-controlled token strings across requests.
@@ -78,6 +81,38 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
     data[col * row_count + row] = value;
   };
 
+  const char kind = raw_matrix.dtype().kind();
+  const bool plain_numeric = kind == 'b' || kind == 'i' || kind == 'u' ||
+                             (kind == 'f' && raw_matrix.itemsize() <= 8);
+  if (plain_numeric && categorical_states_.empty() && one_hot_states_.empty() &&
+      combination_states_.empty() && ctr_states_.empty() && text_states_.empty() &&
+      embedding_states_.empty() && numeric_indices_.size() == column_count) {
+    // Python numeric scalars are converted through double by py::cast<float>.
+    // Retain that rounding order, including for int64/uint64, without boxing
+    // every input value. forcecast also handles non-native byte order.
+    const auto numeric = py::array_t<double, py::array::forcecast>::ensure(raw_matrix);
+    if (!numeric) {
+      throw std::invalid_argument("numeric feature-pipeline input cannot be converted to double");
+    }
+    const py::buffer_info info = numeric.request();
+    const auto* source = static_cast<const char*>(info.ptr);
+    for (std::size_t column = 0; column < column_count; ++column) {
+      const py::ssize_t source_column = numeric_indices_[column];
+      for (std::size_t row = 0; row < row_count; ++row) {
+        // NumPy permits unaligned views; memcpy avoids undefined accesses.
+        double value;
+        std::memcpy(&value, source + static_cast<py::ssize_t>(row) * info.strides[0] +
+                                source_column * info.strides[1], sizeof(value));
+        write_column_value(row, column, static_cast<float>(value));
+      }
+    }
+    return py::make_tuple(std::move(transformed),
+                          detail::VectorToPyList(cat_feature_indices_),
+                          detail::VectorToPyList(output_feature_names_));
+  }
+
+  const detail::MatrixView matrix =
+      detail::MakeMatrixView(detail::EnsureObjectMatrix(std::move(raw_matrix)));
   std::unordered_map<int, const CategoricalEncoderState*> categorical_by_index;
   for (const auto& state : categorical_states_) {
     categorical_by_index.emplace(state.source_index, &state);
@@ -169,16 +204,19 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
     }
   } else {
     for (const auto& state : ctr_states_) {
-      for (std::size_t output_index = 0; output_index < state.output_names.size(); ++output_index) {
-        for (std::size_t row = 0; row < row_count; ++row) {
-          const std::string key = detail::JoinNormalizedKey(
-              matrix, row, state.source_indices, categorical_key_encoding_version_);
-          const auto count_it = state.total_counts.find(key);
-          const float count =
-              count_it == state.total_counts.end() ? 0.0F : static_cast<float>(count_it->second);
+      for (std::size_t row = 0; row < row_count; ++row) {
+        // All class outputs use the same category and fitted sufficient statistics.
+        // Resolve them once per row while keeping each output's arithmetic intact.
+        const std::string key = detail::JoinNormalizedKey(
+            matrix, row, state.source_indices, categorical_key_encoding_version_);
+        const auto count_it = state.total_counts.find(key);
+        const float count =
+            count_it == state.total_counts.end() ? 0.0F : static_cast<float>(count_it->second);
+        const auto sums_it = state.ctr_type == "Mean"
+            ? state.total_sums.find(key) : state.total_sums.end();
+        for (std::size_t output_index = 0; output_index < state.output_names.size(); ++output_index) {
           float value = 0.0F;
           if (state.ctr_type == "Mean") {
-            const auto sums_it = state.total_sums.find(key);
             const float summed =
                 sums_it == state.total_sums.end() ? 0.0F : sums_it->second[output_index];
             const double denominator =
@@ -201,10 +239,10 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
             value = CheckedCtrFloat(
                 numerator / std::max(denominator, 1.0));
           }
-          write_column_value(row, column_index, value);
+          write_column_value(row, column_index + output_index, value);
         }
-        ++column_index;
       }
+      column_index += state.output_names.size();
     }
   }
 

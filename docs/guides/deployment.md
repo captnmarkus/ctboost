@@ -44,6 +44,31 @@ For the selected model's monitored score, use
 `booster.eval_loss_history[booster.best_iteration]`. The sklearn `best_score_`
 dictionary continues to report each metric's historical minimum or maximum.
 
+## CPU prediction in the development build
+
+The development branch caches a compact traversal representation on the first
+CPU prediction that uses trees. Matching scalar multiclass trees share a
+traversal, and root-only trees add their leaf updates directly. The cache keeps
+the original floating-point update order, physical tree indices, and
+leaf-index output. It does not change training or statistical feature selection.
+
+The first call builds the cache for the complete ensemble, even when predicting
+only a prefix. This adds cold-call work and resident memory; later calls reuse
+it. Training, loading model state, or changing the quantization schema or
+learning rate invalidates the cache. The cache is derived state and is not
+written to model files. Saved models keep their existing format and behavior.
+Builds using fast-math, and GCC targets with fused multiply-add instructions,
+retain the previous score-accumulation path to preserve their rounding behavior.
+
+Fitted preprocessing also avoids serializing its metadata on every prediction.
+Ordinary numeric arrays and frames use a typed conversion path; categorical,
+text, embedding, and nullable values retain their established conversion rules.
+
+Measure both the first prediction and repeated predictions with your actual
+batch sizes. Include preprocessing when comparing libraries, and report the
+model size and prediction quality alongside latency. These changes are not
+part of the published 0.1.60 wheel.
+
 ## Export choices
 
 Install table-oriented CLI support with `python -m pip install "ctboost[cli]"`.

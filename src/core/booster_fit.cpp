@@ -10,6 +10,17 @@
 namespace ctboost {
 namespace {
 
+// Custom objectives may predict during a fit. Such predictions must not retain
+// a cache while the training loop appends trees or rescales DART learning rates.
+struct PredictionCachePause {
+  explicit PredictionCachePause(bool& enabled) : enabled_(enabled), previous_(enabled) {
+    enabled_ = false;
+  }
+  ~PredictionCachePause() { enabled_ = previous_; }
+  bool& enabled_;
+  bool previous_;
+};
+
 bool SameQuantizationSchema(const QuantizationSchema& lhs,
                             const QuantizationSchema& rhs) {
   return lhs.num_bins_per_feature == rhs.num_bins_per_feature &&
@@ -35,6 +46,8 @@ void GradientBooster::FitWithObjective(Pool& pool,
                                        int early_stopping_rounds,
                                        bool continue_training,
                                        bool allow_average_initialization) {
+  InvalidatePredictionCache();
+  const PredictionCachePause pause_prediction_cache(prediction_cache_enabled_);
   const auto fit_start = std::chrono::steady_clock::now();
   if ((leaf_estimation_backtracking_ || multiclass_leaf_solver_ == "full" ||
        multiclass_feature_test_ == "joint") &&

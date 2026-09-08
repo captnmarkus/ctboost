@@ -8,8 +8,12 @@ namespace {
 
 template <typename BinType>
 bool HasCompleteContiguousBinStorage(const HistMatrix& hist,
-                                     const std::vector<BinType>& storage) noexcept {
-  if (hist.uses_external_bin_storage()) {
+                                     const std::vector<BinType>& storage,
+                                     const QuantizationSchemaPtr& tree_schema) noexcept {
+  // Direct C++ callers can pass a narrower histogram. Retain feature_bins()
+  // checks unless a known tree schema is covered by the contiguous storage.
+  if (tree_schema == nullptr || hist.num_cols < tree_schema->num_cols() ||
+      hist.uses_external_bin_storage()) {
     return false;
   }
   if (hist.num_rows == 0) {
@@ -154,7 +158,7 @@ void Tree::AccumulateBinnedContributions(
   }
 
   if (hist.bin_storage_bytes() == 1 &&
-      HasCompleteContiguousBinStorage(hist, hist.compact_bin_indices)) {
+      HasCompleteContiguousBinStorage(hist, hist.compact_bin_indices, quantization_schema_)) {
     AccumulateContiguousContributions(nodes_,
                                       hist.compact_bin_indices.data(),
                                       hist.num_rows,
@@ -165,7 +169,7 @@ void Tree::AccumulateBinnedContributions(
     return;
   }
   if (hist.bin_storage_bytes() == 2 &&
-      HasCompleteContiguousBinStorage(hist, hist.bin_indices)) {
+      HasCompleteContiguousBinStorage(hist, hist.bin_indices, quantization_schema_)) {
     AccumulateContiguousContributions(nodes_,
                                       hist.bin_indices.data(),
                                       hist.num_rows,
@@ -213,12 +217,12 @@ int Tree::PredictBinnedLeafIndex(const HistMatrix& hist, std::size_t row) const 
   }
 
   if (hist.bin_storage_bytes() == 1 &&
-      HasCompleteContiguousBinStorage(hist, hist.compact_bin_indices)) {
+      HasCompleteContiguousBinStorage(hist, hist.compact_bin_indices, quantization_schema_)) {
     return PredictContiguousLeafIndex(
         nodes_, hist.compact_bin_indices.data(), hist.num_rows, row);
   }
   if (hist.bin_storage_bytes() == 2 &&
-      HasCompleteContiguousBinStorage(hist, hist.bin_indices)) {
+      HasCompleteContiguousBinStorage(hist, hist.bin_indices, quantization_schema_)) {
     return PredictContiguousLeafIndex(nodes_, hist.bin_indices.data(), hist.num_rows, row);
   }
 

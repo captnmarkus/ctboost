@@ -14,6 +14,10 @@
 
 namespace ctboost {
 
+namespace booster_detail {
+struct PredictionCache;
+}
+
 class GradientBooster {
  public:
   GradientBooster(std::string objective = "RMSE",
@@ -88,6 +92,8 @@ class GradientBooster {
   void SetIterations(int iterations);
   void SetLearningRate(double learning_rate);
   std::vector<float> Predict(const Pool& pool, int num_iteration = -1) const;
+  // Internal compatibility diagnostic; not a training or prediction option.
+  std::vector<float> PredictUncached(const Pool& pool, int num_iteration = -1) const;
   std::vector<std::int32_t> PredictLeafIndices(const Pool& pool, int num_iteration = -1) const;
   std::vector<float> PredictContributions(const Pool& pool, int num_iteration = -1) const;
   void LoadState(std::vector<Tree> trees,
@@ -244,6 +250,14 @@ class GradientBooster {
   int best_iteration_{-1};
   double best_score_{0.0};
   bool maximize_eval_metric_{false};
+
+  // Derived inference state only; never serialized or used by the learner.
+  mutable std::shared_ptr<const booster_detail::PredictionCache> prediction_cache_;
+  bool prediction_cache_enabled_{true};
+
+  std::vector<float> PredictImpl(const Pool& pool, int num_iteration, bool use_cache) const;
+  void InvalidatePredictionCache() noexcept;
+  std::shared_ptr<const booster_detail::PredictionCache> GetPredictionCache() const;
 
   void InitializeBaseScore(const Pool& pool, bool allow_average_initialization);
 };
