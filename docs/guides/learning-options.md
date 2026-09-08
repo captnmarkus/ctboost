@@ -131,3 +131,30 @@ exports store the resulting tree structure and leaf values.
 Use held-out validation data to compare these options on your task. The
 published [0.1.58 TabArena results](../benchmarks.md) remain evidence for that
 version and configuration; they do not measure these new algorithms.
+
+
+## Experimental joint cut score (isolated development prototype)
+
+The opt-in `multiclass_split_score="joint"` scores candidate cuts on the feature
+already accepted by conditional inference. It sums diagonal Newton gains
+`G_left[k]^2/(H_left[k]+lambda_l2) + G_right[k]^2/(H_right[k]+lambda_l2)
+- G_parent[k]^2/(H_parent[k]+lambda_l2)` over classes. The default is `"scalar"`;
+old states without this field restore that default. This prototype is not part
+of the published 0.1.60 release and has no demonstrated validation-score benefit.
+
+Feature selection, its p-value threshold, and candidate feature subsampling stay
+unchanged. `multiclass_feature_test="joint"` is an independent choice: joint cut
+scoring alone cannot recover a feature rejected by the scalar conditional test.
+Numeric cuts use the existing bins. Categorical candidates retain the existing
+scalar structure-coordinate ordering, then score its prefixes jointly; this is
+not an exhaustive search over category partitions. `gamma` applies to the summed
+gain; child weight/count checks retain their existing structure-coordinate rules.
+
+The initial implementation requires a built-in CPU multiclass objective with
+3-32 classes and rejects distributed training, custom objectives, monotone and
+interaction constraints, feature weights, first-use penalties, nonzero
+`random_strength`, and nonzero `max_leaf_weight`. Scalar and vector tree storage
+use the same cut scores and leaves. Fractional sample/bootstrap weights work with
+single-coordinate feature testing; enabling joint feature testing retains its
+integer-frequency-weight restriction. The full leaf solver remains independent:
+its coupled Hessian is not used by this diagonal cut score.

@@ -73,7 +73,8 @@ class GradientBooster {
                   std::string multi_strategy = "one_output_per_tree",
                   bool leaf_estimation_backtracking = false,
                   std::string multiclass_leaf_solver = "diagonal",
-                  std::string multiclass_feature_test = "single");
+                  std::string multiclass_feature_test = "single",
+                  std::string multiclass_split_score = "scalar");
 
   void Fit(Pool& pool,
            Pool* eval_pool = nullptr,
@@ -144,6 +145,7 @@ class GradientBooster {
   bool leaf_estimation_backtracking() const noexcept;
   const std::string& multiclass_leaf_solver() const noexcept;
   const std::string& multiclass_feature_test() const noexcept;
+  const std::string& multiclass_split_score() const noexcept;
   const std::string& feature_test() const noexcept;
   std::size_t feature_test_bins() const noexcept;
   const std::string& feature_test_adjustment() const noexcept;
@@ -212,6 +214,7 @@ class GradientBooster {
   bool leaf_estimation_backtracking_{false};
   std::string multiclass_leaf_solver_{"diagonal"};
   std::string multiclass_feature_test_{"single"};
+  std::string multiclass_split_score_{"scalar"};
   std::string feature_test_{"quadratic"};
   std::size_t feature_test_bins_{8};
   std::string feature_test_adjustment_{"none"};

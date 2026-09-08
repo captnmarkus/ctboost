@@ -27,6 +27,21 @@ void Tree::Build(const HistMatrix& hist,
   if (weights.size() != hist.num_rows) {
     throw std::invalid_argument("weight size must match the histogram row count");
   }
+  if (options.split_gradients != nullptr || options.split_hessians != nullptr) {
+    if (options.use_gpu || options.distributed != nullptr ||
+        options.split_dimension < 3U || options.split_dimension > 32U ||
+        options.split_gradients == nullptr || options.split_hessians == nullptr ||
+        options.split_gradients->size() != hist.num_rows * options.split_dimension ||
+        options.split_hessians->size() != hist.num_rows * options.split_dimension) {
+      throw std::invalid_argument("joint split scoring requires complete 3-32 dimensional CPU gradients and Hessians");
+    }
+    if ((options.monotone_constraints != nullptr && !options.monotone_constraints->empty()) ||
+        options.interaction_constraints != nullptr || options.feature_weights != nullptr ||
+        options.first_feature_use_penalties != nullptr || options.random_strength > 0.0 ||
+        options.max_leaf_weight != 0.0) {
+      throw std::invalid_argument("joint split scoring does not support constrained or gain-ranked feature selection");
+    }
+  }
   if (options.multivariate_gradients != nullptr &&
       (options.use_gpu || options.distributed != nullptr ||
        options.multivariate_dimension < 2U || options.multivariate_dimension > 32U ||

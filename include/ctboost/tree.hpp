@@ -95,6 +95,11 @@ struct TreeBuildOptions {
   // Optional complete response vectors for CPU joint feature selection.
   const std::vector<float>* multivariate_gradients{nullptr};
   std::size_t multivariate_dimension{0};
+  // Optional all-class diagonal Newton responses for scoring cuts only.
+  // These do not enable multivariate conditional feature statistics.
+  const std::vector<float>* split_gradients{nullptr};
+  const std::vector<float>* split_hessians{nullptr};
+  std::size_t split_dimension{0};
   // Set internally by Build; valid only for the duration of that tree build.
   const std::vector<std::size_t>* statistic_row_indices{nullptr};
   const std::vector<float>* statistic_weights{nullptr};

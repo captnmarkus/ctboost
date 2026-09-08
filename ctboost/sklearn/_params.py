@@ -94,6 +94,7 @@ class _BaseInitMixin:
             leaf_estimation_backtracking: bool = False,
             multiclass_leaf_solver: str = "diagonal",
             multiclass_feature_test: str = "single",
+            multiclass_split_score: str = "scalar",
             feature_test: str = "quadratic",
             feature_test_bins: int = 8,
             feature_test_adjustment: str = "none",
@@ -194,6 +195,7 @@ class _BaseInitMixin:
             self.leaf_estimation_backtracking = leaf_estimation_backtracking
             self.multiclass_leaf_solver = multiclass_leaf_solver
             self.multiclass_feature_test = multiclass_feature_test
+            self.multiclass_split_score = multiclass_split_score
             self.feature_test = feature_test
             self.feature_test_bins = feature_test_bins
             self.feature_test_adjustment = feature_test_adjustment
@@ -283,6 +285,7 @@ class _BaseInitMixin:
                 "leaf_estimation_backtracking": False,
                 "multiclass_leaf_solver": "diagonal",
                 "multiclass_feature_test": "single",
+                "multiclass_split_score": "scalar",
                 "feature_test": "quadratic",
                 "feature_test_bins": 8,
                 "feature_test_adjustment": "none",

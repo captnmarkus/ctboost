@@ -668,6 +668,11 @@ class Booster:
         return str(self._handle.multiclass_feature_test())
 
     @property
+    def multiclass_split_score(self) -> str:
+        """Return the configured score for cuts on the conditionally selected feature."""
+        return str(self._handle.multiclass_split_score())
+
+    @property
     def leaf_estimation_iterations(self) -> int:
         """Number of fixed-structure leaf-value estimation steps per tree."""
         return int(self._handle.leaf_estimation_iterations())

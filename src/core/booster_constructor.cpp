@@ -64,7 +64,8 @@ GradientBooster::GradientBooster(std::string objective,
                                  std::string multi_strategy,
                                  bool leaf_estimation_backtracking,
                                  std::string multiclass_leaf_solver,
-                                 std::string multiclass_feature_test)
+                                 std::string multiclass_feature_test,
+                                 std::string multiclass_split_score)
     : objective_name_(std::move(objective)),
       eval_metric_name_(std::move(eval_metric)),
       objective_config_{huber_delta, quantile_alpha, tweedie_variance_power},
@@ -99,6 +100,7 @@ GradientBooster::GradientBooster(std::string objective,
       leaf_estimation_backtracking_(leaf_estimation_backtracking),
       multiclass_leaf_solver_(std::move(multiclass_leaf_solver)),
       multiclass_feature_test_(std::move(multiclass_feature_test)),
+      multiclass_split_score_(std::move(multiclass_split_score)),
       feature_test_(booster_detail::CanonicalFeatureTest(std::move(feature_test))),
       feature_test_bins_(feature_test_bins),
       feature_test_adjustment_(booster_detail::CanonicalFeatureTestAdjustment(
@@ -204,6 +206,24 @@ GradientBooster::GradientBooster(std::string objective,
   }
   if (multiclass_feature_test_ != "single" && multiclass_feature_test_ != "joint") {
     throw std::invalid_argument("multiclass_feature_test must be 'single' or 'joint'");
+  }
+  if (multiclass_split_score_ != "scalar" && multiclass_split_score_ != "joint") {
+    throw std::invalid_argument("multiclass_split_score must be 'scalar' or 'joint'");
+  }
+  if (multiclass_split_score_ == "joint") {
+    if (prediction_dimension_ < 3 || num_classes_ > 32) {
+      throw std::invalid_argument("joint split scoring requires a multiclass objective with 3-32 classes");
+    }
+    if (booster_detail::NormalizeTaskType(task_type) != "cpu" || distributed_world_size_ != 1) {
+      throw std::invalid_argument("joint split scoring requires non-distributed CPU training");
+    }
+    if (!monotone_constraints_.empty() || !interaction_constraints_.empty() ||
+        !feature_weights_.empty() || !first_feature_use_penalties_.empty() ||
+        random_strength_ > 0.0 || max_leaf_weight_ != 0.0) {
+      throw std::invalid_argument(
+          "joint split scoring does not support constraints, feature weights, first-use penalties, "
+          "random_strength or max_leaf_weight");
+    }
   }
   const bool advanced_multiclass =
       multiclass_leaf_solver_ == "full" || multiclass_feature_test_ == "joint";

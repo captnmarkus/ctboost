@@ -139,6 +139,9 @@ def _resolve_native_training_params(
         "multiclass_feature_test": str(config.get(
             "multiclass_feature_test", "single" if init_state is None else init_state.get("multiclass_feature_test", "single"),
         )),
+        "multiclass_split_score": str(config.get(
+            "multiclass_split_score", "scalar" if init_state is None else init_state.get("multiclass_split_score", "scalar"),
+        )),
         "feature_test": feature_test or "quadratic",
         "feature_test_bins": int(
             config.get(

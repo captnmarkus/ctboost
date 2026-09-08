@@ -51,6 +51,7 @@ def _make_native_booster(
         leaf_estimation_backtracking=native_params["leaf_estimation_backtracking"],
         multiclass_leaf_solver=native_params["multiclass_leaf_solver"],
         multiclass_feature_test=native_params["multiclass_feature_test"],
+        multiclass_split_score=native_params["multiclass_split_score"],
         feature_test=native_params["feature_test"],
         feature_test_bins=native_params["feature_test_bins"],
         feature_test_adjustment=native_params["feature_test_adjustment"],

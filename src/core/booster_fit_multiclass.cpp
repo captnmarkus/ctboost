@@ -34,6 +34,11 @@ void RunMulticlassIteration(const FitLoopContext& context,
       context.pool->num_cols(), context.colsample_bytree, context.feature_weights, *context.rng_state);
   TreeBuildOptions build_options = MakeTreeBuildOptions(
       context, allowed_features.empty() ? nullptr : &allowed_features, distributed_coordinator);
+  if (context.joint_multiclass_split_score) {
+    build_options.split_gradients = &context.workspace->gradients;
+    build_options.split_hessians = &context.workspace->hessians;
+    build_options.split_dimension = static_cast<std::size_t>(context.prediction_dimension);
+  }
   if (context.joint_multiclass_feature_test) {
     build_options.multivariate_gradients = &context.workspace->gradients;
     build_options.multivariate_dimension = static_cast<std::size_t>(context.prediction_dimension);

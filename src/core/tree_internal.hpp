@@ -181,6 +181,13 @@ std::vector<int> FilterAllowedFeaturesForInteraction(
     const InteractionConstraintSet& constraints,
     const std::vector<int>* active_groups);
 std::vector<int> IntersectSortedVectors(const std::vector<int>& lhs, const std::vector<int>& rhs);
+SplitChoice SelectBestMulticlassSplit(const HistMatrix& hist,
+                                     const NodeHistogramSet& node_stats,
+                                     int feature_id,
+                                     const TreeBuildOptions& options,
+                                     std::size_t row_begin,
+                                     std::size_t row_end);
+
 SplitChoice SelectBestSplit(const BinStatistics& feature_stats,
                             double total_gradient,
                             double total_hessian,

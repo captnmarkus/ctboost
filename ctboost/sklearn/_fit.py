@@ -191,6 +191,7 @@ class _BaseFitMixin:
                 "leaf_estimation_backtracking": self.leaf_estimation_backtracking,
                 "multiclass_leaf_solver": self.multiclass_leaf_solver,
                 "multiclass_feature_test": self.multiclass_feature_test,
+                "multiclass_split_score": self.multiclass_split_score,
                 "feature_test": self.feature_test,
                 "feature_test_bins": self.feature_test_bins,
                 "feature_test_adjustment": self.feature_test_adjustment,

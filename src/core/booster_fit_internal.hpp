@@ -125,6 +125,7 @@ struct FitLoopContext {
   bool leaf_estimation_backtracking{false};
   bool full_multiclass_leaf_solver{false};
   bool joint_multiclass_feature_test{false};
+  bool joint_multiclass_split_score{false};
   const std::string* feature_test{nullptr};
   std::size_t feature_test_bins{8};
   const std::string* feature_test_adjustment{nullptr};

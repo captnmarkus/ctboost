@@ -66,6 +66,7 @@ py::dict BoosterToStateDict(const ctboost::GradientBooster& booster) {
   state["leaf_estimation_backtracking"] = booster.leaf_estimation_backtracking();
   state["multiclass_leaf_solver"] = booster.multiclass_leaf_solver();
   state["multiclass_feature_test"] = booster.multiclass_feature_test();
+  state["multiclass_split_score"] = booster.multiclass_split_score();
   state["feature_test"] = booster.feature_test();
   state["feature_test_bins"] = booster.feature_test_bins();
   state["feature_test_adjustment"] = booster.feature_test_adjustment();
@@ -279,7 +280,10 @@ ctboost::GradientBooster BoosterFromStateDict(const py::dict& state) {
                                        : "diagonal",
                                    state.contains("multiclass_feature_test")
                                        ? py::cast<std::string>(state["multiclass_feature_test"])
-                                       : "single");
+                                       : "single",
+                                   state.contains("multiclass_split_score")
+                                       ? py::cast<std::string>(state["multiclass_split_score"])
+                                       : "scalar");
 
   booster.LoadState(std::move(trees),
                     quantization_schema,

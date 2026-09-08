@@ -137,6 +137,7 @@ add_library(ctboost_core STATIC
   src/core/tree_distributed_payloads.cpp
   src/core/tree_predict.cpp
   src/core/tree_split_scoring.cpp
+  src/core/tree_multiclass_split.cpp
 )
 
 # ``ctboost_core`` is an implementation-only static archive linked into the

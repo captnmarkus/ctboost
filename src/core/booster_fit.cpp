@@ -36,6 +36,10 @@ void GradientBooster::FitWithObjective(Pool& pool,
                                        bool continue_training,
                                        bool allow_average_initialization) {
   const auto fit_start = std::chrono::steady_clock::now();
+  if (multiclass_split_score_ == "joint" &&
+      (use_gpu_ || distributed_world_size_ != 1 || &objective != objective_.get())) {
+    throw std::invalid_argument("joint split scoring requires a built-in objective and non-distributed CPU training");
+  }
   if ((leaf_estimation_backtracking_ || multiclass_leaf_solver_ == "full" ||
        multiclass_feature_test_ == "joint") &&
       (use_gpu_ || distributed_world_size_ != 1)) {
@@ -368,6 +372,7 @@ void GradientBooster::FitWithObjective(Pool& pool,
   context.leaf_estimation_backtracking = leaf_estimation_backtracking_;
   context.full_multiclass_leaf_solver = multiclass_leaf_solver_ == "full";
   context.joint_multiclass_feature_test = multiclass_feature_test_ == "joint";
+  context.joint_multiclass_split_score = multiclass_split_score_ == "joint";
   context.feature_test = &feature_test_;
   context.feature_test_bins = feature_test_bins_;
   context.feature_test_adjustment = &feature_test_adjustment_;

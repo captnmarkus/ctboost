@@ -256,7 +256,10 @@ CandidateSelectionResult SelectBestCandidateSplit(const HistMatrix& hist,
     }
 
     const auto split_start = measure_timing ? Clock::now() : Clock::time_point{};
-    best.split_choice = SelectBestSplit(
+    best.split_choice = options.split_gradients != nullptr
+        ? SelectBestMulticlassSplit(hist, node_stats, best.feature_choice.feature_id,
+                                    options, row_begin, row_end)
+        : SelectBestSplit(
         node_stats.by_feature[static_cast<std::size_t>(best.feature_choice.feature_id)],
         node_stats.total_gradient,
         node_stats.total_hessian,

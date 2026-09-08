@@ -168,6 +168,7 @@ void BindGradientBooster(py::module_& m) {
                     std::string,
                     bool,
                     std::string,
+                    std::string,
                     std::string>(),
            py::arg("objective") = "RMSE",
            py::arg("iterations") = 100,
@@ -226,7 +227,8 @@ void BindGradientBooster(py::module_& m) {
            py::arg("multi_strategy") = "one_output_per_tree",
            py::arg("leaf_estimation_backtracking") = false,
            py::arg("multiclass_leaf_solver") = "diagonal",
-           py::arg("multiclass_feature_test") = "single")
+           py::arg("multiclass_feature_test") = "single",
+           py::arg("multiclass_split_score") = "scalar")
       .def("fit",
            [](ctboost::GradientBooster& booster,
               py::object pool_obj,

@@ -44,6 +44,7 @@ _NATIVE_TRAIN_PARAM_KEYS = {
     "leaf_estimation_backtracking",
     "multiclass_leaf_solver",
     "multiclass_feature_test",
+    "multiclass_split_score",
     "feature_test",
     "feature_test_bins",
     "feature_test_adjustment",

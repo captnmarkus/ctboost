@@ -55,6 +55,9 @@ const std::string& GradientBooster::multiclass_leaf_solver() const noexcept {
 const std::string& GradientBooster::multiclass_feature_test() const noexcept {
   return multiclass_feature_test_;
 }
+const std::string& GradientBooster::multiclass_split_score() const noexcept {
+  return multiclass_split_score_;
+}
 const std::string& GradientBooster::feature_test() const noexcept { return feature_test_; }
 std::size_t GradientBooster::feature_test_bins() const noexcept { return feature_test_bins_; }
 const std::string& GradientBooster::feature_test_adjustment() const noexcept {

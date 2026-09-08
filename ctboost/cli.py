@@ -629,6 +629,7 @@ def _training_parameters(args: argparse.Namespace) -> Dict[str, Any]:
         "leaf_estimation_backtracking": args.leaf_estimation_backtracking,
         "multiclass_leaf_solver": args.multiclass_leaf_solver,
         "multiclass_feature_test": args.multiclass_feature_test,
+        "multiclass_split_score": args.multiclass_split_score,
         "feature_test": args.feature_test,
         "feature_test_bins": args.feature_test_bins,
         "feature_test_adjustment": args.feature_test_adjustment,
@@ -966,6 +967,8 @@ def build_parser() -> argparse.ArgumentParser:
                               help="Safeguard RMSE/LogLoss leaf updates with loss backtracking")
     train_parser.add_argument("--multiclass-leaf-solver", choices=("diagonal", "full"),
                               help="Multiclass leaf solver (full: CPU, 3-32 classes)")
+    train_parser.add_argument("--multiclass-split-score", choices=("scalar", "joint"),
+                              help="Score cuts on the selected feature (joint: CPU, 3-32 classes)")
     train_parser.add_argument("--multiclass-feature-test", choices=("single", "joint"),
                               help="Use one class or all class gradients for feature selection")
     train_parser.add_argument(

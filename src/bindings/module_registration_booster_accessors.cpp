@@ -49,6 +49,7 @@ void BindGradientBoosterAccessors(py::class_<ctboost::GradientBooster>& booster_
       .def("leaf_estimation_backtracking", &ctboost::GradientBooster::leaf_estimation_backtracking)
       .def("multiclass_leaf_solver", &ctboost::GradientBooster::multiclass_leaf_solver)
       .def("multiclass_feature_test", &ctboost::GradientBooster::multiclass_feature_test)
+      .def("multiclass_split_score", &ctboost::GradientBooster::multiclass_split_score)
       .def("feature_test", &ctboost::GradientBooster::feature_test)
       .def("feature_test_bins", &ctboost::GradientBooster::feature_test_bins)
       .def("feature_test_adjustment", &ctboost::GradientBooster::feature_test_adjustment)
