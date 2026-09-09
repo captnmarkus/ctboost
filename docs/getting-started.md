@@ -97,10 +97,11 @@ persisted in model state and snapshots; exact snapshot resume requires the same
 value and rejects configuration drift (use `init_model` when intentionally
 changing it).
 
-Multiclass objectives currently reject values greater than `1`: independent
-per-class diagonal Newton steps can overshoot because softmax classes are
-coupled. This fails closed until a coupled, safeguarded multiclass solver is
-available.
+The default diagonal multiclass solver rejects values greater than `1` because
+independent per-class Newton steps can overshoot. The opt-in
+`multiclass_leaf_solver="full"` supports 1–5 safeguarded passes on CPU for
+3–32 classes. See [multiclass learning options](guides/learning-options.md)
+for its supported workflows and restrictions.
 
 ## Optional grouped feature test
 

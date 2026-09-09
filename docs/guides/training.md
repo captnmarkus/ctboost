@@ -15,6 +15,54 @@ The estimator examples require the scikit-learn extra:
 python -m pip install "ctboost[sklearn]"
 ```
 
+## Validation and early stopping
+
+For binary classification, put `eval_metric` in the estimator constructor and
+`early_stopping_rounds` in `.fit()`. A list containing `(X_valid, y_valid)` is
+supported, as is a single tuple:
+
+```python
+from ctboost import CTBoostClassifier, log_evaluation
+
+model = CTBoostClassifier(
+    iterations=2000,
+    learning_rate=0.03,
+    max_depth=5,
+    eval_metric="AUC",
+    random_seed=42,
+    task_type="CPU",
+)
+model.fit(
+    X_train,
+    y_train,
+    eval_set=[(X_valid, y_valid)],
+    early_stopping_rounds=100,
+    callbacks=[log_evaluation(period=100)],
+)
+valid_probabilities = model.predict_proba(X_valid)[:, 1]
+```
+
+Early stopping retains the best iteration, so ordinary `predict_proba(...)`
+uses the selected model. `best_iteration_` is zero-based. For regression,
+use `CTBoostRegressor` and an appropriate metric such as `eval_metric="RMSE"`.
+With several validation sets or metrics, the first controls stopping by default;
+`early_stopping_name` and `early_stopping_metric` select a different one.
+
+### Switching from LightGBM
+
+Keep your feature preparation and fold indices. Replace the estimator and its
+training controls: LightGBM's `early_stopping` callback expects a different
+callback environment and cannot be passed to CTBoost. Use
+`early_stopping_rounds` as above and CTBoost's `log_evaluation` for logging.
+
+Constructor parameters also differ. Use `eval_metric` instead of `metric`,
+`max_bins` instead of `max_bin`, and `min_data_in_leaf` instead of
+`min_child_samples`. Recheck their meaning and defaults when tuning.
+LightGBM's `num_leaves`, `reg_alpha`, `feature_pre_filter` and `n_jobs` are not accepted by
+`CTBoostClassifier` or `CTBoostRegressor`; CTBoost's `alpha` controls the
+statistical feature test, not L1 regularization. The
+[API reference](../reference/api.md) lists the supported parameters.
+
 ## Callable objectives and metrics
 
 A callable objective receives raw predictions followed by labels and returns

@@ -12,7 +12,10 @@ and optional CUDA acceleration.
 
 </div>
 
-Version [0.1.61](release-0.1.61.md) reduces CPU inference overhead and fixes
+The current release, [0.1.61](release-0.1.61.md), is available on
+[PyPI](https://pypi.org/project/ctboost/0.1.61/) and
+[GitHub](https://github.com/captnmarkus/ctboost/releases/tag/v0.1.61).
+It reduces CPU inference overhead and fixes
 Huber/Quantile edge cases, NumPy conversion compatibility, and GNU FMA
 training-rounding differences. Saved-model formats, learning defaults, and
 conditional-inference feature selection are preserved.
@@ -22,14 +25,19 @@ conditional-inference feature selection are preserved.
     but it does not yet have the independent production history of CatBoost or
     XGBoost. Benchmark claims on this site state their dataset and protocol scope.
 
+As of 9 September 2026, the fresh 0.1.61 Full HPO25 evaluation is prepared but
+has not started; the 0.1.60 run is retired. The latest downloadable author-run
+TabArena bundle measures 0.1.58. See [benchmark status](benchmarks.md) for the
+separate maintainer report, evidence, and limits.
+
 <div class="grid cards" markdown>
 
 -   :material-chart-tree:{ .lg .middle } **A different tree learner**
 
     ---
 
-    Conditional tests select splits before cut points are optimized. CTBoost keeps
-    that defining behavior instead of copying symmetric or conventional greedy trees.
+    Conditional tests select features before cut points are optimized. CTBoost
+    preserves that ordering across its supported learning options.
 
 -   :material-speedometer:{ .lg .middle } **Native CPU and CUDA paths**
 
