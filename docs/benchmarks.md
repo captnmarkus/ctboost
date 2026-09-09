@@ -2,19 +2,28 @@
 
 ## Current public-evidence status
 
-CTBoost has two separate evidence tracks. They must not be combined into one
-score:
+The current public release is [0.1.61](release-0.1.61.md). Its local CPU
+inference measurements and development accuracy studies are separate from the
+latest downloadable author-run TabArena bundle below, which measures **0.1.58**. They do not
+establish an Elo increase or a general win over default XGBoost. The
+[accuracy archive](https://github.com/captnmarkus/ctboost/tree/8cc75aa/benchmarks/results/inference_accuracy_20260908/accuracy)
+retains protocols, every task result, and failed qualification gates. Learning
+defaults remain unchanged.
 
-1. a default-plus-25-configuration TabArena-v0.1 Lite evaluation for the ordinary adapter; and
-2. a pre-registered external panel for the opt-in grouped split statistic.
+As of **9 September 2026**, a fresh Full HPO25 evaluation on public **0.1.61**
+is prepared but has **not started**. It covers the default plus 25 frozen HPO
+configurations across all 816 outer splits, with eight-fold bagging. The
+0.1.60 run is retired; its results will not be relabeled or mixed into the
+0.1.61 evaluation. No complete Full result or official leaderboard entry is
+claimed.
 
-The [0.1.60 corrections](release-0.1.60.md) have separate development validation.
-The CTR and numeric-bin comparisons found no broad score gain and did not
-change learning defaults. Their
-[complete audit report](https://github.com/captnmarkus/ctboost/tree/master/benchmarks/results/score_audit_20260907)
-retains locally frozen plans, reused-baseline disclosures, and every result.
-These checks are not a completed 0.1.60 TabArena evaluation or an independent
-holdout; the published TabArena scores below still measure 0.1.58.
+On 8 September, Lennart Purucker separately
+[reported TabArena-Lite results with 25 configurations and offered a Full run with 200](https://github.com/autogluon/tabarena/pull/479#issuecomment-5588951890).
+That report predates the 0.1.61 release; a completed 0.1.61 evaluation is still pending.
+
+The [0.1.60 CTR and numeric-bin audit](https://github.com/captnmarkus/ctboost/tree/master/benchmarks/results/score_audit_20260907)
+and earlier grouped-statistic panels remain historical development evidence,
+with their own protocols and limitations.
 
 ### CTBoost 0.1.58: TabArena-v0.1 Lite with 25 HPO configurations
 
@@ -22,7 +31,7 @@ CTBoost has a committed adapter for the official TabArena protocol. It delegates
 folds, task metrics, bagging, tuning, ensembling, timing, and memory measurement to
 TabArena rather than recreating them locally.
 
-The latest [published result bundle](https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-hpo25-0.1.58)
+The latest [downloadable author-run result bundle](https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-hpo25-0.1.58)
 covers all 51 TabArena-v0.1 Lite datasets with **CTBoost 0.1.58**, using the
 manual default plus the first 25 configurations of the frozen 200-configuration
 portfolio. Each configuration uses outer split `r0f0` and eight-fold bagging.
@@ -47,7 +56,7 @@ using validation predictions; test outcomes do not change the frozen portfolio.
 | Per-fit limit | 3,600 seconds |
 
 !!! note "Scope of the score"
-    This is a author-run Lite evaluation with 25 HPO configurations, not a full
+    This is an author-run Lite evaluation with 25 HPO configurations, not a full
     200-configuration run, TabArena-Full result, or official leaderboard entry.
     Elo depends on the dataset and method roster: this evaluation uses 87 rows,
     including defaults, tuned configurations, ensembles, and systems. The workers' 4 CPUs and 28 GB
@@ -87,7 +96,7 @@ The earlier [0.1.55 three-dataset smoke record](https://github.com/captnmarkus/c
 remain historical integration checks. Their different task scope prevents
 interpreting the newer Lite score as a version-to-version Elo improvement.
 
-### Grouped split-statistic qualification
+### Historical grouped split-statistic qualification
 
 The final-source 0.1.55 grouped-statistic panel completed 294/294 isolated
 fits and 42/42 exact implicit-control checks. It recorded nine wins, no ties,
@@ -136,12 +145,14 @@ uses eight-fold bagging:
 | Result | Configurations | Outer jobs | Child fits |
 |---|---:|---:|---:|
 | default | 1 | 816 | 6,528 |
-| tuned + ensemble | default + frozen 200-config portfolio | 164,016 | 1,312,128 |
+| Full HPO25 | default + 25 frozen HPO configurations | 21,216 | 169,728 |
+| Full HPO200 | default + 200 frozen HPO configurations | 164,016 | 1,312,128 |
 
-The full tuned run belongs on a resumable Linux cluster. Official publication also
-requires upstream model registration, raw-artifact review, and TabArena maintainer
-verification. Public CatBoost/XGBoost baselines should be reused; rerunning them would
-multiply cost without improving CTBoost's evaluation.
+Full refers to outer-split coverage; the HPO count is a separate part of the
+protocol. These counts require resumable execution and complete coverage checks.
+Official publication also requires upstream model registration, raw-artifact
+review, and TabArena maintainer verification. Resource allocations and timing
+comparability must be reported alongside results.
 
 ## Benchmark policy
 

@@ -11,7 +11,9 @@ Python/scikit-learn interfaces.
 [Benchmarks](https://captnmarkus.github.io/ctboost/benchmarks/) ·
 [Compatibility](https://captnmarkus.github.io/ctboost/reference/compatibility/)
 
-Version [0.1.61](https://captnmarkus.github.io/ctboost/release-0.1.61/) reduces CPU
+The current release, [0.1.61](https://captnmarkus.github.io/ctboost/release-0.1.61/), is
+available on [PyPI](https://pypi.org/project/ctboost/0.1.61/) and
+[GitHub](https://github.com/captnmarkus/ctboost/releases/tag/v0.1.61). It reduces CPU
 inference overhead and fixes Huber/Quantile edge cases, NumPy conversion
 compatibility, and GNU FMA training-rounding differences. Saved-model formats,
 learning defaults, and the statistical feature-selection-before-cut contract
@@ -83,9 +85,7 @@ tests, and the low-level API.
 
 ## Compact multiclass vector leaves
 
-CTBoost 0.1.58 includes compact multiclass vector leaves introduced in the
-0.1.57 source tag. Use
-`CTBoostClassifier(multi_strategy="multi_output_tree")` to store one shared
+Use `CTBoostClassifier(multi_strategy="multi_output_tree")` to store one shared
 CPU tree per multiclass boosting round, with one score per class in each leaf.
 It preserves CTBoost's conditional-inference feature tests and split selection;
 the default scalar-tree layout remains unchanged.
@@ -95,57 +95,29 @@ for supported workflows, artifact compatibility, and a reproducible comparison.
 
 ## Evidence and project status
 
-The [0.1.61 release](https://captnmarkus.github.io/ctboost/release-0.1.61/)
-includes CPU inference optimizations and Huber, Quantile, and training-arithmetic
-correctness fixes. The [pre-release verification](https://github.com/captnmarkus/ctboost/tree/833a775/benchmarks/results/release_readiness_20260908)
-records compatibility checks, performance measurements, and remaining limitations.
+The [0.1.61 release notes](https://captnmarkus.github.io/ctboost/release-0.1.61/)
+describe the CPU speed measurements, their scope, and compatibility limits.
+The [verification archive](https://github.com/captnmarkus/ctboost/tree/833a775/benchmarks/results/release_readiness_20260908)
+retains the reproducible protocols and results.
 The [accuracy studies](https://github.com/captnmarkus/ctboost/tree/8cc75aa/benchmarks/results/inference_accuracy_20260908/accuracy)
 did not justify changing the learning defaults or claiming an Elo increase.
-The ongoing Full HPO25 evaluation uses 0.1.60 and does not measure this release.
 
-For the new CPU learning controls, see
+As of 9 September 2026, a fresh Full HPO25 evaluation on **0.1.61** is prepared
+but has **not started**. The 0.1.60 run is retired. The latest downloadable
+author-run TabArena bundle measures 0.1.58 on the Lite suite; these results are
+not an official leaderboard entry or evidence for 0.1.61. The
+[benchmark page](https://captnmarkus.github.io/ctboost/benchmarks/) retains the
+scores, resource limits, and historical comparisons.
+
+For opt-in CPU learning controls, see
 [safeguarded leaves and joint multiclass tests](https://captnmarkus.github.io/ctboost/guides/learning-options/).
-The full solver and joint test support 3–32 classes and remain opt-in.
+The full solver and joint test support 3–32 classes. The
+[split-statistics research ledger](https://captnmarkus.github.io/ctboost/split-statistics-research/)
+records qualification gates and the literature-to-implementation boundary.
 
 CTBoost is an alpha project. Its API and model formats are tested extensively,
 but it does not yet have the independent production history of CatBoost or
 XGBoost.
-
-The latest [published TabArena artifacts](https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-hpo25-0.1.58)
-measure **CTBoost 0.1.58** on all 51 TabArena-v0.1 Lite datasets, using the
-default plus 25 frozen HPO configurations, one outer split (`r0f0`), and
-eight-fold bagging. All 1,326 parent results and 10,608 child fits completed,
-with no imputed CTBoost tasks.
-
-| Evaluation | Lite Elo |
-|---|---:|
-| Default | 1161.9 |
-| Tuned | 1262.8 |
-| Tuned + ensemble | 1296.9 |
-
-These author-run Lite scores use an 87-row comparison roster; they are not an
-official leaderboard entry or a TabArena-Full result. The workers used 4 CPUs
-and 28 GB RAM, so their timings are not directly comparable to the canonical
-benchmark. The [benchmark history](https://captnmarkus.github.io/ctboost/benchmarks/)
-retains the earlier 0.1.56 default-only result and explains the different rosters.
-
-The final-source 0.1.55 pre-registered grouped-statistic panel completed
-294/294 isolated fits and 42/42 exact control checks. Grouped-8 recorded nine
-wins, no ties, and three losses with an observed 5.63% median primary-loss
-improvement (task-bootstrap 95% interval: -1.23% to +13.64%), but its 1.1708
-median paired fit-time ratio exceeded the frozen 1.15 ceiling.
-Because the promotion gates were conjunctive, grouped-8 did not advance and
-the conditional TabArena scout was not run. The quadratic feature test remains
-the default; grouped testing is opt-in.
-
-Read the [benchmark status](https://captnmarkus.github.io/ctboost/benchmarks/)
-and [split-statistics research ledger](https://captnmarkus.github.io/ctboost/split-statistics-research/)
-for protocols, limitations, and machine-readable evidence.
-See the [0.1.61 release notes](https://captnmarkus.github.io/ctboost/release-0.1.61/)
-for the fixes, persistence compatibility, and development validation. The
-TabArena scores above belong to 0.1.58; they do not measure 0.1.61. The recent
-CTR and numeric-bin studies found no broad score gain, so learning defaults
-remain unchanged.
 
 ## Documentation
 

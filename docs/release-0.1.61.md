@@ -1,5 +1,9 @@
 # CTBoost 0.1.61
 
+Published 8 September 2026 on [PyPI](https://pypi.org/project/ctboost/0.1.61/)
+and [GitHub](https://github.com/captnmarkus/ctboost/releases/tag/v0.1.61).
+For earlier versions, see the [release history](releases.md).
+
 This release reduces CPU prediction overhead and corrects two
 regression-loss edge cases. Conditional-inference feature selection still
 precedes cut-point optimization. Learning defaults remain unchanged.
@@ -69,8 +73,10 @@ showed gains on some tasks and regressions on others, so they remain opt-in.
 The experimental joint-cut change failed its quality gate and is excluded.
 The loss fixes above do not explain or close the measured RMSE gap.
 
-The frozen Full HPO25 evaluation continues to measure public **0.1.60**. It
-does not measure 0.1.61, and no historical result has been relabeled.
+As of 9 September 2026, a fresh Full HPO25 evaluation on public **0.1.61** is
+prepared but has not started. The 0.1.60 run is retired; no historical result
+has been relabeled. The latest [downloadable author-run TabArena bundle](benchmarks.md)
+measures 0.1.58 on the Lite suite.
 
 ## Release validation
 
@@ -89,3 +95,10 @@ and rebuilt and smoke-tested the source distribution. Both publication jobs
 were skipped. CUDA-enabled wheel checks did not execute on GPU hardware. The
 [pre-release verification archive](https://github.com/captnmarkus/ctboost/tree/833a775/benchmarks/results/release_readiness_20260908)
 retains original failures, corrective checks and artifact identities.
+
+The subsequent [tag publication workflow](https://github.com/captnmarkus/ctboost/actions/runs/34275227949)
+completed all 19 jobs, including both PyPI and GitHub publication. The release
+contains 26 wheels and one source distribution; all 27 filenames, sizes and
+SHA-256 digests match across the two public catalogs. The
+[CPU workflow for the released source](https://github.com/captnmarkus/ctboost/actions/runs/34275228266)
+also passed all 13 jobs.
