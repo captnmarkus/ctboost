@@ -979,14 +979,14 @@
   
   
     <li class="md-nav__item">
-      <a href="release-0.1.61/" class="md-nav__link">
+      <a href="release-0.1.62/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Current release (0.1.61)
+    Release 0.1.62
   
 
     
@@ -1260,23 +1260,26 @@ and optional CUDA acceleration.</p>
 <p><a class="md-button md-button--primary" href="getting-started/">Install CTBoost</a>
 <a class="md-button" href="benchmarks/">See benchmark status</a></p>
 </div>
-<p>The current release, <a href="release-0.1.61/">0.1.61</a>, is available on
-<a href="https://pypi.org/project/ctboost/0.1.61/">PyPI</a> and
-<a href="https://github.com/captnmarkus/ctboost/releases/tag/v0.1.61">GitHub</a>.
-It reduces CPU inference overhead and fixes
-Huber/Quantile edge cases, NumPy conversion compatibility, and GNU FMA
-training-rounding differences. Saved-model formats, learning defaults, and
-conditional-inference feature selection are preserved.</p>
+<p><a href="release-0.1.62/">CTBoost 0.1.62</a> improves categorical CPU inference
+preparation, compact JSON persistence, and CTR accumulation precision.
+Conditional-inference feature selection and tree-growth and hyperparameter
+defaults are preserved.
+Newly fitted pipelines use format 5; existing format 1–4 pipelines retain their
+legacy arithmetic. Read the release notes before exchanging new artifacts with
+an older CTBoost runtime. The JVM binding updates Jackson to 2.21.7 for five
+reported security alerts. The release notes describe validation and compatibility.</p>
 <div class="admonition info">
 <p class="admonition-title">Project status</p>
 <p>CTBoost is an alpha project. Its API and model format are tested extensively,
 but it does not yet have the independent production history of CatBoost or
 XGBoost. Benchmark claims on this site state their dataset and protocol scope.</p>
 </div>
-<p>As of 9 September 2026, the fresh 0.1.61 Full HPO25 evaluation is prepared but
-has not started; the 0.1.60 run is retired. The latest downloadable author-run
-TabArena bundle measures 0.1.58. See <a href="benchmarks/">benchmark status</a> for the
-separate maintainer report, evidence, and limits.</p>
+<p>The <a href="https://github.com/captnmarkus/ctboost/tree/master/benchmarks/results/improvements_20261016_followup">October follow-up</a> records the local inference and twelve-task
+accuracy work, including unsuccessful experiments. It is separate from the
+historical 0.1.58 author-run TabArena bundle. The 9 September 2026 statement that
+the 0.1.61 Full HPO25 run was prepared but unstarted remains a dated historical
+status, not a result for 0.1.62. See <a href="benchmarks/">benchmark status</a> for the
+protocols, results, and limits.</p>
 <div class="grid cards">
 <ul>
 <li>

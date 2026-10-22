@@ -853,15 +853,26 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#current-public-evidence-status" class="md-nav__link">
+  <a href="#ctboost-0162-local-evidence-and-scope" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Current public-evidence status
+        CTBoost 0.1.62: local evidence and scope
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Current public-evidence status">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#historical-public-evaluations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Historical public evaluations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Historical public evaluations">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1044,14 +1055,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../release-0.1.61/" class="md-nav__link">
+      <a href="../release-0.1.62/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Current release (0.1.61)
+    Release 0.1.62
   
 
     
@@ -1275,15 +1286,26 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#current-public-evidence-status" class="md-nav__link">
+  <a href="#ctboost-0162-local-evidence-and-scope" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Current public-evidence status
+        CTBoost 0.1.62: local evidence and scope
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Current public-evidence status">
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#historical-public-evaluations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Historical public evaluations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Historical public evaluations">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1378,23 +1400,53 @@
 
 
 <h1 id="benchmarks">Benchmarks<a class="headerlink" href="#benchmarks" title="Permanent link">&para;</a></h1>
-<h2 id="current-public-evidence-status">Current public-evidence status<a class="headerlink" href="#current-public-evidence-status" title="Permanent link">&para;</a></h2>
-<p>The current public release is <a href="../release-0.1.61/">0.1.61</a>. Its local CPU
-inference measurements and development accuracy studies are separate from the
-latest downloadable author-run TabArena bundle below, which measures <strong>0.1.58</strong>. They do not
-establish an Elo increase or a general win over default XGBoost. The
-<a href="https://github.com/captnmarkus/ctboost/tree/8cc75aa/benchmarks/results/inference_accuracy_20260908/accuracy">accuracy archive</a>
-retains protocols, every task result, and failed qualification gates. Learning
-defaults remain unchanged.</p>
-<p>As of <strong>9 September 2026</strong>, a fresh Full HPO25 evaluation on public <strong>0.1.61</strong>
-is prepared but has <strong>not started</strong>. It covers the default plus 25 frozen HPO
-configurations across all 816 outer splits, with eight-fold bagging. The
-0.1.60 run is retired; its results will not be relabeled or mixed into the
-0.1.61 evaluation. No complete Full result or official leaderboard entry is
-claimed.</p>
-<p>On 8 September, Lennart Purucker separately
+<h2 id="ctboost-0162-local-evidence-and-scope">CTBoost 0.1.62: local evidence and scope<a class="headerlink" href="#ctboost-0162-local-evidence-and-scope" title="Permanent link">&para;</a></h2>
+<p><a href="../release-0.1.62/">Release 0.1.62</a> reduces prediction preparation overhead,
+improves categorical target-statistic precision, and writes compact JSON.
+The conditional-inference feature-test-before-cut design and tree-growth and
+hyperparameter defaults remain unchanged. The <a href="https://github.com/captnmarkus/ctboost/tree/master/benchmarks/results/improvements_20261016_followup">October follow-up archive</a> records the
+production changes, tests, fixed-model latency protocols and accuracy studies.</p>
+<p>The accuracy study contains twelve tasks: four binary, four regression and
+four multiclass. It compares CTBoost, XGBoost and LightGBM with explicit fitting,
+selection and replication budgets. Development data were reused across
+successive hypotheses; their scores are development evidence, not unbiased
+estimates or an official TabArena ranking. Equal model-fit counts do not imply
+equal compute or model capacity. The immutable accuracy runtime is recorded
+separately from the final inference runtime; the CTR precision fix does not
+retroactively change the training of those frozen models.</p>
+<p>The final current-data round-count experiment completed 540 fold fits and 36
+selected full-data fits. CTBoost achieved a median relative error reduction of
+<strong>+0.2075% versus XGBoost</strong> (7/12 wins) and <strong>-0.8217% versus LightGBM</strong> (5/12
+wins), with no ties. The combined development target was not met. The original
+rules therefore kept the second-seed and official-test stages closed; the
+separate confirmation role remained sealed. The archive preserves the earlier
+resource failure and externally interrupted attempt, plus the unchanged-plan
+recovery that completed this experiment.</p>
+<p>Serving-cost comparisons use one complete, prospectively selected model policy
+and balanced library orders. They distinguish raw-input preparation from
+normalized-input prediction, and require exact prediction checks. Their task
+scope and differing model capacities must accompany any reported speedup;
+latency alone does not establish accuracy superiority.</p>
+<p>The completed three-pass diagnostic measured batches of 1, 64 and 1,000 rows
+on one CPU/thread. Across the 36 task/batch cases, CTBoost's geometric mean
+raw-input speed ratio was <strong>2.247x versus XGBoost</strong> and <strong>1.915x versus LightGBM</strong>;
+CTBoost was faster in 36/36 and 35/36 cases respectively. Full-development and
+every batch prediction matched the frozen references exactly. These selected
+models have the accuracy gap described above. See the
+<a href="https://github.com/captnmarkus/ctboost/tree/master/benchmarks/results/improvements_20261016_followup/inference/final_execution_20261022">complete final timing report</a>
+for every case, normalized-input costs and source/runtime identities.</p>
+<h2 id="historical-public-evaluations">Historical public evaluations<a class="headerlink" href="#historical-public-evaluations" title="Permanent link">&para;</a></h2>
+<p>The <a href="https://github.com/captnmarkus/ctboost/tree/8cc75aa/benchmarks/results/inference_accuracy_20260908/accuracy">0.1.61 accuracy archive</a>
+retains earlier local studies and failed qualification gates. Those studies
+did not establish an Elo increase or justify changing learning defaults.</p>
+<p>The status recorded on <strong>9 September 2026</strong> was that a fresh Full HPO25
+evaluation of public <strong>0.1.61</strong> was prepared but had <strong>not started</strong>. Its design
+covered the default plus 25 frozen HPO configurations across 816 outer splits,
+with eight-fold bagging. The 0.1.60 run was retired. This is a historical status
+record, not a completed 0.1.62 Full evaluation or an official leaderboard entry.</p>
+<p>On 8 September 2026, Lennart Purucker separately
 <a href="https://github.com/autogluon/tabarena/pull/479#issuecomment-5588951890">reported TabArena-Lite results with 25 configurations and offered a Full run with 200</a>.
-That report predates the 0.1.61 release; a completed 0.1.61 evaluation is still pending.</p>
+That report predates 0.1.61 and is not evidence for 0.1.62.</p>
 <p>The <a href="https://github.com/captnmarkus/ctboost/tree/master/benchmarks/results/score_audit_20260907">0.1.60 CTR and numeric-bin audit</a>
 and earlier grouped-statistic panels remain historical development evidence,
 with their own protocols and limitations.</p>
@@ -1402,7 +1454,7 @@ with their own protocols and limitations.</p>
 <p>CTBoost has a committed adapter for the official TabArena protocol. It delegates
 folds, task metrics, bagging, tuning, ensembling, timing, and memory measurement to
 TabArena rather than recreating them locally.</p>
-<p>The latest <a href="https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-hpo25-0.1.58">downloadable author-run result bundle</a>
+<p>The historical <a href="https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-hpo25-0.1.58">downloadable author-run result bundle</a>
 covers all 51 TabArena-v0.1 Lite datasets with <strong>CTBoost 0.1.58</strong>, using the
 manual default plus the first 25 configurations of the frozen 200-configuration
 portfolio. Each configuration uses outer split <code>r0f0</code> and eight-fold bagging.

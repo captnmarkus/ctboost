@@ -910,14 +910,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../release-0.1.61/" class="md-nav__link">
+      <a href="../../release-0.1.62/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Current release (0.1.61)
+    Release 0.1.62
   
 
     
@@ -1299,6 +1299,10 @@
 <li>Streaming Pools are numeric-only.</li>
 <li>Generated Python/C++ and ONNX exports require prepared numeric features for models with
   fitted categorical, text, or embedding pipelines.</li>
+<li>Fresh feature pipelines in 0.1.62 use format 5 for higher-precision Mean CTR
+  accumulation. Older runtimes reject that format. Existing formats 1–4 retain
+  their legacy accumulation when loaded; use a compatible runtime with new raw
+  exports. See <a href="../../guides/deployment/">deployment</a> for replay and refit behavior.</li>
 <li>The repository's R and JVM packages are inference-only and prepared-feature-only;
   they are not training bindings and are not yet published to CRAN/Maven Central.
   They accept scalar JSON predictor versions 1 and 2 and reject vector version 3.</li>

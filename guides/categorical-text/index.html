@@ -994,14 +994,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../release-0.1.61/" class="md-nav__link">
+      <a href="../../release-0.1.62/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Current release (0.1.61)
+    Release 0.1.62
   
 
     
@@ -1296,9 +1296,17 @@ ordered CTRs, feature combinations, and per-feature CTR configuration. Unknown a
 missing values have deterministic routes.</p>
 <p>Starting in 0.1.60, a positive <code>ctr_prior_strength</code> below one preserves the
 unscaled target prior for first occurrences and unseen categories. Zero-prior
-cold starts retain their previous behavior. New fits use pipeline format 4;
+cold starts retain their previous behavior. Pipeline format 4 introduced this correction;
 loaded older pipelines preserve their original smoothing until explicitly
 refitted. See <a href="../deployment/">deployment</a> for saved-model compatibility.</p>
+<p>New pipelines now use format 5. Mean CTR priors, category totals, and ordered
+prefix totals accumulate in double precision, then the resulting features are
+checked and converted to float32. This reduces cancellation and accumulation
+drift and permits a finite mean when its total exceeds the float32 range. It is
+not exact summation for arbitrary target magnitudes. Frequency CTRs retain their
+existing arithmetic. Loaded formats 1–4 keep their previous accumulation,
+including during explicit refitting or warm-start replay; create a new pipeline
+to use the improved precision.</p>
 <p>Fitted pipelines record <code>categorical_key_encoding_version</code> in their state and
 inference manifest. New fits use version 2, which keeps actual missing values,
 literal strings such as <code>__ctboost_missing__</code> and <code>__ctboost_other__</code>, synthetic
