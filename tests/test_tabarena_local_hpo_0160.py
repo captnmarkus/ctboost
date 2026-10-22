@@ -12,7 +12,13 @@ import pytest
 
 pytest.importorskip("psutil")
 
-from benchmarks.tabarena import local_hpo_0160 as local
+# This diagnostic probes only the standalone controller, bypassing the
+# optional model adapter imported by benchmarks.tabarena.__init__.
+import importlib.util
+controller_path = Path(__file__).resolve().parents[1] / "benchmarks/tabarena/local_hpo_0160.py"
+controller_spec = importlib.util.spec_from_file_location("_macos_probe_local_hpo", controller_path)
+local = importlib.util.module_from_spec(controller_spec)
+controller_spec.loader.exec_module(local)
 
 base = local.base
 GIB = base.GIB
