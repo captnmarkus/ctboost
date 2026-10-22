@@ -32,7 +32,7 @@ def parent(repeat=0, fold=0, config=0, owner="local"):
 
 
 @pytest.fixture
-def factory(tmp_path, monkeypatch):
+def factory(tmp_path, monkeypatch, synthetic_controller_cpu_set):
     worker_path = tmp_path / "synthetic_worker.py"
     worker_path.write_text(
         "# Fixture only; this script must never run.\n", encoding="utf-8"

@@ -103,7 +103,8 @@ def test_raw_export_retains_double_statistics(tmp_path, labels):
 @pytest.mark.parametrize("version", [1, 2, 3, 4])
 def test_old_load_rounding_and_refit_keep_legacy_accumulation(version):
     data = np.asarray([["a"], ["a"], ["a"]], dtype=object)
-    state = pipeline().fit(data, [1.0e8, 1.0, -1.0e8]).to_state()
+    labels = np.asarray([1.0e8, 1.0, -1.0e8], dtype=np.float32)
+    state = pipeline(ctr_prior_strength=1.0).fit(data, labels).to_state()
     state["feature_pipeline_format_version"] = version
     if version < 3:
         state["categorical_key_encoding_version"] = 1
@@ -115,13 +116,26 @@ def test_old_load_rounding_and_refit_keep_legacy_accumulation(version):
     assert stored["ctr_states"][0]["total_sums"]["a"] == [3.0]
     assert stored["feature_pipeline_format_version"] == (3 if version < 4 else 4)
     np.testing.assert_array_equal(restored.transform_array(data)[0][:, 1], np.ones(3))
-    transformed = restored.fit_transform_array(data, [1.0e8, 1.0, -1.0e8])[0]
+    transformed = restored.fit_transform_array(data, labels)[0]
     replay_state = restored.to_state()
     assert replay_state["feature_pipeline_format_version"] == 4
     assert replay_state["ctr_states"][0]["prior_values"] == [0.0]
-    assert replay_state["ctr_states"][0]["total_sums"] == {"a": [0.0]}
+    # Legacy totals follow the shuffled row order, which std::shuffle does not
+    # fix across standard libraries. Require the total and every prefix output
+    # to match the same independently enumerated float32 accumulation order.
+    possible = []
+    for order in itertools.permutations(range(3)):
+        expected = np.empty(3, dtype=np.float32)
+        total = np.float32(0.0)
+        for count, row in enumerate(order):
+            expected[row] = float(total) / (count + 1.0)
+            total = np.float32(total + labels[row])
+        possible.append((bits(expected), {"a": [float(total)]}))
+    assert any(np.array_equal(bits(transformed[:, 1]), expected)
+               and replay_state["ctr_states"][0]["total_sums"] == totals
+               for expected, totals in possible)
     replay = ctboost.FeaturePipeline.from_state(replay_state)
-    np.testing.assert_array_equal(bits(replay.fit_transform_array(data, [1.0e8, 1.0, -1.0e8])[0]),
+    np.testing.assert_array_equal(bits(replay.fit_transform_array(data, labels)[0]),
                                   bits(transformed))
     assert replay.to_state() == replay_state
 

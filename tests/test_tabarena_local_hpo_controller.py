@@ -29,7 +29,7 @@ def parent(index=0, dataset="SYNTHETIC_DATASET"):
 
 
 @pytest.fixture
-def make_controller(tmp_path, monkeypatch):
+def make_controller(tmp_path, monkeypatch, synthetic_controller_cpu_set):
     project = tmp_path / "EXPLICIT_SYNTHETIC_PROJECT"
     script = project / "benchmarks/tabarena/local_hpo.py"
     script.parent.mkdir(parents=True)
@@ -489,6 +489,8 @@ def test_memory_pressure_stops_only_newest_owned_parent(make_controller, monkeyp
     )
 
 
+@pytest.mark.skipif(not hasattr(psutil.Process, "cpu_affinity"),
+                    reason="This subprocess test verifies OS CPU affinity")
 def test_synthetic_worker_launch_cache_validation_and_resume(make_controller):
     """A real child process writes synthetic JSON only; no model libraries or fitting."""
     make_controller.script.write_text(

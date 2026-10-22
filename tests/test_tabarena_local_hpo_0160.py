@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import json
 import sys
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -29,7 +30,7 @@ def parent(index=0, owner="local", outcome="complete"):
 
 
 @pytest.fixture
-def factory(tmp_path, monkeypatch):
+def factory(tmp_path, monkeypatch, synthetic_controller_cpu_set):
     root = tmp_path / "EXPLICIT_SYNTHETIC_FIXTURE"
     root.mkdir()
     script = root / "synthetic_worker.py"
@@ -128,7 +129,8 @@ def test_dispatch_owns_only_fixed_local_assignments(factory):
 def test_worker_command_binds_local_identity_receipt_wheel_and_affinity(factory):
     run = factory()
     command = run._worker_command(parent(), 0, "claim", "permit", "token")
-    assert command[:3] == [str(sys.executable), "-I", str(local.Path(local.__file__).resolve())]
+    assert command[:3] == [str(Path(sys.executable).resolve()), "-I",
+                           str(Path(local.__file__).resolve())]
     assert command[command.index("--host") + 1] == "local"
     assert command[command.index("--parent-id") + 1] == parent()["parent_id"]
     assert command[command.index("--wheel") + 1] == str(run.wheel)

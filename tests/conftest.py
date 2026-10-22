@@ -52,3 +52,16 @@ def record_worker_affinity(monkeypatch):
         calls.append(tuple(cpus))
     monkeypatch.setattr(psutil.Process, "cpu_affinity", record, raising=False)
     return calls
+
+
+@pytest.fixture
+def synthetic_controller_cpu_set(monkeypatch):
+    """Supply logical slots for controller protocol tests without an affinity API.
+
+    Real CPU placement tests retain the OS API and require platform support.
+    These controllers use synthetic workers or stored synthetic receipts.
+    """
+    psutil = pytest.importorskip("psutil")
+    if not hasattr(psutil.Process, "cpu_affinity"):
+        monkeypatch.setattr(psutil.Process, "cpu_affinity",
+                            lambda process: [0, 1, 2, 3], raising=False)
