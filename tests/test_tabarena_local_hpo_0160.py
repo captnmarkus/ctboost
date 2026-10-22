@@ -31,6 +31,13 @@ def parent(index=0, owner="local", outcome="complete"):
 
 @pytest.fixture
 def factory(tmp_path, monkeypatch, synthetic_controller_cpu_set):
+    if sys.platform == "darwin":
+        # The framework launcher rewrites argv[0] before the worker claims its
+        # identity. Launch the running interpreter directly in this synthetic
+        # fixture so the real command, claim, and permit checks stay strict.
+        monkeypatch.setattr(
+            sys, "executable", str(Path(base.psutil.Process().exe()).resolve())
+        )
     root = tmp_path / "EXPLICIT_SYNTHETIC_FIXTURE"
     root.mkdir()
     script = root / "synthetic_worker.py"
@@ -245,8 +252,11 @@ def test_synthetic_process_failure_continues_next_parent_and_never_retries(facto
         assert run.run() == 1
     records = run.state["parents"]
     failed, completed = records[base.parent_key(parents[0])], records[base.parent_key(parents[1])]
-    assert failed["status"] == "failed" and "Deliberate synthetic" in failed["worker_error"]
-    assert completed["status"] == "complete"
+    diagnostic = {"failed": failed, "completed": completed}
+    assert (
+        failed["status"] == "failed" and "Deliberate synthetic" in failed["worker_error"]
+    ), diagnostic
+    assert completed["status"] == "complete", diagnostic
     assert not base.parent_paths(run.output, parents[2])[2].exists()
     identity = completed["identity"]
     resumed = factory()
