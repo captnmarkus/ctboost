@@ -1,0 +1,54 @@
+{
+  "status": "terminal_selection_failure",
+  "all_stages_successful": false,
+  "source_sha256": {
+    "plan.json": "258eae391b666f63cdf074df25e02f722590484d43c1191ceb6a3f9783cc6a71",
+    "scalar_controls.json": "0fead4e03f8b66f83b02e952d956cc142a744fbae47d28b974b045a03fd2ee00",
+    "synthetic_validation.json": "07627294b37a5a302dd85782d4d6860799d0f2b5fc6fcec4fb0000fbcca12933"
+  },
+  "new_train_anchor_fits_planned": 24,
+  "new_train_anchor_fits_completed": 24,
+  "new_clean_union_fits_planned": 24,
+  "new_clean_union_fits_completed": 0,
+  "selection_jobs_successful": 23,
+  "selection_jobs_failed": 1,
+  "selection_solves_attempted": 96,
+  "nonidentity_candidates_successful": 190,
+  "nonidentity_candidates_failed": 2,
+  "failed_candidates": [
+    {
+      "dataset": "diamonds",
+      "library": "lightgbm",
+      "index": 0,
+      "controls": {
+        "lambda": 1.0,
+        "shrinkage": 0.25
+      },
+      "error": "Traceback (most recent call last):\n  File \"C:\\apps\\ctboost\\benchmarks\\fair_accuracy_scalar_refresh.py\", line 259, in selection_job\n    raise ValueError(failed_solve)\nValueError: Traceback (most recent call last):\n  File \"C:\\apps\\ctboost\\benchmarks\\fair_accuracy_scalar_refresh.py\", line 255, in selection_job\n    coefficients, solve = solve_coefficients(case[\"problem_type\"], design, labels, cached_penalty, plan[\"solvers\"][case[\"problem_type\"]])\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\apps\\ctboost\\benchmarks\\fair_accuracy_scalar_refresh.py\", line 75, in solve_coefficients\n    return union.refit.solve_coefficients(design, labels, penalty, solver)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\apps\\ctboost\\benchmarks\\fair_accuracy_leaf_refit_v2.py\", line 133, in solve_coefficients\n    raise ValueError(f\"Ridge solve did not converge: {receipt}\")\nValueError: Ridge solve did not converge: {'istop': 7, 'iterations': 2000, 'residual_norm': 30548.785372332055, 'regularized_residual_norm': 32606.855911460563, 'matrix_norm': 85772.80556776769, 'condition_estimate': 142563.34578031878, 'normal_residual_norm': 890.8500703620948, 'coefficient_norm': 11402.500150187989}\n\n"
+    },
+    {
+      "dataset": "diamonds",
+      "library": "lightgbm",
+      "index": 1,
+      "controls": {
+        "lambda": 1.0,
+        "shrinkage": 1.0
+      },
+      "error": "Traceback (most recent call last):\n  File \"C:\\apps\\ctboost\\benchmarks\\fair_accuracy_scalar_refresh.py\", line 259, in selection_job\n    raise ValueError(failed_solve)\nValueError: Traceback (most recent call last):\n  File \"C:\\apps\\ctboost\\benchmarks\\fair_accuracy_scalar_refresh.py\", line 255, in selection_job\n    coefficients, solve = solve_coefficients(case[\"problem_type\"], design, labels, cached_penalty, plan[\"solvers\"][case[\"problem_type\"]])\n                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\apps\\ctboost\\benchmarks\\fair_accuracy_scalar_refresh.py\", line 75, in solve_coefficients\n    return union.refit.solve_coefficients(design, labels, penalty, solver)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\apps\\ctboost\\benchmarks\\fair_accuracy_leaf_refit_v2.py\", line 133, in solve_coefficients\n    raise ValueError(f\"Ridge solve did not converge: {receipt}\")\nValueError: Ridge solve did not converge: {'istop': 7, 'iterations': 2000, 'residual_norm': 30548.785372332055, 'regularized_residual_norm': 32606.855911460563, 'matrix_norm': 85772.80556776769, 'condition_estimate': 142563.34578031878, 'normal_residual_norm': 890.8500703620948, 'coefficient_norm': 11402.500150187989}\n\n"
+    }
+  ],
+  "identity_evaluations": 24,
+  "maximum_job_seconds": 424.4369999999981,
+  "maximum_process_tree_rss_bytes": 2284605440,
+  "sum_selection_job_seconds": 1277.2170000000006,
+  "maximum_named_array_estimate_bytes": 2162025648,
+  "resource_failures": [],
+  "total_quality_tree_fits_through_wave17": 2448,
+  "diagnostic_replay_fits_separate": 8,
+  "development_scored": false,
+  "development_target_met": null,
+  "conditional_seed569_run": false,
+  "official_test_scored": false,
+  "failure_interpretation": "Numerical convergence failure, not a measured quality result; all-success barrier prevented union fits and DEV scoring",
+  "limitations": "Adaptive reused development. Fresh TRAIN anchors retain tree controls and counts chosen using prior STOP/CV. Equal penalty and shrinkage counts do not equal compute, capacity or effective regularization. The binary solver optimizes logistic loss while STOP selection uses AUC. Refitting and expanded rows alter the baseline and penalty optimum; no union STOP reselection. Mandatory clean identity can differ from the old corrected parent, with no DEV fallback. Same-split seed sensitivity is not independent replication, significance or an official ranking."
+}

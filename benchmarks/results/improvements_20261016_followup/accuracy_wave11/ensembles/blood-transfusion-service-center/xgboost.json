@@ -1,0 +1,167 @@
+{
+  "component_stop_prediction_diagnostic": {
+    "exactly_equal": true,
+    "maximum_absolute_difference": 0.0,
+    "purpose": "Diagnostic only; never replace a component or select seeds"
+  },
+  "components": [
+    {
+      "dataset": "blood-transfusion-service-center",
+      "finished_at": "2026-10-16T12:18:15.604849+00:00",
+      "library": "xgboost",
+      "model_bytes": 42411,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave10\\models\\blood-transfusion-service-center\\xgboost.pkl",
+      "model_sha256": "aef7cdab04d705ab06e0f909e88732623c08c1fbe20756bacefa8e784e7467cd",
+      "reused": true,
+      "seed": 47,
+      "started_at": "2026-10-16T12:18:15.604849+00:00",
+      "status": "ok"
+    },
+    {
+      "dataset": "blood-transfusion-service-center",
+      "finished_at": "2026-10-16T12:18:15.699711+00:00",
+      "library": "xgboost",
+      "model_bytes": 42403,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave11\\components\\blood-transfusion-service-center\\xgboost-seed947.pkl",
+      "model_sha256": "6089dc9c8c94a41bcb12347f8a893ac4d5fd37b0fc1e8e632b6acbb6322a188c",
+      "refit_details": {
+        "apparent_union_error_inference_transform": 0.16187221869040058,
+        "early_stopping": false,
+        "fit_seconds": 0.026658499999030028,
+        "fixed_binary_refit": {
+          "fold": {
+            "coefficient_rounding_absolute_bound": 5.2247275998673626e-08,
+            "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+            "inference_only": true,
+            "library": "xgboost",
+            "physical_trees": 28,
+            "prediction_oracle_absolute_tolerance": 0.0001753042743075639,
+            "topology_sha256_after": "201c7a7a9614ae5d38d9603aaf8c1ca05314d205a24e3c281cc971114ba96a21",
+            "topology_sha256_before": "201c7a7a9614ae5d38d9603aaf8c1ca05314d205a24e3c281cc971114ba96a21"
+          },
+          "inference_checks": {
+            "original_stop": {
+              "fixed_tolerance_atol": 1e-05,
+              "fixed_tolerance_rtol": 5e-05,
+              "leaf_routing_exact": true,
+              "oracle_absolute_tolerance": 0.0001753042743075639,
+              "oracle_difference_divided_by_max_one_or_prediction_magnitude": 2.1498655796534513e-07,
+              "oracle_max_absolute_difference": 6.065957722789506e-07
+            },
+            "original_train": {
+              "fixed_tolerance_atol": 1e-05,
+              "fixed_tolerance_rtol": 5e-05,
+              "leaf_routing_exact": true,
+              "oracle_absolute_tolerance": 0.0001753042743075639,
+              "oracle_difference_divided_by_max_one_or_prediction_magnitude": 2.1498655796534513e-07,
+              "oracle_max_absolute_difference": 6.065957722789506e-07
+            }
+          },
+          "preprocessing": {
+            "column_order": "physical tree order, then sorted observed native leaf IDs",
+            "design_nonzeros": 10472,
+            "design_shape": [
+              374,
+              224
+            ],
+            "ordered_training_transform_replayed": false,
+            "training_leaf_ids_sha256": "8b2e9acfebd20113cbd1e25e014acae2cefdbd456092d29ba49f2976a8729631",
+            "training_rows": 374,
+            "unobserved_leaf_correction": 0
+          },
+          "solve": {
+            "columns": 224,
+            "evaluations": 8,
+            "final_objective": 0.41961784355166803,
+            "ftol": 1e-13,
+            "gradient_gate": 1e-06,
+            "gtol": 1e-09,
+            "initial_coefficients": "all zero",
+            "initial_objective": 0.42227056379382344,
+            "iterations": 6,
+            "maxcor": 20,
+            "maximum_absolute_mean_gradient": 2.3341269266475977e-09,
+            "maxiter": 2000,
+            "maxls": 50,
+            "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+            "method": "L-BFGS-B",
+            "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+            "penalty": 1000.0,
+            "rows": 374,
+            "status": 0
+          },
+          "training_check": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.0001753042743075639,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 2.1498655796534513e-07,
+            "oracle_max_absolute_difference": 6.065957722789506e-07
+          }
+        },
+        "parameters": {
+          "eta": 0.05,
+          "eval_metric": "auc",
+          "lambda": 0.3,
+          "max_bin": 256,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 8,
+          "max_depth": 4,
+          "min_child_weight": 5,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "binary:logistic",
+          "seed": 947,
+          "subsample": 1.0,
+          "tree_method": "hist"
+        },
+        "requested_rounds": 28,
+        "retained_rounds": 28,
+        "structural_early_termination": false,
+        "union_data": {
+          "row_order": "original TRAIN followed by original STOP",
+          "source_roles": {
+            "stop": {
+              "index_sha256": "71a564af518385779257f7b6cca008a07627dfedd4905925a797260841b5dcdd",
+              "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\blood-transfusion-service-center\\stop.pkl",
+              "rows": 62,
+              "sha256": "59daf432712096f4ae9724df3db47ed8ac786d8e56b8a48e9ad86a6c0c2ce4c6"
+            },
+            "train": {
+              "index_sha256": "fac9f22e07f5ccbd69e89955d9f2de01cad1246ca69fa962e31753763caa7ea7",
+              "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\blood-transfusion-service-center\\train.pkl",
+              "rows": 312,
+              "sha256": "9d676cdf2a05bc27f6a21a9607b5a2d976ba87a5d8f4389356e129d84f17d54c"
+            }
+          },
+          "stop_ids_sha256": "71a564af518385779257f7b6cca008a07627dfedd4905925a797260841b5dcdd",
+          "stop_rows": 62,
+          "train_ids_sha256": "fac9f22e07f5ccbd69e89955d9f2de01cad1246ca69fa962e31753763caa7ea7",
+          "train_rows": 312,
+          "union_category_counts": {},
+          "union_ids_sha256": "7c36cebee258bd2f29ce4e3837c330fc04fab214a958911910078d193a67195d",
+          "union_rows": 374,
+          "vocabulary_fit_on": "TRAIN+STOP union only"
+        }
+      },
+      "reused": false,
+      "seed": 947,
+      "started_at": "2026-10-16T12:18:15.606856+00:00",
+      "status": "ok"
+    }
+  ],
+  "dataset": "blood-transfusion-service-center",
+  "library": "xgboost",
+  "model_bytes": 85267,
+  "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave11\\ensembles\\blood-transfusion-service-center\\xgboost.pkl",
+  "model_sha256": "a2a294e2e421df2ddbf2c2c5ef1c2b46274ba1d285958b9cd15972480d1ad59b",
+  "seed_pair": [
+    47,
+    947
+  ],
+  "shared_encoded_label_ids": [
+    0,
+    1
+  ],
+  "status": "ok"
+}

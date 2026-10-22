@@ -1,0 +1,105 @@
+--- a/tests/test_prediction_fast_path.py
++++ b/tests/test_prediction_fast_path.py
+@@ -307,6 +307,18 @@
+             leaves,
+         )
+     assert native.export_state() == before
++
++
++def test_prefix_cache_does_not_index_a_later_out_of_schema_feature():
++    state = _routing_state()
++    state["trees"][1]["nodes"][0]["split_feature_id"] = 100_000
++    native = ctboost._core.GradientBooster.from_state(state)
++    pool = ctboost.Pool(np.asarray([[-3, 0, 0], [3, 128, 0]], dtype=np.float32))._handle
++    # Native state loading permits this later malformed tree. A valid prefix
++    # must not access its out-of-schema feature while building the shared cache.
++    for _ in range(2):
++        np.testing.assert_array_equal(native.predict(pool, 1), native._predict_uncached(pool, 1))
++        np.testing.assert_array_equal(np.asarray(native.predict_leaf_indices(pool, 1)).ravel(), [1, 2])
+ 
+ 
+ @pytest.mark.parametrize("dimension,strategy", [
+@@ -633,3 +645,83 @@
+         actual = np.asarray(native.predict(pool, limit))
+         np.testing.assert_array_equal(actual.view(np.uint32), expected.view(np.uint32))
+     assert native.export_state() == before
++
++
++@pytest.mark.parametrize("dimension,strategy", [
++    (1, "one_output_per_tree"),
++    (3, "one_output_per_tree"),
++    (3, "multi_output_tree"),
++])
++@pytest.mark.parametrize("wide", [False, True])
++@pytest.mark.parametrize("storage", ["c", "f", "csr", "csc"])
++def test_sparse_used_feature_slots_preserve_original_schema_and_prefixes(
++    dimension, strategy, wide, storage, tmp_path
++):
++    state = _routing_state(dimension, strategy, wide=wide)
++    original = state["quantization_schema"]
++    # Reverse the first two features' order and separate them by hundreds of
++    # unused columns, so a global feature ID cannot accidentally equal its slot.
++    source_columns = {511: 0, 129: 1, 7: 2}
++    schema = {"num_bins_per_feature": [], "cut_offsets": [0], "cut_values": [],
++              "categorical_mask": [], "missing_value_mask": [],
++              "nan_mode": original["nan_mode"], "nan_modes": []}
++    for feature in range(512):
++        source = source_columns.get(feature, 2)
++        start, end = original["cut_offsets"][source:source + 2]
++        schema["cut_values"].extend(original["cut_values"][start:end])
++        schema["cut_offsets"].append(len(schema["cut_values"]))
++        for name in ("num_bins_per_feature", "categorical_mask", "missing_value_mask", "nan_modes"):
++            schema[name].append(original[name][source])
++    schema["nan_modes"][129] = 0  # Used only after the first iteration.
++    state["quantization_schema"] = schema
++    for tree in state["trees"]:
++        tree["feature_importances"] = [0.0] * 512
++        for node in tree["nodes"]:
++            if not node["is_leaf"]:
++                node["split_feature_id"] = 511 if node["split_feature_id"] == 0 else 129
++    native = ctboost._core.GradientBooster.from_state(state)
++    before = native.export_state()
++    data = np.zeros((5, 512), dtype=np.float32)
++    data[:, 511] = [-3.0, -0.5, 0.0, 1.0, 3.0]
++    data[:, 129] = [0.0, 63.0, 128.0, 192.0, 254.0]
++    baseline = np.linspace(-0.2, 0.3, 5 * dimension, dtype=np.float32)
++    if dimension > 1:
++        baseline = baseline.reshape(5, dimension)
++
++    def pool(values):
++        if storage in ("csr", "csc"):
++            sparse = pytest.importorskip("scipy.sparse")
++            values = (sparse.csr_matrix if storage == "csr" else sparse.csc_matrix)(values)
++        else:
++            values = np.array(values, order=storage.upper())
++        return ctboost.Pool(values, cat_features=[129], baseline=baseline)._handle
++
++    exported = tmp_path / "sparse_slots.json"
++    ctboost.Booster(native).export_model(exported, export_format="json_predictor")
++    predictor = ctboost.load_exported_predictor(exported)
++    prepared = pool(data)
++    for limit in (1, -1, 0, 2, 99, 1):
++        expected, leaves = _reference_predict_and_leaves(
++            predictor, data, native.num_iterations_trained() if limit < 0 else limit
++        )
++        actual = np.asarray(native.predict(prepared, limit)).reshape(expected.shape)
++        uncached = np.asarray(native._predict_uncached(prepared, limit)).reshape(expected.shape)
++        np.testing.assert_array_equal(actual.view(np.uint32), uncached.view(np.uint32))
++        np.testing.assert_allclose(actual, expected + baseline, rtol=1e-6, atol=1e-6)
++        np.testing.assert_array_equal(np.asarray(native.predict_leaf_indices(prepared, limit)).reshape(leaves.shape), leaves)
++
++    # Unused Forbidden-NaN columns remain untouched in both compact and full
++    # materialization; later-only active columns must still obey prefix limits.
++    with_nan = data.copy()
++    with_nan[:, 7] = np.nan
++    np.testing.assert_array_equal(native.predict(pool(with_nan)), native.predict(prepared))
++    with_nan[:, 129] = np.nan
++    later_nan = pool(with_nan)
++    for _ in range(2):
++        np.testing.assert_array_equal(native.predict(later_nan, 1), native.predict(prepared, 1))
++        np.testing.assert_array_equal(native.predict_leaf_indices(later_nan, 1),
++                                      native.predict_leaf_indices(prepared, 1))
++        for predict in (native.predict, native.predict_leaf_indices):
++            with pytest.raises(ValueError, match="NaN values are not allowed"):
++                predict(later_nan, 2)
++    assert native.export_state() == before

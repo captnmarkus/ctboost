@@ -1,0 +1,60 @@
+{
+  "config_index": 0,
+  "controls": {
+    "lambda": 1.0,
+    "shrinkage": 0.25
+  },
+  "dataset": "blood-transfusion-service-center",
+  "finished_at": "2026-10-16T12:11:46.681228+00:00",
+  "fold": {
+    "coefficient_rounding_absolute_bound": 1.1102230246251565e-16,
+    "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+    "inference_only": true,
+    "library": "lightgbm",
+    "physical_trees": 1,
+    "prediction_oracle_absolute_tolerance": 1.0163252396129176e-12,
+    "topology_sha256_after": "d95e2f6ab41a70147d1c3d066553dd0efb4e6741fa4044d841abdf8af9683754",
+    "topology_sha256_before": "d95e2f6ab41a70147d1c3d066553dd0efb4e6741fa4044d841abdf8af9683754"
+  },
+  "library": "lightgbm",
+  "solve": {
+    "columns": 9,
+    "evaluations": 12,
+    "final_objective": 0.4572198750358578,
+    "ftol": 1e-13,
+    "gradient_gate": 1e-06,
+    "gtol": 1e-09,
+    "initial_coefficients": "all zero",
+    "initial_objective": 0.533773988841998,
+    "iterations": 11,
+    "maxcor": 20,
+    "maximum_absolute_mean_gradient": 4.655716875680745e-09,
+    "maxiter": 2000,
+    "maxls": 50,
+    "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+    "method": "L-BFGS-B",
+    "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+    "penalty": 1.0,
+    "rows": 312,
+    "status": 0
+  },
+  "started_at": "2026-10-16T12:11:46.670588+00:00",
+  "status": "ok",
+  "stop_check": {
+    "fixed_tolerance_atol": 1e-05,
+    "fixed_tolerance_rtol": 5e-05,
+    "leaf_routing_exact": true,
+    "oracle_absolute_tolerance": 1.0163252396129176e-12,
+    "oracle_difference_divided_by_max_one_or_prediction_magnitude": 0.0,
+    "oracle_max_absolute_difference": 0.0
+  },
+  "stop_error": 0.06595744680851057,
+  "training_check": {
+    "fixed_tolerance_atol": 1e-05,
+    "fixed_tolerance_rtol": 5e-05,
+    "leaf_routing_exact": true,
+    "oracle_absolute_tolerance": 1.0163252396129176e-12,
+    "oracle_difference_divided_by_max_one_or_prediction_magnitude": 0.0,
+    "oracle_max_absolute_difference": 0.0
+  }
+}

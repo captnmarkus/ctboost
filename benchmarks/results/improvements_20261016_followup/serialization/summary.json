@@ -1,0 +1,87 @@
+{
+  "cases": [
+    {
+      "case": "breast_cancer_20261016_baseline",
+      "formats": {
+        "pretty_json": {
+          "bytes": 4648008,
+          "load_seconds": 0.03275000000030559,
+          "first_predict_seconds": 0.0004251000009389827,
+          "peak_working_set_bytes": 103071744
+        },
+        "compact_json": {
+          "bytes": 806378,
+          "load_seconds": 0.02256370000031893,
+          "first_predict_seconds": 0.00043000000005122274,
+          "peak_working_set_bytes": 93151232
+        },
+        "pickle": {
+          "bytes": 752748,
+          "load_seconds": 0.010309100000085891,
+          "first_predict_seconds": 0.0004336000001785578,
+          "peak_working_set_bytes": 93409280
+        }
+      },
+      "json_size_reduction": 0.8265110559190088,
+      "compact_json_load_speedup": 1.451446349660857,
+      "pickle_load_speedup": 3.176804958728961
+    },
+    {
+      "case": "digits_20261016_baseline",
+      "formats": {
+        "pretty_json": {
+          "bytes": 449316415,
+          "load_seconds": 3.202137100000982,
+          "first_predict_seconds": 0.006786300000385381,
+          "peak_working_set_bytes": 1412968448
+        },
+        "compact_json": {
+          "bytes": 63425243,
+          "load_seconds": 2.128530399999363,
+          "first_predict_seconds": 0.00695599999926344,
+          "peak_working_set_bytes": 402690048
+        },
+        "pickle": {
+          "bytes": 62511815,
+          "load_seconds": 1.0905301999991934,
+          "first_predict_seconds": 0.006930200001079356,
+          "peak_working_set_bytes": 415838208
+        }
+      },
+      "json_size_reduction": 0.8588405834227089,
+      "compact_json_load_speedup": 1.5043887087550831,
+      "pickle_load_speedup": 2.9363121718255494
+    },
+    {
+      "case": "digits_20261016_vector",
+      "formats": {
+        "pretty_json": {
+          "bytes": 48682768,
+          "load_seconds": 0.3334785999995802,
+          "first_predict_seconds": 0.0033370000001013977,
+          "peak_working_set_bytes": 232783872
+        },
+        "compact_json": {
+          "bytes": 8351960,
+          "load_seconds": 0.22999840000011318,
+          "first_predict_seconds": 0.0033916000011231517,
+          "peak_working_set_bytes": 127025152
+        },
+        "pickle": {
+          "bytes": 7260650,
+          "load_seconds": 0.10234350000064296,
+          "first_predict_seconds": 0.0033566999991307966,
+          "peak_working_set_bytes": 127180800
+        }
+      },
+      "json_size_reduction": 0.8284411436917474,
+      "compact_json_load_speedup": 1.4499170428986292,
+      "pickle_load_speedup": 3.2584248144482566
+    }
+  ],
+  "measurements": 27,
+  "raw_bits_exact": true,
+  "scope": "Warm OS-cache loading after imports in fresh processes; 3 Latin-order repeats, 1 CPU/thread.",
+  "memory_scope": "Whole-process peak working set includes imports, hashing, loading and first prediction; not native model bytes.",
+  "decision": "Use compact whitespace in native Booster/estimator JSON writers; keep model schema and readers unchanged."
+}

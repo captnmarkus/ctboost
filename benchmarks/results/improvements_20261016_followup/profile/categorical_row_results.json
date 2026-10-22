@@ -1,0 +1,438 @@
+{
+  "purpose": "Correctness and concurrent diagnostic, not a benchmark speedup claim",
+  "python_version": "3.10.14",
+  "pandas": "2.3.3",
+  "numpy": "1.26.4",
+  "native_sha256": "565f490d1e9ae4fe2ee7333c9a3bd41ab21375705c294442ab0ae7d925a961fb",
+  "script_sha256": "ea1fc2dd08f5e881630e8da36815a35d5cb13fd5ac96b7f12868f46cd456cd84",
+  "synthetic": [
+    {
+      "name": "string",
+      "object_guard": true,
+      "string_guard": true,
+      "unguarded_row": {
+        "exact_cells": true,
+        "differences": []
+      },
+      "object_guarded": {
+        "exact_cells": true,
+        "differences": []
+      },
+      "string_guarded": {
+        "exact_cells": true,
+        "differences": []
+      }
+    },
+    {
+      "name": "string_missing",
+      "object_guard": true,
+      "string_guard": true,
+      "unguarded_row": {
+        "exact_cells": true,
+        "differences": []
+      },
+      "object_guarded": {
+        "exact_cells": true,
+        "differences": []
+      },
+      "string_guarded": {
+        "exact_cells": true,
+        "differences": []
+      }
+    },
+    {
+      "name": "all_string_missing",
+      "object_guard": true,
+      "string_guard": true,
+      "unguarded_row": {
+        "exact_cells": true,
+        "differences": []
+      },
+      "object_guarded": {
+        "exact_cells": true,
+        "differences": []
+      },
+      "string_guarded": {
+        "exact_cells": true,
+        "differences": []
+      }
+    },
+    {
+      "name": "empty_vocabulary",
+      "object_guard": false,
+      "string_guard": false,
+      "unguarded_row": {
+        "exact_cells": true,
+        "differences": []
+      },
+      "object_guarded": {
+        "exact_cells": true,
+        "differences": []
+      },
+      "string_guarded": {
+        "exact_cells": true,
+        "differences": []
+      }
+    },
+    {
+      "name": "same_string_vocabulary",
+      "object_guard": true,
+      "string_guard": true,
+      "unguarded_row": {
+        "exact_cells": true,
+        "differences": []
+      },
+      "object_guarded": {
+        "exact_cells": true,
+        "differences": []
+      },
+      "string_guarded": {
+        "exact_cells": true,
+        "differences": []
+      }
+    },
+    {
+      "name": "integer",
+      "object_guard": false,
+      "string_guard": false,
+      "unguarded_row": {
+        "exact_cells": true,
+        "differences": []
+      },
+      "object_guarded": {
+        "exact_cells": true,
+        "differences": []
+      },
+      "string_guarded": {
+        "exact_cells": true,
+        "differences": []
+      }
+    },
+    {
+      "name": "integer_float",
+      "object_guard": false,
+      "string_guard": false,
+      "unguarded_row": {
+        "exact_cells": false,
+        "differences": [
+          {
+            "cell": 0,
+            "old_type": "int",
+            "old": "4611686018427387905",
+            "new_type": "float",
+            "new": "4.611686018427388e+18"
+          }
+        ]
+      },
+      "object_guarded": {
+        "exact_cells": true,
+        "differences": []
+      },
+      "string_guarded": {
+        "exact_cells": true,
+        "differences": []
+      }
+    },
+    {
+      "name": "integer_missing",
+      "object_guard": false,
+      "string_guard": false,
+      "unguarded_row": {
+        "error": "ValueError: cannot convert float NaN to integer"
+      },
+      "object_guarded": {
+        "exact_cells": true,
+        "differences": []
+      },
+      "string_guarded": {
+        "exact_cells": true,
+        "differences": []
+      }
+    },
+    {
+      "name": "float32",
+      "object_guard": false,
+      "string_guard": false,
+      "unguarded_row": {
+        "exact_cells": true,
+        "differences": []
+      },
+      "object_guarded": {
+        "exact_cells": true,
+        "differences": []
+      },
+      "string_guarded": {
+        "exact_cells": true,
+        "differences": []
+      }
+    },
+    {
+      "name": "integer_string",
+      "object_guard": false,
+      "string_guard": false,
+      "unguarded_row": {
+        "exact_cells": false,
+        "differences": [
+          {
+            "cell": 0,
+            "old_type": "int",
+            "old": "4611686018427387905",
+            "new_type": "int64",
+            "new": "4611686018427387905"
+          }
+        ]
+      },
+      "object_guarded": {
+        "exact_cells": true,
+        "differences": []
+      },
+      "string_guarded": {
+        "exact_cells": true,
+        "differences": []
+      }
+    },
+    {
+      "name": "mixed_object_vocabulary",
+      "object_guard": true,
+      "string_guard": false,
+      "unguarded_row": {
+        "exact_cells": true,
+        "differences": []
+      },
+      "object_guarded": {
+        "exact_cells": true,
+        "differences": []
+      },
+      "string_guarded": {
+        "exact_cells": true,
+        "differences": []
+      }
+    },
+    {
+      "name": "bool_integer",
+      "object_guard": false,
+      "string_guard": false,
+      "unguarded_row": {
+        "exact_cells": false,
+        "differences": [
+          {
+            "cell": 0,
+            "old_type": "bool",
+            "old": "True",
+            "new_type": "bool_",
+            "new": "True"
+          },
+          {
+            "cell": 1,
+            "old_type": "int",
+            "old": "5",
+            "new_type": "int64",
+            "new": "5"
+          }
+        ]
+      },
+      "object_guarded": {
+        "exact_cells": true,
+        "differences": []
+      },
+      "string_guarded": {
+        "exact_cells": true,
+        "differences": []
+      }
+    },
+    {
+      "name": "numeric_plain",
+      "object_guard": false,
+      "string_guard": false,
+      "unguarded_row": {
+        "exact_cells": false,
+        "differences": [
+          {
+            "cell": 0,
+            "old_type": "int",
+            "old": "4611686018427387905",
+            "new_type": "float",
+            "new": "4.611686018427388e+18"
+          }
+        ]
+      },
+      "object_guarded": {
+        "exact_cells": true,
+        "differences": []
+      },
+      "string_guarded": {
+        "exact_cells": true,
+        "differences": []
+      }
+    },
+    {
+      "name": "mixed_plain",
+      "object_guard": false,
+      "string_guard": false,
+      "unguarded_row": {
+        "exact_cells": false,
+        "differences": [
+          {
+            "cell": 0,
+            "old_type": "int",
+            "old": "4611686018427387905",
+            "new_type": "int64",
+            "new": "4611686018427387905"
+          }
+        ]
+      },
+      "object_guarded": {
+        "exact_cells": true,
+        "differences": []
+      },
+      "string_guarded": {
+        "exact_cells": true,
+        "differences": []
+      }
+    }
+  ],
+  "real": [
+    {
+      "case": "hiva_agnostic",
+      "columns": 1617,
+      "model_sha256": "a83fe0f3b6f4cbda5814501ffef8a8fc2b475d1e93d5a9cb3b942ac8a11c63c0",
+      "input_sha256": "b665ebef74bba981668a934e5bf676a5f0ed15b6a50c7418e84181cda8864efe",
+      "object_guard": true,
+      "string_guard": true,
+      "exact_cell_types_values_missing": true,
+      "transformed_bits_exact": true,
+      "prediction_bits_exact": true,
+      "original_extract": {
+        "median_ms": 30.8492,
+        "samples_ms": [
+          30.8492,
+          31.3995,
+          30.7409,
+          31.2039,
+          30.197
+        ]
+      },
+      "unguarded_row_extract": {
+        "median_ms": 15.6106,
+        "samples_ms": [
+          15.9276,
+          15.5715,
+          15.8258,
+          15.6106,
+          15.5061
+        ]
+      },
+      "object_guarded_extract": {
+        "median_ms": 18.4771,
+        "samples_ms": [
+          18.4888,
+          18.4771,
+          18.5132,
+          18.2398,
+          18.2908
+        ]
+      },
+      "string_guarded_extract": {
+        "median_ms": 18.5996,
+        "samples_ms": [
+          18.6035,
+          18.5658,
+          18.7086,
+          18.5996,
+          18.4971
+        ]
+      },
+      "baseline_raw_library": {
+        "median_ms": 34.435,
+        "samples_ms": [
+          34.0739,
+          34.4224,
+          35.4316,
+          34.435,
+          38.0201
+        ]
+      },
+      "candidate_raw_library": {
+        "median_ms": 21.4877,
+        "samples_ms": [
+          21.3804,
+          21.4981,
+          21.4877,
+          22.079,
+          20.6585
+        ]
+      }
+    },
+    {
+      "case": "splice",
+      "columns": 60,
+      "model_sha256": "046882a53ed41fe29f90889fdf807b8338b4d16748136e832014a43a4d5a0dfb",
+      "input_sha256": "0e3d8eb837856a9de102c6346a68b8b23cfc7442863485b7eb759fe1d7c6ab49",
+      "object_guard": true,
+      "string_guard": true,
+      "exact_cell_types_values_missing": true,
+      "transformed_bits_exact": true,
+      "prediction_bits_exact": true,
+      "original_extract": {
+        "median_ms": 1.1181,
+        "samples_ms": [
+          1.1181,
+          1.116,
+          1.1101,
+          1.1232,
+          1.1262
+        ]
+      },
+      "unguarded_row_extract": {
+        "median_ms": 0.6392,
+        "samples_ms": [
+          0.6814,
+          0.6392,
+          0.6198,
+          0.613,
+          0.644
+        ]
+      },
+      "object_guarded_extract": {
+        "median_ms": 0.7905,
+        "samples_ms": [
+          0.7835,
+          2.8464,
+          0.7981,
+          0.7905,
+          0.7822
+        ]
+      },
+      "string_guarded_extract": {
+        "median_ms": 0.7912,
+        "samples_ms": [
+          0.7993,
+          0.7845,
+          0.7948,
+          0.7834,
+          0.7912
+        ]
+      },
+      "baseline_raw_library": {
+        "median_ms": 1.323,
+        "samples_ms": [
+          1.323,
+          1.4009,
+          1.3323,
+          1.3161,
+          1.3208
+        ]
+      },
+      "candidate_raw_library": {
+        "median_ms": 1.0031,
+        "samples_ms": [
+          1.021,
+          1.0007,
+          1.0088,
+          0.9949,
+          1.0031
+        ]
+      }
+    }
+  ]
+}

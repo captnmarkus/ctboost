@@ -98,6 +98,16 @@ bool IsMissing(const py::handle& value) {
   if (value.is_none()) {
     return true;
   }
+  // These exact builtins cannot be missing arrays or NumPy scalar subclasses.
+  // Avoid Python/NumPy type checks for every categorical cell, while keeping
+  // the existing conversion and exception behavior for user-defined types.
+  if (PyUnicode_CheckExact(value.ptr()) || PyLong_CheckExact(value.ptr()) ||
+      PyBool_Check(value.ptr())) {
+    return false;
+  }
+  if (PyFloat_CheckExact(value.ptr())) {
+    return std::isnan(PyFloat_AS_DOUBLE(value.ptr()));
+  }
   if (py::isinstance<py::array>(value)) {
     return py::reinterpret_borrow<py::array>(value).size() == 0;
   }
@@ -112,7 +122,11 @@ std::string NormalizeKey(const py::handle& value, int encoding_version) {
   if (IsMissing(value)) {
     return kMissingKey;
   }
-  std::string key = py::str(value).cast<std::string>();
+  // Exact Python strings already have their final textual representation.
+  // Subclasses must still use __str__, and both paths share codec escaping.
+  std::string key = PyUnicode_CheckExact(value.ptr())
+      ? py::cast<std::string>(value)
+      : py::str(value).cast<std::string>();
   if (encoding_version == kLegacyCategoricalKeyEncodingVersion) {
     return key;
   }

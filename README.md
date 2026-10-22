@@ -11,13 +11,17 @@ Python/scikit-learn interfaces.
 [Benchmarks](https://captnmarkus.github.io/ctboost/benchmarks/) ·
 [Compatibility](https://captnmarkus.github.io/ctboost/reference/compatibility/)
 
-The current release, [0.1.61](https://captnmarkus.github.io/ctboost/release-0.1.61/), is
-available on [PyPI](https://pypi.org/project/ctboost/0.1.61/) and
-[GitHub](https://github.com/captnmarkus/ctboost/releases/tag/v0.1.61). It reduces CPU
-inference overhead and fixes Huber/Quantile edge cases, NumPy conversion
-compatibility, and GNU FMA training-rounding differences. Saved-model formats,
-learning defaults, and the statistical feature-selection-before-cut contract
-remain unchanged.
+The [0.1.62 release](https://captnmarkus.github.io/ctboost/release-0.1.62/)
+reduces CPU prediction preparation costs for eligible categorical pandas inputs
+and wide fitted schemas, writes compact JSON, and improves the precision of
+categorical target statistics. Conditional feature testing still selects a
+feature before its cut point is optimized; tree-growth and hyperparameter
+defaults remain unchanged.
+Newly fitted pipelines use format 5 for precise CTR accumulation. Formats 1–4
+remain loadable with their original arithmetic; older CTBoost versions cannot
+load format 5. The JVM binding also updates Jackson to 2.21.7 to address five
+reported security alerts. See the release notes for compatibility, validation,
+and the scope of the measured results.
 
 ## Highlights
 
@@ -95,18 +99,27 @@ for supported workflows, artifact compatibility, and a reproducible comparison.
 
 ## Evidence and project status
 
-The [0.1.61 release notes](https://captnmarkus.github.io/ctboost/release-0.1.61/)
-describe the CPU speed measurements, their scope, and compatibility limits.
-The [verification archive](https://github.com/captnmarkus/ctboost/tree/833a775/benchmarks/results/release_readiness_20260908)
-retains the reproducible protocols and results.
-The [accuracy studies](https://github.com/captnmarkus/ctboost/tree/8cc75aa/benchmarks/results/inference_accuracy_20260908/accuracy)
-did not justify changing the learning defaults or claiming an Elo increase.
+The [October follow-up archive](https://github.com/captnmarkus/ctboost/tree/master/benchmarks/results/improvements_20261016_followup) separates production correctness,
+fixed-model inference measurements, and a twelve-task development accuracy
+study. It retains failed hypotheses, resource limits, source identities, and
+the distinction between model training and inference runtimes. These local
+studies do not establish a new TabArena Elo or a universal accuracy advantage.
 
-As of 9 September 2026, a fresh Full HPO25 evaluation on **0.1.61** is prepared
-but has **not started**. The 0.1.60 run is retired. The latest downloadable
-author-run TabArena bundle measures 0.1.58 on the Lite suite; these results are
-not an official leaderboard entry or evidence for 0.1.61. The
-[benchmark page](https://captnmarkus.github.io/ctboost/benchmarks/) retains the
+The final current-data experiment completed 540 fold fits and 36 selected
+full-data fits. CTBoost's median relative error reduction was +0.21% against
+XGBoost (7/12 wins) and -0.82% against LightGBM (5/12 wins). The combined
+development target was not met, so the gated second-seed and official-test
+stages were not run. This release publishes the validated implementation
+improvements with that remaining accuracy gap documented.
+
+The [0.1.61 verification archive](https://github.com/captnmarkus/ctboost/tree/833a775/benchmarks/results/release_readiness_20260908)
+and [earlier accuracy studies](https://github.com/captnmarkus/ctboost/tree/8cc75aa/benchmarks/results/inference_accuracy_20260908/accuracy)
+remain historical evidence. The status recorded on **9 September 2026** was
+that a fresh 0.1.61 Full HPO25 evaluation had been prepared but had not started,
+and the 0.1.60 run was retired. That record is not a completed 0.1.62 evaluation.
+The published author-run 0.1.58 TabArena-Lite bundle is also separate from this
+release and is not an official leaderboard entry. The
+[benchmark page](https://captnmarkus.github.io/ctboost/benchmarks/) retains its
 scores, resource limits, and historical comparisons.
 
 For opt-in CPU learning controls, see

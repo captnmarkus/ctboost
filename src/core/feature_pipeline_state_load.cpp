@@ -123,6 +123,7 @@ void NativeFeaturePipeline::LoadState(const py::dict& state) {
         "feature pipeline formats before version 3 require categorical key encoding version 1");
   }
   ctr_smoothing_version_ = format_version < 4 ? 1 : 2;
+  ctr_accumulation_version_ = format_version < 5 ? 1 : 2;
 
   cat_features_ = detail::NormalizeOptionalSequence(
       state.contains("cat_features") ? py::reinterpret_borrow<py::object>(state["cat_features"])
@@ -341,7 +342,16 @@ void NativeFeaturePipeline::LoadState(const py::dict& state) {
       ctr_state.output_names = py::cast<std::vector<std::string>>(item["output_names"]);
       ctr_state.ctr_type =
           item.contains("ctr_type") ? py::cast<std::string>(item["ctr_type"]) : std::string("Mean");
-      ctr_state.prior_values = py::cast<std::vector<float>>(item["prior_values"]);
+      const auto load_ctr_values = [this](const py::handle values) {
+        if (ctr_accumulation_version_ == 1) {
+          // Preserve the historical loader's rounding and range validation,
+          // including old JSON numbers with more precision than a float.
+          const auto rounded = py::cast<std::vector<float>>(values);
+          return std::vector<double>(rounded.begin(), rounded.end());
+        }
+        return py::cast<std::vector<double>>(values);
+      };
+      ctr_state.prior_values = load_ctr_values(item["prior_values"]);
       ctr_state.total_rows =
           item.contains("total_rows") ? py::cast<std::size_t>(item["total_rows"]) : 0U;
       for (const auto& count_item : py::cast<py::dict>(item["total_counts"])) {
@@ -350,7 +360,7 @@ void NativeFeaturePipeline::LoadState(const py::dict& state) {
       }
       for (const auto& sum_item : py::cast<py::dict>(item["total_sums"])) {
         ctr_state.total_sums.emplace(py::cast<std::string>(sum_item.first),
-                                     py::cast<std::vector<float>>(sum_item.second));
+                                     load_ctr_values(sum_item.second));
       }
       ctr_states_.push_back(std::move(ctr_state));
     }
@@ -635,7 +645,7 @@ void NativeFeaturePipeline::ValidateFittedState() const {
     if (state.prior_values.empty()) {
       throw std::invalid_argument("serialized CTR priors must not be empty");
     }
-    for (float value : state.prior_values) {
+    for (double value : state.prior_values) {
       ValidateFinite(value, "CTR priors");
     }
     if (state.ctr_type == "Mean") {
@@ -662,7 +672,7 @@ void NativeFeaturePipeline::ValidateFittedState() const {
           throw std::invalid_argument(
               "serialized mean CTR sum dimensions are inconsistent");
         }
-        for (float value : sums_it->second) {
+        for (double value : sums_it->second) {
           ValidateFinite(value, "CTR sums");
         }
       }

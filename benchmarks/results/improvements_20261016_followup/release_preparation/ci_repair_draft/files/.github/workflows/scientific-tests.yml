@@ -1,0 +1,136 @@
+name: Scientific integration
+
+on:
+  push:
+    branches:
+      - master
+      - "improve/**"
+    paths-ignore:
+      - "docs/**"
+      - "README.md"
+      - "mkdocs.yml"
+      - "benchmarks/results/**"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+  CMAKE_BUILD_PARALLEL_LEVEL: "4"
+  OMP_NUM_THREADS: "1"
+  OPENBLAS_NUM_THREADS: "1"
+  MKL_NUM_THREADS: "1"
+  NUMEXPR_NUM_THREADS: "1"
+  CTBOOST_HIST_THREADS: "1"
+
+jobs:
+  scientific-integration:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.0.2
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.2.0
+        with:
+          python-version: "3.12"
+
+      - name: Install pinned scientific test stack
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip install "pybind11<3" jsonschema "numpy==2.0.2" "pandas==2.3.3" "scikit-learn==1.6.1" "scipy==1.16.3" "xgboost==3.4.1" "lightgbm==4.7.0" "psutil==7.2.2" "pytest==9.1.1"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m pip install . --no-deps --config-settings=cmake.define.CTBOOST_ENABLE_CUDA=OFF
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Test installed package and native scientific contracts
+        shell: pwsh
+        run: |
+          $scientificRoot = Join-Path $env:RUNNER_TEMP "ctboost-scientific-tests"
+          if (Test-Path -LiteralPath $scientificRoot) {
+            throw "Expected a new isolated scientific test directory"
+          }
+          New-Item -ItemType Directory -Path $scientificRoot | Out-Null
+          Copy-Item -Path tests,benchmarks,include,spec -Destination $scientificRoot -Recurse
+          New-Item -ItemType Directory -Path (Join-Path $scientificRoot "scripts") | Out-Null
+          Copy-Item -Path scripts/prepare_cuda_runtime_license.py,scripts/validate_release_artifacts.py -Destination (Join-Path $scientificRoot "scripts")
+          Push-Location $scientificRoot
+          try {
+            @'
+          import hashlib, importlib.metadata as metadata, json, os
+          from pathlib import Path
+          import sys
+          import ctboost, numpy, pandas, scipy, sklearn, xgboost, lightgbm, psutil, pytest
+
+          expected = {"numpy":"2.0.2", "pandas":"2.3.3", "scikit-learn":"1.6.1",
+                      "scipy":"1.16.3", "xgboost":"3.4.1", "lightgbm":"4.7.0",
+                      "psutil":"7.2.2", "pytest":"9.1.1"}
+          actual = {name: metadata.version(name) for name in expected}
+          assert actual == expected, (actual, expected)
+          assert sys.version_info[:2] == (3, 12), sys.version
+          workspace = Path(os.environ["GITHUB_WORKSPACE"]).resolve()
+          package = Path(ctboost.__file__).resolve()
+          assert workspace != package and workspace not in package.parents, package
+          native_paths = {"ctboost": Path(ctboost._core.__file__).resolve(),
+                          "xgboost": Path(xgboost.core._LIB._name).resolve(),
+                          "lightgbm": Path(lightgbm.basic._LIB._name).resolve()}
+          native = {name: {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+                    for name, path in native_paths.items()}
+          receipt = {"python": sys.version, "versions": actual, "native": native,
+                     "ctboost_package": str(package), "ctboost_build": ctboost.build_info(),
+                     "scope": "Synthetic contract tests only; no benchmark dataset or scoring job"}
+          Path("scientific-runtime.json").write_text(json.dumps(receipt, indent=2)+"\n", encoding="utf-8")
+          print(json.dumps(receipt, indent=2))
+          '@ | python -
+            if ($LASTEXITCODE -ne 0) { throw "Required scientific runtime preflight failed" }
+
+            $scientificTests = @(
+              "tests/test_fixed_leaf_refit.py",
+              "tests/test_fixed_binary_leaf_refit.py",
+              "tests/test_fixed_multiclass_leaf_refit.py",
+              "tests/test_fixed_multiclass_leaf_refit_math.py",
+              "tests/test_fixed_clean_refit_check.py",
+              "tests/test_fixed_seed_ensemble.py",
+              "tests/test_union_refit_experiment.py",
+              "tests/test_binary_union_experiment.py",
+              "tests/test_seed_ensemble_experiment.py",
+              "tests/test_threshold_scout_experiment.py",
+              "tests/test_round_cv_experiment.py",
+              "tests/test_cap_expansion_experiment.py",
+              "tests/test_houses_cap_experiment.py",
+              "tests/test_houses_cap_experiment_v2.py",
+              "tests/test_multiclass_refit_experiment.py",
+              "tests/test_scalar_refresh_experiment.py",
+              "tests/test_scalar_numerical_retry_experiment.py",
+              "tests/test_ridge_numerical_diagnostic.py",
+              "tests/test_ridge_numerical_diagnostic_extended.py",
+              "tests/test_owned_process_watchdog.py",
+              "benchmarks/test_fair_accuracy_current_round_cv_support.py",
+              "benchmarks/test_fair_accuracy_current_round_cv_native.py",
+              "benchmarks/test_fair_accuracy_current_round_cv_runner.py"
+            )
+            python -X faulthandler -m pytest @scientificTests -q --junitxml=scientific-results.xml
+            if ($LASTEXITCODE -ne 0) { throw "Scientific contract tests failed" }
+            @'
+          import xml.etree.ElementTree as ET
+          suites = list(ET.parse("scientific-results.xml").getroot().iter("testsuite"))
+          assert suites and sum(int(item.attrib.get("tests", 0)) for item in suites) > 0
+          skipped = sum(int(item.attrib.get("skipped", 0)) for item in suites)
+          assert skipped == 0, f"Pinned scientific job must execute every selected case; skipped={skipped}"
+          '@ | python -
+            if ($LASTEXITCODE -ne 0) { throw "Pinned scientific coverage was incomplete" }
+          } finally {
+            Pop-Location
+          }
+
+      - name: Upload scientific runtime and results
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: scientific-integration-windows-py312
+          path: |
+            ${{ runner.temp }}/ctboost-scientific-tests/scientific-runtime.json
+            ${{ runner.temp }}/ctboost-scientific-tests/scientific-results.xml
+          if-no-files-found: warn

@@ -1,0 +1,546 @@
+{
+  "dataset": "houses",
+  "library": "lightgbm",
+  "selection": {
+    "best": {
+      "parameters": {
+        "bagging_fraction": 0.8,
+        "bagging_freq": 1,
+        "deterministic": true,
+        "feature_fraction": 0.8,
+        "force_col_wise": true,
+        "lambda_l2": 5,
+        "learning_rate": 0.03,
+        "max_bin": 255,
+        "metric": "rmse",
+        "min_data_in_leaf": 1,
+        "num_leaves": 127,
+        "num_threads": 1,
+        "objective": "regression",
+        "seed": 47,
+        "verbosity": -1,
+        "zero_as_missing": false
+      },
+      "retained_rounds": 191,
+      "stop_error": null
+    },
+    "binary_refit": null,
+    "cv_selection": {
+      "all_fits_successful": true,
+      "best": {
+        "mean_fold_error": 0.22739206700154502,
+        "profile_index": 0,
+        "requested_rounds": 191
+      },
+      "dataset": "houses",
+      "job": {
+        "anchor_rounds": 381,
+        "binary_refit": null,
+        "dataset": "houses",
+        "leaf_refit": {
+          "fold": {
+            "coefficient_rounding_absolute_bound": 1.0758741445481002e-15,
+            "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+            "inference_only": true,
+            "library": "lightgbm",
+            "physical_trees": 380,
+            "prediction_oracle_absolute_tolerance": 2.1074229467532547e-11,
+            "topology_sha256_after": "ad038ba5b4a41be111f4e56061c57cf9edbee9286a1174ac766141ab50d0a367",
+            "topology_sha256_before": "ad038ba5b4a41be111f4e56061c57cf9edbee9286a1174ac766141ab50d0a367"
+          },
+          "lambda": 1000,
+          "shrinkage": 1.0,
+          "solver": {
+            "atol": 1e-08,
+            "btol": 1e-08,
+            "damp": "sqrt(lambda)",
+            "iter_lim": 2000,
+            "method": "scipy.sparse.linalg.lsqr"
+          }
+        },
+        "library": "lightgbm",
+        "original_selection": {
+          "all_eight_successful": true,
+          "base_selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 2,
+              "fit_seconds": 1.1383255000000645,
+              "parameters": {
+                "bagging_fraction": 0.8,
+                "bagging_freq": 1,
+                "deterministic": true,
+                "feature_fraction": 0.8,
+                "force_col_wise": true,
+                "lambda_l2": 5,
+                "learning_rate": 0.03,
+                "max_bin": 255,
+                "metric": "rmse",
+                "min_data_in_leaf": 5,
+                "num_leaves": 127,
+                "num_threads": 1,
+                "objective": "regression",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 380,
+              "selection_key": [
+                0.2281429811199807,
+                380,
+                2
+              ],
+              "stop_error": 0.2281429811199807,
+              "trained_rounds_if_available": 430
+            },
+            "cumulative_search_fit_seconds": 19.586272900003678,
+            "current_wave_all_eight_successful": true,
+            "dataset": "houses",
+            "library": "lightgbm",
+            "model_bytes": 4686921,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave2\\models\\houses\\lightgbm.pkl",
+            "model_sha256": "a8a0455d5774a279d8f927b08c7467fd78073a58e704bd4816627f3bb1e6db66",
+            "plan_sha256": "f724c37603c865a54a492ab8b022cdd0351c2cfbda124571d880b0fbcd799dc3",
+            "search_fit_seconds": 4.5161917000004905,
+            "source_wave": 2
+          },
+          "best": {
+            "config_index": 7,
+            "fit_seconds": 1.1383255000000645,
+            "parameters": {
+              "bagging_fraction": 0.8,
+              "bagging_freq": 1,
+              "deterministic": true,
+              "feature_fraction": 0.8,
+              "force_col_wise": true,
+              "lambda_l2": 5,
+              "learning_rate": 0.03,
+              "max_bin": 255,
+              "metric": "rmse",
+              "min_data_in_leaf": 5,
+              "num_leaves": 127,
+              "num_threads": 1,
+              "objective": "regression",
+              "seed": 47,
+              "verbosity": -1,
+              "zero_as_missing": false
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 380,
+            "selection_key": [
+              0.2273438798210773,
+              1,
+              -1000,
+              1.0
+            ],
+            "stop_error": 0.2273438798210773,
+            "trained_rounds_if_available": 430
+          },
+          "cumulative_search_fit_seconds": 22.15919190000386,
+          "current_wave_all_eight_successful": true,
+          "dataset": "houses",
+          "leaf_refit": {
+            "fold": {
+              "coefficient_rounding_absolute_bound": 1.0758741445481002e-15,
+              "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+              "inference_only": true,
+              "library": "lightgbm",
+              "physical_trees": 380,
+              "prediction_oracle_absolute_tolerance": 2.1074229467532547e-11,
+              "topology_sha256_after": "ad038ba5b4a41be111f4e56061c57cf9edbee9286a1174ac766141ab50d0a367",
+              "topology_sha256_before": "ad038ba5b4a41be111f4e56061c57cf9edbee9286a1174ac766141ab50d0a367"
+            },
+            "lambda": 1000,
+            "shrinkage": 1.0,
+            "solver": {
+              "atol": 1e-08,
+              "btol": 1e-08,
+              "damp": "sqrt(lambda)",
+              "iter_lim": 2000,
+              "method": "scipy.sparse.linalg.lsqr"
+            }
+          },
+          "library": "lightgbm",
+          "model_bytes": 4683337,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave6_v2\\models\\houses\\lightgbm.pkl",
+          "model_sha256": "b9b21f72c2943ddc884a133f3e70f37193227c9789232ff5b5221f65810025c0",
+          "plan_sha256": "b2af792e292900317ec8086ecd6974224bffc52fd315e12a213c3f44a5e4978f",
+          "postfit_candidate_seconds": 54.612597400000595,
+          "search_fit_seconds": 4.5161917000004905,
+          "source_wave": 6
+        },
+        "parameters": {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "feature_fraction": 0.8,
+          "force_col_wise": true,
+          "lambda_l2": 5,
+          "learning_rate": 0.03,
+          "max_bin": 255,
+          "metric": "rmse",
+          "min_data_in_leaf": 1,
+          "num_leaves": 127,
+          "num_threads": 1,
+          "objective": "regression",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        "profiles": [
+          {
+            "bagging_fraction": 0.8,
+            "bagging_freq": 1,
+            "deterministic": true,
+            "feature_fraction": 0.8,
+            "force_col_wise": true,
+            "lambda_l2": 5,
+            "learning_rate": 0.03,
+            "max_bin": 255,
+            "metric": "rmse",
+            "min_data_in_leaf": 5,
+            "num_leaves": 127,
+            "num_threads": 1,
+            "objective": "regression",
+            "seed": 47,
+            "verbosity": -1,
+            "zero_as_missing": false
+          },
+          {
+            "bagging_fraction": 0.8,
+            "bagging_freq": 1,
+            "deterministic": true,
+            "feature_fraction": 0.8,
+            "force_col_wise": true,
+            "lambda_l2": 5,
+            "learning_rate": 0.015,
+            "max_bin": 255,
+            "metric": "rmse",
+            "min_data_in_leaf": 5,
+            "num_leaves": 127,
+            "num_threads": 1,
+            "objective": "regression",
+            "seed": 47,
+            "verbosity": -1,
+            "zero_as_missing": false
+          },
+          {
+            "bagging_fraction": 0.8,
+            "bagging_freq": 1,
+            "deterministic": true,
+            "feature_fraction": 0.8,
+            "force_col_wise": true,
+            "lambda_l2": 5,
+            "learning_rate": 0.03,
+            "max_bin": 255,
+            "metric": "rmse",
+            "min_data_in_leaf": 1,
+            "num_leaves": 127,
+            "num_threads": 1,
+            "objective": "regression",
+            "seed": 47,
+            "verbosity": -1,
+            "zero_as_missing": false
+          },
+          {
+            "bagging_fraction": 0.8,
+            "bagging_freq": 1,
+            "deterministic": true,
+            "feature_fraction": 0.8,
+            "force_col_wise": true,
+            "lambda_l2": 5,
+            "learning_rate": 0.015,
+            "max_bin": 255,
+            "metric": "rmse",
+            "min_data_in_leaf": 1,
+            "num_leaves": 127,
+            "num_threads": 1,
+            "objective": "regression",
+            "seed": 47,
+            "verbosity": -1,
+            "zero_as_missing": false
+          }
+        ],
+        "round_candidates": [
+          191,
+          381,
+          762
+        ],
+        "rounds": 191,
+        "temperature": null,
+        "training_selection": {
+          "all_eight_successful": true,
+          "base_selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 2,
+              "fit_seconds": 1.1383255000000645,
+              "parameters": {
+                "bagging_fraction": 0.8,
+                "bagging_freq": 1,
+                "deterministic": true,
+                "feature_fraction": 0.8,
+                "force_col_wise": true,
+                "lambda_l2": 5,
+                "learning_rate": 0.03,
+                "max_bin": 255,
+                "metric": "rmse",
+                "min_data_in_leaf": 5,
+                "num_leaves": 127,
+                "num_threads": 1,
+                "objective": "regression",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 380,
+              "selection_key": [
+                0.2281429811199807,
+                380,
+                2
+              ],
+              "stop_error": 0.2281429811199807,
+              "trained_rounds_if_available": 430
+            },
+            "cumulative_search_fit_seconds": 19.586272900003678,
+            "current_wave_all_eight_successful": true,
+            "dataset": "houses",
+            "library": "lightgbm",
+            "model_bytes": 4686921,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave2\\models\\houses\\lightgbm.pkl",
+            "model_sha256": "a8a0455d5774a279d8f927b08c7467fd78073a58e704bd4816627f3bb1e6db66",
+            "plan_sha256": "f724c37603c865a54a492ab8b022cdd0351c2cfbda124571d880b0fbcd799dc3",
+            "search_fit_seconds": 4.5161917000004905,
+            "source_wave": 2
+          },
+          "best": {
+            "config_index": 7,
+            "fit_seconds": 1.1383255000000645,
+            "parameters": {
+              "bagging_fraction": 0.8,
+              "bagging_freq": 1,
+              "deterministic": true,
+              "feature_fraction": 0.8,
+              "force_col_wise": true,
+              "lambda_l2": 5,
+              "learning_rate": 0.03,
+              "max_bin": 255,
+              "metric": "rmse",
+              "min_data_in_leaf": 5,
+              "num_leaves": 127,
+              "num_threads": 1,
+              "objective": "regression",
+              "seed": 47,
+              "verbosity": -1,
+              "zero_as_missing": false
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 380,
+            "selection_key": [
+              0.2273438798210773,
+              1,
+              -1000,
+              1.0
+            ],
+            "stop_error": 0.2273438798210773,
+            "trained_rounds_if_available": 430
+          },
+          "cumulative_search_fit_seconds": 22.15919190000386,
+          "current_wave_all_eight_successful": true,
+          "dataset": "houses",
+          "leaf_refit": {
+            "fold": {
+              "coefficient_rounding_absolute_bound": 1.0758741445481002e-15,
+              "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+              "inference_only": true,
+              "library": "lightgbm",
+              "physical_trees": 380,
+              "prediction_oracle_absolute_tolerance": 2.1074229467532547e-11,
+              "topology_sha256_after": "ad038ba5b4a41be111f4e56061c57cf9edbee9286a1174ac766141ab50d0a367",
+              "topology_sha256_before": "ad038ba5b4a41be111f4e56061c57cf9edbee9286a1174ac766141ab50d0a367"
+            },
+            "lambda": 1000,
+            "shrinkage": 1.0,
+            "solver": {
+              "atol": 1e-08,
+              "btol": 1e-08,
+              "damp": "sqrt(lambda)",
+              "iter_lim": 2000,
+              "method": "scipy.sparse.linalg.lsqr"
+            }
+          },
+          "library": "lightgbm",
+          "model_bytes": 4683337,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave6_v2\\models\\houses\\lightgbm.pkl",
+          "model_sha256": "b9b21f72c2943ddc884a133f3e70f37193227c9789232ff5b5221f65810025c0",
+          "plan_sha256": "b2af792e292900317ec8086ecd6974224bffc52fd315e12a213c3f44a5e4978f",
+          "postfit_candidate_seconds": 54.612597400000595,
+          "search_fit_seconds": 4.5161917000004905,
+          "source_wave": 6
+        }
+      },
+      "library": "lightgbm",
+      "scores": [
+        {
+          "mean_fold_error": 0.22739206700154502,
+          "profile_index": 0,
+          "requested_rounds": 191
+        },
+        {
+          "mean_fold_error": 0.22799797825266405,
+          "profile_index": 1,
+          "requested_rounds": 381
+        },
+        {
+          "mean_fold_error": 0.22877015467340164,
+          "profile_index": 2,
+          "requested_rounds": 762
+        }
+      ]
+    },
+    "dataset": "houses",
+    "leaf_refit": {
+      "fold": {
+        "coefficient_rounding_absolute_bound": 1.0758741445481002e-15,
+        "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+        "inference_only": true,
+        "library": "lightgbm",
+        "physical_trees": 380,
+        "prediction_oracle_absolute_tolerance": 2.1074229467532547e-11,
+        "topology_sha256_after": "ad038ba5b4a41be111f4e56061c57cf9edbee9286a1174ac766141ab50d0a367",
+        "topology_sha256_before": "ad038ba5b4a41be111f4e56061c57cf9edbee9286a1174ac766141ab50d0a367"
+      },
+      "lambda": 1000,
+      "shrinkage": 1.0,
+      "solver": {
+        "atol": 1e-08,
+        "btol": 1e-08,
+        "damp": "sqrt(lambda)",
+        "iter_lim": 2000,
+        "method": "scipy.sparse.linalg.lsqr"
+      }
+    },
+    "library": "lightgbm",
+    "model_bytes": 2302092,
+    "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave13\\models\\houses\\lightgbm.pkl",
+    "model_sha256": "3fe5f2e542a188672907f74e5dec2108de49552bca3c49fce34163b6d2788cb5",
+    "refit_details": {
+      "apparent_union_error_inference_transform": 0.11191556359591216,
+      "early_stopping": false,
+      "fit_seconds": 0.4468443000005209,
+      "fixed_leaf_refit": {
+        "fold": {
+          "coefficient_rounding_absolute_bound": 1.031123699878761e-15,
+          "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+          "inference_only": true,
+          "library": "lightgbm",
+          "physical_trees": 191,
+          "prediction_oracle_absolute_tolerance": 1.070999470939058e-11,
+          "topology_sha256_after": "cd238028ee1caf059027d9724d6b43abc688e7db33950267d71c6e376cba5fbf",
+          "topology_sha256_before": "cd238028ee1caf059027d9724d6b43abc688e7db33950267d71c6e376cba5fbf"
+        },
+        "inference_checks": {
+          "original_stop": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 1.070999470939058e-11,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 2.829023236796327e-15,
+            "oracle_max_absolute_difference": 3.730349362740526e-14
+          },
+          "original_train": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 1.070999470939058e-11,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 3.2271979395557234e-15,
+            "oracle_max_absolute_difference": 4.263256414560601e-14
+          }
+        },
+        "lambda": 1000,
+        "ordered_union_check": {
+          "fixed_tolerance_atol": 1e-05,
+          "fixed_tolerance_rtol": 5e-05,
+          "leaf_routing_exact": true,
+          "oracle_absolute_tolerance": 1.070999470939058e-11,
+          "oracle_difference_divided_by_max_one_or_prediction_magnitude": 3.2271979395557234e-15,
+          "oracle_max_absolute_difference": 4.263256414560601e-14
+        },
+        "preprocessing": {
+          "column_order": "physical tree order, then sorted observed native leaf IDs",
+          "design_nonzeros": 1432500,
+          "design_shape": [
+            7500,
+            24257
+          ],
+          "ordered_training_transform_replayed": false,
+          "training_leaf_ids_sha256": "821233abfa0226152ea76c8efed771b18b849beb103b5901b842d571c886cebc",
+          "training_rows": 7500,
+          "unobserved_leaf_correction": 0
+        },
+        "shrinkage": 1.0,
+        "solve": {
+          "coefficient_norm": 0.13390105040223713,
+          "condition_estimate": 66.45161190234826,
+          "istop": 2,
+          "iterations": 37,
+          "matrix_norm": 753.5702335020594,
+          "normal_residual_norm": 4.3594536514363755e-05,
+          "regularized_residual_norm": 10.576752413289787,
+          "residual_norm": 9.69217211533553
+        }
+      },
+      "parameters": {
+        "bagging_fraction": 0.8,
+        "bagging_freq": 1,
+        "deterministic": true,
+        "feature_fraction": 0.8,
+        "force_col_wise": true,
+        "lambda_l2": 5,
+        "learning_rate": 0.03,
+        "max_bin": 255,
+        "metric": "rmse",
+        "min_data_in_leaf": 1,
+        "num_leaves": 127,
+        "num_threads": 1,
+        "objective": "regression",
+        "seed": 47,
+        "verbosity": -1,
+        "zero_as_missing": false
+      },
+      "requested_rounds": 191,
+      "retained_rounds": 191,
+      "structural_early_termination": false,
+      "union_data": {
+        "row_order": "original TRAIN followed by original STOP",
+        "source_roles": {
+          "stop": {
+            "index_sha256": "f164721c3663e300a6127b9aeb570ca8c03ea420efb2a68a90abb490895891b6",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\houses\\stop.pkl",
+            "rows": 1250,
+            "sha256": "1da0730eed74fbdd7a0831fa74200d3117b82ea731fdb47ce5fd52b0d0ba30b3"
+          },
+          "train": {
+            "index_sha256": "036bed52ffebff5d0b4a6c9101cde13e1332a6d9038bc668310af3412d831c20",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\houses\\train.pkl",
+            "rows": 6250,
+            "sha256": "757cf06af21d8499a235403d3d23b75e0a7de7d7d5505ac47c3108326b1ac92b"
+          }
+        },
+        "stop_ids_sha256": "f164721c3663e300a6127b9aeb570ca8c03ea420efb2a68a90abb490895891b6",
+        "stop_rows": 1250,
+        "train_ids_sha256": "036bed52ffebff5d0b4a6c9101cde13e1332a6d9038bc668310af3412d831c20",
+        "train_rows": 6250,
+        "union_category_counts": {},
+        "union_ids_sha256": "d205cf77e877fc4493228e55449a38474e9feb62f1deec3ad5c33cfe0b356a4c",
+        "union_rows": 7500,
+        "vocabulary_fit_on": "TRAIN+STOP union only"
+      }
+    },
+    "source_wave": 13,
+    "temperature": null
+  },
+  "status": "ok"
+}

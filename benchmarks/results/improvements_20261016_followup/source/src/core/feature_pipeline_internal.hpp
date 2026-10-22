@@ -1,0 +1,83 @@
+#pragma once
+
+#include "ctboost/feature_pipeline.hpp"
+
+#include <cstdint>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+#include <pybind11/stl.h>
+
+namespace py = pybind11;
+
+namespace ctboost::detail {
+
+inline constexpr const char* kMissingKey = "__ctboost_missing__";
+inline constexpr const char* kOtherKey = "__ctboost_other__";
+inline constexpr const char* kCodec2LiteralMissingKey = "\\m";
+inline constexpr const char* kCodec2OtherKey = "\\o";
+inline constexpr int kLegacyCategoricalKeyEncodingVersion = 1;
+inline constexpr int kCurrentCategoricalKeyEncodingVersion = 2;
+inline constexpr int kCurrentFeaturePipelineFormatVersion = 5;
+
+struct MatrixView {
+  py::array array;
+  py::buffer_info info;
+  PyObject** data{nullptr};
+  py::ssize_t row_stride{0};
+  py::ssize_t col_stride{0};
+  std::size_t rows{0};
+  std::size_t cols{0};
+};
+
+py::module_& NumpyModule();
+py::module_& HashlibModule();
+py::object& NumpyFloatingType();
+py::array EnsureObjectMatrix(py::array raw_matrix);
+MatrixView MakeMatrixView(py::array object_array);
+py::handle MatrixValue(const MatrixView& matrix, std::size_t row, std::size_t col);
+bool IsMissing(const py::handle& value);
+std::string NormalizeKey(const py::handle& value, int encoding_version);
+std::vector<std::string> NormalizeEmbeddingStats(py::object embedding_stats);
+std::string NormalizeTextTokenizer(std::string tokenizer);
+std::pair<int, int> NormalizeTextNgramRange(py::object ngram_range);
+std::string NormalizeTextFeatureCalcer(std::string feature_calcer);
+std::string NormalizeEmbeddingTargetMode(std::string target_mode);
+py::object NormalizeOptionalSequence(py::object values);
+py::object NormalizeOptionalCombinations(py::object values);
+std::string CanonicalCtrType(std::string ctr_type);
+py::object NormalizeOptionalCtrTypes(py::object values);
+std::vector<std::string> BuildOneHotOutputNames(const std::string& prefix,
+                                                const std::vector<std::string>& keys,
+                                                int encoding_version);
+std::vector<std::string> ResolveCtrTypeList(const py::object& values, bool default_mean);
+std::vector<std::string> BuildBucketKeys(
+    const std::unordered_map<std::string, std::size_t>& key_counts,
+    int max_cat_threshold,
+    int encoding_version,
+    bool* out_has_other_bucket);
+std::vector<float> ArrayToFloatVector(py::array_t<float, py::array::forcecast> values,
+                                      const char* name);
+std::string JoinNormalizedKey(const MatrixView& matrix,
+                              std::size_t row,
+                              const std::vector<int>& source_indices,
+                              int encoding_version);
+const char* OtherKey(int encoding_version);
+std::uint64_t BytesToLittleEndianU64(const py::bytes& digest);
+std::vector<float> EmbeddingValues(const py::handle& value);
+std::pair<int, std::vector<double>> FitTargetMode(const std::vector<float>& labels,
+                                                bool double_accumulation = false);
+std::vector<std::string> ExtractTextTokens(std::string text,
+                                           const std::string& tokenizer,
+                                           int ngram_min,
+                                           int ngram_max,
+                                           bool lowercase);
+std::string TextOutputName(const std::string& prefix,
+                           const std::string& token,
+                           std::size_t index);
+py::list VectorToPyList(const std::vector<int>& values);
+py::list VectorToPyList(const std::vector<std::string>& values);
+py::list VectorToPyList(const std::vector<float>& values);
+
+}  // namespace ctboost::detail

@@ -1,0 +1,104 @@
+{
+  "status": "terminal_fold_failure",
+  "source_sha256": {
+    "plan.json": "d368d34f9245e27d818f105b70163474878f9a6fdfd0f720a1204440b0ca09d2",
+    "fold_manifest.json": "1ea66f8f87242708f9df4ad483f21474e0a48bc7c912495fea2b53cf622e972e",
+    "fold_completion.json": "8bfbe878f3ee320b2b3ae74726330272a2f1cd4dd7a6ef38c3b5ce9ace8317a2"
+  },
+  "report_source_sha256": "413b4c0e10a7a9ea18a889ecee46c064d64eb03191b2add8525d40bcfe332962",
+  "fold_completion_counts": {
+    "fully_verified_jobs": 297,
+    "limits": "Completed means the native fit returned and passed clean-fit checks. A terminated fit without this checkpoint is not counted.",
+    "native_fits_completed": 298,
+    "native_fits_started": 298,
+    "planned_jobs": 540
+  },
+  "union_completion_counts": {
+    "planned_jobs": 36,
+    "native_fits_started": 0,
+    "native_fits_completed": 0,
+    "fully_verified_jobs": 0
+  },
+  "total_quality_tree_fits_through_wave18b": 2828,
+  "diagnostic_replay_fits_separate": 8,
+  "terminal_failures": [
+    {
+      "dataset": "houses",
+      "library": "xgboost",
+      "profile_index": 2,
+      "fold": 2,
+      "failure": null,
+      "error": null,
+      "resource": {
+        "cleanup_complete": true,
+        "exit_code": 4294967295,
+        "killed_processes": [],
+        "owned_processes": [
+          {
+            "create_time": 1792167981.5097108,
+            "pid": 20716
+          },
+          {
+            "create_time": 1792167981.5187018,
+            "pid": 30288
+          },
+          {
+            "create_time": 1792167981.537644,
+            "pid": 7488
+          }
+        ],
+        "peak_rss_bytes": 1323466752,
+        "resource_failure": null,
+        "rss_scope": "sum of observed live owned process tree",
+        "wall_seconds": 40.17199999999866
+      }
+    }
+  ],
+  "prior_resource_failed_attempt": {
+    "directory": "accuracy_wave18",
+    "native_fits_completed": 58,
+    "new_attempt_reuses_fits": false,
+    "fold_completion_sha256": "a9755755a9c32228761c95b1a5b2afcbb8588b6917567231be4ab8d0036f9fed",
+    "limits": "All 540 folds are fitted afresh under the new resource plan. The 58 earlier fits remain preserved and are included separately in cumulative compute counts."
+  },
+  "not_started_after_terminal_failure": 242,
+  "maximum_job_seconds": 49.17099999999846,
+  "maximum_process_tree_rss_bytes": 1358413824,
+  "sum_stage_job_seconds": {
+    "fold": 2066.858000000011,
+    "union": 0
+  },
+  "resource_failures": [],
+  "headroom_failures": [],
+  "maximum_headroom_wait_seconds": 0.014999999999417923,
+  "quiet_baseline_memory": {
+    "available_bytes": 13984444416,
+    "captured_at": "2026-10-16T15:50:03.089504+00:00",
+    "context": "Activation coordinator must ensure no fits/builds/timings overlap this snapshot",
+    "total_bytes": 34278686720
+  },
+  "resources": {
+    "cpu": 4,
+    "headroom_poll_seconds": 5.0,
+    "headroom_reserve_bytes": 4294967296,
+    "headroom_wait_seconds": 300.0,
+    "maximum_job_rss_bytes": 8589934592,
+    "maximum_job_seconds": 1200.0,
+    "maximum_named_array_bytes": 6442450944,
+    "threads_per_fit": 1,
+    "workers": 1
+  },
+  "prospective_profiles_checked": 216,
+  "maximum_prospective_named_array_bytes": 4515168888,
+  "timing_interpretation": "Diagnostic process durations including fitting, fixed corrections, native verification and persistence; no inference-speed or equal-compute claim.",
+  "concurrent_validation": {
+    "disclosure": "Some fold jobs overlapped separately bounded release correctness/build work on CPU0. Accuracy workers remained on CPU4 with their frozen resources; durations are not isolated timing measurements.",
+    "jvm_receipt": "release_preparation/security/jvm_validation_summary.json",
+    "jvm_receipt_sha256": "310b170c32be95fe5573ba6473bd4c1cbe3ce67729327f6b790b76d9fc54b812"
+  },
+  "development_scored": false,
+  "development_target_met": null,
+  "conditional_seed677_run": false,
+  "official_test_scored": false,
+  "limitations": "Adaptive reused development and earlier STOP/CV tuning. Raw fold-local preprocessing prevents direct vocabulary/CTR leakage, but inherited tree/correction/temperature controls were selected using these authorized rows previously: fold errors are a selection criterion, not unbiased external estimates. Equal fit counts do not equal compute, capacity or effective regularization. Different fixed corrections can be suboptimal on folds. Models with fixed leaf corrections are inference artifacts; historical training metrics are not recomputed. Same-split seed sensitivity is not independent replication, significance, TabArena ranking or a universal claim. Named arrays are conservative accounting, not a whole-process RAM bound."
+}

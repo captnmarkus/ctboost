@@ -1,0 +1,76 @@
+{
+  "controls": {
+    "lambda": 1.0,
+    "shrinkage": 0.25
+  },
+  "evidence": {
+    "checks": {
+      "fitting": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 1.277509070064023e-12,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 3.4830191482527817e-16,
+        "oracle_max_absolute_difference": 1.3322676295501878e-15
+      },
+      "stop": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 1.277509070064023e-12,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 3.4546029080165366e-16,
+        "oracle_max_absolute_difference": 1.3322676295501878e-15
+      }
+    },
+    "fold": {
+      "coefficient_rounding_absolute_bound": 4.440892098500626e-16,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "lightgbm",
+      "physical_trees": 12,
+      "prediction_oracle_absolute_tolerance": 1.277509070064023e-12,
+      "topology_sha256_after": "e4b5b4dcad4305b460fb025a083f6d370ab8a3d80618f3ca188339263ac95c26",
+      "topology_sha256_before": "e4b5b4dcad4305b460fb025a083f6d370ab8a3d80618f3ca188339263ac95c26"
+    },
+    "independent_sparse_raw_margin_oracle": true,
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 25020,
+      "design_shape": [
+        2085,
+        372
+      ],
+      "ordered_training_transform_replayed": false,
+      "training_leaf_ids_sha256": "8fc5345ca3d262b7be00377b99c215d1e650ac7cc94cfeb58837f0d715ceb1d1",
+      "training_rows": 2085,
+      "unobserved_leaf_correction": 0
+    }
+  },
+  "finished_at": "2026-10-16T14:18:32.895151+00:00",
+  "index": 0,
+  "predictions_sha256": "11835b55b1409485f244b8a0b22f72691e41d57b546271aba193cb381a8e2f65",
+  "solve": {
+    "columns": 372,
+    "evaluations": 43,
+    "final_objective": 0.06901336750801168,
+    "ftol": 1e-13,
+    "gradient_gate": 1e-06,
+    "gtol": 1e-09,
+    "initial_coefficients": "all zero",
+    "initial_objective": 0.2140703816027217,
+    "iterations": 39,
+    "maxcor": 20,
+    "maximum_absolute_mean_gradient": 2.454804429674207e-09,
+    "maxiter": 2000,
+    "maxls": 50,
+    "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+    "method": "L-BFGS-B",
+    "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+    "penalty": 1.0,
+    "rows": 2085,
+    "status": 0
+  },
+  "started_at": "2026-10-16T14:18:32.817495+00:00",
+  "status": "ok",
+  "stop_error": 0.07007320362165281
+}

@@ -398,6 +398,37 @@ def test_cached_prefix_does_not_quantize_features_first_used_later():
             native.predict(pool, 2)
 
 
+@pytest.mark.parametrize("dimension,strategy", [
+    (1, "one_output_per_tree"),
+    (3, "one_output_per_tree"),
+    (3, "multi_output_tree"),
+])
+@pytest.mark.parametrize("wide", [False, True])
+def test_root_only_prefix_preserves_shape_checks_and_unused_forbidden_nans(dimension, strategy, wide):
+    state = _routing_state(dimension, strategy, wide=wide, nan_mode=0)
+    trees_per_iteration = 1 if strategy == "multi_output_tree" else dimension
+    for tree in state["trees"][:trees_per_iteration]:
+        tree["nodes"] = [tree["nodes"][1]]
+    native = ctboost._core.GradientBooster.from_state(state)
+    data = np.full((64, 3), np.nan, dtype=np.float32)
+    pool = ctboost.Pool(data)._handle
+    for _ in range(2):
+        expected = np.asarray(native._predict_uncached(pool, 1))
+        actual = np.asarray(native.predict(pool, 1))
+        np.testing.assert_array_equal(actual.view(np.uint32), expected.view(np.uint32))
+        np.testing.assert_array_equal(native.predict_leaf_indices(pool, 1), 0)
+        with pytest.raises(ValueError, match="NaN values are not allowed"):
+            native.predict(pool)
+        with pytest.raises(ValueError, match="NaN values are not allowed"):
+            native.predict_leaf_indices(pool)
+        for rows in (0, 1):
+            wrong_columns = ctboost.Pool(np.zeros((rows, 2), dtype=np.float32))._handle
+            with pytest.raises(ValueError, match="same number of columns"):
+                native.predict(wrong_columns, 1)
+            with pytest.raises(ValueError, match="same number of columns"):
+                native.predict_leaf_indices(wrong_columns, 1)
+
+
 @pytest.mark.parametrize("difference", [
     "numeric_threshold", "numeric_feature", "numeric_children",
     "categorical_routes", "categorical_children", "constant_tree",

@@ -1,0 +1,22 @@
+{
+  "protocol": "fixed_topology_regression_leaf_correction_20261016",
+  "created_after": "All five equal-count development search waves missed the predeclared comparator gate.",
+  "created_before": "Any real-data leaf correction solve or development scoring of corrected models.",
+  "source_selections": "accuracy_wave5/frozen_selections.json",
+  "population": "The same12 metadata-selected tasks. Fit corrections only for all4 regression tasks; carry the8 classification-task models unchanged for every library. Report both4-task regression and unchanged12-task aggregate.",
+  "libraries": ["ctboost", "xgboost", "lightgbm"],
+  "objective": "For each already selected regression ensemble, solve min_delta ||y_train - f_train - Z_train*delta||_2^2 + lambda*||delta||_2^2. Z has one active existing leaf per tree and training row, with columns concatenated by tree then leaf ID. No feature, split, threshold, route, tree count, or boosting round is changed.",
+  "lambda": [1, 10, 100, 1000],
+  "shrinkage": [0.25, 1.0],
+  "incumbent": "Zero correction, the existing native selected model. It wins stopping-error ties.",
+  "budget": "8 nonzero candidates per library/regression task,4 ridge solves reused for2shrinkages;96candidate evaluations and48solves total, plus the12existing zero-correction incumbents. Same budget for all3libraries.",
+  "solver": {"method": "scipy.sparse.linalg.lsqr", "damp": "sqrt(lambda)", "atol": 1e-8, "btol": 1e-8, "iter_lim": 2000},
+  "successful_solver_statuses": [0, 1, 2, 4, 5],
+  "training_rows": "Only the original TRAIN role. STOP chooses the correction; DEVELOPMENT is scored only after all36combined selections freeze. No TRAIN+STOP union or official-test access.",
+  "ctboost_target_statistics": "Reconstruct the exact ordered training transform from the saved pipeline configuration, random seed, original normalized training frame and labels. Require exact equality of the resulting fitted pipeline state and the saved state. Route and predict training rows through that prepared matrix. Never fit correction residuals using full-statistic inference CTR values on the training rows. Numeric-only data still follow the same checked pipeline protocol.",
+  "native_fold_in": "Fold contribution-unit deltas into existing CTBoost scalar leaf weights, LightGBM leaf outputs and XGBoost scalar leaf outputs. Verify complete feature/threshold/category-routing metadata is unchanged, plus all TRAIN/STOP leaf IDs unchanged. Native prediction must match original prediction plus the leaf correction oracle at rtol5e-5/atol1e-5, acknowledging native float32 quantization/accumulation; report actual discrepancies. Select using actual native STOP RMSE, never the unrounded oracle. No wrapper latency claims.",
+  "persistence": "Save native model payloads with the existing pickle envelope, verify reload prediction parity, and retain original models unchanged.",
+  "selection": "Minimum STOP RMSE among the8candidates and zero incumbent; ties prefer zero correction, then larger lambda, then smaller shrinkage. Preserve every candidate failure and solver status. The existing all-success and two-comparator development gate remains unchanged.",
+  "freeze": "The final executable plan records the reviewed helper/runner hashes, complete frozen base selections, native/runtime hashes, predeclaration hash and all input identities before the first real correction solve.",
+  "limitations": "Adaptive development study on historically reused data. Equal candidate counts are not equal compute or equal effective regularization across different leaf bases. This is a new post-fit objective on fixed trees, not redundant per-tree Newton refinement and not a production default. Old failed-gate confirmation and official outer test remain sealed."
+}

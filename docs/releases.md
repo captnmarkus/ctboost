@@ -1,8 +1,9 @@
 # Release history
 
-The current release is [CTBoost 0.1.61](release-0.1.61.md), published on
-[PyPI](https://pypi.org/project/ctboost/0.1.61/) and
-[GitHub](https://github.com/captnmarkus/ctboost/releases/tag/v0.1.61).
+[CTBoost 0.1.62](release-0.1.62.md) covers categorical prediction preparation,
+compact JSON persistence, precise CTR accumulation and the JVM Jackson 2.21.7
+security update addressing five reported alerts. Its release notes state the
+artifact compatibility and pending release-validation scope.
 Use the current [getting-started](getting-started.md),
 [deployment](guides/deployment.md), and [compatibility](reference/compatibility.md)
 guides for supported workflows.
@@ -13,6 +14,7 @@ reported at the time. Their status statements are historical; see
 
 | Release | Notes |
 |---|---|
+| [0.1.62](release-0.1.62.md) | Categorical serving, compact JSON, CTR precision, and JVM security update |
 | [0.1.61](release-0.1.61.md) | CPU inference, loss correctness, and conversion compatibility |
 | [0.1.60](release-0.1.60.md) | CTR priors, stopping history, and DART corrections |
 | [0.1.59](release-0.1.59.md) | Safeguarded leaves and joint multiclass feature tests |

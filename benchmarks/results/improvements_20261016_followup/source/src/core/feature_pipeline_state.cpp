@@ -1,0 +1,158 @@
+#include "ctboost/feature_pipeline.hpp"
+
+#include "feature_pipeline_internal.hpp"
+
+namespace py = pybind11;
+
+namespace ctboost {
+
+py::dict NativeFeaturePipeline::to_state() const {
+  py::dict state;
+  state["feature_pipeline_format_version"] =
+      ctr_smoothing_version_ == 1 ? 3
+      : ctr_accumulation_version_ == 1 ? 4
+                                      : detail::kCurrentFeaturePipelineFormatVersion;
+  state["categorical_key_encoding_version"] = categorical_key_encoding_version_;
+  state["cat_features"] = cat_features_;
+  state["ordered_ctr"] = ordered_ctr_;
+  state["one_hot_max_size"] = one_hot_max_size_;
+  state["max_cat_threshold"] = max_cat_threshold_;
+  state["categorical_combinations"] = categorical_combinations_;
+  state["pairwise_categorical_combinations"] = pairwise_categorical_combinations_;
+  state["simple_ctr"] = simple_ctr_;
+  state["combinations_ctr"] = combinations_ctr_;
+  state["per_feature_ctr"] = per_feature_ctr_;
+  state["text_features"] = text_features_;
+  state["text_hash_dim"] = text_hash_dim_;
+  state["text_tokenizer"] = text_tokenizer_;
+  state["text_ngram_range"] = py::make_tuple(text_ngram_min_, text_ngram_max_);
+  state["text_lowercase"] = text_lowercase_;
+  state["text_min_token_count"] = text_min_token_count_;
+  state["text_max_dictionary_size"] = text_max_dictionary_size_;
+  state["text_feature_calcer"] = text_feature_calcer_;
+  state["embedding_features"] = embedding_features_;
+  state["embedding_stats"] = embedding_stats_;
+  state["embedding_target_features"] = embedding_target_features_;
+  state["embedding_target_regularization"] = embedding_target_regularization_;
+  state["embedding_target_mode"] = embedding_target_mode_;
+  state["ctr_prior_strength"] = ctr_prior_strength_;
+  state["random_seed"] = random_seed_;
+  if (feature_names_in_.has_value()) {
+    state["feature_names_in_"] = detail::VectorToPyList(feature_names_in_.value());
+  } else {
+    state["feature_names_in_"] = py::none();
+  }
+  if (n_features_in_ >= 0) {
+    state["n_features_in_"] = py::int_(n_features_in_);
+  } else {
+    state["n_features_in_"] = py::none();
+  }
+  state["cat_feature_indices_"] = detail::VectorToPyList(cat_feature_indices_);
+  state["output_feature_names_"] = detail::VectorToPyList(output_feature_names_);
+  state["numeric_indices"] = detail::VectorToPyList(numeric_indices_);
+
+  py::list one_hot_states;
+  for (const auto& one_hot_state : one_hot_states_) {
+    py::dict item;
+    item["source_index"] = one_hot_state.source_index;
+    item["prefix"] = one_hot_state.prefix;
+    item["category_keys"] = detail::VectorToPyList(one_hot_state.category_keys);
+    item["output_names"] = detail::VectorToPyList(one_hot_state.output_names);
+    item["has_other_bucket"] = one_hot_state.has_other_bucket != 0U;
+    one_hot_states.append(std::move(item));
+  }
+  state["one_hot_states"] = std::move(one_hot_states);
+
+  py::list categorical_states;
+  for (const auto& categorical_state : categorical_states_) {
+    py::dict item;
+    item["source_index"] = categorical_state.source_index;
+    item["output_name"] = categorical_state.output_name;
+    item["has_other_bucket"] = categorical_state.has_other_bucket != 0U;
+    item["other_value"] = categorical_state.other_value;
+    py::dict mapping;
+    for (const auto& [key, value] : categorical_state.mapping) {
+      mapping[py::str(key)] = value;
+    }
+    item["mapping"] = std::move(mapping);
+    categorical_states.append(std::move(item));
+  }
+  state["categorical_states"] = std::move(categorical_states);
+
+  py::list combination_states;
+  for (const auto& combination_state : combination_states_) {
+    py::dict item;
+    item["output_name"] = combination_state.output_name;
+    item["has_other_bucket"] = combination_state.has_other_bucket != 0U;
+    item["other_value"] = combination_state.other_value;
+    py::dict mapping;
+    for (const auto& [key, value] : combination_state.mapping) {
+      mapping[py::str(key)] = value;
+    }
+    item["mapping"] = std::move(mapping);
+    combination_states.append(std::move(item));
+  }
+  state["combination_states"] = std::move(combination_states);
+
+  py::list ctr_states;
+  for (const auto& ctr_state : ctr_states_) {
+    py::dict item;
+    item["source_indices"] = detail::VectorToPyList(ctr_state.source_indices);
+    item["output_names"] = detail::VectorToPyList(ctr_state.output_names);
+    item["ctr_type"] = ctr_state.ctr_type;
+    item["prior_values"] = py::cast(ctr_state.prior_values);
+    item["total_rows"] = ctr_state.total_rows;
+    py::dict total_counts;
+    for (const auto& [key, value] : ctr_state.total_counts) {
+      total_counts[py::str(key)] = value;
+    }
+    item["total_counts"] = std::move(total_counts);
+    py::dict total_sums;
+    for (const auto& [key, values] : ctr_state.total_sums) {
+      total_sums[py::str(key)] = py::cast(values);
+    }
+    item["total_sums"] = std::move(total_sums);
+    ctr_states.append(std::move(item));
+  }
+  state["ctr_states"] = std::move(ctr_states);
+
+  py::list text_states;
+  for (const auto& text_state : text_states_) {
+    py::dict item;
+    item["source_index"] = text_state.source_index;
+    item["prefix"] = text_state.prefix;
+    item["output_dim"] = text_state.output_dim;
+    item["uses_dictionary"] = text_state.uses_dictionary != 0U;
+    item["filters_tokens"] = text_state.filters_tokens != 0U;
+    item["vocabulary"] = detail::VectorToPyList(text_state.vocabulary);
+    item["idf_values"] = detail::VectorToPyList(text_state.idf_values);
+    text_states.append(std::move(item));
+  }
+  state["text_states"] = std::move(text_states);
+
+  py::list embedding_states;
+  for (const auto& embedding_state : embedding_states_) {
+    py::dict item;
+    item["source_index"] = embedding_state.source_index;
+    item["prefix"] = embedding_state.prefix;
+    item["stats"] = detail::VectorToPyList(embedding_state.stats);
+    item["center"] = detail::VectorToPyList(embedding_state.center);
+    py::list target_projection_weights;
+    for (const auto& weights : embedding_state.target_projection_weights) {
+      target_projection_weights.append(detail::VectorToPyList(weights));
+    }
+    item["target_projection_weights"] = std::move(target_projection_weights);
+    item["target_output_names"] = detail::VectorToPyList(embedding_state.target_output_names);
+    embedding_states.append(std::move(item));
+  }
+  state["embedding_states"] = std::move(embedding_states);
+  return state;
+}
+
+NativeFeaturePipeline NativeFeaturePipeline::FromState(const py::dict& state) {
+  NativeFeaturePipeline pipeline;
+  pipeline.LoadState(state);
+  return pipeline;
+}
+
+}  // namespace ctboost

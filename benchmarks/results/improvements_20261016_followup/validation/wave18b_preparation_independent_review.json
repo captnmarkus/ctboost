@@ -1,0 +1,34 @@
+{
+  "date": "2026-10-16",
+  "status": "passed_frozen_resource_only_retry_audit",
+  "plan_sha256": "d368d34f9245e27d818f105b70163474878f9a6fdfd0f720a1204440b0ca09d2",
+  "amendment_sha256": "374cfc7e6b3a24d3c5fdb1cbcdd3693db67b64f65a7093c41f0ded01c7e627fd",
+  "original_failure_review_sha256": "a592b0bfa2e74dddf5a72fa3d1d4a0f5d6d62eb4a69a4e58516d15c193cf90b5",
+  "changed_plan_fields": [
+    "created_at",
+    "quiet_baseline_memory",
+    "resources"
+  ],
+  "sole_resource_change": "maximum_job_rss_bytes from10GiB to8GiB",
+  "all_other_plan_fields_exactly_equal": true,
+  "fold_manifest_bytes_identical": true,
+  "all36_controls_and_four_sources_unchanged": true,
+  "resources": {
+    "cpu": 4,
+    "headroom_poll_seconds": 5.0,
+    "headroom_reserve_bytes": 4294967296,
+    "headroom_wait_seconds": 300.0,
+    "maximum_job_rss_bytes": 8589934592,
+    "maximum_job_seconds": 1200.0,
+    "maximum_named_array_bytes": 6442450944,
+    "threads_per_fit": 1,
+    "workers": 1
+  },
+  "quiet_available_bytes": 13984444416,
+  "required_available_bytes": 12884901888,
+  "fresh_fold_fits": 540,
+  "fresh_union_fits": 36,
+  "old_fit_reuse": 0,
+  "scope": "Closed plan/amendment/manifests only; no worker receipts, raw payloads, fits or scores accessed",
+  "limits": "No success or memory-convergence guarantee. Frozen RSS/time/headroom/numerical failures remain terminal. Current quiet surplus above12GiB is less than2GiB; synthetic test execution stays held."
+}

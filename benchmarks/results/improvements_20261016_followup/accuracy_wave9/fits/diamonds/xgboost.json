@@ -1,0 +1,141 @@
+{
+  "dataset": "diamonds",
+  "finished_at": "2026-10-16T12:02:51.298398+00:00",
+  "library": "xgboost",
+  "selection": {
+    "all_eight_successful": true,
+    "base_selection": {
+      "all_eight_successful": true,
+      "best": {
+        "config_index": 7,
+        "fit_seconds": 0.5042481999989832,
+        "parameters": {
+          "alpha": 100.0,
+          "colsample_bytree": 1.0,
+          "eta": 0.05,
+          "eval_metric": "rmse",
+          "lambda": 1.0,
+          "max_bin": 256,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "reg:squarederror",
+          "seed": 47,
+          "subsample": 1.0,
+          "tree_method": "hist"
+        },
+        "retained_at_round_cap": false,
+        "retained_rounds": 154,
+        "selection_key": [
+          571.9837120496934,
+          154,
+          7
+        ],
+        "stop_error": 571.9837120496934,
+        "trained_rounds_if_available": 204
+      },
+      "cumulative_search_fit_seconds": 48.2406192999897,
+      "current_wave_all_eight_successful": true,
+      "dataset": "diamonds",
+      "library": "xgboost",
+      "model_bytes": 809468,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave8\\models\\diamonds\\xgboost.pkl",
+      "model_sha256": "3cc15fec46236caf3334248164318f6e08dbdf9b7b6582220cb9baf27409ff82",
+      "plan_sha256": "a8b864e4ef75e9f0b385789433f26fe82ec913c85f7c0fb38376e7dbd53712e8",
+      "search_fit_seconds": 4.790836999996827,
+      "source_wave": 8
+    },
+    "best": {
+      "config_index": 7,
+      "fit_seconds": 0.5042481999989832,
+      "parameters": {
+        "alpha": 100.0,
+        "colsample_bytree": 1.0,
+        "eta": 0.05,
+        "eval_metric": "rmse",
+        "lambda": 1.0,
+        "max_bin": 256,
+        "max_depth": 6,
+        "min_child_weight": 1.0,
+        "multi_strategy": "one_output_per_tree",
+        "nthread": 1,
+        "objective": "reg:squarederror",
+        "seed": 47,
+        "subsample": 1.0,
+        "tree_method": "hist"
+      },
+      "retained_at_round_cap": false,
+      "retained_rounds": 154,
+      "selection_key": null,
+      "stop_error": null,
+      "trained_rounds_if_available": 204
+    },
+    "cumulative_search_fit_seconds": 48.2406192999897,
+    "current_wave_all_eight_successful": true,
+    "dataset": "diamonds",
+    "library": "xgboost",
+    "mandatory_union_refit": true,
+    "model_bytes": 822181,
+    "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave9\\models\\diamonds\\xgboost.pkl",
+    "model_sha256": "73a4c5154f3f9b91535236ed001d4c0cd4f90a9c81c9c38f23341643c4139b25",
+    "plan_sha256": "fb82afcb096c6346ff1dd3c99281004efafe948d9bde4221bea5a50a4e095107",
+    "refit_details": {
+      "apparent_union_error_inference_transform": 349.4400214906897,
+      "early_stopping": false,
+      "fit_seconds": 0.29423210000095423,
+      "parameters": {
+        "alpha": 100.0,
+        "colsample_bytree": 1.0,
+        "eta": 0.05,
+        "eval_metric": "rmse",
+        "lambda": 1.0,
+        "max_bin": 256,
+        "max_depth": 6,
+        "min_child_weight": 1.0,
+        "multi_strategy": "one_output_per_tree",
+        "nthread": 1,
+        "objective": "reg:squarederror",
+        "seed": 47,
+        "subsample": 1.0,
+        "tree_method": "hist"
+      },
+      "requested_rounds": 154,
+      "retained_rounds": 154,
+      "structural_early_termination": false,
+      "union_data": {
+        "row_order": "original TRAIN followed by original STOP",
+        "source_roles": {
+          "stop": {
+            "index_sha256": "3e974c20b4b0dd9787cfa93cf2d14b18177838f3975c31d94f2dbb4d112e4653",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\diamonds\\stop.pkl",
+            "rows": 1250,
+            "sha256": "8aa0a52fd215f4cd95d3e65eaed49176d689e3c2de6c7842c886b3bb19fab9cb"
+          },
+          "train": {
+            "index_sha256": "da7aed652a62c60f83056933aa26a1fcc5aa72cd51f1668a28ecbc8ae4948bb3",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\diamonds\\train.pkl",
+            "rows": 6250,
+            "sha256": "7179128062904539b97310cd9f9e2e6058c6c17cf9e3a255a5db4e886eecb277"
+          }
+        },
+        "stop_ids_sha256": "3e974c20b4b0dd9787cfa93cf2d14b18177838f3975c31d94f2dbb4d112e4653",
+        "stop_rows": 1250,
+        "train_ids_sha256": "da7aed652a62c60f83056933aa26a1fcc5aa72cd51f1668a28ecbc8ae4948bb3",
+        "train_rows": 6250,
+        "union_category_counts": {
+          "clarity": 8,
+          "color": 7,
+          "cut": 5
+        },
+        "union_ids_sha256": "29a54833fffd8636859c085bd1c468385d43074835dc61e1e295fbbbda0dc995",
+        "union_rows": 7500,
+        "vocabulary_fit_on": "TRAIN+STOP union only"
+      }
+    },
+    "search_fit_seconds": 4.790836999996827,
+    "source_wave": 9
+  },
+  "started_at": "2026-10-16T12:02:50.920122+00:00",
+  "status": "ok"
+}

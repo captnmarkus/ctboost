@@ -1,0 +1,31 @@
+{
+  "protocol": "binary_union_refit_robustness_20261016",
+  "created_before": "Any real binary correction fit, seed947 fit or official-test feature/label access",
+  "preserved_parent_policy": "robustness_protocol_union.json",
+  "population": "All twelve original metadata-selected tasks and all three libraries; every earlier failed development gate remains preserved",
+  "wave10_policy": "For each of four binary tasks and three libraries, solve penalized logistic corrections of fixed leaf indicators on original wave8 TRAIN models, using only TRAIN labels and exact original ordered CT preprocessing. Evaluate penalties [1,10,100,1000] times shrinkages [0.25,1] plus unchanged identity on independent STOP 1-AUC. Exact ties prefer identity, then larger penalty, then smaller shrinkage. Freeze all twelve control choices before recomputing the selected correction on the corresponding wave9 TRAIN+STOP union model. The union stage makes no choice and uses no independent STOP metric. Carry the other eight tasks from wave9 unchanged. Freeze all36 models before development scoring.",
+  "objective": "Sum of logistic losses plus lambda/2 times squared correction norm, using original raw margins as fixed offsets. This training objective differs deliberately from STOP AUC selection.",
+  "structural_constraint": "All feature tests, split features, thresholds, categorical routes and topology remain unchanged. Corrections are folded into native scalar leaf outputs and require exact routing and numerical prediction-oracle checks.",
+  "trigger": "Only a successful36-model wave10 development gate opens the fixed-seed check",
+  "additional_seed": 947,
+  "additional_models": 36,
+  "seed_policy": "Refit every model on the same TRAIN+STOP union using seed947, the original wave8 requested round counts and frozen tree parameters. Recompute selected binary and regression corrections with their unchanged penalties, shrinkages and solver controls on reconstructed ordered union training transforms; retain selected multiclass temperatures unchanged. No early stopping, HPO, correction reselection or development fallback.",
+  "aggregation": "Average primary errors across seeds47 and947 within each of12 datasets, then compare dataset means. Report each seed separately; these are not24 independent tasks.",
+  "gate": {
+    "all_36_models_successful": true,
+    "median_relative_error_gain_against_each_comparator": 0,
+    "minimum_dataset_wins_or_ties_against_each_comparator": 6
+  },
+  "primary_errors": {"binary": "1-ROC-AUC", "regression": "RMSE", "multiclass": "logloss"},
+  "prediction_rule": "Native leaf corrections need no wrapper; multiclass uses shared fixed_temperature.py float64 margin division, also included in any final latency benchmark.",
+  "if_gate_fails": "Keep official outer test and original14 confirmation sealed. Further work needs a fresh predeclared protocol, not a development-selected fallback to an earlier model policy.",
+  "official_test_after_gate": {
+    "authorization": "User authorized one-shot assessment after final policy/model freeze",
+    "split": "Original OpenML repeat0/fold0/sample0 outer-test rows, uncapped",
+    "preconditions": "Freeze72 model hashes, all source/runtime/policy identities and official cache/split identities before opening test features or labels",
+    "models": "Score the already trained47 and947 binary-corrected union models without further fit or adjustment",
+    "labels": "Fit classification label ordering on official outer-training labels and verify exact cached-role agreement",
+    "aggregation": "Same mean errors across two seeds within each of twelve datasets",
+    "limitations": "Adaptively reused development, capped partial outer training, twelve tasks and two learner seeds; not an official TabArena ranking, statistical significance claim or new default. Fixed penalty transfer from TRAIN to union may be suboptimal. Original14 confirmation fold7 remains sealed."
+  }
+}

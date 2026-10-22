@@ -1,0 +1,2835 @@
+{
+  "created_at": "2026-10-16T11:37:41.308590+00:00",
+  "development_target_met": false,
+  "frozen_selections_sha256": "9e7a9b8eb963eaefa9a43c163bab5c562b860f23c38195af8a1cba07d7eb9f6e",
+  "limitations": "Adaptive development study on historically reused data. Equal candidate counts are not equal compute or equal effective regularization across different leaf bases. This is a new post-fit objective on fixed trees, not redundant per-tree Newton refinement and not a production default. Old failed-gate confirmation and official outer test remain sealed.",
+  "official_test_scored": false,
+  "plan_sha256": "b2af792e292900317ec8086ecd6974224bffc52fd315e12a213c3f44a5e4978f",
+  "results": [
+    {
+      "dataset": "blood-transfusion-service-center",
+      "models": {
+        "ctboost": {
+          "error": 0.39503546099290776,
+          "predictions_sha256": "ec17cf7fd1b2cd050cb5f1548904233394ea477160a79433f6af742004d563d2",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 1,
+              "fit_seconds": 0.00554550000015297,
+              "parameters": {
+                "alpha": 0.2,
+                "bootstrap_type": "Bernoulli",
+                "cat_features": null,
+                "eval_metric": "AUC",
+                "feature_test": "grouped",
+                "feature_test_adjustment": "none",
+                "feature_test_bins": 8,
+                "iterations": 2000,
+                "lambda_l2": 1,
+                "leaf_estimation_backtracking": true,
+                "leaf_estimation_iterations": 3,
+                "learning_rate": 0.1,
+                "max_bins": 256,
+                "max_cat_threshold": 64,
+                "max_depth": 4,
+                "min_data_in_leaf": 20,
+                "multi_strategy": "one_output_per_tree",
+                "multiclass_feature_test": "single",
+                "ordered_ctr": true,
+                "random_seed": 47,
+                "subsample": 0.8,
+                "verbose": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 15,
+              "selection_key": [
+                0.05957446808510636,
+                15,
+                1
+              ],
+              "stop_error": 0.05957446808510636,
+              "trained_rounds_if_available": null
+            },
+            "cumulative_search_fit_seconds": 0.9099443000050087,
+            "current_wave_all_eight_successful": true,
+            "dataset": "blood-transfusion-service-center",
+            "library": "ctboost",
+            "model_bytes": 73512,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave2\\models\\blood-transfusion-service-center\\ctboost.pkl",
+            "model_sha256": "442c3c2868f003981c332b1062bea6847018ff0a724d97eeae5454b4fa1eada0",
+            "plan_sha256": "f724c37603c865a54a492ab8b022cdd0351c2cfbda124571d880b0fbcd799dc3",
+            "search_fit_seconds": 0.16125730000021576,
+            "source_wave": 2
+          }
+        },
+        "lightgbm": {
+          "error": 0.33758865248226955,
+          "predictions_sha256": "d18961bb2231dd27ba67161485bb1f34b94b96fff8ed02293c7f175f6dacde25",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 0,
+              "fit_seconds": 0.016201399999772548,
+              "parameters": {
+                "bagging_fraction": 0.8,
+                "bagging_freq": 1,
+                "deterministic": true,
+                "force_col_wise": true,
+                "lambda_l2": 0,
+                "learning_rate": 0.05,
+                "max_bin": 255,
+                "metric": "auc",
+                "num_leaves": 15,
+                "num_threads": 1,
+                "objective": "binary",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 1,
+              "selection_key": [
+                0.06595744680851057,
+                1,
+                0
+              ],
+              "stop_error": 0.06595744680851057,
+              "trained_rounds_if_available": 51
+            },
+            "cumulative_search_fit_seconds": 0.3728824999961944,
+            "current_wave_all_eight_successful": true,
+            "dataset": "blood-transfusion-service-center",
+            "library": "lightgbm",
+            "model_bytes": 6464,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\blood-transfusion-service-center\\lightgbm.pkl",
+            "model_sha256": "db669924407280288f40600852d9eab3e54e0046abef388136bf2af9b1d35bba",
+            "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+            "search_fit_seconds": 0.054282200000670855,
+            "source_wave": 1
+          }
+        },
+        "xgboost": {
+          "error": 0.37163120567375885,
+          "predictions_sha256": "280822c5b8757fdc52ef4ef2770891b2e9a18cd1ba0229a25c763fd8b4fa7fa7",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 1,
+              "fit_seconds": 0.13437029999840888,
+              "parameters": {
+                "eta": 0.05,
+                "eval_metric": "auc",
+                "lambda": 0.3,
+                "max_bin": 256,
+                "max_cat_threshold": 256,
+                "max_cat_to_onehot": 8,
+                "max_depth": 4,
+                "min_child_weight": 5,
+                "multi_strategy": "one_output_per_tree",
+                "nthread": 1,
+                "objective": "binary:logistic",
+                "seed": 47,
+                "subsample": 1.0,
+                "tree_method": "hist"
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 28,
+              "selection_key": [
+                0.0687943262411348,
+                28,
+                1
+              ],
+              "stop_error": 0.0687943262411348,
+              "trained_rounds_if_available": 78
+            },
+            "cumulative_search_fit_seconds": 4.692014800000834,
+            "current_wave_all_eight_successful": true,
+            "dataset": "blood-transfusion-service-center",
+            "library": "xgboost",
+            "model_bytes": 41154,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave5\\models\\blood-transfusion-service-center\\xgboost.pkl",
+            "model_sha256": "544c5a9917015043fe44e3c0f4a44aee8e559b3688b60a6f99faa14872813e05",
+            "plan_sha256": "70b439625ede1a0f4fcde32e08ced81995eee0ab020ccbeb76e6d39a8784abb3",
+            "search_fit_seconds": 1.1041340999981912,
+            "source_wave": 5
+          }
+        }
+      },
+      "problem_type": "binary"
+    },
+    {
+      "dataset": "churn",
+      "models": {
+        "ctboost": {
+          "error": 0.11974789915966388,
+          "predictions_sha256": "b4471ed40618c65e292d93cdadb3b63e811bbade53cc5fe932a62a1401e97ced",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 0,
+              "fit_seconds": 0.3514441999996052,
+              "parameters": {
+                "alpha": 0.05,
+                "bootstrap_type": "Bernoulli",
+                "cat_features": [
+                  "state",
+                  "area_code",
+                  "international_plan",
+                  "voice_mail_plan"
+                ],
+                "eval_metric": "AUC",
+                "feature_test": "grouped",
+                "feature_test_adjustment": "none",
+                "feature_test_bins": 8,
+                "iterations": 2000,
+                "lambda_l2": 0.1,
+                "leaf_estimation_backtracking": true,
+                "leaf_estimation_iterations": 3,
+                "learning_rate": 0.05,
+                "max_bins": 256,
+                "max_cat_threshold": 256,
+                "max_depth": 4,
+                "min_data_in_leaf": 1,
+                "multi_strategy": "one_output_per_tree",
+                "multiclass_feature_test": "single",
+                "one_hot_max_size": 8,
+                "ordered_ctr": true,
+                "random_seed": 47,
+                "subsample": 0.8,
+                "verbose": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 137,
+              "selection_key": [
+                0.06164515507609314,
+                137,
+                0
+              ],
+              "stop_error": 0.06164515507609314,
+              "trained_rounds_if_available": null
+            },
+            "cumulative_search_fit_seconds": 7.261624899996605,
+            "current_wave_all_eight_successful": true,
+            "dataset": "churn",
+            "library": "ctboost",
+            "model_bytes": 954061,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave4\\models\\churn\\ctboost.pkl",
+            "model_sha256": "6fdb47171b7ec6a8da62e10c34777ce1e1300b8cad3d98fc9b1976d056ee766c",
+            "plan_sha256": "b63459620d4e35f543ce3b366d33767b82da8c98a96fa30155442825ce3c585a",
+            "search_fit_seconds": 1.279098499995598,
+            "source_wave": 4
+          }
+        },
+        "lightgbm": {
+          "error": 0.12528485970659453,
+          "predictions_sha256": "08edf6a095260ee0aa72289446064bc398bc5649a57ebb6c672ad9a63703e9ae",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 2,
+              "fit_seconds": 0.05005680000067514,
+              "parameters": {
+                "bagging_fraction": 0.8,
+                "bagging_freq": 1,
+                "deterministic": true,
+                "force_col_wise": true,
+                "lambda_l2": 0.1,
+                "learning_rate": 0.05,
+                "max_bin": 255,
+                "max_cat_threshold": 256,
+                "max_cat_to_onehot": 8,
+                "metric": "auc",
+                "min_data_in_leaf": 5,
+                "num_leaves": 31,
+                "num_threads": 1,
+                "objective": "binary",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 6,
+              "selection_key": [
+                0.05463783471392791,
+                6,
+                2
+              ],
+              "stop_error": 0.05463783471392791,
+              "trained_rounds_if_available": 56
+            },
+            "cumulative_search_fit_seconds": 2.4950912999993307,
+            "current_wave_all_eight_successful": true,
+            "dataset": "churn",
+            "library": "lightgbm",
+            "model_bytes": 27229,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave4\\models\\churn\\lightgbm.pkl",
+            "model_sha256": "be709c42db3d74f160ddc146f641e4a71093547856d1f9f14514e77d9f29f442",
+            "plan_sha256": "b63459620d4e35f543ce3b366d33767b82da8c98a96fa30155442825ce3c585a",
+            "search_fit_seconds": 0.3370207999996637,
+            "source_wave": 4
+          }
+        },
+        "xgboost": {
+          "error": 0.12942126002943544,
+          "predictions_sha256": "3bf847a7abca0d2060a9446bf3f2687db36ff19517410d8f2621737a1ca28d14",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 7,
+              "fit_seconds": 0.2909252999997989,
+              "parameters": {
+                "eta": 0.05,
+                "eval_metric": "auc",
+                "lambda": 10,
+                "max_bin": 256,
+                "max_cat_threshold": 256,
+                "max_cat_to_onehot": 8,
+                "max_depth": 6,
+                "min_child_weight": 1,
+                "multi_strategy": "one_output_per_tree",
+                "nthread": 1,
+                "objective": "binary:logistic",
+                "seed": 47,
+                "subsample": 1.0,
+                "tree_method": "hist"
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 61,
+              "selection_key": [
+                0.09658543633211314,
+                61,
+                7
+              ],
+              "stop_error": 0.09658543633211314,
+              "trained_rounds_if_available": 111
+            },
+            "cumulative_search_fit_seconds": 12.623109599999225,
+            "current_wave_all_eight_successful": true,
+            "dataset": "churn",
+            "library": "xgboost",
+            "model_bytes": 219982,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave4\\models\\churn\\xgboost.pkl",
+            "model_sha256": "dad32f1f1cf5e3d6a9646dadbeb292a6dc99c30ab4e1de5d9cef8467afc8f5cd",
+            "plan_sha256": "b63459620d4e35f543ce3b366d33767b82da8c98a96fa30155442825ce3c585a",
+            "search_fit_seconds": 1.8812544999982492,
+            "source_wave": 4
+          }
+        }
+      },
+      "problem_type": "binary"
+    },
+    {
+      "dataset": "in_vehicle_coupon_recommendation",
+      "models": {
+        "ctboost": {
+          "error": 0.2041297410649161,
+          "predictions_sha256": "ebd2ea9dc5ad05b696f3b5f770e1035cfa428d7bd74b709f466277617e9bf806",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 6,
+              "fit_seconds": 0.9137422000003426,
+              "parameters": {
+                "alpha": 0.2,
+                "bootstrap_type": "Bernoulli",
+                "cat_features": [
+                  "destination",
+                  "passenger",
+                  "weather",
+                  "coupon",
+                  "expiration",
+                  "gender",
+                  "age",
+                  "maritalStatus",
+                  "has_children",
+                  "education",
+                  "occupation",
+                  "income",
+                  "car",
+                  "Bar",
+                  "CoffeeHouse",
+                  "CarryAway",
+                  "RestaurantLessThan20",
+                  "Restaurant20To50",
+                  "toCoupon_GEQ15min",
+                  "toCoupon_GEQ25min",
+                  "direction_same",
+                  "direction_opp"
+                ],
+                "eval_metric": "AUC",
+                "feature_test": "grouped",
+                "feature_test_adjustment": "none",
+                "feature_test_bins": 8,
+                "iterations": 2000,
+                "lambda_l2": 3,
+                "leaf_estimation_backtracking": true,
+                "leaf_estimation_iterations": 3,
+                "learning_rate": 0.1,
+                "max_bins": 256,
+                "max_cat_threshold": 256,
+                "max_depth": 8,
+                "min_data_in_leaf": 10,
+                "multi_strategy": "one_output_per_tree",
+                "multiclass_feature_test": "single",
+                "one_hot_max_size": 8,
+                "ordered_ctr": true,
+                "random_seed": 47,
+                "subsample": 0.8,
+                "verbose": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 72,
+              "selection_key": [
+                0.22278293487462408,
+                72,
+                6
+              ],
+              "stop_error": 0.22278293487462408,
+              "trained_rounds_if_available": null
+            },
+            "cumulative_search_fit_seconds": 38.14547940000011,
+            "current_wave_all_eight_successful": true,
+            "dataset": "in_vehicle_coupon_recommendation",
+            "library": "ctboost",
+            "model_bytes": 3941355,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave3\\models\\in_vehicle_coupon_recommendation\\ctboost.pkl",
+            "model_sha256": "c6f4cd2651111bab5d096302791047b68aeaf7d3985fe273f6fc0a8a20241a71",
+            "plan_sha256": "322e99168bcd1f855ec372d071fe3235c494b08bccac851de00a2b6d21a6db61",
+            "search_fit_seconds": 5.964578500002972,
+            "source_wave": 3
+          }
+        },
+        "lightgbm": {
+          "error": 0.19244210430342834,
+          "predictions_sha256": "bdb1bdf21939192ff2e008fa64c8b2509373f10f8bbcc016c6809afb796f4fbf",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 7,
+              "fit_seconds": 0.7517843999994511,
+              "parameters": {
+                "bagging_fraction": 0.8,
+                "bagging_freq": 1,
+                "deterministic": true,
+                "feature_fraction": 0.8,
+                "force_col_wise": true,
+                "lambda_l2": 5,
+                "learning_rate": 0.1,
+                "max_bin": 255,
+                "metric": "auc",
+                "min_data_in_leaf": 40,
+                "num_leaves": 127,
+                "num_threads": 1,
+                "objective": "binary",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 424,
+              "selection_key": [
+                0.19857620340368398,
+                424,
+                7
+              ],
+              "stop_error": 0.19857620340368398,
+              "trained_rounds_if_available": 474
+            },
+            "cumulative_search_fit_seconds": 22.17498130000058,
+            "current_wave_all_eight_successful": true,
+            "dataset": "in_vehicle_coupon_recommendation",
+            "library": "lightgbm",
+            "model_bytes": 1975608,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave2\\models\\in_vehicle_coupon_recommendation\\lightgbm.pkl",
+            "model_sha256": "89bf2942f31f980cab05011dafca6c17ba3c1858d9c0e74c28d353028c34df6b",
+            "plan_sha256": "f724c37603c865a54a492ab8b022cdd0351c2cfbda124571d880b0fbcd799dc3",
+            "search_fit_seconds": 6.143122799998309,
+            "source_wave": 2
+          }
+        },
+        "xgboost": {
+          "error": 0.1925980123997083,
+          "predictions_sha256": "a03c8f44b112b66e1f7fa96bdfa9df5f82649073888f536425c4cda533900c27",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 2,
+              "fit_seconds": 1.3270763000000443,
+              "parameters": {
+                "eta": 0.05,
+                "eval_metric": "auc",
+                "lambda": 1,
+                "max_bin": 256,
+                "max_depth": 8,
+                "multi_strategy": "one_output_per_tree",
+                "nthread": 1,
+                "objective": "binary:logistic",
+                "seed": 47,
+                "subsample": 0.8,
+                "tree_method": "hist"
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 235,
+              "selection_key": [
+                0.1944602562979828,
+                235,
+                2
+              ],
+              "stop_error": 0.1944602562979828,
+              "trained_rounds_if_available": 285
+            },
+            "cumulative_search_fit_seconds": 48.011561799994524,
+            "current_wave_all_eight_successful": true,
+            "dataset": "in_vehicle_coupon_recommendation",
+            "library": "xgboost",
+            "model_bytes": 3513126,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\in_vehicle_coupon_recommendation\\xgboost.pkl",
+            "model_sha256": "ded3b1b425e3b0f17372f29b7aabd694f19da73adac9b2ae3215fad7614aad83",
+            "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+            "search_fit_seconds": 8.28501150000011,
+            "source_wave": 1
+          }
+        }
+      },
+      "problem_type": "binary"
+    },
+    {
+      "dataset": "GiveMeSomeCredit",
+      "models": {
+        "ctboost": {
+          "error": 0.14687474475210316,
+          "predictions_sha256": "334d82b1daf932c35ed67412300dd6a732c39054429d111ab174602c596189bc",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 6,
+              "fit_seconds": 0.3300113000004785,
+              "parameters": {
+                "alpha": 0.05,
+                "bootstrap_type": "Bernoulli",
+                "cat_features": null,
+                "eval_metric": "AUC",
+                "feature_test": "grouped",
+                "feature_test_adjustment": "none",
+                "feature_test_bins": 8,
+                "iterations": 2000,
+                "lambda_l2": 10,
+                "leaf_estimation_backtracking": true,
+                "leaf_estimation_iterations": 3,
+                "learning_rate": 0.1,
+                "max_bins": 256,
+                "max_cat_threshold": 64,
+                "max_depth": 10,
+                "min_data_in_leaf": 20,
+                "multi_strategy": "one_output_per_tree",
+                "multiclass_feature_test": "single",
+                "ordered_ctr": true,
+                "random_seed": 47,
+                "subsample": 0.8,
+                "verbose": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 164,
+              "selection_key": [
+                0.18897533284325752,
+                164,
+                6
+              ],
+              "stop_error": 0.18897533284325752,
+              "trained_rounds_if_available": null
+            },
+            "cumulative_search_fit_seconds": 9.97677350000049,
+            "current_wave_all_eight_successful": true,
+            "dataset": "GiveMeSomeCredit",
+            "library": "ctboost",
+            "model_bytes": 688474,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave2\\models\\GiveMeSomeCredit\\ctboost.pkl",
+            "model_sha256": "313d6b580d4c45569b507d1c36e2973af1b5048af96c80685a6e7409f90ce8be",
+            "plan_sha256": "f724c37603c865a54a492ab8b022cdd0351c2cfbda124571d880b0fbcd799dc3",
+            "search_fit_seconds": 1.6403964000019187,
+            "source_wave": 2
+          }
+        },
+        "lightgbm": {
+          "error": 0.1400034713713959,
+          "predictions_sha256": "777e472315a7f96df3635382e8b5b5a2f49a04be376675c4ff078159eee2e805",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 5,
+              "fit_seconds": 0.06872300000031828,
+              "parameters": {
+                "bagging_fraction": 1.0,
+                "bagging_freq": 1,
+                "deterministic": true,
+                "force_col_wise": true,
+                "lambda_l2": 10,
+                "learning_rate": 0.05,
+                "max_bin": 255,
+                "max_cat_threshold": 256,
+                "max_cat_to_onehot": 8,
+                "metric": "auc",
+                "min_data_in_leaf": 5,
+                "num_leaves": 7,
+                "num_threads": 1,
+                "objective": "binary",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 95,
+              "selection_key": [
+                0.18867414032508378,
+                95,
+                5
+              ],
+              "stop_error": 0.18867414032508378,
+              "trained_rounds_if_available": 145
+            },
+            "cumulative_search_fit_seconds": 3.503934599995773,
+            "current_wave_all_eight_successful": true,
+            "dataset": "GiveMeSomeCredit",
+            "library": "lightgbm",
+            "model_bytes": 90847,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave4\\models\\GiveMeSomeCredit\\lightgbm.pkl",
+            "model_sha256": "38641aa400702e0d748da9e7bae2a2de9c4dbef5cd6b8e01bbc8617dfb880235",
+            "plan_sha256": "b63459620d4e35f543ce3b366d33767b82da8c98a96fa30155442825ce3c585a",
+            "search_fit_seconds": 0.7460292999967351,
+            "source_wave": 4
+          }
+        },
+        "xgboost": {
+          "error": 0.14602732173486888,
+          "predictions_sha256": "977dd8e52f40fbabec3afa3a2dcf38ce9b459dd6d1cfc9a8313a3711256c4457",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 5,
+              "fit_seconds": 0.24200949999976729,
+              "parameters": {
+                "eta": 0.05,
+                "eval_metric": "auc",
+                "lambda": 10,
+                "max_bin": 256,
+                "max_cat_threshold": 256,
+                "max_cat_to_onehot": 8,
+                "max_depth": 3,
+                "min_child_weight": 1,
+                "multi_strategy": "one_output_per_tree",
+                "nthread": 1,
+                "objective": "binary:logistic",
+                "seed": 47,
+                "subsample": 1.0,
+                "tree_method": "hist"
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 64,
+              "selection_key": [
+                0.18673425630972795,
+                64,
+                5
+              ],
+              "stop_error": 0.18673425630972795,
+              "trained_rounds_if_available": 114
+            },
+            "cumulative_search_fit_seconds": 8.135626600005708,
+            "current_wave_all_eight_successful": true,
+            "dataset": "GiveMeSomeCredit",
+            "library": "xgboost",
+            "model_bytes": 83451,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave4\\models\\GiveMeSomeCredit\\xgboost.pkl",
+            "model_sha256": "0bf4fbfc88932ff7b20b72d25f00298b70ccba9e3608d6a3549c4cc38364df8d",
+            "plan_sha256": "b63459620d4e35f543ce3b366d33767b82da8c98a96fa30155442825ce3c585a",
+            "search_fit_seconds": 1.7137800000018615,
+            "source_wave": 4
+          }
+        }
+      },
+      "problem_type": "binary"
+    },
+    {
+      "dataset": "QSAR_fish_toxicity",
+      "models": {
+        "ctboost": {
+          "error": 0.7803592976812973,
+          "predictions_sha256": "153f6f30997eafd0b926c0f5c2803f62890335f82131cbca826438a87a92d52c",
+          "selection": {
+            "all_eight_successful": true,
+            "base_selection": {
+              "all_eight_successful": true,
+              "best": {
+                "config_index": 7,
+                "fit_seconds": 0.01178789999903529,
+                "parameters": {
+                  "alpha": 0.05,
+                  "bootstrap_type": "Bernoulli",
+                  "cat_features": null,
+                  "eval_metric": "RMSE",
+                  "feature_test": "grouped",
+                  "feature_test_adjustment": "none",
+                  "feature_test_bins": 8,
+                  "iterations": 1000,
+                  "lambda_l2": 1,
+                  "leaf_estimation_backtracking": true,
+                  "leaf_estimation_iterations": 3,
+                  "learning_rate": 0.15,
+                  "max_bins": 256,
+                  "max_cat_threshold": 64,
+                  "max_depth": 8,
+                  "multi_strategy": "one_output_per_tree",
+                  "multiclass_feature_test": "single",
+                  "ordered_ctr": true,
+                  "random_seed": 47,
+                  "subsample": 0.8,
+                  "verbose": false
+                },
+                "retained_at_round_cap": false,
+                "retained_rounds": 192,
+                "selection_key": [
+                  0.9431947088188166,
+                  192,
+                  7
+                ],
+                "stop_error": 0.9431947088188166,
+                "trained_rounds_if_available": null
+              },
+              "cumulative_search_fit_seconds": 1.4199784999982512,
+              "current_wave_all_eight_successful": true,
+              "dataset": "QSAR_fish_toxicity",
+              "library": "ctboost",
+              "model_bytes": 331883,
+              "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\QSAR_fish_toxicity\\ctboost.pkl",
+              "model_sha256": "ad9e3e1b0a79a773cb71f0dd408a406f858361c55e391aeadbaedea74100db58",
+              "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+              "search_fit_seconds": 0.2334666999977344,
+              "source_wave": 1
+            },
+            "best": {
+              "config_index": 7,
+              "fit_seconds": 0.01178789999903529,
+              "parameters": {
+                "alpha": 0.05,
+                "bootstrap_type": "Bernoulli",
+                "cat_features": null,
+                "eval_metric": "RMSE",
+                "feature_test": "grouped",
+                "feature_test_adjustment": "none",
+                "feature_test_bins": 8,
+                "iterations": 1000,
+                "lambda_l2": 1,
+                "leaf_estimation_backtracking": true,
+                "leaf_estimation_iterations": 3,
+                "learning_rate": 0.15,
+                "max_bins": 256,
+                "max_cat_threshold": 64,
+                "max_depth": 8,
+                "multi_strategy": "one_output_per_tree",
+                "multiclass_feature_test": "single",
+                "ordered_ctr": true,
+                "random_seed": 47,
+                "subsample": 0.8,
+                "verbose": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 192,
+              "selection_key": [
+                0.9311839571725863,
+                1,
+                -1000,
+                1.0
+              ],
+              "stop_error": 0.9311839571725863,
+              "trained_rounds_if_available": null
+            },
+            "cumulative_search_fit_seconds": 1.4199784999982512,
+            "current_wave_all_eight_successful": true,
+            "dataset": "QSAR_fish_toxicity",
+            "leaf_refit": {
+              "fold": {
+                "coefficient_rounding_absolute_bound": 1.674975070948203e-07,
+                "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+                "inference_only": true,
+                "library": "ctboost",
+                "physical_trees": 192,
+                "prediction_oracle_absolute_tolerance": 0.00306907226331532,
+                "topology_sha256_after": "96437923c16a35f9924d2e290737b3c9467bf934906f1cb3ed380ba244c3d297",
+                "topology_sha256_before": "96437923c16a35f9924d2e290737b3c9467bf934906f1cb3ed380ba244c3d297"
+              },
+              "lambda": 1000,
+              "shrinkage": 1.0,
+              "solver": {
+                "atol": 1e-08,
+                "btol": 1e-08,
+                "damp": "sqrt(lambda)",
+                "iter_lim": 2000,
+                "method": "scipy.sparse.linalg.lsqr"
+              }
+            },
+            "library": "ctboost",
+            "model_bytes": 332318,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave6_v2\\models\\QSAR_fish_toxicity\\ctboost.pkl",
+            "model_sha256": "0cd0c040c82c66ab0d42c7dfb55affb35bf2ffa0f55130bb27b3b6587f28a134",
+            "plan_sha256": "b2af792e292900317ec8086ecd6974224bffc52fd315e12a213c3f44a5e4978f",
+            "postfit_candidate_seconds": 0.8389791000026889,
+            "search_fit_seconds": 0.2334666999977344,
+            "source_wave": 6
+          }
+        },
+        "lightgbm": {
+          "error": 0.7553058612872044,
+          "predictions_sha256": "83c7a9e2bc3c7e67b6200e19ef976dc6436bcf7f02ff0f3d35b3beefc6af57e0",
+          "selection": {
+            "all_eight_successful": true,
+            "base_selection": {
+              "all_eight_successful": true,
+              "best": {
+                "config_index": 0,
+                "fit_seconds": 0.03218879999985802,
+                "parameters": {
+                  "bagging_fraction": 0.8,
+                  "bagging_freq": 1,
+                  "cat_l2": 0,
+                  "cat_smooth": 0,
+                  "deterministic": true,
+                  "force_col_wise": true,
+                  "lambda_l2": 0,
+                  "learning_rate": 0.1,
+                  "max_bin": 255,
+                  "max_cat_threshold": 256,
+                  "max_cat_to_onehot": 1,
+                  "metric": "rmse",
+                  "min_data_in_leaf": 10,
+                  "num_leaves": 7,
+                  "num_threads": 1,
+                  "objective": "regression",
+                  "seed": 47,
+                  "verbosity": -1,
+                  "zero_as_missing": false
+                },
+                "retained_at_round_cap": false,
+                "retained_rounds": 38,
+                "selection_key": [
+                  0.9222049833031178,
+                  38,
+                  0
+                ],
+                "stop_error": 0.9222049833031178,
+                "trained_rounds_if_available": 88
+              },
+              "cumulative_search_fit_seconds": 1.6065270000108285,
+              "current_wave_all_eight_successful": true,
+              "dataset": "QSAR_fish_toxicity",
+              "library": "lightgbm",
+              "model_bytes": 34934,
+              "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave3\\models\\QSAR_fish_toxicity\\lightgbm.pkl",
+              "model_sha256": "d10a189fd08b86f01eb2489d14f3f1ba719ffbb3d6c300e15284724478913fde",
+              "plan_sha256": "322e99168bcd1f855ec372d071fe3235c494b08bccac851de00a2b6d21a6db61",
+              "search_fit_seconds": 0.257201400003396,
+              "source_wave": 3
+            },
+            "best": {
+              "config_index": 7,
+              "fit_seconds": 0.03218879999985802,
+              "parameters": {
+                "bagging_fraction": 0.8,
+                "bagging_freq": 1,
+                "cat_l2": 0,
+                "cat_smooth": 0,
+                "deterministic": true,
+                "force_col_wise": true,
+                "lambda_l2": 0,
+                "learning_rate": 0.1,
+                "max_bin": 255,
+                "max_cat_threshold": 256,
+                "max_cat_to_onehot": 1,
+                "metric": "rmse",
+                "min_data_in_leaf": 10,
+                "num_leaves": 7,
+                "num_threads": 1,
+                "objective": "regression",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 38,
+              "selection_key": [
+                0.9210915022821272,
+                1,
+                -1000,
+                1.0
+              ],
+              "stop_error": 0.9210915022821272,
+              "trained_rounds_if_available": 88
+            },
+            "cumulative_search_fit_seconds": 1.6065270000108285,
+            "current_wave_all_eight_successful": true,
+            "dataset": "QSAR_fish_toxicity",
+            "leaf_refit": {
+              "fold": {
+                "coefficient_rounding_absolute_bound": 5.527262675331102e-16,
+                "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+                "inference_only": true,
+                "library": "lightgbm",
+                "physical_trees": 38,
+                "prediction_oracle_absolute_tolerance": 2.122588085208124e-12,
+                "topology_sha256_after": "4f3bd66c5c1b6cb9b8cb95194ec72a0ab3fdcaf67c70bf6ef7044ffd00d5143c",
+                "topology_sha256_before": "4f3bd66c5c1b6cb9b8cb95194ec72a0ab3fdcaf67c70bf6ef7044ffd00d5143c"
+              },
+              "lambda": 1000,
+              "shrinkage": 1.0,
+              "solver": {
+                "atol": 1e-08,
+                "btol": 1e-08,
+                "damp": "sqrt(lambda)",
+                "iter_lim": 2000,
+                "method": "scipy.sparse.linalg.lsqr"
+              }
+            },
+            "library": "lightgbm",
+            "model_bytes": 35348,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave6_v2\\models\\QSAR_fish_toxicity\\lightgbm.pkl",
+            "model_sha256": "ce7ae01c1fc551cd37b3b3d06ac483255a3ff3a4cb86f0b78972dd726be95129",
+            "plan_sha256": "b2af792e292900317ec8086ecd6974224bffc52fd315e12a213c3f44a5e4978f",
+            "postfit_candidate_seconds": 0.2558668999972724,
+            "search_fit_seconds": 0.257201400003396,
+            "source_wave": 6
+          }
+        },
+        "xgboost": {
+          "error": 0.6978862488385986,
+          "predictions_sha256": "8bcc248a50bda2ad51ad6e12ad45db92e49d5fc2137764a57370e8b4cfb3ca27",
+          "selection": {
+            "all_eight_successful": true,
+            "base_selection": {
+              "all_eight_successful": true,
+              "best": {
+                "config_index": 7,
+                "fit_seconds": 0.30523209999955725,
+                "parameters": {
+                  "eta": 0.15,
+                  "eval_metric": "rmse",
+                  "lambda": 10,
+                  "max_bin": 256,
+                  "max_depth": 6,
+                  "multi_strategy": "one_output_per_tree",
+                  "nthread": 1,
+                  "objective": "reg:squarederror",
+                  "seed": 47,
+                  "subsample": 0.8,
+                  "tree_method": "hist"
+                },
+                "retained_at_round_cap": false,
+                "retained_rounds": 117,
+                "selection_key": [
+                  0.9191156358757825,
+                  117,
+                  7
+                ],
+                "stop_error": 0.9191156358757825,
+                "trained_rounds_if_available": 167
+              },
+              "cumulative_search_fit_seconds": 14.350266800001918,
+              "current_wave_all_eight_successful": true,
+              "dataset": "QSAR_fish_toxicity",
+              "library": "xgboost",
+              "model_bytes": 343458,
+              "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\QSAR_fish_toxicity\\xgboost.pkl",
+              "model_sha256": "ec17fdf5994fdd563bdeca123cb8e0842140e54a76769c841e7b707fd3fc1c76",
+              "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+              "search_fit_seconds": 2.3065904999966733,
+              "source_wave": 1
+            },
+            "best": {
+              "config_index": 7,
+              "fit_seconds": 0.30523209999955725,
+              "parameters": {
+                "eta": 0.15,
+                "eval_metric": "rmse",
+                "lambda": 10,
+                "max_bin": 256,
+                "max_depth": 6,
+                "multi_strategy": "one_output_per_tree",
+                "nthread": 1,
+                "objective": "reg:squarederror",
+                "seed": 47,
+                "subsample": 0.8,
+                "tree_method": "hist"
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 117,
+              "selection_key": [
+                0.9191156358757825,
+                117,
+                7
+              ],
+              "stop_error": 0.9191156358757825,
+              "trained_rounds_if_available": 167
+            },
+            "cumulative_search_fit_seconds": 14.350266800001918,
+            "current_wave_all_eight_successful": true,
+            "dataset": "QSAR_fish_toxicity",
+            "leaf_refit": null,
+            "library": "xgboost",
+            "model_bytes": 343458,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\QSAR_fish_toxicity\\xgboost.pkl",
+            "model_sha256": "ec17fdf5994fdd563bdeca123cb8e0842140e54a76769c841e7b707fd3fc1c76",
+            "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+            "postfit_candidate_seconds": 1.236280799996166,
+            "search_fit_seconds": 2.3065904999966733,
+            "source_wave": 1
+          }
+        }
+      },
+      "problem_type": "regression"
+    },
+    {
+      "dataset": "Another-Dataset-on-used-Fiat-500",
+      "models": {
+        "ctboost": {
+          "error": 758.8128604715458,
+          "predictions_sha256": "415620562c29ee487d4036ad94483a4dfde40d7e4198370cfa80a3229491fecf",
+          "selection": {
+            "all_eight_successful": true,
+            "base_selection": {
+              "all_eight_successful": true,
+              "best": {
+                "config_index": 3,
+                "fit_seconds": 0.01855520000026445,
+                "parameters": {
+                  "alpha": 0.05,
+                  "bootstrap_type": "Bernoulli",
+                  "cat_features": [
+                    "model"
+                  ],
+                  "eval_metric": "RMSE",
+                  "feature_test": "grouped",
+                  "feature_test_adjustment": "none",
+                  "feature_test_bins": 8,
+                  "iterations": 2000,
+                  "lambda_l2": 3,
+                  "leaf_estimation_iterations": 1,
+                  "learning_rate": 0.05,
+                  "max_bins": 256,
+                  "max_cat_threshold": 256,
+                  "max_depth": 8,
+                  "min_data_in_leaf": 1,
+                  "multi_strategy": "one_output_per_tree",
+                  "multiclass_feature_test": "single",
+                  "one_hot_max_size": 8,
+                  "ordered_ctr": true,
+                  "random_seed": 47,
+                  "subsample": 1.0,
+                  "verbose": false
+                },
+                "retained_at_round_cap": false,
+                "retained_rounds": 58,
+                "selection_key": [
+                  637.4069292196643,
+                  58,
+                  3
+                ],
+                "stop_error": 637.4069292196643,
+                "trained_rounds_if_available": null
+              },
+              "cumulative_search_fit_seconds": 1.72626300000411,
+              "current_wave_all_eight_successful": true,
+              "dataset": "Another-Dataset-on-used-Fiat-500",
+              "library": "ctboost",
+              "model_bytes": 762298,
+              "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave5\\models\\Another-Dataset-on-used-Fiat-500\\ctboost.pkl",
+              "model_sha256": "4e9e21ed3bffe1ff07db2df8fe4428d4f3364ce486a1bcc306ab108e13d334e9",
+              "plan_sha256": "70b439625ede1a0f4fcde32e08ced81995eee0ab020ccbeb76e6d39a8784abb3",
+              "search_fit_seconds": 0.6591459000046598,
+              "source_wave": 5
+            },
+            "best": {
+              "config_index": 2,
+              "fit_seconds": 0.01855520000026445,
+              "parameters": {
+                "alpha": 0.05,
+                "bootstrap_type": "Bernoulli",
+                "cat_features": [
+                  "model"
+                ],
+                "eval_metric": "RMSE",
+                "feature_test": "grouped",
+                "feature_test_adjustment": "none",
+                "feature_test_bins": 8,
+                "iterations": 2000,
+                "lambda_l2": 3,
+                "leaf_estimation_iterations": 1,
+                "learning_rate": 0.05,
+                "max_bins": 256,
+                "max_cat_threshold": 256,
+                "max_depth": 8,
+                "min_data_in_leaf": 1,
+                "multi_strategy": "one_output_per_tree",
+                "multiclass_feature_test": "single",
+                "one_hot_max_size": 8,
+                "ordered_ctr": true,
+                "random_seed": 47,
+                "subsample": 1.0,
+                "verbose": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 58,
+              "selection_key": [
+                636.642460005489,
+                1,
+                -10,
+                0.25
+              ],
+              "stop_error": 636.642460005489,
+              "trained_rounds_if_available": null
+            },
+            "cumulative_search_fit_seconds": 1.72626300000411,
+            "current_wave_all_eight_successful": true,
+            "dataset": "Another-Dataset-on-used-Fiat-500",
+            "leaf_refit": {
+              "fold": {
+                "coefficient_rounding_absolute_bound": 0.00018069136470350022,
+                "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+                "inference_only": true,
+                "library": "ctboost",
+                "physical_trees": 58,
+                "prediction_oracle_absolute_tolerance": 1.4354956150054932,
+                "topology_sha256_after": "2997573bfbce3b0a04d3bc1d42801232f649587a3ea15c4096e7d90e5f5005c7",
+                "topology_sha256_before": "2997573bfbce3b0a04d3bc1d42801232f649587a3ea15c4096e7d90e5f5005c7"
+              },
+              "lambda": 10,
+              "shrinkage": 0.25,
+              "solver": {
+                "atol": 1e-08,
+                "btol": 1e-08,
+                "damp": "sqrt(lambda)",
+                "iter_lim": 2000,
+                "method": "scipy.sparse.linalg.lsqr"
+              }
+            },
+            "library": "ctboost",
+            "model_bytes": 762733,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave6_v2\\models\\Another-Dataset-on-used-Fiat-500\\ctboost.pkl",
+            "model_sha256": "27dd49843a38d0b85f195433b91a293af2ab6e8aa284fff70cce6d8d67cb784f",
+            "plan_sha256": "b2af792e292900317ec8086ecd6974224bffc52fd315e12a213c3f44a5e4978f",
+            "postfit_candidate_seconds": 1.522991700001512,
+            "search_fit_seconds": 0.6591459000046598,
+            "source_wave": 6
+          }
+        },
+        "lightgbm": {
+          "error": 743.9378929836084,
+          "predictions_sha256": "e8f12928676cd56846214c0c18b0434194469897130a6ea5cd5dbd919397963c",
+          "selection": {
+            "all_eight_successful": true,
+            "base_selection": {
+              "all_eight_successful": true,
+              "best": {
+                "config_index": 7,
+                "fit_seconds": 0.014911899999788147,
+                "parameters": {
+                  "bagging_fraction": 0.8,
+                  "bagging_freq": 1,
+                  "deterministic": true,
+                  "force_col_wise": true,
+                  "lambda_l2": 10,
+                  "learning_rate": 0.15,
+                  "max_bin": 255,
+                  "metric": "rmse",
+                  "num_leaves": 31,
+                  "num_threads": 1,
+                  "objective": "regression",
+                  "seed": 47,
+                  "verbosity": -1,
+                  "zero_as_missing": false
+                },
+                "retained_at_round_cap": false,
+                "retained_rounds": 21,
+                "selection_key": [
+                  648.9738421650532,
+                  21,
+                  7
+                ],
+                "stop_error": 648.9738421650532,
+                "trained_rounds_if_available": 71
+              },
+              "cumulative_search_fit_seconds": 1.0951067999976658,
+              "current_wave_all_eight_successful": true,
+              "dataset": "Another-Dataset-on-used-Fiat-500",
+              "library": "lightgbm",
+              "model_bytes": 30937,
+              "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\Another-Dataset-on-used-Fiat-500\\lightgbm.pkl",
+              "model_sha256": "b8d97b9293e52ca5904eeddb6875f43f4a2bd75e4ecdfd25021cfd82de7177fb",
+              "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+              "search_fit_seconds": 0.16001869999854534,
+              "source_wave": 1
+            },
+            "best": {
+              "config_index": 7,
+              "fit_seconds": 0.014911899999788147,
+              "parameters": {
+                "bagging_fraction": 0.8,
+                "bagging_freq": 1,
+                "deterministic": true,
+                "force_col_wise": true,
+                "lambda_l2": 10,
+                "learning_rate": 0.15,
+                "max_bin": 255,
+                "metric": "rmse",
+                "num_leaves": 31,
+                "num_threads": 1,
+                "objective": "regression",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 21,
+              "selection_key": [
+                648.9738421650532,
+                21,
+                7
+              ],
+              "stop_error": 648.9738421650532,
+              "trained_rounds_if_available": 71
+            },
+            "cumulative_search_fit_seconds": 1.0951067999976658,
+            "current_wave_all_eight_successful": true,
+            "dataset": "Another-Dataset-on-used-Fiat-500",
+            "leaf_refit": null,
+            "library": "lightgbm",
+            "model_bytes": 30937,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\Another-Dataset-on-used-Fiat-500\\lightgbm.pkl",
+            "model_sha256": "b8d97b9293e52ca5904eeddb6875f43f4a2bd75e4ecdfd25021cfd82de7177fb",
+            "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+            "postfit_candidate_seconds": 0.2889723000007507,
+            "search_fit_seconds": 0.16001869999854534,
+            "source_wave": 1
+          }
+        },
+        "xgboost": {
+          "error": 768.0530075707153,
+          "predictions_sha256": "b7ac50855cf1a883a8e55cd9b9f896abbe8a3568dc334358ced08da190339a14",
+          "selection": {
+            "all_eight_successful": true,
+            "base_selection": {
+              "all_eight_successful": true,
+              "best": {
+                "config_index": 7,
+                "fit_seconds": 0.14499380000052042,
+                "parameters": {
+                  "colsample_bytree": 0.8,
+                  "eta": 0.1,
+                  "eval_metric": "rmse",
+                  "lambda": 10,
+                  "max_bin": 256,
+                  "max_depth": 8,
+                  "min_child_weight": 5,
+                  "multi_strategy": "one_output_per_tree",
+                  "nthread": 1,
+                  "objective": "reg:squarederror",
+                  "seed": 47,
+                  "subsample": 0.8,
+                  "tree_method": "hist"
+                },
+                "retained_at_round_cap": false,
+                "retained_rounds": 32,
+                "selection_key": [
+                  645.2174723292696,
+                  32,
+                  7
+                ],
+                "stop_error": 645.2174723292696,
+                "trained_rounds_if_available": 82
+              },
+              "cumulative_search_fit_seconds": 7.2578828999976395,
+              "current_wave_all_eight_successful": true,
+              "dataset": "Another-Dataset-on-used-Fiat-500",
+              "library": "xgboost",
+              "model_bytes": 91660,
+              "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave2\\models\\Another-Dataset-on-used-Fiat-500\\xgboost.pkl",
+              "model_sha256": "4ff8ed20356dfa8f50c8da56a8ab13c6fbd2f0a1198d6772c5fe14d8efceaf6f",
+              "plan_sha256": "f724c37603c865a54a492ab8b022cdd0351c2cfbda124571d880b0fbcd799dc3",
+              "search_fit_seconds": 1.4816677999988315,
+              "source_wave": 2
+            },
+            "best": {
+              "config_index": 7,
+              "fit_seconds": 0.14499380000052042,
+              "parameters": {
+                "colsample_bytree": 0.8,
+                "eta": 0.1,
+                "eval_metric": "rmse",
+                "lambda": 10,
+                "max_bin": 256,
+                "max_depth": 8,
+                "min_child_weight": 5,
+                "multi_strategy": "one_output_per_tree",
+                "nthread": 1,
+                "objective": "reg:squarederror",
+                "seed": 47,
+                "subsample": 0.8,
+                "tree_method": "hist"
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 32,
+              "selection_key": [
+                645.2174723292696,
+                32,
+                7
+              ],
+              "stop_error": 645.2174723292696,
+              "trained_rounds_if_available": 82
+            },
+            "cumulative_search_fit_seconds": 7.2578828999976395,
+            "current_wave_all_eight_successful": true,
+            "dataset": "Another-Dataset-on-used-Fiat-500",
+            "leaf_refit": null,
+            "library": "xgboost",
+            "model_bytes": 91660,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave2\\models\\Another-Dataset-on-used-Fiat-500\\xgboost.pkl",
+            "model_sha256": "4ff8ed20356dfa8f50c8da56a8ab13c6fbd2f0a1198d6772c5fe14d8efceaf6f",
+            "plan_sha256": "f724c37603c865a54a492ab8b022cdd0351c2cfbda124571d880b0fbcd799dc3",
+            "postfit_candidate_seconds": 0.5023031999990053,
+            "search_fit_seconds": 1.4816677999988315,
+            "source_wave": 2
+          }
+        }
+      },
+      "problem_type": "regression"
+    },
+    {
+      "dataset": "houses",
+      "models": {
+        "ctboost": {
+          "error": 0.22566789444840796,
+          "predictions_sha256": "67bb4455fc6d209ab34c2915d2665878ac2c4cbe3296f19b688d9e28bea5fb30",
+          "selection": {
+            "all_eight_successful": true,
+            "base_selection": {
+              "all_eight_successful": true,
+              "best": {
+                "config_index": 7,
+                "fit_seconds": 0.5408250999989832,
+                "parameters": {
+                  "alpha": 0.5,
+                  "bootstrap_type": "Bernoulli",
+                  "cat_features": null,
+                  "eval_metric": "RMSE",
+                  "feature_test": "grouped",
+                  "feature_test_adjustment": "none",
+                  "feature_test_bins": 8,
+                  "iterations": 2000,
+                  "lambda_l2": 3,
+                  "leaf_estimation_iterations": 1,
+                  "learning_rate": 0.05,
+                  "max_bins": 256,
+                  "max_cat_threshold": 256,
+                  "max_depth": 8,
+                  "min_data_in_leaf": 1,
+                  "multi_strategy": "one_output_per_tree",
+                  "multiclass_feature_test": "single",
+                  "one_hot_max_size": 8,
+                  "ordered_ctr": true,
+                  "random_seed": 47,
+                  "subsample": 1.0,
+                  "verbose": false
+                },
+                "retained_at_round_cap": false,
+                "retained_rounds": 167,
+                "selection_key": [
+                  0.23196616531188244,
+                  167,
+                  7
+                ],
+                "stop_error": 0.23196616531188244,
+                "trained_rounds_if_available": null
+              },
+              "cumulative_search_fit_seconds": 9.97373439999501,
+              "current_wave_all_eight_successful": true,
+              "dataset": "houses",
+              "library": "ctboost",
+              "model_bytes": 21967611,
+              "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave5\\models\\houses\\ctboost.pkl",
+              "model_sha256": "cded1f42238ae496548e6093168db665748f9f17a416f83c6d73f2189458d774",
+              "plan_sha256": "70b439625ede1a0f4fcde32e08ced81995eee0ab020ccbeb76e6d39a8784abb3",
+              "search_fit_seconds": 2.3967393999973865,
+              "source_wave": 5
+            },
+            "best": {
+              "config_index": 5,
+              "fit_seconds": 0.5408250999989832,
+              "parameters": {
+                "alpha": 0.5,
+                "bootstrap_type": "Bernoulli",
+                "cat_features": null,
+                "eval_metric": "RMSE",
+                "feature_test": "grouped",
+                "feature_test_adjustment": "none",
+                "feature_test_bins": 8,
+                "iterations": 2000,
+                "lambda_l2": 3,
+                "leaf_estimation_iterations": 1,
+                "learning_rate": 0.05,
+                "max_bins": 256,
+                "max_cat_threshold": 256,
+                "max_depth": 8,
+                "min_data_in_leaf": 1,
+                "multi_strategy": "one_output_per_tree",
+                "multiclass_feature_test": "single",
+                "one_hot_max_size": 8,
+                "ordered_ctr": true,
+                "random_seed": 47,
+                "subsample": 1.0,
+                "verbose": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 167,
+              "selection_key": [
+                0.22685123112675679,
+                1,
+                -100,
+                1.0
+              ],
+              "stop_error": 0.22685123112675679,
+              "trained_rounds_if_available": null
+            },
+            "cumulative_search_fit_seconds": 9.97373439999501,
+            "current_wave_all_eight_successful": true,
+            "dataset": "houses",
+            "leaf_refit": {
+              "fold": {
+                "coefficient_rounding_absolute_bound": 1.766766862611901e-07,
+                "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+                "inference_only": true,
+                "library": "ctboost",
+                "physical_trees": 167,
+                "prediction_oracle_absolute_tolerance": 0.004699454177170992,
+                "topology_sha256_after": "8362fac40ac1525585f9dc9f0c505445b5540b74128ee33eb5afdbd861aaf21f",
+                "topology_sha256_before": "8362fac40ac1525585f9dc9f0c505445b5540b74128ee33eb5afdbd861aaf21f"
+              },
+              "lambda": 100,
+              "shrinkage": 1.0,
+              "solver": {
+                "atol": 1e-08,
+                "btol": 1e-08,
+                "damp": "sqrt(lambda)",
+                "iter_lim": 2000,
+                "method": "scipy.sparse.linalg.lsqr"
+              }
+            },
+            "library": "ctboost",
+            "model_bytes": 21968046,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave6_v2\\models\\houses\\ctboost.pkl",
+            "model_sha256": "0f1e333ceec5a34e72daa1ab4959faa001f701fcdfc2bc2e00eaf7e9fb26c90a",
+            "plan_sha256": "b2af792e292900317ec8086ecd6974224bffc52fd315e12a213c3f44a5e4978f",
+            "postfit_candidate_seconds": 46.867540799998096,
+            "search_fit_seconds": 2.3967393999973865,
+            "source_wave": 6
+          }
+        },
+        "lightgbm": {
+          "error": 0.2208159443978657,
+          "predictions_sha256": "2806f949dc835862868eabf30de67f6b8f925e390978d6c7920b0976a79def21",
+          "selection": {
+            "all_eight_successful": true,
+            "base_selection": {
+              "all_eight_successful": true,
+              "best": {
+                "config_index": 2,
+                "fit_seconds": 1.1383255000000645,
+                "parameters": {
+                  "bagging_fraction": 0.8,
+                  "bagging_freq": 1,
+                  "deterministic": true,
+                  "feature_fraction": 0.8,
+                  "force_col_wise": true,
+                  "lambda_l2": 5,
+                  "learning_rate": 0.03,
+                  "max_bin": 255,
+                  "metric": "rmse",
+                  "min_data_in_leaf": 5,
+                  "num_leaves": 127,
+                  "num_threads": 1,
+                  "objective": "regression",
+                  "seed": 47,
+                  "verbosity": -1,
+                  "zero_as_missing": false
+                },
+                "retained_at_round_cap": false,
+                "retained_rounds": 380,
+                "selection_key": [
+                  0.2281429811199807,
+                  380,
+                  2
+                ],
+                "stop_error": 0.2281429811199807,
+                "trained_rounds_if_available": 430
+              },
+              "cumulative_search_fit_seconds": 19.586272900003678,
+              "current_wave_all_eight_successful": true,
+              "dataset": "houses",
+              "library": "lightgbm",
+              "model_bytes": 4686921,
+              "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave2\\models\\houses\\lightgbm.pkl",
+              "model_sha256": "a8a0455d5774a279d8f927b08c7467fd78073a58e704bd4816627f3bb1e6db66",
+              "plan_sha256": "f724c37603c865a54a492ab8b022cdd0351c2cfbda124571d880b0fbcd799dc3",
+              "search_fit_seconds": 4.5161917000004905,
+              "source_wave": 2
+            },
+            "best": {
+              "config_index": 7,
+              "fit_seconds": 1.1383255000000645,
+              "parameters": {
+                "bagging_fraction": 0.8,
+                "bagging_freq": 1,
+                "deterministic": true,
+                "feature_fraction": 0.8,
+                "force_col_wise": true,
+                "lambda_l2": 5,
+                "learning_rate": 0.03,
+                "max_bin": 255,
+                "metric": "rmse",
+                "min_data_in_leaf": 5,
+                "num_leaves": 127,
+                "num_threads": 1,
+                "objective": "regression",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 380,
+              "selection_key": [
+                0.2273438798210773,
+                1,
+                -1000,
+                1.0
+              ],
+              "stop_error": 0.2273438798210773,
+              "trained_rounds_if_available": 430
+            },
+            "cumulative_search_fit_seconds": 19.586272900003678,
+            "current_wave_all_eight_successful": true,
+            "dataset": "houses",
+            "leaf_refit": {
+              "fold": {
+                "coefficient_rounding_absolute_bound": 1.0758741445481002e-15,
+                "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+                "inference_only": true,
+                "library": "lightgbm",
+                "physical_trees": 380,
+                "prediction_oracle_absolute_tolerance": 2.1074229467532547e-11,
+                "topology_sha256_after": "ad038ba5b4a41be111f4e56061c57cf9edbee9286a1174ac766141ab50d0a367",
+                "topology_sha256_before": "ad038ba5b4a41be111f4e56061c57cf9edbee9286a1174ac766141ab50d0a367"
+              },
+              "lambda": 1000,
+              "shrinkage": 1.0,
+              "solver": {
+                "atol": 1e-08,
+                "btol": 1e-08,
+                "damp": "sqrt(lambda)",
+                "iter_lim": 2000,
+                "method": "scipy.sparse.linalg.lsqr"
+              }
+            },
+            "library": "lightgbm",
+            "model_bytes": 4683337,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave6_v2\\models\\houses\\lightgbm.pkl",
+            "model_sha256": "b9b21f72c2943ddc884a133f3e70f37193227c9789232ff5b5221f65810025c0",
+            "plan_sha256": "b2af792e292900317ec8086ecd6974224bffc52fd315e12a213c3f44a5e4978f",
+            "postfit_candidate_seconds": 54.612597400000595,
+            "search_fit_seconds": 4.5161917000004905,
+            "source_wave": 6
+          }
+        },
+        "xgboost": {
+          "error": 0.22502701496552077,
+          "predictions_sha256": "607db3b1bf4af25487e2ab379e6879d07bcdb112370f28dc874e104073af3e34",
+          "selection": {
+            "all_eight_successful": true,
+            "base_selection": {
+              "all_eight_successful": true,
+              "best": {
+                "config_index": 3,
+                "fit_seconds": 3.2742283000006864,
+                "parameters": {
+                  "eta": 0.05,
+                  "eval_metric": "rmse",
+                  "lambda": 10,
+                  "max_bin": 256,
+                  "max_cat_threshold": 256,
+                  "max_cat_to_onehot": 8,
+                  "max_depth": 6,
+                  "min_child_weight": 1,
+                  "multi_strategy": "one_output_per_tree",
+                  "nthread": 1,
+                  "objective": "reg:squarederror",
+                  "seed": 47,
+                  "subsample": 0.8,
+                  "tree_method": "hist"
+                },
+                "retained_at_round_cap": false,
+                "retained_rounds": 1087,
+                "selection_key": [
+                  0.228771841445333,
+                  1087,
+                  3
+                ],
+                "stop_error": 0.228771841445333,
+                "trained_rounds_if_available": 1137
+              },
+              "cumulative_search_fit_seconds": 74.77279879999514,
+              "current_wave_all_eight_successful": true,
+              "dataset": "houses",
+              "library": "xgboost",
+              "model_bytes": 4618793,
+              "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave4\\models\\houses\\xgboost.pkl",
+              "model_sha256": "764509682fd72d5a13d9da10d3baf21d31b8da3304b947d24b2e507b55322618",
+              "plan_sha256": "b63459620d4e35f543ce3b366d33767b82da8c98a96fa30155442825ce3c585a",
+              "search_fit_seconds": 17.112907700002324,
+              "source_wave": 4
+            },
+            "best": {
+              "config_index": 4,
+              "fit_seconds": 3.2742283000006864,
+              "parameters": {
+                "eta": 0.05,
+                "eval_metric": "rmse",
+                "lambda": 10,
+                "max_bin": 256,
+                "max_cat_threshold": 256,
+                "max_cat_to_onehot": 8,
+                "max_depth": 6,
+                "min_child_weight": 1,
+                "multi_strategy": "one_output_per_tree",
+                "nthread": 1,
+                "objective": "reg:squarederror",
+                "seed": 47,
+                "subsample": 0.8,
+                "tree_method": "hist"
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 1087,
+              "selection_key": [
+                0.22865130123499905,
+                1,
+                -100,
+                0.25
+              ],
+              "stop_error": 0.22865130123499905,
+              "trained_rounds_if_available": 1137
+            },
+            "cumulative_search_fit_seconds": 74.77279879999514,
+            "current_wave_all_eight_successful": true,
+            "dataset": "houses",
+            "leaf_refit": {
+              "fold": {
+                "coefficient_rounding_absolute_bound": 2.3409015831909033e-07,
+                "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+                "inference_only": true,
+                "library": "xgboost",
+                "physical_trees": 1087,
+                "prediction_oracle_absolute_tolerance": 0.03969679772853851,
+                "topology_sha256_after": "585bbbfcdef0fbf761e0774c479b87e10eab2fb99a707972bca5834e5257225e",
+                "topology_sha256_before": "585bbbfcdef0fbf761e0774c479b87e10eab2fb99a707972bca5834e5257225e"
+              },
+              "lambda": 100,
+              "shrinkage": 0.25,
+              "solver": {
+                "atol": 1e-08,
+                "btol": 1e-08,
+                "damp": "sqrt(lambda)",
+                "iter_lim": 2000,
+                "method": "scipy.sparse.linalg.lsqr"
+              }
+            },
+            "library": "xgboost",
+            "model_bytes": 4619184,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave6_v2\\models\\houses\\xgboost.pkl",
+            "model_sha256": "e99f242d7a8e51e53698ebb76bb512807fdbcf9e21f4c9fc34a523fd5c6f3e88",
+            "plan_sha256": "b2af792e292900317ec8086ecd6974224bffc52fd315e12a213c3f44a5e4978f",
+            "postfit_candidate_seconds": 55.98390219999965,
+            "search_fit_seconds": 17.112907700002324,
+            "source_wave": 6
+          }
+        }
+      },
+      "problem_type": "regression"
+    },
+    {
+      "dataset": "diamonds",
+      "models": {
+        "ctboost": {
+          "error": 637.0481551881259,
+          "predictions_sha256": "2fd16d44ffd54cd37cb94178bc52022a4df70cd756bede98c239231e93fecc7b",
+          "selection": {
+            "all_eight_successful": true,
+            "base_selection": {
+              "all_eight_successful": true,
+              "best": {
+                "config_index": 7,
+                "fit_seconds": 0.26838929999939865,
+                "parameters": {
+                  "alpha": 0.05,
+                  "bootstrap_type": "Bernoulli",
+                  "cat_features": [
+                    "cut",
+                    "color",
+                    "clarity"
+                  ],
+                  "eval_metric": "RMSE",
+                  "feature_test": "grouped",
+                  "feature_test_adjustment": "none",
+                  "feature_test_bins": 8,
+                  "iterations": 1000,
+                  "lambda_l2": 1,
+                  "leaf_estimation_backtracking": true,
+                  "leaf_estimation_iterations": 3,
+                  "learning_rate": 0.15,
+                  "max_bins": 256,
+                  "max_cat_threshold": 64,
+                  "max_depth": 8,
+                  "multi_strategy": "one_output_per_tree",
+                  "multiclass_feature_test": "single",
+                  "ordered_ctr": true,
+                  "random_seed": 47,
+                  "subsample": 0.8,
+                  "verbose": false
+                },
+                "retained_at_round_cap": false,
+                "retained_rounds": 256,
+                "selection_key": [
+                  574.5308350044576,
+                  256,
+                  7
+                ],
+                "stop_error": 574.5308350044576,
+                "trained_rounds_if_available": null
+              },
+              "cumulative_search_fit_seconds": 16.913751199996113,
+              "current_wave_all_eight_successful": true,
+              "dataset": "diamonds",
+              "library": "ctboost",
+              "model_bytes": 3087518,
+              "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\diamonds\\ctboost.pkl",
+              "model_sha256": "4ff063d5c98996406c62c6b08e3f8fb5751189d6f165582596f42b3e057fa895",
+              "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+              "search_fit_seconds": 2.1646498999980395,
+              "source_wave": 1
+            },
+            "best": {
+              "config_index": 2,
+              "fit_seconds": 0.26838929999939865,
+              "parameters": {
+                "alpha": 0.05,
+                "bootstrap_type": "Bernoulli",
+                "cat_features": [
+                  "cut",
+                  "color",
+                  "clarity"
+                ],
+                "eval_metric": "RMSE",
+                "feature_test": "grouped",
+                "feature_test_adjustment": "none",
+                "feature_test_bins": 8,
+                "iterations": 1000,
+                "lambda_l2": 1,
+                "leaf_estimation_backtracking": true,
+                "leaf_estimation_iterations": 3,
+                "learning_rate": 0.15,
+                "max_bins": 256,
+                "max_cat_threshold": 64,
+                "max_depth": 8,
+                "multi_strategy": "one_output_per_tree",
+                "multiclass_feature_test": "single",
+                "ordered_ctr": true,
+                "random_seed": 47,
+                "subsample": 0.8,
+                "verbose": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 256,
+              "selection_key": [
+                570.9981560559784,
+                1,
+                -10,
+                0.25
+              ],
+              "stop_error": 570.9981560559784,
+              "trained_rounds_if_available": null
+            },
+            "cumulative_search_fit_seconds": 16.913751199996113,
+            "current_wave_all_eight_successful": true,
+            "dataset": "diamonds",
+            "leaf_refit": {
+              "fold": {
+                "coefficient_rounding_absolute_bound": 0.0011269777682449411,
+                "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+                "inference_only": true,
+                "library": "ctboost",
+                "physical_trees": 256,
+                "prediction_oracle_absolute_tolerance": 11.505845069885254,
+                "topology_sha256_after": "58bc99ae420c636a3f36c2f9b841bb9baab2f0ef3b97346013b71146a7776a17",
+                "topology_sha256_before": "58bc99ae420c636a3f36c2f9b841bb9baab2f0ef3b97346013b71146a7776a17"
+              },
+              "lambda": 10,
+              "shrinkage": 0.25,
+              "solver": {
+                "atol": 1e-08,
+                "btol": 1e-08,
+                "damp": "sqrt(lambda)",
+                "iter_lim": 2000,
+                "method": "scipy.sparse.linalg.lsqr"
+              }
+            },
+            "library": "ctboost",
+            "model_bytes": 3087954,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave6_v2\\models\\diamonds\\ctboost.pkl",
+            "model_sha256": "5ec8a3a18538253f859d03409d20b3b285b7c0430d2b7e9c92a3631978d93946",
+            "plan_sha256": "b2af792e292900317ec8086ecd6974224bffc52fd315e12a213c3f44a5e4978f",
+            "postfit_candidate_seconds": 10.7205273999989,
+            "search_fit_seconds": 2.1646498999980395,
+            "source_wave": 6
+          }
+        },
+        "lightgbm": {
+          "error": 654.2619615205364,
+          "predictions_sha256": "7f4264038a7c712de419af692eb7dce75ab27a96e35c45cb2daee855d08e2d39",
+          "selection": {
+            "all_eight_successful": true,
+            "base_selection": {
+              "all_eight_successful": true,
+              "best": {
+                "config_index": 7,
+                "fit_seconds": 0.7875229000001127,
+                "parameters": {
+                  "bagging_fraction": 0.8,
+                  "bagging_freq": 1,
+                  "cat_l2": 10,
+                  "cat_smooth": 10,
+                  "deterministic": true,
+                  "force_col_wise": true,
+                  "lambda_l2": 3,
+                  "learning_rate": 0.05,
+                  "max_bin": 255,
+                  "max_cat_threshold": 256,
+                  "max_cat_to_onehot": 8,
+                  "metric": "rmse",
+                  "min_data_in_leaf": 5,
+                  "num_leaves": 31,
+                  "num_threads": 1,
+                  "objective": "regression",
+                  "seed": 47,
+                  "verbosity": -1,
+                  "zero_as_missing": false
+                },
+                "retained_at_round_cap": false,
+                "retained_rounds": 635,
+                "selection_key": [
+                  591.2614024754147,
+                  635,
+                  7
+                ],
+                "stop_error": 591.2614024754147,
+                "trained_rounds_if_available": 685
+              },
+              "cumulative_search_fit_seconds": 22.95780559999912,
+              "current_wave_all_eight_successful": true,
+              "dataset": "diamonds",
+              "library": "lightgbm",
+              "model_bytes": 1797817,
+              "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave3\\models\\diamonds\\lightgbm.pkl",
+              "model_sha256": "4068f5841d62b6a0b4626c94dbfdc4b48c23c58e297a53ea0386146661c8d6f9",
+              "plan_sha256": "322e99168bcd1f855ec372d071fe3235c494b08bccac851de00a2b6d21a6db61",
+              "search_fit_seconds": 4.333791300001394,
+              "source_wave": 3
+            },
+            "best": {
+              "config_index": 6,
+              "fit_seconds": 0.7875229000001127,
+              "parameters": {
+                "bagging_fraction": 0.8,
+                "bagging_freq": 1,
+                "cat_l2": 10,
+                "cat_smooth": 10,
+                "deterministic": true,
+                "force_col_wise": true,
+                "lambda_l2": 3,
+                "learning_rate": 0.05,
+                "max_bin": 255,
+                "max_cat_threshold": 256,
+                "max_cat_to_onehot": 8,
+                "metric": "rmse",
+                "min_data_in_leaf": 5,
+                "num_leaves": 31,
+                "num_threads": 1,
+                "objective": "regression",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 635,
+              "selection_key": [
+                591.1617481989147,
+                1,
+                -1000,
+                0.25
+              ],
+              "stop_error": 591.1617481989147,
+              "trained_rounds_if_available": 685
+            },
+            "cumulative_search_fit_seconds": 22.95780559999912,
+            "current_wave_all_eight_successful": true,
+            "dataset": "diamonds",
+            "leaf_refit": {
+              "fold": {
+                "coefficient_rounding_absolute_bound": 2.128447076791065e-12,
+                "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+                "inference_only": true,
+                "library": "lightgbm",
+                "physical_trees": 635,
+                "prediction_oracle_absolute_tolerance": 7.661814237691103e-08,
+                "topology_sha256_after": "f6eec4e411551f486f6f45e279bae91bf638e535318f1f0fc5b67ff355e84840",
+                "topology_sha256_before": "f6eec4e411551f486f6f45e279bae91bf638e535318f1f0fc5b67ff355e84840"
+              },
+              "lambda": 1000,
+              "shrinkage": 0.25,
+              "solver": {
+                "atol": 1e-08,
+                "btol": 1e-08,
+                "damp": "sqrt(lambda)",
+                "iter_lim": 2000,
+                "method": "scipy.sparse.linalg.lsqr"
+              }
+            },
+            "library": "lightgbm",
+            "model_bytes": 1797980,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave6_v2\\models\\diamonds\\lightgbm.pkl",
+            "model_sha256": "1628d9926a4c01bed926f9a6af17001d81ef1ec6737f8fb2a1ea52396a5c4762",
+            "plan_sha256": "b2af792e292900317ec8086ecd6974224bffc52fd315e12a213c3f44a5e4978f",
+            "postfit_candidate_seconds": 47.606413300003624,
+            "search_fit_seconds": 4.333791300001394,
+            "source_wave": 6
+          }
+        },
+        "xgboost": {
+          "error": 626.6658986157794,
+          "predictions_sha256": "61ab093607bf238420c6ead717c9cc870e3333a6c4fa6870fe0fb22c977403c9",
+          "selection": {
+            "all_eight_successful": true,
+            "base_selection": {
+              "all_eight_successful": true,
+              "best": {
+                "config_index": 4,
+                "fit_seconds": 0.34317620000001625,
+                "parameters": {
+                  "eta": 0.15,
+                  "eval_metric": "rmse",
+                  "lambda": 1,
+                  "max_bin": 256,
+                  "max_depth": 4,
+                  "multi_strategy": "one_output_per_tree",
+                  "nthread": 1,
+                  "objective": "reg:squarederror",
+                  "seed": 47,
+                  "subsample": 0.8,
+                  "tree_method": "hist"
+                },
+                "retained_at_round_cap": false,
+                "retained_rounds": 114,
+                "selection_key": [
+                  576.3562013350535,
+                  114,
+                  4
+                ],
+                "stop_error": 576.3562013350535,
+                "trained_rounds_if_available": 164
+              },
+              "cumulative_search_fit_seconds": 43.449782299992876,
+              "current_wave_all_eight_successful": true,
+              "dataset": "diamonds",
+              "library": "xgboost",
+              "model_bytes": 219884,
+              "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\diamonds\\xgboost.pkl",
+              "model_sha256": "28adf6c9587ab4ea9661bfc7d6359951f929b918f9e913e73539439754cad3d2",
+              "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+              "search_fit_seconds": 4.343888399997013,
+              "source_wave": 1
+            },
+            "best": {
+              "config_index": 7,
+              "fit_seconds": 0.34317620000001625,
+              "parameters": {
+                "eta": 0.15,
+                "eval_metric": "rmse",
+                "lambda": 1,
+                "max_bin": 256,
+                "max_depth": 4,
+                "multi_strategy": "one_output_per_tree",
+                "nthread": 1,
+                "objective": "reg:squarederror",
+                "seed": 47,
+                "subsample": 0.8,
+                "tree_method": "hist"
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 114,
+              "selection_key": [
+                572.6461651218264,
+                1,
+                -1000,
+                1.0
+              ],
+              "stop_error": 572.6461651218264,
+              "trained_rounds_if_available": 164
+            },
+            "cumulative_search_fit_seconds": 43.449782299992876,
+            "current_wave_all_eight_successful": true,
+            "dataset": "diamonds",
+            "leaf_refit": {
+              "fold": {
+                "coefficient_rounding_absolute_bound": 0.0010116351684812674,
+                "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+                "inference_only": true,
+                "library": "xgboost",
+                "physical_trees": 114,
+                "prediction_oracle_absolute_tolerance": 8.293943405151367,
+                "topology_sha256_after": "cae9484fd96e2c938ad16eeda50d042179aacdb25f35a5d3bb832e0f15b8e5d3",
+                "topology_sha256_before": "cae9484fd96e2c938ad16eeda50d042179aacdb25f35a5d3bb832e0f15b8e5d3"
+              },
+              "lambda": 1000,
+              "shrinkage": 1.0,
+              "solver": {
+                "atol": 1e-08,
+                "btol": 1e-08,
+                "damp": "sqrt(lambda)",
+                "iter_lim": 2000,
+                "method": "scipy.sparse.linalg.lsqr"
+              }
+            },
+            "library": "xgboost",
+            "model_bytes": 220259,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave6_v2\\models\\diamonds\\xgboost.pkl",
+            "model_sha256": "a1a2d70e5b00e3974e565de3fc833153fba2fa2e029c9da933555ce7089ce9f6",
+            "plan_sha256": "b2af792e292900317ec8086ecd6974224bffc52fd315e12a213c3f44a5e4978f",
+            "postfit_candidate_seconds": 3.9095901000036974,
+            "search_fit_seconds": 4.343888399997013,
+            "source_wave": 6
+          }
+        }
+      },
+      "problem_type": "regression"
+    },
+    {
+      "dataset": "anneal",
+      "models": {
+        "ctboost": {
+          "error": 0.007790245830355615,
+          "predictions_sha256": "9bea7aa252fbd3b93ad603c7551a9b1cb31cdbb74bcbbc43ba40540f49a0fa9e",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 5,
+              "fit_seconds": 2.433838899998591,
+              "parameters": {
+                "alpha": 0.05,
+                "bootstrap_type": "Bernoulli",
+                "cat_features": [
+                  "family",
+                  "product-type",
+                  "steel",
+                  "temper_rolling",
+                  "condition",
+                  "formability",
+                  "non-ageing",
+                  "surface-finish",
+                  "surface-quality",
+                  "enamelability",
+                  "bc",
+                  "bf",
+                  "bt",
+                  "bw_me",
+                  "bl",
+                  "m",
+                  "chrom",
+                  "phos",
+                  "cbond",
+                  "marvi",
+                  "exptl",
+                  "ferro",
+                  "corr",
+                  "blue_bright_varn_clean",
+                  "lustre",
+                  "jurofm",
+                  "s",
+                  "p",
+                  "shape",
+                  "oil",
+                  "bore",
+                  "packing"
+                ],
+                "eval_metric": "MultiClass",
+                "feature_test": "grouped",
+                "feature_test_adjustment": "none",
+                "feature_test_bins": 8,
+                "iterations": 1000,
+                "lambda_l2": 1,
+                "leaf_estimation_iterations": 3,
+                "learning_rate": 0.15,
+                "max_bins": 256,
+                "max_cat_threshold": 64,
+                "max_depth": 6,
+                "multi_strategy": "multi_output_tree",
+                "multiclass_feature_test": "single",
+                "multiclass_leaf_solver": "full",
+                "ordered_ctr": true,
+                "random_seed": 47,
+                "subsample": 0.8,
+                "verbose": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 778,
+              "selection_key": [
+                0.013323091826834948,
+                778,
+                5
+              ],
+              "stop_error": 0.013323091826834948,
+              "trained_rounds_if_available": null
+            },
+            "cumulative_search_fit_seconds": 61.74138649999804,
+            "current_wave_all_eight_successful": true,
+            "dataset": "anneal",
+            "library": "ctboost",
+            "model_bytes": 6055339,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\anneal\\ctboost.pkl",
+            "model_sha256": "ae9107548c5201775ed069eaa3138f22b4036d56c4d31962eb16925181dd0c41",
+            "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+            "search_fit_seconds": 17.57539109999925,
+            "source_wave": 1
+          }
+        },
+        "lightgbm": {
+          "error": 0.0010377624621693844,
+          "predictions_sha256": "89dc1ad3a47372268f2db44fc032782cd65bafb25764a0140c42ffbb6ec42f0c",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 0,
+              "fit_seconds": 0.10297039999932167,
+              "parameters": {
+                "bagging_fraction": 0.8,
+                "bagging_freq": 1,
+                "cat_l2": 0,
+                "cat_smooth": 0,
+                "deterministic": true,
+                "force_col_wise": true,
+                "lambda_l2": 0,
+                "learning_rate": 0.1,
+                "max_bin": 255,
+                "max_cat_threshold": 256,
+                "max_cat_to_onehot": 1,
+                "metric": "multi_logloss",
+                "min_data_in_leaf": 10,
+                "num_class": 5,
+                "num_leaves": 7,
+                "num_threads": 1,
+                "objective": "multiclass",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 137,
+              "selection_key": [
+                0.0015196473184824076,
+                137,
+                0
+              ],
+              "stop_error": 0.0015196473184824076,
+              "trained_rounds_if_available": 187
+            },
+            "cumulative_search_fit_seconds": 24.69154370000797,
+            "current_wave_all_eight_successful": true,
+            "dataset": "anneal",
+            "library": "lightgbm",
+            "model_bytes": 558773,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave3\\models\\anneal\\lightgbm.pkl",
+            "model_sha256": "8e8a9cfb348cf4441de699cc9c615dc149e0db50c899179aef05648d26c92a21",
+            "plan_sha256": "322e99168bcd1f855ec372d071fe3235c494b08bccac851de00a2b6d21a6db61",
+            "search_fit_seconds": 3.4111407000018517,
+            "source_wave": 3
+          }
+        },
+        "xgboost": {
+          "error": 0.05372818757723555,
+          "predictions_sha256": "e8f05559bb827cf37c72c850a61b583b8ad9b05db1396ca8870cd7bbb1e3e5ab",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 4,
+              "fit_seconds": 0.6113003000009485,
+              "parameters": {
+                "eta": 0.05,
+                "eval_metric": "mlogloss",
+                "lambda": 0.3,
+                "max_bin": 256,
+                "max_cat_threshold": 256,
+                "max_cat_to_onehot": 8,
+                "max_depth": 8,
+                "min_child_weight": 0.1,
+                "multi_strategy": "one_output_per_tree",
+                "nthread": 1,
+                "num_class": 5,
+                "objective": "multi:softprob",
+                "seed": 47,
+                "subsample": 1.0,
+                "tree_method": "hist"
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 240,
+              "selection_key": [
+                0.025728996338486323,
+                240,
+                4
+              ],
+              "stop_error": 0.025728996338486323,
+              "trained_rounds_if_available": 290
+            },
+            "cumulative_search_fit_seconds": 49.74652480000077,
+            "current_wave_all_eight_successful": true,
+            "dataset": "anneal",
+            "library": "xgboost",
+            "model_bytes": 1236541,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave5\\models\\anneal\\xgboost.pkl",
+            "model_sha256": "a4569cf17ccf9ad2293e418892e76ba3f8bb216ffceaaf51afdf00f3134ab676",
+            "plan_sha256": "70b439625ede1a0f4fcde32e08ced81995eee0ab020ccbeb76e6d39a8784abb3",
+            "search_fit_seconds": 10.096556400003465,
+            "source_wave": 5
+          }
+        }
+      },
+      "problem_type": "multiclass"
+    },
+    {
+      "dataset": "website_phishing",
+      "models": {
+        "ctboost": {
+          "error": 0.1828139707562972,
+          "predictions_sha256": "56abf299e9dc0317d4360ca958114cfad74bad1311ae0bfe0bad9b0ef2083ecd",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 2,
+              "fit_seconds": 0.1478766000000178,
+              "parameters": {
+                "alpha": 0.05,
+                "bootstrap_type": "Bernoulli",
+                "cat_features": [
+                  "SFH",
+                  "popUpWidnow",
+                  "SSLfinal_State",
+                  "Request_URL",
+                  "URL_of_Anchor",
+                  "web_traffic",
+                  "URL_Length",
+                  "age_of_domain",
+                  "having_IP_Address"
+                ],
+                "eval_metric": "MultiClass",
+                "feature_test": "grouped",
+                "feature_test_adjustment": "none",
+                "feature_test_bins": 8,
+                "iterations": 2000,
+                "lambda_l2": 0.1,
+                "leaf_estimation_iterations": 3,
+                "learning_rate": 0.05,
+                "max_bins": 256,
+                "max_cat_threshold": 256,
+                "max_depth": 6,
+                "min_data_in_leaf": 1,
+                "multi_strategy": "multi_output_tree",
+                "multiclass_feature_test": "joint",
+                "multiclass_leaf_solver": "full",
+                "one_hot_max_size": 8,
+                "ordered_ctr": true,
+                "random_seed": 47,
+                "subsample": 0.8,
+                "verbose": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 118,
+              "selection_key": [
+                0.272905086742629,
+                118,
+                2
+              ],
+              "stop_error": 0.272905086742629,
+              "trained_rounds_if_available": null
+            },
+            "cumulative_search_fit_seconds": 9.771042299998953,
+            "current_wave_all_eight_successful": true,
+            "dataset": "website_phishing",
+            "library": "ctboost",
+            "model_bytes": 1151260,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave4\\models\\website_phishing\\ctboost.pkl",
+            "model_sha256": "70de472dda02f9d4edd93b8fa4fcde414e556100932226abfb922f6be1fe54d8",
+            "plan_sha256": "b63459620d4e35f543ce3b366d33767b82da8c98a96fa30155442825ce3c585a",
+            "search_fit_seconds": 1.5582108000016888,
+            "source_wave": 4
+          }
+        },
+        "lightgbm": {
+          "error": 0.17442756574969703,
+          "predictions_sha256": "b414fd7d94857dd73d2c82b38ec2d900f2c7f7c004fb80da6367974634255351",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 0,
+              "fit_seconds": 0.09655469999961497,
+              "parameters": {
+                "bagging_fraction": 1.0,
+                "bagging_freq": 1,
+                "deterministic": true,
+                "force_col_wise": true,
+                "lambda_l2": 0.3,
+                "learning_rate": 0.05,
+                "max_bin": 255,
+                "max_cat_threshold": 256,
+                "max_cat_to_onehot": 8,
+                "metric": "multi_logloss",
+                "min_data_in_leaf": 1,
+                "num_class": 3,
+                "num_leaves": 15,
+                "num_threads": 1,
+                "objective": "multiclass",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 85,
+              "selection_key": [
+                0.23989572483692387,
+                85,
+                0
+              ],
+              "stop_error": 0.23989572483692387,
+              "trained_rounds_if_available": 135
+            },
+            "cumulative_search_fit_seconds": 5.912297100005162,
+            "current_wave_all_eight_successful": true,
+            "dataset": "website_phishing",
+            "library": "lightgbm",
+            "model_bytes": 405333,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave5\\models\\website_phishing\\lightgbm.pkl",
+            "model_sha256": "11c1e91c05d45d95ee112f3cf9af7d991c3d4e52e241dcb48d1994bd2ac79714",
+            "plan_sha256": "70b439625ede1a0f4fcde32e08ced81995eee0ab020ccbeb76e6d39a8784abb3",
+            "search_fit_seconds": 1.1150135999996564,
+            "source_wave": 5
+          }
+        },
+        "xgboost": {
+          "error": 0.1620602323404441,
+          "predictions_sha256": "6559ab14803cf9f092a1e57bddfeb37ae8370d7d06dacffdcce1e1bd0dac770c",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 2,
+              "fit_seconds": 0.51850530000047,
+              "parameters": {
+                "eta": 0.05,
+                "eval_metric": "mlogloss",
+                "lambda": 3,
+                "max_bin": 256,
+                "max_cat_threshold": 256,
+                "max_cat_to_onehot": 8,
+                "max_depth": 4,
+                "min_child_weight": 0.1,
+                "multi_strategy": "one_output_per_tree",
+                "nthread": 1,
+                "num_class": 3,
+                "objective": "multi:softprob",
+                "seed": 47,
+                "subsample": 1.0,
+                "tree_method": "hist"
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 243,
+              "selection_key": [
+                0.24463517831246911,
+                243,
+                2
+              ],
+              "stop_error": 0.24463517831246911,
+              "trained_rounds_if_available": 293
+            },
+            "cumulative_search_fit_seconds": 16.981693000007,
+            "current_wave_all_eight_successful": true,
+            "dataset": "website_phishing",
+            "library": "xgboost",
+            "model_bytes": 1200089,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave5\\models\\website_phishing\\xgboost.pkl",
+            "model_sha256": "2a59483d2efb5ba3adc55dd8167ce5b8fbba6738f183c19cbf265d851e30be6f",
+            "plan_sha256": "70b439625ede1a0f4fcde32e08ced81995eee0ab020ccbeb76e6d39a8784abb3",
+            "search_fit_seconds": 2.7884194000016578,
+            "source_wave": 5
+          }
+        }
+      },
+      "problem_type": "multiclass"
+    },
+    {
+      "dataset": "splice",
+      "models": {
+        "ctboost": {
+          "error": 0.11179281421936314,
+          "predictions_sha256": "6f35b17db647f3e22080c4dce9a01253aafd3005221f03cb1528e7d12ff5710d",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 0,
+              "fit_seconds": 3.2765402999993967,
+              "parameters": {
+                "alpha": 0.05,
+                "bootstrap_type": "Bernoulli",
+                "cat_features": [
+                  "position_-30",
+                  "position_-29",
+                  "position_-28",
+                  "position_-27",
+                  "position_-26",
+                  "position_-25",
+                  "position_-24",
+                  "position_-23",
+                  "position_-22",
+                  "position_-21",
+                  "position_-20",
+                  "position_-19",
+                  "position_-18",
+                  "position_-17",
+                  "position_-16",
+                  "position_-15",
+                  "position_-14",
+                  "position_-13",
+                  "position_-12",
+                  "position_-11",
+                  "position_-10",
+                  "position_-9",
+                  "position_-8",
+                  "position_-7",
+                  "position_-6",
+                  "position_-5",
+                  "position_-4",
+                  "position_-3",
+                  "position_-2",
+                  "position_-1",
+                  "position_1",
+                  "position_2",
+                  "position_3",
+                  "position_4",
+                  "position_5",
+                  "position_6",
+                  "position_7",
+                  "position_8",
+                  "position_9",
+                  "position_10",
+                  "position_11",
+                  "position_12",
+                  "position_13",
+                  "position_14",
+                  "position_15",
+                  "position_16",
+                  "position_17",
+                  "position_18",
+                  "position_19",
+                  "position_20",
+                  "position_21",
+                  "position_22",
+                  "position_23",
+                  "position_24",
+                  "position_25",
+                  "position_26",
+                  "position_27",
+                  "position_28",
+                  "position_29",
+                  "position_30"
+                ],
+                "eval_metric": "MultiClass",
+                "feature_test": "grouped",
+                "feature_test_adjustment": "none",
+                "feature_test_bins": 8,
+                "iterations": 2000,
+                "lambda_l2": 1,
+                "leaf_estimation_iterations": 3,
+                "learning_rate": 0.1,
+                "max_bins": 256,
+                "max_cat_threshold": 64,
+                "max_depth": 4,
+                "min_data_in_leaf": 5,
+                "multi_strategy": "multi_output_tree",
+                "multiclass_feature_test": "single",
+                "multiclass_leaf_solver": "full",
+                "ordered_ctr": true,
+                "random_seed": 47,
+                "subsample": 0.8,
+                "verbose": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 169,
+              "selection_key": [
+                0.10394451946776453,
+                169,
+                0
+              ],
+              "stop_error": 0.10394451946776453,
+              "trained_rounds_if_available": null
+            },
+            "cumulative_search_fit_seconds": 179.99358169999869,
+            "current_wave_all_eight_successful": true,
+            "dataset": "splice",
+            "library": "ctboost",
+            "model_bytes": 3734649,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave2\\models\\splice\\ctboost.pkl",
+            "model_sha256": "eaa9ac95314c42becbd0f76ab46e3d4e23e81393bb3e18ad166ee1ba240a2851",
+            "plan_sha256": "f724c37603c865a54a492ab8b022cdd0351c2cfbda124571d880b0fbcd799dc3",
+            "search_fit_seconds": 37.103887499997654,
+            "source_wave": 2
+          }
+        },
+        "lightgbm": {
+          "error": 0.1212684408144167,
+          "predictions_sha256": "8b1710a15aa397228826c314f15b57d94aab9cbb96c087d9a1a227ee89827701",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 0,
+              "fit_seconds": 0.282158599999093,
+              "parameters": {
+                "bagging_fraction": 0.8,
+                "bagging_freq": 1,
+                "deterministic": true,
+                "force_col_wise": true,
+                "lambda_l2": 0.1,
+                "learning_rate": 0.05,
+                "max_bin": 255,
+                "max_cat_threshold": 256,
+                "max_cat_to_onehot": 8,
+                "metric": "multi_logloss",
+                "min_data_in_leaf": 5,
+                "num_class": 3,
+                "num_leaves": 7,
+                "num_threads": 1,
+                "objective": "multiclass",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 157,
+              "selection_key": [
+                0.11318919339890227,
+                157,
+                0
+              ],
+              "stop_error": 0.11318919339890227,
+              "trained_rounds_if_available": 207
+            },
+            "cumulative_search_fit_seconds": 18.02162770000359,
+            "current_wave_all_eight_successful": true,
+            "dataset": "splice",
+            "library": "lightgbm",
+            "model_bytes": 406271,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave4\\models\\splice\\lightgbm.pkl",
+            "model_sha256": "fa1f37a2dd297401271362e80ebb9825b7af43e5424d2485a677fa20ff637d2c",
+            "plan_sha256": "b63459620d4e35f543ce3b366d33767b82da8c98a96fa30155442825ce3c585a",
+            "search_fit_seconds": 3.640266500000507,
+            "source_wave": 4
+          }
+        },
+        "xgboost": {
+          "error": 0.11883218139996114,
+          "predictions_sha256": "70bfc4e493a68c5084076625cf8e108f2d8acf2e9dbad209701559440480ee8d",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 4,
+              "fit_seconds": 0.397975600000791,
+              "parameters": {
+                "eta": 0.15,
+                "eval_metric": "mlogloss",
+                "lambda": 1,
+                "max_bin": 256,
+                "max_depth": 4,
+                "multi_strategy": "one_output_per_tree",
+                "nthread": 1,
+                "num_class": 3,
+                "objective": "multi:softprob",
+                "seed": 47,
+                "subsample": 0.8,
+                "tree_method": "hist"
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 69,
+              "selection_key": [
+                0.10754940701813717,
+                69,
+                4
+              ],
+              "stop_error": 0.10754940701813717,
+              "trained_rounds_if_available": 119
+            },
+            "cumulative_search_fit_seconds": 41.05472070000178,
+            "current_wave_all_eight_successful": true,
+            "dataset": "splice",
+            "library": "xgboost",
+            "model_bytes": 363365,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\splice\\xgboost.pkl",
+            "model_sha256": "8cd0e4ac2a46dd9f5ca038ab065a95bd8c42f4a0f8c55cf723fbead083596d05",
+            "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+            "search_fit_seconds": 6.502603900000395,
+            "source_wave": 1
+          }
+        }
+      },
+      "problem_type": "multiclass"
+    },
+    {
+      "dataset": "SDSS17",
+      "models": {
+        "ctboost": {
+          "error": 0.10232363621651186,
+          "predictions_sha256": "4d7d0e60d9848fba346c476e84543f0d57a35a355fde94a58f1f0d322a79f6a0",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 4,
+              "fit_seconds": 2.272313400000712,
+              "parameters": {
+                "alpha": 0.5,
+                "bootstrap_type": "Bernoulli",
+                "cat_features": [
+                  "plate",
+                  "fiber_ID"
+                ],
+                "eval_metric": "MultiClass",
+                "feature_test": "grouped",
+                "feature_test_adjustment": "none",
+                "feature_test_bins": 8,
+                "iterations": 2000,
+                "lambda_l2": 0.3,
+                "leaf_estimation_iterations": 3,
+                "learning_rate": 0.05,
+                "max_bins": 256,
+                "max_cat_threshold": 256,
+                "max_depth": 4,
+                "min_data_in_leaf": 1,
+                "multi_strategy": "multi_output_tree",
+                "multiclass_feature_test": "joint",
+                "multiclass_leaf_solver": "full",
+                "one_hot_max_size": 8,
+                "ordered_ctr": true,
+                "random_seed": 47,
+                "subsample": 1.0,
+                "verbose": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 345,
+              "selection_key": [
+                0.09238821530160862,
+                345,
+                4
+              ],
+              "stop_error": 0.09238821530160862,
+              "trained_rounds_if_available": null
+            },
+            "cumulative_search_fit_seconds": 50.74791109999023,
+            "current_wave_all_eight_successful": true,
+            "dataset": "SDSS17",
+            "library": "ctboost",
+            "model_bytes": 2840606,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave5\\models\\SDSS17\\ctboost.pkl",
+            "model_sha256": "25a4398a530b4fda7df7f7cee66175f0c459d3733d211d2aa29b03732e97654b",
+            "plan_sha256": "70b439625ede1a0f4fcde32e08ced81995eee0ab020ccbeb76e6d39a8784abb3",
+            "search_fit_seconds": 17.337805000001026,
+            "source_wave": 5
+          }
+        },
+        "lightgbm": {
+          "error": 0.10340177102366702,
+          "predictions_sha256": "5b8882b81254366cc074b582c913a9b6322f513197b750fa084e79439064931e",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 0,
+              "fit_seconds": 0.5949644000011176,
+              "parameters": {
+                "bagging_fraction": 0.8,
+                "bagging_freq": 1,
+                "deterministic": true,
+                "feature_fraction": 0.8,
+                "force_col_wise": true,
+                "lambda_l2": 5,
+                "learning_rate": 0.03,
+                "max_bin": 255,
+                "metric": "multi_logloss",
+                "min_data_in_leaf": 5,
+                "num_class": 3,
+                "num_leaves": 31,
+                "num_threads": 1,
+                "objective": "multiclass",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 160,
+              "selection_key": [
+                0.09199748707293777,
+                160,
+                0
+              ],
+              "stop_error": 0.09199748707293777,
+              "trained_rounds_if_available": 210
+            },
+            "cumulative_search_fit_seconds": 13.48038699999961,
+            "current_wave_all_eight_successful": true,
+            "dataset": "SDSS17",
+            "library": "lightgbm",
+            "model_bytes": 1487112,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave2\\models\\SDSS17\\lightgbm.pkl",
+            "model_sha256": "a828c6cd70caed842529755b8a0b229752c718669db4381601e45441168c806a",
+            "plan_sha256": "f724c37603c865a54a492ab8b022cdd0351c2cfbda124571d880b0fbcd799dc3",
+            "search_fit_seconds": 3.200293400001101,
+            "source_wave": 2
+          }
+        },
+        "xgboost": {
+          "error": 0.1782214537489412,
+          "predictions_sha256": "450640d4119274b93c021ffceea781ecd5395eb81a9f780ce4227ec70bb731f6",
+          "selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 2,
+              "fit_seconds": 2.3764561000007234,
+              "parameters": {
+                "colsample_bytree": 0.8,
+                "eta": 0.03,
+                "eval_metric": "mlogloss",
+                "lambda": 1,
+                "max_bin": 256,
+                "max_depth": 8,
+                "min_child_weight": 5,
+                "multi_strategy": "multi_output_tree",
+                "nthread": 1,
+                "num_class": 3,
+                "objective": "multi:softprob",
+                "seed": 47,
+                "subsample": 0.8,
+                "tree_method": "hist"
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 220,
+              "selection_key": [
+                0.15533519482123462,
+                220,
+                2
+              ],
+              "stop_error": 0.15533519482123462,
+              "trained_rounds_if_available": 270
+            },
+            "cumulative_search_fit_seconds": 53.5478008999944,
+            "current_wave_all_eight_successful": true,
+            "dataset": "SDSS17",
+            "library": "xgboost",
+            "model_bytes": 8201325,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave2\\models\\SDSS17\\xgboost.pkl",
+            "model_sha256": "bd017701c7549f6f4df212bc0e2bab78bc39aebf79a5f3f580ca63f0ac95ad82",
+            "plan_sha256": "f724c37603c865a54a492ab8b022cdd0351c2cfbda124571d880b0fbcd799dc3",
+            "search_fit_seconds": 9.870541899999807,
+            "source_wave": 2
+          }
+        }
+      },
+      "problem_type": "multiclass"
+    }
+  ],
+  "summary": [
+    {
+      "comparator": "xgboost",
+      "datasets": 12,
+      "family": "all",
+      "median_relative_error_gain": -0.004325596284252685,
+      "ties": 0,
+      "wins": 5,
+      "worst_relative_regression": 0.12806188240095331
+    },
+    {
+      "comparator": "xgboost",
+      "datasets": 4,
+      "family": "binary",
+      "median_relative_error_gain": -0.03283888988328577,
+      "ties": 0,
+      "wins": 1,
+      "worst_relative_regression": 0.06297709923664116
+    },
+    {
+      "comparator": "xgboost",
+      "datasets": 4,
+      "family": "regression",
+      "median_relative_error_gain": -0.009707731156163394,
+      "ties": 0,
+      "wins": 1,
+      "worst_relative_regression": 0.11817548917169217
+    },
+    {
+      "comparator": "xgboost",
+      "datasets": 4,
+      "family": "multiclass",
+      "median_relative_error_gain": 0.2425501470847149,
+      "ties": 0,
+      "wins": 3,
+      "worst_relative_regression": 0.12806188240095331
+    },
+    {
+      "comparator": "lightgbm",
+      "datasets": 12,
+      "family": "all",
+      "median_relative_error_gain": -0.0275713733067229,
+      "ties": 0,
+      "wins": 4,
+      "worst_relative_regression": 6.50677164991162
+    },
+    {
+      "comparator": "lightgbm",
+      "datasets": 4,
+      "family": "binary",
+      "median_relative_error_gain": -0.05490628465528125,
+      "ties": 0,
+      "wins": 1,
+      "worst_relative_regression": 0.17016806722689048
+    },
+    {
+      "comparator": "lightgbm",
+      "datasets": 4,
+      "family": "regression",
+      "median_relative_error_gain": -0.020983864874676614,
+      "ties": 0,
+      "wins": 1,
+      "worst_relative_regression": 0.03316992185311045
+    },
+    {
+      "comparator": "lightgbm",
+      "datasets": 4,
+      "family": "multiclass",
+      "median_relative_error_gain": -0.018826464057745455,
+      "ties": 0,
+      "wins": 2,
+      "worst_relative_regression": 6.50677164991162
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{"package": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\ctr-precision\\runtime-cp310\\ctboost\\__init__.py", "native": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\ctr-precision\\runtime-cp310\\ctboost\\_core.cp310-win_amd64.pyd", "native_sha256": "21ed48b6234bf570413fd4336ffdf76279b0ff9e3d9003cbcf0b34620e2aee17", "build_info": {"version": "0.1.61", "cuda_enabled": false, "cuda_runtime": "not compiled", "compiler": "MSVC 1950", "cxx_standard": 17, "package_version": "0.1.61"}, "python": "C:\\Users\\captn\\miniconda3\\python.exe"}
+...FFF....FFF.                                                           [100%]
+================================== FAILURES ===================================
+__________ test_native_houses_policy_roundtrip_and_seed349[ctboost] ___________
+tests\test_houses_cap_experiment.py:108: in test_native_houses_policy_roundtrip_and_seed349
+    payload, details, verification = main.fit_policy(job, case, seed)
+benchmarks\fair_accuracy_houses_cap.py:52: in fit_policy
+    return cap.fit_expansion(job, case, expanded, seed, cv)
+benchmarks\fair_accuracy_cap_expansion.py:169: in fit_expansion
+    payload, details = cv.union.fit_fixed(job, case, X, expanded["y"], schema, seed)
+benchmarks\fair_accuracy_union_refit.py:61: in fit_fixed
+    import lightgbm as lgb
+E   ModuleNotFoundError: No module named 'lightgbm'
+__________ test_native_houses_policy_roundtrip_and_seed349[xgboost] ___________
+tests\test_houses_cap_experiment.py:108: in test_native_houses_policy_roundtrip_and_seed349
+    payload, details, verification = main.fit_policy(job, case, seed)
+benchmarks\fair_accuracy_houses_cap.py:52: in fit_policy
+    return cap.fit_expansion(job, case, expanded, seed, cv)
+benchmarks\fair_accuracy_cap_expansion.py:169: in fit_expansion
+    payload, details = cv.union.fit_fixed(job, case, X, expanded["y"], schema, seed)
+benchmarks\fair_accuracy_union_refit.py:61: in fit_fixed
+    import lightgbm as lgb
+E   ModuleNotFoundError: No module named 'lightgbm'
+__________ test_native_houses_policy_roundtrip_and_seed349[lightgbm] __________
+tests\test_houses_cap_experiment.py:108: in test_native_houses_policy_roundtrip_and_seed349
+    payload, details, verification = main.fit_policy(job, case, seed)
+benchmarks\fair_accuracy_houses_cap.py:52: in fit_policy
+    return cap.fit_expansion(job, case, expanded, seed, cv)
+benchmarks\fair_accuracy_cap_expansion.py:169: in fit_expansion
+    payload, details = cv.union.fit_fixed(job, case, X, expanded["y"], schema, seed)
+benchmarks\fair_accuracy_union_refit.py:61: in fit_fixed
+    import lightgbm as lgb
+E   ModuleNotFoundError: No module named 'lightgbm'
+__________ test_native_houses_policy_roundtrip_and_seed349[ctboost] ___________
+tests\test_houses_cap_experiment_v2.py:108: in test_native_houses_policy_roundtrip_and_seed349
+    payload, details, verification = main.fit_policy(job, case, seed)
+benchmarks\fair_accuracy_houses_cap_v2.py:53: in fit_policy
+    return cap.fit_expansion(job, case, expanded, seed, cv)
+benchmarks\fair_accuracy_cap_expansion.py:169: in fit_expansion
+    payload, details = cv.union.fit_fixed(job, case, X, expanded["y"], schema, seed)
+benchmarks\fair_accuracy_union_refit.py:61: in fit_fixed
+    import lightgbm as lgb
+E   ModuleNotFoundError: No module named 'lightgbm'
+__________ test_native_houses_policy_roundtrip_and_seed349[xgboost] ___________
+tests\test_houses_cap_experiment_v2.py:108: in test_native_houses_policy_roundtrip_and_seed349
+    payload, details, verification = main.fit_policy(job, case, seed)
+benchmarks\fair_accuracy_houses_cap_v2.py:53: in fit_policy
+    return cap.fit_expansion(job, case, expanded, seed, cv)
+benchmarks\fair_accuracy_cap_expansion.py:169: in fit_expansion
+    payload, details = cv.union.fit_fixed(job, case, X, expanded["y"], schema, seed)
+benchmarks\fair_accuracy_union_refit.py:61: in fit_fixed
+    import lightgbm as lgb
+E   ModuleNotFoundError: No module named 'lightgbm'
+__________ test_native_houses_policy_roundtrip_and_seed349[lightgbm] __________
+tests\test_houses_cap_experiment_v2.py:108: in test_native_houses_policy_roundtrip_and_seed349
+    payload, details, verification = main.fit_policy(job, case, seed)
+benchmarks\fair_accuracy_houses_cap_v2.py:53: in fit_policy
+    return cap.fit_expansion(job, case, expanded, seed, cv)
+benchmarks\fair_accuracy_cap_expansion.py:169: in fit_expansion
+    payload, details = cv.union.fit_fixed(job, case, X, expanded["y"], schema, seed)
+benchmarks\fair_accuracy_union_refit.py:61: in fit_fixed
+    import lightgbm as lgb
+E   ModuleNotFoundError: No module named 'lightgbm'
+=========================== short test summary info ===========================
+FAILED tests/test_houses_cap_experiment.py::test_native_houses_policy_roundtrip_and_seed349[ctboost]
+FAILED tests/test_houses_cap_experiment.py::test_native_houses_policy_roundtrip_and_seed349[xgboost]
+FAILED tests/test_houses_cap_experiment.py::test_native_houses_policy_roundtrip_and_seed349[lightgbm]
+FAILED tests/test_houses_cap_experiment_v2.py::test_native_houses_policy_roundtrip_and_seed349[ctboost]
+FAILED tests/test_houses_cap_experiment_v2.py::test_native_houses_policy_roundtrip_and_seed349[xgboost]
+FAILED tests/test_houses_cap_experiment_v2.py::test_native_houses_policy_roundtrip_and_seed349[lightgbm]
+6 failed, 8 passed in 2.41s

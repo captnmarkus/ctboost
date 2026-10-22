@@ -1,0 +1,113 @@
+{
+  "clean_fit_controls": {
+    "binary_refit": null,
+    "leaf_refit": null,
+    "multiclass_refit": null,
+    "parameters": {
+      "eta": 0.025,
+      "eval_metric": "auc",
+      "lambda": 1,
+      "max_bin": 256,
+      "max_depth": 8,
+      "min_child_weight": 0.25,
+      "multi_strategy": "one_output_per_tree",
+      "nthread": 1,
+      "objective": "binary:logistic",
+      "seed": 47,
+      "subsample": 0.8,
+      "tree_method": "hist"
+    },
+    "rounds": 682,
+    "temperature": null
+  },
+  "clean_fit_controls_sha256": "6d816e112b2f74d005cd56f98d992d49ba03cb76a8b816e26cd462dc31c8363c",
+  "fit": {
+    "apparent_union_error_inference_transform": 3.0914200828124905e-06,
+    "early_stopping": false,
+    "fit_seconds": 2.948522300001059,
+    "parameters": {
+      "eta": 0.025,
+      "eval_metric": "auc",
+      "lambda": 1,
+      "max_bin": 256,
+      "max_depth": 8,
+      "min_child_weight": 0.25,
+      "multi_strategy": "one_output_per_tree",
+      "nthread": 1,
+      "objective": "binary:logistic",
+      "seed": 47,
+      "subsample": 0.8,
+      "tree_method": "hist"
+    },
+    "requested_rounds": 682,
+    "retained_rounds": 682,
+    "structural_early_termination": false,
+    "union_data": {
+      "row_order": "original TRAIN followed by original STOP",
+      "source_roles": {
+        "stop": {
+          "index_sha256": "046d57cce251fdfdb2c4d5999bb1b3add867fed8c21d77339d5273c99e24a7c6",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\in_vehicle_coupon_recommendation\\stop.pkl",
+          "rows": 1057,
+          "sha256": "aa8945b3b51c5a8e35e2dedd95fc61952d1d74579a5311d7a29e0941e7b42cde"
+        },
+        "train": {
+          "index_sha256": "a9943111493fdf3fb8fa87727ff777bbeac325ea2e7d51f8d567bd3b2f2d301e",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\in_vehicle_coupon_recommendation\\train.pkl",
+          "rows": 5285,
+          "sha256": "a4ffda38caa481cea4b7b79c4615a71cd9e9524005425181a79d7db49a22f9bb"
+        }
+      },
+      "stop_ids_sha256": "046d57cce251fdfdb2c4d5999bb1b3add867fed8c21d77339d5273c99e24a7c6",
+      "stop_rows": 1057,
+      "train_ids_sha256": "a9943111493fdf3fb8fa87727ff777bbeac325ea2e7d51f8d567bd3b2f2d301e",
+      "train_rows": 5285,
+      "union_category_counts": {
+        "Bar": 6,
+        "CarryAway": 6,
+        "CoffeeHouse": 6,
+        "Restaurant20To50": 6,
+        "RestaurantLessThan20": 6,
+        "age": 8,
+        "car": 6,
+        "coupon": 5,
+        "destination": 3,
+        "direction_opp": 2,
+        "direction_same": 2,
+        "education": 6,
+        "expiration": 2,
+        "gender": 2,
+        "has_children": 2,
+        "income": 9,
+        "maritalStatus": 5,
+        "occupation": 25,
+        "passenger": 4,
+        "toCoupon_GEQ15min": 2,
+        "toCoupon_GEQ25min": 2,
+        "weather": 3
+      },
+      "union_ids_sha256": "ef26974f581af575edbb971ee3796e290156a97616a8a1c9c8f37fe4899cb797",
+      "union_rows": 6342,
+      "vocabulary_fit_on": "TRAIN+STOP union only"
+    }
+  },
+  "old_scalar_corrections_disabled_before_fit": true,
+  "status": "ok",
+  "topology": {
+    "clean_native_state_sha256": "011b6250c978d2dba0d88d73aacfaccdb040f870e24843ee8716ffb2408fce50",
+    "data_schema_sha256": null,
+    "exact_clean_refit_identity_except_scalar_leaf_outputs": true,
+    "feature_pipeline_sha256": null,
+    "leaf_outputs_ignored": true,
+    "library": "xgboost",
+    "limitation": "Fresh fit and disabled-correction provenance must also be enforced by the runner",
+    "nonleaf_state_sha256": "dcfccf35d52fc82d87d785e6e9b1f3d0733454072d42b5307a06a53304cf01c2",
+    "old_correction_subtracted": false,
+    "ordered_schema_sha256": "f0d27ebe46c74c557715bf387ca4926c6529e8b13a421429a6fed409a728e1b8",
+    "parent_native_state_sha256": "011b6250c978d2dba0d88d73aacfaccdb040f870e24843ee8716ffb2408fce50",
+    "physical_trees": 682,
+    "problem": "binary",
+    "total_native_leaves": 125765,
+    "training_metadata_sha256": null
+  }
+}

@@ -1,0 +1,194 @@
+{
+  "label": "nodes24-1",
+  "package": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup-native\\nodes24\\ctboost\\__init__.py",
+  "native_sha256": "b268cbcfc5fb2bb50d564efccd18b8ce5d8ece5e6ce5b652b22bc7c321985a02",
+  "runner_sha256": "a11f74ca95148692b75c2e79a8e86937c6e55b2de5db2ee0c7e131c4c0ba2535",
+  "build_info": {
+    "version": "0.1.61",
+    "cuda_enabled": false,
+    "cuda_runtime": "not compiled",
+    "compiler": "MSVC 1950",
+    "cxx_standard": 17,
+    "package_version": "0.1.61"
+  },
+  "python": "3.10.14 | packaged by Anaconda, Inc. | (main, Mar 21 2024, 16:20:14) [MSC v.1916 64 bit (AMD64)]",
+  "versions": {
+    "numpy": "1.26.4",
+    "pandas": "2.3.3",
+    "catboost": "1.2.10",
+    "psutil": "7.2.2"
+  },
+  "build_receipt": {
+    "label": "nodes24",
+    "source_head": "9e68e6d5a6fe4a402d7b465092f6690bdf979a94",
+    "baseline_native_sha256": "565f490d1e9ae4fe2ee7333c9a3bd41ab21375705c294442ab0ae7d925a961fb",
+    "native_sha256": "b268cbcfc5fb2bb50d564efccd18b8ce5d8ece5e6ce5b652b22bc7c321985a02",
+    "compiler_flags": "/DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG",
+    "compiler": "MSVC19.50.35737.0",
+    "source_hashes": {
+      "src/core/feature_pipeline_normalize.cpp": "d2884287871fd11058204dd018b2ef5cae93a14c354d11ac413e936897b2701b",
+      "src/core/booster_predict.cpp": "46df210f6f441c1ba109854038c5f11276a837bef2241c21cb11f08224f98382",
+      "src/core/booster_prediction.cpp": "fd46d9cd6ef29b04af8fa8039ff37bbfc69c5282554ab6fefc713b69ddc791ba",
+      "src/core/booster_internal.hpp": "b409c652374ea48f51cfe6b53a893872dc7f34ad8251e6ca7b1122181df74cae"
+    }
+  },
+  "affinity": [
+    6
+  ],
+  "protocol": "One CPU/thread; 3 warmups; 7 blocks targeting 50ms each; no fitting.",
+  "cases": [
+    {
+      "case": "categorical_2000",
+      "rows": 1,
+      "trees": 400,
+      "nodes": 1238,
+      "model_sha256": "920067f8c8a2d86395ab9d6417468f5bc0e972f0292c38e9213ed49385e33bdb",
+      "catboost_model_sha256": "3982c044d5fb5545ffc34a8b845ed86298f562386666acb629b92880d39552de",
+      "input_sha256": "60c5a9474e6ec535c459a061b1f46cc76b4dfca234f4372ed617a1e7aecf8622",
+      "reference_sha256": "212e7ebbecf40126df3fd814a32731e6db583c53bed49640d4f0cfc45fb4ac30",
+      "exact_parity": true,
+      "first_call_this_batch_ms": 0.3527999997459119,
+      "raw": {
+        "median_ms": 0.23702740384998414,
+        "block_ms": [
+          0.24220961539028324,
+          0.2384274038412024,
+          0.23702740384998414,
+          0.2392360576970112,
+          0.2365009615389751,
+          0.23401826922508917,
+          0.23645961537637888
+        ],
+        "calls_per_block": 208
+      },
+      "prepared": {
+        "median_ms": 0.024416300000666524,
+        "block_ms": [
+          0.024602299999969546,
+          0.02445160000024771,
+          0.024416300000666524,
+          0.0250051999992138,
+          0.024050100000749808,
+          0.02423859999908018,
+          0.024122800001350697
+        ],
+        "calls_per_block": 1000
+      },
+      "catboost_control": {
+        "median_ms": 5.352922222098439,
+        "block_ms": [
+          5.346233333208754,
+          5.352922222098439,
+          5.389411111132682,
+          5.360588888935228,
+          5.361355555376374,
+          5.341866666842382,
+          5.313711111133064
+        ],
+        "calls_per_block": 9
+      }
+    },
+    {
+      "case": "categorical_2000",
+      "rows": 64,
+      "trees": 400,
+      "nodes": 1238,
+      "model_sha256": "920067f8c8a2d86395ab9d6417468f5bc0e972f0292c38e9213ed49385e33bdb",
+      "catboost_model_sha256": "3982c044d5fb5545ffc34a8b845ed86298f562386666acb629b92880d39552de",
+      "input_sha256": "60c5a9474e6ec535c459a061b1f46cc76b4dfca234f4372ed617a1e7aecf8622",
+      "reference_sha256": "8dc5fa328f0d1882889611745f77af840955c4d1d0f0ae1d87bd5908b8acb1e3",
+      "exact_parity": true,
+      "first_call_this_batch_ms": 0.46180000026652124,
+      "raw": {
+        "median_ms": 0.35005555554461254,
+        "block_ms": [
+          0.3525970370295302,
+          0.35037481482302407,
+          0.35005555554461254,
+          0.34850444445274426,
+          0.34752074073670275,
+          0.35145703703973497,
+          0.347789629638471
+        ],
+        "calls_per_block": 135
+      },
+      "prepared": {
+        "median_ms": 0.06862089136465174,
+        "block_ms": [
+          0.06963704735398422,
+          0.06862089136465174,
+          0.0676821727005857,
+          0.06876532033426394,
+          0.0684349582174097,
+          0.0689894150406332,
+          0.06848105849484731
+        ],
+        "calls_per_block": 718
+      },
+      "catboost_control": {
+        "median_ms": 5.384311111103873,
+        "block_ms": [
+          5.408722222152089,
+          5.455166666555063,
+          6.2555555555768985,
+          5.384311111103873,
+          5.354444444391346,
+          5.3256000000045685,
+          5.313011111259887
+        ],
+        "calls_per_block": 9
+      }
+    },
+    {
+      "case": "categorical_2000",
+      "rows": 4096,
+      "trees": 400,
+      "nodes": 1238,
+      "model_sha256": "920067f8c8a2d86395ab9d6417468f5bc0e972f0292c38e9213ed49385e33bdb",
+      "catboost_model_sha256": "3982c044d5fb5545ffc34a8b845ed86298f562386666acb629b92880d39552de",
+      "input_sha256": "60c5a9474e6ec535c459a061b1f46cc76b4dfca234f4372ed617a1e7aecf8622",
+      "reference_sha256": "5fadfbac3eb7e4094aa361e40c44880c29e91e3e91534f21bfbdf3543bc3da6a",
+      "exact_parity": true,
+      "first_call_this_batch_ms": 7.604799999171519,
+      "raw": {
+        "median_ms": 7.440600000033252,
+        "block_ms": [
+          7.442550000026434,
+          7.43031666661409,
+          7.440600000033252,
+          7.453966666616907,
+          7.416199999776533,
+          7.474816666520685,
+          7.415833333349535
+        ],
+        "calls_per_block": 6
+      },
+      "prepared": {
+        "median_ms": 3.7612769230271135,
+        "block_ms": [
+          3.7434538461149294,
+          3.798615384557007,
+          3.7741923076212585,
+          3.731238461533884,
+          3.732992307749765,
+          3.7693615385461063,
+          3.7612769230271135
+        ],
+        "calls_per_block": 13
+      },
+      "catboost_control": {
+        "median_ms": 7.191666666888826,
+        "block_ms": [
+          7.236383333292906,
+          7.184799999777169,
+          7.1758999999171165,
+          7.191666666888826,
+          7.2466499999184935,
+          7.2026833331619855,
+          7.1883333333365345
+        ],
+        "calls_per_block": 6
+      }
+    }
+  ]
+}

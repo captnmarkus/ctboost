@@ -1,0 +1,96 @@
+{
+  "config_index": 2,
+  "correction": {
+    "fold": {
+      "coefficient_rounding_absolute_bound": 0.00028359304456298043,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "ctboost",
+      "physical_trees": 105,
+      "prediction_oracle_absolute_tolerance": 2.7954015731811523,
+      "topology_sha256_after": "daf30aef64213ac65d41e8efc612f0f172efeac3d9c5b1d41f4993052ca3c6fb",
+      "topology_sha256_before": "daf30aef64213ac65d41e8efc612f0f172efeac3d9c5b1d41f4993052ca3c6fb"
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 67305,
+      "design_shape": [
+        641,
+        6532
+      ],
+      "ordered_ctr": true,
+      "ordered_training_transform_replayed": true,
+      "pipeline_state_sha256": "ea7e192a262598678ce47a261482367cef4af85f5bb59e5e28fdd3780d15f6ab",
+      "training_leaf_ids_sha256": "f5c7611662305b1c1a5717419a4fa7b6ca00ea483abc2a00f033d874d95257cc",
+      "training_rows": 641,
+      "training_transform_sha256": "d23b935081468c5789fffe7c16481e67d443ce7a020fd2d0cd0a81d0c7c8cd56",
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "coefficient_norm": 965.0927125763174,
+      "condition_estimate": 356.3950033824068,
+      "istop": 2,
+      "iterations": 85,
+      "matrix_norm": 433.02390223649707,
+      "normal_residual_norm": 0.01900321915246044,
+      "regularized_residual_norm": 4659.857894839949,
+      "residual_norm": 3521.3969049592174
+    },
+    "stop_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 2.7954015731811523,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.0890261485457764e-06,
+      "oracle_max_absolute_difference": 0.011829999035398941
+    },
+    "training_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 2.7954015731811523,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 9.07786834441899e-07,
+      "oracle_max_absolute_difference": 0.009897278438074864
+    }
+  },
+  "dataset": "Another-Dataset-on-used-Fiat-500",
+  "finished_at": "2026-10-16T12:28:26.216191+00:00",
+  "fit_seconds": 0.11967159999767318,
+  "library": "ctboost",
+  "parameters": {
+    "alpha": 0.8,
+    "bootstrap_type": "Bernoulli",
+    "cat_features": [
+      "model"
+    ],
+    "eval_metric": "RMSE",
+    "feature_test": "grouped",
+    "feature_test_adjustment": "none",
+    "feature_test_bins": 8,
+    "iterations": 2000,
+    "lambda_l2": 3,
+    "leaf_estimation_iterations": 1,
+    "learning_rate": 0.05,
+    "max_bins": 256,
+    "max_cat_threshold": 256,
+    "max_depth": 8,
+    "min_data_in_leaf": 1,
+    "multi_strategy": "one_output_per_tree",
+    "multiclass_feature_test": "single",
+    "one_hot_max_size": 8,
+    "ordered_ctr": true,
+    "random_seed": 47,
+    "subsample": 1.0,
+    "verbose": false
+  },
+  "patience": 50,
+  "retained_at_round_cap": false,
+  "retained_rounds": 105,
+  "round_cap": 2000,
+  "started_at": "2026-10-16T12:28:23.913413+00:00",
+  "status": "ok",
+  "stop_error": 662.0210514877933,
+  "trained_at_round_cap": null,
+  "trained_rounds_if_available": null,
+  "uncorrected_stop_error": 664.1771880686259
+}

@@ -1,0 +1,99 @@
+{
+  "clean_fit_controls": {
+    "binary_refit": null,
+    "leaf_refit": null,
+    "multiclass_refit": null,
+    "parameters": {
+      "alpha": 10.0,
+      "colsample_bytree": 1.0,
+      "eta": 0.025,
+      "eval_metric": "auc",
+      "lambda": 1.0,
+      "max_bin": 256,
+      "max_depth": 6,
+      "min_child_weight": 1.0,
+      "multi_strategy": "one_output_per_tree",
+      "nthread": 1,
+      "objective": "binary:logistic",
+      "seed": 47,
+      "subsample": 1.0,
+      "tree_method": "hist"
+    },
+    "rounds": 230,
+    "temperature": null
+  },
+  "clean_fit_controls_sha256": "7d489bb4bd663ac783f217dea67509fe49f4602ddf4f24ea6f2bc06b084a72dd",
+  "fit": {
+    "apparent_union_error_inference_transform": 0.046692093837867654,
+    "early_stopping": false,
+    "fit_seconds": 0.35218710000117426,
+    "parameters": {
+      "alpha": 10.0,
+      "colsample_bytree": 1.0,
+      "eta": 0.025,
+      "eval_metric": "auc",
+      "lambda": 1.0,
+      "max_bin": 256,
+      "max_depth": 6,
+      "min_child_weight": 1.0,
+      "multi_strategy": "one_output_per_tree",
+      "nthread": 1,
+      "objective": "binary:logistic",
+      "seed": 47,
+      "subsample": 1.0,
+      "tree_method": "hist"
+    },
+    "requested_rounds": 230,
+    "retained_rounds": 230,
+    "structural_early_termination": false,
+    "union_data": {
+      "row_order": "original TRAIN followed by original STOP",
+      "source_roles": {
+        "stop": {
+          "index_sha256": "86cca4564cf26e9a7d4e20eda6a3d98ccc2d40b37adcac57ad52ec52ac6b84fe",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\churn\\stop.pkl",
+          "rows": 416,
+          "sha256": "39074b7e402e872977a2c9758a2b7a8cc28c9495860e8ac384c962b1a8633d2f"
+        },
+        "train": {
+          "index_sha256": "ac9963bd0d5ae11b11341d1e0cb332d69a36ef646ecca5f0eb857a96109c4370",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\churn\\train.pkl",
+          "rows": 2085,
+          "sha256": "54578e8d3e6dd9f1cee6edc4a61fcf09510996a5adf063f9b0820376c7935a37"
+        }
+      },
+      "stop_ids_sha256": "86cca4564cf26e9a7d4e20eda6a3d98ccc2d40b37adcac57ad52ec52ac6b84fe",
+      "stop_rows": 416,
+      "train_ids_sha256": "ac9963bd0d5ae11b11341d1e0cb332d69a36ef646ecca5f0eb857a96109c4370",
+      "train_rows": 2085,
+      "union_category_counts": {
+        "area_code": 3,
+        "international_plan": 2,
+        "state": 51,
+        "voice_mail_plan": 2
+      },
+      "union_ids_sha256": "791e41637f8b5d602f8e20531bf8687b93b7128a1ac451e121d4023d16e39569",
+      "union_rows": 2501,
+      "vocabulary_fit_on": "TRAIN+STOP union only"
+    }
+  },
+  "old_scalar_corrections_disabled_before_fit": true,
+  "status": "ok",
+  "topology": {
+    "clean_native_state_sha256": "a2eddaaa7799a09460a064c1601b6943ec592f96e37d58ee9d13efc1b12e9fbd",
+    "data_schema_sha256": null,
+    "exact_clean_refit_identity_except_scalar_leaf_outputs": true,
+    "feature_pipeline_sha256": null,
+    "leaf_outputs_ignored": true,
+    "library": "xgboost",
+    "limitation": "Fresh fit and disabled-correction provenance must also be enforced by the runner",
+    "nonleaf_state_sha256": "7967d4f1666791bcaed08a91d1c122349bf264f69aab4403d847fc6a06c01d00",
+    "old_correction_subtracted": false,
+    "ordered_schema_sha256": "9a7b94ad82290a71cf8072aa2ae58063579165ff85e5d50dced1b61f2fadc23e",
+    "parent_native_state_sha256": "58383f24fcce7d1b4e07b4d8e43bcebcfd3941b803cf1caeccc96393c4b783ba",
+    "physical_trees": 230,
+    "problem": "binary",
+    "total_native_leaves": 3501,
+    "training_metadata_sha256": null
+  }
+}

@@ -1,0 +1,349 @@
+{
+  "correction": {
+    "fold": {
+      "coefficient_rounding_absolute_bound": 8.926620261713548e-07,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "ctboost",
+      "physical_trees": 267,
+      "prediction_oracle_absolute_tolerance": 0.007566776592284441,
+      "topology_sha256_after": "4d1a71d0fd3603435fda702d5f621128d266d89b5eef830a44f55f373226748a",
+      "topology_sha256_before": "4d1a71d0fd3603435fda702d5f621128d266d89b5eef830a44f55f373226748a"
+    },
+    "inference_checks": {
+      "stop": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 0.007566776592284441,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 7.132398949046627e-07,
+        "oracle_max_absolute_difference": 3.1951369598992585e-06
+      }
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 1354758,
+      "design_shape": [
+        5074,
+        10397
+      ],
+      "ordered_ctr": true,
+      "ordered_training_transform_replayed": true,
+      "pipeline_state_sha256": "2f2049ad9501a44f742515c6318753c609270629ae47f2c86ab377de5e18d5ba",
+      "training_leaf_ids_sha256": "b4aabda74b57f190a5ca534e7ab2261834a2ed63f07b7db812bb790ee74d9886",
+      "training_rows": 5074,
+      "training_transform_sha256": "7dd0e32aa15d3343617a40edc083d670ee033184e0e1dcfd88cbbae7d18218e5",
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "columns": 10397,
+      "evaluations": 53,
+      "final_objective": 0.24350778265769912,
+      "ftol": 1e-13,
+      "gradient_gate": 1e-06,
+      "gtol": 1e-09,
+      "initial_coefficients": "all zero",
+      "initial_objective": 0.3263846056058302,
+      "iterations": 47,
+      "maxcor": 20,
+      "maximum_absolute_mean_gradient": 3.030260778403994e-08,
+      "maxiter": 2000,
+      "maxls": 50,
+      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+      "method": "L-BFGS-B",
+      "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+      "penalty": 100.0,
+      "rows": 5074,
+      "status": 0
+    },
+    "training_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 0.007566776592284441,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 8.062298403800302e-07,
+      "oracle_max_absolute_difference": 4.182145207032306e-06
+    }
+  },
+  "dataset": "in_vehicle_coupon_recommendation",
+  "early_stopping": false,
+  "feature_names": [
+    "destination",
+    "passenger",
+    "weather",
+    "temperature",
+    "time",
+    "coupon",
+    "expiration",
+    "gender",
+    "age",
+    "maritalStatus",
+    "has_children",
+    "education",
+    "occupation",
+    "income",
+    "car",
+    "Bar",
+    "CoffeeHouse",
+    "CarryAway",
+    "RestaurantLessThan20",
+    "Restaurant20To50",
+    "toCoupon_GEQ15min",
+    "toCoupon_GEQ25min",
+    "direction_same",
+    "direction_opp"
+  ],
+  "finished_at": "2026-10-16T13:09:22.078699+00:00",
+  "fit_seconds": 2.087321499999234,
+  "fold": 3,
+  "fold_category_counts": {
+    "Bar": 6,
+    "CarryAway": 6,
+    "CoffeeHouse": 6,
+    "Restaurant20To50": 6,
+    "RestaurantLessThan20": 6,
+    "age": 8,
+    "car": 6,
+    "coupon": 5,
+    "destination": 3,
+    "direction_opp": 2,
+    "direction_same": 2,
+    "education": 6,
+    "expiration": 2,
+    "gender": 2,
+    "has_children": 2,
+    "income": 9,
+    "maritalStatus": 5,
+    "occupation": 25,
+    "passenger": 4,
+    "toCoupon_GEQ15min": 2,
+    "toCoupon_GEQ25min": 2,
+    "weather": 3
+  },
+  "fold_category_schema": {
+    "Bar": [
+      "1~3",
+      "4~8",
+      "gt8",
+      "less1",
+      "nan",
+      "never"
+    ],
+    "CarryAway": [
+      "1~3",
+      "4~8",
+      "gt8",
+      "less1",
+      "nan",
+      "never"
+    ],
+    "CoffeeHouse": [
+      "1~3",
+      "4~8",
+      "gt8",
+      "less1",
+      "nan",
+      "never"
+    ],
+    "Restaurant20To50": [
+      "1~3",
+      "4~8",
+      "gt8",
+      "less1",
+      "nan",
+      "never"
+    ],
+    "RestaurantLessThan20": [
+      "1~3",
+      "4~8",
+      "gt8",
+      "less1",
+      "nan",
+      "never"
+    ],
+    "age": [
+      "21",
+      "26",
+      "31",
+      "36",
+      "41",
+      "46",
+      "50plus",
+      "below21"
+    ],
+    "car": [
+      "Car that is too old to install Onstar :D",
+      "Mazda5",
+      "Scooter and motorcycle",
+      "crossover",
+      "do not drive",
+      "nan"
+    ],
+    "coupon": [
+      "Bar",
+      "Carry out & Take away",
+      "Coffee House",
+      "Restaurant(20-50)",
+      "Restaurant(<20)"
+    ],
+    "destination": [
+      "Home",
+      "No Urgent Place",
+      "Work"
+    ],
+    "direction_opp": [
+      "0",
+      "1"
+    ],
+    "direction_same": [
+      "0",
+      "1"
+    ],
+    "education": [
+      "Associates degree",
+      "Bachelors degree",
+      "Graduate degree (Masters or Doctorate)",
+      "High School Graduate",
+      "Some High School",
+      "Some college - no degree"
+    ],
+    "expiration": [
+      "1d",
+      "2h"
+    ],
+    "gender": [
+      "Female",
+      "Male"
+    ],
+    "has_children": [
+      "0",
+      "1"
+    ],
+    "income": [
+      "$100000 or More",
+      "$12500 - $24999",
+      "$25000 - $37499",
+      "$37500 - $49999",
+      "$50000 - $62499",
+      "$62500 - $74999",
+      "$75000 - $87499",
+      "$87500 - $99999",
+      "Less than $12500"
+    ],
+    "maritalStatus": [
+      "Divorced",
+      "Married partner",
+      "Single",
+      "Unmarried partner",
+      "Widowed"
+    ],
+    "occupation": [
+      "Architecture & Engineering",
+      "Arts Design Entertainment Sports & Media",
+      "Building & Grounds Cleaning & Maintenance",
+      "Business & Financial",
+      "Community & Social Services",
+      "Computer & Mathematical",
+      "Construction & Extraction",
+      "Education&Training&Library",
+      "Farming Fishing & Forestry",
+      "Food Preparation & Serving Related",
+      "Healthcare Practitioners & Technical",
+      "Healthcare Support",
+      "Installation Maintenance & Repair",
+      "Legal",
+      "Life Physical Social Science",
+      "Management",
+      "Office & Administrative Support",
+      "Personal Care & Service",
+      "Production Occupations",
+      "Protective Service",
+      "Retired",
+      "Sales & Related",
+      "Student",
+      "Transportation & Material Moving",
+      "Unemployed"
+    ],
+    "passenger": [
+      "Alone",
+      "Friend(s)",
+      "Kid(s)",
+      "Partner"
+    ],
+    "toCoupon_GEQ15min": [
+      "0",
+      "1"
+    ],
+    "toCoupon_GEQ25min": [
+      "0",
+      "1"
+    ],
+    "weather": [
+      "Rainy",
+      "Snowy",
+      "Sunny"
+    ]
+  },
+  "library": "ctboost",
+  "model_bytes": 14071596,
+  "model_retained": false,
+  "model_sha256": "30c74594e3712f830f83435d4b494e32549774bc37d7bc9e8ea5ad07f2ab7077",
+  "parameters": {
+    "alpha": 0.8,
+    "bootstrap_type": "Bernoulli",
+    "cat_features": [
+      "destination",
+      "passenger",
+      "weather",
+      "coupon",
+      "expiration",
+      "gender",
+      "age",
+      "maritalStatus",
+      "has_children",
+      "education",
+      "occupation",
+      "income",
+      "car",
+      "Bar",
+      "CoffeeHouse",
+      "CarryAway",
+      "RestaurantLessThan20",
+      "Restaurant20To50",
+      "toCoupon_GEQ15min",
+      "toCoupon_GEQ25min",
+      "direction_same",
+      "direction_opp"
+    ],
+    "eval_metric": "AUC",
+    "feature_test": "grouped",
+    "feature_test_adjustment": "none",
+    "feature_test_bins": 8,
+    "iterations": 267,
+    "lambda_l2": 3,
+    "leaf_estimation_backtracking": true,
+    "leaf_estimation_iterations": 3,
+    "learning_rate": 0.05,
+    "max_bins": 256,
+    "max_cat_threshold": 256,
+    "max_depth": 8,
+    "min_data_in_leaf": 10,
+    "multi_strategy": "one_output_per_tree",
+    "multiclass_feature_test": "single",
+    "one_hot_max_size": 8,
+    "ordered_ctr": true,
+    "random_seed": 47,
+    "subsample": 0.8,
+    "verbose": false
+  },
+  "prediction_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave13\\fold_predictions\\in_vehicle_coupon_recommendation\\ctboost\\profile0-fold3.npz",
+  "prediction_sha256": "4f14b93bda7a1b15fcc3d581c35c2432cbaa31cd93b438dcea2a1930aa1b00ca",
+  "profile_index": 0,
+  "requested_rounds": 267,
+  "retained_rounds": 267,
+  "started_at": "2026-10-16T13:09:15.616049+00:00",
+  "status": "ok",
+  "structural_early_termination": false,
+  "temperature": null,
+  "validation_error": 0.1779647909287072
+}

@@ -1,0 +1,116 @@
+{
+  "clean_fit_controls": {
+    "binary_refit": null,
+    "leaf_refit": null,
+    "multiclass_refit": null,
+    "parameters": {
+      "alpha": 0.05,
+      "bootstrap_type": "Bernoulli",
+      "cat_features": [
+        "model"
+      ],
+      "eval_metric": "RMSE",
+      "feature_test": "grouped",
+      "feature_test_adjustment": "none",
+      "feature_test_bins": 8,
+      "iterations": 2000,
+      "lambda_l2": 3,
+      "leaf_estimation_iterations": 1,
+      "learning_rate": 0.05,
+      "max_bins": 256,
+      "max_cat_threshold": 256,
+      "max_depth": 8,
+      "min_data_in_leaf": 1,
+      "multi_strategy": "one_output_per_tree",
+      "multiclass_feature_test": "single",
+      "one_hot_max_size": 8,
+      "ordered_ctr": true,
+      "random_seed": 47,
+      "subsample": 1.0,
+      "verbose": false
+    },
+    "rounds": 116,
+    "temperature": null
+  },
+  "clean_fit_controls_sha256": "0f9ef746c3909bf5ae9d1e0f6a5c9060b45cfe7f1caa4b53db57d07f3488d4ef",
+  "fit": {
+    "apparent_union_error_inference_transform": 680.7488205229703,
+    "early_stopping": false,
+    "fit_seconds": 0.14040849999946658,
+    "parameters": {
+      "alpha": 0.05,
+      "bootstrap_type": "Bernoulli",
+      "cat_features": [
+        "model"
+      ],
+      "eval_metric": "RMSE",
+      "feature_test": "grouped",
+      "feature_test_adjustment": "none",
+      "feature_test_bins": 8,
+      "iterations": 116,
+      "lambda_l2": 3,
+      "leaf_estimation_iterations": 1,
+      "learning_rate": 0.05,
+      "max_bins": 256,
+      "max_cat_threshold": 256,
+      "max_depth": 8,
+      "min_data_in_leaf": 1,
+      "multi_strategy": "one_output_per_tree",
+      "multiclass_feature_test": "single",
+      "one_hot_max_size": 8,
+      "ordered_ctr": true,
+      "random_seed": 47,
+      "subsample": 1.0,
+      "verbose": false
+    },
+    "requested_rounds": 116,
+    "retained_rounds": 116,
+    "structural_early_termination": false,
+    "union_data": {
+      "row_order": "original TRAIN followed by original STOP",
+      "source_roles": {
+        "stop": {
+          "index_sha256": "e4ff5aecc677409e8207582fe0236f8b69960d04dbde04a2f912653c090ef301",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\Another-Dataset-on-used-Fiat-500\\stop.pkl",
+          "rows": 128,
+          "sha256": "2abb866e9c9ccef26f3c9f6cccdf52540cb045c50dd23830cedcdac07e5e9768"
+        },
+        "train": {
+          "index_sha256": "2cdd25daa6280834253718148c7e690ba1942a7f7b4f38dce8170efc0c67e442",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\Another-Dataset-on-used-Fiat-500\\train.pkl",
+          "rows": 641,
+          "sha256": "4971790b94b148ac95999e371a510e4705012e227521497a30803c61b852efff"
+        }
+      },
+      "stop_ids_sha256": "e4ff5aecc677409e8207582fe0236f8b69960d04dbde04a2f912653c090ef301",
+      "stop_rows": 128,
+      "train_ids_sha256": "2cdd25daa6280834253718148c7e690ba1942a7f7b4f38dce8170efc0c67e442",
+      "train_rows": 641,
+      "union_category_counts": {
+        "model": 3
+      },
+      "union_ids_sha256": "58f7a190e2dde748a025cbae705e42fa5857ee5c1daf85948bc54f49272310c6",
+      "union_rows": 769,
+      "vocabulary_fit_on": "TRAIN+STOP union only"
+    }
+  },
+  "old_scalar_corrections_disabled_before_fit": true,
+  "status": "ok",
+  "topology": {
+    "clean_native_state_sha256": "2a133b4cd4fb0245c9247e9d8960482d25a9335bf3e4d52addc3e304a9231102",
+    "data_schema_sha256": "825a6c5954feb86a2461f8e4b44d31cd0f609461d838f1cd534f7d6903719eb4",
+    "exact_clean_refit_identity_except_scalar_leaf_outputs": true,
+    "feature_pipeline_sha256": "ea7e192a262598678ce47a261482367cef4af85f5bb59e5e28fdd3780d15f6ab",
+    "leaf_outputs_ignored": true,
+    "library": "ctboost",
+    "limitation": "Fresh fit and disabled-correction provenance must also be enforced by the runner",
+    "nonleaf_state_sha256": "c0dbead0e9794b13b1a01e931e83e7ae75c2b2c1e945d347c9dd0c55f7489f70",
+    "old_correction_subtracted": false,
+    "ordered_schema_sha256": "2254012ab8d9b2e4397fa355d797cdebc6090d7bc8a7053c5fac6eda8023b237",
+    "parent_native_state_sha256": "cc7b565de9a294ee6b2c7e4de6b88d0cae8b2bce0a9a15aaad052b095d4a5dcc",
+    "physical_trees": 116,
+    "problem": "regression",
+    "total_native_leaves": 715,
+    "training_metadata_sha256": "a1686208a38b06efea7171a32030beb7b5f94e88f6f69f542d77173a57f94b06"
+  }
+}

@@ -1,0 +1,343 @@
+{"package": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\ctr-precision\\runtime-cp310\\ctboost\\__init__.py", "native": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\ctr-precision\\runtime-cp310\\ctboost\\_core.cp310-win_amd64.pyd", "native_sha256": "21ed48b6234bf570413fd4336ffdf76279b0ff9e3d9003cbcf0b34620e2aee17", "build_info": {"version": "0.1.61", "cuda_enabled": false, "cuda_runtime": "not compiled", "compiler": "MSVC 1950", "cxx_standard": 17, "package_version": "0.1.61"}, "python": "C:\\Users\\captn\\miniconda3\\python.exe", "lightgbm": {"version": "4.7.0", "path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\deps\\lightgbm\\__init__.py", "dll_sha256": "7e366d2e49cd061aac3ab21676b2f99b0c7a758dc3e888d4b23812af1b7d301c"}}
+Windows fatal exception: access violation
+
+Current thread 0x0000753c (most recent call first):
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 2860 in set_field
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 3097 in set_label
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 2189 in _lazy_init
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 2574 in construct
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 3758 in __init__
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\engine.py", line 296 in train
+  File "C:\apps\ctboost\benchmarks\fair_accuracy_union_refit.py", line 85 in fit_fixed
+  File "C:\apps\ctboost\benchmarks\fair_accuracy_cap_expansion.py", line 169 in fit_expansion
+  File "C:\apps\ctboost\benchmarks\fair_accuracy_houses_cap.py", line 52 in fit_policy
+  File "C:\apps\ctboost\tests\test_houses_cap_experiment.py", line 108 in test_native_houses_policy_roundtrip_and_seed349
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\python.py", line 166 in pytest_pyfunc_call
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\python.py", line 1720 in runtest
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 179 in pytest_runtest_call
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 245 in <lambda>
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 353 in from_call
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 244 in call_and_report
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 137 in runtestprotocol
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 118 in pytest_runtest_protocol
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\main.py", line 396 in pytest_runtestloop
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\main.py", line 372 in _main
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\main.py", line 318 in wrap_session
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\main.py", line 365 in pytest_cmdline_main
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\config\__init__.py", line 199 in main
+  File "C:\apps\ctboost\.tmp\improvements-20261016\ctr-precision\run_full.py", line 30 in main
+  File "C:\apps\ctboost\.tmp\improvements-20261016\ctr-precision\run_full.py", line 34 in <module>
+Windows fatal exception: access violation
+
+Current thread 0x0000753c (most recent call first):
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 2860 in set_field
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 3097 in set_label
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 2189 in _lazy_init
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 2574 in construct
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 3758 in __init__
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\engine.py", line 296 in train
+  File "C:\apps\ctboost\benchmarks\fair_accuracy_union_refit.py", line 85 in fit_fixed
+  File "C:\apps\ctboost\benchmarks\fair_accuracy_cap_expansion.py", line 169 in fit_expansion
+  File "C:\apps\ctboost\benchmarks\fair_accuracy_houses_cap_v2.py", line 53 in fit_policy
+  File "C:\apps\ctboost\tests\test_houses_cap_experiment_v2.py", line 108 in test_native_houses_policy_roundtrip_and_seed349
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\python.py", line 166 in pytest_pyfunc_call
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\python.py", line 1720 in runtest
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 179 in pytest_runtest_call
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 245 in <lambda>
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 353 in from_call
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 244 in call_and_report
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 137 in runtestprotocol
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 118 in pytest_runtest_protocol
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\main.py", line 396 in pytest_runtestloop
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\main.py", line 372 in _main
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\main.py", line 318 in wrap_session
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\main.py", line 365 in pytest_cmdline_main
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\config\__init__.py", line 199 in main
+  File "C:\apps\ctboost\.tmp\improvements-20261016\ctr-precision\run_full.py", line 30 in main
+  File "C:\apps\ctboost\.tmp\improvements-20261016\ctr-precision\run_full.py", line 34 in <module>
+Windows fatal exception: access violation
+
+Current thread 0x0000753c (most recent call first):
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 2860 in set_field
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 3097 in set_label
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 2189 in _lazy_init
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 2574 in construct
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 3758 in __init__
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\engine.py", line 296 in train
+  File "C:\apps\ctboost\benchmarks\fair_accuracy_union_refit.py", line 85 in fit_fixed
+  File "C:\apps\ctboost\tests\test_multiclass_refit_experiment.py", line 70 in test_anchor_stop_and_seed_transfer_pipeline
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\python.py", line 166 in pytest_pyfunc_call
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\python.py", line 1720 in runtest
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 179 in pytest_runtest_call
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 245 in <lambda>
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 353 in from_call
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 244 in call_and_report
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 137 in runtestprotocol
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 118 in pytest_runtest_protocol
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\main.py", line 396 in pytest_runtestloop
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\main.py", line 372 in _main
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\main.py", line 318 in wrap_session
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\main.py", line 365 in pytest_cmdline_main
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\config\__init__.py", line 199 in main
+  File "C:\apps\ctboost\.tmp\improvements-20261016\ctr-precision\run_full.py", line 30 in main
+  File "C:\apps\ctboost\.tmp\improvements-20261016\ctr-precision\run_full.py", line 34 in <module>
+Windows fatal exception: access violation
+
+Current thread 0x0000753c (most recent call first):
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 2860 in set_field
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 3097 in set_label
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 2189 in _lazy_init
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 2574 in construct
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 3758 in __init__
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\engine.py", line 296 in train
+  File "C:\apps\ctboost\benchmarks\fair_accuracy_union_refit.py", line 85 in fit_fixed
+  File "C:\apps\ctboost\tests\test_scalar_refresh_experiment.py", line 82 in test_fresh_anchor_and_fixed_seed_pipeline
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\python.py", line 166 in pytest_pyfunc_call
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\python.py", line 1720 in runtest
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 179 in pytest_runtest_call
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 245 in <lambda>
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 353 in from_call
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 244 in call_and_report
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 137 in runtestprotocol
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 118 in pytest_runtest_protocol
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\main.py", line 396 in pytest_runtestloop
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\main.py", line 372 in _main
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\main.py", line 318 in wrap_session
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\main.py", line 365 in pytest_cmdline_main
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\config\__init__.py", line 199 in main
+  File "C:\apps\ctboost\.tmp\improvements-20261016\ctr-precision\run_full.py", line 30 in main
+  File "C:\apps\ctboost\.tmp\improvements-20261016\ctr-precision\run_full.py", line 34 in <module>
+Windows fatal exception: access violation
+
+Current thread 0x0000753c (most recent call first):
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 2860 in set_field
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 3097 in set_label
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 2189 in _lazy_init
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 2574 in construct
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\basic.py", line 3758 in __init__
+  File "C:\apps\ctboost\.tmp\improvements-20261016\followup\deps\lightgbm\engine.py", line 296 in train
+  File "C:\apps\ctboost\benchmarks\fair_accuracy_union_refit.py", line 85 in fit_fixed
+  File "C:\apps\ctboost\tests\test_scalar_refresh_experiment.py", line 82 in test_fresh_anchor_and_fixed_seed_pipeline
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\python.py", line 166 in pytest_pyfunc_call
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\python.py", line 1720 in runtest
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 179 in pytest_runtest_call
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 245 in <lambda>
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 353 in from_call
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 244 in call_and_report
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 137 in runtestprotocol
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\runner.py", line 118 in pytest_runtest_protocol
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\main.py", line 396 in pytest_runtestloop
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\main.py", line 372 in _main
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\main.py", line 318 in wrap_session
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\main.py", line 365 in pytest_cmdline_main
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_callers.py", line 121 in _multicall
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_manager.py", line 120 in _hookexec
+  File "C:\Users\captn\miniconda3\lib\site-packages\pluggy\_hooks.py", line 512 in __call__
+  File "C:\Users\captn\miniconda3\lib\site-packages\_pytest\config\__init__.py", line 199 in main
+  File "C:\apps\ctboost\.tmp\improvements-20261016\ctr-precision\run_full.py", line 30 in main
+  File "C:\apps\ctboost\.tmp\improvements-20261016\ctr-precision\run_full.py", line 34 in <module>
+.....F......F...FFF......F..F.....                                       [100%]
+================================== FAILURES ===================================
+__________ test_native_houses_policy_roundtrip_and_seed349[lightgbm] __________
+tests\test_houses_cap_experiment.py:108: in test_native_houses_policy_roundtrip_and_seed349
+    payload, details, verification = main.fit_policy(job, case, seed)
+benchmarks\fair_accuracy_houses_cap.py:52: in fit_policy
+    return cap.fit_expansion(job, case, expanded, seed, cv)
+benchmarks\fair_accuracy_cap_expansion.py:169: in fit_expansion
+    payload, details = cv.union.fit_fixed(job, case, X, expanded["y"], schema, seed)
+benchmarks\fair_accuracy_union_refit.py:85: in fit_fixed
+    model = lgb.train(params, lgb.Dataset(X, label=y, categorical_feature=list(schema) or "auto", free_raw_data=False),
+.tmp\improvements-20261016\followup\deps\lightgbm\engine.py:296: in train
+    booster = Booster(params=params, train_set=train_set)
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:3758: in __init__
+    train_set.construct()
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:2574: in construct
+    self._lazy_init(
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:2189: in _lazy_init
+    self.set_label(label)
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:3097: in set_label
+    self.set_field("label", label_array)
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:2860: in set_field
+    _LIB.LGBM_DatasetSetField(
+E   OSError: exception: access violation reading 0x0000000000000000
+__________ test_native_houses_policy_roundtrip_and_seed349[lightgbm] __________
+tests\test_houses_cap_experiment_v2.py:108: in test_native_houses_policy_roundtrip_and_seed349
+    payload, details, verification = main.fit_policy(job, case, seed)
+benchmarks\fair_accuracy_houses_cap_v2.py:53: in fit_policy
+    return cap.fit_expansion(job, case, expanded, seed, cv)
+benchmarks\fair_accuracy_cap_expansion.py:169: in fit_expansion
+    payload, details = cv.union.fit_fixed(job, case, X, expanded["y"], schema, seed)
+benchmarks\fair_accuracy_union_refit.py:85: in fit_fixed
+    model = lgb.train(params, lgb.Dataset(X, label=y, categorical_feature=list(schema) or "auto", free_raw_data=False),
+.tmp\improvements-20261016\followup\deps\lightgbm\engine.py:296: in train
+    booster = Booster(params=params, train_set=train_set)
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:3758: in __init__
+    train_set.construct()
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:2574: in construct
+    self._lazy_init(
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:2189: in _lazy_init
+    self.set_label(label)
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:3097: in set_label
+    self.set_field("label", label_array)
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:2860: in set_field
+    _LIB.LGBM_DatasetSetField(
+E   OSError: exception: access violation reading 0x0000000000000000
+_________ test_anchor_stop_and_seed_transfer_pipeline[xgboost-False] __________
+tests\test_multiclass_refit_experiment.py:73: in test_anchor_stop_and_seed_transfer_pipeline
+    candidate, evidence = module.corrected(anchor, X, labels, controls(), {"stop": normalized_stop})
+benchmarks\fair_accuracy_multiclass_refit.py:112: in corrected
+    memory = h.memory_preflight(payload, len(X), max_working_bytes=controls["max_working_bytes"])
+benchmarks\fixed_multiclass_leaf_refit.py:245: in memory_preflight
+    classes, supports, document = _metadata(payload)
+benchmarks\fixed_multiclass_leaf_refit.py:52: in _metadata
+    raise ValueError("This draft requires XGBoost3.4.1 serialization")
+E   ValueError: This draft requires XGBoost3.4.1 serialization
+__________ test_anchor_stop_and_seed_transfer_pipeline[xgboost-True] __________
+tests\test_multiclass_refit_experiment.py:70: in test_anchor_stop_and_seed_transfer_pipeline
+    anchor, fit = module.union.fit_fixed(job, case, X, labels, schema, 47)
+benchmarks\fair_accuracy_union_refit.py:80: in fit_fixed
+    model = xgb.train(params, xgb.DMatrix(X, label=y, enable_categorical=True),
+C:\Users\captn\miniconda3\lib\site-packages\xgboost\core.py:751: in inner_f
+    return func(**kwargs)
+C:\Users\captn\miniconda3\lib\site-packages\xgboost\training.py:200: in train
+    bst.update(dtrain, iteration=i, fobj=obj)
+C:\Users\captn\miniconda3\lib\site-packages\xgboost\core.py:2390: in update
+    _check_call(
+C:\Users\captn\miniconda3\lib\site-packages\xgboost\core.py:324: in _check_call
+    raise XGBoostError(py_str(_LIB.XGBGetLastError()))
+E   xgboost.core.XGBoostError: [16:40:48] C:\actions-runner\_work\xgboost\xgboost\src\tree\updater_quantile_hist.cc:204: Categorical features support for multi-target tree is not yet implemented.
+_________ test_anchor_stop_and_seed_transfer_pipeline[lightgbm-False] _________
+tests\test_multiclass_refit_experiment.py:70: in test_anchor_stop_and_seed_transfer_pipeline
+    anchor, fit = module.union.fit_fixed(job, case, X, labels, schema, 47)
+benchmarks\fair_accuracy_union_refit.py:85: in fit_fixed
+    model = lgb.train(params, lgb.Dataset(X, label=y, categorical_feature=list(schema) or "auto", free_raw_data=False),
+.tmp\improvements-20261016\followup\deps\lightgbm\engine.py:296: in train
+    booster = Booster(params=params, train_set=train_set)
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:3758: in __init__
+    train_set.construct()
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:2574: in construct
+    self._lazy_init(
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:2189: in _lazy_init
+    self.set_label(label)
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:3097: in set_label
+    self.set_field("label", label_array)
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:2860: in set_field
+    _LIB.LGBM_DatasetSetField(
+E   OSError: exception: access violation reading 0x0000000000000000
+_________ test_fresh_anchor_and_fixed_seed_pipeline[binary-lightgbm] __________
+tests\test_scalar_refresh_experiment.py:82: in test_fresh_anchor_and_fixed_seed_pipeline
+    anchor, _ = module.union.fit_fixed(clean_job, case, X, labels, schema, 47)
+benchmarks\fair_accuracy_union_refit.py:85: in fit_fixed
+    model = lgb.train(params, lgb.Dataset(X, label=y, categorical_feature=list(schema) or "auto", free_raw_data=False),
+.tmp\improvements-20261016\followup\deps\lightgbm\engine.py:296: in train
+    booster = Booster(params=params, train_set=train_set)
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:3758: in __init__
+    train_set.construct()
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:2574: in construct
+    self._lazy_init(
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:2189: in _lazy_init
+    self.set_label(label)
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:3097: in set_label
+    self.set_field("label", label_array)
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:2860: in set_field
+    _LIB.LGBM_DatasetSetField(
+E   OSError: exception: access violation reading 0x0000000000000000
+_______ test_fresh_anchor_and_fixed_seed_pipeline[regression-lightgbm] ________
+tests\test_scalar_refresh_experiment.py:82: in test_fresh_anchor_and_fixed_seed_pipeline
+    anchor, _ = module.union.fit_fixed(clean_job, case, X, labels, schema, 47)
+benchmarks\fair_accuracy_union_refit.py:85: in fit_fixed
+    model = lgb.train(params, lgb.Dataset(X, label=y, categorical_feature=list(schema) or "auto", free_raw_data=False),
+.tmp\improvements-20261016\followup\deps\lightgbm\engine.py:296: in train
+    booster = Booster(params=params, train_set=train_set)
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:3758: in __init__
+    train_set.construct()
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:2574: in construct
+    self._lazy_init(
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:2189: in _lazy_init
+    self.set_label(label)
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:3097: in set_label
+    self.set_field("label", label_array)
+.tmp\improvements-20261016\followup\deps\lightgbm\basic.py:2860: in set_field
+    _LIB.LGBM_DatasetSetField(
+E   OSError: exception: access violation reading 0x0000000000000000
+=========================== short test summary info ===========================
+FAILED tests/test_houses_cap_experiment.py::test_native_houses_policy_roundtrip_and_seed349[lightgbm]
+FAILED tests/test_houses_cap_experiment_v2.py::test_native_houses_policy_roundtrip_and_seed349[lightgbm]
+FAILED tests/test_multiclass_refit_experiment.py::test_anchor_stop_and_seed_transfer_pipeline[xgboost-False]
+FAILED tests/test_multiclass_refit_experiment.py::test_anchor_stop_and_seed_transfer_pipeline[xgboost-True]
+FAILED tests/test_multiclass_refit_experiment.py::test_anchor_stop_and_seed_transfer_pipeline[lightgbm-False]
+FAILED tests/test_scalar_refresh_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[binary-lightgbm]
+FAILED tests/test_scalar_refresh_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[regression-lightgbm]
+7 failed, 27 passed in 6.14s

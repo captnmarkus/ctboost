@@ -1,0 +1,3171 @@
+{
+  "scope": "Wave6 diagnostic; differing selected quality/capacity, current composed runtime. Speedup is competitor latency / CTBoost latency; >1 means CTBoost faster.",
+  "aggregate": {
+    "all": {
+      "xgboost": {
+        "raw": {
+          "geometric_speedup": 2.2655347964302317,
+          "faster_cases": 36,
+          "cases": 36
+        },
+        "normalized_frame": {
+          "geometric_speedup": 7.427487333499318,
+          "faster_cases": 36,
+          "cases": 36
+        }
+      },
+      "lightgbm": {
+        "raw": {
+          "geometric_speedup": 2.0097507305005475,
+          "faster_cases": 35,
+          "cases": 36
+        },
+        "normalized_frame": {
+          "geometric_speedup": 5.479656125301723,
+          "faster_cases": 35,
+          "cases": 36
+        }
+      }
+    },
+    "1": {
+      "xgboost": {
+        "raw": {
+          "geometric_speedup": 2.299971708140772,
+          "faster_cases": 12,
+          "cases": 12
+        },
+        "normalized_frame": {
+          "geometric_speedup": 15.447870720790666,
+          "faster_cases": 12,
+          "cases": 12
+        }
+      },
+      "lightgbm": {
+        "raw": {
+          "geometric_speedup": 1.5073701612202632,
+          "faster_cases": 12,
+          "cases": 12
+        },
+        "normalized_frame": {
+          "geometric_speedup": 6.908071872827975,
+          "faster_cases": 12,
+          "cases": 12
+        }
+      }
+    },
+    "64": {
+      "xgboost": {
+        "raw": {
+          "geometric_speedup": 2.281263773294094,
+          "faster_cases": 12,
+          "cases": 12
+        },
+        "normalized_frame": {
+          "geometric_speedup": 8.274660947744803,
+          "faster_cases": 12,
+          "cases": 12
+        }
+      },
+      "lightgbm": {
+        "raw": {
+          "geometric_speedup": 1.8237775566620513,
+          "faster_cases": 12,
+          "cases": 12
+        },
+        "normalized_frame": {
+          "geometric_speedup": 5.601369556494139,
+          "faster_cases": 12,
+          "cases": 12
+        }
+      }
+    },
+    "1000": {
+      "xgboost": {
+        "raw": {
+          "geometric_speedup": 2.216226854582101,
+          "faster_cases": 12,
+          "cases": 12
+        },
+        "normalized_frame": {
+          "geometric_speedup": 3.205582256736474,
+          "faster_cases": 12,
+          "cases": 12
+        }
+      },
+      "lightgbm": {
+        "raw": {
+          "geometric_speedup": 2.9528052512108935,
+          "faster_cases": 11,
+          "cases": 12
+        },
+        "normalized_frame": {
+          "geometric_speedup": 4.2521525980977986,
+          "faster_cases": 11,
+          "cases": 12
+        }
+      }
+    }
+  },
+  "rows": [
+    {
+      "dataset": "blood-transfusion-service-center",
+      "rows": 1,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.39503546099290776,
+          "retained_rounds": 15,
+          "model_bytes": 73512,
+          "model_sha256": "442c3c2868f003981c332b1062bea6847018ff0a724d97eeae5454b4fa1eada0",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 0.5127172217452214,
+            "order_medians_ms": [
+              0.5089131868222107,
+              0.5145450549417336,
+              0.514714736824604
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.050427220583742945,
+            "order_medians_ms": [
+              0.04970100000112628,
+              0.05079197802203183,
+              0.05079662309535528
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.37163120567375885,
+          "retained_rounds": 28,
+          "model_bytes": 41154,
+          "model_sha256": "544c5a9917015043fe44e3c0f4a44aee8e559b3688b60a6f99faa14872813e05",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 1.2925021589124948,
+            "order_medians_ms": [
+              1.2780974359021713,
+              1.3098289473897526,
+              1.289778947370666
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.7129277086532056,
+            "order_medians_ms": [
+              0.7125594202870675,
+              0.7130695652238607,
+              0.713154285715843
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.33758865248226955,
+          "retained_rounds": 1,
+          "model_bytes": 6464,
+          "model_sha256": "db669924407280288f40600852d9eab3e54e0046abef388136bf2af9b1d35bba",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 0.671678841621128,
+            "order_medians_ms": [
+              0.6715493150731574,
+              0.6746972602778529,
+              0.668802898529237
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.2038485368724292,
+            "order_medians_ms": [
+              0.20188518518294782,
+              0.20602978723392415,
+              0.20365183673322684
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 2.5208869608728746,
+          "normalized_frame": 14.137755371015707
+        },
+        "lightgbm": {
+          "raw": 1.310037605787499,
+          "normalized_frame": 4.0424305466906345
+        }
+      }
+    },
+    {
+      "dataset": "blood-transfusion-service-center",
+      "rows": 64,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.39503546099290776,
+          "retained_rounds": 15,
+          "model_bytes": 73512,
+          "model_sha256": "442c3c2868f003981c332b1062bea6847018ff0a724d97eeae5454b4fa1eada0",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 0.5746652539279188,
+            "order_medians_ms": [
+              0.5661388235346427,
+              0.5843573170772642,
+              0.573645238091558
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.10989740654134604,
+            "order_medians_ms": [
+              0.10872821670339489,
+              0.11090209790061653,
+              0.11007287356388305
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.37163120567375885,
+          "retained_rounds": 28,
+          "model_bytes": 41154,
+          "model_sha256": "544c5a9917015043fe44e3c0f4a44aee8e559b3688b60a6f99faa14872813e05",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 1.3141510213440986,
+            "order_medians_ms": [
+              1.2974184210179374,
+              1.3344085713989833,
+              1.310892105290182
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.7356597737672405,
+            "order_medians_ms": [
+              0.7383516129031646,
+              0.737340000005833,
+              0.731307462698549
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.33758865248226955,
+          "retained_rounds": 1,
+          "model_bytes": 6464,
+          "model_sha256": "db669924407280288f40600852d9eab3e54e0046abef388136bf2af9b1d35bba",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 0.6845194332357591,
+            "order_medians_ms": [
+              0.6843028169102363,
+              0.6847486110928003,
+              0.6845069444554812
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.21122632009681222,
+            "order_medians_ms": [
+              0.21107531915247896,
+              0.2126683982653474,
+              0.20994410479987013
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 2.2868113434067734,
+          "normalized_frame": 6.6940594589051345
+        },
+        "lightgbm": {
+          "raw": 1.1911620348663354,
+          "normalized_frame": 1.9220318908740017
+        }
+      }
+    },
+    {
+      "dataset": "blood-transfusion-service-center",
+      "rows": 1000,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.39503546099290776,
+          "retained_rounds": 15,
+          "model_bytes": 73512,
+          "model_sha256": "442c3c2868f003981c332b1062bea6847018ff0a724d97eeae5454b4fa1eada0",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 0.667464521805801,
+            "order_medians_ms": [
+              0.6611554053961299,
+              0.6711905405461801,
+              0.6700931506900017
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.17787451567470972,
+            "order_medians_ms": [
+              0.17702518248137972,
+              0.17848079710017992,
+              0.17812080291715063
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.37163120567375885,
+          "retained_rounds": 28,
+          "model_bytes": 41154,
+          "model_sha256": "544c5a9917015043fe44e3c0f4a44aee8e559b3688b60a6f99faa14872813e05",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 1.5592709275248422,
+            "order_medians_ms": [
+              1.5555967741919072,
+              1.563764516122906,
+              1.5584624999860353
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.965921122669159,
+            "order_medians_ms": [
+              0.9659843137128251,
+              0.9717100000125356,
+              0.9601039215768277
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.33758865248226955,
+          "retained_rounds": 1,
+          "model_bytes": 6464,
+          "model_sha256": "db669924407280288f40600852d9eab3e54e0046abef388136bf2af9b1d35bba",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 0.8206018324841596,
+            "order_medians_ms": [
+              0.8114881356189055,
+              0.8176732142796287,
+              0.8327900000040245
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.3294364836074975,
+            "order_medians_ms": [
+              0.32373092104583184,
+              0.3278177631680017,
+              0.33689798658466413
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 2.336110574546032,
+          "normalized_frame": 5.430351385667858
+        },
+        "lightgbm": {
+          "raw": 1.2294313865013398,
+          "normalized_frame": 1.8520724138468416
+        }
+      }
+    },
+    {
+      "dataset": "churn",
+      "rows": 1,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.11974789915966388,
+          "retained_rounds": 137,
+          "model_bytes": 954061,
+          "model_sha256": "6fdb47171b7ec6a8da62e10c34777ce1e1300b8cad3d98fc9b1976d056ee766c",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 2.5453503796471075,
+            "order_medians_ms": [
+              2.5186631578674823,
+              2.5596947368620406,
+              2.5579052631464467
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.15231704438324015,
+            "order_medians_ms": [
+              0.15138507936619192,
+              0.15297672130667497,
+              0.1525938709692714
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.12942126002943544,
+          "retained_rounds": 61,
+          "model_bytes": 219982,
+          "model_sha256": "dad32f1f1cf5e3d6a9646dadbeb292a6dc99c30ab4e1de5d9cef8467afc8f5cd",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 4.849037219452224,
+            "order_medians_ms": [
+              4.793609999978798,
+              4.8705200000767945,
+              4.883470000095258
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 2.113810300865417,
+            "order_medians_ms": [
+              2.117269565212115,
+              2.1091826087206793,
+              2.114986956534583
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.12528485970659453,
+          "retained_rounds": 6,
+          "model_bytes": 27229,
+          "model_sha256": "be709c42db3d74f160ddc146f641e4a71093547856d1f9f14514e77d9f29f442",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 3.673916603310248,
+            "order_medians_ms": [
+              3.6216230768891715,
+              3.7018615385022713,
+              3.6988307691409807
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 1.2494853449443122,
+            "order_medians_ms": [
+              1.2389999999588606,
+              1.253905128228675,
+              1.255617948724345
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 1.9050568669153143,
+          "normalized_frame": 13.877700354708335
+        },
+        "lightgbm": {
+          "raw": 1.4433834464155804,
+          "normalized_frame": 8.203187962343343
+        }
+      }
+    },
+    {
+      "dataset": "churn",
+      "rows": 64,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.11974789915966388,
+          "retained_rounds": 137,
+          "model_bytes": 954061,
+          "model_sha256": "6fdb47171b7ec6a8da62e10c34777ce1e1300b8cad3d98fc9b1976d056ee766c",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 2.749027724567696,
+            "order_medians_ms": [
+              2.768588235245689,
+              2.7349722222425044,
+              2.7436333333146954
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.24222510412667586,
+            "order_medians_ms": [
+              0.24038072916710007,
+              0.24444870466230392,
+              0.24186335078735302
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.12942126002943544,
+          "retained_rounds": 61,
+          "model_bytes": 219982,
+          "model_sha256": "dad32f1f1cf5e3d6a9646dadbeb292a6dc99c30ab4e1de5d9cef8467afc8f5cd",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 4.998168239298297,
+            "order_medians_ms": [
+              4.976410000017495,
+              5.010888888743163,
+              5.007277777824331
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 2.2353889892511947,
+            "order_medians_ms": [
+              2.218859090961897,
+              2.256500000013065,
+              2.230972727209684
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.12528485970659453,
+          "retained_rounds": 6,
+          "model_bytes": 27229,
+          "model_sha256": "be709c42db3d74f160ddc146f641e4a71093547856d1f9f14514e77d9f29f442",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 3.726938335829525,
+            "order_medians_ms": [
+              3.73383076909634,
+              3.7182166665843397,
+              3.7287846154448254
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 1.27957637554216,
+            "order_medians_ms": [
+              1.2656897436103556,
+              1.2906973684278598,
+              1.2824692308081116
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 1.8181585418838562,
+          "normalized_frame": 9.228560339815806
+        },
+        "lightgbm": {
+          "raw": 1.3557296285237037,
+          "normalized_frame": 5.282591910345442
+        }
+      }
+    },
+    {
+      "dataset": "churn",
+      "rows": 1000,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.11974789915966388,
+          "retained_rounds": 137,
+          "model_bytes": 954061,
+          "model_sha256": "6fdb47171b7ec6a8da62e10c34777ce1e1300b8cad3d98fc9b1976d056ee766c",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 4.4771912253866955,
+            "order_medians_ms": [
+              4.4694545454562595,
+              4.4935090908521405,
+              4.468654545483084
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 1.9509101818686223,
+            "order_medians_ms": [
+              1.9527599999855738,
+              1.9553666666575333,
+              1.9446199999947567
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.12942126002943544,
+          "retained_rounds": 61,
+          "model_bytes": 219982,
+          "model_sha256": "dad32f1f1cf5e3d6a9646dadbeb292a6dc99c30ab4e1de5d9cef8467afc8f5cd",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 6.518339296805071,
+            "order_medians_ms": [
+              6.499985714201882,
+              6.529157142982252,
+              6.52591428557311
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 3.70578715293647,
+            "order_medians_ms": [
+              3.68399230767234,
+              3.7031769230592406,
+              3.7303384615370305
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.12528485970659453,
+          "retained_rounds": 6,
+          "model_bytes": 27229,
+          "model_sha256": "be709c42db3d74f160ddc146f641e4a71093547856d1f9f14514e77d9f29f442",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 4.131061932906994,
+            "order_medians_ms": [
+              4.110358333340021,
+              4.136574999999236,
+              4.146336363688037
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 1.6461164045052283,
+            "order_medians_ms": [
+              1.6308599999926325,
+              1.6547766666917596,
+              1.6528199999811477
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 1.4558992387558969,
+          "normalized_frame": 1.8995170497223968
+        },
+        "lightgbm": {
+          "raw": 0.9226905273741561,
+          "normalized_frame": 0.843768421429091
+        }
+      }
+    },
+    {
+      "dataset": "in_vehicle_coupon_recommendation",
+      "rows": 1,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.2041297410649161,
+          "retained_rounds": 72,
+          "model_bytes": 3941355,
+          "model_sha256": "c6f4cd2651111bab5d096302791047b68aeaf7d3985fe273f6fc0a8a20241a71",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 3.4044724256898133,
+            "order_medians_ms": [
+              3.366792857117876,
+              3.4204000000629873,
+              3.4265428570766483
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.373524284692617,
+            "order_medians_ms": [
+              0.36778473282496815,
+              0.3769854961909782,
+              0.37587045453895396
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.1925980123997083,
+          "retained_rounds": 235,
+          "model_bytes": 3513126,
+          "model_sha256": "ded3b1b425e3b0f17372f29b7aabd694f19da73adac9b2ae3215fad7614aad83",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 9.676953119609614,
+            "order_medians_ms": [
+              9.638139999879058,
+              9.690599999885308,
+              9.702240000115125
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 6.284844042945805,
+            "order_medians_ms": [
+              6.256885714070189,
+              6.309257142804979,
+              6.288499999884932
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.19244210430342834,
+          "retained_rounds": 424,
+          "model_bytes": 1975608,
+          "model_sha256": "89bf2942f31f980cab05011dafca6c17ba3c1858d9c0e74c28d353028c34df6b",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 6.046063951524997,
+            "order_medians_ms": [
+              6.00615000007565,
+              6.109599999945203,
+              6.022949999987759
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 3.070087784110827,
+            "order_medians_ms": [
+              3.0643999999711014,
+              3.089724999995269,
+              3.0562375000044995
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 2.8424237031818143,
+          "normalized_frame": 16.82579768037778
+        },
+        "lightgbm": {
+          "raw": 1.7759180265059555,
+          "normalized_frame": 8.219245467901192
+        }
+      }
+    },
+    {
+      "dataset": "in_vehicle_coupon_recommendation",
+      "rows": 64,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.2041297410649161,
+          "retained_rounds": 72,
+          "model_bytes": 3941355,
+          "model_sha256": "c6f4cd2651111bab5d096302791047b68aeaf7d3985fe273f6fc0a8a20241a71",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 3.746733492786631,
+            "order_medians_ms": [
+              3.724615384691368,
+              3.75988461536718,
+              3.75579999994303
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.6541728174937512,
+            "order_medians_ms": [
+              0.6471039473820527,
+              0.666718666664868,
+              0.6488746666824833
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.1925980123997083,
+          "retained_rounds": 235,
+          "model_bytes": 3513126,
+          "model_sha256": "ded3b1b425e3b0f17372f29b7aabd694f19da73adac9b2ae3215fad7614aad83",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 10.863740224914913,
+            "order_medians_ms": [
+              10.927325000011479,
+              10.827975000211154,
+              10.83619999963048
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 7.451737178053181,
+            "order_medians_ms": [
+              7.4370333334930665,
+              7.458950000000186,
+              7.459249999859215
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.19244210430342834,
+          "retained_rounds": 424,
+          "model_bytes": 1975608,
+          "model_sha256": "89bf2942f31f980cab05011dafca6c17ba3c1858d9c0e74c28d353028c34df6b",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 9.14581562688837,
+            "order_medians_ms": [
+              9.06780000004801,
+              9.213939999972354,
+              9.156300000176998
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 6.178398899181111,
+            "order_medians_ms": [
+              6.151937499907945,
+              6.226337500038426,
+              6.157199999961449
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 2.899523076789487,
+          "normalized_frame": 11.391083485556722
+        },
+        "lightgbm": {
+          "raw": 2.4410104547057534,
+          "normalized_frame": 9.44459741212058
+        }
+      }
+    },
+    {
+      "dataset": "in_vehicle_coupon_recommendation",
+      "rows": 1000,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.2041297410649161,
+          "retained_rounds": 72,
+          "model_bytes": 3941355,
+          "model_sha256": "c6f4cd2651111bab5d096302791047b68aeaf7d3985fe273f6fc0a8a20241a71",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 7.538932285063678,
+            "order_medians_ms": [
+              7.461999999880693,
+              7.563683333197939,
+              7.5917333333563874
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 4.392809790702173,
+            "order_medians_ms": [
+              4.372018181873665,
+              4.412240000056045,
+              4.394263636310246
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.1925980123997083,
+          "retained_rounds": 235,
+          "model_bytes": 3513126,
+          "model_sha256": "ded3b1b425e3b0f17372f29b7aabd694f19da73adac9b2ae3215fad7614aad83",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 25.740942824921706,
+            "order_medians_ms": [
+              25.668299999779265,
+              25.86050000081741,
+              25.694449999718927
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 22.24262474159671,
+            "order_medians_ms": [
+              22.203450000233715,
+              22.22170000004553,
+              22.30284999950527
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.19244210430342834,
+          "retained_rounds": 424,
+          "model_bytes": 1975608,
+          "model_sha256": "89bf2942f31f980cab05011dafca6c17ba3c1858d9c0e74c28d353028c34df6b",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 54.49270973016725,
+            "order_medians_ms": [
+              54.186899999876914,
+              54.98425000041607,
+              54.3103499994686
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 51.427452734881015,
+            "order_medians_ms": [
+              51.13950000031764,
+              51.96535000050062,
+              51.181699999688135
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 3.414401648880745,
+          "normalized_frame": 5.0634163101428795
+        },
+        "lightgbm": {
+          "raw": 7.228173389768942,
+          "normalized_frame": 11.707188607103461
+        }
+      }
+    },
+    {
+      "dataset": "GiveMeSomeCredit",
+      "rows": 1,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.14687474475210316,
+          "retained_rounds": 164,
+          "model_bytes": 688474,
+          "model_sha256": "313d6b580d4c45569b507d1c36e2973af1b5048af96c80685a6e7409f90ce8be",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 1.263537349910129,
+            "order_medians_ms": [
+              1.2505307692593375,
+              1.2727512820651425,
+              1.2674368421070732
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.06236300243448967,
+            "order_medians_ms": [
+              0.06148763586976281,
+              0.06315598923256317,
+              0.062456653491352015
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.14602732173486888,
+          "retained_rounds": 64,
+          "model_bytes": 83451,
+          "model_sha256": "0bf4fbfc88932ff7b20b72d25f00298b70ccba9e3608d6a3549c4cc38364df8d",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 2.2269384206446348,
+            "order_medians_ms": [
+              2.2235545454598404,
+              2.225799999988257,
+              2.231468181807114
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.8113813950824784,
+            "order_medians_ms": [
+              0.8115245901669861,
+              0.813795000006697,
+              0.808832203385803
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.1400034713713959,
+          "retained_rounds": 95,
+          "model_bytes": 90847,
+          "model_sha256": "38641aa400702e0d748da9e7bae2a2de9c4dbef5cd6b8e01bbc8617dfb880235",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 1.479902954459647,
+            "order_medians_ms": [
+              1.4794515151482879,
+              1.4805575757429434,
+              1.4797000000147487
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.2520272185376966,
+            "order_medians_ms": [
+              0.25258410256729125,
+              0.2523902061905564,
+              0.2511098958374684
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 1.762463468771247,
+          "normalized_frame": 13.010621095974468
+        },
+        "lightgbm": {
+          "raw": 1.171237996696265,
+          "normalized_frame": 4.041293855318193
+        }
+      }
+    },
+    {
+      "dataset": "GiveMeSomeCredit",
+      "rows": 64,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.14687474475210316,
+          "retained_rounds": 164,
+          "model_bytes": 688474,
+          "model_sha256": "313d6b580d4c45569b507d1c36e2973af1b5048af96c80685a6e7409f90ce8be",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 1.3982059003614313,
+            "order_medians_ms": [
+              1.3931030302818257,
+              1.3973257143204267,
+              1.4042114285985008
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.1539741808074957,
+            "order_medians_ms": [
+              0.15340033222858732,
+              0.15410135135327338,
+              0.1544226351376671
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.14602732173486888,
+          "retained_rounds": 64,
+          "model_bytes": 83451,
+          "model_sha256": "0bf4fbfc88932ff7b20b72d25f00298b70ccba9e3608d6a3549c4cc38364df8d",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 2.31831653886433,
+            "order_medians_ms": [
+              2.3239363636093913,
+              2.3230047618632117,
+              2.308042857163985
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.8786937936675085,
+            "order_medians_ms": [
+              0.8919363636364737,
+              0.8714113207803029,
+              0.8728821428576339
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.1400034713713959,
+          "retained_rounds": 95,
+          "model_bytes": 90847,
+          "model_sha256": "38641aa400702e0d748da9e7bae2a2de9c4dbef5cd6b8e01bbc8617dfb880235",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 1.681156694404953,
+            "order_medians_ms": [
+              1.6706241379418723,
+              1.687886206880272,
+              1.6850107142870132
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.41983151259341517,
+            "order_medians_ms": [
+              0.42757391304843145,
+              0.413101694918577,
+              0.418944915262558
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 1.6580651950224592,
+          "normalized_frame": 5.706760633888902
+        },
+        "lightgbm": {
+          "raw": 1.2023670433448892,
+          "normalized_frame": 2.726635793037953
+        }
+      }
+    },
+    {
+      "dataset": "GiveMeSomeCredit",
+      "rows": 1000,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.14687474475210316,
+          "retained_rounds": 164,
+          "model_bytes": 688474,
+          "model_sha256": "313d6b580d4c45569b507d1c36e2973af1b5048af96c80685a6e7409f90ce8be",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 2.254999796916372,
+            "order_medians_ms": [
+              2.2431636363597303,
+              2.277595238064394,
+              2.2444090908803362
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.9649294293779841,
+            "order_medians_ms": [
+              0.9646705882415499,
+              0.9696568627345293,
+              0.9604826923000823
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.14602732173486888,
+          "retained_rounds": 64,
+          "model_bytes": 83451,
+          "model_sha256": "0bf4fbfc88932ff7b20b72d25f00298b70ccba9e3608d6a3549c4cc38364df8d",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 3.1276589425666868,
+            "order_medians_ms": [
+              3.122874999917258,
+              3.147700000045006,
+              3.112506249976832
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 1.678545962992144,
+            "order_medians_ms": [
+              1.6839344827593745,
+              1.6835758620361267,
+              1.6681758620663836
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.1400034713713959,
+          "retained_rounds": 95,
+          "model_bytes": 90847,
+          "model_sha256": "38641aa400702e0d748da9e7bae2a2de9c4dbef5cd6b8e01bbc8617dfb880235",
+          "problem_type": "binary",
+          "raw": {
+            "median_ms": 4.039092531973025,
+            "order_medians_ms": [
+              4.009108333472493,
+              4.061366666671044,
+              4.046983333258443
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 2.7299362522533728,
+            "order_medians_ms": [
+              2.715438888925645,
+              2.7380222222240667,
+              2.736405882280772
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 1.3869885695083624,
+          "normalized_frame": 1.7395530822126273
+        },
+        "lightgbm": {
+          "raw": 1.7911720158451157,
+          "normalized_frame": 2.829156380910833
+        }
+      }
+    },
+    {
+      "dataset": "QSAR_fish_toxicity",
+      "rows": 1,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.7803592976812973,
+          "retained_rounds": 192,
+          "model_bytes": 332318,
+          "model_sha256": "0cd0c040c82c66ab0d42c7dfb55affb35bf2ffa0f55130bb27b3b6587f28a134",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 0.7634704306769364,
+            "order_medians_ms": [
+              0.7594261538403001,
+              0.7632671874944208,
+              0.7677406250081731
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.05514983057386789,
+            "order_medians_ms": [
+              0.054575000001530136,
+              0.0552990783403884,
+              0.0555803030321908
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.6978862488385986,
+          "retained_rounds": 117,
+          "model_bytes": 343458,
+          "model_sha256": "ec17fdf5994fdd563bdeca123cb8e0842140e54a76769c841e7b707fd3fc1c76",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 1.6103297516093247,
+            "order_medians_ms": [
+              1.6058999999879762,
+              1.613238709685374,
+              1.611859999987549
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.7555305269225966,
+            "order_medians_ms": [
+              0.7515575757541669,
+              0.7545939393876875,
+              0.7604671874901214
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.7553058612872044,
+          "retained_rounds": 38,
+          "model_bytes": 35348,
+          "model_sha256": "ce7ae01c1fc551cd37b3b3d06ac483255a3ff3a4cb86f0b78972dd726be95129",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 0.9409074965145185,
+            "order_medians_ms": [
+              0.9371188679204283,
+              0.9447826922811285,
+              0.9408365384353181
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.21919231553417343,
+            "order_medians_ms": [
+              0.2189515695062512,
+              0.2188742222238539,
+              0.21975223213693035
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 2.1092234707525144,
+          "normalized_frame": 13.699598331687278
+        },
+        "lightgbm": {
+          "raw": 1.2324085631977342,
+          "normalized_frame": 3.9744875596777476
+        }
+      }
+    },
+    {
+      "dataset": "QSAR_fish_toxicity",
+      "rows": 64,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.7803592976812973,
+          "retained_rounds": 192,
+          "model_bytes": 332318,
+          "model_sha256": "0cd0c040c82c66ab0d42c7dfb55affb35bf2ffa0f55130bb27b3b6587f28a134",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 0.8457470407659218,
+            "order_medians_ms": [
+              0.8311241379425186,
+              0.8524754385896877,
+              0.8538344827684341
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.1219418719692264,
+            "order_medians_ms": [
+              0.12066817042633879,
+              0.12256648793437983,
+              0.12260102563838397
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.6978862488385986,
+          "retained_rounds": 117,
+          "model_bytes": 343458,
+          "model_sha256": "ec17fdf5994fdd563bdeca123cb8e0842140e54a76769c841e7b707fd3fc1c76",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 1.7448735812730252,
+            "order_medians_ms": [
+              1.729892857123819,
+              1.7499285714360926,
+              1.7548999999884731
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.8865852478305953,
+            "order_medians_ms": [
+              0.884725000007945,
+              0.8923545454639349,
+              0.882705357136209
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.7553058612872044,
+          "retained_rounds": 38,
+          "model_bytes": 35348,
+          "model_sha256": "ce7ae01c1fc551cd37b3b3d06ac483255a3ff3a4cb86f0b78972dd726be95129",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 1.017531621552979,
+            "order_medians_ms": [
+              1.0118191489225943,
+              1.0219000000011256,
+              1.0189020833498337
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.2757368327907972,
+            "order_medians_ms": [
+              0.27342429378012056,
+              0.2776245810055725,
+              0.27617816091548575
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 2.063115207228914,
+          "normalized_frame": 7.270556319279209
+        },
+        "lightgbm": {
+          "raw": 1.2031157929107106,
+          "normalized_frame": 2.2612153507072854
+        }
+      }
+    },
+    {
+      "dataset": "QSAR_fish_toxicity",
+      "rows": 1000,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.7803592976812973,
+          "retained_rounds": 192,
+          "model_bytes": 332318,
+          "model_sha256": "0cd0c040c82c66ab0d42c7dfb55affb35bf2ffa0f55130bb27b3b6587f28a134",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 1.0679056891670426,
+            "order_medians_ms": [
+              1.0659955555537535,
+              1.0672000000103372,
+              1.0705266666466033
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.29401776622582604,
+            "order_medians_ms": [
+              0.29254457830936725,
+              0.2945287425188985,
+              0.29498571428207687
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.6978862488385986,
+          "retained_rounds": 117,
+          "model_bytes": 343458,
+          "model_sha256": "ec17fdf5994fdd563bdeca123cb8e0842140e54a76769c841e7b707fd3fc1c76",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 3.089215133607293,
+            "order_medians_ms": [
+              3.0609499999627587,
+              3.1146625000246786,
+              3.0922687499241874
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 2.1987694523472836,
+            "order_medians_ms": [
+              2.195136363628659,
+              2.2129409091410874,
+              2.188304545432567
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.7553058612872044,
+          "retained_rounds": 38,
+          "model_bytes": 35348,
+          "model_sha256": "ce7ae01c1fc551cd37b3b3d06ac483255a3ff3a4cb86f0b78972dd726be95129",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 1.836741750493425,
+            "order_medians_ms": [
+              1.8367555555785118,
+              1.8378481482041362,
+              1.8356222221714065
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 1.0386267234742963,
+            "order_medians_ms": [
+              1.0530936169937164,
+              1.0304500000252712,
+              1.032486956516906
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 2.8927789831486472,
+          "normalized_frame": 7.478355748946396
+        },
+        "lightgbm": {
+          "raw": 1.7199475282560466,
+          "normalized_frame": 3.5325304889112004
+        }
+      }
+    },
+    {
+      "dataset": "Another-Dataset-on-used-Fiat-500",
+      "rows": 1,
+      "libraries": {
+        "ctboost": {
+          "development_error": 758.8128604715458,
+          "retained_rounds": 58,
+          "model_bytes": 762733,
+          "model_sha256": "27dd49843a38d0b85f195433b91a293af2ab6e8aa284fff70cce6d8d67cb784f",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 0.9201190211619144,
+            "order_medians_ms": [
+              0.910796296314705,
+              0.9446196078594463,
+              0.9054277777775295
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.08455029206899602,
+            "order_medians_ms": [
+              0.08468623693533711,
+              0.08420665499008764,
+              0.0847590509678578
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 768.0530075707153,
+          "retained_rounds": 32,
+          "model_bytes": 91660,
+          "model_sha256": "4ff8ed20356dfa8f50c8da56a8ab13c6fbd2f0a1198d6772c5fe14d8efceaf6f",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 2.1835991795248906,
+            "order_medians_ms": [
+              2.166482608710952,
+              2.1995772727181744,
+              2.1848636363508622
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 1.1960042598270062,
+            "order_medians_ms": [
+              1.1972804878030552,
+              1.1973463414306469,
+              1.1933902439145974
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 743.9378929836084,
+          "retained_rounds": 21,
+          "model_bytes": 30937,
+          "model_sha256": "b8d97b9293e52ca5904eeddb6875f43f4a2bd75e4ecdfd25021cfd82de7177fb",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 1.6737770797424851,
+            "order_medians_ms": [
+              1.6487999999905394,
+              1.6886344827322193,
+              1.6841827585675015
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.830919043616293,
+            "order_medians_ms": [
+              0.8213716666735612,
+              0.8403016949221452,
+              0.8311916666571051
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 2.373170350035227,
+          "normalized_frame": 14.145477567966585
+        },
+        "lightgbm": {
+          "raw": 1.8190875758973672,
+          "normalized_frame": 9.827512398635285
+        }
+      }
+    },
+    {
+      "dataset": "Another-Dataset-on-used-Fiat-500",
+      "rows": 64,
+      "libraries": {
+        "ctboost": {
+          "development_error": 758.8128604715458,
+          "retained_rounds": 58,
+          "model_bytes": 762733,
+          "model_sha256": "27dd49843a38d0b85f195433b91a293af2ab6e8aa284fff70cce6d8d67cb784f",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 1.0013050327009307,
+            "order_medians_ms": [
+              0.9890680000171415,
+              1.0121142857574992,
+              1.0028673469624125
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.1264719539076225,
+            "order_medians_ms": [
+              0.12551557377319214,
+              0.126970621467322,
+              0.12693512747733704
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 768.0530075707153,
+          "retained_rounds": 32,
+          "model_bytes": 91660,
+          "model_sha256": "4ff8ed20356dfa8f50c8da56a8ab13c6fbd2f0a1198d6772c5fe14d8efceaf6f",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 2.240924912869503,
+            "order_medians_ms": [
+              2.2292727273286967,
+              2.2490727272849074,
+              2.2444772727216002
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 1.256551584932104,
+            "order_medians_ms": [
+              1.2550875000215456,
+              1.2593102564073304,
+              1.255261538459215
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 743.9378929836084,
+          "retained_rounds": 21,
+          "model_bytes": 30937,
+          "model_sha256": "b8d97b9293e52ca5904eeddb6875f43f4a2bd75e4ecdfd25021cfd82de7177fb",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 1.7422343090258423,
+            "order_medians_ms": [
+              1.7431321428895379,
+              1.7468964286178692,
+              1.736689655194039
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.8877699211507145,
+            "order_medians_ms": [
+              0.8890857142692506,
+              0.887754545428007,
+              0.8864714285599413
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 2.2380042441460706,
+          "normalized_frame": 9.935416873925368
+        },
+        "lightgbm": {
+          "raw": 1.739963599629896,
+          "normalized_frame": 7.019500321780103
+        }
+      }
+    },
+    {
+      "dataset": "Another-Dataset-on-used-Fiat-500",
+      "rows": 1000,
+      "libraries": {
+        "ctboost": {
+          "development_error": 758.8128604715458,
+          "retained_rounds": 58,
+          "model_bytes": 762733,
+          "model_sha256": "27dd49843a38d0b85f195433b91a293af2ab6e8aa284fff70cce6d8d67cb784f",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 1.781018903990219,
+            "order_medians_ms": [
+              1.7804962962718154,
+              1.7833629630061936,
+              1.7792000000082664
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.8724022493602527,
+            "order_medians_ms": [
+              0.8712456140193879,
+              0.8743035714035484,
+              0.8716607142754843
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 768.0530075707153,
+          "retained_rounds": 32,
+          "model_bytes": 91660,
+          "model_sha256": "4ff8ed20356dfa8f50c8da56a8ab13c6fbd2f0a1198d6772c5fe14d8efceaf6f",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 2.880105421009932,
+            "order_medians_ms": [
+              2.8679176469749486,
+              2.89835294118829,
+              2.874135294191279
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 1.8499887585307186,
+            "order_medians_ms": [
+              1.85864814813141,
+              1.8516230768979698,
+              1.8397444444552227
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 743.9378929836084,
+          "retained_rounds": 21,
+          "model_bytes": 30937,
+          "model_sha256": "b8d97b9293e52ca5904eeddb6875f43f4a2bd75e4ecdfd25021cfd82de7177fb",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 2.4234412020427176,
+            "order_medians_ms": [
+              2.4182850000215694,
+              2.4287899999762885,
+              2.423259999977745
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 1.531574795051327,
+            "order_medians_ms": [
+              1.5215218749631276,
+              1.5354812499595027,
+              1.5377718750073655
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 1.6171110899257188,
+          "normalized_frame": 2.1205685334802227
+        },
+        "lightgbm": {
+          "raw": 1.3607049294160816,
+          "normalized_frame": 1.7555832715636126
+        }
+      }
+    },
+    {
+      "dataset": "houses",
+      "rows": 1,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.22566789444840796,
+          "retained_rounds": 167,
+          "model_bytes": 21968046,
+          "model_sha256": "0f1e333ceec5a34e72daa1ab4959faa001f701fcdfc2bc2e00eaf7e9fb26c90a",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 1.0259856418885582,
+            "order_medians_ms": [
+              1.0273693877730248,
+              1.0311829787013345,
+              1.0194395833120022
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.06359188064146142,
+            "order_medians_ms": [
+              0.06365245684076846,
+              0.06287345844436432,
+              0.06425730180948479
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.22502701496552077,
+          "retained_rounds": 1087,
+          "model_bytes": 4619184,
+          "model_sha256": "e99f242d7a8e51e53698ebb76bb512807fdbcf9e21f4c9fc34a523fd5c6f3e88",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 2.0318008013491107,
+            "order_medians_ms": [
+              2.02425416667514,
+              2.037337499965967,
+              2.033833333371149
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.8869629381474565,
+            "order_medians_ms": [
+              0.8829927272679263,
+              0.8950690909180345,
+              0.8828821428648682
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.2208159443978657,
+          "retained_rounds": 380,
+          "model_bytes": 4683337,
+          "model_sha256": "b9b21f72c2943ddc884a133f3e70f37193227c9789232ff5b5221f65810025c0",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 1.267921053592153,
+            "order_medians_ms": [
+              1.268941025652263,
+              1.2715000000006955,
+              1.2633358974432132
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.2660632876829003,
+            "order_medians_ms": [
+              0.26575388888482443,
+              0.26601043956051706,
+              0.26642596685381936
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 1.980340385279781,
+          "normalized_frame": 13.947738755333548
+        },
+        "lightgbm": {
+          "raw": 1.2358077947935588,
+          "normalized_frame": 4.183919157588635
+        }
+      }
+    },
+    {
+      "dataset": "houses",
+      "rows": 64,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.22566789444840796,
+          "retained_rounds": 167,
+          "model_bytes": 21968046,
+          "model_sha256": "0f1e333ceec5a34e72daa1ab4959faa001f701fcdfc2bc2e00eaf7e9fb26c90a",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 1.415766038367547,
+            "order_medians_ms": [
+              1.4104483870464573,
+              1.4183333333317987,
+              1.4185314286026238
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.4121048146682614,
+            "order_medians_ms": [
+              0.41372975206925255,
+              0.4102404958802787,
+              0.41235169491131785
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.22502701496552077,
+          "retained_rounds": 1087,
+          "model_bytes": 4619184,
+          "model_sha256": "e99f242d7a8e51e53698ebb76bb512807fdbcf9e21f4c9fc34a523fd5c6f3e88",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 3.2321453897493346,
+            "order_medians_ms": [
+              3.2514666666732714,
+              3.2188066667004023,
+              3.2262533333171937
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 2.0662330014676105,
+            "order_medians_ms": [
+              2.0612125000146384,
+              2.0718043478668933,
+              2.065695833380232
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.2208159443978657,
+          "retained_rounds": 380,
+          "model_bytes": 4683337,
+          "model_sha256": "b9b21f72c2943ddc884a133f3e70f37193227c9789232ff5b5221f65810025c0",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 4.35781393199623,
+            "order_medians_ms": [
+              4.345781818218794,
+              4.374118181823922,
+              4.3535909090595935
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 3.3761889117868855,
+            "order_medians_ms": [
+              3.3724642857383254,
+              3.4182642857558676,
+              3.338314285688934
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 2.2829657599896724,
+          "normalized_frame": 5.013853097374994
+        },
+        "lightgbm": {
+          "raw": 3.0780607910478057,
+          "normalized_frame": 8.192549059405362
+        }
+      }
+    },
+    {
+      "dataset": "houses",
+      "rows": 1000,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.22566789444840796,
+          "retained_rounds": 167,
+          "model_bytes": 21968046,
+          "model_sha256": "0f1e333ceec5a34e72daa1ab4959faa001f701fcdfc2bc2e00eaf7e9fb26c90a",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 5.377871781782958,
+            "order_medians_ms": [
+              5.383166666635791,
+              5.383933333279048,
+              5.366533333370979
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 4.321378370887192,
+            "order_medians_ms": [
+              4.3290090910555925,
+              4.318609090908219,
+              4.316527272583864
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.22502701496552077,
+          "retained_rounds": 1087,
+          "model_bytes": 4619184,
+          "model_sha256": "e99f242d7a8e51e53698ebb76bb512807fdbcf9e21f4c9fc34a523fd5c6f3e88",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 15.93425770497057,
+            "order_medians_ms": [
+              16.05120000021998,
+              15.858099999604747,
+              15.894133333252588
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 14.747080583062788,
+            "order_medians_ms": [
+              14.852099999795124,
+              14.697933333081892,
+              14.691766666752907
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.2208159443978657,
+          "retained_rounds": 380,
+          "model_bytes": 4683337,
+          "model_sha256": "b9b21f72c2943ddc884a133f3e70f37193227c9789232ff5b5221f65810025c0",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 49.05281056065824,
+            "order_medians_ms": [
+              49.082600000474486,
+              49.05320000034408,
+              49.02265000055195
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 47.970360072610085,
+            "order_medians_ms": [
+              47.979799999666284,
+              47.9359500004648,
+              47.99535000074684
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 2.962930012378947,
+          "normalized_frame": 3.412587215785774
+        },
+        "lightgbm": {
+          "raw": 9.121230953631153,
+          "normalized_frame": 11.100708143443969
+        }
+      }
+    },
+    {
+      "dataset": "diamonds",
+      "rows": 1,
+      "libraries": {
+        "ctboost": {
+          "development_error": 637.0481551881259,
+          "retained_rounds": 256,
+          "model_bytes": 3087954,
+          "model_sha256": "5ec8a3a18538253f859d03409d20b3b285b7c0430d2b7e9c92a3631978d93946",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 1.3248550831464696,
+            "order_medians_ms": [
+              1.3111105263305944,
+              1.3260567567477985,
+              1.3375305555503776
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.12180371275939618,
+            "order_medians_ms": [
+              0.11882974999934959,
+              0.12335357142751027,
+              0.12328341836573785
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 626.6658986157794,
+          "retained_rounds": 114,
+          "model_bytes": 220259,
+          "model_sha256": "a1a2d70e5b00e3974e565de3fc833153fba2fa2e029c9da933555ce7089ce9f6",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 2.9632260477355774,
+            "order_medians_ms": [
+              2.919011764735093,
+              2.9903500000045824,
+              2.9808250000087355
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 1.572422371804278,
+            "order_medians_ms": [
+              1.5566937499897904,
+              1.5768741935561035,
+              1.5838258064656159
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 654.2619615205364,
+          "retained_rounds": 635,
+          "model_bytes": 1797980,
+          "model_sha256": "1628d9926a4c01bed926f9a6af17001d81ef1ec6737f8fb2a1ea52396a5c4762",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 2.3337089087976555,
+            "order_medians_ms": [
+              2.307185714276524,
+              2.3400380952287896,
+              2.3541523809225984
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 1.1287028092834899,
+            "order_medians_ms": [
+              1.120818181830559,
+              1.131804545449003,
+              1.1335279069858506
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 2.236641641362052,
+          "normalized_frame": 12.909478177486656
+        },
+        "lightgbm": {
+          "raw": 1.7614823979504268,
+          "normalized_frame": 9.266571467431886
+        }
+      }
+    },
+    {
+      "dataset": "diamonds",
+      "rows": 64,
+      "libraries": {
+        "ctboost": {
+          "development_error": 637.0481551881259,
+          "retained_rounds": 256,
+          "model_bytes": 3087954,
+          "model_sha256": "5ec8a3a18538253f859d03409d20b3b285b7c0430d2b7e9c92a3631978d93946",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 1.4902323659430226,
+            "order_medians_ms": [
+              1.4828393939365703,
+              1.4916575757634938,
+              1.4962312500301778
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.2043933767973709,
+            "order_medians_ms": [
+              0.20235959595763667,
+              0.20539396984586622,
+              0.2054418719260669
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 626.6658986157794,
+          "retained_rounds": 114,
+          "model_bytes": 220259,
+          "model_sha256": "a1a2d70e5b00e3974e565de3fc833153fba2fa2e029c9da933555ce7089ce9f6",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 3.0911500805130006,
+            "order_medians_ms": [
+              3.0563625000468164,
+              3.119081250019917,
+              3.098337499977788
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 1.6865341183123654,
+            "order_medians_ms": [
+              1.6844620689692513,
+              1.6896793103710637,
+              1.6854655172335635
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 654.2619615205364,
+          "retained_rounds": 635,
+          "model_bytes": 1797980,
+          "model_sha256": "1628d9926a4c01bed926f9a6af17001d81ef1ec6737f8fb2a1ea52396a5c4762",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 5.248758913151782,
+            "order_medians_ms": [
+              5.179088888932408,
+              5.235722222197284,
+              5.3326111111447165
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 4.0141931409101765,
+            "order_medians_ms": [
+              3.99872499989821,
+              4.0159166666550545,
+              4.027991666589514
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 2.07427388584257,
+          "normalized_frame": 8.251412764633473
+        },
+        "lightgbm": {
+          "raw": 3.522107714947095,
+          "normalized_frame": 19.639546074380483
+        }
+      }
+    },
+    {
+      "dataset": "diamonds",
+      "rows": 1000,
+      "libraries": {
+        "ctboost": {
+          "development_error": 637.0481551881259,
+          "retained_rounds": 256,
+          "model_bytes": 3087954,
+          "model_sha256": "5ec8a3a18538253f859d03409d20b3b285b7c0430d2b7e9c92a3631978d93946",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 3.3341640132475727,
+            "order_medians_ms": [
+              3.3151066666808524,
+              3.340092857147933,
+              3.3473785714314936
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 2.0497913146452427,
+            "order_medians_ms": [
+              2.0512833333062495,
+              2.049749999969208,
+              2.048341666674484
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 626.6658986157794,
+          "retained_rounds": 114,
+          "model_bytes": 220259,
+          "model_sha256": "a1a2d70e5b00e3974e565de3fc833153fba2fa2e029c9da933555ce7089ce9f6",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 4.758621117961723,
+            "order_medians_ms": [
+              4.7253699998691445,
+              4.777889999968465,
+              4.7727799999847775
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 3.3297203201330103,
+            "order_medians_ms": [
+              3.3281666666880483,
+              3.336780000002667,
+              3.3242266666396367
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 654.2619615205364,
+          "retained_rounds": 635,
+          "model_bytes": 1797980,
+          "model_sha256": "1628d9926a4c01bed926f9a6af17001d81ef1ec6737f8fb2a1ea52396a5c4762",
+          "problem_type": "regression",
+          "raw": {
+            "median_ms": 48.01766499818661,
+            "order_medians_ms": [
+              47.73309999927733,
+              48.2242000007318,
+              48.09705000025133
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 46.871960792915395,
+            "order_medians_ms": [
+              46.52840000017022,
+              47.37959999965824,
+              46.71215000053053
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 1.4272306638348866,
+          "normalized_frame": 1.6244191768903484
+        },
+        "lightgbm": {
+          "raw": 14.40171053595411,
+          "normalized_frame": 22.866698896627693
+        }
+      }
+    },
+    {
+      "dataset": "anneal",
+      "rows": 1,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.007790245830355615,
+          "retained_rounds": 778,
+          "model_bytes": 6055339,
+          "model_sha256": "ae9107548c5201775ed069eaa3138f22b4036d56c4d31962eb16925181dd0c41",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 5.279101499852781,
+            "order_medians_ms": [
+              5.189488888896045,
+              5.329600000146052,
+              5.319377777697001
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.5401901444009696,
+            "order_medians_ms": [
+              0.5402395604355811,
+              0.541555555557554,
+              0.5387788888886765
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.05372818757723555,
+          "retained_rounds": 240,
+          "model_bytes": 1236541,
+          "model_sha256": "a4569cf17ccf9ad2293e418892e76ba3f8bb216ffceaaf51afdf00f3134ab676",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 14.097653359010332,
+            "order_medians_ms": [
+              14.114866666811091,
+              14.145366666828826,
+              14.03296666649112
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 8.764193258100292,
+            "order_medians_ms": [
+              8.793660000083037,
+              8.782779999819468,
+              8.71633999995538
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.0010377624621693844,
+          "retained_rounds": 137,
+          "model_bytes": 558773,
+          "model_sha256": "8e8a9cfb348cf4441de699cc9c615dc149e0db50c899179aef05648d26c92a21",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 8.88126342313054,
+            "order_medians_ms": [
+              8.806860000186134,
+              8.89580000002752,
+              8.941659999982221
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 4.122771088161585,
+            "order_medians_ms": [
+              4.0952999999414414,
+              4.141966666641868,
+              4.131191666601808
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 2.670464540112266,
+          "normalized_frame": 16.22427463540477
+        },
+        "lightgbm": {
+          "raw": 1.6823437517498407,
+          "normalized_frame": 7.632073874160421
+        }
+      }
+    },
+    {
+      "dataset": "anneal",
+      "rows": 64,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.007790245830355615,
+          "retained_rounds": 778,
+          "model_bytes": 6055339,
+          "model_sha256": "ae9107548c5201775ed069eaa3138f22b4036d56c4d31962eb16925181dd0c41",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 6.220377482795759,
+            "order_medians_ms": [
+              6.146662499986633,
+              6.2312428570814,
+              6.283999999920654
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 1.4163418169623303,
+            "order_medians_ms": [
+              1.411042857112729,
+              1.4303852940964348,
+              1.4077028571461727
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.05372818757723555,
+          "retained_rounds": 240,
+          "model_bytes": 1236541,
+          "model_sha256": "a4569cf17ccf9ad2293e418892e76ba3f8bb216ffceaaf51afdf00f3134ab676",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 14.860620004418164,
+            "order_medians_ms": [
+              14.88226666636668,
+              14.822666666683896,
+              14.876999999614782
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 9.500218490189141,
+            "order_medians_ms": [
+              9.503340000082972,
+              9.594819999983883,
+              9.403459999884944
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.0010377624621693844,
+          "retained_rounds": 137,
+          "model_bytes": 558773,
+          "model_sha256": "8e8a9cfb348cf4441de699cc9c615dc149e0db50c899179aef05648d26c92a21",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 10.578002546482832,
+            "order_medians_ms": [
+              10.50497500000347,
+              10.58027499993841,
+              10.6492499999149
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 5.8059607188579685,
+            "order_medians_ms": [
+              5.785125000102198,
+              5.8082000000467815,
+              5.82462499983194
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 2.389022216982728,
+          "normalized_frame": 6.707574666237376
+        },
+        "lightgbm": {
+          "raw": 1.7005402928904776,
+          "normalized_frame": 4.09926519807922
+        }
+      }
+    },
+    {
+      "dataset": "anneal",
+      "rows": 1000,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.007790245830355615,
+          "retained_rounds": 778,
+          "model_bytes": 6055339,
+          "model_sha256": "ae9107548c5201775ed069eaa3138f22b4036d56c4d31962eb16925181dd0c41",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 16.35159294912793,
+            "order_medians_ms": [
+              16.335766666694933,
+              16.47013333301099,
+              16.249633333548747
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 11.526156718740072,
+            "order_medians_ms": [
+              11.728124999990541,
+              11.5398500001902,
+              11.314225000205624
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.05372818757723555,
+          "retained_rounds": 240,
+          "model_bytes": 1236541,
+          "model_sha256": "a4569cf17ccf9ad2293e418892e76ba3f8bb216ffceaaf51afdf00f3134ab676",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 26.264757495537225,
+            "order_medians_ms": [
+              26.375450000159617,
+              26.182100000369246,
+              26.237099999889324
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 20.690535950189204,
+            "order_medians_ms": [
+              20.70969999931549,
+              20.705400000224472,
+              20.656550000239804
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.0010377624621693844,
+          "retained_rounds": 137,
+          "model_bytes": 558773,
+          "model_sha256": "8e8a9cfb348cf4441de699cc9c615dc149e0db50c899179aef05648d26c92a21",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 34.41013691401796,
+            "order_medians_ms": [
+              34.53505000015866,
+              34.350450000601995,
+              34.3452500001149
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 29.983424359568776,
+            "order_medians_ms": [
+              29.804450000483484,
+              30.639749999863852,
+              29.517349999878206
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 1.6062506923484778,
+          "normalized_frame": 1.795094102490296
+        },
+        "lightgbm": {
+          "raw": 2.104390503180495,
+          "normalized_frame": 2.6013375569342663
+        }
+      }
+    },
+    {
+      "dataset": "website_phishing",
+      "rows": 1,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.1828139707562972,
+          "retained_rounds": 118,
+          "model_bytes": 1151260,
+          "model_sha256": "70de472dda02f9d4edd93b8fa4fcde414e556100932226abfb922f6be1fe54d8",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 1.3215823190673668,
+            "order_medians_ms": [
+              1.3083567567731291,
+              1.3218108107704776,
+              1.3347108108211763
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.18860384808562325,
+            "order_medians_ms": [
+              0.1885992156851845,
+              0.1888042968758441,
+              0.18840823970285545
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.1620602323404441,
+          "retained_rounds": 243,
+          "model_bytes": 1200089,
+          "model_sha256": "2a59483d2efb5ba3adc55dd8167ce5b8fbba6738f183c19cbf265d851e30be6f",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 4.482192704437982,
+            "order_medians_ms": [
+              4.451909090758735,
+              4.537070000151289,
+              4.458100000010745
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 3.163206869088781,
+            "order_medians_ms": [
+              3.168100000038976,
+              3.159653333326181,
+              3.1618733332531215
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.17442756574969703,
+          "retained_rounds": 85,
+          "model_bytes": 405333,
+          "model_sha256": "11c1e91c05d45d95ee112f3cf9af7d991c3d4e52e241dcb48d1994bd2ac79714",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 2.784425580220868,
+            "order_medians_ms": [
+              2.7763882353610825,
+              2.794170588244657,
+              2.7827470588389964
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 1.6658336846849195,
+            "order_medians_ms": [
+              1.6842068965568866,
+              1.652286666649161,
+              1.661170000018804
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 3.391535010547841,
+          "normalized_frame": 16.77169846318689
+        },
+        "lightgbm": {
+          "raw": 2.1068877360479683,
+          "normalized_frame": 8.832448020512587
+        }
+      }
+    },
+    {
+      "dataset": "website_phishing",
+      "rows": 64,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.1828139707562972,
+          "retained_rounds": 118,
+          "model_bytes": 1151260,
+          "model_sha256": "70de472dda02f9d4edd93b8fa4fcde414e556100932226abfb922f6be1fe54d8",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 1.43544935356582,
+            "order_medians_ms": [
+              1.414129411761464,
+              1.4391323529172737,
+              1.4533617646948722
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.2693726452523219,
+            "order_medians_ms": [
+              0.26632215909475315,
+              0.271412429386963,
+              0.2704104294460674
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.1620602323404441,
+          "retained_rounds": 243,
+          "model_bytes": 1200089,
+          "model_sha256": "2a59483d2efb5ba3adc55dd8167ce5b8fbba6738f183c19cbf265d851e30be6f",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 5.314667190538886,
+            "order_medians_ms": [
+              5.308044444367018,
+              5.313766666707427,
+              5.322199999985362
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 4.000922959674864,
+            "order_medians_ms": [
+              3.984008333342596,
+              4.015941666693834,
+              4.002883333365996
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.17442756574969703,
+          "retained_rounds": 85,
+          "model_bytes": 405333,
+          "model_sha256": "11c1e91c05d45d95ee112f3cf9af7d991c3d4e52e241dcb48d1994bd2ac79714",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 3.393467735696077,
+            "order_medians_ms": [
+              3.390342857138811,
+              3.4178071429258643,
+              3.372407142835852
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 2.2703922582745477,
+            "order_medians_ms": [
+              2.2767095238772788,
+              2.269031818204067,
+              2.2654500000333595
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 3.7024414531495986,
+          "normalized_frame": 14.85274407105143
+        },
+        "lightgbm": {
+          "raw": 2.36404560513843,
+          "normalized_frame": 8.42844400977637
+        }
+      }
+    },
+    {
+      "dataset": "website_phishing",
+      "rows": 1000,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.1828139707562972,
+          "retained_rounds": 118,
+          "model_bytes": 1151260,
+          "model_sha256": "70de472dda02f9d4edd93b8fa4fcde414e556100932226abfb922f6be1fe54d8",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 2.5159527015912855,
+            "order_medians_ms": [
+              2.4966699999822595,
+              2.5204157894844874,
+              2.5308947368007226
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 1.3255143792801953,
+            "order_medians_ms": [
+              1.3217108108447801,
+              1.3275243243304038,
+              1.3273162162108378
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.1620602323404441,
+          "retained_rounds": 243,
+          "model_bytes": 1200089,
+          "model_sha256": "2a59483d2efb5ba3adc55dd8167ce5b8fbba6738f183c19cbf265d851e30be6f",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 18.287469626262318,
+            "order_medians_ms": [
+              18.240700000205834,
+              18.28029999978753,
+              18.341549999604467
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 16.982005266866263,
+            "order_medians_ms": [
+              16.955299999608542,
+              16.988649999802874,
+              17.002100000354403
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.17442756574969703,
+          "retained_rounds": 85,
+          "model_bytes": 405333,
+          "model_sha256": "11c1e91c05d45d95ee112f3cf9af7d991c3d4e52e241dcb48d1994bd2ac79714",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 12.223385799303825,
+            "order_medians_ms": [
+              12.507000000065696,
+              12.086900000213063,
+              12.081100000159495
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 11.090822643268432,
+            "order_medians_ms": [
+              11.429499999849213,
+              10.91134999978749,
+              10.939199999938864
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 7.268606287668242,
+          "normalized_frame": 12.81163413412998
+        },
+        "lightgbm": {
+          "raw": 4.858352778878872,
+          "normalized_frame": 8.367183952611038
+        }
+      }
+    },
+    {
+      "dataset": "splice",
+      "rows": 1,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.11179281421936314,
+          "retained_rounds": 169,
+          "model_bytes": 3734649,
+          "model_sha256": "eaa9ac95314c42becbd0f76ab46e3d4e23e81393bb3e18ad166ee1ba240a2851",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 11.184765725120018,
+            "order_medians_ms": [
+              11.135374999867054,
+              11.230374999740889,
+              11.188750000201253
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.6243578248238038,
+            "order_medians_ms": [
+              0.6156462500030102,
+              0.621147368412111,
+              0.636465384629376
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.11883218139996114,
+          "retained_rounds": 69,
+          "model_bytes": 363365,
+          "model_sha256": "8cd0e4ac2a46dd9f5ca038ab065a95bd8c42f4a0f8c55cf723fbead083596d05",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 24.368213660893268,
+            "order_medians_ms": [
+              24.055699999735225,
+              24.81519999946613,
+              24.240149999968708
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 15.211491155457209,
+            "order_medians_ms": [
+              15.035866666949005,
+              15.541733333520824,
+              15.062166666515017
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.1212684408144167,
+          "retained_rounds": 157,
+          "model_bytes": 406271,
+          "model_sha256": "fa1f37a2dd297401271362e80ebb9825b7af43e5424d2485a677fa20ff637d2c",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 15.230628685114372,
+            "order_medians_ms": [
+              15.10246666657622,
+              15.481033333344385,
+              15.111433333610572
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 6.909315315713549,
+            "order_medians_ms": [
+              6.921999999966439,
+              7.017828571406426,
+              6.790014285797952
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 2.178696832796807,
+          "normalized_frame": 24.363418781129155
+        },
+        "lightgbm": {
+          "raw": 1.361729790272468,
+          "normalized_frame": 11.066274884379618
+        }
+      }
+    },
+    {
+      "dataset": "splice",
+      "rows": 64,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.11179281421936314,
+          "retained_rounds": 169,
+          "model_bytes": 3734649,
+          "model_sha256": "eaa9ac95314c42becbd0f76ab46e3d4e23e81393bb3e18ad166ee1ba240a2851",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 10.235166706951702,
+            "order_medians_ms": [
+              10.081699999773264,
+              10.317549999854236,
+              10.3079999998954
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 1.779997000573559,
+            "order_medians_ms": [
+              1.7674928571977944,
+              1.7750321428918272,
+              1.7976035714387504
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.11883218139996114,
+          "retained_rounds": 69,
+          "model_bytes": 363365,
+          "model_sha256": "8cd0e4ac2a46dd9f5ca038ab065a95bd8c42f4a0f8c55cf723fbead083596d05",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 24.53740950255523,
+            "order_medians_ms": [
+              24.27854999950796,
+              24.939349999840488,
+              24.399349999839615
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 15.36619765836577,
+            "order_medians_ms": [
+              15.281900000142437,
+              15.483033333415127,
+              15.33436666674485
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.1212684408144167,
+          "retained_rounds": 157,
+          "model_bytes": 406271,
+          "model_sha256": "fa1f37a2dd297401271362e80ebb9825b7af43e5424d2485a677fa20ff637d2c",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 16.300021926252594,
+            "order_medians_ms": [
+              16.252866666642756,
+              16.300933333089535,
+              16.34639999974752
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 7.993011870987358,
+            "order_medians_ms": [
+              7.976683333557351,
+              7.994266666779974,
+              8.008116666436157
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 2.397362955103553,
+          "normalized_frame": 8.632709860417968
+        },
+        "lightgbm": {
+          "raw": 1.5925507021963459,
+          "normalized_frame": 4.490463674046536
+        }
+      }
+    },
+    {
+      "dataset": "splice",
+      "rows": 1000,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.11179281421936314,
+          "retained_rounds": 169,
+          "model_bytes": 3734649,
+          "model_sha256": "eaa9ac95314c42becbd0f76ab46e3d4e23e81393bb3e18ad166ee1ba240a2851",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 20.356366678613,
+            "order_medians_ms": [
+              20.205799999530427,
+              20.596299999851908,
+              20.26914999987639
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 11.795434578995392,
+            "order_medians_ms": [
+              11.746800000310031,
+              11.890525000126217,
+              11.749549999876763
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.11883218139996114,
+          "retained_rounds": 69,
+          "model_bytes": 363365,
+          "model_sha256": "8cd0e4ac2a46dd9f5ca038ab065a95bd8c42f4a0f8c55cf723fbead083596d05",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 30.67182417581339,
+            "order_medians_ms": [
+              30.565500000193424,
+              30.72240000074089,
+              30.72784999949363
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 21.455721086130605,
+            "order_medians_ms": [
+              21.301750000020547,
+              21.566949999396456,
+              21.499349999430706
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.1212684408144167,
+          "retained_rounds": 157,
+          "model_bytes": 406271,
+          "model_sha256": "fa1f37a2dd297401271362e80ebb9825b7af43e5424d2485a677fa20ff637d2c",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 35.457543386093654,
+            "order_medians_ms": [
+              35.56200000002718,
+              35.367999999834865,
+              35.44289999990724
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 27.052607978941456,
+            "order_medians_ms": [
+              27.152900000146474,
+              27.03864999966754,
+              26.9665999994686
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 1.5067435490852163,
+          "normalized_frame": 1.818985213511139
+        },
+        "lightgbm": {
+          "raw": 1.7418404740835405,
+          "normalized_frame": 2.2934812446092603
+        }
+      }
+    },
+    {
+      "dataset": "SDSS17",
+      "rows": 1,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.10232363621651186,
+          "retained_rounds": 345,
+          "model_bytes": 2840606,
+          "model_sha256": "25a4398a530b4fda7df7f7cee66175f0c459d3733d211d2aa29b03732e97654b",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 2.3427363506268826,
+            "order_medians_ms": [
+              2.322171428507621,
+              2.3569900000438793,
+              2.3491904761439875
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.1334178887314343,
+            "order_medians_ms": [
+              0.1324404371596836,
+              0.1338552197811733,
+              0.1339634349016625
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.1782214537489412,
+          "retained_rounds": 220,
+          "model_bytes": 8201325,
+          "model_sha256": "bd017701c7549f6f4df212bc0e2bab78bc39aebf79a5f3f580ca63f0ac95ad82",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 4.877029742727931,
+            "order_medians_ms": [
+              4.856889999973646,
+              4.900810000071942,
+              4.873489999954472
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 2.4799756311535988,
+            "order_medians_ms": [
+              2.4894899999708286,
+              2.4766550000094867,
+              2.473809999992227
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.10340177102366702,
+          "retained_rounds": 160,
+          "model_bytes": 1487112,
+          "model_sha256": "a828c6cd70caed842529755b8a0b229752c718669db4381601e45441168c806a",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 3.4797192617247474,
+            "order_medians_ms": [
+              3.4932642856801976,
+              3.469850000068878,
+              3.476085714282817
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 1.2663868891039696,
+            "order_medians_ms": [
+              1.2587973684084748,
+              1.2695179486912913,
+              1.2708799999018083
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 2.0817663675312454,
+          "normalized_frame": 18.58802934699189
+        },
+        "lightgbm": {
+          "raw": 1.4853226061027416,
+          "normalized_frame": 9.491882244165652
+        }
+      }
+    },
+    {
+      "dataset": "SDSS17",
+      "rows": 64,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.10232363621651186,
+          "retained_rounds": 345,
+          "model_bytes": 2840606,
+          "model_sha256": "25a4398a530b4fda7df7f7cee66175f0c459d3733d211d2aa29b03732e97654b",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 2.578055180486254,
+            "order_medians_ms": [
+              2.5677578947866815,
+              2.5802105263114514,
+              2.5862315790283517
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 0.3110311320789321,
+            "order_medians_ms": [
+              0.3104292993655482,
+              0.3103597402585294,
+              0.31230828024455864
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.1782214537489412,
+          "retained_rounds": 220,
+          "model_bytes": 8201325,
+          "model_sha256": "bd017701c7549f6f4df212bc0e2bab78bc39aebf79a5f3f580ca63f0ac95ad82",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 5.526064276943329,
+            "order_medians_ms": [
+              5.497222222200232,
+              5.586100000073202,
+              5.495355555669651
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 3.104953688760503,
+            "order_medians_ms": [
+              3.0883937499766034,
+              3.1243733332909565,
+              3.1021999999438776
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.10340177102366702,
+          "retained_rounds": 160,
+          "model_bytes": 1487112,
+          "model_sha256": "a828c6cd70caed842529755b8a0b229752c718669db4381601e45441168c806a",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 5.069212734054395,
+            "order_medians_ms": [
+              5.079588889000458,
+              5.0613222220919045,
+              5.066744444573285
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 2.864000695054309,
+            "order_medians_ms": [
+              2.8707470587773165,
+              2.8658647058952793,
+              2.8554117647324935
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 2.1435011627257112,
+          "normalized_frame": 9.982774611682734
+        },
+        "lightgbm": {
+          "raw": 1.966293340974291,
+          "normalized_frame": 9.208083692173604
+        }
+      }
+    },
+    {
+      "dataset": "SDSS17",
+      "rows": 1000,
+      "libraries": {
+        "ctboost": {
+          "development_error": 0.10232363621651186,
+          "retained_rounds": 345,
+          "model_bytes": 2840606,
+          "model_sha256": "25a4398a530b4fda7df7f7cee66175f0c459d3733d211d2aa29b03732e97654b",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 5.463106858954733,
+            "order_medians_ms": [
+              5.44784444436017,
+              5.4747555554462854,
+              5.466755555567539
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 3.1904703267860675,
+            "order_medians_ms": [
+              3.180206666729646,
+              3.183753333360073,
+              3.207519999947787
+            ]
+          }
+        },
+        "xgboost": {
+          "development_error": 0.1782214537489412,
+          "retained_rounds": 220,
+          "model_bytes": 8201325,
+          "model_sha256": "bd017701c7549f6f4df212bc0e2bab78bc39aebf79a5f3f580ca63f0ac95ad82",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 13.684330798209954,
+            "order_medians_ms": [
+              13.680800000050416,
+              13.695833333258634,
+              13.676366666913964
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 11.24149697968613,
+            "order_medians_ms": [
+              11.230000000068685,
+              11.248875000092085,
+              11.245624999901338
+            ]
+          }
+        },
+        "lightgbm": {
+          "development_error": 0.10340177102366702,
+          "retained_rounds": 160,
+          "model_bytes": 1487112,
+          "model_sha256": "a828c6cd70caed842529755b8a0b229752c718669db4381601e45441168c806a",
+          "problem_type": "multiclass",
+          "raw": {
+            "median_ms": 29.851124127690426,
+            "order_medians_ms": [
+              30.43690000049537,
+              29.670750000150292,
+              29.45460000046296
+            ]
+          },
+          "normalized_frame": {
+            "median_ms": 27.40547161169929,
+            "order_medians_ms": [
+              27.577199999541335,
+              27.428899999904388,
+              27.21155000017461
+            ]
+          }
+        }
+      },
+      "ctboost_speedup": {
+        "xgboost": {
+          "raw": 2.504862370718519,
+          "normalized_frame": 3.523460752888523
+        },
+        "lightgbm": {
+          "raw": 5.4641296424141155,
+          "normalized_frame": 8.589790471208142
+        }
+      }
+    }
+  ]
+}

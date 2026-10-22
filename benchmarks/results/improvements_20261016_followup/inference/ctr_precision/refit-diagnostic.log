@@ -1,0 +1,112 @@
+{"package": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\ctr-precision\\runtime-cp310\\ctboost\\__init__.py", "native": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\ctr-precision\\runtime-cp310\\ctboost\\_core.cp310-win_amd64.pyd", "native_sha256": "21ed48b6234bf570413fd4336ffdf76279b0ff9e3d9003cbcf0b34620e2aee17", "build_info": {"version": "0.1.61", "cuda_enabled": false, "cuda_runtime": "not compiled", "compiler": "MSVC 1950", "cxx_standard": 17, "package_version": "0.1.61"}, "python": "C:\\Users\\captn\\miniconda3\\python.exe"}
+FFFFF....FFFFFFFF...                                                     [100%]
+================================== FAILURES ===================================
+_________ test_anchor_stop_and_seed_transfer_pipeline[ctboost-False] __________
+tests\test_multiclass_refit_experiment.py:70: in test_anchor_stop_and_seed_transfer_pipeline
+    anchor, fit = module.union.fit_fixed(job, case, X, labels, schema, 47)
+benchmarks\fair_accuracy_union_refit.py:61: in fit_fixed
+    import lightgbm as lgb
+E   ModuleNotFoundError: No module named 'lightgbm'
+__________ test_anchor_stop_and_seed_transfer_pipeline[ctboost-True] __________
+tests\test_multiclass_refit_experiment.py:70: in test_anchor_stop_and_seed_transfer_pipeline
+    anchor, fit = module.union.fit_fixed(job, case, X, labels, schema, 47)
+benchmarks\fair_accuracy_union_refit.py:61: in fit_fixed
+    import lightgbm as lgb
+E   ModuleNotFoundError: No module named 'lightgbm'
+_________ test_anchor_stop_and_seed_transfer_pipeline[xgboost-False] __________
+tests\test_multiclass_refit_experiment.py:70: in test_anchor_stop_and_seed_transfer_pipeline
+    anchor, fit = module.union.fit_fixed(job, case, X, labels, schema, 47)
+benchmarks\fair_accuracy_union_refit.py:61: in fit_fixed
+    import lightgbm as lgb
+E   ModuleNotFoundError: No module named 'lightgbm'
+__________ test_anchor_stop_and_seed_transfer_pipeline[xgboost-True] __________
+tests\test_multiclass_refit_experiment.py:70: in test_anchor_stop_and_seed_transfer_pipeline
+    anchor, fit = module.union.fit_fixed(job, case, X, labels, schema, 47)
+benchmarks\fair_accuracy_union_refit.py:61: in fit_fixed
+    import lightgbm as lgb
+E   ModuleNotFoundError: No module named 'lightgbm'
+_________ test_anchor_stop_and_seed_transfer_pipeline[lightgbm-False] _________
+tests\test_multiclass_refit_experiment.py:70: in test_anchor_stop_and_seed_transfer_pipeline
+    anchor, fit = module.union.fit_fixed(job, case, X, labels, schema, 47)
+benchmarks\fair_accuracy_union_refit.py:61: in fit_fixed
+    import lightgbm as lgb
+E   ModuleNotFoundError: No module named 'lightgbm'
+__________ test_fresh_anchor_and_fixed_seed_pipeline[binary-ctboost] __________
+tests\test_scalar_refresh_experiment.py:82: in test_fresh_anchor_and_fixed_seed_pipeline
+    anchor, _ = module.union.fit_fixed(clean_job, case, X, labels, schema, 47)
+benchmarks\fair_accuracy_union_refit.py:61: in fit_fixed
+    import lightgbm as lgb
+E   ModuleNotFoundError: No module named 'lightgbm'
+__________ test_fresh_anchor_and_fixed_seed_pipeline[binary-xgboost] __________
+tests\test_scalar_refresh_experiment.py:82: in test_fresh_anchor_and_fixed_seed_pipeline
+    anchor, _ = module.union.fit_fixed(clean_job, case, X, labels, schema, 47)
+benchmarks\fair_accuracy_union_refit.py:61: in fit_fixed
+    import lightgbm as lgb
+E   ModuleNotFoundError: No module named 'lightgbm'
+_________ test_fresh_anchor_and_fixed_seed_pipeline[binary-lightgbm] __________
+tests\test_scalar_refresh_experiment.py:82: in test_fresh_anchor_and_fixed_seed_pipeline
+    anchor, _ = module.union.fit_fixed(clean_job, case, X, labels, schema, 47)
+benchmarks\fair_accuracy_union_refit.py:61: in fit_fixed
+    import lightgbm as lgb
+E   ModuleNotFoundError: No module named 'lightgbm'
+________ test_fresh_anchor_and_fixed_seed_pipeline[regression-ctboost] ________
+tests\test_scalar_refresh_experiment.py:82: in test_fresh_anchor_and_fixed_seed_pipeline
+    anchor, _ = module.union.fit_fixed(clean_job, case, X, labels, schema, 47)
+benchmarks\fair_accuracy_union_refit.py:61: in fit_fixed
+    import lightgbm as lgb
+E   ModuleNotFoundError: No module named 'lightgbm'
+________ test_fresh_anchor_and_fixed_seed_pipeline[regression-xgboost] ________
+tests\test_scalar_refresh_experiment.py:82: in test_fresh_anchor_and_fixed_seed_pipeline
+    anchor, _ = module.union.fit_fixed(clean_job, case, X, labels, schema, 47)
+benchmarks\fair_accuracy_union_refit.py:61: in fit_fixed
+    import lightgbm as lgb
+E   ModuleNotFoundError: No module named 'lightgbm'
+_______ test_fresh_anchor_and_fixed_seed_pipeline[regression-lightgbm] ________
+tests\test_scalar_refresh_experiment.py:82: in test_fresh_anchor_and_fixed_seed_pipeline
+    anchor, _ = module.union.fit_fixed(clean_job, case, X, labels, schema, 47)
+benchmarks\fair_accuracy_union_refit.py:61: in fit_fixed
+    import lightgbm as lgb
+E   ModuleNotFoundError: No module named 'lightgbm'
+______________ test_identity_union_is_fresh_and_clean_not_parent ______________
+tests\test_scalar_refresh_experiment.py:114: in test_identity_union_is_fresh_and_clean_not_parent
+    clean, _, verification = module.parent.fit_policy(module.clean_job(job), case, 47)
+benchmarks\fair_accuracy_multiclass_refit.py:122: in fit_policy
+    payload, details, frame = parent.fit_policy(job, case, seed)
+benchmarks\fair_accuracy_houses_cap_v2.py:45: in fit_policy
+    return cap.fit_policy(job, case, seed)
+benchmarks\fair_accuracy_cap_expansion.py:65: in fit_policy
+    return fit_expansion(job, case, expanded, seed, cv)
+benchmarks\fair_accuracy_cap_expansion.py:169: in fit_expansion
+    payload, details = cv.union.fit_fixed(job, case, X, expanded["y"], schema, seed)
+benchmarks\fair_accuracy_union_refit.py:61: in fit_fixed
+    import lightgbm as lgb
+E   ModuleNotFoundError: No module named 'lightgbm'
+_________ test_selection_runs_all_eight_candidates_from_clean_anchor __________
+tests\test_scalar_refresh_experiment.py:159: in test_selection_runs_all_eight_candidates_from_clean_anchor
+    assert result["status"] == "ok", result.get("error", result.get("candidates"))
+E   AssertionError: Traceback (most recent call last):
+E       File "C:\apps\ctboost\benchmarks\fair_accuracy_scalar_refresh.py", line 231, in selection_job
+E         payload, fit = union.fit_fixed(clean_job(job), case, X, labels, schema, 47)
+E       File "C:\apps\ctboost\benchmarks\fair_accuracy_union_refit.py", line 61, in fit_fixed
+E         import lightgbm as lgb
+E     ModuleNotFoundError: No module named 'lightgbm'
+E     
+E   assert 'failed' == 'ok'
+E     
+E     - ok
+E     + failed
+=========================== short test summary info ===========================
+FAILED tests/test_multiclass_refit_experiment.py::test_anchor_stop_and_seed_transfer_pipeline[ctboost-False]
+FAILED tests/test_multiclass_refit_experiment.py::test_anchor_stop_and_seed_transfer_pipeline[ctboost-True]
+FAILED tests/test_multiclass_refit_experiment.py::test_anchor_stop_and_seed_transfer_pipeline[xgboost-False]
+FAILED tests/test_multiclass_refit_experiment.py::test_anchor_stop_and_seed_transfer_pipeline[xgboost-True]
+FAILED tests/test_multiclass_refit_experiment.py::test_anchor_stop_and_seed_transfer_pipeline[lightgbm-False]
+FAILED tests/test_scalar_refresh_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[binary-ctboost]
+FAILED tests/test_scalar_refresh_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[binary-xgboost]
+FAILED tests/test_scalar_refresh_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[binary-lightgbm]
+FAILED tests/test_scalar_refresh_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[regression-ctboost]
+FAILED tests/test_scalar_refresh_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[regression-xgboost]
+FAILED tests/test_scalar_refresh_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[regression-lightgbm]
+FAILED tests/test_scalar_refresh_experiment.py::test_identity_union_is_fresh_and_clean_not_parent
+FAILED tests/test_scalar_refresh_experiment.py::test_selection_runs_all_eight_candidates_from_clean_anchor
+13 failed, 7 passed in 4.10s

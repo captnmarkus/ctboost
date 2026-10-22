@@ -1,0 +1,166 @@
+{
+  "correction": {
+    "checks": {
+      "fitting": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 0.0006385321030393243,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 3.702997337593629e-07,
+        "oracle_max_absolute_difference": 1.7579728814887119e-06
+      },
+      "validation": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 0.0006385321030393243,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 3.702997337593629e-07,
+        "oracle_max_absolute_difference": 1.7579728814887119e-06
+      }
+    },
+    "fold": {
+      "coefficient_rounding_absolute_bound": 3.2069141362106937e-07,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "xgboost",
+      "physical_trees": 32,
+      "prediction_oracle_absolute_tolerance": 0.0006385321030393243,
+      "topology_sha256_after": "91eecacfaa15fa1d142e9fab7727ca0186bf9aa697f997de6c10836f1d521f50",
+      "topology_sha256_before": "91eecacfaa15fa1d142e9fab7727ca0186bf9aa697f997de6c10836f1d521f50"
+    },
+    "independent_sparse_raw_margin_oracle": true,
+    "memory": {
+      "array_budgets_bytes": {
+        "design_construction_temporary_budget": 62400000,
+        "lbfgsb_float_and_integer_work_arrays": 130968,
+        "native_leaf_result_and_int64_copy": 39936000,
+        "native_raw_result_and_float64_copy": 1248000,
+        "objective_workspace_budget": 7488000,
+        "observed_leaf_maps": 2032,
+        "optimizer_vector_budget": 25400,
+        "resident_csr_data_indices_indptr": 40560008
+      },
+      "csr_nonzeros": 2496000,
+      "excluded": [
+        "native model objects",
+        "input frames",
+        "categorical transform workspace",
+        "Python object/allocator overhead"
+      ],
+      "max_working_bytes": 6442450944,
+      "native_leaf_count": 254,
+      "no_dense_hessian": true,
+      "parameters_upper_bound": 254,
+      "physical_trees": 32,
+      "refit_array_budget_bytes": 151790408,
+      "rows": 78000,
+      "scope": "named conservative refit arrays, not whole-process RSS",
+      "solver_kind": "binary"
+    },
+    "native_cv_adapter": {
+      "algorithm_controls_sha256": "87154146c79456bb1faf80aeb4a7e286a78d5c2118092c284e1daa0bf012de87",
+      "effective_named_array_limit": 6442450944,
+      "fresh_payload_metadata_guard": true,
+      "inherited_named_array_limit": 4294967296,
+      "resource_override_only": true,
+      "temperature_unchanged": true
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 2496000,
+      "design_shape": [
+        78000,
+        254
+      ],
+      "ordered_training_transform_replayed": false,
+      "training_leaf_ids_sha256": "03a74fc7144238e43a0232f276c03a7d6a644cbce6d5a4131d6ef62665a16fb2",
+      "training_rows": 78000,
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "columns": 254,
+      "evaluations": 513,
+      "final_objective": 0.17952497094433262,
+      "ftol": 1e-13,
+      "gradient_gate": 1e-06,
+      "gtol": 1e-09,
+      "initial_coefficients": "all zero",
+      "initial_objective": 0.1864104848151071,
+      "iterations": 471,
+      "maxcor": 20,
+      "maximum_absolute_mean_gradient": 6.874224486413291e-08,
+      "maxiter": 2000,
+      "maxls": 50,
+      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+      "method": "L-BFGS-B",
+      "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+      "penalty": 1.0,
+      "rows": 78000,
+      "status": 0
+    }
+  },
+  "corrections_disabled_before_fit": true,
+  "dataset": "GiveMeSomeCredit",
+  "early_stopping": false,
+  "feature_names": [
+    "RevolvingUtilizationOfUnsecuredLines",
+    "age",
+    "NumberOfTime30-59DaysPastDueNotWorse",
+    "DebtRatio",
+    "MonthlyIncome",
+    "NumberOfOpenCreditLinesAndLoans",
+    "NumberOfTimes90DaysLate",
+    "NumberRealEstateLoansOrLines",
+    "NumberOfTime60-89DaysPastDueNotWorse",
+    "NumberOfDependents"
+  ],
+  "finished_at": "2026-10-16T16:08:04.716655+00:00",
+  "fit_controls_sha256": "35714a96cf83e3123589c9c2096d944c0bb15e9afc50625c4343ef7ad39b3c84",
+  "fit_seconds": 0.17516579999937676,
+  "fixed_corrections_disabled_before_fit": true,
+  "fold": 1,
+  "fold_category_schema": {},
+  "library": "xgboost",
+  "model_bytes": 47361,
+  "model_retained": false,
+  "model_sha256": "9e793c5a783640cd771d3efe38848d3341d9709610a76201c84b57f25a9807fe",
+  "native_cv_fresh_fit": true,
+  "native_fit_completed": true,
+  "native_fit_started": true,
+  "parameters": {
+    "eta": 0.05,
+    "eval_metric": "auc",
+    "lambda": 10,
+    "max_bin": 256,
+    "max_cat_threshold": 256,
+    "max_cat_to_onehot": 8,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "multi_strategy": "one_output_per_tree",
+    "nthread": 1,
+    "objective": "binary:logistic",
+    "seed": 47,
+    "subsample": 1.0,
+    "tree_method": "hist"
+  },
+  "prediction_array_sha256": "4e61c8251b5a393a58deb32749a819ac3587247c398c6c686977d79b9ebc96dc",
+  "prediction_dtype": "<f4",
+  "prediction_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave18b\\fold_predictions\\0151.npz",
+  "prediction_sha256": "1663a2c9ceadf26e4e9dac36596590158e5915b98ee26b3c6737a5f1d95e15ba",
+  "prediction_shape": [
+    19500
+  ],
+  "profile_index": 0,
+  "reload_bit_exact": true,
+  "requested_rounds": 32,
+  "retained_rounds": 32,
+  "seed": 47,
+  "started_at": "2026-10-16T16:07:59.344290+00:00",
+  "status": "ok",
+  "structural_early_termination": false,
+  "temperature": null,
+  "training_rows": 78000,
+  "validation_error": 0.14978540692888287,
+  "validation_labels_received": false,
+  "validation_rows": 19500
+}

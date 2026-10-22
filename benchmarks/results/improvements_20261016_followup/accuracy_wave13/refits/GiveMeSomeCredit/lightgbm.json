@@ -1,0 +1,408 @@
+{
+  "dataset": "GiveMeSomeCredit",
+  "library": "lightgbm",
+  "selection": {
+    "best": {
+      "parameters": {
+        "bagging_fraction": 1.0,
+        "bagging_freq": 1,
+        "deterministic": true,
+        "force_col_wise": true,
+        "lambda_l2": 10,
+        "learning_rate": 0.025,
+        "max_bin": 255,
+        "max_cat_threshold": 256,
+        "max_cat_to_onehot": 8,
+        "metric": "auc",
+        "min_data_in_leaf": 5,
+        "num_leaves": 7,
+        "num_threads": 1,
+        "objective": "binary",
+        "seed": 47,
+        "verbosity": -1,
+        "zero_as_missing": false
+      },
+      "retained_rounds": 87,
+      "stop_error": null
+    },
+    "binary_refit": {
+      "lambda": 1000.0,
+      "shrinkage": 1.0,
+      "solver": {
+        "ftol": 1e-13,
+        "gradient_gate": 1e-06,
+        "gtol": 1e-09,
+        "maxiter": 2000
+      }
+    },
+    "cv_selection": {
+      "all_fits_successful": true,
+      "best": {
+        "mean_fold_error": 0.14118214285714284,
+        "profile_index": 1,
+        "requested_rounds": 87
+      },
+      "dataset": "GiveMeSomeCredit",
+      "job": {
+        "anchor_rounds": 87,
+        "binary_refit": {
+          "lambda": 1000.0,
+          "shrinkage": 1.0,
+          "solver": {
+            "ftol": 1e-13,
+            "gradient_gate": 1e-06,
+            "gtol": 1e-09,
+            "maxiter": 2000
+          }
+        },
+        "dataset": "GiveMeSomeCredit",
+        "leaf_refit": null,
+        "library": "lightgbm",
+        "original_selection": {
+          "all_eight_successful": true,
+          "best": {
+            "config_index": 5,
+            "fit_seconds": 0.06872300000031828,
+            "parameters": {
+              "bagging_fraction": 1.0,
+              "bagging_freq": 1,
+              "deterministic": true,
+              "force_col_wise": true,
+              "lambda_l2": 10,
+              "learning_rate": 0.05,
+              "max_bin": 255,
+              "max_cat_threshold": 256,
+              "max_cat_to_onehot": 8,
+              "metric": "auc",
+              "min_data_in_leaf": 5,
+              "num_leaves": 7,
+              "num_threads": 1,
+              "objective": "binary",
+              "seed": 47,
+              "verbosity": -1,
+              "zero_as_missing": false
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 95,
+            "selection_key": [
+              0.18867414032508378,
+              95,
+              5
+            ],
+            "stop_error": 0.18867414032508378,
+            "trained_rounds_if_available": 145
+          },
+          "cumulative_search_fit_seconds": 4.101755299994693,
+          "current_wave_all_eight_successful": true,
+          "dataset": "GiveMeSomeCredit",
+          "library": "lightgbm",
+          "model_bytes": 90847,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave4\\models\\GiveMeSomeCredit\\lightgbm.pkl",
+          "model_sha256": "38641aa400702e0d748da9e7bae2a2de9c4dbef5cd6b8e01bbc8617dfb880235",
+          "plan_sha256": "b63459620d4e35f543ce3b366d33767b82da8c98a96fa30155442825ce3c585a",
+          "search_fit_seconds": 0.7460292999967351,
+          "source_wave": 4
+        },
+        "parameters": {
+          "bagging_fraction": 1.0,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 10,
+          "learning_rate": 0.025,
+          "max_bin": 255,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 8,
+          "metric": "auc",
+          "min_data_in_leaf": 5,
+          "num_leaves": 7,
+          "num_threads": 1,
+          "objective": "binary",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        "profiles": [
+          {
+            "bagging_fraction": 1.0,
+            "bagging_freq": 1,
+            "deterministic": true,
+            "force_col_wise": true,
+            "lambda_l2": 10,
+            "learning_rate": 0.05,
+            "max_bin": 255,
+            "max_cat_threshold": 256,
+            "max_cat_to_onehot": 8,
+            "metric": "auc",
+            "min_data_in_leaf": 5,
+            "num_leaves": 7,
+            "num_threads": 1,
+            "objective": "binary",
+            "seed": 47,
+            "verbosity": -1,
+            "zero_as_missing": false
+          },
+          {
+            "bagging_fraction": 1.0,
+            "bagging_freq": 1,
+            "deterministic": true,
+            "force_col_wise": true,
+            "lambda_l2": 10,
+            "learning_rate": 0.025,
+            "max_bin": 255,
+            "max_cat_threshold": 256,
+            "max_cat_to_onehot": 8,
+            "metric": "auc",
+            "min_data_in_leaf": 5,
+            "num_leaves": 7,
+            "num_threads": 1,
+            "objective": "binary",
+            "seed": 47,
+            "verbosity": -1,
+            "zero_as_missing": false
+          },
+          {
+            "bagging_fraction": 1.0,
+            "bagging_freq": 1,
+            "deterministic": true,
+            "force_col_wise": true,
+            "lambda_l2": 10,
+            "learning_rate": 0.05,
+            "max_bin": 255,
+            "max_cat_threshold": 256,
+            "max_cat_to_onehot": 8,
+            "metric": "auc",
+            "min_data_in_leaf": 1,
+            "num_leaves": 7,
+            "num_threads": 1,
+            "objective": "binary",
+            "seed": 47,
+            "verbosity": -1,
+            "zero_as_missing": false
+          },
+          {
+            "bagging_fraction": 1.0,
+            "bagging_freq": 1,
+            "deterministic": true,
+            "force_col_wise": true,
+            "lambda_l2": 10,
+            "learning_rate": 0.025,
+            "max_bin": 255,
+            "max_cat_threshold": 256,
+            "max_cat_to_onehot": 8,
+            "metric": "auc",
+            "min_data_in_leaf": 1,
+            "num_leaves": 7,
+            "num_threads": 1,
+            "objective": "binary",
+            "seed": 47,
+            "verbosity": -1,
+            "zero_as_missing": false
+          }
+        ],
+        "round_candidates": [
+          44,
+          87,
+          174
+        ],
+        "rounds": 87,
+        "temperature": null,
+        "training_selection": {
+          "all_eight_successful": true,
+          "best": {
+            "config_index": 5,
+            "fit_seconds": 0.06872300000031828,
+            "parameters": {
+              "bagging_fraction": 1.0,
+              "bagging_freq": 1,
+              "deterministic": true,
+              "force_col_wise": true,
+              "lambda_l2": 10,
+              "learning_rate": 0.05,
+              "max_bin": 255,
+              "max_cat_threshold": 256,
+              "max_cat_to_onehot": 8,
+              "metric": "auc",
+              "min_data_in_leaf": 5,
+              "num_leaves": 7,
+              "num_threads": 1,
+              "objective": "binary",
+              "seed": 47,
+              "verbosity": -1,
+              "zero_as_missing": false
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 95,
+            "selection_key": [
+              0.18867414032508378,
+              95,
+              5
+            ],
+            "stop_error": 0.18867414032508378,
+            "trained_rounds_if_available": 145
+          },
+          "cumulative_search_fit_seconds": 4.101755299994693,
+          "current_wave_all_eight_successful": true,
+          "dataset": "GiveMeSomeCredit",
+          "library": "lightgbm",
+          "model_bytes": 90847,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave4\\models\\GiveMeSomeCredit\\lightgbm.pkl",
+          "model_sha256": "38641aa400702e0d748da9e7bae2a2de9c4dbef5cd6b8e01bbc8617dfb880235",
+          "plan_sha256": "b63459620d4e35f543ce3b366d33767b82da8c98a96fa30155442825ce3c585a",
+          "search_fit_seconds": 0.7460292999967351,
+          "source_wave": 4
+        }
+      },
+      "library": "lightgbm",
+      "scores": [
+        {
+          "mean_fold_error": 0.14710285714285717,
+          "profile_index": 0,
+          "requested_rounds": 44
+        },
+        {
+          "mean_fold_error": 0.14118214285714284,
+          "profile_index": 1,
+          "requested_rounds": 87
+        },
+        {
+          "mean_fold_error": 0.1422885714285715,
+          "profile_index": 2,
+          "requested_rounds": 174
+        }
+      ]
+    },
+    "dataset": "GiveMeSomeCredit",
+    "leaf_refit": null,
+    "library": "lightgbm",
+    "model_bytes": 84500,
+    "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave13\\models\\GiveMeSomeCredit\\lightgbm.pkl",
+    "model_sha256": "74bc1920275e6f360664799309b256a09ecc3d62c32296b42ea0bc6cb66ab97a",
+    "refit_details": {
+      "apparent_union_error_inference_transform": 0.1245965714285715,
+      "early_stopping": false,
+      "fit_seconds": 0.03682539999863366,
+      "fixed_binary_refit": {
+        "fold": {
+          "coefficient_rounding_absolute_bound": 3.826149466701345e-16,
+          "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+          "inference_only": true,
+          "library": "lightgbm",
+          "physical_trees": 87,
+          "prediction_oracle_absolute_tolerance": 2.7913856684372534e-12,
+          "topology_sha256_after": "e1c27b6c7cb98925af435e21e7090393c15b9577aa18cc9c2b8b9b197782df7b",
+          "topology_sha256_before": "e1c27b6c7cb98925af435e21e7090393c15b9577aa18cc9c2b8b9b197782df7b"
+        },
+        "inference_checks": {
+          "original_stop": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 2.7913856684372534e-12,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 9.933874330971176e-16,
+            "oracle_max_absolute_difference": 4.440892098500626e-15
+          },
+          "original_train": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 2.7913856684372534e-12,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 9.933874330971176e-16,
+            "oracle_max_absolute_difference": 4.440892098500626e-15
+          }
+        },
+        "preprocessing": {
+          "column_order": "physical tree order, then sorted observed native leaf IDs",
+          "design_nonzeros": 652500,
+          "design_shape": [
+            7500,
+            609
+          ],
+          "ordered_training_transform_replayed": false,
+          "training_leaf_ids_sha256": "20fb90d6f6ab82263e88b7dcea9cd88307a2b4cd24941ddaee5b01ebe4164e43",
+          "training_rows": 7500,
+          "unobserved_leaf_correction": 0
+        },
+        "solve": {
+          "columns": 609,
+          "evaluations": 17,
+          "final_objective": 0.17204767846021543,
+          "ftol": 1e-13,
+          "gradient_gate": 1e-06,
+          "gtol": 1e-09,
+          "initial_coefficients": "all zero",
+          "initial_objective": 0.17633439992694844,
+          "iterations": 15,
+          "maxcor": 20,
+          "maximum_absolute_mean_gradient": 1.0219025866338901e-08,
+          "maxiter": 2000,
+          "maxls": 50,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "method": "L-BFGS-B",
+          "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+          "penalty": 1000.0,
+          "rows": 7500,
+          "status": 0
+        },
+        "training_check": {
+          "fixed_tolerance_atol": 1e-05,
+          "fixed_tolerance_rtol": 5e-05,
+          "leaf_routing_exact": true,
+          "oracle_absolute_tolerance": 2.7913856684372534e-12,
+          "oracle_difference_divided_by_max_one_or_prediction_magnitude": 9.933874330971176e-16,
+          "oracle_max_absolute_difference": 4.440892098500626e-15
+        }
+      },
+      "parameters": {
+        "bagging_fraction": 1.0,
+        "bagging_freq": 1,
+        "deterministic": true,
+        "force_col_wise": true,
+        "lambda_l2": 10,
+        "learning_rate": 0.025,
+        "max_bin": 255,
+        "max_cat_threshold": 256,
+        "max_cat_to_onehot": 8,
+        "metric": "auc",
+        "min_data_in_leaf": 5,
+        "num_leaves": 7,
+        "num_threads": 1,
+        "objective": "binary",
+        "seed": 47,
+        "verbosity": -1,
+        "zero_as_missing": false
+      },
+      "requested_rounds": 87,
+      "retained_rounds": 87,
+      "structural_early_termination": false,
+      "union_data": {
+        "row_order": "original TRAIN followed by original STOP",
+        "source_roles": {
+          "stop": {
+            "index_sha256": "95f86bc27511af6fa1201005a0abbd270a05687b2dc0c8dfae0562f1eac9237c",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\GiveMeSomeCredit\\stop.pkl",
+            "rows": 1250,
+            "sha256": "f47b44ca78b5a9f4eeb21e24cf673e2dad101b4bb5f585429c57f238883d633c"
+          },
+          "train": {
+            "index_sha256": "dcd223be41a510aa11519a689b24f8807f4deb63a673f010836c73773a74370d",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\GiveMeSomeCredit\\train.pkl",
+            "rows": 6250,
+            "sha256": "7e35bf05917689ae8658a253efeb6c9d0b7788d59071e66bf03a13804937b46d"
+          }
+        },
+        "stop_ids_sha256": "95f86bc27511af6fa1201005a0abbd270a05687b2dc0c8dfae0562f1eac9237c",
+        "stop_rows": 1250,
+        "train_ids_sha256": "dcd223be41a510aa11519a689b24f8807f4deb63a673f010836c73773a74370d",
+        "train_rows": 6250,
+        "union_category_counts": {},
+        "union_ids_sha256": "8c582af6c776addcaf6092bd2ba7040992c68522986f89629afa62163de740f5",
+        "union_rows": 7500,
+        "vocabulary_fit_on": "TRAIN+STOP union only"
+      }
+    },
+    "source_wave": 13,
+    "temperature": null
+  },
+  "status": "ok"
+}

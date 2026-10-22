@@ -1,0 +1,60 @@
+{
+  "config_index": 0,
+  "controls": {
+    "lambda": 1.0,
+    "shrinkage": 0.25
+  },
+  "dataset": "in_vehicle_coupon_recommendation",
+  "finished_at": "2026-10-16T12:12:28.307428+00:00",
+  "fold": {
+    "coefficient_rounding_absolute_bound": 2.9477288665535895e-15,
+    "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+    "inference_only": true,
+    "library": "lightgbm",
+    "physical_trees": 424,
+    "prediction_oracle_absolute_tolerance": 4.70197401428066e-11,
+    "topology_sha256_after": "1562db86fe1b6dc1abe91c3b6615e3328ee6011f65e6a4ab28e5a888198dd723",
+    "topology_sha256_before": "1562db86fe1b6dc1abe91c3b6615e3328ee6011f65e6a4ab28e5a888198dd723"
+  },
+  "library": "lightgbm",
+  "solve": {
+    "columns": 19214,
+    "evaluations": 112,
+    "final_objective": 0.019167093951257392,
+    "ftol": 1e-13,
+    "gradient_gate": 1e-06,
+    "gtol": 1e-09,
+    "initial_coefficients": "all zero",
+    "initial_objective": 0.19558678616405673,
+    "iterations": 104,
+    "maxcor": 20,
+    "maximum_absolute_mean_gradient": 3.036229693960153e-09,
+    "maxiter": 2000,
+    "maxls": 50,
+    "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+    "method": "L-BFGS-B",
+    "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+    "penalty": 1.0,
+    "rows": 5285,
+    "status": 0
+  },
+  "started_at": "2026-10-16T12:12:24.084575+00:00",
+  "status": "ok",
+  "stop_check": {
+    "fixed_tolerance_atol": 1e-05,
+    "fixed_tolerance_rtol": 5e-05,
+    "leaf_routing_exact": true,
+    "oracle_absolute_tolerance": 4.70197401428066e-11,
+    "oracle_difference_divided_by_max_one_or_prediction_magnitude": 2.6799571431381936e-15,
+    "oracle_max_absolute_difference": 2.4868995751603507e-14
+  },
+  "stop_error": 0.20109028811629748,
+  "training_check": {
+    "fixed_tolerance_atol": 1e-05,
+    "fixed_tolerance_rtol": 5e-05,
+    "leaf_routing_exact": true,
+    "oracle_absolute_tolerance": 4.70197401428066e-11,
+    "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.5838388120716418e-15,
+    "oracle_max_absolute_difference": 1.7763568394002505e-14
+  }
+}

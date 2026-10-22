@@ -1,0 +1,85 @@
+diff --git a/src/core/booster_predict.cpp b/src/core/booster_predict.cpp
+index 64f1579..2f680b3 100644
+--- a/src/core/booster_predict.cpp
++++ b/src/core/booster_predict.cpp
+@@ -73,7 +73,7 @@ bool SamePredictionTopology(const Tree& left, const Tree& right) {
+   return true;
+ }
+ 
+-template <typename BinType>
++template <typename BinType, bool HasCategoricalSplits = true>
+ int CachedLeafIndex(const PredictionTree& tree,
+                     const BinType* bins,
+                     std::size_t num_rows,
+@@ -82,14 +82,43 @@ int CachedLeafIndex(const PredictionTree& tree,
+   while (tree.nodes[static_cast<std::size_t>(node_index)].split_feature_id >= 0) {
+     const PredictionNode& node = tree.nodes[static_cast<std::size_t>(node_index)];
+     const std::uint16_t bin = bins[static_cast<std::size_t>(node.split_feature_id) * num_rows + row];
+-    const bool go_left = node.is_categorical_split
+-        ? ((tree.categorical_routes[node.payload_index][bin / 64U] >> (bin % 64U)) & 1U) != 0U
+-        : bin <= node.split_bin_index;
++    bool go_left = bin <= node.split_bin_index;
++    if constexpr (HasCategoricalSplits) {
++      if (node.is_categorical_split) {
++        go_left = ((tree.categorical_routes[node.payload_index][bin / 64U] >> (bin % 64U)) & 1U) != 0U;
++      }
++    }
+     node_index = go_left ? node.left_child : node.right_child;
+   }
+   return node_index;
+ }
+ 
++template <typename BinType, bool HasCategoricalSplits>
++void PredictCachedRows(const PredictionTree& tree,
++                       const BinType* bins,
++                       std::size_t num_rows,
++                       std::size_t dimension,
++                       std::size_t class_index,
++                       bool vector_updates,
++                       std::vector<float>& predictions) {
++  // Both decisions are constant across a tree's rows. Keep them outside the
++  // traversal loop so numeric scalar trees need only comparisons and one add.
++  if (vector_updates) {
++    for (std::size_t row = 0; row < num_rows; ++row) {
++      const int leaf_index = CachedLeafIndex<BinType, HasCategoricalSplits>(tree, bins, num_rows, row);
++      const PredictionNode& leaf = tree.nodes[static_cast<std::size_t>(leaf_index)];
++      for (std::size_t output = 0; output < dimension; ++output) {
++        predictions[row * dimension + output] += tree.vector_updates[leaf.payload_index + output];
++      }
++    }
++  } else {
++    for (std::size_t row = 0; row < num_rows; ++row) {
++      const int leaf_index = CachedLeafIndex<BinType, HasCategoricalSplits>(tree, bins, num_rows, row);
++      predictions[row * dimension + class_index] += tree.nodes[static_cast<std::size_t>(leaf_index)].leaf_update;
++    }
++  }
++}
++
+ template <typename BinType>
+ void PredictCached(const PredictionCache& cache,
+                    const BinType* bins,
+@@ -130,18 +159,12 @@ void PredictCached(const PredictionCache& cache,
+       tree_index += vector_updates ? tree.consumed_trees : 1U;
+       continue;
+     }
+-    const auto add_leaf = [&](int leaf_index, std::size_t row) {
+-      const PredictionNode& leaf = tree.nodes[static_cast<std::size_t>(leaf_index)];
+-      if (vector_updates) {
+-        for (std::size_t output = 0; output < dimension; ++output) {
+-          predictions[row * dimension + output] += tree.vector_updates[leaf.payload_index + output];
+-        }
+-      } else {
+-        predictions[row * dimension + class_index] += leaf.leaf_update;
+-      }
+-    };
+-    for (std::size_t row = 0; row < num_rows; ++row) {
+-      add_leaf(CachedLeafIndex(tree, bins, num_rows, row), row);
++    if (tree.categorical_routes.empty()) {
++      PredictCachedRows<BinType, false>(
++          tree, bins, num_rows, dimension, class_index, vector_updates, predictions);
++    } else {
++      PredictCachedRows<BinType, true>(
++          tree, bins, num_rows, dimension, class_index, vector_updates, predictions);
+     }
+     tree_index += vector_updates ? tree.consumed_trees : 1U;
+   }

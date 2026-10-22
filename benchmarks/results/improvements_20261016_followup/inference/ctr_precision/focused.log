@@ -1,0 +1,88 @@
+{"native": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\ctr-precision\\runtime-cp312\\ctboost\\_core.cp312-win_amd64.pyd", "native_sha256": "04adb21b0e4cea8046581a23b62585b6c8d631561d96a417ad87bc3c55041613", "versions": {"numpy": "2.0.2", "pandas": "2.3.3", "scipy": "1.16.3", "pytest": "9.1.1"}}
+........................................................................ [ 67%]
+.......F....F.................sss.                                       [100%]
+================================== FAILURES ===================================
+_ test_feature_pipeline_rejects_unknown_or_inconsistent_codec_versions[updates0-format version] _
+
+updates = {'feature_pipeline_format_version': 5}, message = 'format version'
+
+    @pytest.mark.parametrize(
+        ("updates", "message"),
+        [
+            ({"feature_pipeline_format_version": 5}, "format version"),
+            (
+                {
+                    "feature_pipeline_format_version": 3,
+                    "categorical_key_encoding_version": 99,
+                },
+                "key encoding version",
+            ),
+            (
+                {
+                    "feature_pipeline_format_version": 2,
+                    "categorical_key_encoding_version": 2,
+                },
+                "formats before version 3",
+            ),
+        ],
+    )
+    def test_feature_pipeline_rejects_unknown_or_inconsistent_codec_versions(updates, message):
+        state = ctboost.FeaturePipeline(cat_features=[0]).to_state()
+        state.update(updates)
+>       with pytest.raises(ValueError, match=message):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_categorical_key_codec.py:381: Failed
+_ test_model_schema_outer_inner_consistency_and_codec1_forward_compatibility __
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-889/test_model_schema_outer_inner_0')
+
+    def test_model_schema_outer_inner_consistency_and_codec1_forward_compatibility(
+        tmp_path: Path,
+    ):
+        values = np.asarray(
+            [["alpha", 0.0], ["beta", 1.0], ["alpha", 2.0], ["gamma", 3.0]],
+            dtype=object,
+        )
+        labels = np.asarray([0.0, 1.0, 1.5, 3.0], dtype=np.float32)
+        pipeline = _legacy_unfitted_pipeline(cat_features=[0], random_seed=13)
+        transformed, categorical, names = pipeline.fit_transform_array(values, labels)
+        booster = ctboost.train(
+            ctboost.Pool(
+                transformed,
+                labels,
+                cat_features=categorical,
+                feature_names=names,
+            ),
+            {
+                "objective": "RMSE",
+                "max_depth": 1,
+                "alpha": 1.0,
+                "random_seed": 13,
+            },
+            num_boost_round=2,
+        )
+        booster._feature_pipeline = pipeline
+    
+        codec1_schema2_path = tmp_path / "codec1-schema2.ctb"
+        booster.save_model(codec1_schema2_path)
+        document = json.loads(codec1_schema2_path.read_text(encoding="utf-8"))
+        inner = _deserialize_json_value(document["feature_pipeline_state"])
+        assert document["schema_version"] == 2
+>       assert inner["feature_pipeline_format_version"] == 5
+E       assert 4 == 5
+
+tests\test_categorical_key_codec.py:514: AssertionError
+============================== warnings summary ===============================
+tests/test_ctr_precision.py::test_finite_average_does_not_require_float_representable_total
+  C:\apps\ctboost\tests\test_ctr_precision.py:59: RuntimeWarning: overflow encountered in cast
+    assert total == float(y[0]) * 4 and total > np.finfo(np.float32).max
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+SKIPPED [2] tests\test_vector_exports.py:230: C++ compiler unavailable
+SKIPPED [1] tests\test_vector_exports.py:284: could not import 'onnxruntime': No module named 'onnxruntime'
+FAILED tests/test_categorical_key_codec.py::test_feature_pipeline_rejects_unknown_or_inconsistent_codec_versions[updates0-format version]
+FAILED tests/test_categorical_key_codec.py::test_model_schema_outer_inner_consistency_and_codec1_forward_compatibility
+2 failed, 101 passed, 3 skipped, 1 warning in 7.66s

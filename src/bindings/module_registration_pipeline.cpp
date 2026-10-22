@@ -66,6 +66,10 @@ void BindNativeFeaturePipeline(py::module_& m) {
            &ctboost::NativeFeaturePipeline::transform_array,
            py::arg("raw_matrix"),
            py::arg("feature_names") = py::none())
+      .def("_transform_categorical_codes",
+           &ctboost::NativeFeaturePipeline::transform_categorical_codes,
+           py::arg("codes"), py::arg("categories"),
+           py::arg("feature_names") = py::none())
       .def("to_state", &ctboost::NativeFeaturePipeline::to_state)
       .def_static("from_state", &ctboost::NativeFeaturePipeline::FromState);
 }

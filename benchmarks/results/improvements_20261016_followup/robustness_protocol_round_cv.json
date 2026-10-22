@@ -1,0 +1,33 @@
+{
+  "protocol": "fivefold_round_union_robustness_20261016",
+  "created_before": "Any wave13 real fold fit or score",
+  "preserved_parent_policy": "All twelve preceding failed development gates and their frozen source files remain unchanged",
+  "population": "All twelve original metadata-selected tasks and all three libraries",
+  "fitting_rows": "Raw original TRAIN followed by raw STOP; verify disjoint row IDs and preserve role hashes. Do not use development, confirmation or official test rows.",
+  "fold_policy": "Five shared folds per dataset using StratifiedKFold for classification and KFold for regression, shuffle=True, random_state=13013. Freeze one assignment manifest shared by all three libraries and all round profiles before any fit. Every classification fitting and validation fold must contain all dataset classes. Every union row is held out exactly once. Learn vocabulary from observed fold-TRAIN values only, including when pandas preserves unused categorical metadata.",
+  "round_profiles": "For each frozen wave12 requested round count n, evaluate [max(1,ceil(n/2)),n,2n]. Preserve all three profile indices even if counts coincide. All other selected tree controls, correction penalties/shrinkages/solver settings and multiclass temperatures remain fixed. Native early stopping is disabled.",
+  "independent_fits": "Fit three separate native models independently on each of five folds for each library/task:540 fits total. Do not slice a longest CTBoost model or call public CV shortcuts. Native LightGBM structural termination without further splits is recorded. Apply each fixed regression/binary correction on fold-TRAIN through exact ordered CT replay, then its fixed multiclass temperature, before validation scoring.",
+  "selection": "Arithmetic mean of five fold primary errors chooses the profile. Exact ties choose fewer requested rounds, then lower profile index. Binary uses mean fold1-AUC rather than pooling margins across folds. There is no unchanged-incumbent or original-versus-CV fallback.",
+  "resource_policy": "Two isolated process workers pinned to CPU4 and8, one native thread each. Each dataset/library job contains15 fits and has an8GiB summed live process-tree RSS and1200-second elapsed limit, including correction/checking and any pause. Record PID/create-time identities; resource termination targets only the observed owned process tree, including Windows venv interpreter children. A limit or incomplete fit is a terminal recorded failure; no silent rerun or dropped task. Precise timing windows occur outside these jobs.",
+  "evidence": "Retain all540 fit/failure receipts, fold assignments, raw-role identities, fold vocabulary, actual native counts, fit/resource costs, serialized model SHA256/size and exact prediction roundtrip, and validation prediction arrays with row IDs/labels. Large fold-model bytes are not retained. Final selected36 union models are retained with exact hashes and pickle checks.",
+  "mandatory_refit": "Freeze all36 CV choices before fitting every selected policy on the same original TRAIN+STOP union at its chosen requested rounds. Fresh union vocabulary, unchanged fixed corrections and temperature, no early stopping or selection using union rows. Freeze all36 native models before development scoring.",
+  "conditional_seed": 137,
+  "conditional_seed_trigger": "Only a successful36-model wave13 development gate opens36 fresh seed137 refits. Seed137 is fixed before all wave13 fits and has not been used in earlier quality experiments; no substituting previous947 models.",
+  "conditional_seed_policy": "Same union rows, chosen requested rounds, tree controls, correction controls and temperatures; change learner seed only. No new HPO, CV, early stopping or correction/temperature reselection.",
+  "aggregation": "Average primary error across47 and137 within each of12datasets, then compare dataset means. Report each seed separately. This is same-split learner-seed sensitivity, not independent datasets or a significance test.",
+  "gate": {
+    "all_models_successful": true,
+    "median_relative_error_gain_against_each_comparator": 0,
+    "minimum_dataset_wins_or_ties_against_each_comparator": 6
+  },
+  "primary_errors": {"binary": "1-ROC-AUC", "regression": "RMSE", "multiclass": "logloss"},
+  "if_gate_fails": "Preserve the failed policy and keep official outer test and original14 confirmation sealed; further work requires a new predeclared hypothesis.",
+  "official_test_after_gate": {
+    "authorization": "User authorized one-shot assessment after final policy/model freeze",
+    "split": "Original OpenML repeat0/fold0/sample0 outer-test rows, uncapped",
+    "preconditions": "Freeze72 model hashes and exact source/runtime/policy/cache/split identities before reading test features or labels",
+    "models": "Use the already trained47 and137 native policies without any further fitting or adjustment",
+    "aggregation": "Same within-dataset two-seed mean errors, with both seeds reported separately",
+    "limitations": "Inherited tree and post-fit controls already used originalSTOP, so this CV is additional adaptive tuning, not an unbiased performance estimate. Development is historically reused, training capped, twelve tasks and two seeds. Not an official TabArena ranking, universal superiority or significance claim. Original14 confirmation fold7 remains sealed."
+  }
+}

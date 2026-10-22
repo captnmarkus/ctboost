@@ -1,0 +1,338 @@
+{
+  "source_sha256": {
+    "plan.json": "1ba0c3dbe15209ff2fc208bb6f06b45f7bd54656c61fa67ec1e643c193a7e735",
+    "multiclass_controls.json": "ba520c321d3b5888f7e89151522c958e94236133438c0353fd03817b06e11349",
+    "frozen_selections.json": "388b9d8ff0fe2178a530f4457c6bf42217c4defb4e9f5f2a3d6de9935468ead3",
+    "development.json": "41a75382cb4aa880ca1ae54056624ff08f071bb06605de9f852a9ec21f734bb5"
+  },
+  "all_stages_successful": true,
+  "new_train_anchor_fits": 12,
+  "successful_nonidentity_candidates": 96,
+  "identity_evaluations": 12,
+  "selection_solves": 48,
+  "selected_nonzero_corrections": 8,
+  "transfer_jobs": 12,
+  "transfer_solves": 8,
+  "exact_carried_binary_regression_models": 24,
+  "total_quality_tree_fits_through_wave16": 2424,
+  "diagnostic_replay_fits_separate": 8,
+  "maximum_job_seconds": 239.07800000000134,
+  "maximum_process_tree_rss_bytes": 2383695872,
+  "sum_stage_job_seconds": {
+    "selection_job": 521.8580000000038,
+    "transfer_job": 37.656999999995605
+  },
+  "maximum_named_array_estimate_bytes": 1320208704,
+  "resource_failures": [],
+  "libraries": {
+    "ctboost": {
+      "new_tree_fits": 4,
+      "selection_solves": 16,
+      "nonzero_candidates": 32,
+      "selected_nonzero": 4,
+      "native_anchor_fit_seconds": 12.766217500000494,
+      "total_policy_payload_bytes": 83849110
+    },
+    "xgboost": {
+      "new_tree_fits": 4,
+      "selection_solves": 16,
+      "nonzero_candidates": 32,
+      "selected_nonzero": 2,
+      "native_anchor_fit_seconds": 12.645730000000185,
+      "total_policy_payload_bytes": 73147483
+    },
+    "lightgbm": {
+      "new_tree_fits": 4,
+      "selection_solves": 16,
+      "nonzero_candidates": 32,
+      "selected_nonzero": 2,
+      "native_anchor_fit_seconds": 2.5821578000031877,
+      "total_policy_payload_bytes": 12217050
+    }
+  },
+  "selected_controls": [
+    {
+      "dataset": "anneal",
+      "library": "ctboost",
+      "lambda": 1.0,
+      "shrinkage": 1.0,
+      "anchor_stop_error": 0.0011615196254268197,
+      "requested_rounds": 389,
+      "retained_rounds": 389,
+      "anchor_rows": 375
+    },
+    {
+      "dataset": "anneal",
+      "library": "xgboost",
+      "lambda": null,
+      "shrinkage": null,
+      "anchor_stop_error": 0.025728996338486323,
+      "requested_rounds": 240,
+      "retained_rounds": 240,
+      "anchor_rows": 375
+    },
+    {
+      "dataset": "anneal",
+      "library": "lightgbm",
+      "lambda": null,
+      "shrinkage": null,
+      "anchor_stop_error": 4.338335331245523e-05,
+      "requested_rounds": 69,
+      "retained_rounds": 69,
+      "anchor_rows": 375
+    },
+    {
+      "dataset": "website_phishing",
+      "library": "ctboost",
+      "lambda": 100.0,
+      "shrinkage": 1.0,
+      "anchor_stop_error": 0.2541023698583372,
+      "requested_rounds": 118,
+      "retained_rounds": 118,
+      "anchor_rows": 565
+    },
+    {
+      "dataset": "website_phishing",
+      "library": "xgboost",
+      "lambda": 100.0,
+      "shrinkage": 1.0,
+      "anchor_stop_error": 0.23872097860155087,
+      "requested_rounds": 122,
+      "retained_rounds": 122,
+      "anchor_rows": 565
+    },
+    {
+      "dataset": "website_phishing",
+      "library": "lightgbm",
+      "lambda": 1000.0,
+      "shrinkage": 1.0,
+      "anchor_stop_error": 0.25975265341522125,
+      "requested_rounds": 43,
+      "retained_rounds": 43,
+      "anchor_rows": 565
+    },
+    {
+      "dataset": "splice",
+      "library": "ctboost",
+      "lambda": 100.0,
+      "shrinkage": 0.25,
+      "anchor_stop_error": 0.10391530478986487,
+      "requested_rounds": 169,
+      "retained_rounds": 169,
+      "anchor_rows": 1330
+    },
+    {
+      "dataset": "splice",
+      "library": "xgboost",
+      "lambda": 10.0,
+      "shrinkage": 0.25,
+      "anchor_stop_error": 0.10693567667176514,
+      "requested_rounds": 69,
+      "retained_rounds": 69,
+      "anchor_rows": 1330
+    },
+    {
+      "dataset": "splice",
+      "library": "lightgbm",
+      "lambda": 100.0,
+      "shrinkage": 0.25,
+      "anchor_stop_error": 0.11295277711131632,
+      "requested_rounds": 157,
+      "retained_rounds": 157,
+      "anchor_rows": 1330
+    },
+    {
+      "dataset": "SDSS17",
+      "library": "ctboost",
+      "lambda": 1000.0,
+      "shrinkage": 1.0,
+      "anchor_stop_error": 0.0818041443866328,
+      "requested_rounds": 173,
+      "retained_rounds": 173,
+      "anchor_rows": 48285
+    },
+    {
+      "dataset": "SDSS17",
+      "library": "xgboost",
+      "lambda": null,
+      "shrinkage": null,
+      "anchor_stop_error": 0.11034419412450716,
+      "requested_rounds": 440,
+      "retained_rounds": 440,
+      "anchor_rows": 48285
+    },
+    {
+      "dataset": "SDSS17",
+      "library": "lightgbm",
+      "lambda": null,
+      "shrinkage": null,
+      "anchor_stop_error": 0.09444407899873886,
+      "requested_rounds": 160,
+      "retained_rounds": 160,
+      "anchor_rows": 48285
+    }
+  ],
+  "task_errors": [
+    {
+      "dataset": "blood-transfusion-service-center",
+      "problem_type": "binary",
+      "ctboost": 0.4141843971631206,
+      "xgboost": 0.35886524822695043,
+      "lightgbm": 0.33475177304964543
+    },
+    {
+      "dataset": "churn",
+      "problem_type": "binary",
+      "ctboost": 0.11834733893557425,
+      "xgboost": 0.10711911883397429,
+      "lightgbm": 0.10903598727626651
+    },
+    {
+      "dataset": "in_vehicle_coupon_recommendation",
+      "problem_type": "binary",
+      "ctboost": 0.17985001823486502,
+      "xgboost": 0.17751322027716998,
+      "lightgbm": 0.18142915754923405
+    },
+    {
+      "dataset": "GiveMeSomeCredit",
+      "problem_type": "binary",
+      "ctboost": 0.13406130033488528,
+      "xgboost": 0.13301478395818023,
+      "lightgbm": 0.1366188842603938
+    },
+    {
+      "dataset": "QSAR_fish_toxicity",
+      "problem_type": "regression",
+      "ctboost": 0.708013914861958,
+      "xgboost": 0.7289516601775194,
+      "lightgbm": 0.746461037809723
+    },
+    {
+      "dataset": "Another-Dataset-on-used-Fiat-500",
+      "problem_type": "regression",
+      "ctboost": 740.9502470452263,
+      "xgboost": 758.5878212645549,
+      "lightgbm": 719.360844407988
+    },
+    {
+      "dataset": "houses",
+      "problem_type": "regression",
+      "ctboost": 0.21717310323129246,
+      "xgboost": 0.21548178045007454,
+      "lightgbm": 0.21010387719851775
+    },
+    {
+      "dataset": "diamonds",
+      "problem_type": "regression",
+      "ctboost": 559.6031325953539,
+      "xgboost": 562.4137785537221,
+      "lightgbm": 560.2968292246047
+    },
+    {
+      "dataset": "anneal",
+      "problem_type": "multiclass",
+      "ctboost": 0.0005517562601754844,
+      "xgboost": 0.0024279283818770133,
+      "lightgbm": 0.0004615109427991189
+    },
+    {
+      "dataset": "website_phishing",
+      "problem_type": "multiclass",
+      "ctboost": 0.14585961823606258,
+      "xgboost": 0.16267168587528089,
+      "lightgbm": 0.1946229709421187
+    },
+    {
+      "dataset": "splice",
+      "problem_type": "multiclass",
+      "ctboost": 0.13395668997757226,
+      "xgboost": 0.11497877641820486,
+      "lightgbm": 0.12064673755102932
+    },
+    {
+      "dataset": "SDSS17",
+      "problem_type": "multiclass",
+      "ctboost": 0.08797907487489148,
+      "xgboost": 0.10884665183879842,
+      "lightgbm": 0.0993804120571123
+    }
+  ],
+  "development_target_met": false,
+  "development_summary": [
+    {
+      "comparator": "xgboost",
+      "datasets": 12,
+      "family": "all",
+      "median_relative_error_gain": -0.001425779611483997,
+      "ties": 0,
+      "wins": 6,
+      "worst_relative_regression": 0.16505579682236537
+    },
+    {
+      "comparator": "xgboost",
+      "datasets": 4,
+      "family": "binary",
+      "median_relative_error_gain": -0.058992011524321736,
+      "ties": 0,
+      "wins": 0,
+      "worst_relative_regression": 0.15415019762845839
+    },
+    {
+      "comparator": "xgboost",
+      "datasets": 4,
+      "family": "regression",
+      "median_relative_error_gain": 0.014124003484260572,
+      "ties": 0,
+      "wins": 3,
+      "worst_relative_regression": 0.007849029173999168
+    },
+    {
+      "comparator": "xgboost",
+      "datasets": 4,
+      "family": "multiclass",
+      "median_relative_error_gain": 0.14753253177567988,
+      "ties": 0,
+      "wins": 3,
+      "worst_relative_regression": 0.16505579682236537
+    },
+    {
+      "comparator": "lightgbm",
+      "datasets": 12,
+      "family": "all",
+      "median_relative_error_gain": -0.014386917889301586,
+      "ties": 0,
+      "wins": 6,
+      "worst_relative_regression": 0.23728813559322032
+    },
+    {
+      "comparator": "lightgbm",
+      "datasets": 4,
+      "family": "binary",
+      "median_relative_error_gain": -0.03834658032847048,
+      "ties": 0,
+      "wins": 2,
+      "worst_relative_regression": 0.23728813559322032
+    },
+    {
+      "comparator": "lightgbm",
+      "datasets": 4,
+      "family": "regression",
+      "median_relative_error_gain": -0.014386917889301586,
+      "ties": 0,
+      "wins": 2,
+      "worst_relative_regression": 0.03364633783552369
+    },
+    {
+      "comparator": "lightgbm",
+      "datasets": 4,
+      "family": "multiclass",
+      "median_relative_error_gain": 0.0022012476804029804,
+      "ties": 0,
+      "wins": 2,
+      "worst_relative_regression": 0.19554318003602883
+    }
+  ],
+  "conditional_seed457_run": false,
+  "official_test_scored": false
+}

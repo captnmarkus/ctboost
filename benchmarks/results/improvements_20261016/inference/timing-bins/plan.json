@@ -1,0 +1,39 @@
+{
+  "created_at_utc": "2026-10-16T10:25:45.7286813Z",
+  "source_head": "9e68e6d5a6fe4a402d7b465092f6690bdf979a94",
+  "comparison": "Current source baseline vs omitted quantization schema copies on cached score/leaf path; inference only",
+  "pass_order": [
+    "baseline-1",
+    "candidate-1",
+    "candidate-2",
+    "baseline-2"
+  ],
+  "cpu_affinity": [
+    6
+  ],
+  "threads": 1,
+  "cases": [
+    "numeric_binary",
+    "numeric_multiclass",
+    "categorical_100",
+    "categorical_2000"
+  ],
+  "rows": [
+    1,
+    64,
+    4096
+  ],
+  "input_rows": "Cycle original 1000 saved rows in order with iloc; no fitting",
+  "protocol": "3 warmups, 10 calibration calls, 7 timed blocks targeting 50 ms; median per call",
+  "paths": [
+    "raw pandas end-to-end",
+    "prepared Pool diagnostic",
+    "unchanged CatBoost control"
+  ],
+  "runner_sha256": "114c3fd5fc9a43d78e4dcd019310c603c93b13420a1468c1cd67034c8558c7c0",
+  "fixtures": "C:/apps/ctboost/.tmp/inference-accuracy-20260908/synthetic",
+  "fixture_source": "benchmarks/inference_latency.py prepare --iterations 400 --cpus 6; originally fitted using CTBoost0.1.60/CatBoost1.2.10; exact models/inputs retained local only",
+  "limitations": "Selected prior synthetic development models; repeated rows; no accuracy or leaderboard evidence; exact fixture bytes needed for identical reproduction",
+  "supplemental_wide": "512columns,255borders,4activecolumns,64manualdepth2trees, rows1/64; measured each pass, reported separately from four fitted-model cases",
+  "wide_runner_sha256": "bf433f5c933d94843e4ea5cf53cf771cf703e76f740fdcbd1f4c8c3cdbe8bda2"
+}

@@ -1,0 +1,188 @@
+{
+  "correction": {
+    "checks": {
+      "fitting": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 0.0023074401542544365,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.2991442088349708e-06,
+        "oracle_max_absolute_difference": 1.714145373021836e-05
+      },
+      "validation": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 0.0023074401542544365,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.1986011418743812e-06,
+        "oracle_max_absolute_difference": 1.5818594611971548e-05
+      }
+    },
+    "fold": {
+      "coefficient_rounding_absolute_bound": 1.3557981000879162e-07,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "ctboost",
+      "physical_trees": 84,
+      "prediction_oracle_absolute_tolerance": 0.0023074401542544365,
+      "topology_sha256_after": "e9eca4aebd4ef70ff757a138459f2675d9c594341f44ae13cf95e66a3e12c69d",
+      "topology_sha256_before": "e9eca4aebd4ef70ff757a138459f2675d9c594341f44ae13cf95e66a3e12c69d"
+    },
+    "independent_sparse_raw_margin_oracle": true,
+    "memory": {
+      "array_budgets_bytes": {
+        "design_construction_temporary_budget": 18448384,
+        "lsqr_residual_and_vector_workspace_budget": 1479040,
+        "native_leaf_result_and_int64_copy": 12106752,
+        "native_raw_result_and_float64_copy": 144128,
+        "observed_leaf_maps": 112816,
+        "resident_csr_data_indices_indptr": 12178824
+      },
+      "csr_nonzeros": 756672,
+      "excluded": [
+        "native model objects",
+        "input frames",
+        "categorical transform workspace",
+        "Python object/allocator overhead"
+      ],
+      "extra_certificate_vector_bytes": 5916160,
+      "max_working_bytes": 6442450944,
+      "native_leaf_count": 14102,
+      "no_dense_hessian": true,
+      "parameters_upper_bound": 14102,
+      "physical_trees": 84,
+      "refit_array_budget_bytes": 44469944,
+      "rows": 9008,
+      "scope": "named conservative refit arrays, not whole-process RSS",
+      "solver_kind": "regression"
+    },
+    "native_cv_adapter": {
+      "algorithm_controls_sha256": "4aadd0583ab22ea01c26dfe0f08d128e3a4731bef17d6082c15c20b0f884101a",
+      "effective_named_array_limit": 6442450944,
+      "fresh_payload_metadata_guard": true,
+      "inherited_named_array_limit": 4294967296,
+      "resource_override_only": true,
+      "temperature_unchanged": true
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 756672,
+      "design_shape": [
+        9008,
+        14102
+      ],
+      "ordered_ctr": true,
+      "ordered_training_transform_replayed": true,
+      "pipeline_state_sha256": "8b837dea1ffa8093ab291ad076ea9d78c6bfe1a4478570f4ac076d1874e76293",
+      "training_leaf_ids_sha256": "109257551b38546e4dd802bda0ba6d2b55478ab5eae67600da1305a9a7e476d9",
+      "training_rows": 9008,
+      "training_transform_sha256": "49fdc15732fe2404439ae420f6217e2ac6f513782920808bd45c2b42728fe5a7",
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "atol": 1e-12,
+      "btol": 1e-12,
+      "certificate": {
+        "certified": true,
+        "coefficient_l2_error_bound": 5.8024774623548874e-12,
+        "dual": 124.0907496416742,
+        "finite": true,
+        "fitting_prediction_rms_error_bound": 1.9333001004875934e-12,
+        "gradient_norm": 5.8024774623548875e-09,
+        "normalized_original_gradient": 1.2415998267510696e-11,
+        "original_gradient_dual_gap": 1.6834372350568206e-20,
+        "primal": 124.0907496416742,
+        "primal_minus_dual": 0.0,
+        "primal_zero": 141.68188483840288,
+        "relative_gap": 1.356617830029984e-22
+      },
+      "conlim": 100000000.0,
+      "initial_coefficients": "zero",
+      "iterations_limit": 10000,
+      "native": {
+        "condition_estimate": 68.65209190879231,
+        "istop": 2,
+        "iterations": 44,
+        "matrix_norm": 626.418522362797,
+        "normal_residual_norm": 5.802484768784171e-09,
+        "regularized_residual_norm": 15.753777302074198,
+        "residual_norm": 15.117647725124252
+      },
+      "no_heldout_score": true,
+      "penalty": 1000.0,
+      "solver_seconds_diagnostic_only": 0.05321429999821703,
+      "success": true,
+      "variant": "unscaled_lsqr_10000"
+    }
+  },
+  "corrections_disabled_before_fit": true,
+  "dataset": "houses",
+  "early_stopping": false,
+  "feature_names": [
+    "MedianIncome",
+    "HousingMedianAge",
+    "TotalRooms",
+    "TotalBedrooms",
+    "Population",
+    "Households",
+    "Latitude",
+    "Longitude"
+  ],
+  "finished_at": "2026-10-16T16:19:33.314559+00:00",
+  "fit_controls_sha256": "a5a2ecb51084b5923bfe2e49956d45fa9925a3dacf0808ffcd5f7e69c9983086",
+  "fit_seconds": 0.5835874999975204,
+  "fixed_corrections_disabled_before_fit": true,
+  "fold": 3,
+  "fold_category_schema": {},
+  "library": "ctboost",
+  "model_bytes": 18953104,
+  "model_retained": false,
+  "model_sha256": "32484dd1df71af29295329db9f136f826f07dd460f2083347984327fcdf464d1",
+  "native_cv_fresh_fit": true,
+  "native_fit_completed": true,
+  "native_fit_started": true,
+  "parameters": {
+    "alpha": 0.5,
+    "bootstrap_type": "Bernoulli",
+    "cat_features": null,
+    "eval_metric": "RMSE",
+    "feature_test": "grouped",
+    "feature_test_adjustment": "none",
+    "feature_test_bins": 8,
+    "iterations": 84,
+    "lambda_l2": 3,
+    "leaf_estimation_iterations": 1,
+    "learning_rate": 0.05,
+    "max_bins": 256,
+    "max_cat_threshold": 256,
+    "max_depth": 8,
+    "min_data_in_leaf": 1,
+    "multi_strategy": "one_output_per_tree",
+    "multiclass_feature_test": "single",
+    "one_hot_max_size": 8,
+    "ordered_ctr": true,
+    "random_seed": 47,
+    "subsample": 1.0,
+    "verbose": false
+  },
+  "prediction_array_sha256": "c5b461cf071c313b23d76dbdd01a693b2398b669489f04031c38023127ec0035",
+  "prediction_dtype": "<f4",
+  "prediction_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave18b\\fold_predictions\\0273.npz",
+  "prediction_sha256": "f7563137d22f771eb7121b455090f9aea78fe44d66fd973e6c03d598914ccaf1",
+  "prediction_shape": [
+    2252
+  ],
+  "profile_index": 0,
+  "reload_bit_exact": true,
+  "requested_rounds": 84,
+  "retained_rounds": 84,
+  "seed": 47,
+  "started_at": "2026-10-16T16:19:24.075053+00:00",
+  "status": "ok",
+  "structural_early_termination": false,
+  "temperature": null,
+  "training_rows": 9008,
+  "validation_error": 0.21938880004978004,
+  "validation_labels_received": false,
+  "validation_rows": 2252
+}

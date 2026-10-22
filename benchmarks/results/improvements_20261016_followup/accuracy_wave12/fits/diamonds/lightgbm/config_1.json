@@ -1,0 +1,88 @@
+{
+  "config_index": 1,
+  "correction": {
+    "fold": {
+      "coefficient_rounding_absolute_bound": 1.8920375520221216e-12,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "lightgbm",
+      "physical_trees": 1195,
+      "prediction_oracle_absolute_tolerance": 1.4168631420652182e-07,
+      "topology_sha256_after": "5638bc883e1992eeebf894708b990bfa706a554af09f3c0f14cf67de6beb295f",
+      "topology_sha256_before": "5638bc883e1992eeebf894708b990bfa706a554af09f3c0f14cf67de6beb295f"
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 7468750,
+      "design_shape": [
+        6250,
+        37045
+      ],
+      "ordered_training_transform_replayed": false,
+      "training_leaf_ids_sha256": "881dbb58a620d5e9afe96ed4301ada27d7d02918ea5a5ead009897f858b1629f",
+      "training_rows": 6250,
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "coefficient_norm": 194.94673240287952,
+      "condition_estimate": 525.8318485827467,
+      "istop": 2,
+      "iterations": 81,
+      "matrix_norm": 6337.0563090613,
+      "normal_residual_norm": 0.8230527953894918,
+      "regularized_residual_norm": 15179.180328035485,
+      "residual_norm": 13870.951191823682
+    },
+    "stop_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 1.4168631420652182e-07,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 6.865070330318801e-15,
+      "oracle_max_absolute_difference": 1.2369127944111824e-10
+    },
+    "training_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 1.4168631420652182e-07,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 6.07785464896688e-15,
+      "oracle_max_absolute_difference": 1.1459633242338896e-10
+    }
+  },
+  "dataset": "diamonds",
+  "finished_at": "2026-10-16T12:31:58.272471+00:00",
+  "fit_seconds": 1.0570454000007885,
+  "library": "lightgbm",
+  "parameters": {
+    "bagging_fraction": 0.8,
+    "bagging_freq": 1,
+    "cat_l2": 10,
+    "cat_smooth": 10,
+    "deterministic": true,
+    "force_col_wise": true,
+    "lambda_l2": 3,
+    "learning_rate": 0.025,
+    "max_bin": 255,
+    "max_cat_threshold": 256,
+    "max_cat_to_onehot": 8,
+    "metric": "rmse",
+    "min_data_in_leaf": 5,
+    "num_leaves": 31,
+    "num_threads": 1,
+    "objective": "regression",
+    "seed": 47,
+    "verbosity": -1,
+    "zero_as_missing": false
+  },
+  "patience": 100,
+  "retained_at_round_cap": false,
+  "retained_rounds": 1195,
+  "round_cap": 4000,
+  "started_at": "2026-10-16T12:31:46.571223+00:00",
+  "status": "ok",
+  "stop_error": 589.3212219190289,
+  "trained_at_round_cap": false,
+  "trained_rounds_if_available": 1295,
+  "uncorrected_stop_error": 589.5732670803944
+}

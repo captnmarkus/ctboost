@@ -1,0 +1,39 @@
+{
+  "protocol": "independent_stop_multiclass_leaf_correction_20261016",
+  "created_before": "Any real wave16 TRAIN-anchor fit, correction solve or STOP candidate score",
+  "parent": "Complete failed wave15b seed47 policy, including all four expanded fitting sources and the report-only recovery; no fallback",
+  "anchors": "Exactly four multiclass tasks by three libraries. Fit twelve fresh TRAIN anchors at inherited requested counts and tree controls, with no early stopping. For SDSS17, fit original TRAIN then ascending outside-cap rows from its unchanged expanded source, explicitly excluding original STOP; all other anchors use original TRAIN only. Fresh vocabulary from actual anchor rows. Require every class in fitting and STOP and preserve class-ID order.",
+  "selection": "Four TRAIN-only penalized softmax solves per task/library: lambda1,10,100,1000; each evaluated at shrinkage0.25 and1, plus zero-correction identity. Fixed inherited temperature enters the objective and prediction exactly once. STOP logloss of actual native-folded candidate selects. Exact ties prefer identity, then larger lambda, then smaller shrinkage. All 96 nonidentity candidates plus 12 identity evaluations and 12 choices must succeed and freeze before transfer.",
+  "transfer": "Recompute selected fixed lambda/shrinkage on the original parent union/expanded native models using their exact original fitting-row order and fresh reconstruction of ordered training transforms. Never choose controls using union-in-sample STOP or DEV. Identity means unchanged parent model. Carry the other24 binary/regression models exactly. All36 final models freeze before DEV.",
+  "solver": {
+    "maxiter": 2000,
+    "ftol": 1e-13,
+    "gtol": 1e-09,
+    "gradient_gate": 1e-06,
+    "maxls": 50,
+    "maxcor": 20,
+    "initial_coefficients": "zero"
+  },
+  "native_validation": "Preserve full non-leaf metadata, features, thresholds, categorical routing and physical tree/class layout. Require exact leaf routing, helper analytical roundoff and strict rtol5e-5/atol1e-5 raw-margin checks, independent sparse-matrix oracle, and exact pickle predictions. No added trees or predictor wrapper.",
+  "resources": {
+    "workers": 1,
+    "cpus": [
+      4
+    ],
+    "threads_per_fit": 1,
+    "maximum_job_seconds": 1200,
+    "maximum_process_tree_rss_bytes": 8589934592,
+    "maximum_named_array_bytes": 2147483648,
+    "scope": "1200s/8GiB applies to each complete selection job (anchor fit,4solves,8native evaluations/verification) and each fixed transfer or conditional-seed job. Preflight2GiB conservative named arrays before leaf/design allocation excludes model/input/CTR/Python overhead; totalRSS separately guarded. Terminal failures preserve receipts and close gate; no relaxed retry/fallback."
+  },
+  "conditional_seed": 457,
+  "conditional_seed_trigger": "Initial full12-dataset gate passes both comparators",
+  "conditional_seed_policy": "Thirty-six fresh seed 457 models, same requested counts and fixed policies. Preserve all four expanded sources, all binary/regression corrections and temperatures; recompute fixed selected multiclass correction only on fresh model fitting rows, no STOP reselection. Same per-job watchdog. Average47/457 errors within12datasets before aggregate gate; report each seed separately.",
+  "gate": {
+    "all_fits_successful": true,
+    "median_relative_error_gain_against_each_comparator": 0,
+    "minimum_wins_or_ties_against_each_comparator": 6
+  },
+  "official_test": "Only after initial and mean-seed gate, freeze72 already-trained native models and code/runtime/source/split hashes, then one-shot original official test with no fitting or adjustment. Original confirmation remains unopened.",
+  "limitations": "Adaptive reused development. Fresh TRAIN anchors retain controls/counts selected using prior STOP/CV; their STOP selection is still development tuning, not independent evaluation. Equal lambda/shrinkage counts do not equal capacity/compute or normalized effective regularization. Transfer changes fitting rows and baseline models; no claim selected penalty is union-optimal. Historic native training statistics remain unchanged by leaf folding; corrected artifacts are for inference, not resumed boosting. Temperature is fixed, not reselected. Same-split seed sensitivity is not independent replication, significance or an official ranking."
+}

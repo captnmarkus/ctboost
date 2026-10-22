@@ -1,0 +1,660 @@
+{"native": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\ctr-precision\\runtime-cp312\\ctboost\\_core.cp312-win_amd64.pyd", "native_sha256": "04adb21b0e4cea8046581a23b62585b6c8d631561d96a417ad87bc3c55041613", "versions": {"numpy": "2.0.2", "pandas": "2.3.3", "scipy": "1.16.3", "pytest": "9.1.1"}}
+...............................FF..FFFF................................. [ 60%]
+...............................................                          [100%]
+================================== FAILURES ===================================
+____ test_wide_multiclass_ctr_matches_direct_category_statistics[0.2-3-3] _____
+
+classes = 3, format_version = 3, strength = 0.2
+
+    @pytest.mark.parametrize("classes", [3, 8])
+    @pytest.mark.parametrize("format_version", [3, 4])
+    @pytest.mark.parametrize("strength", [0.0, 0.2, 2.0])
+    def test_wide_multiclass_ctr_matches_direct_category_statistics(
+        classes, format_version, strength
+    ):
+        categories = ["red", "blue", None, "__ctboost_missing__", "a||b", "\\literal", "1"]
+        width, rows = 32, 37
+        train = np.asarray(
+            [[categories[(row * (column % 3 + 1) + column) % len(categories)]
+              for column in range(width)] for row in range(rows)],
+            dtype=object,
+        )
+        labels = np.arange(rows) % classes
+        pipeline = FeaturePipeline(
+            cat_features=list(range(width)),
+            simple_ctr=["Mean", "Frequency"],
+            categorical_combinations=[[0, 1], [2, 3]],
+            combinations_ctr=["Frequency", "Mean"],
+            ctr_prior_strength=strength,
+            random_seed=17,
+        ).fit(train, labels)
+        state = pipeline.to_state()
+        state["feature_pipeline_format_version"] = format_version
+        pipeline = FeaturePipeline.from_state(state)
+        before = copy.deepcopy(pipeline.to_state())
+        query = np.asarray(
+            [train[0].tolist(), ["unseen"] * width, [None] * width,
+             [np.nan] * width, ["__ctboost_missing__"] * width,
+             ["a||b" if column % 2 else "\\literal" for column in range(width)]],
+            dtype=object,
+        )
+        # Reverse row strides exercise the matrix view independently of output order.
+        query = query[::-1]
+        transformed, _, names = pipeline.transform_array(query)
+        assert transformed.flags.f_contiguous and transformed.dtype == np.float32
+        targets = np.eye(classes, dtype=np.float32)[labels]
+        missing = object()
+    
+        def category(value):
+            return missing if value is None or isinstance(value, float) and np.isnan(value) else value
+    
+        # Derive sufficient statistics directly from raw categories and labels, not
+        # the transform or its escaped dictionary keys. Literal sentinels and joined
+        # category separators must stay distinct from missing values and tuples.
+        for ctr in state["ctr_states"]:
+            columns = ctr["source_indices"]
+            training_keys = [tuple(category(row[column]) for column in columns) for row in train]
+            expected = []
+            for row in query:
+                key = tuple(category(row[column]) for column in columns)
+                selected = np.asarray([key == item for item in training_keys])
+                count = float(np.float32(selected.sum()))
+                if ctr["ctr_type"] == "Mean":
+                    sums = targets[selected].sum(axis=0).astype(np.float64)
+                    prior = np.asarray(ctr["prior_values"], dtype=np.float64)
+                    denominator = count + strength
+                    denominator = (
+                        max(denominator, 1.0) if format_version == 3
+                        else denominator if denominator > 0.0 else 1.0
+                    )
+                    values = (sums + strength * prior) / denominator
+                else:
+                    frequency = float(np.float32(count) / np.float32(rows))
+                    values = [(count + strength * frequency) / max(rows + strength, 1.0)]
+                expected.append(values)
+            output_columns = [names.index(name) for name in ctr["output_names"]]
+>           np.testing.assert_array_equal(
+                transformed[:, output_columns].view(np.uint32),
+                np.asarray(expected, dtype=np.float32).view(np.uint32),
+            )
+
+tests\test_feature_pipeline_ctr_inference.py:78: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.tmp\inference-accuracy-20260908\baseline-env\Lib\site-packages\numpy\_utils\__init__.py:85: in wrapper
+    return fun(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (<built-in function eq>, array([[1053546381, 1045541452, 1053511501],
+       [1053546381, 1053511501, 1045541452],
+   ... 1053511501],
+       [1032841692, 1032116191, 1032116191],
+       [1051391705, 1051362451, 1051362451]], dtype=uint32))
+kwds = {'err_msg': '', 'verbose': True, 'header': 'Arrays are not equal', 'strict': False}
+
+    @wraps(func)
+    def inner(*args, **kwds):
+        with self._recreate_cm():
+>           return func(*args, **kwds)
+                   ^^^^^^^^^^^^^^^^^^^
+E           AssertionError: 
+E           Arrays are not equal
+E           
+E           Mismatched elements: 2 / 18 (11.1%)
+E           Max absolute difference among violations: 1
+E           Max relative difference among violations: 9.68883163e-10
+E            ACTUAL: array([[1053546381, 1045541452, 1053511501],
+E                  [1053546381, 1053511501, 1045541452],
+E                  [1053546381, 1045541452, 1053511501],...
+E            DESIRED: array([[1053546381, 1045541452, 1053511501],
+E                  [1053546381, 1053511501, 1045541452],
+E                  [1053546381, 1045541452, 1053511501],...
+
+C:\Users\captn\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\contextlib.py:81: AssertionError
+____ test_wide_multiclass_ctr_matches_direct_category_statistics[0.2-3-8] _____
+
+classes = 8, format_version = 3, strength = 0.2
+
+    @pytest.mark.parametrize("classes", [3, 8])
+    @pytest.mark.parametrize("format_version", [3, 4])
+    @pytest.mark.parametrize("strength", [0.0, 0.2, 2.0])
+    def test_wide_multiclass_ctr_matches_direct_category_statistics(
+        classes, format_version, strength
+    ):
+        categories = ["red", "blue", None, "__ctboost_missing__", "a||b", "\\literal", "1"]
+        width, rows = 32, 37
+        train = np.asarray(
+            [[categories[(row * (column % 3 + 1) + column) % len(categories)]
+              for column in range(width)] for row in range(rows)],
+            dtype=object,
+        )
+        labels = np.arange(rows) % classes
+        pipeline = FeaturePipeline(
+            cat_features=list(range(width)),
+            simple_ctr=["Mean", "Frequency"],
+            categorical_combinations=[[0, 1], [2, 3]],
+            combinations_ctr=["Frequency", "Mean"],
+            ctr_prior_strength=strength,
+            random_seed=17,
+        ).fit(train, labels)
+        state = pipeline.to_state()
+        state["feature_pipeline_format_version"] = format_version
+        pipeline = FeaturePipeline.from_state(state)
+        before = copy.deepcopy(pipeline.to_state())
+        query = np.asarray(
+            [train[0].tolist(), ["unseen"] * width, [None] * width,
+             [np.nan] * width, ["__ctboost_missing__"] * width,
+             ["a||b" if column % 2 else "\\literal" for column in range(width)]],
+            dtype=object,
+        )
+        # Reverse row strides exercise the matrix view independently of output order.
+        query = query[::-1]
+        transformed, _, names = pipeline.transform_array(query)
+        assert transformed.flags.f_contiguous and transformed.dtype == np.float32
+        targets = np.eye(classes, dtype=np.float32)[labels]
+        missing = object()
+    
+        def category(value):
+            return missing if value is None or isinstance(value, float) and np.isnan(value) else value
+    
+        # Derive sufficient statistics directly from raw categories and labels, not
+        # the transform or its escaped dictionary keys. Literal sentinels and joined
+        # category separators must stay distinct from missing values and tuples.
+        for ctr in state["ctr_states"]:
+            columns = ctr["source_indices"]
+            training_keys = [tuple(category(row[column]) for column in columns) for row in train]
+            expected = []
+            for row in query:
+                key = tuple(category(row[column]) for column in columns)
+                selected = np.asarray([key == item for item in training_keys])
+                count = float(np.float32(selected.sum()))
+                if ctr["ctr_type"] == "Mean":
+                    sums = targets[selected].sum(axis=0).astype(np.float64)
+                    prior = np.asarray(ctr["prior_values"], dtype=np.float64)
+                    denominator = count + strength
+                    denominator = (
+                        max(denominator, 1.0) if format_version == 3
+                        else denominator if denominator > 0.0 else 1.0
+                    )
+                    values = (sums + strength * prior) / denominator
+                else:
+                    frequency = float(np.float32(count) / np.float32(rows))
+                    values = [(count + strength * frequency) / max(rows + strength, 1.0)]
+                expected.append(values)
+            output_columns = [names.index(name) for name in ctr["output_names"]]
+>           np.testing.assert_array_equal(
+                transformed[:, output_columns].view(np.uint32),
+                np.asarray(expected, dtype=np.float32).view(np.uint32),
+            )
+
+tests\test_feature_pipeline_ctr_inference.py:78: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.tmp\inference-accuracy-20260908\baseline-env\Lib\site-packages\numpy\_utils\__init__.py:85: in wrapper
+    return fun(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (<built-in function eq>, array([[1001017301, 1045053133, 1045053133, 1045053133, 1045053133,
+        1044983374,  9987...042915335,  999217050,  999217050, 1042915335, 1042915335,
+        1042856827, 1042856827, 1042856827]], dtype=uint32))
+kwds = {'err_msg': '', 'verbose': True, 'header': 'Arrays are not equal', 'strict': False}
+
+    @wraps(func)
+    def inner(*args, **kwds):
+        with self._recreate_cm():
+>           return func(*args, **kwds)
+                   ^^^^^^^^^^^^^^^^^^^
+E           AssertionError: 
+E           Arrays are not equal
+E           
+E           Mismatched elements: 5 / 48 (10.4%)
+E           Max absolute difference among violations: 1
+E           Max relative difference among violations: 9.79294785e-10
+E            ACTUAL: array([[1001017301, 1045053133, 1045053133, 1045053133, 1045053133,
+E                   1044983374,  998784990,  998784990],
+E                  [1045053133, 1045053133, 1045053133, 1045053133, 1001017301,...
+E            DESIRED: array([[1001017301, 1045053133, 1045053133, 1045053133, 1045053133,
+E                   1044983374,  998784990,  998784990],
+E                  [1045053133, 1045053133, 1045053133, 1045053133, 1001017301,...
+
+C:\Users\captn\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\contextlib.py:81: AssertionError
+____ test_wide_multiclass_ctr_matches_direct_category_statistics[2.0-3-3] _____
+
+classes = 3, format_version = 3, strength = 2.0
+
+    @pytest.mark.parametrize("classes", [3, 8])
+    @pytest.mark.parametrize("format_version", [3, 4])
+    @pytest.mark.parametrize("strength", [0.0, 0.2, 2.0])
+    def test_wide_multiclass_ctr_matches_direct_category_statistics(
+        classes, format_version, strength
+    ):
+        categories = ["red", "blue", None, "__ctboost_missing__", "a||b", "\\literal", "1"]
+        width, rows = 32, 37
+        train = np.asarray(
+            [[categories[(row * (column % 3 + 1) + column) % len(categories)]
+              for column in range(width)] for row in range(rows)],
+            dtype=object,
+        )
+        labels = np.arange(rows) % classes
+        pipeline = FeaturePipeline(
+            cat_features=list(range(width)),
+            simple_ctr=["Mean", "Frequency"],
+            categorical_combinations=[[0, 1], [2, 3]],
+            combinations_ctr=["Frequency", "Mean"],
+            ctr_prior_strength=strength,
+            random_seed=17,
+        ).fit(train, labels)
+        state = pipeline.to_state()
+        state["feature_pipeline_format_version"] = format_version
+        pipeline = FeaturePipeline.from_state(state)
+        before = copy.deepcopy(pipeline.to_state())
+        query = np.asarray(
+            [train[0].tolist(), ["unseen"] * width, [None] * width,
+             [np.nan] * width, ["__ctboost_missing__"] * width,
+             ["a||b" if column % 2 else "\\literal" for column in range(width)]],
+            dtype=object,
+        )
+        # Reverse row strides exercise the matrix view independently of output order.
+        query = query[::-1]
+        transformed, _, names = pipeline.transform_array(query)
+        assert transformed.flags.f_contiguous and transformed.dtype == np.float32
+        targets = np.eye(classes, dtype=np.float32)[labels]
+        missing = object()
+    
+        def category(value):
+            return missing if value is None or isinstance(value, float) and np.isnan(value) else value
+    
+        # Derive sufficient statistics directly from raw categories and labels, not
+        # the transform or its escaped dictionary keys. Literal sentinels and joined
+        # category separators must stay distinct from missing values and tuples.
+        for ctr in state["ctr_states"]:
+            columns = ctr["source_indices"]
+            training_keys = [tuple(category(row[column]) for column in columns) for row in train]
+            expected = []
+            for row in query:
+                key = tuple(category(row[column]) for column in columns)
+                selected = np.asarray([key == item for item in training_keys])
+                count = float(np.float32(selected.sum()))
+                if ctr["ctr_type"] == "Mean":
+                    sums = targets[selected].sum(axis=0).astype(np.float64)
+                    prior = np.asarray(ctr["prior_values"], dtype=np.float64)
+                    denominator = count + strength
+                    denominator = (
+                        max(denominator, 1.0) if format_version == 3
+                        else denominator if denominator > 0.0 else 1.0
+                    )
+                    values = (sums + strength * prior) / denominator
+                else:
+                    frequency = float(np.float32(count) / np.float32(rows))
+                    values = [(count + strength * frequency) / max(rows + strength, 1.0)]
+                expected.append(values)
+            output_columns = [names.index(name) for name in ctr["output_names"]]
+>           np.testing.assert_array_equal(
+                transformed[:, output_columns].view(np.uint32),
+                np.asarray(expected, dtype=np.float32).view(np.uint32),
+            )
+
+tests\test_feature_pipeline_ctr_inference.py:78: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.tmp\inference-accuracy-20260908\baseline-env\Lib\site-packages\numpy\_utils\__init__.py:85: in wrapper
+    return fun(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (<built-in function eq>, array([[1053142771, 1047604346, 1052883663],
+       [1053142771, 1052883663, 1047604346],
+   ... 1052883664],
+       [1051976787, 1051069910, 1051069910],
+       [1051523349, 1051296630, 1051296630]], dtype=uint32))
+kwds = {'err_msg': '', 'verbose': True, 'header': 'Arrays are not equal', 'strict': False}
+
+    @wraps(func)
+    def inner(*args, **kwds):
+        with self._recreate_cm():
+>           return func(*args, **kwds)
+                   ^^^^^^^^^^^^^^^^^^^
+E           AssertionError: 
+E           Arrays are not equal
+E           
+E           Mismatched elements: 8 / 18 (44.4%)
+E           Max absolute difference among violations: 1
+E           Max relative difference among violations: 9.54558849e-10
+E            ACTUAL: array([[1053142771, 1047604346, 1052883663],
+E                  [1053142771, 1052883663, 1047604346],
+E                  [1053142771, 1047604346, 1052883663],...
+E            DESIRED: array([[1053142771, 1047604347, 1052883664],
+E                  [1053142771, 1052883664, 1047604347],
+E                  [1053142771, 1047604347, 1052883664],...
+
+C:\Users\captn\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\contextlib.py:81: AssertionError
+____ test_wide_multiclass_ctr_matches_direct_category_statistics[2.0-3-8] _____
+
+classes = 8, format_version = 3, strength = 2.0
+
+    @pytest.mark.parametrize("classes", [3, 8])
+    @pytest.mark.parametrize("format_version", [3, 4])
+    @pytest.mark.parametrize("strength", [0.0, 0.2, 2.0])
+    def test_wide_multiclass_ctr_matches_direct_category_statistics(
+        classes, format_version, strength
+    ):
+        categories = ["red", "blue", None, "__ctboost_missing__", "a||b", "\\literal", "1"]
+        width, rows = 32, 37
+        train = np.asarray(
+            [[categories[(row * (column % 3 + 1) + column) % len(categories)]
+              for column in range(width)] for row in range(rows)],
+            dtype=object,
+        )
+        labels = np.arange(rows) % classes
+        pipeline = FeaturePipeline(
+            cat_features=list(range(width)),
+            simple_ctr=["Mean", "Frequency"],
+            categorical_combinations=[[0, 1], [2, 3]],
+            combinations_ctr=["Frequency", "Mean"],
+            ctr_prior_strength=strength,
+            random_seed=17,
+        ).fit(train, labels)
+        state = pipeline.to_state()
+        state["feature_pipeline_format_version"] = format_version
+        pipeline = FeaturePipeline.from_state(state)
+        before = copy.deepcopy(pipeline.to_state())
+        query = np.asarray(
+            [train[0].tolist(), ["unseen"] * width, [None] * width,
+             [np.nan] * width, ["__ctboost_missing__"] * width,
+             ["a||b" if column % 2 else "\\literal" for column in range(width)]],
+            dtype=object,
+        )
+        # Reverse row strides exercise the matrix view independently of output order.
+        query = query[::-1]
+        transformed, _, names = pipeline.transform_array(query)
+        assert transformed.flags.f_contiguous and transformed.dtype == np.float32
+        targets = np.eye(classes, dtype=np.float32)[labels]
+        missing = object()
+    
+        def category(value):
+            return missing if value is None or isinstance(value, float) and np.isnan(value) else value
+    
+        # Derive sufficient statistics directly from raw categories and labels, not
+        # the transform or its escaped dictionary keys. Literal sentinels and joined
+        # category separators must stay distinct from missing values and tuples.
+        for ctr in state["ctr_states"]:
+            columns = ctr["source_indices"]
+            training_keys = [tuple(category(row[column]) for column in columns) for row in train]
+            expected = []
+            for row in query:
+                key = tuple(category(row[column]) for column in columns)
+                selected = np.asarray([key == item for item in training_keys])
+                count = float(np.float32(selected.sum()))
+                if ctr["ctr_type"] == "Mean":
+                    sums = targets[selected].sum(axis=0).astype(np.float64)
+                    prior = np.asarray(ctr["prior_values"], dtype=np.float64)
+                    denominator = count + strength
+                    denominator = (
+                        max(denominator, 1.0) if format_version == 3
+                        else denominator if denominator > 0.0 else 1.0
+                    )
+                    values = (sums + strength * prior) / denominator
+                else:
+                    frequency = float(np.float32(count) / np.float32(rows))
+                    values = [(count + strength * frequency) / max(rows + strength, 1.0)]
+                expected.append(values)
+            output_columns = [names.index(name) for name in ctr["output_names"]]
+>           np.testing.assert_array_equal(
+                transformed[:, output_columns].view(np.uint32),
+                np.asarray(expected, dtype=np.float32).view(np.uint32),
+            )
+
+tests\test_feature_pipeline_ctr_inference.py:78: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.tmp\inference-accuracy-20260908\baseline-env\Lib\site-packages\numpy\_utils\__init__.py:85: in wrapper
+    return fun(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (<built-in function eq>, array([[1025385871, 1043976840, 1043976840, 1043976840, 1043976840,
+        1043458625, 10232...042454583, 1024090333, 1024090333, 1042454583, 1042454583,
+        1042001145, 1042001145, 1042001145]], dtype=uint32))
+kwds = {'err_msg': '', 'verbose': True, 'header': 'Arrays are not equal', 'strict': False}
+
+    @wraps(func)
+    def inner(*args, **kwds):
+        with self._recreate_cm():
+>           return func(*args, **kwds)
+                   ^^^^^^^^^^^^^^^^^^^
+E           AssertionError: 
+E           Arrays are not equal
+E           
+E           Mismatched elements: 6 / 48 (12.5%)
+E           Max absolute difference among violations: 1
+E           Max relative difference among violations: 9.77310902e-10
+E            ACTUAL: array([[1025385871, 1043976840, 1043976840, 1043976840, 1043976840,
+E                   1043458625, 1023215846, 1023215846],
+E                  [1043976840, 1043976840, 1043976840, 1043976840, 1025385871,...
+E            DESIRED: array([[1025385871, 1043976840, 1043976840, 1043976840, 1043976840,
+E                   1043458625, 1023215845, 1023215845],
+E                  [1043976840, 1043976840, 1043976840, 1043976840, 1025385871,...
+
+C:\Users\captn\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\contextlib.py:81: AssertionError
+____ test_wide_multiclass_ctr_matches_direct_category_statistics[2.0-4-3] _____
+
+classes = 3, format_version = 4, strength = 2.0
+
+    @pytest.mark.parametrize("classes", [3, 8])
+    @pytest.mark.parametrize("format_version", [3, 4])
+    @pytest.mark.parametrize("strength", [0.0, 0.2, 2.0])
+    def test_wide_multiclass_ctr_matches_direct_category_statistics(
+        classes, format_version, strength
+    ):
+        categories = ["red", "blue", None, "__ctboost_missing__", "a||b", "\\literal", "1"]
+        width, rows = 32, 37
+        train = np.asarray(
+            [[categories[(row * (column % 3 + 1) + column) % len(categories)]
+              for column in range(width)] for row in range(rows)],
+            dtype=object,
+        )
+        labels = np.arange(rows) % classes
+        pipeline = FeaturePipeline(
+            cat_features=list(range(width)),
+            simple_ctr=["Mean", "Frequency"],
+            categorical_combinations=[[0, 1], [2, 3]],
+            combinations_ctr=["Frequency", "Mean"],
+            ctr_prior_strength=strength,
+            random_seed=17,
+        ).fit(train, labels)
+        state = pipeline.to_state()
+        state["feature_pipeline_format_version"] = format_version
+        pipeline = FeaturePipeline.from_state(state)
+        before = copy.deepcopy(pipeline.to_state())
+        query = np.asarray(
+            [train[0].tolist(), ["unseen"] * width, [None] * width,
+             [np.nan] * width, ["__ctboost_missing__"] * width,
+             ["a||b" if column % 2 else "\\literal" for column in range(width)]],
+            dtype=object,
+        )
+        # Reverse row strides exercise the matrix view independently of output order.
+        query = query[::-1]
+        transformed, _, names = pipeline.transform_array(query)
+        assert transformed.flags.f_contiguous and transformed.dtype == np.float32
+        targets = np.eye(classes, dtype=np.float32)[labels]
+        missing = object()
+    
+        def category(value):
+            return missing if value is None or isinstance(value, float) and np.isnan(value) else value
+    
+        # Derive sufficient statistics directly from raw categories and labels, not
+        # the transform or its escaped dictionary keys. Literal sentinels and joined
+        # category separators must stay distinct from missing values and tuples.
+        for ctr in state["ctr_states"]:
+            columns = ctr["source_indices"]
+            training_keys = [tuple(category(row[column]) for column in columns) for row in train]
+            expected = []
+            for row in query:
+                key = tuple(category(row[column]) for column in columns)
+                selected = np.asarray([key == item for item in training_keys])
+                count = float(np.float32(selected.sum()))
+                if ctr["ctr_type"] == "Mean":
+                    sums = targets[selected].sum(axis=0).astype(np.float64)
+                    prior = np.asarray(ctr["prior_values"], dtype=np.float64)
+                    denominator = count + strength
+                    denominator = (
+                        max(denominator, 1.0) if format_version == 3
+                        else denominator if denominator > 0.0 else 1.0
+                    )
+                    values = (sums + strength * prior) / denominator
+                else:
+                    frequency = float(np.float32(count) / np.float32(rows))
+                    values = [(count + strength * frequency) / max(rows + strength, 1.0)]
+                expected.append(values)
+            output_columns = [names.index(name) for name in ctr["output_names"]]
+>           np.testing.assert_array_equal(
+                transformed[:, output_columns].view(np.uint32),
+                np.asarray(expected, dtype=np.float32).view(np.uint32),
+            )
+
+tests\test_feature_pipeline_ctr_inference.py:78: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.tmp\inference-accuracy-20260908\baseline-env\Lib\site-packages\numpy\_utils\__init__.py:85: in wrapper
+    return fun(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (<built-in function eq>, array([[1053142771, 1047604346, 1052883663],
+       [1053142771, 1052883663, 1047604346],
+   ... 1052883664],
+       [1051976787, 1051069910, 1051069910],
+       [1051523349, 1051296630, 1051296630]], dtype=uint32))
+kwds = {'err_msg': '', 'verbose': True, 'header': 'Arrays are not equal', 'strict': False}
+
+    @wraps(func)
+    def inner(*args, **kwds):
+        with self._recreate_cm():
+>           return func(*args, **kwds)
+                   ^^^^^^^^^^^^^^^^^^^
+E           AssertionError: 
+E           Arrays are not equal
+E           
+E           Mismatched elements: 8 / 18 (44.4%)
+E           Max absolute difference among violations: 1
+E           Max relative difference among violations: 9.54558849e-10
+E            ACTUAL: array([[1053142771, 1047604346, 1052883663],
+E                  [1053142771, 1052883663, 1047604346],
+E                  [1053142771, 1047604346, 1052883663],...
+E            DESIRED: array([[1053142771, 1047604347, 1052883664],
+E                  [1053142771, 1052883664, 1047604347],
+E                  [1053142771, 1047604347, 1052883664],...
+
+C:\Users\captn\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\contextlib.py:81: AssertionError
+____ test_wide_multiclass_ctr_matches_direct_category_statistics[2.0-4-8] _____
+
+classes = 8, format_version = 4, strength = 2.0
+
+    @pytest.mark.parametrize("classes", [3, 8])
+    @pytest.mark.parametrize("format_version", [3, 4])
+    @pytest.mark.parametrize("strength", [0.0, 0.2, 2.0])
+    def test_wide_multiclass_ctr_matches_direct_category_statistics(
+        classes, format_version, strength
+    ):
+        categories = ["red", "blue", None, "__ctboost_missing__", "a||b", "\\literal", "1"]
+        width, rows = 32, 37
+        train = np.asarray(
+            [[categories[(row * (column % 3 + 1) + column) % len(categories)]
+              for column in range(width)] for row in range(rows)],
+            dtype=object,
+        )
+        labels = np.arange(rows) % classes
+        pipeline = FeaturePipeline(
+            cat_features=list(range(width)),
+            simple_ctr=["Mean", "Frequency"],
+            categorical_combinations=[[0, 1], [2, 3]],
+            combinations_ctr=["Frequency", "Mean"],
+            ctr_prior_strength=strength,
+            random_seed=17,
+        ).fit(train, labels)
+        state = pipeline.to_state()
+        state["feature_pipeline_format_version"] = format_version
+        pipeline = FeaturePipeline.from_state(state)
+        before = copy.deepcopy(pipeline.to_state())
+        query = np.asarray(
+            [train[0].tolist(), ["unseen"] * width, [None] * width,
+             [np.nan] * width, ["__ctboost_missing__"] * width,
+             ["a||b" if column % 2 else "\\literal" for column in range(width)]],
+            dtype=object,
+        )
+        # Reverse row strides exercise the matrix view independently of output order.
+        query = query[::-1]
+        transformed, _, names = pipeline.transform_array(query)
+        assert transformed.flags.f_contiguous and transformed.dtype == np.float32
+        targets = np.eye(classes, dtype=np.float32)[labels]
+        missing = object()
+    
+        def category(value):
+            return missing if value is None or isinstance(value, float) and np.isnan(value) else value
+    
+        # Derive sufficient statistics directly from raw categories and labels, not
+        # the transform or its escaped dictionary keys. Literal sentinels and joined
+        # category separators must stay distinct from missing values and tuples.
+        for ctr in state["ctr_states"]:
+            columns = ctr["source_indices"]
+            training_keys = [tuple(category(row[column]) for column in columns) for row in train]
+            expected = []
+            for row in query:
+                key = tuple(category(row[column]) for column in columns)
+                selected = np.asarray([key == item for item in training_keys])
+                count = float(np.float32(selected.sum()))
+                if ctr["ctr_type"] == "Mean":
+                    sums = targets[selected].sum(axis=0).astype(np.float64)
+                    prior = np.asarray(ctr["prior_values"], dtype=np.float64)
+                    denominator = count + strength
+                    denominator = (
+                        max(denominator, 1.0) if format_version == 3
+                        else denominator if denominator > 0.0 else 1.0
+                    )
+                    values = (sums + strength * prior) / denominator
+                else:
+                    frequency = float(np.float32(count) / np.float32(rows))
+                    values = [(count + strength * frequency) / max(rows + strength, 1.0)]
+                expected.append(values)
+            output_columns = [names.index(name) for name in ctr["output_names"]]
+>           np.testing.assert_array_equal(
+                transformed[:, output_columns].view(np.uint32),
+                np.asarray(expected, dtype=np.float32).view(np.uint32),
+            )
+
+tests\test_feature_pipeline_ctr_inference.py:78: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.tmp\inference-accuracy-20260908\baseline-env\Lib\site-packages\numpy\_utils\__init__.py:85: in wrapper
+    return fun(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (<built-in function eq>, array([[1025385871, 1043976840, 1043976840, 1043976840, 1043976840,
+        1043458625, 10232...042454583, 1024090333, 1024090333, 1042454583, 1042454583,
+        1042001145, 1042001145, 1042001145]], dtype=uint32))
+kwds = {'err_msg': '', 'verbose': True, 'header': 'Arrays are not equal', 'strict': False}
+
+    @wraps(func)
+    def inner(*args, **kwds):
+        with self._recreate_cm():
+>           return func(*args, **kwds)
+                   ^^^^^^^^^^^^^^^^^^^
+E           AssertionError: 
+E           Arrays are not equal
+E           
+E           Mismatched elements: 6 / 48 (12.5%)
+E           Max absolute difference among violations: 1
+E           Max relative difference among violations: 9.77310902e-10
+E            ACTUAL: array([[1025385871, 1043976840, 1043976840, 1043976840, 1043976840,
+E                   1043458625, 1023215846, 1023215846],
+E                  [1043976840, 1043976840, 1043976840, 1043976840, 1025385871,...
+E            DESIRED: array([[1025385871, 1043976840, 1043976840, 1043976840, 1043976840,
+E                   1043458625, 1023215845, 1023215845],
+E                  [1043976840, 1043976840, 1043976840, 1043976840, 1025385871,...
+
+C:\Users\captn\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\contextlib.py:81: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_feature_pipeline_ctr_inference.py::test_wide_multiclass_ctr_matches_direct_category_statistics[0.2-3-3]
+FAILED tests/test_feature_pipeline_ctr_inference.py::test_wide_multiclass_ctr_matches_direct_category_statistics[0.2-3-8]
+FAILED tests/test_feature_pipeline_ctr_inference.py::test_wide_multiclass_ctr_matches_direct_category_statistics[2.0-3-3]
+FAILED tests/test_feature_pipeline_ctr_inference.py::test_wide_multiclass_ctr_matches_direct_category_statistics[2.0-3-8]
+FAILED tests/test_feature_pipeline_ctr_inference.py::test_wide_multiclass_ctr_matches_direct_category_statistics[2.0-4-3]
+FAILED tests/test_feature_pipeline_ctr_inference.py::test_wide_multiclass_ctr_matches_direct_category_statistics[2.0-4-8]
+6 failed, 113 passed in 3.50s

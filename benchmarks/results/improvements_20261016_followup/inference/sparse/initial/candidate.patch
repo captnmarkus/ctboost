@@ -1,0 +1,121 @@
+--- a/src/core/booster_predict.cpp
++++ b/src/core/booster_predict.cpp
+@@ -32,6 +32,9 @@
+   // Prefix prediction must not quantize a feature used only by later trees (in
+   // particular, nan_mode=Forbidden should retain its existing prefix behavior).
+   std::vector<std::size_t> first_feature_tree;
++  // Cached nodes address compact bin slots; schema lookup and prefix masks
++  // continue to use these original feature ids. Training nodes are unchanged.
++  std::vector<std::size_t> feature_order;
+ 
+   std::vector<std::uint8_t> ActiveFeatures(std::size_t tree_limit) const {
+     std::vector<std::uint8_t> active(first_feature_tree.size());
+@@ -257,6 +260,21 @@
+       }
+     }
+   }
++  std::vector<int> feature_slots(cache->first_feature_tree.size(), -1);
++  for (std::size_t feature = 0; feature < cache->first_feature_tree.size(); ++feature) {
++    if (cache->first_feature_tree[feature] != std::numeric_limits<std::size_t>::max()) {
++      feature_slots[feature] = static_cast<int>(cache->feature_order.size());
++      cache->feature_order.push_back(feature);
++    }
++  }
++  for (auto& tree : cache->trees) {
++    for (auto& node : tree.nodes) {
++      if (node.split_feature_id >= 0 &&
++          static_cast<std::size_t>(node.split_feature_id) < feature_slots.size()) {
++        node.split_feature_id = feature_slots[static_cast<std::size_t>(node.split_feature_id)];
++      }
++    }
++  }
+   std::shared_ptr<const booster_detail::PredictionCache> result = std::move(cache);
+   if (prediction_cache_enabled_) {
+     // Concurrent read-only C++ predictions may build equivalent local caches;
+@@ -305,7 +323,8 @@
+     }
+   }
+   const HistMatrix hist = cache != nullptr
+-      ? booster_detail::BuildPredictionBins(pool, quantization_schema, &active_features)
++      ? booster_detail::BuildPredictionBins(pool, quantization_schema, &active_features,
++                                            true, &cache->feature_order)
+       : booster_detail::BuildPredictionHist(pool, quantization_schema, &active_features);
+   if (!use_cached_prediction) {
+     predictions = booster_detail::PredictFromHist(trees_,
+@@ -357,7 +376,8 @@
+     }
+   }
+   const HistMatrix hist = cache != nullptr
+-      ? booster_detail::BuildPredictionBins(pool, quantization_schema, &active_features)
++      ? booster_detail::BuildPredictionBins(pool, quantization_schema, &active_features,
++                                            true, &cache->feature_order)
+       : booster_detail::BuildPredictionHist(pool, quantization_schema, &active_features);
+   if (cache == nullptr) {
+     for (std::size_t tree_index = 0; tree_index < tree_limit; ++tree_index) {
+--- a/src/core/booster_prediction.cpp
++++ b/src/core/booster_prediction.cpp
+@@ -194,7 +194,8 @@
+ HistMatrix BuildPredictionBins(const Pool& pool,
+                                const QuantizationSchema& quantization_schema,
+                                const std::vector<std::uint8_t>* active_features,
+-                               bool omit_unused_storage) {
++                               bool omit_unused_storage,
++                               const std::vector<std::size_t>* feature_order) {
+   if (pool.num_cols() != quantization_schema.num_cols()) {
+     throw std::invalid_argument(
+         "prediction pool must have the same number of columns as the fitted model");
+@@ -202,14 +203,14 @@
+ 
+   HistMatrix hist;
+   hist.num_rows = pool.num_rows();
+-  hist.num_cols = pool.num_cols();
+-  // Root-only cached score/leaf traversal never reads a bin. Retain logical
+-  // dimensions and the usual shape check, without allocating rows * columns.
++  hist.num_cols = feature_order == nullptr ? pool.num_cols() : feature_order->size();
++  // Root-only cached score/leaf traversal never reads a bin. Input shape was
++  // checked above; no rows * columns allocation is needed for this prefix.
+   // Full histograms still materialize their documented zero-filled storage.
+   if (omit_unused_storage && active_features != nullptr &&
+-      active_features->size() >= hist.num_cols &&
++      active_features->size() >= pool.num_cols() &&
+       std::none_of(active_features->begin(),
+-                   active_features->begin() + static_cast<std::ptrdiff_t>(hist.num_cols),
++                   active_features->begin() + static_cast<std::ptrdiff_t>(pool.num_cols()),
+                    [](std::uint8_t active) { return active != 0U; })) {
+     return hist;
+   }
+@@ -224,12 +225,13 @@
+     return hist;
+   }
+ 
+-  for (std::size_t feature = 0; feature < hist.num_cols; ++feature) {
++  for (std::size_t slot = 0; slot < hist.num_cols; ++slot) {
++    const std::size_t feature = feature_order == nullptr ? slot : (*feature_order)[slot];
+     if (active_features != nullptr && feature < active_features->size() &&
+         (*active_features)[feature] == 0U) {
+       continue;
+     }
+-    const std::size_t offset = feature * hist.num_rows;
++    const std::size_t offset = slot * hist.num_rows;
+     if (hist.bin_storage_bytes() == 1) {
+       MaterializePredictionFeature(pool,
+                                    quantization_schema,
+--- a/src/core/booster_internal.hpp
++++ b/src/core/booster_internal.hpp
+@@ -130,12 +130,13 @@
+                                const QuantizationSchema& quantization_schema,
+                                const std::vector<std::uint8_t>* active_features);
+ HistMatrix BuildPredictionHist(const Pool& pool, const Tree& reference_tree);
+-// Cached traversal consumes only row/column counts and bin storage, so it does
+-// not need a private copy of the model's immutable quantization metadata.
++// Cached traversal consumes only row count and bin storage, without a private
++// schema copy. Optional feature_order maps compact slots to original columns.
+ HistMatrix BuildPredictionBins(const Pool& pool,
+                                const QuantizationSchema& quantization_schema,
+                                const std::vector<std::uint8_t>* active_features,
+-                               bool omit_unused_storage = true);
++                               bool omit_unused_storage = true,
++                               const std::vector<std::size_t>* feature_order = nullptr);
+ std::vector<GpuTreeNode> FlattenTreesForGpu(const std::vector<Tree>& trees,
+                                             std::size_t tree_limit,
+                                             const std::vector<double>& tree_learning_rates,

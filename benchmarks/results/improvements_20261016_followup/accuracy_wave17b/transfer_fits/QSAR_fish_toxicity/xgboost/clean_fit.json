@@ -1,0 +1,88 @@
+{
+  "clean_fit_controls": {
+    "binary_refit": null,
+    "leaf_refit": null,
+    "multiclass_refit": null,
+    "parameters": {
+      "eta": 0.15,
+      "eval_metric": "rmse",
+      "lambda": 10,
+      "max_bin": 256,
+      "max_depth": 6,
+      "multi_strategy": "one_output_per_tree",
+      "nthread": 1,
+      "objective": "reg:squarederror",
+      "seed": 47,
+      "subsample": 0.8,
+      "tree_method": "hist"
+    },
+    "rounds": 59,
+    "temperature": null
+  },
+  "clean_fit_controls_sha256": "0c258f06d4aab1b927344a2b3858df7c98016c0bcd81ccdfd4680b3b3cc69edd",
+  "fit": {
+    "apparent_union_error_inference_transform": 0.3975421681727431,
+    "early_stopping": false,
+    "fit_seconds": 0.0725832000025548,
+    "parameters": {
+      "eta": 0.15,
+      "eval_metric": "rmse",
+      "lambda": 10,
+      "max_bin": 256,
+      "max_depth": 6,
+      "multi_strategy": "one_output_per_tree",
+      "nthread": 1,
+      "objective": "reg:squarederror",
+      "seed": 47,
+      "subsample": 0.8,
+      "tree_method": "hist"
+    },
+    "requested_rounds": 59,
+    "retained_rounds": 59,
+    "structural_early_termination": false,
+    "union_data": {
+      "row_order": "original TRAIN followed by original STOP",
+      "source_roles": {
+        "stop": {
+          "index_sha256": "de393724061091abc721213073c612a2cb3947c29c7b7dc140f00abffbd62ccf",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\QSAR_fish_toxicity\\stop.pkl",
+          "rows": 75,
+          "sha256": "43ca4ebb2355030f59be5efac1b974303f0210a3fd60d7fec7b94fb5d7b1b210"
+        },
+        "train": {
+          "index_sha256": "26be8a0042fad36c4a38afc7ead69ffb0cef33bbddb18aa58b2a116ce973d933",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\QSAR_fish_toxicity\\train.pkl",
+          "rows": 379,
+          "sha256": "f5e842b299001515cdcfee2cc3b322864cdf0fc244fe067a9e0cc6f88147ea50"
+        }
+      },
+      "stop_ids_sha256": "de393724061091abc721213073c612a2cb3947c29c7b7dc140f00abffbd62ccf",
+      "stop_rows": 75,
+      "train_ids_sha256": "26be8a0042fad36c4a38afc7ead69ffb0cef33bbddb18aa58b2a116ce973d933",
+      "train_rows": 379,
+      "union_category_counts": {},
+      "union_ids_sha256": "69e84dd8c3c6712a016f2651feda5c5aed139b3d45496734fbee5a3f2fe5597c",
+      "union_rows": 454,
+      "vocabulary_fit_on": "TRAIN+STOP union only"
+    }
+  },
+  "old_scalar_corrections_disabled_before_fit": true,
+  "status": "ok",
+  "topology": {
+    "clean_native_state_sha256": "278cf4d3fb42f1bf5476f448670079a160eb7d398e9911370fc1b4fe5f7e9ce4",
+    "data_schema_sha256": null,
+    "exact_clean_refit_identity_except_scalar_leaf_outputs": true,
+    "feature_pipeline_sha256": null,
+    "leaf_outputs_ignored": true,
+    "library": "xgboost",
+    "limitation": "Fresh fit and disabled-correction provenance must also be enforced by the runner",
+    "nonleaf_state_sha256": "234078dec7180ce91dd82efa8d41b737d752ada7b54d90cb9890889d5cc59125",
+    "old_correction_subtracted": false,
+    "ordered_schema_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "parent_native_state_sha256": "278cf4d3fb42f1bf5476f448670079a160eb7d398e9911370fc1b4fe5f7e9ce4",
+    "physical_trees": 59,
+    "problem": "regression",
+    "total_native_leaves": 2035,
+    "training_metadata_sha256": null
+  }
+}

@@ -68,13 +68,17 @@ Fitted preprocessing also avoids serializing its metadata on every prediction.
 Supported numeric arrays and uniform numeric frames use typed conversion.
 Float16 inputs and mixed numeric frames containing float32 columns retain
 object conversion to preserve NumPy warning, callback, and exception behavior.
-Categorical, text, embedding, and nullable values retain their established
-conversion rules.
+Version 0.1.62 also avoids quantization-schema copies during cached prediction
+and accelerates eligible categorical inputs. The wide-batch path requires at
+least 1,000 rows and 32 independently categorical columns, small exact-string
+vocabularies, and object-dtype category and column-name indexes. Extension-string
+indexes, including pandas 3's inferred string indexes, use the general conversion
+path. Both paths preserve the established categorical encoding semantics.
 
 Measure both the first prediction and repeated predictions with your actual
 batch sizes. Include preprocessing when comparing libraries, and report the
 model size and prediction quality alongside latency. See the
-[0.1.61 release notes](../release-0.1.61.md) for measured results and limitations.
+[0.1.62 release notes](../release-0.1.62.md) for measured results and limitations.
 
 ## Export choices
 
@@ -93,15 +97,25 @@ ONNX export additionally requires `python -m pip install "ctboost[onnx]"`.
 Scalar version-2 and vector version-3 JSON predictors can embed a fitted categorical,
 text, or embedding pipeline for the Python `load_exported_predictor` runtime.
 Raw-feature exports require a matching
-inference manifest, pipeline format 3 or 4, and categorical key encoding 2; fingerprints and the
+inference manifest, pipeline format 3, 4 or 5, and categorical key encoding 2; fingerprints and the
 full native pipeline state are validated before construction. Treat the JSON as trusted
 input: its SHA-256 fingerprint detects accidental or uncoordinated changes but is not a
 signature or authenticity boundary.
 
-Starting in 0.1.60, new fitted pipelines use format 4 for
+Starting in 0.1.60, fitted pipelines use format 4 for
 corrected fractional CTR smoothing. Release 0.1.59 uses format 3. Loaded
 format-3 pipelines retain their original smoothing and re-export as format 3.
 Older CTBoost runtimes that support only format 3 reject format-4 pipelines.
+
+New pipelines now use format 5 to store Mean CTR priors and target totals in
+double precision. Feature outputs remain float32. Formats 1–4 load with their
+original float32 accumulation and rounding, including ordered training replay
+and warm-start continuation. Explicit refitting of those loaded pipelines keeps
+legacy accumulation; formats 1–3 still upgrade smoothing to format 4 as before.
+Create a fresh pipeline to obtain format 5. Older runtimes reject format 5, so
+update the prediction runtime before deploying a newly fitted pipeline. Existing
+saved models retain their predictions. Formats 3 and 4 retain their format when
+loaded and saved; formats 1 and 2 re-export as format 3, as before.
 
 Generated Python/C++/ONNX predictors and the R/JVM scorers do not silently reproduce a
 fitted pipeline. Their manifest/profile requires prepared features. See

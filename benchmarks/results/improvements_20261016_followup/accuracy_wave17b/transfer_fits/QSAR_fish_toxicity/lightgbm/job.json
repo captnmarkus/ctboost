@@ -1,0 +1,1246 @@
+{
+  "dataset": "QSAR_fish_toxicity",
+  "finished_at": "2026-10-16T15:34:35.249288+00:00",
+  "library": "lightgbm",
+  "selection": {
+    "base_selection": {
+      "best": {
+        "parameters": {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "cat_l2": 0,
+          "cat_smooth": 0,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 0,
+          "learning_rate": 0.1,
+          "max_bin": 255,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 1,
+          "metric": "rmse",
+          "min_data_in_leaf": 10,
+          "num_leaves": 7,
+          "num_threads": 1,
+          "objective": "regression",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        "retained_rounds": 38,
+        "stop_error": null
+      },
+      "binary_refit": null,
+      "cv_selection": {
+        "all_fits_successful": true,
+        "best": {
+          "mean_fold_error": 0.941857899885699,
+          "profile_index": 1,
+          "requested_rounds": 38
+        },
+        "dataset": "QSAR_fish_toxicity",
+        "job": {
+          "anchor_rounds": 38,
+          "binary_refit": null,
+          "dataset": "QSAR_fish_toxicity",
+          "leaf_refit": {
+            "fold": {
+              "coefficient_rounding_absolute_bound": 5.527262675331102e-16,
+              "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+              "inference_only": true,
+              "library": "lightgbm",
+              "physical_trees": 38,
+              "prediction_oracle_absolute_tolerance": 2.122588085208124e-12,
+              "topology_sha256_after": "4f3bd66c5c1b6cb9b8cb95194ec72a0ab3fdcaf67c70bf6ef7044ffd00d5143c",
+              "topology_sha256_before": "4f3bd66c5c1b6cb9b8cb95194ec72a0ab3fdcaf67c70bf6ef7044ffd00d5143c"
+            },
+            "lambda": 1000,
+            "shrinkage": 1.0,
+            "solver": {
+              "atol": 1e-08,
+              "btol": 1e-08,
+              "damp": "sqrt(lambda)",
+              "iter_lim": 2000,
+              "method": "scipy.sparse.linalg.lsqr"
+            }
+          },
+          "library": "lightgbm",
+          "original_selection": {
+            "all_eight_successful": true,
+            "base_selection": {
+              "all_eight_successful": true,
+              "best": {
+                "config_index": 0,
+                "fit_seconds": 0.03218879999985802,
+                "parameters": {
+                  "bagging_fraction": 0.8,
+                  "bagging_freq": 1,
+                  "cat_l2": 0,
+                  "cat_smooth": 0,
+                  "deterministic": true,
+                  "force_col_wise": true,
+                  "lambda_l2": 0,
+                  "learning_rate": 0.1,
+                  "max_bin": 255,
+                  "max_cat_threshold": 256,
+                  "max_cat_to_onehot": 1,
+                  "metric": "rmse",
+                  "min_data_in_leaf": 10,
+                  "num_leaves": 7,
+                  "num_threads": 1,
+                  "objective": "regression",
+                  "seed": 47,
+                  "verbosity": -1,
+                  "zero_as_missing": false
+                },
+                "retained_at_round_cap": false,
+                "retained_rounds": 38,
+                "selection_key": [
+                  0.9222049833031178,
+                  38,
+                  0
+                ],
+                "stop_error": 0.9222049833031178,
+                "trained_rounds_if_available": 88
+              },
+              "cumulative_search_fit_seconds": 1.6065270000108285,
+              "current_wave_all_eight_successful": true,
+              "dataset": "QSAR_fish_toxicity",
+              "library": "lightgbm",
+              "model_bytes": 34934,
+              "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave3\\models\\QSAR_fish_toxicity\\lightgbm.pkl",
+              "model_sha256": "d10a189fd08b86f01eb2489d14f3f1ba719ffbb3d6c300e15284724478913fde",
+              "plan_sha256": "322e99168bcd1f855ec372d071fe3235c494b08bccac851de00a2b6d21a6db61",
+              "search_fit_seconds": 0.257201400003396,
+              "source_wave": 3
+            },
+            "best": {
+              "config_index": 7,
+              "fit_seconds": 0.03218879999985802,
+              "parameters": {
+                "bagging_fraction": 0.8,
+                "bagging_freq": 1,
+                "cat_l2": 0,
+                "cat_smooth": 0,
+                "deterministic": true,
+                "force_col_wise": true,
+                "lambda_l2": 0,
+                "learning_rate": 0.1,
+                "max_bin": 255,
+                "max_cat_threshold": 256,
+                "max_cat_to_onehot": 1,
+                "metric": "rmse",
+                "min_data_in_leaf": 10,
+                "num_leaves": 7,
+                "num_threads": 1,
+                "objective": "regression",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 38,
+              "selection_key": [
+                0.9210915022821272,
+                1,
+                -1000,
+                1.0
+              ],
+              "stop_error": 0.9210915022821272,
+              "trained_rounds_if_available": 88
+            },
+            "cumulative_search_fit_seconds": 2.0034084000126313,
+            "current_wave_all_eight_successful": true,
+            "dataset": "QSAR_fish_toxicity",
+            "leaf_refit": {
+              "fold": {
+                "coefficient_rounding_absolute_bound": 5.527262675331102e-16,
+                "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+                "inference_only": true,
+                "library": "lightgbm",
+                "physical_trees": 38,
+                "prediction_oracle_absolute_tolerance": 2.122588085208124e-12,
+                "topology_sha256_after": "4f3bd66c5c1b6cb9b8cb95194ec72a0ab3fdcaf67c70bf6ef7044ffd00d5143c",
+                "topology_sha256_before": "4f3bd66c5c1b6cb9b8cb95194ec72a0ab3fdcaf67c70bf6ef7044ffd00d5143c"
+              },
+              "lambda": 1000,
+              "shrinkage": 1.0,
+              "solver": {
+                "atol": 1e-08,
+                "btol": 1e-08,
+                "damp": "sqrt(lambda)",
+                "iter_lim": 2000,
+                "method": "scipy.sparse.linalg.lsqr"
+              }
+            },
+            "library": "lightgbm",
+            "model_bytes": 35348,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave6_v2\\models\\QSAR_fish_toxicity\\lightgbm.pkl",
+            "model_sha256": "ce7ae01c1fc551cd37b3b3d06ac483255a3ff3a4cb86f0b78972dd726be95129",
+            "plan_sha256": "b2af792e292900317ec8086ecd6974224bffc52fd315e12a213c3f44a5e4978f",
+            "postfit_candidate_seconds": 0.2558668999972724,
+            "search_fit_seconds": 0.257201400003396,
+            "source_wave": 6
+          },
+          "parameters": {
+            "bagging_fraction": 0.8,
+            "bagging_freq": 1,
+            "cat_l2": 0,
+            "cat_smooth": 0,
+            "deterministic": true,
+            "force_col_wise": true,
+            "lambda_l2": 0,
+            "learning_rate": 0.1,
+            "max_bin": 255,
+            "max_cat_threshold": 256,
+            "max_cat_to_onehot": 1,
+            "metric": "rmse",
+            "min_data_in_leaf": 10,
+            "num_leaves": 7,
+            "num_threads": 1,
+            "objective": "regression",
+            "seed": 47,
+            "verbosity": -1,
+            "zero_as_missing": false
+          },
+          "profiles": [
+            {
+              "bagging_fraction": 0.8,
+              "bagging_freq": 1,
+              "cat_l2": 0,
+              "cat_smooth": 0,
+              "deterministic": true,
+              "force_col_wise": true,
+              "lambda_l2": 0,
+              "learning_rate": 0.1,
+              "max_bin": 255,
+              "max_cat_threshold": 256,
+              "max_cat_to_onehot": 1,
+              "metric": "rmse",
+              "min_data_in_leaf": 10,
+              "num_leaves": 7,
+              "num_threads": 1,
+              "objective": "regression",
+              "seed": 47,
+              "verbosity": -1,
+              "zero_as_missing": false
+            },
+            {
+              "bagging_fraction": 0.8,
+              "bagging_freq": 1,
+              "cat_l2": 0,
+              "cat_smooth": 0,
+              "deterministic": true,
+              "force_col_wise": true,
+              "lambda_l2": 0,
+              "learning_rate": 0.05,
+              "max_bin": 255,
+              "max_cat_threshold": 256,
+              "max_cat_to_onehot": 1,
+              "metric": "rmse",
+              "min_data_in_leaf": 10,
+              "num_leaves": 7,
+              "num_threads": 1,
+              "objective": "regression",
+              "seed": 47,
+              "verbosity": -1,
+              "zero_as_missing": false
+            },
+            {
+              "bagging_fraction": 0.8,
+              "bagging_freq": 1,
+              "cat_l2": 0,
+              "cat_smooth": 0,
+              "deterministic": true,
+              "force_col_wise": true,
+              "lambda_l2": 0,
+              "learning_rate": 0.1,
+              "max_bin": 255,
+              "max_cat_threshold": 256,
+              "max_cat_to_onehot": 1,
+              "metric": "rmse",
+              "min_data_in_leaf": 2,
+              "num_leaves": 7,
+              "num_threads": 1,
+              "objective": "regression",
+              "seed": 47,
+              "verbosity": -1,
+              "zero_as_missing": false
+            },
+            {
+              "bagging_fraction": 0.8,
+              "bagging_freq": 1,
+              "cat_l2": 0,
+              "cat_smooth": 0,
+              "deterministic": true,
+              "force_col_wise": true,
+              "lambda_l2": 0,
+              "learning_rate": 0.05,
+              "max_bin": 255,
+              "max_cat_threshold": 256,
+              "max_cat_to_onehot": 1,
+              "metric": "rmse",
+              "min_data_in_leaf": 2,
+              "num_leaves": 7,
+              "num_threads": 1,
+              "objective": "regression",
+              "seed": 47,
+              "verbosity": -1,
+              "zero_as_missing": false
+            }
+          ],
+          "round_candidates": [
+            19,
+            38,
+            76
+          ],
+          "rounds": 38,
+          "temperature": null,
+          "training_selection": {
+            "all_eight_successful": true,
+            "base_selection": {
+              "all_eight_successful": true,
+              "best": {
+                "config_index": 0,
+                "fit_seconds": 0.03218879999985802,
+                "parameters": {
+                  "bagging_fraction": 0.8,
+                  "bagging_freq": 1,
+                  "cat_l2": 0,
+                  "cat_smooth": 0,
+                  "deterministic": true,
+                  "force_col_wise": true,
+                  "lambda_l2": 0,
+                  "learning_rate": 0.1,
+                  "max_bin": 255,
+                  "max_cat_threshold": 256,
+                  "max_cat_to_onehot": 1,
+                  "metric": "rmse",
+                  "min_data_in_leaf": 10,
+                  "num_leaves": 7,
+                  "num_threads": 1,
+                  "objective": "regression",
+                  "seed": 47,
+                  "verbosity": -1,
+                  "zero_as_missing": false
+                },
+                "retained_at_round_cap": false,
+                "retained_rounds": 38,
+                "selection_key": [
+                  0.9222049833031178,
+                  38,
+                  0
+                ],
+                "stop_error": 0.9222049833031178,
+                "trained_rounds_if_available": 88
+              },
+              "cumulative_search_fit_seconds": 1.6065270000108285,
+              "current_wave_all_eight_successful": true,
+              "dataset": "QSAR_fish_toxicity",
+              "library": "lightgbm",
+              "model_bytes": 34934,
+              "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave3\\models\\QSAR_fish_toxicity\\lightgbm.pkl",
+              "model_sha256": "d10a189fd08b86f01eb2489d14f3f1ba719ffbb3d6c300e15284724478913fde",
+              "plan_sha256": "322e99168bcd1f855ec372d071fe3235c494b08bccac851de00a2b6d21a6db61",
+              "search_fit_seconds": 0.257201400003396,
+              "source_wave": 3
+            },
+            "best": {
+              "config_index": 7,
+              "fit_seconds": 0.03218879999985802,
+              "parameters": {
+                "bagging_fraction": 0.8,
+                "bagging_freq": 1,
+                "cat_l2": 0,
+                "cat_smooth": 0,
+                "deterministic": true,
+                "force_col_wise": true,
+                "lambda_l2": 0,
+                "learning_rate": 0.1,
+                "max_bin": 255,
+                "max_cat_threshold": 256,
+                "max_cat_to_onehot": 1,
+                "metric": "rmse",
+                "min_data_in_leaf": 10,
+                "num_leaves": 7,
+                "num_threads": 1,
+                "objective": "regression",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 38,
+              "selection_key": [
+                0.9210915022821272,
+                1,
+                -1000,
+                1.0
+              ],
+              "stop_error": 0.9210915022821272,
+              "trained_rounds_if_available": 88
+            },
+            "cumulative_search_fit_seconds": 2.0034084000126313,
+            "current_wave_all_eight_successful": true,
+            "dataset": "QSAR_fish_toxicity",
+            "leaf_refit": {
+              "fold": {
+                "coefficient_rounding_absolute_bound": 5.527262675331102e-16,
+                "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+                "inference_only": true,
+                "library": "lightgbm",
+                "physical_trees": 38,
+                "prediction_oracle_absolute_tolerance": 2.122588085208124e-12,
+                "topology_sha256_after": "4f3bd66c5c1b6cb9b8cb95194ec72a0ab3fdcaf67c70bf6ef7044ffd00d5143c",
+                "topology_sha256_before": "4f3bd66c5c1b6cb9b8cb95194ec72a0ab3fdcaf67c70bf6ef7044ffd00d5143c"
+              },
+              "lambda": 1000,
+              "shrinkage": 1.0,
+              "solver": {
+                "atol": 1e-08,
+                "btol": 1e-08,
+                "damp": "sqrt(lambda)",
+                "iter_lim": 2000,
+                "method": "scipy.sparse.linalg.lsqr"
+              }
+            },
+            "library": "lightgbm",
+            "model_bytes": 35348,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave6_v2\\models\\QSAR_fish_toxicity\\lightgbm.pkl",
+            "model_sha256": "ce7ae01c1fc551cd37b3b3d06ac483255a3ff3a4cb86f0b78972dd726be95129",
+            "plan_sha256": "b2af792e292900317ec8086ecd6974224bffc52fd315e12a213c3f44a5e4978f",
+            "postfit_candidate_seconds": 0.2558668999972724,
+            "search_fit_seconds": 0.257201400003396,
+            "source_wave": 6
+          }
+        },
+        "library": "lightgbm",
+        "scores": [
+          {
+            "mean_fold_error": 0.954947303697517,
+            "profile_index": 0,
+            "requested_rounds": 19
+          },
+          {
+            "mean_fold_error": 0.941857899885699,
+            "profile_index": 1,
+            "requested_rounds": 38
+          },
+          {
+            "mean_fold_error": 0.9564741125248695,
+            "profile_index": 2,
+            "requested_rounds": 76
+          }
+        ]
+      },
+      "dataset": "QSAR_fish_toxicity",
+      "leaf_refit": {
+        "fold": {
+          "coefficient_rounding_absolute_bound": 5.527262675331102e-16,
+          "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+          "inference_only": true,
+          "library": "lightgbm",
+          "physical_trees": 38,
+          "prediction_oracle_absolute_tolerance": 2.122588085208124e-12,
+          "topology_sha256_after": "4f3bd66c5c1b6cb9b8cb95194ec72a0ab3fdcaf67c70bf6ef7044ffd00d5143c",
+          "topology_sha256_before": "4f3bd66c5c1b6cb9b8cb95194ec72a0ab3fdcaf67c70bf6ef7044ffd00d5143c"
+        },
+        "lambda": 1000,
+        "shrinkage": 1.0,
+        "solver": {
+          "atol": 1e-08,
+          "btol": 1e-08,
+          "damp": "sqrt(lambda)",
+          "iter_lim": 2000,
+          "method": "scipy.sparse.linalg.lsqr"
+        }
+      },
+      "library": "lightgbm",
+      "model_bytes": 35275,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave13\\models\\QSAR_fish_toxicity\\lightgbm.pkl",
+      "model_sha256": "1839822dc6c9501b08667190ba91361e971bd1b0645285244ada4845f586a513",
+      "refit_details": {
+        "apparent_union_error_inference_transform": 0.7229454389893225,
+        "early_stopping": false,
+        "fit_seconds": 0.004729599997517653,
+        "fixed_leaf_refit": {
+          "fold": {
+            "coefficient_rounding_absolute_bound": 6.053642830072814e-16,
+            "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+            "inference_only": true,
+            "library": "lightgbm",
+            "physical_trees": 38,
+            "prediction_oracle_absolute_tolerance": 2.159524794089567e-12,
+            "topology_sha256_after": "461217b5ba7411dc015104975ce1e91140947aec17483d8a83999bc58c8a72ae",
+            "topology_sha256_before": "461217b5ba7411dc015104975ce1e91140947aec17483d8a83999bc58c8a72ae"
+          },
+          "inference_checks": {
+            "original_stop": {
+              "fixed_tolerance_atol": 1e-05,
+              "fixed_tolerance_rtol": 5e-05,
+              "leaf_routing_exact": true,
+              "oracle_absolute_tolerance": 2.159524794089567e-12,
+              "oracle_difference_divided_by_max_one_or_prediction_magnitude": 7.691444135357781e-16,
+              "oracle_max_absolute_difference": 5.329070518200751e-15
+            },
+            "original_train": {
+              "fixed_tolerance_atol": 1e-05,
+              "fixed_tolerance_rtol": 5e-05,
+              "leaf_routing_exact": true,
+              "oracle_absolute_tolerance": 2.159524794089567e-12,
+              "oracle_difference_divided_by_max_one_or_prediction_magnitude": 8.430481560116343e-16,
+              "oracle_max_absolute_difference": 6.217248937900877e-15
+            }
+          },
+          "lambda": 1000,
+          "ordered_union_check": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 2.159524794089567e-12,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 8.430481560116343e-16,
+            "oracle_max_absolute_difference": 6.217248937900877e-15
+          },
+          "preprocessing": {
+            "column_order": "physical tree order, then sorted observed native leaf IDs",
+            "design_nonzeros": 17252,
+            "design_shape": [
+              454,
+              266
+            ],
+            "ordered_training_transform_replayed": false,
+            "training_leaf_ids_sha256": "72573def9d1800948701b41f4203824d1f94b22ed05b47b7ffea06521b4a7906",
+            "training_rows": 454,
+            "unobserved_leaf_correction": 0
+          },
+          "shrinkage": 1.0,
+          "solve": {
+            "coefficient_norm": 0.0622427928985698,
+            "condition_estimate": 12.586246152845419,
+            "istop": 2,
+            "iterations": 11,
+            "matrix_norm": 150.7200943733015,
+            "normal_residual_norm": 2.6495587300796173e-06,
+            "regularized_residual_norm": 15.529240618549087,
+            "residual_norm": 15.403997822675155
+          }
+        },
+        "parameters": {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "cat_l2": 0,
+          "cat_smooth": 0,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 0,
+          "learning_rate": 0.1,
+          "max_bin": 255,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 1,
+          "metric": "rmse",
+          "min_data_in_leaf": 10,
+          "num_leaves": 7,
+          "num_threads": 1,
+          "objective": "regression",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        "requested_rounds": 38,
+        "retained_rounds": 38,
+        "structural_early_termination": false,
+        "union_data": {
+          "row_order": "original TRAIN followed by original STOP",
+          "source_roles": {
+            "stop": {
+              "index_sha256": "de393724061091abc721213073c612a2cb3947c29c7b7dc140f00abffbd62ccf",
+              "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\QSAR_fish_toxicity\\stop.pkl",
+              "rows": 75,
+              "sha256": "43ca4ebb2355030f59be5efac1b974303f0210a3fd60d7fec7b94fb5d7b1b210"
+            },
+            "train": {
+              "index_sha256": "26be8a0042fad36c4a38afc7ead69ffb0cef33bbddb18aa58b2a116ce973d933",
+              "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\QSAR_fish_toxicity\\train.pkl",
+              "rows": 379,
+              "sha256": "f5e842b299001515cdcfee2cc3b322864cdf0fc244fe067a9e0cc6f88147ea50"
+            }
+          },
+          "stop_ids_sha256": "de393724061091abc721213073c612a2cb3947c29c7b7dc140f00abffbd62ccf",
+          "stop_rows": 75,
+          "train_ids_sha256": "26be8a0042fad36c4a38afc7ead69ffb0cef33bbddb18aa58b2a116ce973d933",
+          "train_rows": 379,
+          "union_category_counts": {},
+          "union_ids_sha256": "69e84dd8c3c6712a016f2651feda5c5aed139b3d45496734fbee5a3f2fe5597c",
+          "union_rows": 454,
+          "vocabulary_fit_on": "TRAIN+STOP union only"
+        }
+      },
+      "source_wave": 13,
+      "temperature": null
+    },
+    "best": {
+      "parameters": {
+        "bagging_fraction": 0.8,
+        "bagging_freq": 1,
+        "cat_l2": 0,
+        "cat_smooth": 0,
+        "deterministic": true,
+        "force_col_wise": true,
+        "lambda_l2": 0,
+        "learning_rate": 0.1,
+        "max_bin": 255,
+        "max_cat_threshold": 256,
+        "max_cat_to_onehot": 1,
+        "metric": "rmse",
+        "min_data_in_leaf": 10,
+        "num_leaves": 7,
+        "num_threads": 1,
+        "objective": "regression",
+        "seed": 47,
+        "verbosity": -1,
+        "zero_as_missing": false
+      },
+      "retained_rounds": 38
+    },
+    "binary_refit": null,
+    "clean_refit_check": {
+      "clean_native_state_sha256": "1571020c58e2b09dbd2d82ecdbd7bc0e32801f1381c5025b20bb0e998800f639",
+      "data_schema_sha256": null,
+      "exact_clean_refit_identity_except_scalar_leaf_outputs": true,
+      "feature_pipeline_sha256": null,
+      "leaf_outputs_ignored": true,
+      "library": "lightgbm",
+      "limitation": "Fresh fit and disabled-correction provenance must also be enforced by the runner",
+      "nonleaf_state_sha256": "461217b5ba7411dc015104975ce1e91140947aec17483d8a83999bc58c8a72ae",
+      "old_correction_subtracted": false,
+      "ordered_schema_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "parent_native_state_sha256": "c078ad6ec58365e4285802a144b0be0222baeb9d5ab8ad75c0416b9c1ecd1ba6",
+      "physical_trees": 38,
+      "problem": "regression",
+      "total_native_leaves": 266,
+      "training_metadata_sha256": null
+    },
+    "dataset": "QSAR_fish_toxicity",
+    "fixed_job": {
+      "anchor_rounds": 38,
+      "binary_refit": null,
+      "dataset": "QSAR_fish_toxicity",
+      "leaf_refit": {
+        "lambda": 1000.0,
+        "max_working_bytes": 4294967296,
+        "shrinkage": 1.0,
+        "solver": {
+          "iterations": 10000,
+          "variant": "unscaled_lsqr_10000"
+        }
+      },
+      "library": "lightgbm",
+      "multiclass_refit": null,
+      "original_selection": {
+        "all_eight_successful": true,
+        "base_selection": {
+          "all_eight_successful": true,
+          "best": {
+            "config_index": 0,
+            "fit_seconds": 0.03218879999985802,
+            "parameters": {
+              "bagging_fraction": 0.8,
+              "bagging_freq": 1,
+              "cat_l2": 0,
+              "cat_smooth": 0,
+              "deterministic": true,
+              "force_col_wise": true,
+              "lambda_l2": 0,
+              "learning_rate": 0.1,
+              "max_bin": 255,
+              "max_cat_threshold": 256,
+              "max_cat_to_onehot": 1,
+              "metric": "rmse",
+              "min_data_in_leaf": 10,
+              "num_leaves": 7,
+              "num_threads": 1,
+              "objective": "regression",
+              "seed": 47,
+              "verbosity": -1,
+              "zero_as_missing": false
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 38,
+            "selection_key": [
+              0.9222049833031178,
+              38,
+              0
+            ],
+            "stop_error": 0.9222049833031178,
+            "trained_rounds_if_available": 88
+          },
+          "cumulative_search_fit_seconds": 1.6065270000108285,
+          "current_wave_all_eight_successful": true,
+          "dataset": "QSAR_fish_toxicity",
+          "library": "lightgbm",
+          "model_bytes": 34934,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave3\\models\\QSAR_fish_toxicity\\lightgbm.pkl",
+          "model_sha256": "d10a189fd08b86f01eb2489d14f3f1ba719ffbb3d6c300e15284724478913fde",
+          "plan_sha256": "322e99168bcd1f855ec372d071fe3235c494b08bccac851de00a2b6d21a6db61",
+          "search_fit_seconds": 0.257201400003396,
+          "source_wave": 3
+        },
+        "best": {
+          "config_index": 7,
+          "fit_seconds": 0.03218879999985802,
+          "parameters": {
+            "bagging_fraction": 0.8,
+            "bagging_freq": 1,
+            "cat_l2": 0,
+            "cat_smooth": 0,
+            "deterministic": true,
+            "force_col_wise": true,
+            "lambda_l2": 0,
+            "learning_rate": 0.1,
+            "max_bin": 255,
+            "max_cat_threshold": 256,
+            "max_cat_to_onehot": 1,
+            "metric": "rmse",
+            "min_data_in_leaf": 10,
+            "num_leaves": 7,
+            "num_threads": 1,
+            "objective": "regression",
+            "seed": 47,
+            "verbosity": -1,
+            "zero_as_missing": false
+          },
+          "retained_at_round_cap": false,
+          "retained_rounds": 38,
+          "selection_key": [
+            0.9210915022821272,
+            1,
+            -1000,
+            1.0
+          ],
+          "stop_error": 0.9210915022821272,
+          "trained_rounds_if_available": 88
+        },
+        "cumulative_search_fit_seconds": 2.0034084000126313,
+        "current_wave_all_eight_successful": true,
+        "dataset": "QSAR_fish_toxicity",
+        "leaf_refit": {
+          "fold": {
+            "coefficient_rounding_absolute_bound": 5.527262675331102e-16,
+            "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+            "inference_only": true,
+            "library": "lightgbm",
+            "physical_trees": 38,
+            "prediction_oracle_absolute_tolerance": 2.122588085208124e-12,
+            "topology_sha256_after": "4f3bd66c5c1b6cb9b8cb95194ec72a0ab3fdcaf67c70bf6ef7044ffd00d5143c",
+            "topology_sha256_before": "4f3bd66c5c1b6cb9b8cb95194ec72a0ab3fdcaf67c70bf6ef7044ffd00d5143c"
+          },
+          "lambda": 1000,
+          "shrinkage": 1.0,
+          "solver": {
+            "atol": 1e-08,
+            "btol": 1e-08,
+            "damp": "sqrt(lambda)",
+            "iter_lim": 2000,
+            "method": "scipy.sparse.linalg.lsqr"
+          }
+        },
+        "library": "lightgbm",
+        "model_bytes": 35348,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave6_v2\\models\\QSAR_fish_toxicity\\lightgbm.pkl",
+        "model_sha256": "ce7ae01c1fc551cd37b3b3d06ac483255a3ff3a4cb86f0b78972dd726be95129",
+        "plan_sha256": "b2af792e292900317ec8086ecd6974224bffc52fd315e12a213c3f44a5e4978f",
+        "postfit_candidate_seconds": 0.2558668999972724,
+        "search_fit_seconds": 0.257201400003396,
+        "source_wave": 6
+      },
+      "parameters": {
+        "bagging_fraction": 0.8,
+        "bagging_freq": 1,
+        "cat_l2": 0,
+        "cat_smooth": 0,
+        "deterministic": true,
+        "force_col_wise": true,
+        "lambda_l2": 0,
+        "learning_rate": 0.1,
+        "max_bin": 255,
+        "max_cat_threshold": 256,
+        "max_cat_to_onehot": 1,
+        "metric": "rmse",
+        "min_data_in_leaf": 10,
+        "num_leaves": 7,
+        "num_threads": 1,
+        "objective": "regression",
+        "seed": 47,
+        "verbosity": -1,
+        "zero_as_missing": false
+      },
+      "profiles": [
+        {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "cat_l2": 0,
+          "cat_smooth": 0,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 0,
+          "learning_rate": 0.1,
+          "max_bin": 255,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 1,
+          "metric": "rmse",
+          "min_data_in_leaf": 10,
+          "num_leaves": 7,
+          "num_threads": 1,
+          "objective": "regression",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "cat_l2": 0,
+          "cat_smooth": 0,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 0,
+          "learning_rate": 0.05,
+          "max_bin": 255,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 1,
+          "metric": "rmse",
+          "min_data_in_leaf": 10,
+          "num_leaves": 7,
+          "num_threads": 1,
+          "objective": "regression",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "cat_l2": 0,
+          "cat_smooth": 0,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 0,
+          "learning_rate": 0.1,
+          "max_bin": 255,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 1,
+          "metric": "rmse",
+          "min_data_in_leaf": 2,
+          "num_leaves": 7,
+          "num_threads": 1,
+          "objective": "regression",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "cat_l2": 0,
+          "cat_smooth": 0,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 0,
+          "learning_rate": 0.05,
+          "max_bin": 255,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 1,
+          "metric": "rmse",
+          "min_data_in_leaf": 2,
+          "num_leaves": 7,
+          "num_threads": 1,
+          "objective": "regression",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        }
+      ],
+      "round_candidates": [
+        19,
+        38,
+        76
+      ],
+      "rounds": 38,
+      "temperature": null,
+      "training_selection": {
+        "all_eight_successful": true,
+        "base_selection": {
+          "all_eight_successful": true,
+          "best": {
+            "config_index": 0,
+            "fit_seconds": 0.03218879999985802,
+            "parameters": {
+              "bagging_fraction": 0.8,
+              "bagging_freq": 1,
+              "cat_l2": 0,
+              "cat_smooth": 0,
+              "deterministic": true,
+              "force_col_wise": true,
+              "lambda_l2": 0,
+              "learning_rate": 0.1,
+              "max_bin": 255,
+              "max_cat_threshold": 256,
+              "max_cat_to_onehot": 1,
+              "metric": "rmse",
+              "min_data_in_leaf": 10,
+              "num_leaves": 7,
+              "num_threads": 1,
+              "objective": "regression",
+              "seed": 47,
+              "verbosity": -1,
+              "zero_as_missing": false
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 38,
+            "selection_key": [
+              0.9222049833031178,
+              38,
+              0
+            ],
+            "stop_error": 0.9222049833031178,
+            "trained_rounds_if_available": 88
+          },
+          "cumulative_search_fit_seconds": 1.6065270000108285,
+          "current_wave_all_eight_successful": true,
+          "dataset": "QSAR_fish_toxicity",
+          "library": "lightgbm",
+          "model_bytes": 34934,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave3\\models\\QSAR_fish_toxicity\\lightgbm.pkl",
+          "model_sha256": "d10a189fd08b86f01eb2489d14f3f1ba719ffbb3d6c300e15284724478913fde",
+          "plan_sha256": "322e99168bcd1f855ec372d071fe3235c494b08bccac851de00a2b6d21a6db61",
+          "search_fit_seconds": 0.257201400003396,
+          "source_wave": 3
+        },
+        "best": {
+          "config_index": 7,
+          "fit_seconds": 0.03218879999985802,
+          "parameters": {
+            "bagging_fraction": 0.8,
+            "bagging_freq": 1,
+            "cat_l2": 0,
+            "cat_smooth": 0,
+            "deterministic": true,
+            "force_col_wise": true,
+            "lambda_l2": 0,
+            "learning_rate": 0.1,
+            "max_bin": 255,
+            "max_cat_threshold": 256,
+            "max_cat_to_onehot": 1,
+            "metric": "rmse",
+            "min_data_in_leaf": 10,
+            "num_leaves": 7,
+            "num_threads": 1,
+            "objective": "regression",
+            "seed": 47,
+            "verbosity": -1,
+            "zero_as_missing": false
+          },
+          "retained_at_round_cap": false,
+          "retained_rounds": 38,
+          "selection_key": [
+            0.9210915022821272,
+            1,
+            -1000,
+            1.0
+          ],
+          "stop_error": 0.9210915022821272,
+          "trained_rounds_if_available": 88
+        },
+        "cumulative_search_fit_seconds": 2.0034084000126313,
+        "current_wave_all_eight_successful": true,
+        "dataset": "QSAR_fish_toxicity",
+        "leaf_refit": {
+          "fold": {
+            "coefficient_rounding_absolute_bound": 5.527262675331102e-16,
+            "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+            "inference_only": true,
+            "library": "lightgbm",
+            "physical_trees": 38,
+            "prediction_oracle_absolute_tolerance": 2.122588085208124e-12,
+            "topology_sha256_after": "4f3bd66c5c1b6cb9b8cb95194ec72a0ab3fdcaf67c70bf6ef7044ffd00d5143c",
+            "topology_sha256_before": "4f3bd66c5c1b6cb9b8cb95194ec72a0ab3fdcaf67c70bf6ef7044ffd00d5143c"
+          },
+          "lambda": 1000,
+          "shrinkage": 1.0,
+          "solver": {
+            "atol": 1e-08,
+            "btol": 1e-08,
+            "damp": "sqrt(lambda)",
+            "iter_lim": 2000,
+            "method": "scipy.sparse.linalg.lsqr"
+          }
+        },
+        "library": "lightgbm",
+        "model_bytes": 35348,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave6_v2\\models\\QSAR_fish_toxicity\\lightgbm.pkl",
+        "model_sha256": "ce7ae01c1fc551cd37b3b3d06ac483255a3ff3a4cb86f0b78972dd726be95129",
+        "plan_sha256": "b2af792e292900317ec8086ecd6974224bffc52fd315e12a213c3f44a5e4978f",
+        "postfit_candidate_seconds": 0.2558668999972724,
+        "search_fit_seconds": 0.257201400003396,
+        "source_wave": 6
+      }
+    },
+    "independent_stop_selection": {
+      "anchor": {
+        "model_bytes": 33522,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\QSAR_fish_toxicity\\lightgbm.pkl",
+        "model_sha256": "82a2249cefab214d27dc9c11e942595d8e4a5a979a3d426453f6b7eb6af926f9"
+      },
+      "correction": {
+        "lambda": 1000.0,
+        "max_working_bytes": 4294967296,
+        "shrinkage": 1.0,
+        "solver": {
+          "iterations": 10000,
+          "variant": "unscaled_lsqr_10000"
+        }
+      },
+      "dataset": "QSAR_fish_toxicity",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 0.01622979999956442,
+        "parameters": {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "cat_l2": 0,
+          "cat_smooth": 0,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 0,
+          "learning_rate": 0.1,
+          "max_bin": 255,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 1,
+          "metric": "rmse",
+          "min_data_in_leaf": 10,
+          "num_leaves": 7,
+          "num_threads": 1,
+          "objective": "regression",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        "requested_rounds": 38,
+        "retained_rounds": 38,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 75,
+        "original_train_rows": 379,
+        "outside_cap_rows": 0,
+        "row_ids_sha256": "26be8a0042fad36c4a38afc7ead69ffb0cef33bbddb18aa58b2a116ce973d933",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 379,
+        "schema": {},
+        "source_sha256": null,
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "lightgbm",
+      "stop_error": 0.9210915019789565
+    },
+    "leaf_refit": {
+      "lambda": 1000.0,
+      "max_working_bytes": 4294967296,
+      "shrinkage": 1.0,
+      "solver": {
+        "iterations": 10000,
+        "variant": "unscaled_lsqr_10000"
+      }
+    },
+    "library": "lightgbm",
+    "model_bytes": 35357,
+    "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17b\\models\\QSAR_fish_toxicity\\lightgbm.pkl",
+    "model_sha256": "ca371a6367a08a04cd495b5f515d2c3c5ca78d18f18a319f665e398e09752ff0",
+    "multiclass_refit": null,
+    "refit_details": {
+      "apparent_union_error_inference_transform": 0.736852245050038,
+      "early_stopping": false,
+      "fit_seconds": 0.015159599999606144,
+      "parameters": {
+        "bagging_fraction": 0.8,
+        "bagging_freq": 1,
+        "cat_l2": 0,
+        "cat_smooth": 0,
+        "deterministic": true,
+        "force_col_wise": true,
+        "lambda_l2": 0,
+        "learning_rate": 0.1,
+        "max_bin": 255,
+        "max_cat_threshold": 256,
+        "max_cat_to_onehot": 1,
+        "metric": "rmse",
+        "min_data_in_leaf": 10,
+        "num_leaves": 7,
+        "num_threads": 1,
+        "objective": "regression",
+        "seed": 47,
+        "verbosity": -1,
+        "zero_as_missing": false
+      },
+      "requested_rounds": 38,
+      "retained_rounds": 38,
+      "scalar_fitting_data": {
+        "original_stop_rows": 75,
+        "original_train_rows": 379,
+        "outside_cap_rows": 0,
+        "row_ids_sha256": "69e84dd8c3c6712a016f2651feda5c5aed139b3d45496734fbee5a3f2fe5597c",
+        "row_order": "TRAIN, STOP, ascending outside-cap",
+        "rows": 454,
+        "schema": {},
+        "source_sha256": null,
+        "stop_excluded": false,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "scalar_refresh": {
+        "checks": {
+          "fitting": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 2.1590366863389508e-12,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 9.634836069336416e-16,
+            "oracle_max_absolute_difference": 7.105427357601002e-15
+          },
+          "original_stop": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 2.1590366863389508e-12,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 8.973351488762323e-16,
+            "oracle_max_absolute_difference": 6.217248937900877e-15
+          },
+          "original_train": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 2.1590366863389508e-12,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 9.634836069336416e-16,
+            "oracle_max_absolute_difference": 7.105427357601002e-15
+          }
+        },
+        "fold": {
+          "coefficient_rounding_absolute_bound": 4.833373284940379e-16,
+          "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+          "inference_only": true,
+          "library": "lightgbm",
+          "physical_trees": 38,
+          "prediction_oracle_absolute_tolerance": 2.1590366863389508e-12,
+          "topology_sha256_after": "461217b5ba7411dc015104975ce1e91140947aec17483d8a83999bc58c8a72ae",
+          "topology_sha256_before": "461217b5ba7411dc015104975ce1e91140947aec17483d8a83999bc58c8a72ae"
+        },
+        "independent_sparse_raw_margin_oracle": true,
+        "memory": {
+          "array_budgets_bytes": {
+            "design_construction_temporary_budget": 428576,
+            "lsqr_residual_and_vector_workspace_budget": 46080,
+            "native_leaf_result_and_int64_copy": 276032,
+            "native_raw_result_and_float64_copy": 7264,
+            "observed_leaf_maps": 2128,
+            "resident_csr_data_indices_indptr": 279672
+          },
+          "csr_nonzeros": 17252,
+          "excluded": [
+            "native model objects",
+            "input frames",
+            "categorical transform workspace",
+            "Python object/allocator overhead"
+          ],
+          "extra_certificate_vector_bytes": 184320,
+          "max_working_bytes": 4294967296,
+          "native_leaf_count": 266,
+          "no_dense_hessian": true,
+          "parameters_upper_bound": 266,
+          "physical_trees": 38,
+          "refit_array_budget_bytes": 1039752,
+          "rows": 454,
+          "scope": "named conservative refit arrays, not whole-process RSS",
+          "solver_kind": "regression"
+        },
+        "preprocessing": {
+          "column_order": "physical tree order, then sorted observed native leaf IDs",
+          "design_nonzeros": 17252,
+          "design_shape": [
+            454,
+            266
+          ],
+          "ordered_training_transform_replayed": false,
+          "training_leaf_ids_sha256": "72573def9d1800948701b41f4203824d1f94b22ed05b47b7ffea06521b4a7906",
+          "training_rows": 454,
+          "unobserved_leaf_correction": 0
+        },
+        "solve": {
+          "atol": 1e-12,
+          "btol": 1e-12,
+          "certificate": {
+            "certified": true,
+            "coefficient_l2_error_bound": 2.122157931921443e-12,
+            "dual": 120.57865709439737,
+            "finite": true,
+            "fitting_prediction_rms_error_bound": 3.149559191594792e-12,
+            "gradient_norm": 2.122157931921443e-09,
+            "normalized_original_gradient": 1.3537675780901397e-11,
+            "original_gradient_dual_gap": 2.251777144008548e-21,
+            "primal": 120.57865709439739,
+            "primal_minus_dual": 1.4210854715202004e-14,
+            "primal_zero": 123.24992944500889,
+            "relative_gap": 1.867475719393441e-23
+          },
+          "conlim": 100000000.0,
+          "initial_coefficients": "zero",
+          "iterations_limit": 10000,
+          "native": {
+            "condition_estimate": 17.726134176015893,
+            "istop": 2,
+            "iterations": 15,
+            "matrix_norm": 181.1975169283632,
+            "normal_residual_norm": 2.122164286770284e-09,
+            "regularized_residual_norm": 15.529240618549087,
+            "residual_norm": 15.40399782267514
+          },
+          "no_heldout_score": true,
+          "penalty": 1000.0,
+          "solver_seconds_diagnostic_only": 0.0011975999987043906,
+          "success": true,
+          "variant": "unscaled_lsqr_10000"
+        }
+      },
+      "structural_early_termination": false,
+      "union_data": {
+        "row_order": "original TRAIN followed by original STOP",
+        "source_roles": {
+          "stop": {
+            "index_sha256": "de393724061091abc721213073c612a2cb3947c29c7b7dc140f00abffbd62ccf",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\QSAR_fish_toxicity\\stop.pkl",
+            "rows": 75,
+            "sha256": "43ca4ebb2355030f59be5efac1b974303f0210a3fd60d7fec7b94fb5d7b1b210"
+          },
+          "train": {
+            "index_sha256": "26be8a0042fad36c4a38afc7ead69ffb0cef33bbddb18aa58b2a116ce973d933",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\QSAR_fish_toxicity\\train.pkl",
+            "rows": 379,
+            "sha256": "f5e842b299001515cdcfee2cc3b322864cdf0fc244fe067a9e0cc6f88147ea50"
+          }
+        },
+        "stop_ids_sha256": "de393724061091abc721213073c612a2cb3947c29c7b7dc140f00abffbd62ccf",
+        "stop_rows": 75,
+        "train_ids_sha256": "26be8a0042fad36c4a38afc7ead69ffb0cef33bbddb18aa58b2a116ce973d933",
+        "train_rows": 379,
+        "union_category_counts": {},
+        "union_ids_sha256": "69e84dd8c3c6712a016f2651feda5c5aed139b3d45496734fbee5a3f2fe5597c",
+        "union_rows": 454,
+        "vocabulary_fit_on": "TRAIN+STOP union only"
+      }
+    },
+    "requested_rounds": 38,
+    "seed": 47,
+    "source_wave": "17b",
+    "temperature": null
+  },
+  "started_at": "2026-10-16T15:34:35.147097+00:00",
+  "status": "ok"
+}

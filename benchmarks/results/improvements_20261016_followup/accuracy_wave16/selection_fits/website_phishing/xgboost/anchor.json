@@ -1,0 +1,89 @@
+{
+  "fit": {
+    "early_stopping": false,
+    "fit_seconds": 0.14168419999987236,
+    "parameters": {
+      "eta": 0.05,
+      "eval_metric": "mlogloss",
+      "lambda": 3,
+      "max_bin": 256,
+      "max_cat_threshold": 256,
+      "max_cat_to_onehot": 8,
+      "max_depth": 4,
+      "min_child_weight": 0.1,
+      "multi_strategy": "one_output_per_tree",
+      "nthread": 1,
+      "num_class": 3,
+      "objective": "multi:softprob",
+      "seed": 47,
+      "subsample": 1.0,
+      "tree_method": "hist"
+    },
+    "requested_rounds": 122,
+    "retained_rounds": 122,
+    "structural_early_termination": false
+  },
+  "fitting_data": {
+    "original_stop_rows": 113,
+    "original_train_rows": 565,
+    "outside_cap_rows": 0,
+    "row_ids_sha256": "ee3eee0b7c0c312c9fab03d76edc2b2a89ff8ebf1b1b4b5f5143bd2210d149cc",
+    "row_order": "TRAIN then ascending outside-cap",
+    "rows": 565,
+    "schema": {
+      "Request_URL": [
+        "Legitimate",
+        "Phishy",
+        "Suspicious"
+      ],
+      "SFH": [
+        "Legitimate",
+        "Phishy",
+        "Suspicious"
+      ],
+      "SSLfinal_State": [
+        "Legitimate",
+        "Phishy",
+        "Suspicious"
+      ],
+      "URL_Length": [
+        "Legitimate",
+        "Phishy",
+        "Suspicious"
+      ],
+      "URL_of_Anchor": [
+        "Legitimate",
+        "Phishy",
+        "Suspicious"
+      ],
+      "age_of_domain": [
+        "Legitimate",
+        "Phishy"
+      ],
+      "having_IP_Address": [
+        "Legitimate",
+        "Suspicious"
+      ],
+      "popUpWidnow": [
+        "Legitimate",
+        "Phishy",
+        "Suspicious"
+      ],
+      "web_traffic": [
+        "Legitimate",
+        "Phishy",
+        "Suspicious"
+      ]
+    },
+    "source_sha256": null,
+    "stop_excluded": true,
+    "vocabulary_fit_on": "actual fitting rows only"
+  },
+  "model": {
+    "model_bytes": 613847,
+    "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave16\\anchors\\website_phishing\\xgboost.pkl",
+    "model_sha256": "a5b6ea8da8fbd2dce62c3a1a6ce947a3a80264f93687ff1ad462562b4035d31b"
+  },
+  "status": "ok",
+  "temperature": 1.0
+}

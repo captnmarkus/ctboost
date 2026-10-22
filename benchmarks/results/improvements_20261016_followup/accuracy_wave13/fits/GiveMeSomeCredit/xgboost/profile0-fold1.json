@@ -1,0 +1,114 @@
+{
+  "correction": {
+    "fold": {
+      "coefficient_rounding_absolute_bound": 1.10167883440003e-07,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "xgboost",
+      "physical_trees": 32,
+      "prediction_oracle_absolute_tolerance": 0.0003885661135427654,
+      "topology_sha256_after": "11e653480664ea3c9d911e26b25725a3ff59511f56a793058bcb2a9c0d74c3e2",
+      "topology_sha256_before": "11e653480664ea3c9d911e26b25725a3ff59511f56a793058bcb2a9c0d74c3e2"
+    },
+    "inference_checks": {
+      "stop": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 0.0003885661135427654,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 2.8285876900575407e-07,
+        "oracle_max_absolute_difference": 1.2530835595825351e-06
+      }
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 192000,
+      "design_shape": [
+        6000,
+        242
+      ],
+      "ordered_training_transform_replayed": false,
+      "training_leaf_ids_sha256": "95064901aabe9dffdb784a47b90d0eeee9df6a1f4cf340ef1d4c7d2648ae6556",
+      "training_rows": 6000,
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "columns": 242,
+      "evaluations": 25,
+      "final_objective": 0.172430802633941,
+      "ftol": 1e-13,
+      "gradient_gate": 1e-06,
+      "gtol": 1e-09,
+      "initial_coefficients": "all zero",
+      "initial_objective": 0.1827856779295681,
+      "iterations": 22,
+      "maxcor": 20,
+      "maximum_absolute_mean_gradient": 4.080325925581718e-09,
+      "maxiter": 2000,
+      "maxls": 50,
+      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+      "method": "L-BFGS-B",
+      "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+      "penalty": 100.0,
+      "rows": 6000,
+      "status": 0
+    },
+    "training_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 0.0003885661135427654,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 2.884685880581516e-07,
+      "oracle_max_absolute_difference": 1.277935439025768e-06
+    }
+  },
+  "dataset": "GiveMeSomeCredit",
+  "early_stopping": false,
+  "feature_names": [
+    "RevolvingUtilizationOfUnsecuredLines",
+    "age",
+    "NumberOfTime30-59DaysPastDueNotWorse",
+    "DebtRatio",
+    "MonthlyIncome",
+    "NumberOfOpenCreditLinesAndLoans",
+    "NumberOfTimes90DaysLate",
+    "NumberRealEstateLoansOrLines",
+    "NumberOfTime60-89DaysPastDueNotWorse",
+    "NumberOfDependents"
+  ],
+  "finished_at": "2026-10-16T13:12:52.690608+00:00",
+  "fit_seconds": 0.04364480000003823,
+  "fold": 1,
+  "fold_category_counts": {},
+  "fold_category_schema": {},
+  "library": "xgboost",
+  "model_bytes": 46453,
+  "model_retained": false,
+  "model_sha256": "e116091b2411560986d102f4fe126824d83572752d28195178cdb47db997bbce",
+  "parameters": {
+    "eta": 0.05,
+    "eval_metric": "auc",
+    "lambda": 10,
+    "max_bin": 256,
+    "max_cat_threshold": 256,
+    "max_cat_to_onehot": 8,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "multi_strategy": "one_output_per_tree",
+    "nthread": 1,
+    "objective": "binary:logistic",
+    "seed": 47,
+    "subsample": 1.0,
+    "tree_method": "hist"
+  },
+  "prediction_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave13\\fold_predictions\\GiveMeSomeCredit\\xgboost\\profile0-fold1.npz",
+  "prediction_sha256": "8a56e7114e4a5f073e9742cdaa75502c068b754328fd9402be794de82effa346",
+  "profile_index": 0,
+  "requested_rounds": 32,
+  "retained_rounds": 32,
+  "started_at": "2026-10-16T13:12:52.486237+00:00",
+  "status": "ok",
+  "structural_early_termination": false,
+  "temperature": null,
+  "validation_error": 0.11555000000000004
+}

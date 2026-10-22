@@ -12,23 +12,26 @@ and optional CUDA acceleration.
 
 </div>
 
-The current release, [0.1.61](release-0.1.61.md), is available on
-[PyPI](https://pypi.org/project/ctboost/0.1.61/) and
-[GitHub](https://github.com/captnmarkus/ctboost/releases/tag/v0.1.61).
-It reduces CPU inference overhead and fixes
-Huber/Quantile edge cases, NumPy conversion compatibility, and GNU FMA
-training-rounding differences. Saved-model formats, learning defaults, and
-conditional-inference feature selection are preserved.
+[CTBoost 0.1.62](release-0.1.62.md) improves categorical CPU inference
+preparation, compact JSON persistence, and CTR accumulation precision.
+Conditional-inference feature selection and tree-growth and hyperparameter
+defaults are preserved.
+Newly fitted pipelines use format 5; existing format 1–4 pipelines retain their
+legacy arithmetic. Read the release notes before exchanging new artifacts with
+an older CTBoost runtime. The JVM binding updates Jackson to 2.21.7 for five
+reported security alerts. The release notes describe validation and compatibility.
 
 !!! info "Project status"
     CTBoost is an alpha project. Its API and model format are tested extensively,
     but it does not yet have the independent production history of CatBoost or
     XGBoost. Benchmark claims on this site state their dataset and protocol scope.
 
-As of 9 September 2026, the fresh 0.1.61 Full HPO25 evaluation is prepared but
-has not started; the 0.1.60 run is retired. The latest downloadable author-run
-TabArena bundle measures 0.1.58. See [benchmark status](benchmarks.md) for the
-separate maintainer report, evidence, and limits.
+The [October follow-up](https://github.com/captnmarkus/ctboost/tree/master/benchmarks/results/improvements_20261016_followup) records the local inference and twelve-task
+accuracy work, including unsuccessful experiments. It is separate from the
+historical 0.1.58 author-run TabArena bundle. The 9 September 2026 statement that
+the 0.1.61 Full HPO25 run was prepared but unstarted remains a dated historical
+status, not a result for 0.1.62. See [benchmark status](benchmarks.md) for the
+protocols, results, and limits.
 
 <div class="grid cards" markdown>
 

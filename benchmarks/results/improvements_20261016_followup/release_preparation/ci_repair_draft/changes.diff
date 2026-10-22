@@ -1,0 +1,370 @@
+--- a/tests/conftest.py
++++ b/tests/conftest.py
+@@ -22,3 +22,33 @@
+     finally:
+         # Do not suppress restoration failures on platforms supporting affinity.
+         process.cpu_affinity(original)
++
++
++
++@pytest.fixture
++def require_scientific_stack():
++    """Optional imports required by the frozen three-library fit helper."""
++    def require(*, native_library=None, multiclass=False):
++        reason = "Frozen scientific fit helper imports both comparison libraries"
++        xgb = pytest.importorskip("xgboost", reason=reason)
++        pytest.importorskip("lightgbm", reason=reason)
++        if native_library == "xgboost" and multiclass and xgb.__version__ != "3.4.1":
++            pytest.skip("Native multiclass serialization tests require XGBoost3.4.1")
++    return require
++
++
++@pytest.fixture
++def record_worker_affinity(monkeypatch):
++    """Record synthetic protocol placement without restricting the pytest process.
++
++    These tests verify selection/folding/persistence, not OS CPU placement.
++    Real process-tree watchdog tests do not request this fixture.
++    """
++    psutil = pytest.importorskip("psutil")
++    calls = []
++    def record(process, cpus=None):
++        if cpus is None:
++            raise AssertionError("Synthetic worker should only request placement")
++        calls.append(tuple(cpus))
++    monkeypatch.setattr(psutil.Process, "cpu_affinity", record, raising=False)
++    return calls
+--- a/.github/workflows/cmake.yml
++++ b/.github/workflows/cmake.yml
+@@ -56,10 +56,10 @@
+             cxxflags: "/arch:AVX2 /fp:fast"
+     steps:
+       - name: Checkout
+-        uses: actions/checkout@v6
++        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.0.2
+ 
+       - name: Set up Python
+-        uses: actions/setup-python@v6
++        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.2.0
+         with:
+           python-version: ${{ matrix.python-version }}
+ 
+@@ -67,7 +67,7 @@
+         shell: pwsh
+         run: |
+           python -m pip install --upgrade pip
+-          python -m pip install "pybind11<3" jsonschema numpy pandas scikit-learn scipy pytest
++          python -m pip install "pybind11<3" jsonschema numpy pandas scikit-learn scipy pytest psutil
+ 
+       - name: Export Python and pybind11 paths
+         shell: pwsh
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -90,6 +90,7 @@
+   "jsonschema>=4.18",
+   "pandas",
+   "pytest>=8.0",
++  "psutil>=7",
+   "scikit-learn>=1.3",
+   "scipy>=1.10",
+ ]
+@@ -172,6 +173,11 @@
+   "/benchmarks/*.py",
+   "/benchmarks/*.md",
+   "/benchmarks/*.cpp",
++  "/benchmarks/fair_accuracy_current_round_cv_policy.json",
++  # Small source-test policy fixtures; full research archives remain excluded.
++  "/benchmarks/results/improvements_20261016_followup/robustness_protocol_multiclass.json",
++  "/benchmarks/results/improvements_20261016_followup/robustness_protocol_scalar_refresh.json",
++  "/benchmarks/results/improvements_20261016_followup/robustness_protocol_scalar_numerical.json",
+   "/benchmarks/results/*.json",
+   "/benchmarks/tabarena/*.md",
+   "/benchmarks/tabarena/*.json",
+--- a/tests/test_houses_cap_experiment.py
++++ b/tests/test_houses_cap_experiment.py
+@@ -86,7 +86,8 @@
+ 
+ 
+ @pytest.mark.parametrize('library', ['ctboost','xgboost','lightgbm'])
+-def test_native_houses_policy_roundtrip_and_seed349(tmp_path, library):
++def test_native_houses_policy_roundtrip_and_seed349(tmp_path, library, require_scientific_stack):
++    require_scientific_stack(native_library=library)
+     rng = np.random.default_rng(62)
+     frame = pd.DataFrame(rng.normal(size=(80, 8)), columns=main.selector.ATTRIBUTES[:-1])
+     labels = 2 * frame.iloc[:, 0].to_numpy() + frame.iloc[:, 1].to_numpy()
+--- a/tests/test_houses_cap_experiment_v2.py
++++ b/tests/test_houses_cap_experiment_v2.py
+@@ -86,7 +86,8 @@
+ 
+ 
+ @pytest.mark.parametrize('library', ['ctboost','xgboost','lightgbm'])
+-def test_native_houses_policy_roundtrip_and_seed349(tmp_path, library):
++def test_native_houses_policy_roundtrip_and_seed349(tmp_path, library, require_scientific_stack):
++    require_scientific_stack(native_library=library)
+     rng = np.random.default_rng(62)
+     frame = pd.DataFrame(rng.normal(size=(80, 8)), columns=main.selector.ATTRIBUTES[:-1])
+     labels = 2 * frame.iloc[:, 0].to_numpy() + frame.iloc[:, 1].to_numpy()
+--- a/tests/test_multiclass_refit_experiment.py
++++ b/tests/test_multiclass_refit_experiment.py
+@@ -57,7 +57,8 @@
+ 
+ 
+ @pytest.mark.parametrize("library,vector", [("ctboost", False), ("ctboost", True), ("xgboost", False), ("xgboost", True), ("lightgbm", False)])
+-def test_anchor_stop_and_seed_transfer_pipeline(tmp_path, library, vector):
++def test_anchor_stop_and_seed_transfer_pipeline(tmp_path, library, vector, require_scientific_stack):
++    require_scientific_stack(native_library=library, multiclass=True)
+     module = runner()
+     case, source = fixture(module, tmp_path)
+     job = {"dataset": "SDSS17", "library": library, "parameters": params(library, vector), "rounds": 4,
+@@ -92,7 +93,7 @@
+     assert module.selection_key(.2, {"lambda": 10., "shrinkage": .25}) < module.selection_key(.2, {"lambda": 10., "shrinkage": 1.})
+ 
+ 
+-def test_identity_transfer_keeps_parent_artifact(tmp_path, monkeypatch):
++def test_identity_transfer_keeps_parent_artifact(tmp_path, monkeypatch, record_worker_affinity):
+     module = runner()
+     original = {"dataset": "toy", "library": "ctboost", "model_path": "unchanged.pkl", "model_sha256": "f" * 64, "model_bytes": 123}
+     job = {"dataset": "toy", "library": "ctboost"}
+@@ -104,6 +105,7 @@
+     monkeypatch.setattr(module, "corrected", lambda *_: pytest.fail("identity must not solve or fold"))
+     args = SimpleNamespace(dataset="toy", library="ctboost", output=tmp_path, artifacts=tmp_path / "artifacts")
+     module.transfer_job(args)
++    assert record_worker_affinity == [(4,)]
+     result = module.base.read(tmp_path / "transfer_fits/toy/ctboost/job.json")
+     assert result["status"] == "ok"
+     assert {key: result["selection"][key] for key in original} == original
+--- a/tests/test_scalar_refresh_experiment.py
++++ b/tests/test_scalar_refresh_experiment.py
+@@ -69,7 +69,8 @@
+ 
+ @pytest.mark.parametrize("library", ["ctboost", "xgboost", "lightgbm"])
+ @pytest.mark.parametrize("problem", ["binary", "regression"])
+-def test_fresh_anchor_and_fixed_seed_pipeline(tmp_path, monkeypatch, library, problem):
++def test_fresh_anchor_and_fixed_seed_pipeline(tmp_path, monkeypatch, library, problem, require_scientific_stack):
++    require_scientific_stack(native_library=library)
+     module = runner()
+     case, source = fixture(module, tmp_path, problem)
+     job = job_for(module, case, source, library)
+@@ -107,7 +108,8 @@
+         assert not np.array_equal(module.predict(clean47, verification), module.predict(clean569, verification))
+ 
+ 
+-def test_identity_union_is_fresh_and_clean_not_parent(tmp_path, monkeypatch):
++def test_identity_union_is_fresh_and_clean_not_parent(tmp_path, monkeypatch, require_scientific_stack, record_worker_affinity):
++    require_scientific_stack(native_library="ctboost")
+     module = runner()
+     case, source = fixture(module, tmp_path, "regression")
+     job = job_for(module, case, source, "ctboost")
+@@ -131,6 +133,7 @@
+     monkeypatch.setattr(module, "corrected", lambda *_: pytest.fail("identity does not solve"))
+     args = SimpleNamespace(dataset=job["dataset"], library="ctboost", output=tmp_path / "result", artifacts=tmp_path / "artifacts")
+     module.transfer_job(args)
++    assert record_worker_affinity == [(4,)]
+     directory = args.output / "transfer_fits" / job["dataset"] / "ctboost"
+     result = module.base.read(directory / "job.json")
+     assert result["status"] == "ok", result.get("error")
+@@ -144,7 +147,8 @@
+     assert len(receipt["clean_fit_controls_sha256"]) == 64
+ 
+ 
+-def test_selection_runs_all_eight_candidates_from_clean_anchor(tmp_path, monkeypatch):
++def test_selection_runs_all_eight_candidates_from_clean_anchor(tmp_path, monkeypatch, require_scientific_stack, record_worker_affinity):
++    require_scientific_stack(native_library="xgboost")
+     module = runner()
+     case, source = fixture(module, tmp_path, "binary")
+     job = job_for(module, case, source, "xgboost")
+@@ -154,6 +158,7 @@
+     monkeypatch.setattr(module, "checked", lambda _: plan)
+     args = SimpleNamespace(dataset=job["dataset"], library="xgboost", output=tmp_path / "result", artifacts=tmp_path / "artifacts")
+     module.selection_job(args)
++    assert record_worker_affinity == [(4,)]
+     directory = args.output / "selection_fits" / job["dataset"] / "xgboost"
+     result = module.base.read(directory / "job.json")
+     assert result["status"] == "ok", result.get("error", result.get("candidates"))
+--- a/tests/test_scalar_numerical_retry_experiment.py
++++ b/tests/test_scalar_numerical_retry_experiment.py
+@@ -69,7 +69,8 @@
+ 
+ @pytest.mark.parametrize("library", ["ctboost", "xgboost", "lightgbm"])
+ @pytest.mark.parametrize("problem", ["binary", "regression"])
+-def test_fresh_anchor_and_fixed_seed_pipeline(tmp_path, monkeypatch, library, problem):
++def test_fresh_anchor_and_fixed_seed_pipeline(tmp_path, monkeypatch, library, problem, require_scientific_stack):
++    require_scientific_stack(native_library=library)
+     module = runner()
+     case, source = fixture(module, tmp_path, problem)
+     job = job_for(module, case, source, library)
+@@ -107,7 +108,8 @@
+         assert not np.array_equal(module.predict(clean47, verification), module.predict(clean569, verification))
+ 
+ 
+-def test_identity_union_is_fresh_and_clean_not_parent(tmp_path, monkeypatch):
++def test_identity_union_is_fresh_and_clean_not_parent(tmp_path, monkeypatch, require_scientific_stack, record_worker_affinity):
++    require_scientific_stack(native_library="ctboost")
+     module = runner()
+     case, source = fixture(module, tmp_path, "regression")
+     job = job_for(module, case, source, "ctboost")
+@@ -131,6 +133,7 @@
+     monkeypatch.setattr(module, "corrected", lambda *_: pytest.fail("identity does not solve"))
+     args = SimpleNamespace(dataset=job["dataset"], library="ctboost", output=tmp_path / "result", artifacts=tmp_path / "artifacts")
+     module.transfer_job(args)
++    assert record_worker_affinity == [(4,)]
+     directory = args.output / "transfer_fits" / job["dataset"] / "ctboost"
+     result = module.base.read(directory / "job.json")
+     assert result["status"] == "ok", result.get("error")
+@@ -144,7 +147,8 @@
+     assert len(receipt["clean_fit_controls_sha256"]) == 64
+ 
+ 
+-def test_penalty_worker_reuses_anchor_and_checks_two_native_candidates(tmp_path, monkeypatch):
++def test_penalty_worker_reuses_anchor_and_checks_two_native_candidates(tmp_path, monkeypatch, require_scientific_stack, record_worker_affinity):
++    require_scientific_stack(native_library="lightgbm")
+     module = runner()
+     case, source = fixture(module, tmp_path, "regression")
+     job = job_for(module, case, source, "lightgbm")
+@@ -167,6 +171,7 @@
+     args = SimpleNamespace(dataset=job["dataset"], library=job["library"], penalty_index=0,
+         output=tmp_path / "result", artifacts=tmp_path / "artifacts")
+     module.penalty_job(args)
++    assert record_worker_affinity == [(4,)]
+     record = module.base.read(args.output / "penalty_fits" / job["dataset"] / job["library"] / "0/job.json")
+     assert record["status"] == "ok", record.get("error")
+     assert record["new_native_tree_fits"] == 0 and len(record["candidates"]) == 2
+--- /dev/null
++++ b/.github/workflows/scientific-tests.yml
+@@ -0,0 +1,136 @@
++name: Scientific integration
++
++on:
++  push:
++    branches:
++      - master
++      - "improve/**"
++    paths-ignore:
++      - "docs/**"
++      - "README.md"
++      - "mkdocs.yml"
++      - "benchmarks/results/**"
++  pull_request:
++  workflow_dispatch:
++
++permissions:
++  contents: read
++
++env:
++  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
++  CMAKE_BUILD_PARALLEL_LEVEL: "4"
++  OMP_NUM_THREADS: "1"
++  OPENBLAS_NUM_THREADS: "1"
++  MKL_NUM_THREADS: "1"
++  NUMEXPR_NUM_THREADS: "1"
++  CTBOOST_HIST_THREADS: "1"
++
++jobs:
++  scientific-integration:
++    runs-on: windows-latest
++    timeout-minutes: 30
++    steps:
++      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.0.2
++      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.2.0
++        with:
++          python-version: "3.12"
++
++      - name: Install pinned scientific test stack
++        shell: pwsh
++        run: |
++          python -m pip install --upgrade pip
++          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
++          python -m pip install "pybind11<3" jsonschema "numpy==2.0.2" "pandas==2.3.3" "scikit-learn==1.6.1" "scipy==1.16.3" "xgboost==3.4.1" "lightgbm==4.7.0" "psutil==7.2.2" "pytest==9.1.1"
++          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
++          python -m pip install . --no-deps --config-settings=cmake.define.CTBOOST_ENABLE_CUDA=OFF
++          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
++
++      - name: Test installed package and native scientific contracts
++        shell: pwsh
++        run: |
++          $scientificRoot = Join-Path $env:RUNNER_TEMP "ctboost-scientific-tests"
++          if (Test-Path -LiteralPath $scientificRoot) {
++            throw "Expected a new isolated scientific test directory"
++          }
++          New-Item -ItemType Directory -Path $scientificRoot | Out-Null
++          Copy-Item -Path tests,benchmarks,include,spec -Destination $scientificRoot -Recurse
++          New-Item -ItemType Directory -Path (Join-Path $scientificRoot "scripts") | Out-Null
++          Copy-Item -Path scripts/prepare_cuda_runtime_license.py,scripts/validate_release_artifacts.py -Destination (Join-Path $scientificRoot "scripts")
++          Push-Location $scientificRoot
++          try {
++            @'
++          import hashlib, importlib.metadata as metadata, json, os
++          from pathlib import Path
++          import sys
++          import ctboost, numpy, pandas, scipy, sklearn, xgboost, lightgbm, psutil, pytest
++
++          expected = {"numpy":"2.0.2", "pandas":"2.3.3", "scikit-learn":"1.6.1",
++                      "scipy":"1.16.3", "xgboost":"3.4.1", "lightgbm":"4.7.0",
++                      "psutil":"7.2.2", "pytest":"9.1.1"}
++          actual = {name: metadata.version(name) for name in expected}
++          assert actual == expected, (actual, expected)
++          assert sys.version_info[:2] == (3, 12), sys.version
++          workspace = Path(os.environ["GITHUB_WORKSPACE"]).resolve()
++          package = Path(ctboost.__file__).resolve()
++          assert workspace != package and workspace not in package.parents, package
++          native_paths = {"ctboost": Path(ctboost._core.__file__).resolve(),
++                          "xgboost": Path(xgboost.core._LIB._name).resolve(),
++                          "lightgbm": Path(lightgbm.basic._LIB._name).resolve()}
++          native = {name: {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
++                    for name, path in native_paths.items()}
++          receipt = {"python": sys.version, "versions": actual, "native": native,
++                     "ctboost_package": str(package), "ctboost_build": ctboost.build_info(),
++                     "scope": "Synthetic contract tests only; no benchmark dataset or scoring job"}
++          Path("scientific-runtime.json").write_text(json.dumps(receipt, indent=2)+"\n", encoding="utf-8")
++          print(json.dumps(receipt, indent=2))
++          '@ | python -
++            if ($LASTEXITCODE -ne 0) { throw "Required scientific runtime preflight failed" }
++
++            $scientificTests = @(
++              "tests/test_fixed_leaf_refit.py",
++              "tests/test_fixed_binary_leaf_refit.py",
++              "tests/test_fixed_multiclass_leaf_refit.py",
++              "tests/test_fixed_multiclass_leaf_refit_math.py",
++              "tests/test_fixed_clean_refit_check.py",
++              "tests/test_fixed_seed_ensemble.py",
++              "tests/test_union_refit_experiment.py",
++              "tests/test_binary_union_experiment.py",
++              "tests/test_seed_ensemble_experiment.py",
++              "tests/test_threshold_scout_experiment.py",
++              "tests/test_round_cv_experiment.py",
++              "tests/test_cap_expansion_experiment.py",
++              "tests/test_houses_cap_experiment.py",
++              "tests/test_houses_cap_experiment_v2.py",
++              "tests/test_multiclass_refit_experiment.py",
++              "tests/test_scalar_refresh_experiment.py",
++              "tests/test_scalar_numerical_retry_experiment.py",
++              "tests/test_ridge_numerical_diagnostic.py",
++              "tests/test_ridge_numerical_diagnostic_extended.py",
++              "tests/test_owned_process_watchdog.py",
++              "benchmarks/test_fair_accuracy_current_round_cv_support.py",
++              "benchmarks/test_fair_accuracy_current_round_cv_native.py",
++              "benchmarks/test_fair_accuracy_current_round_cv_runner.py"
++            )
++            python -X faulthandler -m pytest @scientificTests -q --junitxml=scientific-results.xml
++            if ($LASTEXITCODE -ne 0) { throw "Scientific contract tests failed" }
++            @'
++          import xml.etree.ElementTree as ET
++          suites = list(ET.parse("scientific-results.xml").getroot().iter("testsuite"))
++          assert suites and sum(int(item.attrib.get("tests", 0)) for item in suites) > 0
++          skipped = sum(int(item.attrib.get("skipped", 0)) for item in suites)
++          assert skipped == 0, f"Pinned scientific job must execute every selected case; skipped={skipped}"
++          '@ | python -
++            if ($LASTEXITCODE -ne 0) { throw "Pinned scientific coverage was incomplete" }
++          } finally {
++            Pop-Location
++          }
++
++      - name: Upload scientific runtime and results
++        if: always()
++        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
++        with:
++          name: scientific-integration-windows-py312
++          path: |
++            ${{ runner.temp }}/ctboost-scientific-tests/scientific-runtime.json
++            ${{ runner.temp }}/ctboost-scientific-tests/scientific-results.xml
++          if-no-files-found: warn

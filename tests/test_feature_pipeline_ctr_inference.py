@@ -9,7 +9,7 @@ from ctboost import FeaturePipeline
 
 
 @pytest.mark.parametrize("classes", [3, 8])
-@pytest.mark.parametrize("format_version", [3, 4])
+@pytest.mark.parametrize("format_version", [3, 4, 5])
 @pytest.mark.parametrize("strength", [0.0, 0.2, 2.0])
 def test_wide_multiclass_ctr_matches_direct_category_statistics(
     classes, format_version, strength
@@ -33,6 +33,9 @@ def test_wide_multiclass_ctr_matches_direct_category_statistics(
     state = pipeline.to_state()
     state["feature_pipeline_format_version"] = format_version
     pipeline = FeaturePipeline.from_state(state)
+    # Legacy loaders round stored priors through float32; use their actual
+    # persisted values when checking arithmetic against direct category sums.
+    state = pipeline.to_state()
     before = copy.deepcopy(pipeline.to_state())
     query = np.asarray(
         [train[0].tolist(), ["unseen"] * width, [None] * width,

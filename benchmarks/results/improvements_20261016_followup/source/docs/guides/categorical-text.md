@@ -1,0 +1,72 @@
+# Categorical, text, and embedding features
+
+CTBoost can fit a preprocessing pipeline together with the booster. The pipeline is
+serialized with the estimator and reused for validation and prediction.
+
+These transformations add or prepare input features; they do not replace the
+conditional-inference feature-selection and split-search mechanism used by
+the tree learner.
+
+## Categorical features
+
+```python
+model = CTBoostClassifier(
+    cat_features=["city", "segment"],
+    ordered_ctr=True,
+    one_hot_max_size=8,
+    max_cat_threshold=64,
+)
+```
+
+Available categorical transforms include one-hot values, smoothed target statistics,
+ordered CTRs, feature combinations, and per-feature CTR configuration. Unknown and
+missing values have deterministic routes.
+
+Starting in 0.1.60, a positive `ctr_prior_strength` below one preserves the
+unscaled target prior for first occurrences and unseen categories. Zero-prior
+cold starts retain their previous behavior. Pipeline format 4 introduced this correction;
+loaded older pipelines preserve their original smoothing until explicitly
+refitted. See [deployment](deployment.md) for saved-model compatibility.
+
+New pipelines now use format 5. Mean CTR priors, category totals, and ordered
+prefix totals accumulate in double precision, then the resulting features are
+checked and converted to float32. This reduces cancellation and accumulation
+drift and permits a finite mean when its total exceeds the float32 range. It is
+not exact summation for arbitrary target magnitudes. Frequency CTRs retain their
+existing arithmetic. Loaded formats 1–4 keep their previous accumulation,
+including during explicit refitting or warm-start replay; create a new pipeline
+to use the improved precision.
+
+Fitted pipelines record `categorical_key_encoding_version` in their state and
+inference manifest. New fits use version 2, which keeps actual missing values,
+literal strings such as `__ctboost_missing__` and `__ctboost_other__`, synthetic
+"other" buckets, backslashes, and categorical-combination delimiters distinct.
+Pipelines saved before this field existed load as version 1 and retain their
+historical key behavior for prediction and warm starts. CTBoost model documents use
+schema version 2 for new saves while the current runtime continues to read schema
+version 1 artifacts.
+
+## Text features
+
+```python
+model = CTBoostClassifier(
+    text_features=["title", "description"],
+    text_tokenizer="word",
+    text_ngram_range=(1, 2),
+    text_lowercase=True,
+    text_feature_calcer="tfidf",
+    text_min_token_count=2,
+    text_max_dictionary_size=50_000,
+)
+```
+
+Tokenizers are intentionally deterministic and dependency-free. CTBoost currently
+provides word, whitespace, and character tokenization; count, binary, and raw
+count-times-IDF features. It does not claim CatBoost's tokenizer/dictionary breadth.
+
+## Embeddings
+
+Fixed-width embedding columns can produce descriptive statistics and optional
+target-supervised projections. Supervised projections must be fitted only on training
+data. They are regularized correlation/ridge-style transforms, not ordered or
+leave-one-out target encoders.

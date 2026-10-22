@@ -1,0 +1,166 @@
+{
+  "correction": {
+    "checks": {
+      "fitting": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 0.006772676482796669,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 6.204040416743376e-07,
+        "oracle_max_absolute_difference": 4.344151905755211e-06
+      },
+      "validation": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 0.006772676482796669,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 6.045775640707265e-07,
+        "oracle_max_absolute_difference": 4.233332797198841e-06
+      }
+    },
+    "fold": {
+      "coefficient_rounding_absolute_bound": 1.2526680445990035e-06,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "xgboost",
+      "physical_trees": 128,
+      "prediction_oracle_absolute_tolerance": 0.006772676482796669,
+      "topology_sha256_after": "e1a0ff63fe2b1b8553fce1be336fc7fa1bd0b07d0ae182112184eb73fd8fbba6",
+      "topology_sha256_before": "e1a0ff63fe2b1b8553fce1be336fc7fa1bd0b07d0ae182112184eb73fd8fbba6"
+    },
+    "independent_sparse_raw_margin_oracle": true,
+    "memory": {
+      "array_budgets_bytes": {
+        "design_construction_temporary_budget": 242112000,
+        "lbfgsb_float_and_integer_work_arrays": 417408,
+        "native_leaf_result_and_int64_copy": 159744000,
+        "native_raw_result_and_float64_copy": 1248000,
+        "objective_workspace_budget": 7488000,
+        "observed_leaf_maps": 8192,
+        "optimizer_vector_budget": 102400,
+        "resident_csr_data_indices_indptr": 160368008
+      },
+      "csr_nonzeros": 9984000,
+      "excluded": [
+        "native model objects",
+        "input frames",
+        "categorical transform workspace",
+        "Python object/allocator overhead"
+      ],
+      "max_working_bytes": 6442450944,
+      "native_leaf_count": 1024,
+      "no_dense_hessian": true,
+      "parameters_upper_bound": 1024,
+      "physical_trees": 128,
+      "refit_array_budget_bytes": 571488008,
+      "rows": 78000,
+      "scope": "named conservative refit arrays, not whole-process RSS",
+      "solver_kind": "binary"
+    },
+    "native_cv_adapter": {
+      "algorithm_controls_sha256": "87154146c79456bb1faf80aeb4a7e286a78d5c2118092c284e1daa0bf012de87",
+      "effective_named_array_limit": 6442450944,
+      "fresh_payload_metadata_guard": true,
+      "inherited_named_array_limit": 4294967296,
+      "resource_override_only": true,
+      "temperature_unchanged": true
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 9984000,
+      "design_shape": [
+        78000,
+        1024
+      ],
+      "ordered_training_transform_replayed": false,
+      "training_leaf_ids_sha256": "98e459de5bd4dd3fe19536a13d8d7bc79739bcd2d1d6e091512ca6bd84035333",
+      "training_rows": 78000,
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "columns": 1024,
+      "evaluations": 956,
+      "final_objective": 0.17124456994640033,
+      "ftol": 1e-13,
+      "gradient_gate": 1e-06,
+      "gtol": 1e-09,
+      "initial_coefficients": "all zero",
+      "initial_objective": 0.1767767057614665,
+      "iterations": 882,
+      "maxcor": 20,
+      "maximum_absolute_mean_gradient": 9.082877434548826e-08,
+      "maxiter": 2000,
+      "maxls": 50,
+      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+      "method": "L-BFGS-B",
+      "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+      "penalty": 1.0,
+      "rows": 78000,
+      "status": 0
+    }
+  },
+  "corrections_disabled_before_fit": true,
+  "dataset": "GiveMeSomeCredit",
+  "early_stopping": false,
+  "feature_names": [
+    "RevolvingUtilizationOfUnsecuredLines",
+    "age",
+    "NumberOfTime30-59DaysPastDueNotWorse",
+    "DebtRatio",
+    "MonthlyIncome",
+    "NumberOfOpenCreditLinesAndLoans",
+    "NumberOfTimes90DaysLate",
+    "NumberRealEstateLoansOrLines",
+    "NumberOfTime60-89DaysPastDueNotWorse",
+    "NumberOfDependents"
+  ],
+  "finished_at": "2026-10-16T16:11:14.421030+00:00",
+  "fit_controls_sha256": "864f45cc0c7ce4357bca587b4e31e16310e1ea17d4ea2cbd4b1f0315d0fa5402",
+  "fit_seconds": 0.5111745000031078,
+  "fixed_corrections_disabled_before_fit": true,
+  "fold": 3,
+  "fold_category_schema": {},
+  "library": "xgboost",
+  "model_bytes": 159639,
+  "model_retained": false,
+  "model_sha256": "2425fc0758dc66156832b20a513b4b7a1d8b99a74a49ed40dcd1ffa8a11f0389",
+  "native_cv_fresh_fit": true,
+  "native_fit_completed": true,
+  "native_fit_started": true,
+  "parameters": {
+    "eta": 0.05,
+    "eval_metric": "auc",
+    "lambda": 10,
+    "max_bin": 256,
+    "max_cat_threshold": 256,
+    "max_cat_to_onehot": 8,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "multi_strategy": "one_output_per_tree",
+    "nthread": 1,
+    "objective": "binary:logistic",
+    "seed": 47,
+    "subsample": 1.0,
+    "tree_method": "hist"
+  },
+  "prediction_array_sha256": "339210b4785bd1d964adedaaf0e70b05e31c027cb860966990ffd3ed0a1916ab",
+  "prediction_dtype": "<f4",
+  "prediction_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave18b\\fold_predictions\\0163.npz",
+  "prediction_sha256": "7d975931c821cfd3ffc89a1746737e7154323827b9fda37f6add84022486513b",
+  "prediction_shape": [
+    19500
+  ],
+  "profile_index": 2,
+  "reload_bit_exact": true,
+  "requested_rounds": 128,
+  "retained_rounds": 128,
+  "seed": 47,
+  "started_at": "2026-10-16T16:10:50.719374+00:00",
+  "status": "ok",
+  "structural_early_termination": false,
+  "temperature": null,
+  "training_rows": 78000,
+  "validation_error": 0.14490094362918393,
+  "validation_labels_received": false,
+  "validation_rows": 19500
+}

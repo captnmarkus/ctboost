@@ -1,0 +1,107 @@
+{
+  "correction": {
+    "fold": {
+      "coefficient_rounding_absolute_bound": 2.4342814426865905e-07,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "ctboost",
+      "physical_trees": 16,
+      "prediction_oracle_absolute_tolerance": 0.00029564741998910904,
+      "topology_sha256_after": "c4fd829ef31f201080b5e1b09264f753307ae34e56d37609cee7c3e146357500",
+      "topology_sha256_before": "c4fd829ef31f201080b5e1b09264f753307ae34e56d37609cee7c3e146357500"
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 5808,
+      "design_shape": [
+        363,
+        1012
+      ],
+      "ordered_ctr": true,
+      "ordered_training_transform_replayed": true,
+      "pipeline_state_sha256": "aec3030b714d519945402f53a4a2419328ac129a41dbe7acbb789b6d472ce918",
+      "training_leaf_ids_sha256": "10592ee818cc8253459c4e82dbdcdd3b42b020dad5740ee1aa4552be83322f4e",
+      "training_rows": 363,
+      "training_transform_sha256": "fbd0586e48015512c483a875aeb45b820f8381004b7432631c49e19d3e71a071",
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "coefficient_norm": 0.045690471815120266,
+      "condition_estimate": 7.068032933623219,
+      "istop": 2,
+      "iterations": 7,
+      "matrix_norm": 91.25354898153171,
+      "normal_residual_norm": 3.4791229239068553e-07,
+      "regularized_residual_norm": 8.273978826174332,
+      "residual_norm": 8.146846408352921
+    },
+    "stop_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 0.00029564741998910904,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 3.227045841161566e-07,
+      "oracle_max_absolute_difference": 2.130655751386712e-06
+    },
+    "training_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 0.00029564741998910904,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 2.534904943995121e-07,
+      "oracle_max_absolute_difference": 2.0181497184523778e-06
+    }
+  },
+  "dataset": "QSAR_fish_toxicity",
+  "early_stopping": false,
+  "feature_names": [
+    "CIC0",
+    "SM1_Dz(Z)",
+    "GATS1i",
+    "NdsCH",
+    "NdssC",
+    "MLOGP"
+  ],
+  "finished_at": "2026-10-16T13:13:00.941391+00:00",
+  "fit_seconds": 0.01666990000012447,
+  "fold": 1,
+  "fold_category_counts": {},
+  "fold_category_schema": {},
+  "library": "ctboost",
+  "model_bytes": 1363175,
+  "model_retained": false,
+  "model_sha256": "b57a5111ad2565cff0cfcb7ee39d24b476761cbe80df555af84fe8069b38b545",
+  "parameters": {
+    "alpha": 0.5,
+    "bootstrap_type": "Bernoulli",
+    "cat_features": null,
+    "eval_metric": "RMSE",
+    "feature_test": "grouped",
+    "feature_test_adjustment": "none",
+    "feature_test_bins": 8,
+    "iterations": 16,
+    "lambda_l2": 1,
+    "leaf_estimation_backtracking": true,
+    "leaf_estimation_iterations": 3,
+    "learning_rate": 0.15,
+    "max_bins": 256,
+    "max_cat_threshold": 64,
+    "max_depth": 8,
+    "multi_strategy": "one_output_per_tree",
+    "multiclass_feature_test": "single",
+    "ordered_ctr": true,
+    "random_seed": 47,
+    "subsample": 0.8,
+    "verbose": false
+  },
+  "prediction_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave13\\fold_predictions\\QSAR_fish_toxicity\\ctboost\\profile0-fold1.npz",
+  "prediction_sha256": "9be6462f8f0a8d559df61ee7b15904ddc347bb20aa6ccb9d91f0b73cc47452a7",
+  "profile_index": 0,
+  "requested_rounds": 16,
+  "retained_rounds": 16,
+  "started_at": "2026-10-16T13:13:00.544603+00:00",
+  "status": "ok",
+  "structural_early_termination": false,
+  "temperature": null,
+  "validation_error": 1.0587955814595458
+}

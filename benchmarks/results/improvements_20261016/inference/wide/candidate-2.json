@@ -1,0 +1,113 @@
+{
+  "label": "candidate-2",
+  "purpose": "Deliberately wide schema-copy stress case; no quality/general speed claim",
+  "runner_sha256": "bf433f5c933d94843e4ea5cf53cf771cf703e76f740fdcbd1f4c8c3cdbe8bda2",
+  "common_runner_sha256": "114c3fd5fc9a43d78e4dcd019310c603c93b13420a1468c1cd67034c8558c7c0",
+  "state_sha256": "8a267a9d7b92b1c3ed07f1fe579c899ce3ca005df10a92ff94e9d31994fd9d1e",
+  "input_sha256": "e769207428b9a1ccbe5c975a025eedac44f8732b945f720f438c314b5387ec49",
+  "native_sha256": "e1f5f5a6e29d9f643189fe87e27cecf66248b9ddd65d1617321768e5320084ed",
+  "build_info": {
+    "version": "0.1.61",
+    "cuda_enabled": false,
+    "cuda_runtime": "not compiled",
+    "compiler": "MSVC 1950",
+    "cxx_standard": 17,
+    "package_version": "0.1.61"
+  },
+  "build_receipt": {
+    "source_head": "9e68e6d5a6fe4a402d7b465092f6690bdf979a94",
+    "source_file": "src/core/booster_predict.cpp",
+    "source_sha256": "445c02bc2d810969088af32a4e9a835bd20cc80a9b52124a55e7ff1d74c00651",
+    "build_recipe_sha256": "3daf4d3f40219d4672d1c7992531020b86e966bb67d69a900dc01f0ed76c8047",
+    "cmake_cache_sha256": "7213ad75a9069c0a0e576fd03d1f360c2981ead3a94017cd062785c942aa476f",
+    "compiler_flags": "/DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG",
+    "compiler": "MSVC 19.50.35737.0",
+    "cuda": false,
+    "native_sha256": "e1f5f5a6e29d9f643189fe87e27cecf66248b9ddd65d1617321768e5320084ed",
+    "changed_sources": {
+      "src/core/booster_prediction.cpp": "6bd513e631440ffd867da412612facaac1c7546a5e9607e1a04e8ef42204858b",
+      "src/core/booster_predict.cpp": "445c02bc2d810969088af32a4e9a835bd20cc80a9b52124a55e7ff1d74c00651",
+      "src/core/booster_internal.hpp": "a81b5916f30bb3145294671acc7336dc5bddad223a2f65fd7379a73312dee941"
+    }
+  },
+  "versions": {
+    "numpy": "1.26.4",
+    "psutil": "7.2.2"
+  },
+  "python": "3.10.14 | packaged by Anaconda, Inc. | (main, Mar 21 2024, 16:20:14) [MSC v.1916 64 bit (AMD64)]",
+  "affinity": [
+    6
+  ],
+  "cases": [
+    {
+      "rows": 1,
+      "columns": 512,
+      "active_columns": 4,
+      "trees": 64,
+      "depth": 2,
+      "exact_parity": true,
+      "reference_sha256": "6da6609a59ef54e473516736e38af999105fabddabe4f401c492f910becc9cc7",
+      "raw": {
+        "median_ms": 0.031870900000285474,
+        "block_ms": [
+          0.03275260000009439,
+          0.031870900000285474,
+          0.03164440000000468,
+          0.03640760000052978,
+          0.03157160000046133,
+          0.031589600001098006,
+          0.03188829999999143
+        ],
+        "calls_per_block": 1000
+      },
+      "prepared": {
+        "median_ms": 0.003950300000724383,
+        "block_ms": [
+          0.003968700000768877,
+          0.003948999999920488,
+          0.003978500000812346,
+          0.003935200000341865,
+          0.003939799998988747,
+          0.003950300000724383,
+          0.003958400000556139
+        ],
+        "calls_per_block": 1000
+      }
+    },
+    {
+      "rows": 64,
+      "columns": 512,
+      "active_columns": 4,
+      "trees": 64,
+      "depth": 2,
+      "exact_parity": true,
+      "reference_sha256": "6e03a468022c910a8a150c2c7613d28d9335277e3d1ab3d45d5ac99c3d8b9ba5",
+      "raw": {
+        "median_ms": 0.09766567460347789,
+        "block_ms": [
+          0.0986702380970879,
+          0.09762698412862572,
+          0.09780496031727659,
+          0.09764682539796576,
+          0.09740297618990885,
+          0.09807876983994368,
+          0.09766567460347789
+        ],
+        "calls_per_block": 504
+      },
+      "prepared": {
+        "median_ms": 0.02047880000100122,
+        "block_ms": [
+          0.020305199999711476,
+          0.020521000000371714,
+          0.020438999999896623,
+          0.020475499999520252,
+          0.020504500000242842,
+          0.020501200000580866,
+          0.02047880000100122
+        ],
+        "calls_per_block": 1000
+      }
+    }
+  ]
+}

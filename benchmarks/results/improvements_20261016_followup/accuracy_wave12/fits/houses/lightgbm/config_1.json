@@ -1,0 +1,85 @@
+{
+  "config_index": 1,
+  "correction": {
+    "fold": {
+      "coefficient_rounding_absolute_bound": 1.094470302918815e-15,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "lightgbm",
+      "physical_trees": 978,
+      "prediction_oracle_absolute_tolerance": 5.364647083260186e-11,
+      "topology_sha256_after": "1089f1d3d10d4b3b52330d0d98a7b3492871fc972e1bc65b0fbdaab669df93e1",
+      "topology_sha256_before": "1089f1d3d10d4b3b52330d0d98a7b3492871fc972e1bc65b0fbdaab669df93e1"
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 6112500,
+      "design_shape": [
+        6250,
+        124206
+      ],
+      "ordered_training_transform_replayed": false,
+      "training_leaf_ids_sha256": "07573e00a9e19d68a285b13c6020c846000ef32fbce6c3d9783fb11d543f4011",
+      "training_rows": 6250,
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "coefficient_norm": 0.08066758339056783,
+      "condition_estimate": 218.4616560270238,
+      "istop": 2,
+      "iterations": 63,
+      "matrix_norm": 2638.516909649,
+      "normal_residual_norm": 9.04823189200171e-05,
+      "regularized_residual_norm": 4.087560643369748,
+      "residual_norm": 3.193883686574898
+    },
+    "stop_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 5.364647083260186e-11,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 4.709800526168266e-15,
+      "oracle_max_absolute_difference": 6.217248937900877e-14
+    },
+    "training_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 5.364647083260186e-11,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 6.60574135402156e-15,
+      "oracle_max_absolute_difference": 8.704148513061227e-14
+    }
+  },
+  "dataset": "houses",
+  "finished_at": "2026-10-16T12:30:47.188461+00:00",
+  "fit_seconds": 2.709298800000397,
+  "library": "lightgbm",
+  "parameters": {
+    "bagging_fraction": 0.8,
+    "bagging_freq": 1,
+    "deterministic": true,
+    "feature_fraction": 0.8,
+    "force_col_wise": true,
+    "lambda_l2": 5,
+    "learning_rate": 0.015,
+    "max_bin": 255,
+    "metric": "rmse",
+    "min_data_in_leaf": 5,
+    "num_leaves": 127,
+    "num_threads": 1,
+    "objective": "regression",
+    "seed": 47,
+    "verbosity": -1,
+    "zero_as_missing": false
+  },
+  "patience": 100,
+  "retained_at_round_cap": false,
+  "retained_rounds": 978,
+  "round_cap": 4000,
+  "started_at": "2026-10-16T12:30:25.253158+00:00",
+  "status": "ok",
+  "stop_error": 0.22696527599244443,
+  "trained_at_round_cap": false,
+  "trained_rounds_if_available": 1078,
+  "uncorrected_stop_error": 0.22695342139430139
+}

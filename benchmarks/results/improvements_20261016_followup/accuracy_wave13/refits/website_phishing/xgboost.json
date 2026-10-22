@@ -1,0 +1,333 @@
+{
+  "dataset": "website_phishing",
+  "library": "xgboost",
+  "selection": {
+    "best": {
+      "parameters": {
+        "eta": 0.05,
+        "eval_metric": "mlogloss",
+        "lambda": 3,
+        "max_bin": 256,
+        "max_cat_threshold": 256,
+        "max_cat_to_onehot": 8,
+        "max_depth": 4,
+        "min_child_weight": 0.1,
+        "multi_strategy": "one_output_per_tree",
+        "nthread": 1,
+        "num_class": 3,
+        "objective": "multi:softprob",
+        "seed": 47,
+        "subsample": 1.0,
+        "tree_method": "hist"
+      },
+      "retained_rounds": 122,
+      "stop_error": null
+    },
+    "binary_refit": null,
+    "cv_selection": {
+      "all_fits_successful": true,
+      "best": {
+        "mean_fold_error": 0.3504843108515129,
+        "profile_index": 0,
+        "requested_rounds": 122
+      },
+      "dataset": "website_phishing",
+      "job": {
+        "anchor_rounds": 243,
+        "binary_refit": null,
+        "dataset": "website_phishing",
+        "leaf_refit": null,
+        "library": "xgboost",
+        "original_selection": {
+          "all_eight_successful": true,
+          "base_selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 2,
+              "fit_seconds": 0.51850530000047,
+              "parameters": {
+                "eta": 0.05,
+                "eval_metric": "mlogloss",
+                "lambda": 3,
+                "max_bin": 256,
+                "max_cat_threshold": 256,
+                "max_cat_to_onehot": 8,
+                "max_depth": 4,
+                "min_child_weight": 0.1,
+                "multi_strategy": "one_output_per_tree",
+                "nthread": 1,
+                "num_class": 3,
+                "objective": "multi:softprob",
+                "seed": 47,
+                "subsample": 1.0,
+                "tree_method": "hist"
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 243,
+              "selection_key": [
+                0.24463517831246911,
+                243,
+                2
+              ],
+              "stop_error": 0.24463517831246911,
+              "trained_rounds_if_available": 293
+            },
+            "cumulative_search_fit_seconds": 16.981693000007,
+            "current_wave_all_eight_successful": true,
+            "dataset": "website_phishing",
+            "library": "xgboost",
+            "model_bytes": 1200089,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave5\\models\\website_phishing\\xgboost.pkl",
+            "model_sha256": "2a59483d2efb5ba3adc55dd8167ce5b8fbba6738f183c19cbf265d851e30be6f",
+            "plan_sha256": "70b439625ede1a0f4fcde32e08ced81995eee0ab020ccbeb76e6d39a8784abb3",
+            "search_fit_seconds": 2.7884194000016578,
+            "source_wave": 5
+          },
+          "best": {
+            "config_index": 2,
+            "fit_seconds": 0.51850530000047,
+            "parameters": {
+              "eta": 0.05,
+              "eval_metric": "mlogloss",
+              "lambda": 3,
+              "max_bin": 256,
+              "max_cat_threshold": 256,
+              "max_cat_to_onehot": 8,
+              "max_depth": 4,
+              "min_child_weight": 0.1,
+              "multi_strategy": "one_output_per_tree",
+              "nthread": 1,
+              "num_class": 3,
+              "objective": "multi:softprob",
+              "seed": 47,
+              "subsample": 1.0,
+              "tree_method": "hist"
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 243,
+            "selection_key": [
+              0.24463517831246911,
+              0,
+              0.0,
+              1.0
+            ],
+            "stop_error": 0.24463517831246911,
+            "trained_rounds_if_available": 293
+          },
+          "cumulative_search_fit_seconds": 16.981693000007,
+          "current_wave_all_eight_successful": true,
+          "dataset": "website_phishing",
+          "library": "xgboost",
+          "model_bytes": 1200112,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave7\\models\\website_phishing\\xgboost.pkl",
+          "model_sha256": "b1f901179d4861c2cd6d5ce36176ec3530d08d843dd1a353684fec93d7941856",
+          "plan_sha256": "caa9857e7fed25876734720058e208566b971ed00d2627df8737f3837ab164a9",
+          "search_fit_seconds": 2.7884194000016578,
+          "source_wave": 7,
+          "temperature": 1.0
+        },
+        "parameters": {
+          "eta": 0.05,
+          "eval_metric": "mlogloss",
+          "lambda": 3,
+          "max_bin": 256,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 8,
+          "max_depth": 4,
+          "min_child_weight": 0.1,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "num_class": 3,
+          "objective": "multi:softprob",
+          "seed": 47,
+          "subsample": 1.0,
+          "tree_method": "hist"
+        },
+        "profiles": [],
+        "round_candidates": [
+          122,
+          243,
+          486
+        ],
+        "rounds": 122,
+        "temperature": 1.0,
+        "training_selection": {
+          "all_eight_successful": true,
+          "base_selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 2,
+              "fit_seconds": 0.51850530000047,
+              "parameters": {
+                "eta": 0.05,
+                "eval_metric": "mlogloss",
+                "lambda": 3,
+                "max_bin": 256,
+                "max_cat_threshold": 256,
+                "max_cat_to_onehot": 8,
+                "max_depth": 4,
+                "min_child_weight": 0.1,
+                "multi_strategy": "one_output_per_tree",
+                "nthread": 1,
+                "num_class": 3,
+                "objective": "multi:softprob",
+                "seed": 47,
+                "subsample": 1.0,
+                "tree_method": "hist"
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 243,
+              "selection_key": [
+                0.24463517831246911,
+                243,
+                2
+              ],
+              "stop_error": 0.24463517831246911,
+              "trained_rounds_if_available": 293
+            },
+            "cumulative_search_fit_seconds": 16.981693000007,
+            "current_wave_all_eight_successful": true,
+            "dataset": "website_phishing",
+            "library": "xgboost",
+            "model_bytes": 1200089,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave5\\models\\website_phishing\\xgboost.pkl",
+            "model_sha256": "2a59483d2efb5ba3adc55dd8167ce5b8fbba6738f183c19cbf265d851e30be6f",
+            "plan_sha256": "70b439625ede1a0f4fcde32e08ced81995eee0ab020ccbeb76e6d39a8784abb3",
+            "search_fit_seconds": 2.7884194000016578,
+            "source_wave": 5
+          },
+          "best": {
+            "config_index": 2,
+            "fit_seconds": 0.51850530000047,
+            "parameters": {
+              "eta": 0.05,
+              "eval_metric": "mlogloss",
+              "lambda": 3,
+              "max_bin": 256,
+              "max_cat_threshold": 256,
+              "max_cat_to_onehot": 8,
+              "max_depth": 4,
+              "min_child_weight": 0.1,
+              "multi_strategy": "one_output_per_tree",
+              "nthread": 1,
+              "num_class": 3,
+              "objective": "multi:softprob",
+              "seed": 47,
+              "subsample": 1.0,
+              "tree_method": "hist"
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 243,
+            "selection_key": [
+              0.24463517831246911,
+              0,
+              0.0,
+              1.0
+            ],
+            "stop_error": 0.24463517831246911,
+            "trained_rounds_if_available": 293
+          },
+          "cumulative_search_fit_seconds": 16.981693000007,
+          "current_wave_all_eight_successful": true,
+          "dataset": "website_phishing",
+          "library": "xgboost",
+          "model_bytes": 1200112,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave7\\models\\website_phishing\\xgboost.pkl",
+          "model_sha256": "b1f901179d4861c2cd6d5ce36176ec3530d08d843dd1a353684fec93d7941856",
+          "plan_sha256": "caa9857e7fed25876734720058e208566b971ed00d2627df8737f3837ab164a9",
+          "search_fit_seconds": 2.7884194000016578,
+          "source_wave": 7,
+          "temperature": 1.0
+        }
+      },
+      "library": "xgboost",
+      "scores": [
+        {
+          "mean_fold_error": 0.3504843108515129,
+          "profile_index": 0,
+          "requested_rounds": 122
+        },
+        {
+          "mean_fold_error": 0.3561320380639108,
+          "profile_index": 1,
+          "requested_rounds": 243
+        },
+        {
+          "mean_fold_error": 0.3829315593237309,
+          "profile_index": 2,
+          "requested_rounds": 486
+        }
+      ]
+    },
+    "dataset": "website_phishing",
+    "leaf_refit": null,
+    "library": "xgboost",
+    "model_bytes": 625621,
+    "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave13\\models\\website_phishing\\xgboost.pkl",
+    "model_sha256": "0971c48f821bad41a24670382b27622c8019b88dadbb40997924201de7bb2b74",
+    "refit_details": {
+      "apparent_union_error_inference_transform": 0.22529925176777335,
+      "early_stopping": false,
+      "fit_seconds": 0.1303933999988658,
+      "parameters": {
+        "eta": 0.05,
+        "eval_metric": "mlogloss",
+        "lambda": 3,
+        "max_bin": 256,
+        "max_cat_threshold": 256,
+        "max_cat_to_onehot": 8,
+        "max_depth": 4,
+        "min_child_weight": 0.1,
+        "multi_strategy": "one_output_per_tree",
+        "nthread": 1,
+        "num_class": 3,
+        "objective": "multi:softprob",
+        "seed": 47,
+        "subsample": 1.0,
+        "tree_method": "hist"
+      },
+      "requested_rounds": 122,
+      "retained_rounds": 122,
+      "structural_early_termination": false,
+      "temperature": 1.0,
+      "union_data": {
+        "row_order": "original TRAIN followed by original STOP",
+        "source_roles": {
+          "stop": {
+            "index_sha256": "f1e1fc92f5b0d729ec6071939acd7ccc8d60f3133fd02e10d16163b79dad46f2",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\website_phishing\\stop.pkl",
+            "rows": 113,
+            "sha256": "33b55b90145e55aedcdfff2c8418ec782225accf2d90bb6b16afc34cf8a1e785"
+          },
+          "train": {
+            "index_sha256": "ee3eee0b7c0c312c9fab03d76edc2b2a89ff8ebf1b1b4b5f5143bd2210d149cc",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\website_phishing\\train.pkl",
+            "rows": 565,
+            "sha256": "ff284a41ad64eae6888d41871274e8ca70f6f0a2c303ed887adff29f3d1a7f9b"
+          }
+        },
+        "stop_ids_sha256": "f1e1fc92f5b0d729ec6071939acd7ccc8d60f3133fd02e10d16163b79dad46f2",
+        "stop_rows": 113,
+        "train_ids_sha256": "ee3eee0b7c0c312c9fab03d76edc2b2a89ff8ebf1b1b4b5f5143bd2210d149cc",
+        "train_rows": 565,
+        "union_category_counts": {
+          "Request_URL": 3,
+          "SFH": 3,
+          "SSLfinal_State": 3,
+          "URL_Length": 3,
+          "URL_of_Anchor": 3,
+          "age_of_domain": 2,
+          "having_IP_Address": 2,
+          "popUpWidnow": 3,
+          "web_traffic": 3
+        },
+        "union_ids_sha256": "4fd8afc6ec1942285276157af29d270c34e9643b7cc35ac3377b7d300dc6380b",
+        "union_rows": 678,
+        "vocabulary_fit_on": "TRAIN+STOP union only"
+      }
+    },
+    "source_wave": 13,
+    "temperature": 1.0
+  },
+  "status": "ok"
+}

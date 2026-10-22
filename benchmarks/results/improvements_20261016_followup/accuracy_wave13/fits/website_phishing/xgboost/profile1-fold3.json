@@ -1,0 +1,106 @@
+{
+  "correction": null,
+  "dataset": "website_phishing",
+  "early_stopping": false,
+  "feature_names": [
+    "SFH",
+    "popUpWidnow",
+    "SSLfinal_State",
+    "Request_URL",
+    "URL_of_Anchor",
+    "web_traffic",
+    "URL_Length",
+    "age_of_domain",
+    "having_IP_Address"
+  ],
+  "finished_at": "2026-10-16T13:18:23.537788+00:00",
+  "fit_seconds": 0.2500055999989854,
+  "fold": 3,
+  "fold_category_counts": {
+    "Request_URL": 3,
+    "SFH": 3,
+    "SSLfinal_State": 3,
+    "URL_Length": 3,
+    "URL_of_Anchor": 3,
+    "age_of_domain": 2,
+    "having_IP_Address": 2,
+    "popUpWidnow": 3,
+    "web_traffic": 3
+  },
+  "fold_category_schema": {
+    "Request_URL": [
+      "Legitimate",
+      "Phishy",
+      "Suspicious"
+    ],
+    "SFH": [
+      "Legitimate",
+      "Phishy",
+      "Suspicious"
+    ],
+    "SSLfinal_State": [
+      "Legitimate",
+      "Phishy",
+      "Suspicious"
+    ],
+    "URL_Length": [
+      "Legitimate",
+      "Phishy",
+      "Suspicious"
+    ],
+    "URL_of_Anchor": [
+      "Legitimate",
+      "Phishy",
+      "Suspicious"
+    ],
+    "age_of_domain": [
+      "Legitimate",
+      "Phishy"
+    ],
+    "having_IP_Address": [
+      "Legitimate",
+      "Suspicious"
+    ],
+    "popUpWidnow": [
+      "Legitimate",
+      "Phishy",
+      "Suspicious"
+    ],
+    "web_traffic": [
+      "Legitimate",
+      "Phishy",
+      "Suspicious"
+    ]
+  },
+  "library": "xgboost",
+  "model_bytes": 1196060,
+  "model_retained": false,
+  "model_sha256": "0023ff9365e1eb822615883a00be81d09000b53e3d3d5223d82d6ec008fe5ab3",
+  "parameters": {
+    "eta": 0.05,
+    "eval_metric": "mlogloss",
+    "lambda": 3,
+    "max_bin": 256,
+    "max_cat_threshold": 256,
+    "max_cat_to_onehot": 8,
+    "max_depth": 4,
+    "min_child_weight": 0.1,
+    "multi_strategy": "one_output_per_tree",
+    "nthread": 1,
+    "num_class": 3,
+    "objective": "multi:softprob",
+    "seed": 47,
+    "subsample": 1.0,
+    "tree_method": "hist"
+  },
+  "prediction_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave13\\fold_predictions\\website_phishing\\xgboost\\profile1-fold3.npz",
+  "prediction_sha256": "18835f6d3d512379712e998658ed4bce1038eaa9c2074e1bbb775b4fbee86d8b",
+  "profile_index": 1,
+  "requested_rounds": 243,
+  "retained_rounds": 243,
+  "started_at": "2026-10-16T13:18:23.219682+00:00",
+  "status": "ok",
+  "structural_early_termination": false,
+  "temperature": 1.0,
+  "validation_error": 0.5036780012277582
+}

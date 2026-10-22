@@ -1,0 +1,76 @@
+{
+  "controls": {
+    "lambda": 100.0,
+    "shrinkage": 1.0
+  },
+  "evidence": {
+    "checks": {
+      "fitting": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 0.02501663565635681,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.526038639054641e-06,
+        "oracle_max_absolute_difference": 1.6019223272323302e-05
+      },
+      "stop": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 0.02501663565635681,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.2395596726231221e-06,
+        "oracle_max_absolute_difference": 1.0910888780024663e-05
+      }
+    },
+    "fold": {
+      "coefficient_rounding_absolute_bound": 7.825680527177186e-07,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "xgboost",
+      "physical_trees": 682,
+      "prediction_oracle_absolute_tolerance": 0.02501663565635681,
+      "topology_sha256_after": "5d7bebf7596eefb50950b34471f15bf638767b829b2718ac3f02d18df8120fc1",
+      "topology_sha256_before": "5d7bebf7596eefb50950b34471f15bf638767b829b2718ac3f02d18df8120fc1"
+    },
+    "independent_sparse_raw_margin_oracle": true,
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 3604370,
+      "design_shape": [
+        5285,
+        120072
+      ],
+      "ordered_training_transform_replayed": false,
+      "training_leaf_ids_sha256": "9df1a4e78a3f0db88a053d2f4b4b25d08d04f03a41349e54c3148189f55064dc",
+      "training_rows": 5285,
+      "unobserved_leaf_correction": 0
+    }
+  },
+  "finished_at": "2026-10-16T14:20:49.316535+00:00",
+  "index": 5,
+  "predictions_sha256": "18e758631419a3c34ada4f9537817315330976f68a3db16a0cbddcb7fb4d131d",
+  "solve": {
+    "columns": 120072,
+    "evaluations": 21,
+    "final_objective": 0.035530408634681244,
+    "ftol": 1e-13,
+    "gradient_gate": 1e-06,
+    "gtol": 1e-09,
+    "initial_coefficients": "all zero",
+    "initial_objective": 0.053716641589651136,
+    "iterations": 18,
+    "maxcor": 20,
+    "maximum_absolute_mean_gradient": 8.844665000317158e-10,
+    "maxiter": 2000,
+    "maxls": 50,
+    "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+    "method": "L-BFGS-B",
+    "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+    "penalty": 100.0,
+    "rows": 5285,
+    "status": 0
+  },
+  "started_at": "2026-10-16T14:20:41.108521+00:00",
+  "status": "ok",
+  "stop_error": 0.19474486966167492
+}

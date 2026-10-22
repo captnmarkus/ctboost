@@ -172,7 +172,7 @@ def save_booster(
     )
     if resolved_format == "json":
         with path.open("w", encoding="utf-8") as stream:
-            json.dump(document, stream, indent=2, sort_keys=True)
+            json.dump(document, stream, separators=(",", ":"), sort_keys=True)
         return
 
     with path.open("wb") as stream:
@@ -230,7 +230,7 @@ def save_estimator(
             "fitted_state": serializable_state,
         }
         with path.open("w", encoding="utf-8") as stream:
-            json.dump(document, stream, indent=2, sort_keys=True)
+            json.dump(document, stream, separators=(",", ":"), sort_keys=True)
         return
 
     with path.open("wb") as stream:

@@ -1,0 +1,92 @@
+{
+  "fit": {
+    "early_stopping": false,
+    "fit_seconds": 0.028498300001956522,
+    "parameters": {
+      "bagging_fraction": 1.0,
+      "bagging_freq": 1,
+      "deterministic": true,
+      "force_col_wise": true,
+      "lambda_l2": 0.3,
+      "learning_rate": 0.05,
+      "max_bin": 255,
+      "max_cat_threshold": 256,
+      "max_cat_to_onehot": 8,
+      "metric": "multi_logloss",
+      "min_data_in_leaf": 1,
+      "num_class": 3,
+      "num_leaves": 15,
+      "num_threads": 1,
+      "objective": "multiclass",
+      "seed": 47,
+      "verbosity": -1,
+      "zero_as_missing": false
+    },
+    "requested_rounds": 43,
+    "retained_rounds": 43,
+    "structural_early_termination": false
+  },
+  "fitting_data": {
+    "original_stop_rows": 113,
+    "original_train_rows": 565,
+    "outside_cap_rows": 0,
+    "row_ids_sha256": "ee3eee0b7c0c312c9fab03d76edc2b2a89ff8ebf1b1b4b5f5143bd2210d149cc",
+    "row_order": "TRAIN then ascending outside-cap",
+    "rows": 565,
+    "schema": {
+      "Request_URL": [
+        "Legitimate",
+        "Phishy",
+        "Suspicious"
+      ],
+      "SFH": [
+        "Legitimate",
+        "Phishy",
+        "Suspicious"
+      ],
+      "SSLfinal_State": [
+        "Legitimate",
+        "Phishy",
+        "Suspicious"
+      ],
+      "URL_Length": [
+        "Legitimate",
+        "Phishy",
+        "Suspicious"
+      ],
+      "URL_of_Anchor": [
+        "Legitimate",
+        "Phishy",
+        "Suspicious"
+      ],
+      "age_of_domain": [
+        "Legitimate",
+        "Phishy"
+      ],
+      "having_IP_Address": [
+        "Legitimate",
+        "Suspicious"
+      ],
+      "popUpWidnow": [
+        "Legitimate",
+        "Phishy",
+        "Suspicious"
+      ],
+      "web_traffic": [
+        "Legitimate",
+        "Phishy",
+        "Suspicious"
+      ]
+    },
+    "source_sha256": null,
+    "stop_excluded": true,
+    "vocabulary_fit_on": "actual fitting rows only"
+  },
+  "model": {
+    "model_bytes": 205615,
+    "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave16\\anchors\\website_phishing\\lightgbm.pkl",
+    "model_sha256": "bda9e32ecd7dd9c3106f0604761f8b367e94eb5f793defb7ecf6f22cefcb3de2"
+  },
+  "status": "ok",
+  "temperature": 0.75
+}

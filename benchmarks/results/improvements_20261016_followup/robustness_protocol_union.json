@@ -1,0 +1,29 @@
+{
+  "protocol": "mandatory_union_refit_robustness_20261016",
+  "created_before": "Any real mandatory TRAIN+STOP union refit, seed947 fit or official-test feature/label access",
+  "parent_policy": "robustness_protocol_temperature.json remains preserved for earlier experiments",
+  "population": "All twelve original metadata-selected tasks and all three libraries, with every prior failed development gate preserved",
+  "wave9_policy": "Mandatory one refit on original TRAIN followed by STOP rows, with a fresh training vocabulary fitted on this union. Use exact selected tree hyperparameters and selected retained-round count from frozen wave8. No early stopping, new HPO, original-versus-refit choice, or fallback based on development. Recompute any selected regression ridge correction on the exact reconstructed ordered union transform with its unchanged penalty/shrinkage, and retain the selected multiclass temperature unchanged.",
+  "trigger": "Only a successful36-model mandatory-refit development gate opens the fixed-seed check",
+  "additional_seed": 947,
+  "additional_models": 36,
+  "seed_policy": "Refit every same wave9 policy on the same TRAIN+STOP union using seed947. Retain wave8 selected requested-round counts and all tree, regression-correction and temperature controls. No early stopping or reselection. Rebuild the shared vocabulary and ordered training transform from the union; validate preprocessing replay and native correction oracles again.",
+  "aggregation": "Average primary error across seed47 and seed947 within each dataset, then compare twelve dataset means. Never count24independent tasks. Also report each seed separately.",
+  "gate": {
+    "all_36_refits_successful": true,
+    "median_relative_error_gain_against_each_comparator": 0,
+    "minimum_dataset_wins_or_ties_against_each_comparator": 6
+  },
+  "primary_errors": {"binary": "1-ROC-AUC", "regression": "RMSE", "multiclass": "logloss"},
+  "prediction_rule": "Use the shared fixed_temperature.py float64-margin division for calibrated multiclass models, including latency measurement. Regression corrections are folded into native leaves.",
+  "if_gate_fails": "Keep official outer test and original14failed-gate confirmation sealed. Any continuation requires a new predeclared protocol; preserve the failed union policy rather than silently reverting based on development.",
+  "official_test_after_gate": {
+    "authorization": "User authorized one-shot assessment after final policy/model freeze",
+    "split": "Original OpenML repeat0/fold0/sample0 outer-test rows, uncapped",
+    "preconditions": "Freeze72native model payload hashes, all source/runtime/policy identities and official cache/split identities before opening test features/labels",
+    "models": "Use the already trained seed47 and947 mandatory union-refit models, without further fitting or adjustment after test scoring",
+    "labels": "Fit classification label order on official outer-training labels and verify exact agreement with cached roles",
+    "aggregation": "Same two-seed means within each of12datasets; preserve all per-task and seed outcomes",
+    "limitations": "Adaptive reused-development study, capped partial outer training,12tasks and2learner seeds. This is not an official TabArena run, global ranking, significance claim or new library default. Original14confirmation fold7 remains sealed."
+  }
+}

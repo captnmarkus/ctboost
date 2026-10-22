@@ -1,0 +1,47 @@
+{
+  "date": "2026-10-16",
+  "source_head": "9e68e6d5a6fe4a402d7b465092f6690bdf979a94",
+  "platform": "Windows, CPython 3.10.14, MSVC 19.50, CPU Release",
+  "installed_native": "C:\\apps\\ctboost\\ctboost\\_core.cp310-win_amd64.pyd",
+  "native_sha256": "e1f5f5a6e29d9f643189fe87e27cecf66248b9ddd65d1617321768e5320084ed",
+  "previous_native_backup": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\original-_core.cp310-win_amd64.pyd",
+  "previous_native_sha256": "46570ebdcda5ab4bf68eaeb841b5289f10af86e61206db27169b6cfffc98611a",
+  "suites": [
+    {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "147",
+      "time": "12.323",
+      "timestamp": "2026-10-16T12:28:22.661716+02:00",
+      "hostname": "MarkusPc"
+    },
+    {
+      "name": "pytest",
+      "errors": "0",
+      "failures": "0",
+      "skipped": "0",
+      "tests": "28",
+      "time": "1.289",
+      "timestamp": "2026-10-16T12:29:07.743852+02:00",
+      "hostname": "MarkusPc"
+    }
+  ],
+  "native_ctest": {
+    "passed": 1,
+    "failed": 0,
+    "command": "cmake -E env PYTHONHOME=C:/Users/captn/miniconda3 ctest --test-dir .tmp/improvements-20261016/build-release --output-on-failure",
+    "setup_note": "The first ctest attempt could not initialize embedded Python's filesystem codec. Supplying the linked interpreter's PYTHONHOME resolved that environment failure; the test then passed."
+  },
+  "changed_sources": {
+    "src/core/booster_internal.hpp": "a81b5916f30bb3145294671acc7336dc5bddad223a2f65fd7379a73312dee941",
+    "src/core/booster_predict.cpp": "445c02bc2d810969088af32a4e9a835bd20cc80a9b52124a55e7ff1d74c00651",
+    "src/core/booster_prediction.cpp": "6bd513e631440ffd867da412612facaac1c7546a5e9607e1a04e8ef42204858b"
+  },
+  "other_checks": [
+    "git diff --check",
+    "py_compile of three new top-level benchmark runners"
+  ],
+  "scope": "Targeted regression tests, not the full repository suite or non-Windows/GPU validation."
+}

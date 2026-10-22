@@ -9,7 +9,9 @@ namespace ctboost {
 py::dict NativeFeaturePipeline::to_state() const {
   py::dict state;
   state["feature_pipeline_format_version"] =
-      ctr_smoothing_version_ == 1 ? 3 : detail::kCurrentFeaturePipelineFormatVersion;
+      ctr_smoothing_version_ == 1 ? 3
+      : ctr_accumulation_version_ == 1 ? 4
+                                      : detail::kCurrentFeaturePipelineFormatVersion;
   state["categorical_key_encoding_version"] = categorical_key_encoding_version_;
   state["cat_features"] = cat_features_;
   state["ordered_ctr"] = ordered_ctr_;
@@ -98,7 +100,7 @@ py::dict NativeFeaturePipeline::to_state() const {
     item["source_indices"] = detail::VectorToPyList(ctr_state.source_indices);
     item["output_names"] = detail::VectorToPyList(ctr_state.output_names);
     item["ctr_type"] = ctr_state.ctr_type;
-    item["prior_values"] = detail::VectorToPyList(ctr_state.prior_values);
+    item["prior_values"] = py::cast(ctr_state.prior_values);
     item["total_rows"] = ctr_state.total_rows;
     py::dict total_counts;
     for (const auto& [key, value] : ctr_state.total_counts) {
@@ -107,7 +109,7 @@ py::dict NativeFeaturePipeline::to_state() const {
     item["total_counts"] = std::move(total_counts);
     py::dict total_sums;
     for (const auto& [key, values] : ctr_state.total_sums) {
-      total_sums[py::str(key)] = detail::VectorToPyList(values);
+      total_sums[py::str(key)] = py::cast(values);
     }
     item["total_sums"] = std::move(total_sums);
     ctr_states.append(std::move(item));

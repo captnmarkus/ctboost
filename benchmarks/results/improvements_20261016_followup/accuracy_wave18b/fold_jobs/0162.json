@@ -1,0 +1,166 @@
+{
+  "correction": {
+    "checks": {
+      "fitting": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 0.006697024218738079,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 6.166349039231024e-07,
+        "oracle_max_absolute_difference": 4.326511438002001e-06
+      },
+      "validation": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 0.006697024218738079,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 6.420918204674561e-07,
+        "oracle_max_absolute_difference": 4.397379680831648e-06
+      }
+    },
+    "fold": {
+      "coefficient_rounding_absolute_bound": 1.2196180781860744e-06,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "xgboost",
+      "physical_trees": 128,
+      "prediction_oracle_absolute_tolerance": 0.006697024218738079,
+      "topology_sha256_after": "8712073b53124eaa0ae5e66e6e4471e013739b4067ff74f882a35ef7d3cc5554",
+      "topology_sha256_before": "8712073b53124eaa0ae5e66e6e4471e013739b4067ff74f882a35ef7d3cc5554"
+    },
+    "independent_sparse_raw_margin_oracle": true,
+    "memory": {
+      "array_budgets_bytes": {
+        "design_construction_temporary_budget": 242112000,
+        "lbfgsb_float_and_integer_work_arrays": 417408,
+        "native_leaf_result_and_int64_copy": 159744000,
+        "native_raw_result_and_float64_copy": 1248000,
+        "objective_workspace_budget": 7488000,
+        "observed_leaf_maps": 8192,
+        "optimizer_vector_budget": 102400,
+        "resident_csr_data_indices_indptr": 160368008
+      },
+      "csr_nonzeros": 9984000,
+      "excluded": [
+        "native model objects",
+        "input frames",
+        "categorical transform workspace",
+        "Python object/allocator overhead"
+      ],
+      "max_working_bytes": 6442450944,
+      "native_leaf_count": 1024,
+      "no_dense_hessian": true,
+      "parameters_upper_bound": 1024,
+      "physical_trees": 128,
+      "refit_array_budget_bytes": 571488008,
+      "rows": 78000,
+      "scope": "named conservative refit arrays, not whole-process RSS",
+      "solver_kind": "binary"
+    },
+    "native_cv_adapter": {
+      "algorithm_controls_sha256": "87154146c79456bb1faf80aeb4a7e286a78d5c2118092c284e1daa0bf012de87",
+      "effective_named_array_limit": 6442450944,
+      "fresh_payload_metadata_guard": true,
+      "inherited_named_array_limit": 4294967296,
+      "resource_override_only": true,
+      "temperature_unchanged": true
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 9984000,
+      "design_shape": [
+        78000,
+        1024
+      ],
+      "ordered_training_transform_replayed": false,
+      "training_leaf_ids_sha256": "4d465f02c43567a7704d15a8a476f5e0c18b6239e8dcb81216957b864e564695",
+      "training_rows": 78000,
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "columns": 1024,
+      "evaluations": 990,
+      "final_objective": 0.17193553127929603,
+      "ftol": 1e-13,
+      "gradient_gate": 1e-06,
+      "gtol": 1e-09,
+      "initial_coefficients": "all zero",
+      "initial_objective": 0.17765062640584542,
+      "iterations": 909,
+      "maxcor": 20,
+      "maximum_absolute_mean_gradient": 8.342203986865518e-08,
+      "maxiter": 2000,
+      "maxls": 50,
+      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+      "method": "L-BFGS-B",
+      "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+      "penalty": 1.0,
+      "rows": 78000,
+      "status": 0
+    }
+  },
+  "corrections_disabled_before_fit": true,
+  "dataset": "GiveMeSomeCredit",
+  "early_stopping": false,
+  "feature_names": [
+    "RevolvingUtilizationOfUnsecuredLines",
+    "age",
+    "NumberOfTime30-59DaysPastDueNotWorse",
+    "DebtRatio",
+    "MonthlyIncome",
+    "NumberOfOpenCreditLinesAndLoans",
+    "NumberOfTimes90DaysLate",
+    "NumberRealEstateLoansOrLines",
+    "NumberOfTime60-89DaysPastDueNotWorse",
+    "NumberOfDependents"
+  ],
+  "finished_at": "2026-10-16T16:10:48.127525+00:00",
+  "fit_controls_sha256": "864f45cc0c7ce4357bca587b4e31e16310e1ea17d4ea2cbd4b1f0315d0fa5402",
+  "fit_seconds": 0.4988034999987576,
+  "fixed_corrections_disabled_before_fit": true,
+  "fold": 2,
+  "fold_category_schema": {},
+  "library": "xgboost",
+  "model_bytes": 159639,
+  "model_retained": false,
+  "model_sha256": "c50279abeee605425bc1b95bf9ad2a2392170572a28a1535fe206f4a51cb6921",
+  "native_cv_fresh_fit": true,
+  "native_fit_completed": true,
+  "native_fit_started": true,
+  "parameters": {
+    "eta": 0.05,
+    "eval_metric": "auc",
+    "lambda": 10,
+    "max_bin": 256,
+    "max_cat_threshold": 256,
+    "max_cat_to_onehot": 8,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "multi_strategy": "one_output_per_tree",
+    "nthread": 1,
+    "objective": "binary:logistic",
+    "seed": 47,
+    "subsample": 1.0,
+    "tree_method": "hist"
+  },
+  "prediction_array_sha256": "db179aa6af54f38dcedf600d75a31e2be098c543fd69daa37dc2be6d8336ff6e",
+  "prediction_dtype": "<f4",
+  "prediction_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave18b\\fold_predictions\\0162.npz",
+  "prediction_sha256": "a5b46b65f5ebd96fb5b07ab56c3af8c4549699d1b940bd03239b017a26e05036",
+  "prediction_shape": [
+    19500
+  ],
+  "profile_index": 2,
+  "reload_bit_exact": true,
+  "requested_rounds": 128,
+  "retained_rounds": 128,
+  "seed": 47,
+  "started_at": "2026-10-16T16:10:23.815887+00:00",
+  "status": "ok",
+  "structural_early_termination": false,
+  "temperature": null,
+  "training_rows": 78000,
+  "validation_error": 0.13813024259815965,
+  "validation_labels_received": false,
+  "validation_rows": 19500
+}

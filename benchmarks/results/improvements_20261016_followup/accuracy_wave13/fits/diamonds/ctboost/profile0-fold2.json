@@ -1,0 +1,145 @@
+{
+  "correction": {
+    "fold": {
+      "coefficient_rounding_absolute_bound": 0.001101703293491657,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "ctboost",
+      "physical_trees": 128,
+      "prediction_oracle_absolute_tolerance": 5.698089599609375,
+      "topology_sha256_after": "3402d48b85e1c4d381ac1cabf7d682c10594fdc509fa987b7ca3907bd3a88812",
+      "topology_sha256_before": "3402d48b85e1c4d381ac1cabf7d682c10594fdc509fa987b7ca3907bd3a88812"
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 768000,
+      "design_shape": [
+        6000,
+        2207
+      ],
+      "ordered_ctr": true,
+      "ordered_training_transform_replayed": true,
+      "pipeline_state_sha256": "9a5098e70d1d920ce5330234cfbd59ad50fc37d0db11a80b4374087d9a5c8c1a",
+      "training_leaf_ids_sha256": "d092bc7d292631e4911b00bce8a6468b478baba43ad4310d61280aa0b586a57a",
+      "training_rows": 6000,
+      "training_transform_sha256": "14568c402761a973427676d27eb0ffd8dbb5b73f10778510ae48136aee14556d",
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "coefficient_norm": 2864.884863107188,
+      "condition_estimate": 2854.0467430041954,
+      "istop": 2,
+      "iterations": 155,
+      "matrix_norm": 3687.09887520613,
+      "normal_residual_norm": 0.8366081391228518,
+      "regularized_residual_norm": 28801.976942720004,
+      "residual_norm": 27340.04798023809
+    },
+    "stop_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 5.698089599609375,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 4.0056275149058804e-07,
+      "oracle_max_absolute_difference": 0.00700714159393101
+    },
+    "training_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 5.698089599609375,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 4.241548883857492e-07,
+      "oracle_max_absolute_difference": 0.007747696316073416
+    }
+  },
+  "dataset": "diamonds",
+  "early_stopping": false,
+  "feature_names": [
+    "carat",
+    "cut",
+    "color",
+    "clarity",
+    "depth",
+    "table",
+    "x",
+    "y",
+    "z"
+  ],
+  "finished_at": "2026-10-16T13:13:22.641657+00:00",
+  "fit_seconds": 0.1724964999993972,
+  "fold": 2,
+  "fold_category_counts": {
+    "clarity": 8,
+    "color": 7,
+    "cut": 5
+  },
+  "fold_category_schema": {
+    "clarity": [
+      "I1",
+      "IF",
+      "SI1",
+      "SI2",
+      "VS1",
+      "VS2",
+      "VVS1",
+      "VVS2"
+    ],
+    "color": [
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "J"
+    ],
+    "cut": [
+      "Fair",
+      "Good",
+      "Ideal",
+      "Premium",
+      "Very Good"
+    ]
+  },
+  "library": "ctboost",
+  "model_bytes": 2927629,
+  "model_retained": false,
+  "model_sha256": "9bf617436931d9cab83e2e53f6bff1515c229fdb0b234f4ba536fdb774c8572e",
+  "parameters": {
+    "alpha": 0.05,
+    "bootstrap_type": "Bernoulli",
+    "cat_features": [
+      "cut",
+      "color",
+      "clarity"
+    ],
+    "eval_metric": "RMSE",
+    "feature_test": "grouped",
+    "feature_test_adjustment": "none",
+    "feature_test_bins": 8,
+    "iterations": 128,
+    "lambda_l2": 1,
+    "leaf_estimation_backtracking": true,
+    "leaf_estimation_iterations": 3,
+    "learning_rate": 0.15,
+    "max_bins": 256,
+    "max_cat_threshold": 64,
+    "max_depth": 8,
+    "multi_strategy": "one_output_per_tree",
+    "multiclass_feature_test": "single",
+    "ordered_ctr": true,
+    "random_seed": 47,
+    "subsample": 0.8,
+    "verbose": false
+  },
+  "prediction_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave13\\fold_predictions\\diamonds\\ctboost\\profile0-fold2.npz",
+  "prediction_sha256": "037bef185ab8d4e55b955df38d128fbd1a9874a40bace6820e188182aa731101",
+  "profile_index": 0,
+  "requested_rounds": 128,
+  "retained_rounds": 128,
+  "started_at": "2026-10-16T13:13:21.252239+00:00",
+  "status": "ok",
+  "structural_early_termination": false,
+  "temperature": null,
+  "validation_error": 645.2001571254515
+}

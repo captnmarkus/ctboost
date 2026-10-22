@@ -1,0 +1,94 @@
+{
+  "clean_fit_controls": {
+    "binary_refit": null,
+    "leaf_refit": null,
+    "multiclass_refit": null,
+    "parameters": {
+      "colsample_bytree": 0.8,
+      "eta": 0.1,
+      "eval_metric": "rmse",
+      "lambda": 10,
+      "max_bin": 256,
+      "max_depth": 8,
+      "min_child_weight": 1.25,
+      "multi_strategy": "one_output_per_tree",
+      "nthread": 1,
+      "objective": "reg:squarederror",
+      "seed": 47,
+      "subsample": 0.8,
+      "tree_method": "hist"
+    },
+    "rounds": 56,
+    "temperature": null
+  },
+  "clean_fit_controls_sha256": "18694c96c65f1593ae3d8f01de39348afc869244db8cd04cfd7f61f660a15ab8",
+  "fit": {
+    "apparent_union_error_inference_transform": 451.59500656762896,
+    "early_stopping": false,
+    "fit_seconds": 0.08335620000070776,
+    "parameters": {
+      "colsample_bytree": 0.8,
+      "eta": 0.1,
+      "eval_metric": "rmse",
+      "lambda": 10,
+      "max_bin": 256,
+      "max_depth": 8,
+      "min_child_weight": 1.25,
+      "multi_strategy": "one_output_per_tree",
+      "nthread": 1,
+      "objective": "reg:squarederror",
+      "seed": 47,
+      "subsample": 0.8,
+      "tree_method": "hist"
+    },
+    "requested_rounds": 56,
+    "retained_rounds": 56,
+    "structural_early_termination": false,
+    "union_data": {
+      "row_order": "original TRAIN followed by original STOP",
+      "source_roles": {
+        "stop": {
+          "index_sha256": "e4ff5aecc677409e8207582fe0236f8b69960d04dbde04a2f912653c090ef301",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\Another-Dataset-on-used-Fiat-500\\stop.pkl",
+          "rows": 128,
+          "sha256": "2abb866e9c9ccef26f3c9f6cccdf52540cb045c50dd23830cedcdac07e5e9768"
+        },
+        "train": {
+          "index_sha256": "2cdd25daa6280834253718148c7e690ba1942a7f7b4f38dce8170efc0c67e442",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\Another-Dataset-on-used-Fiat-500\\train.pkl",
+          "rows": 641,
+          "sha256": "4971790b94b148ac95999e371a510e4705012e227521497a30803c61b852efff"
+        }
+      },
+      "stop_ids_sha256": "e4ff5aecc677409e8207582fe0236f8b69960d04dbde04a2f912653c090ef301",
+      "stop_rows": 128,
+      "train_ids_sha256": "2cdd25daa6280834253718148c7e690ba1942a7f7b4f38dce8170efc0c67e442",
+      "train_rows": 641,
+      "union_category_counts": {
+        "model": 3
+      },
+      "union_ids_sha256": "58f7a190e2dde748a025cbae705e42fa5857ee5c1daf85948bc54f49272310c6",
+      "union_rows": 769,
+      "vocabulary_fit_on": "TRAIN+STOP union only"
+    }
+  },
+  "old_scalar_corrections_disabled_before_fit": true,
+  "status": "ok",
+  "topology": {
+    "clean_native_state_sha256": "6f5f167c48ff5a33b768895e8bac5d143fb8b8c47b622d063b156db46c8b57e6",
+    "data_schema_sha256": null,
+    "exact_clean_refit_identity_except_scalar_leaf_outputs": true,
+    "feature_pipeline_sha256": null,
+    "leaf_outputs_ignored": true,
+    "library": "xgboost",
+    "limitation": "Fresh fit and disabled-correction provenance must also be enforced by the runner",
+    "nonleaf_state_sha256": "893096897a8b7bfddd2574d7ac2d4a7ea51578d57c4b1672c2800d21e0c9050d",
+    "old_correction_subtracted": false,
+    "ordered_schema_sha256": "2254012ab8d9b2e4397fa355d797cdebc6090d7bc8a7053c5fac6eda8023b237",
+    "parent_native_state_sha256": "6f5f167c48ff5a33b768895e8bac5d143fb8b8c47b622d063b156db46c8b57e6",
+    "physical_trees": 56,
+    "problem": "regression",
+    "total_native_leaves": 2884,
+    "training_metadata_sha256": null
+  }
+}

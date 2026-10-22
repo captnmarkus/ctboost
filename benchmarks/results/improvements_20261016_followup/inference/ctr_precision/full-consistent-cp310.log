@@ -1,0 +1,1435 @@
+{"package": "C:\\apps\\ctboost\\ctboost\\__init__.py", "native": "C:\\apps\\ctboost\\ctboost\\_core.cp310-win_amd64.pyd", "native_sha256": "21ed48b6234bf570413fd4336ffdf76279b0ff9e3d9003cbcf0b34620e2aee17", "build_info": {"version": "0.1.61", "cuda_enabled": false, "cuda_runtime": "not compiled", "compiler": "MSVC 1950", "cxx_standard": 17, "package_version": "0.1.61"}, "python": "C:\\Users\\captn\\miniconda3\\python.exe", "cpu_affinity": [0, 2]}
+{"validation_only_optional_dependency_skips": ["tests/test_houses_cap_experiment.py::test_native_houses_policy_roundtrip_and_seed349[ctboost]", "tests/test_houses_cap_experiment.py::test_native_houses_policy_roundtrip_and_seed349[xgboost]", "tests/test_houses_cap_experiment.py::test_native_houses_policy_roundtrip_and_seed349[lightgbm]", "tests/test_houses_cap_experiment_v2.py::test_native_houses_policy_roundtrip_and_seed349[ctboost]", "tests/test_houses_cap_experiment_v2.py::test_native_houses_policy_roundtrip_and_seed349[xgboost]", "tests/test_houses_cap_experiment_v2.py::test_native_houses_policy_roundtrip_and_seed349[lightgbm]", "tests/test_multiclass_refit_experiment.py::test_anchor_stop_and_seed_transfer_pipeline[ctboost-False]", "tests/test_multiclass_refit_experiment.py::test_anchor_stop_and_seed_transfer_pipeline[ctboost-True]", "tests/test_multiclass_refit_experiment.py::test_anchor_stop_and_seed_transfer_pipeline[xgboost-False]", "tests/test_multiclass_refit_experiment.py::test_anchor_stop_and_seed_transfer_pipeline[xgboost-True]", "tests/test_multiclass_refit_experiment.py::test_anchor_stop_and_seed_transfer_pipeline[lightgbm-False]", "tests/test_scalar_refresh_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[binary-ctboost]", "tests/test_scalar_refresh_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[binary-xgboost]", "tests/test_scalar_refresh_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[binary-lightgbm]", "tests/test_scalar_refresh_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[regression-ctboost]", "tests/test_scalar_refresh_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[regression-xgboost]", "tests/test_scalar_refresh_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[regression-lightgbm]", "tests/test_scalar_refresh_experiment.py::test_identity_union_is_fresh_and_clean_not_parent", "tests/test_scalar_refresh_experiment.py::test_selection_runs_all_eight_candidates_from_clean_anchor"]}
+........................................................................ [  2%]
+.........................sss.......s..................................ss [  5%]
+sssssss................................................................. [  8%]
+........................................................................ [ 10%]
+................s.............................ssssssss.................. [ 13%]
+.........................F.............................................. [ 16%]
+........................................................................ [ 19%]
+........................................................................ [ 21%]
+........................................................................ [ 24%]
+........................................................................ [ 27%]
+........................................................................ [ 29%]
+........................................................................ [ 32%]
+......................s..s..s..s..s..s..s..s.........s...s..s....s..s..s [ 35%]
+...sss..sss..ssss...s..sss.............................................. [ 38%]
+...ss..........................s........................................ [ 40%]
+......................................................ss...........sss.. [ 43%]
+..sss.............................sss...........................sss..... [ 46%]
+................................................s....................... [ 48%]
+........................................................................ [ 51%]
+.....................sssss.............................................. [ 54%]
+..........................................................sss........... [ 57%]
+........................................................................ [ 59%]
+........................................................................ [ 62%]
+........................................................................ [ 65%]
+...............................................sssssssss..ssssssss...sss [ 67%]
+ssssss.................................................................. [ 70%]
+........................................................................ [ 73%]
+........................s............................................... [ 76%]
+.....................................................................sss [ 78%]
+........................................................................ [ 81%]
+..................................................................s..... [ 84%]
+........................................................................ [ 86%]
+........................................................................ [ 89%]
+.................sssFFFFFFFFFFFFFFFFFFF........FFF......FFFFFFFFFFFFFFFF [ 92%]
+FF.................................................................sssss [ 95%]
+s...................................sssssssss........................... [ 97%]
+..........................................................               [100%]
+================================== FAILURES ===================================
+____ test_distributed_tcp_training_fits_raw_feature_pipeline_across_ranks _____
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-900/test_distributed_tcp_training_1')
+
+    def test_distributed_tcp_training_fits_raw_feature_pipeline_across_ranks(tmp_path: Path):
+        pd = pytest.importorskip("pandas")
+    
+        rng = np.random.default_rng(79)
+        city_values = np.asarray(
+            [
+                "berlin",
+                "rome",
+                None,
+                "__ctboost_missing__",
+                r"\m",
+                "__ctboost_other__",
+                r"\o",
+            ],
+            dtype=object,
+        )
+        frame = pd.DataFrame(
+            {
+                "city": rng.choice(city_values, size=72),
+                "text": rng.choice(["red quick fox", "blue slow fox"], size=72),
+                "value": rng.normal(size=72).astype(np.float32),
+            }
+        )
+        target = (
+            0.8 * frame["value"].to_numpy(dtype=np.float32)
+            + (frame["city"] == "berlin").to_numpy(dtype=np.float32)
+            + 0.15 * (frame["text"] == "red quick fox").to_numpy(dtype=np.float32)
+        ).astype(np.float32)
+    
+        shard_indices = [np.arange(0, 36), np.arange(36, 72)]
+        frame.to_pickle(tmp_path / "frame_full.pkl")
+        np.save(tmp_path / "target_full.npy", target)
+        for rank, indices in enumerate(shard_indices):
+            frame.iloc[indices].to_pickle(tmp_path / f"frame_train_{rank}.pkl")
+            np.save(tmp_path / f"target_train_{rank}.npy", target[indices])
+    
+        port = _find_free_tcp_port()
+        worker_script = tmp_path / "distributed_raw_pipeline_worker.py"
+        worker_script.write_text(
+            textwrap.dedent(
+                """
+                from pathlib import Path
+                import json
+                import sys
+                import numpy as np
+                import pandas as pd
+                import ctboost
+    
+                rank = int(sys.argv[1])
+                root = Path(sys.argv[2])
+                port = int(sys.argv[3])
+    
+                frame_train = pd.read_pickle(root / f"frame_train_{rank}.pkl")
+                target_train = np.load(root / f"target_train_{rank}.npy")
+                frame_full = pd.read_pickle(root / "frame_full.pkl")
+    
+                booster = ctboost.train(
+                    frame_train,
+                    {
+                        "objective": "RMSE",
+                        "learning_rate": 0.2,
+                        "max_depth": 2,
+                        "alpha": 1.0,
+                        "lambda_l2": 1.0,
+                        "random_seed": 11,
+                        "cat_features": ["city"],
+                        "ordered_ctr": True,
+                        "text_features": ["text"],
+                        "text_hash_dim": 16,
+                        "distributed_world_size": 2,
+                        "distributed_rank": rank,
+                        "distributed_root": f"tcp://127.0.0.1:{port}/auth/{'a' * 64}",
+                        "distributed_run_id": "raw-pipeline-case",
+                        "distributed_timeout": 120.0,
+                    },
+                    label=target_train,
+                    num_boost_round=8,
+                )
+                np.save(root / f"raw_pipeline_pred_{rank}.npy", booster.predict(frame_full))
+                (root / f"raw_pipeline_codec_{rank}.json").write_text(
+                    json.dumps(
+                        {
+                            "feature_pipeline_format_version": booster._feature_pipeline.to_state()[
+                                "feature_pipeline_format_version"
+                            ],
+                            "categorical_key_encoding_version": booster._feature_pipeline.to_state()[
+                                "categorical_key_encoding_version"
+                            ],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                """
+            ),
+            encoding="utf-8",
+        )
+    
+        worker_env = os.environ.copy()
+        worker_env["PYTHONPATH"] = str(Path.cwd()) + os.pathsep + worker_env.get("PYTHONPATH", "")
+        worker_zero = subprocess.Popen(
+            [sys.executable, str(worker_script), "0", str(tmp_path), str(port)],
+            env=worker_env,
+        )
+        _wait_for_tcp_listener(port)
+        worker_one = subprocess.Popen(
+            [sys.executable, str(worker_script), "1", str(tmp_path), str(port)],
+            env=worker_env,
+        )
+        assert worker_one.wait(timeout=180) == 0
+        assert worker_zero.wait(timeout=180) == 0
+    
+        distributed_pred_0 = np.load(tmp_path / "raw_pipeline_pred_0.npy")
+        distributed_pred_1 = np.load(tmp_path / "raw_pipeline_pred_1.npy")
+        for rank in range(2):
+            codec = json.loads(
+                (tmp_path / f"raw_pipeline_codec_{rank}.json").read_text(encoding="utf-8")
+            )
+>           assert codec == {
+                "feature_pipeline_format_version": 4,
+                "categorical_key_encoding_version": 2,
+            }
+E           AssertionError: assert {'categorical...t_version': 5} == {'categorical...t_version': 4}
+E             
+E             Omitting 1 identical items, use -vv to show
+E             Differing items:
+E             {'feature_pipeline_format_version': 5} != {'feature_pipeline_format_version': 4}
+E             Use -v to get more diff
+
+tests\test_distributed_training_raw_pipeline.py:141: AssertionError
+_______________ test_dispatch_owns_only_fixed_local_assignments _______________
+
+factory = <function factory.<locals>.make at 0x000001C6AAC0EB90>
+
+    def test_dispatch_owns_only_fixed_local_assignments(factory):
+>       run = factory([parent(0), parent(1, owner="kaggle"), parent(2)])
+
+tests\test_tabarena_local_hpo_0160.py:118: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_____ test_worker_command_binds_local_identity_receipt_wheel_and_affinity _____
+
+factory = <function factory.<locals>.make at 0x000001C6AAC0E4D0>
+
+    def test_worker_command_binds_local_identity_receipt_wheel_and_affinity(factory):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:129: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_____ test_canonical_plan_hash_allows_only_whitespace_reformat_on_resume ______
+
+factory = <function factory.<locals>.make at 0x000001C6AA8393F0>
+
+    def test_canonical_plan_hash_allows_only_whitespace_reformat_on_resume(factory):
+>       first = factory()
+
+tests\test_tabarena_local_hpo_0160.py:141: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+________ test_registration_failure_prevents_controller_state_or_launch ________
+
+factory = <function factory.<locals>.make at 0x000001C6AA839480>
+
+    def test_registration_failure_prevents_controller_state_or_launch(factory):
+        def refuse(*_):
+            raise ValueError("Unregistered synthetic plan")
+        factory.worker.verify_registration = refuse
+        with pytest.raises(ValueError, match="Unregistered"):
+>           factory()
+
+tests\test_tabarena_local_hpo_0160.py:156: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+
+During handling of the above exception, another exception occurred:
+
+factory = <function factory.<locals>.make at 0x000001C6AA839480>
+
+    def test_registration_failure_prevents_controller_state_or_launch(factory):
+        def refuse(*_):
+            raise ValueError("Unregistered synthetic plan")
+        factory.worker.verify_registration = refuse
+>       with pytest.raises(ValueError, match="Unregistered"):
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'Unregistered'
+E         Actual message: 'Two available logical CPUs are required per parent'
+
+tests\test_tabarena_local_hpo_0160.py:155: AssertionError
+____________ test_execution_provenance_drift_refuses_resume[wheel] ____________
+
+factory = <function factory.<locals>.make at 0x000001C6AA83AEF0>
+field = 'wheel'
+
+    @pytest.mark.parametrize("field", ["wheel", "runtime", "registration", "worker"])
+    def test_execution_provenance_drift_refuses_resume(factory, field):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:162: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+___________ test_execution_provenance_drift_refuses_resume[runtime] ___________
+
+factory = <function factory.<locals>.make at 0x000001C6AA838310>
+field = 'runtime'
+
+    @pytest.mark.parametrize("field", ["wheel", "runtime", "registration", "worker"])
+    def test_execution_provenance_drift_refuses_resume(factory, field):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:162: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+________ test_execution_provenance_drift_refuses_resume[registration] _________
+
+factory = <function factory.<locals>.make at 0x000001C6AA838D30>
+field = 'registration'
+
+    @pytest.mark.parametrize("field", ["wheel", "runtime", "registration", "worker"])
+    def test_execution_provenance_drift_refuses_resume(factory, field):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:162: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+___________ test_execution_provenance_drift_refuses_resume[worker] ____________
+
+factory = <function factory.<locals>.make at 0x000001C6AA839900>
+field = 'worker'
+
+    @pytest.mark.parametrize("field", ["wheel", "runtime", "registration", "worker"])
+    def test_execution_provenance_drift_refuses_resume(factory, field):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:162: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+________ test_result_requires_complete_local_attested_runtime[runtime] ________
+
+factory = <function factory.<locals>.make at 0x000001C6AA8388B0>
+change = 'runtime'
+
+    @pytest.mark.parametrize("change", ["runtime", "host", "resources", "registration", "status", "raw"])
+    def test_result_requires_complete_local_attested_runtime(factory, change):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:177: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_________ test_result_requires_complete_local_attested_runtime[host] __________
+
+factory = <function factory.<locals>.make at 0x000001C6AA838040>
+change = 'host'
+
+    @pytest.mark.parametrize("change", ["runtime", "host", "resources", "registration", "status", "raw"])
+    def test_result_requires_complete_local_attested_runtime(factory, change):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:177: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_______ test_result_requires_complete_local_attested_runtime[resources] _______
+
+factory = <function factory.<locals>.make at 0x000001C6AA83B910>
+change = 'resources'
+
+    @pytest.mark.parametrize("change", ["runtime", "host", "resources", "registration", "status", "raw"])
+    def test_result_requires_complete_local_attested_runtime(factory, change):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:177: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_____ test_result_requires_complete_local_attested_runtime[registration] ______
+
+factory = <function factory.<locals>.make at 0x000001C6AA83A290>
+change = 'registration'
+
+    @pytest.mark.parametrize("change", ["runtime", "host", "resources", "registration", "status", "raw"])
+    def test_result_requires_complete_local_attested_runtime(factory, change):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:177: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+________ test_result_requires_complete_local_attested_runtime[status] _________
+
+factory = <function factory.<locals>.make at 0x000001C6AA83BA30>
+change = 'status'
+
+    @pytest.mark.parametrize("change", ["runtime", "host", "resources", "registration", "status", "raw"])
+    def test_result_requires_complete_local_attested_runtime(factory, change):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:177: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+__________ test_result_requires_complete_local_attested_runtime[raw] __________
+
+factory = <function factory.<locals>.make at 0x000001C6AA83B640>, change = 'raw'
+
+    @pytest.mark.parametrize("change", ["runtime", "host", "resources", "registration", "status", "raw"])
+    def test_result_requires_complete_local_attested_runtime(factory, change):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:177: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+______________ test_resource_timeout_preserves_terminal_evidence ______________
+
+factory = <function factory.<locals>.make at 0x000001C6AA83A7A0>
+
+    def test_resource_timeout_preserves_terminal_evidence(factory):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:190: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+___________ test_raw_runtime_digest_must_match_manifest_attestation ___________
+
+factory = <function factory.<locals>.make at 0x000001C6AA8385E0>
+
+    def test_raw_runtime_digest_must_match_manifest_attestation(factory):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:201: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_____ test_terminal_launch_failure_does_not_block_independent_assignments _____
+
+factory = <function factory.<locals>.make at 0x000001C6AA8383A0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C6AAC7A800>
+
+    def test_terminal_launch_failure_does_not_block_independent_assignments(factory, monkeypatch):
+>       run = factory([parent(0), parent(1)])
+
+tests\test_tabarena_local_hpo_0160.py:213: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+___________ test_completed_cache_verified_and_reused_without_launch ___________
+
+factory = <function factory.<locals>.make at 0x000001C6AAC0D990>
+
+    def test_completed_cache_verified_and_reused_without_launch(factory):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:230: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+___ test_synthetic_process_failure_continues_next_parent_and_never_retries ____
+
+factory = <function factory.<locals>.make at 0x000001C6A97D3520>
+
+    def test_synthetic_process_failure_continues_next_parent_and_never_retries(factory):
+        parents = [parent(0, outcome="failed"), parent(1), parent(2, owner="kaggle")]
+>       run = factory(parents)
+
+tests\test_tabarena_local_hpo_0160.py:241: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+______ test_running_import_rss_does_not_establish_completed_dataset_peak ______
+
+make_controller = <function make_controller.<locals>.make at 0x000001C6AA83AA70>
+
+    def test_running_import_rss_does_not_establish_completed_dataset_peak(make_controller):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:137: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+______________ test_dispatch_scans_past_unknown_high_memory_jobs ______________
+
+make_controller = <function make_controller.<locals>.make at 0x000001C6AA8392D0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C6AC66ABF0>
+
+    def test_dispatch_scans_past_unknown_high_memory_jobs(make_controller, monkeypatch):
+        parents = [parent(0, "unknown"), parent(1, "known"), parent(2, "known")]
+>       run = make_controller(parents)
+
+tests\test_tabarena_local_hpo_controller.py:148: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+______________________ test_pause_prevents_new_dispatch _______________________
+
+make_controller = <function make_controller.<locals>.make at 0x000001C6AAC22200>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C6A91BC5E0>
+
+    def test_pause_prevents_new_dispatch(make_controller, monkeypatch):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:172: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+______________ test_execution_policy_is_frozen_before_any_launch ______________
+
+make_controller = <function make_controller.<locals>.make at 0x000001C6AAC211B0>
+
+    def test_execution_policy_is_frozen_before_any_launch(make_controller):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:278: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+________ test_resume_imports_valid_completed_artifact_without_fitting _________
+
+make_controller = <function make_controller.<locals>.make at 0x000001C6AAC21000>
+
+    def test_resume_imports_valid_completed_artifact_without_fitting(make_controller):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:290: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+______________ test_completed_raw_modified_on_restart_is_refused ______________
+
+make_controller = <function make_controller.<locals>.make at 0x000001C6AAC220E0>
+
+    def test_completed_raw_modified_on_restart_is_refused(make_controller):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:303: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_______ test_terminal_failures_are_preserved_and_never_requeued[failed] _______
+
+make_controller = <function make_controller.<locals>.make at 0x000001C6AAC23640>
+status = 'failed'
+
+    @pytest.mark.parametrize(
+        "status", ["failed", "interrupted", "resource_pressure", "timed_out"]
+    )
+    def test_terminal_failures_are_preserved_and_never_requeued(make_controller, status):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:315: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+____ test_terminal_failures_are_preserved_and_never_requeued[interrupted] _____
+
+make_controller = <function make_controller.<locals>.make at 0x000001C6AA8381F0>
+status = 'interrupted'
+
+    @pytest.mark.parametrize(
+        "status", ["failed", "interrupted", "resource_pressure", "timed_out"]
+    )
+    def test_terminal_failures_are_preserved_and_never_requeued(make_controller, status):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:315: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_ test_terminal_failures_are_preserved_and_never_requeued[resource_pressure] __
+
+make_controller = <function make_controller.<locals>.make at 0x000001C6AAC0D630>
+status = 'resource_pressure'
+
+    @pytest.mark.parametrize(
+        "status", ["failed", "interrupted", "resource_pressure", "timed_out"]
+    )
+    def test_terminal_failures_are_preserved_and_never_requeued(make_controller, status):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:315: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_____ test_terminal_failures_are_preserved_and_never_requeued[timed_out] ______
+
+make_controller = <function make_controller.<locals>.make at 0x000001C6AAC22830>
+status = 'timed_out'
+
+    @pytest.mark.parametrize(
+        "status", ["failed", "interrupted", "resource_pressure", "timed_out"]
+    )
+    def test_terminal_failures_are_preserved_and_never_requeued(make_controller, status):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:315: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+________ test_started_worker_without_raw_becomes_terminal_interrupted _________
+
+make_controller = <function make_controller.<locals>.make at 0x000001C6AAC20F70>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C6A9777520>
+
+    def test_started_worker_without_raw_becomes_terminal_interrupted(
+        make_controller, monkeypatch
+    ):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:330: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+___________ test_launch_claim_recovers_crash_before_pid_state_write ___________
+
+make_controller = <function make_controller.<locals>.make at 0x000001C6AAC230A0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C6AC6C8250>
+
+    def test_launch_claim_recovers_crash_before_pid_state_write(
+        make_controller, monkeypatch
+    ):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+____________________ test_foreign_launch_claim_is_refused _____________________
+
+make_controller = <function make_controller.<locals>.make at 0x000001C6AAC23400>
+
+    def test_foreign_launch_claim_is_refused(make_controller):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:381: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+________ test_started_worker_with_valid_raw_is_completed_without_retry ________
+
+make_controller = <function make_controller.<locals>.make at 0x000001C6AAC20EE0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C6A9822A10>
+
+    def test_started_worker_with_valid_raw_is_completed_without_retry(
+        make_controller, monkeypatch
+    ):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:398: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_______________ test_failed_worker_even_with_raw_remains_failed _______________
+
+make_controller = <function make_controller.<locals>.make at 0x000001C6AAC201F0>
+
+    def test_failed_worker_even_with_raw_remains_failed(make_controller):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:408: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_________________ test_resource_failure_artifact_is_preserved _________________
+
+make_controller = <function make_controller.<locals>.make at 0x000001C6AAC23C70>
+
+    def test_resource_failure_artifact_is_preserved(make_controller):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:417: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+___________ test_raw_without_worker_provenance_is_terminal_invalid ____________
+
+make_controller = <function make_controller.<locals>.make at 0x000001C6AAC23A30>
+
+    def test_raw_without_worker_provenance_is_terminal_invalid(make_controller):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:429: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+______________ test_timeout_stops_owned_worker_and_never_retries ______________
+
+make_controller = <function make_controller.<locals>.make at 0x000001C6AAC20820>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C6A9517C10>
+
+    def test_timeout_stops_owned_worker_and_never_retries(make_controller, monkeypatch):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:440: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_____________ test_memory_pressure_stops_only_newest_owned_parent _____________
+
+make_controller = <function make_controller.<locals>.make at 0x000001C6AAC21000>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C6AC3B8250>
+
+    def test_memory_pressure_stops_only_newest_owned_parent(make_controller, monkeypatch):
+>       run = make_controller([parent(0), parent(1)])
+
+tests\test_tabarena_local_hpo_controller.py:462: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+__________ test_synthetic_worker_launch_cache_validation_and_resume ___________
+
+make_controller = <function make_controller.<locals>.make at 0x000001C6AAC21240>
+
+    def test_synthetic_worker_launch_cache_validation_and_resume(make_controller):
+        """A real child process writes synthetic JSON only; no model libraries or fitting."""
+        make_controller.script.write_text(
+            """
+    import argparse, hashlib, json, time
+    from pathlib import Path
+    import psutil
+    parser = argparse.ArgumentParser()
+    parser.add_argument("command")
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--dataset")
+    parser.add_argument("--config-index", type=int)
+    parser.add_argument("--affinity")
+    args, _ = parser.parse_known_args()
+    psutil.Process().cpu_affinity([int(value) for value in args.affinity.split(",")])
+    plan_path = args.output / "plan.json"
+    plan = json.loads(plan_path.read_text())
+    parent = next(p for p in plan["parents"] if p["config_index"] == args.config_index)
+    plan_hash = hashlib.sha256(plan_path.read_bytes()).hexdigest()
+    key = f"{parent['config_name']}/{parent['task_id']}/0_0"
+    raw = args.output / "data" / key / "results.pkl"
+    raw.parent.mkdir(parents=True)
+    time.sleep(0.2)
+    raw.write_text(json.dumps({"synthetic_parent": parent, "plan_sha256": plan_hash}))
+    manifest = args.output / "artifacts" / key / "manifest.json"
+    manifest.parent.mkdir(parents=True)
+    manifest.write_text(json.dumps({
+        "parent": parent, "plan_sha256": plan_hash, "status": "complete",
+        "peak_rss_bytes": psutil.Process().memory_info().rss, "elapsed_seconds": 0.2,
+        "validation": {"raw_sha256": hashlib.sha256(raw.read_bytes()).hexdigest()},
+        "synthetic_affinity": psutil.Process().cpu_affinity(),
+    }))
+    """,
+            encoding="utf-8",
+        )
+>       run = make_controller(max_workers=1)
+
+tests\test_tabarena_local_hpo_controller.py:527: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_________ test_main_revalidates_existing_plan_once_before_controller __________
+
+make_controller = <function make_controller.<locals>.make at 0x000001C6AAC235B0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001C6A9777C70>
+
+    def test_main_revalidates_existing_plan_once_before_controller(
+        make_controller, monkeypatch
+    ):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:565: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+=========================== short test summary info ===========================
+SKIPPED [3] tests\test_binary_union_experiment.py:23: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [1] tests\test_booster_constraints.py:238: CUDA support is not compiled into this build
+SKIPPED [9] tests\test_cap_expansion_experiment.py:199: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [1] tests\test_cuda_multi_device_workspace.py:173: CUDA support is not compiled into this build
+SKIPPED [8] tests\test_cuda_quantized_pool.py:346: CUDA support is not compiled into this build
+SKIPPED [3] tests\test_fixed_binary_leaf_refit.py:35: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [1] tests\test_fixed_binary_leaf_refit.py:144: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [7] tests\test_fixed_clean_refit_check.py:42: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [3] tests\test_fixed_leaf_refit.py:32: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [10] tests\test_fixed_multiclass_leaf_refit.py:33: Native serialization tests require the frozen XGBoost3.4.1 runtime
+SKIPPED [4] tests\test_fixed_multiclass_leaf_refit.py:39: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [2] tests\test_fixed_seed_ensemble.py:224: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [1] tests\test_framework_integrations.py:280: could not import 'pyspark': No module named 'pyspark'
+SKIPPED [1] tests\test_grouped_feature_test.py:752: CUDA support is not compiled into this build
+SKIPPED [1] tests\test_grouped_feature_test.py:800: CUDA support is not compiled into this build
+SKIPPED [3] tests\test_houses_cap_experiment.py:88: Frozen cross-library experiment requires complete CP312 accuracy stack; all34 module checks passed separately there
+SKIPPED [3] tests\test_houses_cap_experiment_v2.py:88: Frozen cross-library experiment requires complete CP312 accuracy stack; all34 module checks passed separately there
+SKIPPED [3] tests\test_hpo_full_0160.py:377: Optional pinned TabArena environment
+SKIPPED [3] tests\test_hpo_full_0161.py:377: Optional pinned TabArena environment
+SKIPPED [1] tests\test_leaf_estimation.py:440: CUDA support is not compiled into this build
+SKIPPED [5] tests\test_multiclass_refit_experiment.py:59: Frozen cross-library experiment requires complete CP312 accuracy stack; all34 module checks passed separately there
+SKIPPED [3] tests\test_multivariate_statistics.py:271: requires a CUDA-enabled build
+SKIPPED [9] tests\test_round_cv_experiment.py:23: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [6] tests\test_scalar_refresh_experiment.py:70: Frozen cross-library experiment requires complete CP312 accuracy stack; all34 module checks passed separately there
+SKIPPED [2] tests\test_scalar_refresh_experiment.py: Frozen cross-library experiment requires complete CP312 accuracy stack; all34 module checks passed separately there
+SKIPPED [9] tests\test_seed_ensemble_experiment.py:23: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [1] tests\test_tabarena_grouped_scout.py:590: real pinned TabArena API is only present in the scout environment
+SKIPPED [3] tests\test_tabarena_hpo_0160.py:427: Optional pinned TabArena benchmark environment
+SKIPPED [1] tests\test_tabarena_kaggle_hpo.py:194: could not import 'tabarena': No module named 'tabarena'
+SKIPPED [3] tests\test_tabarena_local_hpo.py:688: Optional pinned TabArena benchmark environment
+SKIPPED [6] tests\test_threshold_scout_experiment.py:15: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [9] tests\test_union_refit_experiment.py:23: could not import 'lightgbm': No module named 'lightgbm'
+FAILED tests/test_distributed_training_raw_pipeline.py::test_distributed_tcp_training_fits_raw_feature_pipeline_across_ranks
+FAILED tests/test_tabarena_local_hpo_0160.py::test_dispatch_owns_only_fixed_local_assignments
+FAILED tests/test_tabarena_local_hpo_0160.py::test_worker_command_binds_local_identity_receipt_wheel_and_affinity
+FAILED tests/test_tabarena_local_hpo_0160.py::test_canonical_plan_hash_allows_only_whitespace_reformat_on_resume
+FAILED tests/test_tabarena_local_hpo_0160.py::test_registration_failure_prevents_controller_state_or_launch
+FAILED tests/test_tabarena_local_hpo_0160.py::test_execution_provenance_drift_refuses_resume[wheel]
+FAILED tests/test_tabarena_local_hpo_0160.py::test_execution_provenance_drift_refuses_resume[runtime]
+FAILED tests/test_tabarena_local_hpo_0160.py::test_execution_provenance_drift_refuses_resume[registration]
+FAILED tests/test_tabarena_local_hpo_0160.py::test_execution_provenance_drift_refuses_resume[worker]
+FAILED tests/test_tabarena_local_hpo_0160.py::test_result_requires_complete_local_attested_runtime[runtime]
+FAILED tests/test_tabarena_local_hpo_0160.py::test_result_requires_complete_local_attested_runtime[host]
+FAILED tests/test_tabarena_local_hpo_0160.py::test_result_requires_complete_local_attested_runtime[resources]
+FAILED tests/test_tabarena_local_hpo_0160.py::test_result_requires_complete_local_attested_runtime[registration]
+FAILED tests/test_tabarena_local_hpo_0160.py::test_result_requires_complete_local_attested_runtime[status]
+FAILED tests/test_tabarena_local_hpo_0160.py::test_result_requires_complete_local_attested_runtime[raw]
+FAILED tests/test_tabarena_local_hpo_0160.py::test_resource_timeout_preserves_terminal_evidence
+FAILED tests/test_tabarena_local_hpo_0160.py::test_raw_runtime_digest_must_match_manifest_attestation
+FAILED tests/test_tabarena_local_hpo_0160.py::test_terminal_launch_failure_does_not_block_independent_assignments
+FAILED tests/test_tabarena_local_hpo_0160.py::test_completed_cache_verified_and_reused_without_launch
+FAILED tests/test_tabarena_local_hpo_0160.py::test_synthetic_process_failure_continues_next_parent_and_never_retries
+FAILED tests/test_tabarena_local_hpo_controller.py::test_running_import_rss_does_not_establish_completed_dataset_peak
+FAILED tests/test_tabarena_local_hpo_controller.py::test_dispatch_scans_past_unknown_high_memory_jobs
+FAILED tests/test_tabarena_local_hpo_controller.py::test_pause_prevents_new_dispatch
+FAILED tests/test_tabarena_local_hpo_controller.py::test_execution_policy_is_frozen_before_any_launch
+FAILED tests/test_tabarena_local_hpo_controller.py::test_resume_imports_valid_completed_artifact_without_fitting
+FAILED tests/test_tabarena_local_hpo_controller.py::test_completed_raw_modified_on_restart_is_refused
+FAILED tests/test_tabarena_local_hpo_controller.py::test_terminal_failures_are_preserved_and_never_requeued[failed]
+FAILED tests/test_tabarena_local_hpo_controller.py::test_terminal_failures_are_preserved_and_never_requeued[interrupted]
+FAILED tests/test_tabarena_local_hpo_controller.py::test_terminal_failures_are_preserved_and_never_requeued[resource_pressure]
+FAILED tests/test_tabarena_local_hpo_controller.py::test_terminal_failures_are_preserved_and_never_requeued[timed_out]
+FAILED tests/test_tabarena_local_hpo_controller.py::test_started_worker_without_raw_becomes_terminal_interrupted
+FAILED tests/test_tabarena_local_hpo_controller.py::test_launch_claim_recovers_crash_before_pid_state_write
+FAILED tests/test_tabarena_local_hpo_controller.py::test_foreign_launch_claim_is_refused
+FAILED tests/test_tabarena_local_hpo_controller.py::test_started_worker_with_valid_raw_is_completed_without_retry
+FAILED tests/test_tabarena_local_hpo_controller.py::test_failed_worker_even_with_raw_remains_failed
+FAILED tests/test_tabarena_local_hpo_controller.py::test_resource_failure_artifact_is_preserved
+FAILED tests/test_tabarena_local_hpo_controller.py::test_raw_without_worker_provenance_is_terminal_invalid
+FAILED tests/test_tabarena_local_hpo_controller.py::test_timeout_stops_owned_worker_and_never_retries
+FAILED tests/test_tabarena_local_hpo_controller.py::test_memory_pressure_stops_only_newest_owned_parent
+FAILED tests/test_tabarena_local_hpo_controller.py::test_synthetic_worker_launch_cache_validation_and_resume
+FAILED tests/test_tabarena_local_hpo_controller.py::test_main_revalidates_existing_plan_once_before_controller
+41 failed, 2484 passed, 125 skipped in 260.12s (0:04:20)

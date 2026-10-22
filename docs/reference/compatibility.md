@@ -23,6 +23,10 @@
 - Streaming Pools are numeric-only.
 - Generated Python/C++ and ONNX exports require prepared numeric features for models with
   fitted categorical, text, or embedding pipelines.
+- Fresh feature pipelines in 0.1.62 use format 5 for higher-precision Mean CTR
+  accumulation. Older runtimes reject that format. Existing formats 1–4 retain
+  their legacy accumulation when loaded; use a compatible runtime with new raw
+  exports. See [deployment](../guides/deployment.md) for replay and refit behavior.
 - The repository's R and JVM packages are inference-only and prepared-feature-only;
   they are not training bindings and are not yet published to CRAN/Maven Central.
   They accept scalar JSON predictor versions 1 and 2 and reject vector version 3.

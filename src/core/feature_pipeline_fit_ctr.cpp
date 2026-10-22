@@ -32,7 +32,13 @@ float CheckedCtrFloat(double value) {
 
 void NativeFeaturePipeline::FitCtrState(pybind11::array object_matrix,
                                         const std::vector<float>& label_values) {
-  const auto [target_width, target_prior] = detail::FitTargetMode(label_values);
+  const bool double_accumulation = ctr_accumulation_version_ >= 2;
+  const auto [target_width, target_prior] =
+      detail::FitTargetMode(label_values, double_accumulation);
+  const auto add_target = [double_accumulation](double& sum, float value) {
+    sum = double_accumulation ? sum + static_cast<double>(value)
+                              : static_cast<float>(static_cast<float>(sum) + value);
+  };
   const bool ctr_enabled =
       ordered_ctr_ || !simple_ctr_.is_none() || !combinations_ctr_.is_none() || !per_feature_ctr_.is_none();
   if (!ctr_enabled) {
@@ -113,9 +119,9 @@ void NativeFeaturePipeline::FitCtrState(pybind11::array object_matrix,
       }
 
       std::unordered_map<std::string, int> total_counts;
-      std::unordered_map<std::string, std::vector<float>> total_sums;
+      std::unordered_map<std::string, std::vector<double>> total_sums;
       std::unordered_map<std::string, int> running_counts;
-      std::unordered_map<std::string, std::vector<float>> running_sums;
+      std::unordered_map<std::string, std::vector<double>> running_sums;
       std::vector<std::vector<float>> training_columns(
           output_names.size(), std::vector<float>(matrix.rows, 0.0F));
       std::size_t seen_rows = 0;
@@ -130,8 +136,11 @@ void NativeFeaturePipeline::FitCtrState(pybind11::array object_matrix,
         }
 
         if (ctr_type == "Mean") {
+          const double mean_count = double_accumulation
+                                        ? static_cast<double>(running_counts[key])
+                                        : static_cast<double>(current_count);
           const double denominator =
-              static_cast<double>(current_count) + ctr_prior_strength_;
+              mean_count + ctr_prior_strength_;
           for (int output_index = 0; output_index < target_width; ++output_index) {
             const double numerator =
                 static_cast<double>(
@@ -162,12 +171,12 @@ void NativeFeaturePipeline::FitCtrState(pybind11::array object_matrix,
             total_sum_values.assign(static_cast<std::size_t>(target_width), 0.0F);
           }
           if (target_width == 1) {
-            total_sum_values[0] += label_values[row];
-            current_sums[0] += label_values[row];
+            add_target(total_sum_values[0], label_values[row]);
+            add_target(current_sums[0], label_values[row]);
           } else {
             const int class_index = static_cast<int>(std::llround(label_values[row]));
-            total_sum_values[static_cast<std::size_t>(class_index)] += 1.0F;
-            current_sums[static_cast<std::size_t>(class_index)] += 1.0F;
+            add_target(total_sum_values[static_cast<std::size_t>(class_index)], 1.0F);
+            add_target(current_sums[static_cast<std::size_t>(class_index)], 1.0F);
           }
         }
         running_counts[key] += 1;

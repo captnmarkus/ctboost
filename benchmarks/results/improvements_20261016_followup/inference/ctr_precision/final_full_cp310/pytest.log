@@ -1,0 +1,434 @@
+........................................................................ [  2%]
+.........................sss.......s..................................ss [  5%]
+sssssss................................................................. [  8%]
+........................................................................ [ 10%]
+................s.............................ssssssss.................. [ 13%]
+........................................................................ [ 16%]
+........................................................................ [ 18%]
+........................................................................ [ 21%]
+........................................................................ [ 24%]
+........................................................................ [ 26%]
+........................................................................ [ 29%]
+........................................................................ [ 32%]
+......................s..s..s..s..s..s..s..s.........s...s..s....s..s..s [ 34%]
+...sss..sss..ssss...s..sss.............................................. [ 37%]
+...ss..........................s........................................ [ 40%]
+......................................................ss...........sss.. [ 42%]
+..sss.............................sss...........................sss..... [ 45%]
+................................................s....................... [ 48%]
+........................................................................ [ 50%]
+.....................sssss.............................................. [ 53%]
+..........................................................sss........... [ 56%]
+........................................................................ [ 58%]
+........................................................................ [ 61%]
+........................................................................ [ 64%]
+.............................................................sssssssss.. [ 67%]
+FFFFFFFF.............ssssssss...sssssssss............................... [ 69%]
+........................................................................ [ 72%]
+...........................................................s............ [ 75%]
+........................................................................ [ 77%]
+................................sss..................................... [ 80%]
+........................................................................ [ 83%]
+.............................s.......................................... [ 85%]
+........................................................................ [ 88%]
+....................................................sss................. [ 91%]
+........................................................................ [ 93%]
+..............................ssssss...................................s [ 96%]
+ssssssss................................................................ [ 99%]
+.....................                                                    [100%]{"complete": true, "exit_status": 1, "collected": 2685}
+
+================================== FAILURES ===================================
+__________ test_fresh_anchor_and_fixed_seed_pipeline[binary-ctboost] __________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-910/test_fresh_anchor_and_fixed_se0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001B1CF352B60>
+library = 'ctboost', problem = 'binary'
+
+    @pytest.mark.parametrize("library", ["ctboost", "xgboost", "lightgbm"])
+    @pytest.mark.parametrize("problem", ["binary", "regression"])
+    def test_fresh_anchor_and_fixed_seed_pipeline(tmp_path, monkeypatch, library, problem):
+        module = runner()
+        case, source = fixture(module, tmp_path, problem)
+        job = job_for(module, case, source, library)
+        original = copy.deepcopy(job)
+        X, labels, schema, train, stop, receipt = module.fitting_data(job, case, train_only=True)
+        assert len(labels) == 84 and receipt["outside_cap_rows"] == 24 and receipt["stop_excluded"]
+        assert "STOP_ONLY" not in schema["category"] and "extra" in schema["category"]
+        clean_job = module.clean_job(job)
+        assert clean_job["leaf_refit"] is None and clean_job["binary_refit"] is None
+>       anchor, _ = module.union.fit_fixed(clean_job, case, X, labels, schema, 47)
+
+tests\test_scalar_numerical_retry_experiment.py:82: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'GiveMeSomeCredit', 'expanded_source': {'dataset': 'GiveMeSomeCredit', 'path': 'C:\\...thetic': True}, 'sha256': '99a875eec4088ca7ac8ed3ebc4341e8371a9520f0f5b47c87e11c508460a2099'}, 'leaf_refit': None, ...}
+case = {'dataset_name': 'GiveMeSomeCredit', 'num_classes': 2, 'problem_type': 'binary', 'roles': {'stop': {'path': 'C:\\Users...fresh_anchor_and_fixed_se0\\train.pkl', 'sha256': '6b4469456e20436de502f94ab5c6bcc7eccd094d09eddbb943b58616404c7275'}}}
+X =            x         z category
+0  -0.647977  1.186947        a
+1   0.032345  0.730127        b
+2   0.965086  1.288942...
+81 -1.260853  0.266861    extra
+82  0.577248  0.012923        a
+83  0.747492 -1.544371        b
+
+[84 rows x 3 columns]
+y = array([0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1,
+       0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1,... 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0,
+       0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0])
+schema = {'category': ['a', 'b', 'c', 'extra']}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+__________ test_fresh_anchor_and_fixed_seed_pipeline[binary-xgboost] __________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-910/test_fresh_anchor_and_fixed_se1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001B188021BA0>
+library = 'xgboost', problem = 'binary'
+
+    @pytest.mark.parametrize("library", ["ctboost", "xgboost", "lightgbm"])
+    @pytest.mark.parametrize("problem", ["binary", "regression"])
+    def test_fresh_anchor_and_fixed_seed_pipeline(tmp_path, monkeypatch, library, problem):
+        module = runner()
+        case, source = fixture(module, tmp_path, problem)
+        job = job_for(module, case, source, library)
+        original = copy.deepcopy(job)
+        X, labels, schema, train, stop, receipt = module.fitting_data(job, case, train_only=True)
+        assert len(labels) == 84 and receipt["outside_cap_rows"] == 24 and receipt["stop_excluded"]
+        assert "STOP_ONLY" not in schema["category"] and "extra" in schema["category"]
+        clean_job = module.clean_job(job)
+        assert clean_job["leaf_refit"] is None and clean_job["binary_refit"] is None
+>       anchor, _ = module.union.fit_fixed(clean_job, case, X, labels, schema, 47)
+
+tests\test_scalar_numerical_retry_experiment.py:82: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'GiveMeSomeCredit', 'expanded_source': {'dataset': 'GiveMeSomeCredit', 'path': 'C:\\...thetic': True}, 'sha256': '99a875eec4088ca7ac8ed3ebc4341e8371a9520f0f5b47c87e11c508460a2099'}, 'leaf_refit': None, ...}
+case = {'dataset_name': 'GiveMeSomeCredit', 'num_classes': 2, 'problem_type': 'binary', 'roles': {'stop': {'path': 'C:\\Users...fresh_anchor_and_fixed_se1\\train.pkl', 'sha256': '6b4469456e20436de502f94ab5c6bcc7eccd094d09eddbb943b58616404c7275'}}}
+X =            x         z category
+0  -0.647977  1.186947        a
+1   0.032345  0.730127        b
+2   0.965086  1.288942...
+81 -1.260853  0.266861    extra
+82  0.577248  0.012923        a
+83  0.747492 -1.544371        b
+
+[84 rows x 3 columns]
+y = array([0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1,
+       0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1,... 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0,
+       0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0])
+schema = {'category': ['a', 'b', 'c', 'extra']}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+_________ test_fresh_anchor_and_fixed_seed_pipeline[binary-lightgbm] __________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-910/test_fresh_anchor_and_fixed_se2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001B1CF2FF790>
+library = 'lightgbm', problem = 'binary'
+
+    @pytest.mark.parametrize("library", ["ctboost", "xgboost", "lightgbm"])
+    @pytest.mark.parametrize("problem", ["binary", "regression"])
+    def test_fresh_anchor_and_fixed_seed_pipeline(tmp_path, monkeypatch, library, problem):
+        module = runner()
+        case, source = fixture(module, tmp_path, problem)
+        job = job_for(module, case, source, library)
+        original = copy.deepcopy(job)
+        X, labels, schema, train, stop, receipt = module.fitting_data(job, case, train_only=True)
+        assert len(labels) == 84 and receipt["outside_cap_rows"] == 24 and receipt["stop_excluded"]
+        assert "STOP_ONLY" not in schema["category"] and "extra" in schema["category"]
+        clean_job = module.clean_job(job)
+        assert clean_job["leaf_refit"] is None and clean_job["binary_refit"] is None
+>       anchor, _ = module.union.fit_fixed(clean_job, case, X, labels, schema, 47)
+
+tests\test_scalar_numerical_retry_experiment.py:82: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'GiveMeSomeCredit', 'expanded_source': {'dataset': 'GiveMeSomeCredit', 'path': 'C:\\...thetic': True}, 'sha256': '99a875eec4088ca7ac8ed3ebc4341e8371a9520f0f5b47c87e11c508460a2099'}, 'leaf_refit': None, ...}
+case = {'dataset_name': 'GiveMeSomeCredit', 'num_classes': 2, 'problem_type': 'binary', 'roles': {'stop': {'path': 'C:\\Users...fresh_anchor_and_fixed_se2\\train.pkl', 'sha256': '6b4469456e20436de502f94ab5c6bcc7eccd094d09eddbb943b58616404c7275'}}}
+X =            x         z category
+0  -0.647977  1.186947        a
+1   0.032345  0.730127        b
+2   0.965086  1.288942...
+81 -1.260853  0.266861    extra
+82  0.577248  0.012923        a
+83  0.747492 -1.544371        b
+
+[84 rows x 3 columns]
+y = array([0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1,
+       0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1,... 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0,
+       0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0])
+schema = {'category': ['a', 'b', 'c', 'extra']}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+________ test_fresh_anchor_and_fixed_seed_pipeline[regression-ctboost] ________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-910/test_fresh_anchor_and_fixed_se3')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001B1CF13BF70>
+library = 'ctboost', problem = 'regression'
+
+    @pytest.mark.parametrize("library", ["ctboost", "xgboost", "lightgbm"])
+    @pytest.mark.parametrize("problem", ["binary", "regression"])
+    def test_fresh_anchor_and_fixed_seed_pipeline(tmp_path, monkeypatch, library, problem):
+        module = runner()
+        case, source = fixture(module, tmp_path, problem)
+        job = job_for(module, case, source, library)
+        original = copy.deepcopy(job)
+        X, labels, schema, train, stop, receipt = module.fitting_data(job, case, train_only=True)
+        assert len(labels) == 84 and receipt["outside_cap_rows"] == 24 and receipt["stop_excluded"]
+        assert "STOP_ONLY" not in schema["category"] and "extra" in schema["category"]
+        clean_job = module.clean_job(job)
+        assert clean_job["leaf_refit"] is None and clean_job["binary_refit"] is None
+>       anchor, _ = module.union.fit_fixed(clean_job, case, X, labels, schema, 47)
+
+tests\test_scalar_numerical_retry_experiment.py:82: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'diamonds', 'expanded_source': {'dataset': 'diamonds', 'path': 'C:\\Users\\captn\\Ap...thetic': True}, 'sha256': '615a0a4f37bfb865ee342915ab5b9dc844088e6a3c8799ea7fb74ebd309cf055'}, 'leaf_refit': None, ...}
+case = {'dataset_name': 'diamonds', 'num_classes': 0, 'problem_type': 'regression', 'roles': {'stop': {'path': 'C:\\Users\\ca...fresh_anchor_and_fixed_se3\\train.pkl', 'sha256': 'a1744b7edded28a64b1fb14c042258f005fe1822c27091bde8204f11a54e8474'}}}
+X =            x         z category
+0  -0.647977  1.186947        a
+1   0.032345  0.730127        b
+2   0.965086  1.288942...
+81 -1.260853  0.266861    extra
+82  0.577248  0.012923        a
+83  0.747492 -1.544371        b
+
+[84 rows x 3 columns]
+y = array([ 1.28763261e-01,  6.77806222e-01,  3.42765162e+00, -2.91878063e+00,
+       -2.21959894e-02,  3.81263497e+00,  6...6480e+00,  1.03728452e+00, -1.10044554e+00,
+        2.77697140e+00, -2.02864352e+00,  9.14276899e-01,  3.31244036e-01])
+schema = {'category': ['a', 'b', 'c', 'extra']}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+________ test_fresh_anchor_and_fixed_seed_pipeline[regression-xgboost] ________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-910/test_fresh_anchor_and_fixed_se4')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001B1D04C4400>
+library = 'xgboost', problem = 'regression'
+
+    @pytest.mark.parametrize("library", ["ctboost", "xgboost", "lightgbm"])
+    @pytest.mark.parametrize("problem", ["binary", "regression"])
+    def test_fresh_anchor_and_fixed_seed_pipeline(tmp_path, monkeypatch, library, problem):
+        module = runner()
+        case, source = fixture(module, tmp_path, problem)
+        job = job_for(module, case, source, library)
+        original = copy.deepcopy(job)
+        X, labels, schema, train, stop, receipt = module.fitting_data(job, case, train_only=True)
+        assert len(labels) == 84 and receipt["outside_cap_rows"] == 24 and receipt["stop_excluded"]
+        assert "STOP_ONLY" not in schema["category"] and "extra" in schema["category"]
+        clean_job = module.clean_job(job)
+        assert clean_job["leaf_refit"] is None and clean_job["binary_refit"] is None
+>       anchor, _ = module.union.fit_fixed(clean_job, case, X, labels, schema, 47)
+
+tests\test_scalar_numerical_retry_experiment.py:82: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'diamonds', 'expanded_source': {'dataset': 'diamonds', 'path': 'C:\\Users\\captn\\Ap...thetic': True}, 'sha256': '615a0a4f37bfb865ee342915ab5b9dc844088e6a3c8799ea7fb74ebd309cf055'}, 'leaf_refit': None, ...}
+case = {'dataset_name': 'diamonds', 'num_classes': 0, 'problem_type': 'regression', 'roles': {'stop': {'path': 'C:\\Users\\ca...fresh_anchor_and_fixed_se4\\train.pkl', 'sha256': 'a1744b7edded28a64b1fb14c042258f005fe1822c27091bde8204f11a54e8474'}}}
+X =            x         z category
+0  -0.647977  1.186947        a
+1   0.032345  0.730127        b
+2   0.965086  1.288942...
+81 -1.260853  0.266861    extra
+82  0.577248  0.012923        a
+83  0.747492 -1.544371        b
+
+[84 rows x 3 columns]
+y = array([ 1.28763261e-01,  6.77806222e-01,  3.42765162e+00, -2.91878063e+00,
+       -2.21959894e-02,  3.81263497e+00,  6...6480e+00,  1.03728452e+00, -1.10044554e+00,
+        2.77697140e+00, -2.02864352e+00,  9.14276899e-01,  3.31244036e-01])
+schema = {'category': ['a', 'b', 'c', 'extra']}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+_______ test_fresh_anchor_and_fixed_seed_pipeline[regression-lightgbm] ________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-910/test_fresh_anchor_and_fixed_se5')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001B1D2EB15A0>
+library = 'lightgbm', problem = 'regression'
+
+    @pytest.mark.parametrize("library", ["ctboost", "xgboost", "lightgbm"])
+    @pytest.mark.parametrize("problem", ["binary", "regression"])
+    def test_fresh_anchor_and_fixed_seed_pipeline(tmp_path, monkeypatch, library, problem):
+        module = runner()
+        case, source = fixture(module, tmp_path, problem)
+        job = job_for(module, case, source, library)
+        original = copy.deepcopy(job)
+        X, labels, schema, train, stop, receipt = module.fitting_data(job, case, train_only=True)
+        assert len(labels) == 84 and receipt["outside_cap_rows"] == 24 and receipt["stop_excluded"]
+        assert "STOP_ONLY" not in schema["category"] and "extra" in schema["category"]
+        clean_job = module.clean_job(job)
+        assert clean_job["leaf_refit"] is None and clean_job["binary_refit"] is None
+>       anchor, _ = module.union.fit_fixed(clean_job, case, X, labels, schema, 47)
+
+tests\test_scalar_numerical_retry_experiment.py:82: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'diamonds', 'expanded_source': {'dataset': 'diamonds', 'path': 'C:\\Users\\captn\\Ap...thetic': True}, 'sha256': '615a0a4f37bfb865ee342915ab5b9dc844088e6a3c8799ea7fb74ebd309cf055'}, 'leaf_refit': None, ...}
+case = {'dataset_name': 'diamonds', 'num_classes': 0, 'problem_type': 'regression', 'roles': {'stop': {'path': 'C:\\Users\\ca...fresh_anchor_and_fixed_se5\\train.pkl', 'sha256': 'a1744b7edded28a64b1fb14c042258f005fe1822c27091bde8204f11a54e8474'}}}
+X =            x         z category
+0  -0.647977  1.186947        a
+1   0.032345  0.730127        b
+2   0.965086  1.288942...
+81 -1.260853  0.266861    extra
+82  0.577248  0.012923        a
+83  0.747492 -1.544371        b
+
+[84 rows x 3 columns]
+y = array([ 1.28763261e-01,  6.77806222e-01,  3.42765162e+00, -2.91878063e+00,
+       -2.21959894e-02,  3.81263497e+00,  6...6480e+00,  1.03728452e+00, -1.10044554e+00,
+        2.77697140e+00, -2.02864352e+00,  9.14276899e-01,  3.31244036e-01])
+schema = {'category': ['a', 'b', 'c', 'extra']}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+______________ test_identity_union_is_fresh_and_clean_not_parent ______________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-910/test_identity_union_is_fresh_a0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001B1CED37580>
+
+    def test_identity_union_is_fresh_and_clean_not_parent(tmp_path, monkeypatch):
+        module = runner()
+        case, source = fixture(module, tmp_path, "regression")
+        job = job_for(module, case, source, "ctboost")
+>       clean, _, verification = module.parent.fit_policy(module.clean_job(job), case, 47)
+
+tests\test_scalar_numerical_retry_experiment.py:114: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+benchmarks\fair_accuracy_multiclass_refit.py:122: in fit_policy
+    payload, details, frame = parent.fit_policy(job, case, seed)
+benchmarks\fair_accuracy_houses_cap_v2.py:45: in fit_policy
+    return cap.fit_policy(job, case, seed)
+benchmarks\fair_accuracy_cap_expansion.py:65: in fit_policy
+    return fit_expansion(job, case, expanded, seed, cv)
+benchmarks\fair_accuracy_cap_expansion.py:169: in fit_expansion
+    payload, details = cv.union.fit_fixed(job, case, X, expanded["y"], schema, seed)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'diamonds', 'expanded_source': {'dataset': 'diamonds', 'path': 'C:\\Users\\captn\\Ap...thetic': True}, 'sha256': '615a0a4f37bfb865ee342915ab5b9dc844088e6a3c8799ea7fb74ebd309cf055'}, 'leaf_refit': None, ...}
+case = {'dataset_name': 'diamonds', 'num_classes': 0, 'problem_type': 'regression', 'roles': {'stop': {'path': 'C:\\Users\\ca...identity_union_is_fresh_a0\\train.pkl', 'sha256': 'a1744b7edded28a64b1fb14c042258f005fe1822c27091bde8204f11a54e8474'}}}
+X =            x         z category
+0  -0.647977  1.186947        a
+1   0.032345  0.730127        b
+2   0.965086  1.288942...
+93 -1.260853  0.266861    extra
+94  0.577248  0.012923        a
+95  0.747492 -1.544371        b
+
+[96 rows x 3 columns]
+y = array([ 1.28763261e-01,  6.77806222e-01,  3.42765162e+00, -2.91878063e+00,
+       -2.21959894e-02,  3.81263497e+00,  6...6480e+00,  1.03728452e+00, -1.10044554e+00,
+        2.77697140e+00, -2.02864352e+00,  9.14276899e-01,  3.31244036e-01])
+schema = {'category': ['STOP_ONLY', 'a', 'b', 'c', 'extra']}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+_____ test_penalty_worker_reuses_anchor_and_checks_two_native_candidates ______
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-910/test_penalty_worker_reuses_anc0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001B1D339E740>
+
+    def test_penalty_worker_reuses_anchor_and_checks_two_native_candidates(tmp_path, monkeypatch):
+        module = runner()
+        case, source = fixture(module, tmp_path, "regression")
+        job = job_for(module, case, source, "lightgbm")
+        X, labels, schema, train, stop, receipt = module.fitting_data(job, case, train_only=True)
+>       payload, details = module.union.fit_fixed(module.clean_job(job), case, X, labels, schema, 47)
+
+tests\test_scalar_numerical_retry_experiment.py:152: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'diamonds', 'expanded_source': {'dataset': 'diamonds', 'path': 'C:\\Users\\captn\\Ap...thetic': True}, 'sha256': '615a0a4f37bfb865ee342915ab5b9dc844088e6a3c8799ea7fb74ebd309cf055'}, 'leaf_refit': None, ...}
+case = {'dataset_name': 'diamonds', 'num_classes': 0, 'problem_type': 'regression', 'roles': {'stop': {'path': 'C:\\Users\\ca...penalty_worker_reuses_anc0\\train.pkl', 'sha256': 'a1744b7edded28a64b1fb14c042258f005fe1822c27091bde8204f11a54e8474'}}}
+X =            x         z category
+0  -0.647977  1.186947        a
+1   0.032345  0.730127        b
+2   0.965086  1.288942...
+81 -1.260853  0.266861    extra
+82  0.577248  0.012923        a
+83  0.747492 -1.544371        b
+
+[84 rows x 3 columns]
+y = array([ 1.28763261e-01,  6.77806222e-01,  3.42765162e+00, -2.91878063e+00,
+       -2.21959894e-02,  3.81263497e+00,  6...6480e+00,  1.03728452e+00, -1.10044554e+00,
+        2.77697140e+00, -2.02864352e+00,  9.14276899e-01,  3.31244036e-01])
+schema = {'category': ['a', 'b', 'c', 'extra']}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+=========================== short test summary info ===========================
+SKIPPED [3] tests\test_binary_union_experiment.py:23: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [1] tests\test_booster_constraints.py:238: CUDA support is not compiled into this build
+SKIPPED [9] tests\test_cap_expansion_experiment.py:199: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [1] tests\test_cuda_multi_device_workspace.py:173: CUDA support is not compiled into this build
+SKIPPED [8] tests\test_cuda_quantized_pool.py:346: CUDA support is not compiled into this build
+SKIPPED [3] tests\test_fixed_binary_leaf_refit.py:35: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [1] tests\test_fixed_binary_leaf_refit.py:144: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [7] tests\test_fixed_clean_refit_check.py:42: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [3] tests\test_fixed_leaf_refit.py:32: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [10] tests\test_fixed_multiclass_leaf_refit.py:33: Native serialization tests require the frozen XGBoost3.4.1 runtime
+SKIPPED [4] tests\test_fixed_multiclass_leaf_refit.py:39: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [2] tests\test_fixed_seed_ensemble.py:224: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [1] tests\test_framework_integrations.py:280: could not import 'pyspark': No module named 'pyspark'
+SKIPPED [1] tests\test_grouped_feature_test.py:752: CUDA support is not compiled into this build
+SKIPPED [1] tests\test_grouped_feature_test.py:800: CUDA support is not compiled into this build
+SKIPPED [3] tests\test_houses_cap_experiment.py:88: CP310 lacks the complete supported comparison stack. Existing isolated LGB4.7 imports but toy fitting raises access violations; XGB3.2 differs from frozen3.4 vector layout.; covered separately by exact CP31234-case validation
+SKIPPED [3] tests\test_houses_cap_experiment_v2.py:88: CP310 lacks the complete supported comparison stack. Existing isolated LGB4.7 imports but toy fitting raises access violations; XGB3.2 differs from frozen3.4 vector layout.; covered separately by exact CP31234-case validation
+SKIPPED [3] tests\test_hpo_full_0160.py:377: Optional pinned TabArena environment
+SKIPPED [3] tests\test_hpo_full_0161.py:377: Optional pinned TabArena environment
+SKIPPED [1] tests\test_leaf_estimation.py:440: CUDA support is not compiled into this build
+SKIPPED [5] tests\test_multiclass_refit_experiment.py:59: CP310 lacks the complete supported comparison stack. Existing isolated LGB4.7 imports but toy fitting raises access violations; XGB3.2 differs from frozen3.4 vector layout.; covered separately by exact CP31234-case validation
+SKIPPED [3] tests\test_multivariate_statistics.py:271: requires a CUDA-enabled build
+SKIPPED [9] tests\test_round_cv_experiment.py:23: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [6] tests\test_scalar_refresh_experiment.py:70: CP310 lacks the complete supported comparison stack. Existing isolated LGB4.7 imports but toy fitting raises access violations; XGB3.2 differs from frozen3.4 vector layout.; covered separately by exact CP31234-case validation
+SKIPPED [2] tests\test_scalar_refresh_experiment.py: CP310 lacks the complete supported comparison stack. Existing isolated LGB4.7 imports but toy fitting raises access violations; XGB3.2 differs from frozen3.4 vector layout.; covered separately by exact CP31234-case validation
+SKIPPED [9] tests\test_seed_ensemble_experiment.py:23: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [1] tests\test_tabarena_grouped_scout.py:590: real pinned TabArena API is only present in the scout environment
+SKIPPED [3] tests\test_tabarena_hpo_0160.py:427: Optional pinned TabArena benchmark environment
+SKIPPED [1] tests\test_tabarena_kaggle_hpo.py:194: could not import 'tabarena': No module named 'tabarena'
+SKIPPED [3] tests\test_tabarena_local_hpo.py:688: Optional pinned TabArena benchmark environment
+SKIPPED [6] tests\test_threshold_scout_experiment.py:15: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [9] tests\test_union_refit_experiment.py:23: could not import 'lightgbm': No module named 'lightgbm'
+FAILED tests/test_scalar_numerical_retry_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[binary-ctboost]
+FAILED tests/test_scalar_numerical_retry_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[binary-xgboost]
+FAILED tests/test_scalar_numerical_retry_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[binary-lightgbm]
+FAILED tests/test_scalar_numerical_retry_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[regression-ctboost]
+FAILED tests/test_scalar_numerical_retry_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[regression-xgboost]
+FAILED tests/test_scalar_numerical_retry_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[regression-lightgbm]
+FAILED tests/test_scalar_numerical_retry_experiment.py::test_identity_union_is_fresh_and_clean_not_parent
+FAILED tests/test_scalar_numerical_retry_experiment.py::test_penalty_worker_reuses_anchor_and_checks_two_native_candidates
+8 failed, 2552 passed, 125 skipped in 210.61s (0:03:30)

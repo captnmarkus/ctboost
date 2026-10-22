@@ -1,0 +1,31 @@
+{
+  "protocol": "fixed_two_seed_ensemble_robustness_20261016",
+  "created_before": "Any new seed947 ensemble component fit or ensemble development score",
+  "preserved_parent_policy": "robustness_protocol_binary.json and every earlier failed gate remain unchanged",
+  "population": "All twelve original metadata-selected datasets and all three libraries",
+  "initial_hypothesis": "Mandatory equal-weight ensemble of existing wave10 seed47 and freshly fitted seed947 models for every task/library. Seed947 is a component of this new hypothesis after the failed wave10 gate; it is not successful confirmation under that older protocol. No choice between single models and ensembles, and no fallback based on development.",
+  "component_policy": "Every new component uses the same TRAIN+STOP union and fresh union vocabulary, original wave8 selected requested tree rounds/hyperparameters, fixed regression and binary correction penalties/shrinkages/solver settings, and fixed multiclass temperature carried through wave10. Change learner seed only. No early stopping, new HPO, correction reselection or temperature reselection. Reconstruct exact ordered CT training transforms and repeat native fold oracles.",
+  "prediction_rule": "Exactly two equally weighted components. Regression averages float64 predictions. Binary and multiclass average probabilities stably after each component's selected temperature, using fixed_seed_ensemble.py. The helper returns binary log-odds and multiclass normalized log probabilities so the existing primary error scorer remains applicable. Never apply a second temperature to an ensemble.",
+  "first_pair": [47, 947],
+  "first_pair_new_tree_fits": 36,
+  "second_pair": [137, 1543],
+  "second_pair_new_tree_fits": 72,
+  "replication_trigger": "All36 first-pair ensembles must pass the same12-dataset development gate before fitting either seed137 or1543. Both seeds and their equal weights are frozen now, not chosen from first-pair results.",
+  "aggregation": "Initial gate uses one ensemble error per dataset/library. Replication averages the two fixed ensemble errors within each dataset, then compares twelve dataset means. Report both pairs separately. Same-split seed pairs are not independent datasets or statistical confirmation.",
+  "gate": {
+    "all_models_and_ensembles_successful": true,
+    "median_relative_error_gain_against_each_comparator": 0,
+    "minimum_dataset_wins_or_ties_against_each_comparator": 6
+  },
+  "primary_errors": {"binary": "1-ROC-AUC", "regression": "RMSE", "multiclass": "logloss"},
+  "cost_accounting": "Every library receives the same additional36 then72 native fits. Report two native models per prediction, actual payload bytes, and measured latency separately; no same-cost or free accuracy claim.",
+  "if_gate_fails": "Preserve the failed mandatory ensemble policy and keep official outer test and original14 confirmation sealed. No selecting a different seed, weighting or earlier policy based on development.",
+  "official_test_after_gate": {
+    "authorization": "User authorized one-shot assessment after final policy/model freeze",
+    "split": "Original OpenML repeat0/fold0/sample0 outer-test rows, uncapped",
+    "preconditions": "Freeze144 component hashes and72 ensemble payload hashes, all source/runtime/policy identities and official cache/split metadata before reading test features or labels",
+    "models": "Use the already trained47+947 and137+1543 ensembles without any further fitting or adjustment",
+    "aggregation": "Average the two ensemble errors within each of twelve datasets; report pairs separately",
+    "limitations": "Adaptive reused development, capped partial outer training, twelve datasets and four learner seeds; not an official TabArena ranking, global superiority claim or statistical significance test. Original14 confirmation fold7 remains sealed."
+  }
+}

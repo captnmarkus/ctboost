@@ -1,0 +1,54 @@
+{
+  "status": "full_run_complete_with_eight_missing_optional_stack_failures",
+  "result": {
+    "passed": 2552,
+    "failed": 8,
+    "skipped": 125
+  },
+  "collected": 2685,
+  "seconds": 210.61,
+  "single_zero_failure_full_run": false,
+  "failure_classification": {
+    "count": 8,
+    "module": "tests/test_scalar_numerical_retry_experiment.py",
+    "reason": "Frozen research helper imports LightGBM unconditionally at fair_accuracy_union_refit.py:61; CP310 lacks that optional supported comparison stack, including CT/XGB parametrizations.",
+    "failed_nodes": [
+      "tests/test_scalar_numerical_retry_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[binary-ctboost]",
+      "tests/test_scalar_numerical_retry_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[binary-xgboost]",
+      "tests/test_scalar_numerical_retry_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[binary-lightgbm]",
+      "tests/test_scalar_numerical_retry_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[regression-ctboost]",
+      "tests/test_scalar_numerical_retry_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[regression-xgboost]",
+      "tests/test_scalar_numerical_retry_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[regression-lightgbm]",
+      "tests/test_scalar_numerical_retry_experiment.py::test_identity_union_is_fresh_and_clean_not_parent",
+      "tests/test_scalar_numerical_retry_experiment.py::test_penalty_worker_reuses_anchor_and_checks_two_native_candidates"
+    ],
+    "production_or_affinity_failures_observed": 0
+  },
+  "existing_exact_runtime_coverage": {
+    "receipt_sha256": "02e30739d6a0fd52e92876c40f0e87a2168d3a18af5dbd1b75c92de1d73fc9f7",
+    "passed": 21,
+    "native_sha256": "c5ea7e026942c3f1190ca5511fbf74f353bfeb08e7771f76bc5f6c1ca3e4d197",
+    "source_hashes_match": true,
+    "test_sha256": "a1a30151ae723eab8b68ee1f849231727af4b37f2af7f9b1dc7761cfad9b49d5",
+    "scope": "The same entire frozen scientific test module, including all eight CP310 failures, already passed under exact CP312 c5/XGB3.4.1/LGB4.7.0. No retest or source edit."
+  },
+  "controller_checks_passed": 133,
+  "global_affinity_fixture_sha256": "7d1d3ba489fc1f2906a6dcc4609b492708db8bbdb1c9966f163016099bc77bc6",
+  "final_affinity": [
+    0,
+    2,
+    6,
+    8
+  ],
+  "unchanged_source_hashes": true,
+  "native_build_sources_current_match": true,
+  "dependency_policy": "Original19 validation-only optional-stack skips retained exactly; no new skips, installs or dependency overrides.",
+  "process_state": {
+    "checked_at": "2026-10-16T15:39:37.726415+00:00",
+    "runner_pid": 14024,
+    "runner_exited": true,
+    "matching_owned_python_processes": [],
+    "session14458_closed": true
+  },
+  "limitations": "The full CP310 run is not labelled all-green. Independent CP312 scientific coverage is explicitly separate. Earlier full-run/targeted-repair history remains unchanged; no CP312/native build suite or performance benchmark repeated."
+}

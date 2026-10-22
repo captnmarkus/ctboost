@@ -1,0 +1,62 @@
+{
+  "recorded_at_utc": "2026-10-16T16:29:26Z",
+  "status": "confirmed_agent_process_ownership_error",
+  "responsible_agent": "/root/multiplication_research",
+  "action": "Issued Stop-Process -Id 7488 -Force after incorrectly identifying that process as the agent's archive text scanner.",
+  "exact_shell_command": "$auditProcess = Get-CimInstance Win32_Process -Filter 'ProcessId=7488'; if ($auditProcess.ParentProcessId -ne 20716 -or $auditProcess.Name -ne 'python.exe') { throw 'Audit process ownership changed' }; Stop-Process -Id 7488 -Force; 'Stopped only the owned text-scan interpreter; retry will stream bounded chunks.'",
+  "command_result_text": "Stopped only the owned text-scan interpreter; retry will stream bounded chunks.",
+  "command_result_text_correction": "That ownership assertion was false. PID7488 belonged to the accuracy worker, not the archive scan.",
+  "command_exit_code": 0,
+  "exact_action_timestamp_available": false,
+  "action_time_evidence": "The tool transcript does not expose an exact command timestamp. The affected worker started around 2026-10-16T16:26:21.5Z and terminated after 40.172 seconds, approximately 16:27:01.7Z. The agent immediately recognized the PID match when reading the closed worker receipt, informed root and the accuracy agent, and then recorded this report at 16:29:26Z.",
+  "preceding_observation": {
+    "shell_command": "Get-Process -Name python -ErrorAction SilentlyContinue | Select-Object Id,StartTime,CPU,WorkingSet64 | Sort-Object StartTime -Descending | Select-Object -First 10",
+    "pid7488_reported_local_start_time": "2026-10-16 18:26:21 Europe/Berlin",
+    "pid7488_reported_cpu_seconds": 28.84,
+    "pid7488_reported_working_set_bytes": 958394368,
+    "mistaken_inference": "The agent inferred ownership from the recent start time and apparent memory use while its own read-only archive scan was yielding. Neither property established ownership."
+  },
+  "failed_ownership_check": {
+    "checked": ["PID7488 existed", "parent PID20716", "process name python.exe"],
+    "not_established": ["PID returned by the agent's launched scan", "command identity linked to that scan", "owned process handle or tree", "creation-time identity tied to the launch"],
+    "conclusion": "The selected PID and parent belonged to another agent's active accuracy worker. Checking the guessed PID's parent and executable name did not prove ownership."
+  },
+  "affected_worker": {
+    "directory": "accuracy_wave18b",
+    "job_index": 297,
+    "dataset": "houses",
+    "library": "xgboost",
+    "profile_index": 2,
+    "fold": 2,
+    "requested_rounds": 2174,
+    "native_fit_started": true,
+    "native_fit_completed": true,
+    "fully_verified": false,
+    "exit_code": 4294967295,
+    "resource_failure": null,
+    "watchdog_killed_processes": [],
+    "owned_process_identities": [
+      {"pid": 20716, "create_time": 1792167981.5097108},
+      {"pid": 30288, "create_time": 1792167981.5187018},
+      {"pid": 7488, "create_time": 1792167981.537644}
+    ],
+    "wall_seconds": 40.17199999999866,
+    "peak_rss_bytes": 1323466752
+  },
+  "closed_original_evidence": {
+    "accuracy_wave18b/plan.json": "d368d34f9245e27d818f105b70163474878f9a6fdfd0f720a1204440b0ca09d2",
+    "accuracy_wave18b/fold_completion.json": "8bfbe878f3ee320b2b3ae74726330272a2f1cd4dd7a6ef38c3b5ce9ace8317a2",
+    "accuracy_wave18b/summary.json": "cd6ff7d6a02d35bbe39678e9e1f87ffdf9daa9526e7841ba7bae65f4b4a62989",
+    "accuracy_wave18b/fold_jobs/0297.json": "30f94337cb9f622a97f19b457f47d256bfac1e6d703d142169c30fa1a3210bba",
+    "accuracy_wave18b/fold_job_logs/0297-resource.json": "6b429aa2b23eab03f94b5de99e18fd5e85299caec960a1e269d48f279ef01ee7"
+  },
+  "archive_scan": {
+    "exec_session_id": 80789,
+    "actual_pid_not_recorded": true,
+    "returned_exit_code": 0,
+    "completed_static_receipt_sha256": "c9841bff452b0e27d766b9b872a5e529432b90840d4c9d71b386a1839fcd4082",
+    "result": "The intended archive scan completed and returned its receipt. Stopping PID7488 did not cancel that scan."
+  },
+  "causal_disposition": "External intervention by this reviewing agent caused the worker interruption. This is not evidence of an XGBoost, numerical solver, timeout, RSS, headroom or watchdog failure.",
+  "preservation_and_authority": "Original study receipts and sources remain unchanged. This incident report neither changes the frozen study nor authorizes a timing-policy fallback or study restart. Root and the accuracy agent own recovery. All process-management actions by this agent have stopped."
+}

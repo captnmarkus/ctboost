@@ -1,0 +1,2072 @@
+{
+  "all_fits_successful": false,
+  "choices": [
+    {
+      "anchor": {
+        "model_bytes": 27260,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\blood-transfusion-service-center\\ctboost.pkl",
+        "model_sha256": "59e65e221e9b0040f008078dc16accdbf6fbf055a685565929afb9441c05c809"
+      },
+      "correction": {
+        "lambda": 10.0,
+        "max_working_bytes": 4294967296,
+        "shrinkage": 1.0,
+        "solver": {
+          "ftol": 1e-13,
+          "gradient_gate": 1e-06,
+          "gtol": 1e-09,
+          "maxiter": 2000
+        }
+      },
+      "dataset": "blood-transfusion-service-center",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 0.1217569000000367,
+        "parameters": {
+          "alpha": 0.5,
+          "bootstrap_type": "Bernoulli",
+          "cat_features": null,
+          "eval_metric": "AUC",
+          "feature_test": "grouped",
+          "feature_test_adjustment": "none",
+          "feature_test_bins": 8,
+          "iterations": 3,
+          "lambda_l2": 1,
+          "leaf_estimation_backtracking": true,
+          "leaf_estimation_iterations": 3,
+          "learning_rate": 0.1,
+          "max_bins": 256,
+          "max_cat_threshold": 64,
+          "max_depth": 4,
+          "min_data_in_leaf": 20,
+          "multi_strategy": "one_output_per_tree",
+          "multiclass_feature_test": "single",
+          "ordered_ctr": true,
+          "random_seed": 47,
+          "subsample": 0.8,
+          "verbose": false
+        },
+        "requested_rounds": 3,
+        "retained_rounds": 3,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 62,
+        "original_train_rows": 312,
+        "outside_cap_rows": 0,
+        "row_ids_sha256": "fac9f22e07f5ccbd69e89955d9f2de01cad1246ca69fa962e31753763caa7ea7",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 312,
+        "schema": {},
+        "source_sha256": null,
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "ctboost",
+      "stop_error": 0.07092198581560283
+    },
+    {
+      "anchor": {
+        "model_bytes": 70366,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\blood-transfusion-service-center\\xgboost.pkl",
+        "model_sha256": "4b676e02cf9c1e7cdb06646c263b5397e674afce83e0b22976dbe28cb61cfcc0"
+      },
+      "correction": null,
+      "dataset": "blood-transfusion-service-center",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 0.04684629999974277,
+        "parameters": {
+          "eta": 0.05,
+          "eval_metric": "auc",
+          "lambda": 0.3,
+          "max_bin": 256,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 8,
+          "max_depth": 4,
+          "min_child_weight": 5,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "binary:logistic",
+          "seed": 47,
+          "subsample": 1.0,
+          "tree_method": "hist"
+        },
+        "requested_rounds": 56,
+        "retained_rounds": 56,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 62,
+        "original_train_rows": 312,
+        "outside_cap_rows": 0,
+        "row_ids_sha256": "fac9f22e07f5ccbd69e89955d9f2de01cad1246ca69fa962e31753763caa7ea7",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 312,
+        "schema": {},
+        "source_sha256": null,
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "xgboost",
+      "stop_error": 0.08439716312056733
+    },
+    {
+      "anchor": {
+        "model_bytes": 6034,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\blood-transfusion-service-center\\lightgbm.pkl",
+        "model_sha256": "f8b9d3c535961625a2ffcbcac2b1f2f0bf4b9880615e7d5e135c73b714eaea02"
+      },
+      "correction": null,
+      "dataset": "blood-transfusion-service-center",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 0.011934500002098503,
+        "parameters": {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 0,
+          "learning_rate": 0.05,
+          "max_bin": 255,
+          "metric": "auc",
+          "num_leaves": 15,
+          "num_threads": 1,
+          "objective": "binary",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        "requested_rounds": 2,
+        "retained_rounds": 2,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 62,
+        "original_train_rows": 312,
+        "outside_cap_rows": 0,
+        "row_ids_sha256": "fac9f22e07f5ccbd69e89955d9f2de01cad1246ca69fa962e31753763caa7ea7",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 312,
+        "schema": {},
+        "source_sha256": null,
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "lightgbm",
+      "stop_error": 0.06737588652482263
+    },
+    {
+      "anchor": {
+        "model_bytes": 1223642,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\churn\\ctboost.pkl",
+        "model_sha256": "327d8fbc5d93eb8c8b1536eeadf18d7b68316e1d4910d3b6efa93c23ec93c075"
+      },
+      "correction": null,
+      "dataset": "churn",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 0.20052969999960624,
+        "parameters": {
+          "alpha": 0.5,
+          "bootstrap_type": "Bernoulli",
+          "cat_features": [
+            "state",
+            "area_code",
+            "international_plan",
+            "voice_mail_plan"
+          ],
+          "eval_metric": "AUC",
+          "feature_test": "grouped",
+          "feature_test_adjustment": "none",
+          "feature_test_bins": 8,
+          "iterations": 61,
+          "lambda_l2": 0.1,
+          "leaf_estimation_backtracking": true,
+          "leaf_estimation_iterations": 3,
+          "learning_rate": 0.05,
+          "max_bins": 256,
+          "max_cat_threshold": 256,
+          "max_depth": 4,
+          "min_data_in_leaf": 1,
+          "multi_strategy": "one_output_per_tree",
+          "multiclass_feature_test": "single",
+          "one_hot_max_size": 8,
+          "ordered_ctr": true,
+          "random_seed": 47,
+          "subsample": 0.8,
+          "verbose": false
+        },
+        "requested_rounds": 61,
+        "retained_rounds": 61,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 416,
+        "original_train_rows": 2085,
+        "outside_cap_rows": 0,
+        "row_ids_sha256": "ac9963bd0d5ae11b11341d1e0cb332d69a36ef646ecca5f0eb857a96109c4370",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 2085,
+        "schema": {
+          "area_code": [
+            "408.0",
+            "415.0",
+            "510.0"
+          ],
+          "international_plan": [
+            "0",
+            "1"
+          ],
+          "state": [
+            "0",
+            "1",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "17",
+            "18",
+            "19",
+            "2",
+            "20",
+            "21",
+            "22",
+            "23",
+            "24",
+            "25",
+            "26",
+            "27",
+            "28",
+            "29",
+            "3",
+            "30",
+            "31",
+            "32",
+            "33",
+            "34",
+            "35",
+            "36",
+            "37",
+            "38",
+            "39",
+            "4",
+            "40",
+            "41",
+            "42",
+            "43",
+            "44",
+            "45",
+            "46",
+            "47",
+            "48",
+            "49",
+            "5",
+            "50",
+            "6",
+            "7",
+            "8",
+            "9"
+          ],
+          "voice_mail_plan": [
+            "0",
+            "1"
+          ]
+        },
+        "source_sha256": null,
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "ctboost",
+      "stop_error": 0.060296667308803786
+    },
+    {
+      "anchor": {
+        "model_bytes": 416014,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\churn\\xgboost.pkl",
+        "model_sha256": "662d242b299626dff40c4ff24923916103fe0a4724786622d707028d01deccf4"
+      },
+      "correction": {
+        "lambda": 1000.0,
+        "max_working_bytes": 4294967296,
+        "shrinkage": 1.0,
+        "solver": {
+          "ftol": 1e-13,
+          "gradient_gate": 1e-06,
+          "gtol": 1e-09,
+          "maxiter": 2000
+        }
+      },
+      "dataset": "churn",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 0.34452239999882295,
+        "parameters": {
+          "alpha": 10.0,
+          "colsample_bytree": 1.0,
+          "eta": 0.025,
+          "eval_metric": "auc",
+          "lambda": 1.0,
+          "max_bin": 256,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "binary:logistic",
+          "seed": 47,
+          "subsample": 1.0,
+          "tree_method": "hist"
+        },
+        "requested_rounds": 230,
+        "retained_rounds": 230,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 416,
+        "original_train_rows": 2085,
+        "outside_cap_rows": 0,
+        "row_ids_sha256": "ac9963bd0d5ae11b11341d1e0cb332d69a36ef646ecca5f0eb857a96109c4370",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 2085,
+        "schema": {
+          "area_code": [
+            "408.0",
+            "415.0",
+            "510.0"
+          ],
+          "international_plan": [
+            "0",
+            "1"
+          ],
+          "state": [
+            "0",
+            "1",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "17",
+            "18",
+            "19",
+            "2",
+            "20",
+            "21",
+            "22",
+            "23",
+            "24",
+            "25",
+            "26",
+            "27",
+            "28",
+            "29",
+            "3",
+            "30",
+            "31",
+            "32",
+            "33",
+            "34",
+            "35",
+            "36",
+            "37",
+            "38",
+            "39",
+            "4",
+            "40",
+            "41",
+            "42",
+            "43",
+            "44",
+            "45",
+            "46",
+            "47",
+            "48",
+            "49",
+            "5",
+            "50",
+            "6",
+            "7",
+            "8",
+            "9"
+          ],
+          "voice_mail_plan": [
+            "0",
+            "1"
+          ]
+        },
+        "source_sha256": null,
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "xgboost",
+      "stop_error": 0.061356193411673976
+    },
+    {
+      "anchor": {
+        "model_bytes": 45774,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\churn\\lightgbm.pkl",
+        "model_sha256": "9a072bf43f87eaf52c01ef3df2fc8a5eae79c84cf4c4e4ed47d49ef883002b40"
+      },
+      "correction": null,
+      "dataset": "churn",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 0.024616599999717437,
+        "parameters": {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 0.1,
+          "learning_rate": 0.05,
+          "max_bin": 255,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 8,
+          "metric": "auc",
+          "min_data_in_leaf": 5,
+          "num_leaves": 31,
+          "num_threads": 1,
+          "objective": "binary",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        "requested_rounds": 12,
+        "retained_rounds": 12,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 416,
+        "original_train_rows": 2085,
+        "outside_cap_rows": 0,
+        "row_ids_sha256": "ac9963bd0d5ae11b11341d1e0cb332d69a36ef646ecca5f0eb857a96109c4370",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 2085,
+        "schema": {
+          "area_code": [
+            "408.0",
+            "415.0",
+            "510.0"
+          ],
+          "international_plan": [
+            "0",
+            "1"
+          ],
+          "state": [
+            "0",
+            "1",
+            "10",
+            "11",
+            "12",
+            "13",
+            "14",
+            "15",
+            "16",
+            "17",
+            "18",
+            "19",
+            "2",
+            "20",
+            "21",
+            "22",
+            "23",
+            "24",
+            "25",
+            "26",
+            "27",
+            "28",
+            "29",
+            "3",
+            "30",
+            "31",
+            "32",
+            "33",
+            "34",
+            "35",
+            "36",
+            "37",
+            "38",
+            "39",
+            "4",
+            "40",
+            "41",
+            "42",
+            "43",
+            "44",
+            "45",
+            "46",
+            "47",
+            "48",
+            "49",
+            "5",
+            "50",
+            "6",
+            "7",
+            "8",
+            "9"
+          ],
+          "voice_mail_plan": [
+            "0",
+            "1"
+          ]
+        },
+        "source_sha256": null,
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "lightgbm",
+      "stop_error": 0.059622423425159
+    },
+    {
+      "anchor": {
+        "model_bytes": 26899759,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\in_vehicle_coupon_recommendation\\ctboost.pkl",
+        "model_sha256": "fc7ee7c0e9c840b3f554fac3c64710d91891d3694bd58f634ee01077f8cd505c"
+      },
+      "correction": null,
+      "dataset": "in_vehicle_coupon_recommendation",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 4.293509499999345,
+        "parameters": {
+          "alpha": 0.8,
+          "bootstrap_type": "Bernoulli",
+          "cat_features": [
+            "destination",
+            "passenger",
+            "weather",
+            "coupon",
+            "expiration",
+            "gender",
+            "age",
+            "maritalStatus",
+            "has_children",
+            "education",
+            "occupation",
+            "income",
+            "car",
+            "Bar",
+            "CoffeeHouse",
+            "CarryAway",
+            "RestaurantLessThan20",
+            "Restaurant20To50",
+            "toCoupon_GEQ15min",
+            "toCoupon_GEQ25min",
+            "direction_same",
+            "direction_opp"
+          ],
+          "eval_metric": "AUC",
+          "feature_test": "grouped",
+          "feature_test_adjustment": "none",
+          "feature_test_bins": 8,
+          "iterations": 534,
+          "lambda_l2": 3,
+          "leaf_estimation_backtracking": true,
+          "leaf_estimation_iterations": 3,
+          "learning_rate": 0.05,
+          "max_bins": 256,
+          "max_cat_threshold": 256,
+          "max_depth": 8,
+          "min_data_in_leaf": 10,
+          "multi_strategy": "one_output_per_tree",
+          "multiclass_feature_test": "single",
+          "one_hot_max_size": 8,
+          "ordered_ctr": true,
+          "random_seed": 47,
+          "subsample": 0.8,
+          "verbose": false
+        },
+        "requested_rounds": 534,
+        "retained_rounds": 534,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 1057,
+        "original_train_rows": 5285,
+        "outside_cap_rows": 0,
+        "row_ids_sha256": "a9943111493fdf3fb8fa87727ff777bbeac325ea2e7d51f8d567bd3b2f2d301e",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 5285,
+        "schema": {
+          "Bar": [
+            "1~3",
+            "4~8",
+            "gt8",
+            "less1",
+            "nan",
+            "never"
+          ],
+          "CarryAway": [
+            "1~3",
+            "4~8",
+            "gt8",
+            "less1",
+            "nan",
+            "never"
+          ],
+          "CoffeeHouse": [
+            "1~3",
+            "4~8",
+            "gt8",
+            "less1",
+            "nan",
+            "never"
+          ],
+          "Restaurant20To50": [
+            "1~3",
+            "4~8",
+            "gt8",
+            "less1",
+            "nan",
+            "never"
+          ],
+          "RestaurantLessThan20": [
+            "1~3",
+            "4~8",
+            "gt8",
+            "less1",
+            "nan",
+            "never"
+          ],
+          "age": [
+            "21",
+            "26",
+            "31",
+            "36",
+            "41",
+            "46",
+            "50plus",
+            "below21"
+          ],
+          "car": [
+            "Car that is too old to install Onstar :D",
+            "Mazda5",
+            "Scooter and motorcycle",
+            "crossover",
+            "do not drive",
+            "nan"
+          ],
+          "coupon": [
+            "Bar",
+            "Carry out & Take away",
+            "Coffee House",
+            "Restaurant(20-50)",
+            "Restaurant(<20)"
+          ],
+          "destination": [
+            "Home",
+            "No Urgent Place",
+            "Work"
+          ],
+          "direction_opp": [
+            "0",
+            "1"
+          ],
+          "direction_same": [
+            "0",
+            "1"
+          ],
+          "education": [
+            "Associates degree",
+            "Bachelors degree",
+            "Graduate degree (Masters or Doctorate)",
+            "High School Graduate",
+            "Some High School",
+            "Some college - no degree"
+          ],
+          "expiration": [
+            "1d",
+            "2h"
+          ],
+          "gender": [
+            "Female",
+            "Male"
+          ],
+          "has_children": [
+            "0",
+            "1"
+          ],
+          "income": [
+            "$100000 or More",
+            "$12500 - $24999",
+            "$25000 - $37499",
+            "$37500 - $49999",
+            "$50000 - $62499",
+            "$62500 - $74999",
+            "$75000 - $87499",
+            "$87500 - $99999",
+            "Less than $12500"
+          ],
+          "maritalStatus": [
+            "Divorced",
+            "Married partner",
+            "Single",
+            "Unmarried partner",
+            "Widowed"
+          ],
+          "occupation": [
+            "Architecture & Engineering",
+            "Arts Design Entertainment Sports & Media",
+            "Building & Grounds Cleaning & Maintenance",
+            "Business & Financial",
+            "Community & Social Services",
+            "Computer & Mathematical",
+            "Construction & Extraction",
+            "Education&Training&Library",
+            "Farming Fishing & Forestry",
+            "Food Preparation & Serving Related",
+            "Healthcare Practitioners & Technical",
+            "Healthcare Support",
+            "Installation Maintenance & Repair",
+            "Legal",
+            "Life Physical Social Science",
+            "Management",
+            "Office & Administrative Support",
+            "Personal Care & Service",
+            "Production Occupations",
+            "Protective Service",
+            "Retired",
+            "Sales & Related",
+            "Student",
+            "Transportation & Material Moving",
+            "Unemployed"
+          ],
+          "passenger": [
+            "Alone",
+            "Friend(s)",
+            "Kid(s)",
+            "Partner"
+          ],
+          "toCoupon_GEQ15min": [
+            "0",
+            "1"
+          ],
+          "toCoupon_GEQ25min": [
+            "0",
+            "1"
+          ],
+          "weather": [
+            "Rainy",
+            "Snowy",
+            "Sunny"
+          ]
+        },
+        "source_sha256": null,
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "ctboost",
+      "stop_error": 0.20996803572992384
+    },
+    {
+      "anchor": {
+        "model_bytes": 12311417,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\in_vehicle_coupon_recommendation\\xgboost.pkl",
+        "model_sha256": "304e62aa7f7bc987f108cb61653302da9e87ed133a7d8afacca780992975ecd0"
+      },
+      "correction": {
+        "lambda": 1000.0,
+        "max_working_bytes": 4294967296,
+        "shrinkage": 0.25,
+        "solver": {
+          "ftol": 1e-13,
+          "gradient_gate": 1e-06,
+          "gtol": 1e-09,
+          "maxiter": 2000
+        }
+      },
+      "dataset": "in_vehicle_coupon_recommendation",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 2.526158000000578,
+        "parameters": {
+          "eta": 0.025,
+          "eval_metric": "auc",
+          "lambda": 1,
+          "max_bin": 256,
+          "max_depth": 8,
+          "min_child_weight": 0.25,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "binary:logistic",
+          "seed": 47,
+          "subsample": 0.8,
+          "tree_method": "hist"
+        },
+        "requested_rounds": 682,
+        "retained_rounds": 682,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 1057,
+        "original_train_rows": 5285,
+        "outside_cap_rows": 0,
+        "row_ids_sha256": "a9943111493fdf3fb8fa87727ff777bbeac325ea2e7d51f8d567bd3b2f2d301e",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 5285,
+        "schema": {
+          "Bar": [
+            "1~3",
+            "4~8",
+            "gt8",
+            "less1",
+            "nan",
+            "never"
+          ],
+          "CarryAway": [
+            "1~3",
+            "4~8",
+            "gt8",
+            "less1",
+            "nan",
+            "never"
+          ],
+          "CoffeeHouse": [
+            "1~3",
+            "4~8",
+            "gt8",
+            "less1",
+            "nan",
+            "never"
+          ],
+          "Restaurant20To50": [
+            "1~3",
+            "4~8",
+            "gt8",
+            "less1",
+            "nan",
+            "never"
+          ],
+          "RestaurantLessThan20": [
+            "1~3",
+            "4~8",
+            "gt8",
+            "less1",
+            "nan",
+            "never"
+          ],
+          "age": [
+            "21",
+            "26",
+            "31",
+            "36",
+            "41",
+            "46",
+            "50plus",
+            "below21"
+          ],
+          "car": [
+            "Car that is too old to install Onstar :D",
+            "Mazda5",
+            "Scooter and motorcycle",
+            "crossover",
+            "do not drive",
+            "nan"
+          ],
+          "coupon": [
+            "Bar",
+            "Carry out & Take away",
+            "Coffee House",
+            "Restaurant(20-50)",
+            "Restaurant(<20)"
+          ],
+          "destination": [
+            "Home",
+            "No Urgent Place",
+            "Work"
+          ],
+          "direction_opp": [
+            "0",
+            "1"
+          ],
+          "direction_same": [
+            "0",
+            "1"
+          ],
+          "education": [
+            "Associates degree",
+            "Bachelors degree",
+            "Graduate degree (Masters or Doctorate)",
+            "High School Graduate",
+            "Some High School",
+            "Some college - no degree"
+          ],
+          "expiration": [
+            "1d",
+            "2h"
+          ],
+          "gender": [
+            "Female",
+            "Male"
+          ],
+          "has_children": [
+            "0",
+            "1"
+          ],
+          "income": [
+            "$100000 or More",
+            "$12500 - $24999",
+            "$25000 - $37499",
+            "$37500 - $49999",
+            "$50000 - $62499",
+            "$62500 - $74999",
+            "$75000 - $87499",
+            "$87500 - $99999",
+            "Less than $12500"
+          ],
+          "maritalStatus": [
+            "Divorced",
+            "Married partner",
+            "Single",
+            "Unmarried partner",
+            "Widowed"
+          ],
+          "occupation": [
+            "Architecture & Engineering",
+            "Arts Design Entertainment Sports & Media",
+            "Building & Grounds Cleaning & Maintenance",
+            "Business & Financial",
+            "Community & Social Services",
+            "Computer & Mathematical",
+            "Construction & Extraction",
+            "Education&Training&Library",
+            "Farming Fishing & Forestry",
+            "Food Preparation & Serving Related",
+            "Healthcare Practitioners & Technical",
+            "Healthcare Support",
+            "Installation Maintenance & Repair",
+            "Legal",
+            "Life Physical Social Science",
+            "Management",
+            "Office & Administrative Support",
+            "Personal Care & Service",
+            "Production Occupations",
+            "Protective Service",
+            "Retired",
+            "Sales & Related",
+            "Student",
+            "Transportation & Material Moving",
+            "Unemployed"
+          ],
+          "passenger": [
+            "Alone",
+            "Friend(s)",
+            "Kid(s)",
+            "Partner"
+          ],
+          "toCoupon_GEQ15min": [
+            "0",
+            "1"
+          ],
+          "toCoupon_GEQ25min": [
+            "0",
+            "1"
+          ],
+          "weather": [
+            "Rainy",
+            "Snowy",
+            "Sunny"
+          ]
+        },
+        "source_sha256": null,
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "xgboost",
+      "stop_error": 0.1933363984003269
+    },
+    {
+      "anchor": {
+        "model_bytes": 1974147,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\in_vehicle_coupon_recommendation\\lightgbm.pkl",
+        "model_sha256": "940f1301887f9520184bd7b10483757013f9801c0252664a89c7660f80afdf46"
+      },
+      "correction": null,
+      "dataset": "in_vehicle_coupon_recommendation",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 0.493166399999609,
+        "parameters": {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "feature_fraction": 0.8,
+          "force_col_wise": true,
+          "lambda_l2": 5,
+          "learning_rate": 0.1,
+          "max_bin": 255,
+          "metric": "auc",
+          "min_data_in_leaf": 40,
+          "num_leaves": 127,
+          "num_threads": 1,
+          "objective": "binary",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        "requested_rounds": 424,
+        "retained_rounds": 424,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 1057,
+        "original_train_rows": 5285,
+        "outside_cap_rows": 0,
+        "row_ids_sha256": "a9943111493fdf3fb8fa87727ff777bbeac325ea2e7d51f8d567bd3b2f2d301e",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 5285,
+        "schema": {
+          "Bar": [
+            "1~3",
+            "4~8",
+            "gt8",
+            "less1",
+            "nan",
+            "never"
+          ],
+          "CarryAway": [
+            "1~3",
+            "4~8",
+            "gt8",
+            "less1",
+            "nan",
+            "never"
+          ],
+          "CoffeeHouse": [
+            "1~3",
+            "4~8",
+            "gt8",
+            "less1",
+            "nan",
+            "never"
+          ],
+          "Restaurant20To50": [
+            "1~3",
+            "4~8",
+            "gt8",
+            "less1",
+            "nan",
+            "never"
+          ],
+          "RestaurantLessThan20": [
+            "1~3",
+            "4~8",
+            "gt8",
+            "less1",
+            "nan",
+            "never"
+          ],
+          "age": [
+            "21",
+            "26",
+            "31",
+            "36",
+            "41",
+            "46",
+            "50plus",
+            "below21"
+          ],
+          "car": [
+            "Car that is too old to install Onstar :D",
+            "Mazda5",
+            "Scooter and motorcycle",
+            "crossover",
+            "do not drive",
+            "nan"
+          ],
+          "coupon": [
+            "Bar",
+            "Carry out & Take away",
+            "Coffee House",
+            "Restaurant(20-50)",
+            "Restaurant(<20)"
+          ],
+          "destination": [
+            "Home",
+            "No Urgent Place",
+            "Work"
+          ],
+          "direction_opp": [
+            "0",
+            "1"
+          ],
+          "direction_same": [
+            "0",
+            "1"
+          ],
+          "education": [
+            "Associates degree",
+            "Bachelors degree",
+            "Graduate degree (Masters or Doctorate)",
+            "High School Graduate",
+            "Some High School",
+            "Some college - no degree"
+          ],
+          "expiration": [
+            "1d",
+            "2h"
+          ],
+          "gender": [
+            "Female",
+            "Male"
+          ],
+          "has_children": [
+            "0",
+            "1"
+          ],
+          "income": [
+            "$100000 or More",
+            "$12500 - $24999",
+            "$25000 - $37499",
+            "$37500 - $49999",
+            "$50000 - $62499",
+            "$62500 - $74999",
+            "$75000 - $87499",
+            "$87500 - $99999",
+            "Less than $12500"
+          ],
+          "maritalStatus": [
+            "Divorced",
+            "Married partner",
+            "Single",
+            "Unmarried partner",
+            "Widowed"
+          ],
+          "occupation": [
+            "Architecture & Engineering",
+            "Arts Design Entertainment Sports & Media",
+            "Building & Grounds Cleaning & Maintenance",
+            "Business & Financial",
+            "Community & Social Services",
+            "Computer & Mathematical",
+            "Construction & Extraction",
+            "Education&Training&Library",
+            "Farming Fishing & Forestry",
+            "Food Preparation & Serving Related",
+            "Healthcare Practitioners & Technical",
+            "Healthcare Support",
+            "Installation Maintenance & Repair",
+            "Legal",
+            "Life Physical Social Science",
+            "Management",
+            "Office & Administrative Support",
+            "Personal Care & Service",
+            "Production Occupations",
+            "Protective Service",
+            "Retired",
+            "Sales & Related",
+            "Student",
+            "Transportation & Material Moving",
+            "Unemployed"
+          ],
+          "passenger": [
+            "Alone",
+            "Friend(s)",
+            "Kid(s)",
+            "Partner"
+          ],
+          "toCoupon_GEQ15min": [
+            "0",
+            "1"
+          ],
+          "toCoupon_GEQ25min": [
+            "0",
+            "1"
+          ],
+          "weather": [
+            "Rainy",
+            "Snowy",
+            "Sunny"
+          ]
+        },
+        "source_sha256": null,
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "lightgbm",
+      "stop_error": 0.19857620340368398
+    },
+    {
+      "anchor": {
+        "model_bytes": 2335788,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\GiveMeSomeCredit\\ctboost.pkl",
+        "model_sha256": "1acfff8e8cd75db5d86e9cbf50b64f1a5717a635f8d38ac6758408570ed7ccda"
+      },
+      "correction": null,
+      "dataset": "GiveMeSomeCredit",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 9.551157300000341,
+        "parameters": {
+          "alpha": 0.05,
+          "bootstrap_type": "Bernoulli",
+          "cat_features": null,
+          "eval_metric": "AUC",
+          "feature_test": "grouped",
+          "feature_test_adjustment": "none",
+          "feature_test_bins": 8,
+          "iterations": 328,
+          "lambda_l2": 10,
+          "leaf_estimation_backtracking": true,
+          "leaf_estimation_iterations": 3,
+          "learning_rate": 0.1,
+          "max_bins": 256,
+          "max_cat_threshold": 64,
+          "max_depth": 10,
+          "min_data_in_leaf": 20,
+          "multi_strategy": "one_output_per_tree",
+          "multiclass_feature_test": "single",
+          "ordered_ctr": true,
+          "random_seed": 47,
+          "subsample": 0.8,
+          "verbose": false
+        },
+        "requested_rounds": 328,
+        "retained_rounds": 328,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 1250,
+        "original_train_rows": 6250,
+        "outside_cap_rows": 90000,
+        "row_ids_sha256": "e5a56aecb0ad2bd760d7ae1cc80f8f40bd9d6da9813886b8ea283bf5f88512b8",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 96250,
+        "schema": {},
+        "source_sha256": "6fde5280592c8c593b803dfa9e92f494249125aa76445f585a2bb6a93cc986af",
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "ctboost",
+      "stop_error": 0.19441721800212364
+    },
+    {
+      "anchor": {
+        "model_bytes": 84274,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\GiveMeSomeCredit\\xgboost.pkl",
+        "model_sha256": "416aae39ba44e0200915bcbfb78cb5d182fa041c67b1e5661d0769947a153708"
+      },
+      "correction": {
+        "lambda": 1.0,
+        "max_working_bytes": 4294967296,
+        "shrinkage": 1.0,
+        "solver": {
+          "ftol": 1e-13,
+          "gradient_gate": 1e-06,
+          "gtol": 1e-09,
+          "maxiter": 2000
+        }
+      },
+      "dataset": "GiveMeSomeCredit",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 0.35074170000007143,
+        "parameters": {
+          "eta": 0.05,
+          "eval_metric": "auc",
+          "lambda": 10,
+          "max_bin": 256,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 8,
+          "max_depth": 3,
+          "min_child_weight": 1,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "binary:logistic",
+          "seed": 47,
+          "subsample": 1.0,
+          "tree_method": "hist"
+        },
+        "requested_rounds": 64,
+        "retained_rounds": 64,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 1250,
+        "original_train_rows": 6250,
+        "outside_cap_rows": 90000,
+        "row_ids_sha256": "e5a56aecb0ad2bd760d7ae1cc80f8f40bd9d6da9813886b8ea283bf5f88512b8",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 96250,
+        "schema": {},
+        "source_sha256": "6fde5280592c8c593b803dfa9e92f494249125aa76445f585a2bb6a93cc986af",
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "xgboost",
+      "stop_error": 0.19476435514171353
+    },
+    {
+      "anchor": {
+        "model_bytes": 84158,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\GiveMeSomeCredit\\lightgbm.pkl",
+        "model_sha256": "deedfed18ee2e6f82d13bea4a0d822ee16c4b6311e44afb9b9a4b2dc9440be1b"
+      },
+      "correction": {
+        "lambda": 10.0,
+        "max_working_bytes": 4294967296,
+        "shrinkage": 1.0,
+        "solver": {
+          "ftol": 1e-13,
+          "gradient_gate": 1e-06,
+          "gtol": 1e-09,
+          "maxiter": 2000
+        }
+      },
+      "dataset": "GiveMeSomeCredit",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 0.40536259999862523,
+        "parameters": {
+          "bagging_fraction": 1.0,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 10,
+          "learning_rate": 0.025,
+          "max_bin": 255,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 8,
+          "metric": "auc",
+          "min_data_in_leaf": 5,
+          "num_leaves": 7,
+          "num_threads": 1,
+          "objective": "binary",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        "requested_rounds": 87,
+        "retained_rounds": 87,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 1250,
+        "original_train_rows": 6250,
+        "outside_cap_rows": 90000,
+        "row_ids_sha256": "e5a56aecb0ad2bd760d7ae1cc80f8f40bd9d6da9813886b8ea283bf5f88512b8",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 96250,
+        "schema": {},
+        "source_sha256": "6fde5280592c8c593b803dfa9e92f494249125aa76445f585a2bb6a93cc986af",
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "lightgbm",
+      "stop_error": 0.20101282365433304
+    },
+    {
+      "anchor": {
+        "model_bytes": 2317381,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\QSAR_fish_toxicity\\ctboost.pkl",
+        "model_sha256": "33259c8ddcf8b48114f51cb37ec31475198510055c9cdb5516a8d77fa6ed071d"
+      },
+      "correction": null,
+      "dataset": "QSAR_fish_toxicity",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 0.17845540000053006,
+        "parameters": {
+          "alpha": 0.5,
+          "bootstrap_type": "Bernoulli",
+          "cat_features": null,
+          "eval_metric": "RMSE",
+          "feature_test": "grouped",
+          "feature_test_adjustment": "none",
+          "feature_test_bins": 8,
+          "iterations": 32,
+          "lambda_l2": 1,
+          "leaf_estimation_backtracking": true,
+          "leaf_estimation_iterations": 3,
+          "learning_rate": 0.15,
+          "max_bins": 256,
+          "max_cat_threshold": 64,
+          "max_depth": 8,
+          "multi_strategy": "one_output_per_tree",
+          "multiclass_feature_test": "single",
+          "ordered_ctr": true,
+          "random_seed": 47,
+          "subsample": 0.8,
+          "verbose": false
+        },
+        "requested_rounds": 32,
+        "retained_rounds": 32,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 75,
+        "original_train_rows": 379,
+        "outside_cap_rows": 0,
+        "row_ids_sha256": "26be8a0042fad36c4a38afc7ead69ffb0cef33bbddb18aa58b2a116ce973d933",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 379,
+        "schema": {},
+        "source_sha256": null,
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "ctboost",
+      "stop_error": 0.9169127094831985
+    },
+    {
+      "anchor": {
+        "model_bytes": 176012,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\QSAR_fish_toxicity\\xgboost.pkl",
+        "model_sha256": "faf8deb7516aee842507ccf8bb366e31ef6f25bce831765c9ef43ba3eafcce6c"
+      },
+      "correction": {
+        "lambda": 100.0,
+        "max_working_bytes": 4294967296,
+        "shrinkage": 0.25,
+        "solver": {
+          "atol": 1e-08,
+          "btol": 1e-08,
+          "iter_lim": 2000
+        }
+      },
+      "dataset": "QSAR_fish_toxicity",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 0.075338799997553,
+        "parameters": {
+          "eta": 0.15,
+          "eval_metric": "rmse",
+          "lambda": 10,
+          "max_bin": 256,
+          "max_depth": 6,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "reg:squarederror",
+          "seed": 47,
+          "subsample": 0.8,
+          "tree_method": "hist"
+        },
+        "requested_rounds": 59,
+        "retained_rounds": 59,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 75,
+        "original_train_rows": 379,
+        "outside_cap_rows": 0,
+        "row_ids_sha256": "26be8a0042fad36c4a38afc7ead69ffb0cef33bbddb18aa58b2a116ce973d933",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 379,
+        "schema": {},
+        "source_sha256": null,
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "xgboost",
+      "stop_error": 0.9413388837190911
+    },
+    {
+      "anchor": {
+        "model_bytes": 33522,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\QSAR_fish_toxicity\\lightgbm.pkl",
+        "model_sha256": "82a2249cefab214d27dc9c11e942595d8e4a5a979a3d426453f6b7eb6af926f9"
+      },
+      "correction": {
+        "lambda": 1000.0,
+        "max_working_bytes": 4294967296,
+        "shrinkage": 1.0,
+        "solver": {
+          "atol": 1e-08,
+          "btol": 1e-08,
+          "iter_lim": 2000
+        }
+      },
+      "dataset": "QSAR_fish_toxicity",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 0.01622979999956442,
+        "parameters": {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "cat_l2": 0,
+          "cat_smooth": 0,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 0,
+          "learning_rate": 0.1,
+          "max_bin": 255,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 1,
+          "metric": "rmse",
+          "min_data_in_leaf": 10,
+          "num_leaves": 7,
+          "num_threads": 1,
+          "objective": "regression",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        "requested_rounds": 38,
+        "retained_rounds": 38,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 75,
+        "original_train_rows": 379,
+        "outside_cap_rows": 0,
+        "row_ids_sha256": "26be8a0042fad36c4a38afc7ead69ffb0cef33bbddb18aa58b2a116ce973d933",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 379,
+        "schema": {},
+        "source_sha256": null,
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "lightgbm",
+      "stop_error": 0.9210915022821272
+    },
+    {
+      "anchor": {
+        "model_bytes": 832020,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\Another-Dataset-on-used-Fiat-500\\ctboost.pkl",
+        "model_sha256": "f88db5d3937e53672789fdbeed2fe907c00ecb37f6db61275c7647f4b4197d81"
+      },
+      "correction": {
+        "lambda": 10.0,
+        "max_working_bytes": 4294967296,
+        "shrinkage": 0.25,
+        "solver": {
+          "atol": 1e-08,
+          "btol": 1e-08,
+          "iter_lim": 2000
+        }
+      },
+      "dataset": "Another-Dataset-on-used-Fiat-500",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 0.1643982000023243,
+        "parameters": {
+          "alpha": 0.05,
+          "bootstrap_type": "Bernoulli",
+          "cat_features": [
+            "model"
+          ],
+          "eval_metric": "RMSE",
+          "feature_test": "grouped",
+          "feature_test_adjustment": "none",
+          "feature_test_bins": 8,
+          "iterations": 116,
+          "lambda_l2": 3,
+          "leaf_estimation_iterations": 1,
+          "learning_rate": 0.05,
+          "max_bins": 256,
+          "max_cat_threshold": 256,
+          "max_depth": 8,
+          "min_data_in_leaf": 1,
+          "multi_strategy": "one_output_per_tree",
+          "multiclass_feature_test": "single",
+          "one_hot_max_size": 8,
+          "ordered_ctr": true,
+          "random_seed": 47,
+          "subsample": 1.0,
+          "verbose": false
+        },
+        "requested_rounds": 116,
+        "retained_rounds": 116,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 128,
+        "original_train_rows": 641,
+        "outside_cap_rows": 0,
+        "row_ids_sha256": "2cdd25daa6280834253718148c7e690ba1942a7f7b4f38dce8170efc0c67e442",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 641,
+        "schema": {
+          "model": [
+            "lounge",
+            "pop",
+            "sport"
+          ]
+        },
+        "source_sha256": null,
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "ctboost",
+      "stop_error": 640.656328215409
+    },
+    {
+      "anchor": {
+        "model_bytes": 232882,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\Another-Dataset-on-used-Fiat-500\\xgboost.pkl",
+        "model_sha256": "77a626b4047894751b6dd97133faf5ff7f2456cc7b65160c6b4be504462784f7"
+      },
+      "correction": {
+        "lambda": 10.0,
+        "max_working_bytes": 4294967296,
+        "shrinkage": 0.25,
+        "solver": {
+          "atol": 1e-08,
+          "btol": 1e-08,
+          "iter_lim": 2000
+        }
+      },
+      "dataset": "Another-Dataset-on-used-Fiat-500",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 0.08322299999781535,
+        "parameters": {
+          "colsample_bytree": 0.8,
+          "eta": 0.1,
+          "eval_metric": "rmse",
+          "lambda": 10,
+          "max_bin": 256,
+          "max_depth": 8,
+          "min_child_weight": 1.25,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "reg:squarederror",
+          "seed": 47,
+          "subsample": 0.8,
+          "tree_method": "hist"
+        },
+        "requested_rounds": 56,
+        "retained_rounds": 56,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 128,
+        "original_train_rows": 641,
+        "outside_cap_rows": 0,
+        "row_ids_sha256": "2cdd25daa6280834253718148c7e690ba1942a7f7b4f38dce8170efc0c67e442",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 641,
+        "schema": {
+          "model": [
+            "lounge",
+            "pop",
+            "sport"
+          ]
+        },
+        "source_sha256": null,
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "xgboost",
+      "stop_error": 654.2289296636689
+    },
+    {
+      "anchor": {
+        "model_bytes": 64896,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\Another-Dataset-on-used-Fiat-500\\lightgbm.pkl",
+        "model_sha256": "0491b5ee804e5b3ecbca6d27233c9a19b0a6e72d54b4c8bef6579a8f15a0151f"
+      },
+      "correction": null,
+      "dataset": "Another-Dataset-on-used-Fiat-500",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 0.023182700002507772,
+        "parameters": {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 10,
+          "learning_rate": 0.15,
+          "max_bin": 255,
+          "metric": "rmse",
+          "num_leaves": 31,
+          "num_threads": 1,
+          "objective": "regression",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        "requested_rounds": 42,
+        "retained_rounds": 42,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 128,
+        "original_train_rows": 641,
+        "outside_cap_rows": 0,
+        "row_ids_sha256": "2cdd25daa6280834253718148c7e690ba1942a7f7b4f38dce8170efc0c67e442",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 641,
+        "schema": {
+          "model": [
+            "lounge",
+            "pop",
+            "sport"
+          ]
+        },
+        "source_sha256": null,
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "lightgbm",
+      "stop_error": 676.7896033570552
+    },
+    {
+      "anchor": {
+        "model_bytes": 24264253,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\houses\\ctboost.pkl",
+        "model_sha256": "20aa35a84ea8c0f3dc3f901a5cc6429b4ee79e6c40933fa017290d82482f6b25"
+      },
+      "correction": {
+        "lambda": 1000.0,
+        "max_working_bytes": 4294967296,
+        "shrinkage": 1.0,
+        "solver": {
+          "atol": 1e-08,
+          "btol": 1e-08,
+          "iter_lim": 2000
+        }
+      },
+      "dataset": "houses",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 0.801975800000946,
+        "parameters": {
+          "alpha": 0.5,
+          "bootstrap_type": "Bernoulli",
+          "cat_features": null,
+          "eval_metric": "RMSE",
+          "feature_test": "grouped",
+          "feature_test_adjustment": "none",
+          "feature_test_bins": 8,
+          "iterations": 167,
+          "lambda_l2": 3,
+          "leaf_estimation_iterations": 1,
+          "learning_rate": 0.05,
+          "max_bins": 256,
+          "max_cat_threshold": 256,
+          "max_depth": 8,
+          "min_data_in_leaf": 1,
+          "multi_strategy": "one_output_per_tree",
+          "multiclass_feature_test": "single",
+          "one_hot_max_size": 8,
+          "ordered_ctr": true,
+          "random_seed": 47,
+          "subsample": 1.0,
+          "verbose": false
+        },
+        "requested_rounds": 167,
+        "retained_rounds": 167,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 1250,
+        "original_train_rows": 6250,
+        "outside_cap_rows": 3760,
+        "row_ids_sha256": "9857daa2efbadb9d3cec56b74d3fdfa7856096f2c32d4b0ad5a883c6325ef01d",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 10010,
+        "schema": {},
+        "source_sha256": "ea7db54b000d474826b35085254e6b0c66172e75a4870759b34317c40b696a06",
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "ctboost",
+      "stop_error": 0.22103647190789932
+    },
+    {
+      "anchor": {
+        "model_bytes": 4690920,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\houses\\xgboost.pkl",
+        "model_sha256": "1065680f78ecaedfc5bc9531025add76393d82b338a4767db0fc727845f1efbb"
+      },
+      "correction": {
+        "lambda": 1000.0,
+        "max_working_bytes": 4294967296,
+        "shrinkage": 0.25,
+        "solver": {
+          "atol": 1e-08,
+          "btol": 1e-08,
+          "iter_lim": 2000
+        }
+      },
+      "dataset": "houses",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 3.029323499999009,
+        "parameters": {
+          "eta": 0.05,
+          "eval_metric": "rmse",
+          "lambda": 10,
+          "max_bin": 256,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 8,
+          "max_depth": 6,
+          "min_child_weight": 1,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "reg:squarederror",
+          "seed": 47,
+          "subsample": 0.8,
+          "tree_method": "hist"
+        },
+        "requested_rounds": 1087,
+        "retained_rounds": 1087,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 1250,
+        "original_train_rows": 6250,
+        "outside_cap_rows": 3760,
+        "row_ids_sha256": "9857daa2efbadb9d3cec56b74d3fdfa7856096f2c32d4b0ad5a883c6325ef01d",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 10010,
+        "schema": {},
+        "source_sha256": "ea7db54b000d474826b35085254e6b0c66172e75a4870759b34317c40b696a06",
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "xgboost",
+      "stop_error": 0.21927970725630416
+    },
+    {
+      "anchor": {
+        "model_bytes": 2287038,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\houses\\lightgbm.pkl",
+        "model_sha256": "9febf4ef3d28f46d80a61f9b8f23229b5a23ea281acfcc72eb3d7bf7128ff3ba"
+      },
+      "correction": {
+        "lambda": 1000.0,
+        "max_working_bytes": 4294967296,
+        "shrinkage": 1.0,
+        "solver": {
+          "atol": 1e-08,
+          "btol": 1e-08,
+          "iter_lim": 2000
+        }
+      },
+      "dataset": "houses",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 0.5035432000004221,
+        "parameters": {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "feature_fraction": 0.8,
+          "force_col_wise": true,
+          "lambda_l2": 5,
+          "learning_rate": 0.03,
+          "max_bin": 255,
+          "metric": "rmse",
+          "min_data_in_leaf": 1,
+          "num_leaves": 127,
+          "num_threads": 1,
+          "objective": "regression",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        "requested_rounds": 191,
+        "retained_rounds": 191,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 1250,
+        "original_train_rows": 6250,
+        "outside_cap_rows": 3760,
+        "row_ids_sha256": "9857daa2efbadb9d3cec56b74d3fdfa7856096f2c32d4b0ad5a883c6325ef01d",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 10010,
+        "schema": {},
+        "source_sha256": "ea7db54b000d474826b35085254e6b0c66172e75a4870759b34317c40b696a06",
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "lightgbm",
+      "stop_error": 0.21304469942537618
+    },
+    {
+      "anchor": {
+        "model_bytes": 6462694,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\diamonds\\ctboost.pkl",
+        "model_sha256": "4591b6a716e2fabc50bca6aa8cb8f95247e9ebc297208eaab92f8c90bd0c9362"
+      },
+      "correction": {
+        "lambda": 1000.0,
+        "max_working_bytes": 4294967296,
+        "shrinkage": 0.25,
+        "solver": {
+          "atol": 1e-08,
+          "btol": 1e-08,
+          "iter_lim": 2000
+        }
+      },
+      "dataset": "diamonds",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 2.392048800000339,
+        "parameters": {
+          "alpha": 0.05,
+          "bootstrap_type": "Bernoulli",
+          "cat_features": [
+            "cut",
+            "color",
+            "clarity"
+          ],
+          "eval_metric": "RMSE",
+          "feature_test": "grouped",
+          "feature_test_adjustment": "none",
+          "feature_test_bins": 8,
+          "iterations": 512,
+          "lambda_l2": 1,
+          "leaf_estimation_backtracking": true,
+          "leaf_estimation_iterations": 3,
+          "learning_rate": 0.15,
+          "max_bins": 256,
+          "max_cat_threshold": 64,
+          "max_depth": 8,
+          "multi_strategy": "one_output_per_tree",
+          "multiclass_feature_test": "single",
+          "ordered_ctr": true,
+          "random_seed": 47,
+          "subsample": 0.8,
+          "verbose": false
+        },
+        "requested_rounds": 512,
+        "retained_rounds": 512,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 1250,
+        "original_train_rows": 6250,
+        "outside_cap_rows": 25960,
+        "row_ids_sha256": "ec88c865061d9bb68ed908585b63e91dcaf1416356a2802e2874f3df8932bac6",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 32210,
+        "schema": {
+          "clarity": [
+            "I1",
+            "IF",
+            "SI1",
+            "SI2",
+            "VS1",
+            "VS2",
+            "VVS1",
+            "VVS2"
+          ],
+          "color": [
+            "D",
+            "E",
+            "F",
+            "G",
+            "H",
+            "I",
+            "J"
+          ],
+          "cut": [
+            "Fair",
+            "Good",
+            "Ideal",
+            "Premium",
+            "Very Good"
+          ]
+        },
+        "source_sha256": "7cc55e82fc485dbe8fdcba4170005f13dcb12e4cde4570f243ff0ed9be7d4416",
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "ctboost",
+      "stop_error": 572.6218912484755
+    },
+    {
+      "anchor": {
+        "model_bytes": 854052,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\diamonds\\xgboost.pkl",
+        "model_sha256": "2d7645576f267ca85465de99563744ec892790a4bb77dc8f1026350bedbecffa"
+      },
+      "correction": {
+        "lambda": 1000.0,
+        "max_working_bytes": 4294967296,
+        "shrinkage": 0.25,
+        "solver": {
+          "atol": 1e-08,
+          "btol": 1e-08,
+          "iter_lim": 2000
+        }
+      },
+      "dataset": "diamonds",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 0.5421907999989344,
+        "parameters": {
+          "alpha": 100.0,
+          "colsample_bytree": 1.0,
+          "eta": 0.05,
+          "eval_metric": "rmse",
+          "lambda": 1.0,
+          "max_bin": 256,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "reg:squarederror",
+          "seed": 47,
+          "subsample": 1.0,
+          "tree_method": "hist"
+        },
+        "requested_rounds": 154,
+        "retained_rounds": 154,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 1250,
+        "original_train_rows": 6250,
+        "outside_cap_rows": 25960,
+        "row_ids_sha256": "ec88c865061d9bb68ed908585b63e91dcaf1416356a2802e2874f3df8932bac6",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 32210,
+        "schema": {
+          "clarity": [
+            "I1",
+            "IF",
+            "SI1",
+            "SI2",
+            "VS1",
+            "VS2",
+            "VVS1",
+            "VVS2"
+          ],
+          "color": [
+            "D",
+            "E",
+            "F",
+            "G",
+            "H",
+            "I",
+            "J"
+          ],
+          "cut": [
+            "Fair",
+            "Good",
+            "Ideal",
+            "Premium",
+            "Very Good"
+          ]
+        },
+        "source_sha256": "7cc55e82fc485dbe8fdcba4170005f13dcb12e4cde4570f243ff0ed9be7d4416",
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "xgboost",
+      "stop_error": 555.603862017231
+    }
+  ],
+  "created_at": "2026-10-16T14:39:28.845293+00:00",
+  "development_scored": false,
+  "identity_evaluations_planned": 24,
+  "new_anchor_fits_completed": 24,
+  "new_anchor_fits_planned": 24,
+  "nonidentity_candidate_evaluations_planned": 192,
+  "plan_sha256": "258eae391b666f63cdf074df25e02f722590484d43c1191ceb6a3f9783cc6a71",
+  "selection_solves_planned": 96,
+  "transfer_started": false
+}

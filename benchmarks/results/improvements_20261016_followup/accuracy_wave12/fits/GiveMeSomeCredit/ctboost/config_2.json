@@ -1,0 +1,107 @@
+{
+  "config_index": 2,
+  "correction": {
+    "fold": {
+      "coefficient_rounding_absolute_bound": 1.8028508538174906e-07,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "ctboost",
+      "physical_trees": 38,
+      "prediction_oracle_absolute_tolerance": 0.000478352332720533,
+      "topology_sha256_after": "a6980c6c3bd2ae4c1049a7e184ff323ed14f2d1174d3fb04c7486c4677b04df1",
+      "topology_sha256_before": "a6980c6c3bd2ae4c1049a7e184ff323ed14f2d1174d3fb04c7486c4677b04df1"
+    },
+    "inference_checks": {
+      "stop": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 0.000478352332720533,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 5.929224404659249e-07,
+        "oracle_max_absolute_difference": 3.1528710264794313e-06
+      }
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 237500,
+      "design_shape": [
+        6250,
+        976
+      ],
+      "ordered_ctr": true,
+      "ordered_training_transform_replayed": true,
+      "pipeline_state_sha256": "1a1df0b03e421a46d71afb13782e21a53737e5377f5953fc9de1b0031dfad4d6",
+      "training_leaf_ids_sha256": "a0fae23cbcf245804580dbad2de3355577994362f34616b73a1f3097acd7841f",
+      "training_rows": 6250,
+      "training_transform_sha256": "cfd29e18913e1fe3f1d562f545d203399708e8f195cf91179c812112ce1fe5d2",
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "columns": 976,
+      "evaluations": 11,
+      "final_objective": 0.15267798690215187,
+      "ftol": 1e-13,
+      "gradient_gate": 1e-06,
+      "gtol": 1e-09,
+      "initial_coefficients": "all zero",
+      "initial_objective": 0.15426633303427828,
+      "iterations": 9,
+      "maxcor": 20,
+      "maximum_absolute_mean_gradient": 5.512689833153672e-10,
+      "maxiter": 2000,
+      "maxls": 50,
+      "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+      "method": "L-BFGS-B",
+      "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+      "penalty": 1000.0,
+      "rows": 6250,
+      "status": 0
+    },
+    "training_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 0.000478352332720533,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 5.865983288162557e-07,
+      "oracle_max_absolute_difference": 3.145153177008808e-06
+    }
+  },
+  "dataset": "GiveMeSomeCredit",
+  "finished_at": "2026-10-16T12:28:07.013455+00:00",
+  "fit_seconds": 0.19527009999728762,
+  "library": "ctboost",
+  "parameters": {
+    "alpha": 0.8,
+    "bootstrap_type": "Bernoulli",
+    "cat_features": null,
+    "eval_metric": "AUC",
+    "feature_test": "grouped",
+    "feature_test_adjustment": "none",
+    "feature_test_bins": 8,
+    "iterations": 2000,
+    "lambda_l2": 10,
+    "leaf_estimation_backtracking": true,
+    "leaf_estimation_iterations": 3,
+    "learning_rate": 0.1,
+    "max_bins": 256,
+    "max_cat_threshold": 64,
+    "max_depth": 10,
+    "min_data_in_leaf": 20,
+    "multi_strategy": "one_output_per_tree",
+    "multiclass_feature_test": "single",
+    "ordered_ctr": true,
+    "random_seed": 47,
+    "subsample": 0.8,
+    "verbose": false
+  },
+  "patience": 50,
+  "retained_at_round_cap": false,
+  "retained_rounds": 38,
+  "round_cap": 2000,
+  "started_at": "2026-10-16T12:28:06.384571+00:00",
+  "status": "ok",
+  "stop_error": 0.19449379237115094,
+  "trained_at_round_cap": null,
+  "trained_rounds_if_available": null,
+  "uncorrected_stop_error": 0.19474904026790818
+}

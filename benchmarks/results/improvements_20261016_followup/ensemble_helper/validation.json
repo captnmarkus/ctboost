@@ -1,0 +1,20 @@
+{
+  "helper_sha256": "c28e5b9a8623ac07bc85670dbeeafbfe435d5c067b16927d7a866d8473ad2f83",
+  "tests_sha256": "0e29dad54e280742c28c721968b6a213bc6d0ab2a40f1f65272701b563fa930f",
+  "cp310": {
+    "passed": 39,
+    "skipped": 2,
+    "reason": "Optional LightGBM unavailable"
+  },
+  "cp312": {
+    "passed": 41,
+    "skipped": 0,
+    "numpy": "2.0.2",
+    "lightgbm": "4.7.0"
+  },
+  "scope": "Synthetic mathematical, metadata, persistence, shared-normalization and inplace-guard tests. Two tiny16-row LightGBM fits check native unit/nonunit sigmoid text reloads. No real-data fitting or DEV/official-test reads or scoring.",
+  "review": "Parent and research independently reviewed the helper; parent requested native LightGBM link verification and finite-extreme multiclass rejection, both included.",
+  "payload": "Plain version1 dict with exactly two seeded/provenance-bearing native components; fixed equal weights; per-component temperature once; normalized log-probabilities for multiclass and mixture log-odds for binary.",
+  "responsibility": "The experiment runner verifies source model hashes and common class order before construction, freezes the entire ensemble artifact hash before assessment, and independently checks each frozen batch before opting into XGB inplace.",
+  "non_goals": "No production default, native model change, seed/weight selection, real-data quality claim, or fit scheduling."
+}

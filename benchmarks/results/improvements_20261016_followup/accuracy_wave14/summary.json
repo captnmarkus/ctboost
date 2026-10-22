@@ -1,0 +1,145 @@
+{
+  "source_sha256": {
+    "plan.json": "8f99bc561554b042ea44d37652f6cc6f995c851d12dc077f0611382e80851011",
+    "frozen_selections.json": "d90bcb021575f7be3347b5b28e6a7a47e9d8f12b4965303f0d3909772be25903",
+    "development.json": "06e9d9e5fa84209a8a2e610466924e871585fbb093a2a55878631ffc9db4135b"
+  },
+  "all_nine_fits_successful": true,
+  "new_fits": 9,
+  "carried_models": 27,
+  "total_quality_tree_fits_through_wave14": 2409,
+  "diagnostic_replays_separate": 8,
+  "expanded_rows": [
+    {
+      "dataset": "GiveMeSomeCredit",
+      "rows": 97500,
+      "added_rows": 90000,
+      "original_train_rows": 6250,
+      "original_stop_rows": 1250,
+      "development_rows_excluded": 1250,
+      "confirmation_rows_excluded": 1250
+    },
+    {
+      "dataset": "diamonds",
+      "rows": 33460,
+      "added_rows": 25960,
+      "original_train_rows": 6250,
+      "original_stop_rows": 1250,
+      "development_rows_excluded": 1250,
+      "confirmation_rows_excluded": 1250
+    },
+    {
+      "dataset": "SDSS17",
+      "rows": 49535,
+      "added_rows": 42035,
+      "original_train_rows": 6250,
+      "original_stop_rows": 1250,
+      "development_rows_excluded": 1250,
+      "confirmation_rows_excluded": 1250
+    }
+  ],
+  "libraries": {
+    "ctboost": {
+      "new_fits": 3,
+      "carried_models": 9,
+      "native_fit_seconds": 20.19496270000309,
+      "new_payload_bytes": 13111533,
+      "total_policy_payload_bytes": 79524020
+    },
+    "xgboost": {
+      "new_fits": 3,
+      "carried_models": 9,
+      "native_fit_seconds": 13.157865599998331,
+      "new_payload_bytes": 52379076,
+      "total_policy_payload_bytes": 73120005
+    },
+    "lightgbm": {
+      "new_fits": 3,
+      "carried_models": 9,
+      "native_fit_seconds": 4.6632016000039584,
+      "new_payload_bytes": 6504924,
+      "total_policy_payload_bytes": 12233962
+    }
+  },
+  "maximum_job_seconds": 40.81299999999828,
+  "maximum_process_tree_rss_bytes": 2329653248,
+  "sum_job_seconds": 125.59299999999348,
+  "resource_failures": [],
+  "development_target_met": false,
+  "development_summary": [
+    {
+      "comparator": "xgboost",
+      "datasets": 12,
+      "family": "all",
+      "median_relative_error_gain": 0.001979128306907169,
+      "ties": 0,
+      "wins": 6,
+      "worst_relative_regression": 0.15415019762845839
+    },
+    {
+      "comparator": "xgboost",
+      "datasets": 4,
+      "family": "binary",
+      "median_relative_error_gain": -0.058992011524321736,
+      "ties": 0,
+      "wins": 0,
+      "worst_relative_regression": 0.15415019762845839
+    },
+    {
+      "comparator": "xgboost",
+      "datasets": 4,
+      "family": "regression",
+      "median_relative_error_gain": 0.014124003484260572,
+      "ties": 0,
+      "wins": 3,
+      "worst_relative_regression": 0.0010392133372168354
+    },
+    {
+      "comparator": "xgboost",
+      "datasets": 4,
+      "family": "multiclass",
+      "median_relative_error_gain": 0.16377799594100717,
+      "ties": 0,
+      "wins": 3,
+      "worst_relative_regression": 0.14490515986777322
+    },
+    {
+      "comparator": "lightgbm",
+      "datasets": 12,
+      "family": "all",
+      "median_relative_error_gain": -0.014386917889301586,
+      "ties": 0,
+      "wins": 6,
+      "worst_relative_regression": 0.23728813559322032
+    },
+    {
+      "comparator": "lightgbm",
+      "datasets": 4,
+      "family": "binary",
+      "median_relative_error_gain": -0.03834658032847048,
+      "ties": 0,
+      "wins": 2,
+      "worst_relative_regression": 0.23728813559322032
+    },
+    {
+      "comparator": "lightgbm",
+      "datasets": 4,
+      "family": "regression",
+      "median_relative_error_gain": -0.014386917889301586,
+      "ties": 0,
+      "wins": 2,
+      "worst_relative_regression": 0.03719248928050022
+    },
+    {
+      "comparator": "lightgbm",
+      "datasets": 4,
+      "family": "multiclass",
+      "median_relative_error_gain": -0.0010199284873890144,
+      "ties": 0,
+      "wins": 2,
+      "worst_relative_regression": 0.1891632924907889
+    }
+  ],
+  "seed239_run": false,
+  "official_test_scored": false
+}

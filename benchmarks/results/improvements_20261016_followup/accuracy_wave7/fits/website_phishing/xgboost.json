@@ -1,0 +1,180 @@
+{
+  "calibrated_roundtrip_exact": true,
+  "candidates": [
+    {
+      "selection_key": [
+        0.4806246737727196,
+        1,
+        1.3862943611198906,
+        0.25
+      ],
+      "stop_error": 0.4806246737727196,
+      "temperature": 0.25
+    },
+    {
+      "selection_key": [
+        0.2871452021430859,
+        1,
+        0.6931471805599453,
+        0.5
+      ],
+      "stop_error": 0.2871452021430859,
+      "temperature": 0.5
+    },
+    {
+      "selection_key": [
+        0.2455906254973627,
+        1,
+        0.2876820724517809,
+        0.75
+      ],
+      "stop_error": 0.2455906254973627,
+      "temperature": 0.75
+    },
+    {
+      "selection_key": [
+        0.24463517831246911,
+        0,
+        0.0,
+        1.0
+      ],
+      "stop_error": 0.24463517831246911,
+      "temperature": 1.0
+    },
+    {
+      "selection_key": [
+        0.2615718945167571,
+        1,
+        0.22314355131420976,
+        1.25
+      ],
+      "stop_error": 0.2615718945167571,
+      "temperature": 1.25
+    },
+    {
+      "selection_key": [
+        0.2876908275274322,
+        1,
+        0.4054651081081644,
+        1.5
+      ],
+      "stop_error": 0.2876908275274322,
+      "temperature": 1.5
+    },
+    {
+      "selection_key": [
+        0.3510373222304297,
+        1,
+        0.6931471805599453,
+        2.0
+      ],
+      "stop_error": 0.3510373222304297,
+      "temperature": 2.0
+    },
+    {
+      "selection_key": [
+        0.5757625937042717,
+        1,
+        1.3862943611198906,
+        4.0
+      ],
+      "stop_error": 0.5757625937042717,
+      "temperature": 4.0
+    }
+  ],
+  "dataset": "website_phishing",
+  "finished_at": "2026-10-16T11:42:02.484473+00:00",
+  "library": "xgboost",
+  "native_model_sha256": "c275cb09cf21df0b5cd463814954334b58b7e406003d66c1910b2ba2379c09bc",
+  "raw_prediction_roundtrip_exact": true,
+  "selection": {
+    "all_eight_successful": true,
+    "base_selection": {
+      "all_eight_successful": true,
+      "best": {
+        "config_index": 2,
+        "fit_seconds": 0.51850530000047,
+        "parameters": {
+          "eta": 0.05,
+          "eval_metric": "mlogloss",
+          "lambda": 3,
+          "max_bin": 256,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 8,
+          "max_depth": 4,
+          "min_child_weight": 0.1,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "num_class": 3,
+          "objective": "multi:softprob",
+          "seed": 47,
+          "subsample": 1.0,
+          "tree_method": "hist"
+        },
+        "retained_at_round_cap": false,
+        "retained_rounds": 243,
+        "selection_key": [
+          0.24463517831246911,
+          243,
+          2
+        ],
+        "stop_error": 0.24463517831246911,
+        "trained_rounds_if_available": 293
+      },
+      "cumulative_search_fit_seconds": 16.981693000007,
+      "current_wave_all_eight_successful": true,
+      "dataset": "website_phishing",
+      "library": "xgboost",
+      "model_bytes": 1200089,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave5\\models\\website_phishing\\xgboost.pkl",
+      "model_sha256": "2a59483d2efb5ba3adc55dd8167ce5b8fbba6738f183c19cbf265d851e30be6f",
+      "plan_sha256": "70b439625ede1a0f4fcde32e08ced81995eee0ab020ccbeb76e6d39a8784abb3",
+      "search_fit_seconds": 2.7884194000016578,
+      "source_wave": 5
+    },
+    "best": {
+      "config_index": 2,
+      "fit_seconds": 0.51850530000047,
+      "parameters": {
+        "eta": 0.05,
+        "eval_metric": "mlogloss",
+        "lambda": 3,
+        "max_bin": 256,
+        "max_cat_threshold": 256,
+        "max_cat_to_onehot": 8,
+        "max_depth": 4,
+        "min_child_weight": 0.1,
+        "multi_strategy": "one_output_per_tree",
+        "nthread": 1,
+        "num_class": 3,
+        "objective": "multi:softprob",
+        "seed": 47,
+        "subsample": 1.0,
+        "tree_method": "hist"
+      },
+      "retained_at_round_cap": false,
+      "retained_rounds": 243,
+      "selection_key": [
+        0.24463517831246911,
+        0,
+        0.0,
+        1.0
+      ],
+      "stop_error": 0.24463517831246911,
+      "trained_rounds_if_available": 293
+    },
+    "cumulative_search_fit_seconds": 16.981693000007,
+    "current_wave_all_eight_successful": true,
+    "dataset": "website_phishing",
+    "library": "xgboost",
+    "model_bytes": 1200112,
+    "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave7\\models\\website_phishing\\xgboost.pkl",
+    "model_sha256": "b1f901179d4861c2cd6d5ce36176ec3530d08d843dd1a353684fec93d7941856",
+    "plan_sha256": "caa9857e7fed25876734720058e208566b971ed00d2627df8737f3837ab164a9",
+    "search_fit_seconds": 2.7884194000016578,
+    "source_wave": 7,
+    "temperature": 1.0
+  },
+  "started_at": "2026-10-16T11:42:02.411318+00:00",
+  "status": "ok"
+}

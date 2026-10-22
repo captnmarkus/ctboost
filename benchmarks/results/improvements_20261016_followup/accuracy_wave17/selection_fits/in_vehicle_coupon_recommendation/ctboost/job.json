@@ -1,0 +1,1145 @@
+{
+  "anchor": {
+    "model_bytes": 26899759,
+    "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\in_vehicle_coupon_recommendation\\ctboost.pkl",
+    "model_sha256": "fc7ee7c0e9c840b3f554fac3c64710d91891d3694bd58f634ee01077f8cd505c"
+  },
+  "candidates": [
+    {
+      "controls": {
+        "lambda": 1.0,
+        "shrinkage": 0.25
+      },
+      "evidence": {
+        "checks": {
+          "fitting": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.03480266407132149,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 9.973985668440171e-07,
+            "oracle_max_absolute_difference": 9.42550647131668e-06
+          },
+          "stop": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.03480266407132149,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.105365749314059e-06,
+            "oracle_max_absolute_difference": 8.780414991527152e-06
+          }
+        },
+        "fold": {
+          "coefficient_rounding_absolute_bound": 2.2723298915223647e-06,
+          "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+          "inference_only": true,
+          "library": "ctboost",
+          "physical_trees": 534,
+          "prediction_oracle_absolute_tolerance": 0.03480266407132149,
+          "topology_sha256_after": "f55ed2fbda31347986838d9eb80e0d93575cb37fcfa134431bc4c68d22e33148",
+          "topology_sha256_before": "f55ed2fbda31347986838d9eb80e0d93575cb37fcfa134431bc4c68d22e33148"
+        },
+        "independent_sparse_raw_margin_oracle": true,
+        "preprocessing": {
+          "column_order": "physical tree order, then sorted observed native leaf IDs",
+          "design_nonzeros": 2822190,
+          "design_shape": [
+            5285,
+            19890
+          ],
+          "ordered_ctr": true,
+          "ordered_training_transform_replayed": true,
+          "pipeline_state_sha256": "1687115269ceb451b719ce1efb1767193988ee2edc2f86298ff95be287418fb0",
+          "training_leaf_ids_sha256": "01ed40b85d592944c189ccd51e0a885150d96b5db2a0ee76a246aded12eafe00",
+          "training_rows": 5285,
+          "training_transform_sha256": "46f1ca81ca1379ac0bf377fdb1b1eee67d26b72470c45f0061a38281ad960b51",
+          "unobserved_leaf_correction": 0
+        }
+      },
+      "finished_at": "2026-10-16T14:18:53.610188+00:00",
+      "index": 0,
+      "predictions_sha256": "47ce6b2ef1aba199c9ac8fa16e2fcf2a9320321d992cd65f59965ab9c76ff30f",
+      "solve": {
+        "columns": 19890,
+        "evaluations": 177,
+        "final_objective": 0.022099027424062015,
+        "ftol": 1e-13,
+        "gradient_gate": 1e-06,
+        "gtol": 1e-09,
+        "initial_coefficients": "all zero",
+        "initial_objective": 0.2372355279644849,
+        "iterations": 161,
+        "maxcor": 20,
+        "maximum_absolute_mean_gradient": 1.79183651924612e-08,
+        "maxiter": 2000,
+        "maxls": 50,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "method": "L-BFGS-B",
+        "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+        "penalty": 1.0,
+        "rows": 5285,
+        "status": 0
+      },
+      "started_at": "2026-10-16T14:18:44.631367+00:00",
+      "status": "ok",
+      "stop_error": 0.21593396969962342
+    },
+    {
+      "controls": {
+        "lambda": 1.0,
+        "shrinkage": 1.0
+      },
+      "evidence": {
+        "checks": {
+          "fitting": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.0777500569820404,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 8.94095734246868e-07,
+            "oracle_max_absolute_difference": 1.865461989147832e-05
+          },
+          "stop": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.0777500569820404,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 9.318825091781663e-07,
+            "oracle_max_absolute_difference": 1.7232557514290647e-05
+          }
+        },
+        "fold": {
+          "coefficient_rounding_absolute_bound": 5.8263759709284435e-06,
+          "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+          "inference_only": true,
+          "library": "ctboost",
+          "physical_trees": 534,
+          "prediction_oracle_absolute_tolerance": 0.0777500569820404,
+          "topology_sha256_after": "f55ed2fbda31347986838d9eb80e0d93575cb37fcfa134431bc4c68d22e33148",
+          "topology_sha256_before": "f55ed2fbda31347986838d9eb80e0d93575cb37fcfa134431bc4c68d22e33148"
+        },
+        "independent_sparse_raw_margin_oracle": true,
+        "preprocessing": {
+          "column_order": "physical tree order, then sorted observed native leaf IDs",
+          "design_nonzeros": 2822190,
+          "design_shape": [
+            5285,
+            19890
+          ],
+          "ordered_ctr": true,
+          "ordered_training_transform_replayed": true,
+          "pipeline_state_sha256": "1687115269ceb451b719ce1efb1767193988ee2edc2f86298ff95be287418fb0",
+          "training_leaf_ids_sha256": "01ed40b85d592944c189ccd51e0a885150d96b5db2a0ee76a246aded12eafe00",
+          "training_rows": 5285,
+          "training_transform_sha256": "46f1ca81ca1379ac0bf377fdb1b1eee67d26b72470c45f0061a38281ad960b51",
+          "unobserved_leaf_correction": 0
+        }
+      },
+      "finished_at": "2026-10-16T14:19:01.325129+00:00",
+      "index": 1,
+      "predictions_sha256": "205dc2a07b2db59754bf73cfa0654d139b619f9cd4ab197966db08d5ede61d0d",
+      "solve": {
+        "columns": 19890,
+        "evaluations": 177,
+        "final_objective": 0.022099027424062015,
+        "ftol": 1e-13,
+        "gradient_gate": 1e-06,
+        "gtol": 1e-09,
+        "initial_coefficients": "all zero",
+        "initial_objective": 0.2372355279644849,
+        "iterations": 161,
+        "maxcor": 20,
+        "maximum_absolute_mean_gradient": 1.79183651924612e-08,
+        "maxiter": 2000,
+        "maxls": 50,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "method": "L-BFGS-B",
+        "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+        "penalty": 1.0,
+        "rows": 5285,
+        "status": 0
+      },
+      "started_at": "2026-10-16T14:18:53.611187+00:00",
+      "status": "ok",
+      "stop_error": 0.22892036664039472
+    },
+    {
+      "controls": {
+        "lambda": 10.0,
+        "shrinkage": 0.25
+      },
+      "evidence": {
+        "checks": {
+          "fitting": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.02845805697143078,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.232625593988281e-06,
+            "oracle_max_absolute_difference": 9.54815149434296e-06
+          },
+          "stop": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.02845805697143078,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.1385778150120733e-06,
+            "oracle_max_absolute_difference": 7.197319029650373e-06
+          }
+        },
+        "fold": {
+          "coefficient_rounding_absolute_bound": 1.7826568289698802e-06,
+          "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+          "inference_only": true,
+          "library": "ctboost",
+          "physical_trees": 534,
+          "prediction_oracle_absolute_tolerance": 0.02845805697143078,
+          "topology_sha256_after": "f55ed2fbda31347986838d9eb80e0d93575cb37fcfa134431bc4c68d22e33148",
+          "topology_sha256_before": "f55ed2fbda31347986838d9eb80e0d93575cb37fcfa134431bc4c68d22e33148"
+        },
+        "independent_sparse_raw_margin_oracle": true,
+        "preprocessing": {
+          "column_order": "physical tree order, then sorted observed native leaf IDs",
+          "design_nonzeros": 2822190,
+          "design_shape": [
+            5285,
+            19890
+          ],
+          "ordered_ctr": true,
+          "ordered_training_transform_replayed": true,
+          "pipeline_state_sha256": "1687115269ceb451b719ce1efb1767193988ee2edc2f86298ff95be287418fb0",
+          "training_leaf_ids_sha256": "01ed40b85d592944c189ccd51e0a885150d96b5db2a0ee76a246aded12eafe00",
+          "training_rows": 5285,
+          "training_transform_sha256": "46f1ca81ca1379ac0bf377fdb1b1eee67d26b72470c45f0061a38281ad960b51",
+          "unobserved_leaf_correction": 0
+        }
+      },
+      "finished_at": "2026-10-16T14:19:09.918460+00:00",
+      "index": 2,
+      "predictions_sha256": "15fedb7bc9d60cb3c36f103f51a8647b276ee1409ca2f2e89f0a796e332eb9a8",
+      "solve": {
+        "columns": 19890,
+        "evaluations": 115,
+        "final_objective": 0.07628044811320923,
+        "ftol": 1e-13,
+        "gradient_gate": 1e-06,
+        "gtol": 1e-09,
+        "initial_coefficients": "all zero",
+        "initial_objective": 0.2372355279644849,
+        "iterations": 108,
+        "maxcor": 20,
+        "maximum_absolute_mean_gradient": 2.1472910088312202e-08,
+        "maxiter": 2000,
+        "maxls": 50,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "method": "L-BFGS-B",
+        "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+        "penalty": 10.0,
+        "rows": 5285,
+        "status": 0
+      },
+      "started_at": "2026-10-16T14:19:01.326134+00:00",
+      "status": "ok",
+      "stop_error": 0.2136424672329742
+    },
+    {
+      "controls": {
+        "lambda": 10.0,
+        "shrinkage": 1.0
+      },
+      "evidence": {
+        "checks": {
+          "fitting": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.0487387552857399,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 9.006432063154966e-07,
+            "oracle_max_absolute_difference": 1.2652801501644717e-05
+          },
+          "stop": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.0487387552857399,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.1669168077148711e-06,
+            "oracle_max_absolute_difference": 1.4007324214304617e-05
+          }
+        },
+        "fold": {
+          "coefficient_rounding_absolute_bound": 3.468210526973853e-06,
+          "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+          "inference_only": true,
+          "library": "ctboost",
+          "physical_trees": 534,
+          "prediction_oracle_absolute_tolerance": 0.0487387552857399,
+          "topology_sha256_after": "f55ed2fbda31347986838d9eb80e0d93575cb37fcfa134431bc4c68d22e33148",
+          "topology_sha256_before": "f55ed2fbda31347986838d9eb80e0d93575cb37fcfa134431bc4c68d22e33148"
+        },
+        "independent_sparse_raw_margin_oracle": true,
+        "preprocessing": {
+          "column_order": "physical tree order, then sorted observed native leaf IDs",
+          "design_nonzeros": 2822190,
+          "design_shape": [
+            5285,
+            19890
+          ],
+          "ordered_ctr": true,
+          "ordered_training_transform_replayed": true,
+          "pipeline_state_sha256": "1687115269ceb451b719ce1efb1767193988ee2edc2f86298ff95be287418fb0",
+          "training_leaf_ids_sha256": "01ed40b85d592944c189ccd51e0a885150d96b5db2a0ee76a246aded12eafe00",
+          "training_rows": 5285,
+          "training_transform_sha256": "46f1ca81ca1379ac0bf377fdb1b1eee67d26b72470c45f0061a38281ad960b51",
+          "unobserved_leaf_correction": 0
+        }
+      },
+      "finished_at": "2026-10-16T14:19:17.695097+00:00",
+      "index": 3,
+      "predictions_sha256": "2d9cd7b448540bf3cb8d8b10ade703b476f213884000f4e596ca728824fb1215",
+      "solve": {
+        "columns": 19890,
+        "evaluations": 115,
+        "final_objective": 0.07628044811320923,
+        "ftol": 1e-13,
+        "gradient_gate": 1e-06,
+        "gtol": 1e-09,
+        "initial_coefficients": "all zero",
+        "initial_objective": 0.2372355279644849,
+        "iterations": 108,
+        "maxcor": 20,
+        "maximum_absolute_mean_gradient": 2.1472910088312202e-08,
+        "maxiter": 2000,
+        "maxls": 50,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "method": "L-BFGS-B",
+        "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+        "penalty": 10.0,
+        "rows": 5285,
+        "status": 0
+      },
+      "started_at": "2026-10-16T14:19:09.919462+00:00",
+      "status": "ok",
+      "stop_error": 0.22479347286685936
+    },
+    {
+      "controls": {
+        "lambda": 100.0,
+        "shrinkage": 0.25
+      },
+      "evidence": {
+        "checks": {
+          "fitting": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.024905245751142502,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.3010825628057329e-06,
+            "oracle_max_absolute_difference": 8.446176878340594e-06
+          },
+          "stop": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.024905245751142502,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.2897183034272999e-06,
+            "oracle_max_absolute_difference": 6.8225294960200245e-06
+          }
+        },
+        "fold": {
+          "coefficient_rounding_absolute_bound": 1.494788362458468e-06,
+          "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+          "inference_only": true,
+          "library": "ctboost",
+          "physical_trees": 534,
+          "prediction_oracle_absolute_tolerance": 0.024905245751142502,
+          "topology_sha256_after": "f55ed2fbda31347986838d9eb80e0d93575cb37fcfa134431bc4c68d22e33148",
+          "topology_sha256_before": "f55ed2fbda31347986838d9eb80e0d93575cb37fcfa134431bc4c68d22e33148"
+        },
+        "independent_sparse_raw_margin_oracle": true,
+        "preprocessing": {
+          "column_order": "physical tree order, then sorted observed native leaf IDs",
+          "design_nonzeros": 2822190,
+          "design_shape": [
+            5285,
+            19890
+          ],
+          "ordered_ctr": true,
+          "ordered_training_transform_replayed": true,
+          "pipeline_state_sha256": "1687115269ceb451b719ce1efb1767193988ee2edc2f86298ff95be287418fb0",
+          "training_leaf_ids_sha256": "01ed40b85d592944c189ccd51e0a885150d96b5db2a0ee76a246aded12eafe00",
+          "training_rows": 5285,
+          "training_transform_sha256": "46f1ca81ca1379ac0bf377fdb1b1eee67d26b72470c45f0061a38281ad960b51",
+          "unobserved_leaf_correction": 0
+        }
+      },
+      "finished_at": "2026-10-16T14:19:26.078366+00:00",
+      "index": 4,
+      "predictions_sha256": "93b73a0045f1e35dc8c0da5c1c1a77d7ddc7e81d27a629e76d5b68f733e0077b",
+      "solve": {
+        "columns": 19890,
+        "evaluations": 60,
+        "final_objective": 0.16568804595112482,
+        "ftol": 1e-13,
+        "gradient_gate": 1e-06,
+        "gtol": 1e-09,
+        "initial_coefficients": "all zero",
+        "initial_objective": 0.2372355279644849,
+        "iterations": 56,
+        "maxcor": 20,
+        "maximum_absolute_mean_gradient": 8.346382902368257e-09,
+        "maxiter": 2000,
+        "maxls": 50,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "method": "L-BFGS-B",
+        "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+        "penalty": 100.0,
+        "rows": 5285,
+        "status": 0
+      },
+      "started_at": "2026-10-16T14:19:17.696097+00:00",
+      "status": "ok",
+      "stop_error": 0.21122325364159156
+    },
+    {
+      "controls": {
+        "lambda": 100.0,
+        "shrinkage": 1.0
+      },
+      "evidence": {
+        "checks": {
+          "fitting": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.030268609523773193,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.0875735986157783e-06,
+            "oracle_max_absolute_difference": 9.821314946201198e-06
+          },
+          "stop": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.030268609523773193,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.2711165570086071e-06,
+            "oracle_max_absolute_difference": 9.308411888397927e-06
+          }
+        },
+        "fold": {
+          "coefficient_rounding_absolute_bound": 1.948329553453417e-06,
+          "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+          "inference_only": true,
+          "library": "ctboost",
+          "physical_trees": 534,
+          "prediction_oracle_absolute_tolerance": 0.030268609523773193,
+          "topology_sha256_after": "f55ed2fbda31347986838d9eb80e0d93575cb37fcfa134431bc4c68d22e33148",
+          "topology_sha256_before": "f55ed2fbda31347986838d9eb80e0d93575cb37fcfa134431bc4c68d22e33148"
+        },
+        "independent_sparse_raw_margin_oracle": true,
+        "preprocessing": {
+          "column_order": "physical tree order, then sorted observed native leaf IDs",
+          "design_nonzeros": 2822190,
+          "design_shape": [
+            5285,
+            19890
+          ],
+          "ordered_ctr": true,
+          "ordered_training_transform_replayed": true,
+          "pipeline_state_sha256": "1687115269ceb451b719ce1efb1767193988ee2edc2f86298ff95be287418fb0",
+          "training_leaf_ids_sha256": "01ed40b85d592944c189ccd51e0a885150d96b5db2a0ee76a246aded12eafe00",
+          "training_rows": 5285,
+          "training_transform_sha256": "46f1ca81ca1379ac0bf377fdb1b1eee67d26b72470c45f0061a38281ad960b51",
+          "unobserved_leaf_correction": 0
+        }
+      },
+      "finished_at": "2026-10-16T14:19:33.785608+00:00",
+      "index": 5,
+      "predictions_sha256": "3ad823d1c6442fd3ae7785fbf16e65ff9a9067b62d8b451bc49e610d7b17d462",
+      "solve": {
+        "columns": 19890,
+        "evaluations": 60,
+        "final_objective": 0.16568804595112482,
+        "ftol": 1e-13,
+        "gradient_gate": 1e-06,
+        "gtol": 1e-09,
+        "initial_coefficients": "all zero",
+        "initial_objective": 0.2372355279644849,
+        "iterations": 56,
+        "maxcor": 20,
+        "maximum_absolute_mean_gradient": 8.346382902368257e-09,
+        "maxiter": 2000,
+        "maxls": 50,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "method": "L-BFGS-B",
+        "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+        "penalty": 100.0,
+        "rows": 5285,
+        "status": 0
+      },
+      "started_at": "2026-10-16T14:19:26.079366+00:00",
+      "status": "ok",
+      "stop_error": 0.21732784540385897
+    },
+    {
+      "controls": {
+        "lambda": 1000.0,
+        "shrinkage": 0.25
+      },
+      "evidence": {
+        "checks": {
+          "fitting": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.02371802367269993,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.5370076485907653e-06,
+            "oracle_max_absolute_difference": 8.987899452250758e-06
+          },
+          "stop": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.02371802367269993,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.29986688247463e-06,
+            "oracle_max_absolute_difference": 6.263418026897227e-06
+          }
+        },
+        "fold": {
+          "coefficient_rounding_absolute_bound": 1.4267456024114592e-06,
+          "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+          "inference_only": true,
+          "library": "ctboost",
+          "physical_trees": 534,
+          "prediction_oracle_absolute_tolerance": 0.02371802367269993,
+          "topology_sha256_after": "f55ed2fbda31347986838d9eb80e0d93575cb37fcfa134431bc4c68d22e33148",
+          "topology_sha256_before": "f55ed2fbda31347986838d9eb80e0d93575cb37fcfa134431bc4c68d22e33148"
+        },
+        "independent_sparse_raw_margin_oracle": true,
+        "preprocessing": {
+          "column_order": "physical tree order, then sorted observed native leaf IDs",
+          "design_nonzeros": 2822190,
+          "design_shape": [
+            5285,
+            19890
+          ],
+          "ordered_ctr": true,
+          "ordered_training_transform_replayed": true,
+          "pipeline_state_sha256": "1687115269ceb451b719ce1efb1767193988ee2edc2f86298ff95be287418fb0",
+          "training_leaf_ids_sha256": "01ed40b85d592944c189ccd51e0a885150d96b5db2a0ee76a246aded12eafe00",
+          "training_rows": 5285,
+          "training_transform_sha256": "46f1ca81ca1379ac0bf377fdb1b1eee67d26b72470c45f0061a38281ad960b51",
+          "unobserved_leaf_correction": 0
+        }
+      },
+      "finished_at": "2026-10-16T14:19:41.737170+00:00",
+      "index": 6,
+      "predictions_sha256": "96789762c1a53d5b19f55c963f1fbe3a5c498b1820372524761a9ca18c08222c",
+      "solve": {
+        "columns": 19890,
+        "evaluations": 23,
+        "final_objective": 0.2223806437175729,
+        "ftol": 1e-13,
+        "gradient_gate": 1e-06,
+        "gtol": 1e-09,
+        "initial_coefficients": "all zero",
+        "initial_objective": 0.2372355279644849,
+        "iterations": 19,
+        "maxcor": 20,
+        "maximum_absolute_mean_gradient": 1.3460492737246344e-08,
+        "maxiter": 2000,
+        "maxls": 50,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "method": "L-BFGS-B",
+        "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+        "penalty": 1000.0,
+        "rows": 5285,
+        "status": 0
+      },
+      "started_at": "2026-10-16T14:19:33.786614+00:00",
+      "status": "ok",
+      "stop_error": 0.21021616020083478
+    },
+    {
+      "controls": {
+        "lambda": 1000.0,
+        "shrinkage": 1.0
+      },
+      "evidence": {
+        "checks": {
+          "fitting": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.02448078617453575,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.2387703241092988e-06,
+            "oracle_max_absolute_difference": 7.99565959663795e-06
+          },
+          "stop": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.02448078617453575,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.4635201073202918e-06,
+            "oracle_max_absolute_difference": 7.73187766611727e-06
+          }
+        },
+        "fold": {
+          "coefficient_rounding_absolute_bound": 1.487058471303721e-06,
+          "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+          "inference_only": true,
+          "library": "ctboost",
+          "physical_trees": 534,
+          "prediction_oracle_absolute_tolerance": 0.02448078617453575,
+          "topology_sha256_after": "f55ed2fbda31347986838d9eb80e0d93575cb37fcfa134431bc4c68d22e33148",
+          "topology_sha256_before": "f55ed2fbda31347986838d9eb80e0d93575cb37fcfa134431bc4c68d22e33148"
+        },
+        "independent_sparse_raw_margin_oracle": true,
+        "preprocessing": {
+          "column_order": "physical tree order, then sorted observed native leaf IDs",
+          "design_nonzeros": 2822190,
+          "design_shape": [
+            5285,
+            19890
+          ],
+          "ordered_ctr": true,
+          "ordered_training_transform_replayed": true,
+          "pipeline_state_sha256": "1687115269ceb451b719ce1efb1767193988ee2edc2f86298ff95be287418fb0",
+          "training_leaf_ids_sha256": "01ed40b85d592944c189ccd51e0a885150d96b5db2a0ee76a246aded12eafe00",
+          "training_rows": 5285,
+          "training_transform_sha256": "46f1ca81ca1379ac0bf377fdb1b1eee67d26b72470c45f0061a38281ad960b51",
+          "unobserved_leaf_correction": 0
+        }
+      },
+      "finished_at": "2026-10-16T14:19:49.456364+00:00",
+      "index": 7,
+      "predictions_sha256": "1f5aff99573c168179b8b8f4e1432760f5ed15b6975389f8129d78bf0912767a",
+      "solve": {
+        "columns": 19890,
+        "evaluations": 23,
+        "final_objective": 0.2223806437175729,
+        "ftol": 1e-13,
+        "gradient_gate": 1e-06,
+        "gtol": 1e-09,
+        "initial_coefficients": "all zero",
+        "initial_objective": 0.2372355279644849,
+        "iterations": 19,
+        "maxcor": 20,
+        "maximum_absolute_mean_gradient": 1.3460492737246344e-08,
+        "maxiter": 2000,
+        "maxls": 50,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "method": "L-BFGS-B",
+        "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+        "penalty": 1000.0,
+        "rows": 5285,
+        "status": 0
+      },
+      "started_at": "2026-10-16T14:19:41.737170+00:00",
+      "status": "ok",
+      "stop_error": 0.21128893364859747
+    }
+  ],
+  "choice": {
+    "anchor": {
+      "model_bytes": 26899759,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\in_vehicle_coupon_recommendation\\ctboost.pkl",
+      "model_sha256": "fc7ee7c0e9c840b3f554fac3c64710d91891d3694bd58f634ee01077f8cd505c"
+    },
+    "correction": null,
+    "dataset": "in_vehicle_coupon_recommendation",
+    "fit": {
+      "early_stopping": false,
+      "fit_seconds": 4.293509499999345,
+      "parameters": {
+        "alpha": 0.8,
+        "bootstrap_type": "Bernoulli",
+        "cat_features": [
+          "destination",
+          "passenger",
+          "weather",
+          "coupon",
+          "expiration",
+          "gender",
+          "age",
+          "maritalStatus",
+          "has_children",
+          "education",
+          "occupation",
+          "income",
+          "car",
+          "Bar",
+          "CoffeeHouse",
+          "CarryAway",
+          "RestaurantLessThan20",
+          "Restaurant20To50",
+          "toCoupon_GEQ15min",
+          "toCoupon_GEQ25min",
+          "direction_same",
+          "direction_opp"
+        ],
+        "eval_metric": "AUC",
+        "feature_test": "grouped",
+        "feature_test_adjustment": "none",
+        "feature_test_bins": 8,
+        "iterations": 534,
+        "lambda_l2": 3,
+        "leaf_estimation_backtracking": true,
+        "leaf_estimation_iterations": 3,
+        "learning_rate": 0.05,
+        "max_bins": 256,
+        "max_cat_threshold": 256,
+        "max_depth": 8,
+        "min_data_in_leaf": 10,
+        "multi_strategy": "one_output_per_tree",
+        "multiclass_feature_test": "single",
+        "one_hot_max_size": 8,
+        "ordered_ctr": true,
+        "random_seed": 47,
+        "subsample": 0.8,
+        "verbose": false
+      },
+      "requested_rounds": 534,
+      "retained_rounds": 534,
+      "structural_early_termination": false
+    },
+    "fitting_data": {
+      "original_stop_rows": 1057,
+      "original_train_rows": 5285,
+      "outside_cap_rows": 0,
+      "row_ids_sha256": "a9943111493fdf3fb8fa87727ff777bbeac325ea2e7d51f8d567bd3b2f2d301e",
+      "row_order": "TRAIN then ascending outside-cap",
+      "rows": 5285,
+      "schema": {
+        "Bar": [
+          "1~3",
+          "4~8",
+          "gt8",
+          "less1",
+          "nan",
+          "never"
+        ],
+        "CarryAway": [
+          "1~3",
+          "4~8",
+          "gt8",
+          "less1",
+          "nan",
+          "never"
+        ],
+        "CoffeeHouse": [
+          "1~3",
+          "4~8",
+          "gt8",
+          "less1",
+          "nan",
+          "never"
+        ],
+        "Restaurant20To50": [
+          "1~3",
+          "4~8",
+          "gt8",
+          "less1",
+          "nan",
+          "never"
+        ],
+        "RestaurantLessThan20": [
+          "1~3",
+          "4~8",
+          "gt8",
+          "less1",
+          "nan",
+          "never"
+        ],
+        "age": [
+          "21",
+          "26",
+          "31",
+          "36",
+          "41",
+          "46",
+          "50plus",
+          "below21"
+        ],
+        "car": [
+          "Car that is too old to install Onstar :D",
+          "Mazda5",
+          "Scooter and motorcycle",
+          "crossover",
+          "do not drive",
+          "nan"
+        ],
+        "coupon": [
+          "Bar",
+          "Carry out & Take away",
+          "Coffee House",
+          "Restaurant(20-50)",
+          "Restaurant(<20)"
+        ],
+        "destination": [
+          "Home",
+          "No Urgent Place",
+          "Work"
+        ],
+        "direction_opp": [
+          "0",
+          "1"
+        ],
+        "direction_same": [
+          "0",
+          "1"
+        ],
+        "education": [
+          "Associates degree",
+          "Bachelors degree",
+          "Graduate degree (Masters or Doctorate)",
+          "High School Graduate",
+          "Some High School",
+          "Some college - no degree"
+        ],
+        "expiration": [
+          "1d",
+          "2h"
+        ],
+        "gender": [
+          "Female",
+          "Male"
+        ],
+        "has_children": [
+          "0",
+          "1"
+        ],
+        "income": [
+          "$100000 or More",
+          "$12500 - $24999",
+          "$25000 - $37499",
+          "$37500 - $49999",
+          "$50000 - $62499",
+          "$62500 - $74999",
+          "$75000 - $87499",
+          "$87500 - $99999",
+          "Less than $12500"
+        ],
+        "maritalStatus": [
+          "Divorced",
+          "Married partner",
+          "Single",
+          "Unmarried partner",
+          "Widowed"
+        ],
+        "occupation": [
+          "Architecture & Engineering",
+          "Arts Design Entertainment Sports & Media",
+          "Building & Grounds Cleaning & Maintenance",
+          "Business & Financial",
+          "Community & Social Services",
+          "Computer & Mathematical",
+          "Construction & Extraction",
+          "Education&Training&Library",
+          "Farming Fishing & Forestry",
+          "Food Preparation & Serving Related",
+          "Healthcare Practitioners & Technical",
+          "Healthcare Support",
+          "Installation Maintenance & Repair",
+          "Legal",
+          "Life Physical Social Science",
+          "Management",
+          "Office & Administrative Support",
+          "Personal Care & Service",
+          "Production Occupations",
+          "Protective Service",
+          "Retired",
+          "Sales & Related",
+          "Student",
+          "Transportation & Material Moving",
+          "Unemployed"
+        ],
+        "passenger": [
+          "Alone",
+          "Friend(s)",
+          "Kid(s)",
+          "Partner"
+        ],
+        "toCoupon_GEQ15min": [
+          "0",
+          "1"
+        ],
+        "toCoupon_GEQ25min": [
+          "0",
+          "1"
+        ],
+        "weather": [
+          "Rainy",
+          "Snowy",
+          "Sunny"
+        ]
+      },
+      "source_sha256": null,
+      "stop_excluded": true,
+      "vocabulary_fit_on": "actual fitting rows only"
+    },
+    "library": "ctboost",
+    "stop_error": 0.20996803572992384
+  },
+  "dataset": "in_vehicle_coupon_recommendation",
+  "finished_at": "2026-10-16T14:19:49.458363+00:00",
+  "fit": {
+    "early_stopping": false,
+    "fit_seconds": 4.293509499999345,
+    "parameters": {
+      "alpha": 0.8,
+      "bootstrap_type": "Bernoulli",
+      "cat_features": [
+        "destination",
+        "passenger",
+        "weather",
+        "coupon",
+        "expiration",
+        "gender",
+        "age",
+        "maritalStatus",
+        "has_children",
+        "education",
+        "occupation",
+        "income",
+        "car",
+        "Bar",
+        "CoffeeHouse",
+        "CarryAway",
+        "RestaurantLessThan20",
+        "Restaurant20To50",
+        "toCoupon_GEQ15min",
+        "toCoupon_GEQ25min",
+        "direction_same",
+        "direction_opp"
+      ],
+      "eval_metric": "AUC",
+      "feature_test": "grouped",
+      "feature_test_adjustment": "none",
+      "feature_test_bins": 8,
+      "iterations": 534,
+      "lambda_l2": 3,
+      "leaf_estimation_backtracking": true,
+      "leaf_estimation_iterations": 3,
+      "learning_rate": 0.05,
+      "max_bins": 256,
+      "max_cat_threshold": 256,
+      "max_depth": 8,
+      "min_data_in_leaf": 10,
+      "multi_strategy": "one_output_per_tree",
+      "multiclass_feature_test": "single",
+      "one_hot_max_size": 8,
+      "ordered_ctr": true,
+      "random_seed": 47,
+      "subsample": 0.8,
+      "verbose": false
+    },
+    "requested_rounds": 534,
+    "retained_rounds": 534,
+    "structural_early_termination": false
+  },
+  "fitting_data": {
+    "original_stop_rows": 1057,
+    "original_train_rows": 5285,
+    "outside_cap_rows": 0,
+    "row_ids_sha256": "a9943111493fdf3fb8fa87727ff777bbeac325ea2e7d51f8d567bd3b2f2d301e",
+    "row_order": "TRAIN then ascending outside-cap",
+    "rows": 5285,
+    "schema": {
+      "Bar": [
+        "1~3",
+        "4~8",
+        "gt8",
+        "less1",
+        "nan",
+        "never"
+      ],
+      "CarryAway": [
+        "1~3",
+        "4~8",
+        "gt8",
+        "less1",
+        "nan",
+        "never"
+      ],
+      "CoffeeHouse": [
+        "1~3",
+        "4~8",
+        "gt8",
+        "less1",
+        "nan",
+        "never"
+      ],
+      "Restaurant20To50": [
+        "1~3",
+        "4~8",
+        "gt8",
+        "less1",
+        "nan",
+        "never"
+      ],
+      "RestaurantLessThan20": [
+        "1~3",
+        "4~8",
+        "gt8",
+        "less1",
+        "nan",
+        "never"
+      ],
+      "age": [
+        "21",
+        "26",
+        "31",
+        "36",
+        "41",
+        "46",
+        "50plus",
+        "below21"
+      ],
+      "car": [
+        "Car that is too old to install Onstar :D",
+        "Mazda5",
+        "Scooter and motorcycle",
+        "crossover",
+        "do not drive",
+        "nan"
+      ],
+      "coupon": [
+        "Bar",
+        "Carry out & Take away",
+        "Coffee House",
+        "Restaurant(20-50)",
+        "Restaurant(<20)"
+      ],
+      "destination": [
+        "Home",
+        "No Urgent Place",
+        "Work"
+      ],
+      "direction_opp": [
+        "0",
+        "1"
+      ],
+      "direction_same": [
+        "0",
+        "1"
+      ],
+      "education": [
+        "Associates degree",
+        "Bachelors degree",
+        "Graduate degree (Masters or Doctorate)",
+        "High School Graduate",
+        "Some High School",
+        "Some college - no degree"
+      ],
+      "expiration": [
+        "1d",
+        "2h"
+      ],
+      "gender": [
+        "Female",
+        "Male"
+      ],
+      "has_children": [
+        "0",
+        "1"
+      ],
+      "income": [
+        "$100000 or More",
+        "$12500 - $24999",
+        "$25000 - $37499",
+        "$37500 - $49999",
+        "$50000 - $62499",
+        "$62500 - $74999",
+        "$75000 - $87499",
+        "$87500 - $99999",
+        "Less than $12500"
+      ],
+      "maritalStatus": [
+        "Divorced",
+        "Married partner",
+        "Single",
+        "Unmarried partner",
+        "Widowed"
+      ],
+      "occupation": [
+        "Architecture & Engineering",
+        "Arts Design Entertainment Sports & Media",
+        "Building & Grounds Cleaning & Maintenance",
+        "Business & Financial",
+        "Community & Social Services",
+        "Computer & Mathematical",
+        "Construction & Extraction",
+        "Education&Training&Library",
+        "Farming Fishing & Forestry",
+        "Food Preparation & Serving Related",
+        "Healthcare Practitioners & Technical",
+        "Healthcare Support",
+        "Installation Maintenance & Repair",
+        "Legal",
+        "Life Physical Social Science",
+        "Management",
+        "Office & Administrative Support",
+        "Personal Care & Service",
+        "Production Occupations",
+        "Protective Service",
+        "Retired",
+        "Sales & Related",
+        "Student",
+        "Transportation & Material Moving",
+        "Unemployed"
+      ],
+      "passenger": [
+        "Alone",
+        "Friend(s)",
+        "Kid(s)",
+        "Partner"
+      ],
+      "toCoupon_GEQ15min": [
+        "0",
+        "1"
+      ],
+      "toCoupon_GEQ25min": [
+        "0",
+        "1"
+      ],
+      "weather": [
+        "Rainy",
+        "Snowy",
+        "Sunny"
+      ]
+    },
+    "source_sha256": null,
+    "stop_excluded": true,
+    "vocabulary_fit_on": "actual fitting rows only"
+  },
+  "library": "ctboost",
+  "memory": {
+    "array_budgets_bytes": {
+      "design_construction_temporary_budget": 67901680,
+      "lbfgsb_float_and_integer_work_arrays": 7435560,
+      "native_leaf_result_and_int64_copy": 45155040,
+      "native_raw_result_and_float64_copy": 84560,
+      "objective_workspace_budget": 507360,
+      "observed_leaf_maps": 159120,
+      "optimizer_vector_budget": 1989000,
+      "resident_csr_data_indices_indptr": 45197328
+    },
+    "csr_nonzeros": 2822190,
+    "excluded": [
+      "native model objects",
+      "input frames",
+      "categorical transform workspace",
+      "Python object/allocator overhead"
+    ],
+    "max_working_bytes": 4294967296,
+    "native_leaf_count": 19890,
+    "no_dense_hessian": true,
+    "parameters_upper_bound": 19890,
+    "physical_trees": 534,
+    "refit_array_budget_bytes": 168429648,
+    "rows": 5285,
+    "scope": "named conservative refit arrays, not whole-process RSS",
+    "solver_kind": "binary"
+  },
+  "started_at": "2026-10-16T14:18:35.646397+00:00",
+  "status": "ok"
+}

@@ -37,7 +37,7 @@ def _ctr_booster(pipeline_version):
     return booster
 
 
-@pytest.mark.parametrize("pipeline_version, unseen_ctr", [(3, 4.0), (4, 20.0)])
+@pytest.mark.parametrize("pipeline_version, unseen_ctr", [(3, 4.0), (4, 20.0), (5, 20.0)])
 def test_fractional_ctr_raw_export_and_saved_model_keep_fitted_semantics(
     tmp_path, pipeline_version, unseen_ctr
 ):
@@ -79,12 +79,12 @@ def test_legacy_and_corrected_ctr_versions_can_change_unseen_predictions():
 
 
 def test_raw_export_rejects_unknown_pipeline_version_before_model_access():
-    with pytest.raises(ValueError, match="format 3 or 4"):
+    with pytest.raises(ValueError, match="format 3, 4 or 5"):
         _standalone_python_payload(
             object(),
             expects_prepared_features=False,
             feature_pipeline_state={
-                "feature_pipeline_format_version": 5,
+                "feature_pipeline_format_version": 6,
                 "categorical_key_encoding_version": 2,
             },
         )
@@ -95,7 +95,7 @@ def test_raw_reader_rejects_unknown_pipeline_version_before_native_load(tmp_path
     path = tmp_path / "valid.json"
     booster.export_model(path)
     payload = copy.deepcopy(json.loads(path.read_text(encoding="utf-8")))
-    payload["feature_pipeline_state"]["feature_pipeline_format_version"] = 5
+    payload["feature_pipeline_state"]["feature_pipeline_format_version"] = 6
     payload["inference_manifest"]["input"]["preprocessing"]["fingerprint"] = (
         _fingerprint(payload["feature_pipeline_state"])
     )
@@ -104,5 +104,5 @@ def test_raw_reader_rejects_unknown_pipeline_version_before_native_load(tmp_path
         pytest.fail("unknown pipeline version reached native construction")
 
     monkeypatch.setattr(ctboost.FeaturePipeline, "from_state", unexpected_native_load)
-    with pytest.raises(ValueError, match="format version 3 or 4"):
+    with pytest.raises(ValueError, match="format version 3, 4 or 5"):
         ExportedPredictor(payload)

@@ -1,0 +1,61 @@
+{
+  "dataset": "blood-transfusion-service-center",
+  "finished_at": "2026-10-16T12:18:15.761249+00:00",
+  "library": "lightgbm",
+  "model_bytes": 5166,
+  "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave11\\components\\blood-transfusion-service-center\\lightgbm-seed947.pkl",
+  "model_sha256": "cea6af5959608a213851adfac1981dfab797c4d83630e2ab14bf23a5a66de56d",
+  "refit_details": {
+    "apparent_union_error_inference_transform": 0.19491020343293075,
+    "early_stopping": false,
+    "fit_seconds": 0.011617099997238256,
+    "parameters": {
+      "bagging_fraction": 0.8,
+      "bagging_freq": 1,
+      "deterministic": true,
+      "force_col_wise": true,
+      "lambda_l2": 0,
+      "learning_rate": 0.05,
+      "max_bin": 255,
+      "metric": "auc",
+      "num_leaves": 15,
+      "num_threads": 1,
+      "objective": "binary",
+      "seed": 947,
+      "verbosity": -1,
+      "zero_as_missing": false
+    },
+    "requested_rounds": 1,
+    "retained_rounds": 1,
+    "structural_early_termination": false,
+    "union_data": {
+      "row_order": "original TRAIN followed by original STOP",
+      "source_roles": {
+        "stop": {
+          "index_sha256": "71a564af518385779257f7b6cca008a07627dfedd4905925a797260841b5dcdd",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\blood-transfusion-service-center\\stop.pkl",
+          "rows": 62,
+          "sha256": "59daf432712096f4ae9724df3db47ed8ac786d8e56b8a48e9ad86a6c0c2ce4c6"
+        },
+        "train": {
+          "index_sha256": "fac9f22e07f5ccbd69e89955d9f2de01cad1246ca69fa962e31753763caa7ea7",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\blood-transfusion-service-center\\train.pkl",
+          "rows": 312,
+          "sha256": "9d676cdf2a05bc27f6a21a9607b5a2d976ba87a5d8f4389356e129d84f17d54c"
+        }
+      },
+      "stop_ids_sha256": "71a564af518385779257f7b6cca008a07627dfedd4905925a797260841b5dcdd",
+      "stop_rows": 62,
+      "train_ids_sha256": "fac9f22e07f5ccbd69e89955d9f2de01cad1246ca69fa962e31753763caa7ea7",
+      "train_rows": 312,
+      "union_category_counts": {},
+      "union_ids_sha256": "7c36cebee258bd2f29ce4e3837c330fc04fab214a958911910078d193a67195d",
+      "union_rows": 374,
+      "vocabulary_fit_on": "TRAIN+STOP union only"
+    }
+  },
+  "reused": false,
+  "seed": 947,
+  "started_at": "2026-10-16T12:18:15.732731+00:00",
+  "status": "ok"
+}

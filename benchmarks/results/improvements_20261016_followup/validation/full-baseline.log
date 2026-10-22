@@ -1,0 +1,125 @@
+{"package": "C:\\apps\\ctboost\\ctboost\\__init__.py", "native": "C:\\apps\\ctboost\\ctboost\\_core.cp310-win_amd64.pyd", "native_sha256": "e1f5f5a6e29d9f643189fe87e27cecf66248b9ddd65d1617321768e5320084ed", "build_info": {"version": "0.1.61", "cuda_enabled": false, "cuda_runtime": "not compiled", "compiler": "MSVC 1950", "cxx_standard": 17, "package_version": "0.1.61"}}
+..............s......................................................... [  3%]
+.....................................s.............................sssss [  6%]
+sss..................................................................... [ 10%]
+........................................................................ [ 13%]
+........................................................................ [ 17%]
+........................................................................ [ 20%]
+........................................................................ [ 24%]
+........................................................................ [ 27%]
+......................................................................s. [ 31%]
+........................................................................ [ 34%]
+.....................ss...................................sss........... [ 38%]
+................sss..................................................... [ 41%]
+s....................................................................... [ 45%]
+........................................................................ [ 48%]
+........................................................................ [ 52%]
+.sss.................................................................... [ 55%]
+........................................................................ [ 59%]
+........................................................................ [ 62%]
+........................................................................ [ 65%]
+.......................................s................................ [ 69%]
+........................................................................ [ 72%]
+............sss......................................................... [ 76%]
+........................................................................ [ 79%]
+.........s.............................................................. [ 83%]
+........................................................................ [ 86%]
+................................sss..................F.................. [ 90%]
+........................................................................ [ 93%]
+........................................................................ [ 97%]
+.........................................................                [100%]
+================================== FAILURES ===================================
+___ test_synthetic_process_failure_continues_next_parent_and_never_retries ____
+
+factory = <function factory.<locals>.make at 0x0000021844268550>
+
+    def test_synthetic_process_failure_continues_next_parent_and_never_retries(factory):
+        parents = [parent(0, outcome="failed"), parent(1), parent(2, owner="kaggle")]
+        run = factory(parents)
+        with base.controller_lock(run.output):
+>           assert run.run() == 1
+
+tests\test_tabarena_local_hpo_0160.py:243: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+benchmarks\tabarena\local_hpo_controller.py:763: in run
+    self.poll()
+benchmarks\tabarena\local_hpo_controller.py:645: in poll
+    rss, descendants = sample_owned_tree(identity)
+benchmarks\tabarena\local_hpo_controller.py:178: in sample_owned_tree
+    for child in [process, *process.children(recursive=True)]:
+C:\Users\captn\miniconda3\lib\site-packages\psutil\__init__.py:982: in children
+    proc_ctime = Process(self.pid).create_time()
+C:\Users\captn\miniconda3\lib\site-packages\psutil\__init__.py:314: in __init__
+    self._init(pid)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = psutil.Process(pid=28832, status='terminated'), pid = 28832
+_ignore_nsp = False
+
+    def _init(self, pid, _ignore_nsp=False):
+        if pid is None:
+            pid = os.getpid()
+        else:
+            if pid < 0:
+                msg = f"pid must be a positive integer (got {pid})"
+                raise ValueError(msg)
+            try:
+                _psplatform.cext.check_pid_range(pid)
+            except OverflowError as err:
+                msg = "process PID out of range"
+                raise NoSuchProcess(pid, msg=msg) from err
+    
+        self._pid = pid
+        self._name = None
+        self._exe = None
+        self._create_time = None
+        self._gone = False
+        self._pid_reused = False
+        self._hash = None
+        self._lock = threading.RLock()
+        # used for caching on Windows only (on POSIX ppid may change)
+        self._ppid = None
+        # platform-specific modules define an _psplatform.Process
+        # implementation class
+        self._proc = _psplatform.Process(pid)
+        self._last_sys_cpu_times = None
+        self._last_proc_cpu_times = None
+        self._exitcode = _SENTINEL
+        self._ident = (self.pid, None)
+        try:
+            self._ident = self._get_ident()
+        except AccessDenied:
+            # This should happen on Windows only, since we use the fast
+            # create time method. AFAIK, on all other platforms we are
+            # able to get create time for all PIDs.
+            pass
+        except ZombieProcess:
+            # Zombies can still be queried by this class (although
+            # not always) and pids() return them so just go on.
+            pass
+        except NoSuchProcess:
+            if not _ignore_nsp:
+                msg = "process PID not found"
+>               raise NoSuchProcess(pid, msg=msg) from None
+E               psutil.NoSuchProcess: process PID not found (pid=28832)
+
+C:\Users\captn\miniconda3\lib\site-packages\psutil\__init__.py:360: NoSuchProcess
+---------------------------- Captured stdout call -----------------------------
+{"updated_at": "2026-10-16T10:50:29.635454+00:00", "counts": {"complete": 0, "failed": 0, "interrupted": 0, "invalid_result": 0, "launch_failed": 0, "launching": 0, "queued": 1, "resource_limit": 0, "resource_pressure": 0, "running": 1, "timed_out": 0}, "physical_available_bytes": 32212254720, "active_rss_bytes": 0, "eta_seconds": null, "paused": false}
+=========================== short test summary info ===========================
+SKIPPED [1] tests\test_booster_constraints.py:238: CUDA support is not compiled into this build
+SKIPPED [1] tests\test_cuda_multi_device_workspace.py:173: CUDA support is not compiled into this build
+SKIPPED [8] tests\test_cuda_quantized_pool.py:346: CUDA support is not compiled into this build
+SKIPPED [1] tests\test_framework_integrations.py:280: could not import 'pyspark': No module named 'pyspark'
+SKIPPED [1] tests\test_grouped_feature_test.py:752: CUDA support is not compiled into this build
+SKIPPED [1] tests\test_grouped_feature_test.py:800: CUDA support is not compiled into this build
+SKIPPED [3] tests\test_hpo_full_0160.py:377: Optional pinned TabArena environment
+SKIPPED [3] tests\test_hpo_full_0161.py:377: Optional pinned TabArena environment
+SKIPPED [1] tests\test_leaf_estimation.py:440: CUDA support is not compiled into this build
+SKIPPED [3] tests\test_multivariate_statistics.py:271: requires a CUDA-enabled build
+SKIPPED [1] tests\test_tabarena_grouped_scout.py:590: real pinned TabArena API is only present in the scout environment
+SKIPPED [3] tests\test_tabarena_hpo_0160.py:427: Optional pinned TabArena benchmark environment
+SKIPPED [1] tests\test_tabarena_kaggle_hpo.py:194: could not import 'tabarena': No module named 'tabarena'
+SKIPPED [3] tests\test_tabarena_local_hpo.py:688: Optional pinned TabArena benchmark environment
+FAILED tests/test_tabarena_local_hpo_0160.py::test_synthetic_process_failure_continues_next_parent_and_never_retries
+1 failed, 2041 passed, 31 skipped in 183.08s (0:03:03)

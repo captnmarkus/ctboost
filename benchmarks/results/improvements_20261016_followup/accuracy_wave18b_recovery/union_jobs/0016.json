@@ -1,0 +1,514 @@
+{
+  "dataset": "Another-Dataset-on-used-Fiat-500",
+  "finished_at": "2026-10-22T10:43:13.387225+00:00",
+  "library": "xgboost",
+  "native_fit_completed": true,
+  "native_fit_started": true,
+  "requested_rounds": 56,
+  "seed": 47,
+  "selection": {
+    "best": {
+      "parameters": {
+        "colsample_bytree": 0.8,
+        "eta": 0.1,
+        "eval_metric": "rmse",
+        "lambda": 10,
+        "max_bin": 256,
+        "max_depth": 8,
+        "min_child_weight": 1.25,
+        "multi_strategy": "one_output_per_tree",
+        "nthread": 1,
+        "objective": "reg:squarederror",
+        "seed": 47,
+        "subsample": 0.8,
+        "tree_method": "hist"
+      },
+      "retained_rounds": 56
+    },
+    "binary_refit": null,
+    "dataset": "Another-Dataset-on-used-Fiat-500",
+    "fixed_job": {
+      "anchor_rounds": 28,
+      "binary_refit": null,
+      "dataset": "Another-Dataset-on-used-Fiat-500",
+      "leaf_refit": {
+        "lambda": 10.0,
+        "max_working_bytes": 4294967296,
+        "shrinkage": 0.25,
+        "solver": {
+          "iterations": 10000,
+          "variant": "unscaled_lsqr_10000"
+        }
+      },
+      "library": "xgboost",
+      "multiclass_refit": null,
+      "original_selection": {
+        "all_eight_successful": true,
+        "base_selection": {
+          "all_eight_successful": true,
+          "best": {
+            "config_index": 7,
+            "fit_seconds": 0.14499380000052042,
+            "parameters": {
+              "colsample_bytree": 0.8,
+              "eta": 0.1,
+              "eval_metric": "rmse",
+              "lambda": 10,
+              "max_bin": 256,
+              "max_depth": 8,
+              "min_child_weight": 5,
+              "multi_strategy": "one_output_per_tree",
+              "nthread": 1,
+              "objective": "reg:squarederror",
+              "seed": 47,
+              "subsample": 0.8,
+              "tree_method": "hist"
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 32,
+            "selection_key": [
+              645.2174723292696,
+              32,
+              7
+            ],
+            "stop_error": 645.2174723292696,
+            "trained_rounds_if_available": 82
+          },
+          "cumulative_search_fit_seconds": 7.2578828999976395,
+          "current_wave_all_eight_successful": true,
+          "dataset": "Another-Dataset-on-used-Fiat-500",
+          "library": "xgboost",
+          "model_bytes": 91660,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave2\\models\\Another-Dataset-on-used-Fiat-500\\xgboost.pkl",
+          "model_sha256": "4ff8ed20356dfa8f50c8da56a8ab13c6fbd2f0a1198d6772c5fe14d8efceaf6f",
+          "plan_sha256": "f724c37603c865a54a492ab8b022cdd0351c2cfbda124571d880b0fbcd799dc3",
+          "search_fit_seconds": 1.4816677999988315,
+          "source_wave": 2
+        },
+        "best": {
+          "config_index": 7,
+          "fit_seconds": 0.14499380000052042,
+          "parameters": {
+            "colsample_bytree": 0.8,
+            "eta": 0.1,
+            "eval_metric": "rmse",
+            "lambda": 10,
+            "max_bin": 256,
+            "max_depth": 8,
+            "min_child_weight": 5,
+            "multi_strategy": "one_output_per_tree",
+            "nthread": 1,
+            "objective": "reg:squarederror",
+            "seed": 47,
+            "subsample": 0.8,
+            "tree_method": "hist"
+          },
+          "retained_at_round_cap": false,
+          "retained_rounds": 32,
+          "selection_key": [
+            645.2174723292696,
+            32,
+            7
+          ],
+          "stop_error": 645.2174723292696,
+          "trained_rounds_if_available": 82
+        },
+        "cumulative_search_fit_seconds": 8.763431399996989,
+        "current_wave_all_eight_successful": true,
+        "dataset": "Another-Dataset-on-used-Fiat-500",
+        "leaf_refit": null,
+        "library": "xgboost",
+        "model_bytes": 91660,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave2\\models\\Another-Dataset-on-used-Fiat-500\\xgboost.pkl",
+        "model_sha256": "4ff8ed20356dfa8f50c8da56a8ab13c6fbd2f0a1198d6772c5fe14d8efceaf6f",
+        "plan_sha256": "f724c37603c865a54a492ab8b022cdd0351c2cfbda124571d880b0fbcd799dc3",
+        "postfit_candidate_seconds": 0.5023031999990053,
+        "search_fit_seconds": 1.4816677999988315,
+        "source_wave": 2
+      },
+      "parameters": {
+        "colsample_bytree": 0.8,
+        "eta": 0.1,
+        "eval_metric": "rmse",
+        "lambda": 10,
+        "max_bin": 256,
+        "max_depth": 8,
+        "min_child_weight": 1.25,
+        "multi_strategy": "one_output_per_tree",
+        "nthread": 1,
+        "objective": "reg:squarederror",
+        "seed": 47,
+        "subsample": 0.8,
+        "tree_method": "hist"
+      },
+      "profiles": [
+        {
+          "colsample_bytree": 0.8,
+          "eta": 0.1,
+          "eval_metric": "rmse",
+          "lambda": 10,
+          "max_bin": 256,
+          "max_depth": 8,
+          "min_child_weight": 5,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "reg:squarederror",
+          "seed": 47,
+          "subsample": 0.8,
+          "tree_method": "hist"
+        },
+        {
+          "colsample_bytree": 0.8,
+          "eta": 0.05,
+          "eval_metric": "rmse",
+          "lambda": 10,
+          "max_bin": 256,
+          "max_depth": 8,
+          "min_child_weight": 5,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "reg:squarederror",
+          "seed": 47,
+          "subsample": 0.8,
+          "tree_method": "hist"
+        },
+        {
+          "colsample_bytree": 0.8,
+          "eta": 0.1,
+          "eval_metric": "rmse",
+          "lambda": 10,
+          "max_bin": 256,
+          "max_depth": 8,
+          "min_child_weight": 1.25,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "reg:squarederror",
+          "seed": 47,
+          "subsample": 0.8,
+          "tree_method": "hist"
+        },
+        {
+          "colsample_bytree": 0.8,
+          "eta": 0.05,
+          "eval_metric": "rmse",
+          "lambda": 10,
+          "max_bin": 256,
+          "max_depth": 8,
+          "min_child_weight": 1.25,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "reg:squarederror",
+          "seed": 47,
+          "subsample": 0.8,
+          "tree_method": "hist"
+        }
+      ],
+      "round_candidates": [
+        14,
+        28,
+        56
+      ],
+      "rounds": 56,
+      "temperature": null,
+      "training_selection": {
+        "all_eight_successful": true,
+        "base_selection": {
+          "all_eight_successful": true,
+          "best": {
+            "config_index": 7,
+            "fit_seconds": 0.14499380000052042,
+            "parameters": {
+              "colsample_bytree": 0.8,
+              "eta": 0.1,
+              "eval_metric": "rmse",
+              "lambda": 10,
+              "max_bin": 256,
+              "max_depth": 8,
+              "min_child_weight": 5,
+              "multi_strategy": "one_output_per_tree",
+              "nthread": 1,
+              "objective": "reg:squarederror",
+              "seed": 47,
+              "subsample": 0.8,
+              "tree_method": "hist"
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 32,
+            "selection_key": [
+              645.2174723292696,
+              32,
+              7
+            ],
+            "stop_error": 645.2174723292696,
+            "trained_rounds_if_available": 82
+          },
+          "cumulative_search_fit_seconds": 7.2578828999976395,
+          "current_wave_all_eight_successful": true,
+          "dataset": "Another-Dataset-on-used-Fiat-500",
+          "library": "xgboost",
+          "model_bytes": 91660,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave2\\models\\Another-Dataset-on-used-Fiat-500\\xgboost.pkl",
+          "model_sha256": "4ff8ed20356dfa8f50c8da56a8ab13c6fbd2f0a1198d6772c5fe14d8efceaf6f",
+          "plan_sha256": "f724c37603c865a54a492ab8b022cdd0351c2cfbda124571d880b0fbcd799dc3",
+          "search_fit_seconds": 1.4816677999988315,
+          "source_wave": 2
+        },
+        "best": {
+          "config_index": 7,
+          "fit_seconds": 0.14499380000052042,
+          "parameters": {
+            "colsample_bytree": 0.8,
+            "eta": 0.1,
+            "eval_metric": "rmse",
+            "lambda": 10,
+            "max_bin": 256,
+            "max_depth": 8,
+            "min_child_weight": 5,
+            "multi_strategy": "one_output_per_tree",
+            "nthread": 1,
+            "objective": "reg:squarederror",
+            "seed": 47,
+            "subsample": 0.8,
+            "tree_method": "hist"
+          },
+          "retained_at_round_cap": false,
+          "retained_rounds": 32,
+          "selection_key": [
+            645.2174723292696,
+            32,
+            7
+          ],
+          "stop_error": 645.2174723292696,
+          "trained_rounds_if_available": 82
+        },
+        "cumulative_search_fit_seconds": 8.763431399996989,
+        "current_wave_all_eight_successful": true,
+        "dataset": "Another-Dataset-on-used-Fiat-500",
+        "leaf_refit": null,
+        "library": "xgboost",
+        "model_bytes": 91660,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave2\\models\\Another-Dataset-on-used-Fiat-500\\xgboost.pkl",
+        "model_sha256": "4ff8ed20356dfa8f50c8da56a8ab13c6fbd2f0a1198d6772c5fe14d8efceaf6f",
+        "plan_sha256": "f724c37603c865a54a492ab8b022cdd0351c2cfbda124571d880b0fbcd799dc3",
+        "postfit_candidate_seconds": 0.5023031999990053,
+        "search_fit_seconds": 1.4816677999988315,
+        "source_wave": 2
+      }
+    },
+    "leaf_refit": {
+      "lambda": 10.0,
+      "max_working_bytes": 4294967296,
+      "shrinkage": 0.25,
+      "solver": {
+        "iterations": 10000,
+        "variant": "unscaled_lsqr_10000"
+      }
+    },
+    "library": "xgboost",
+    "model_bytes": 245195,
+    "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave18b_recovery\\models\\Another-Dataset-on-used-Fiat-500\\xgboost.pkl",
+    "model_sha256": "b52a53ec233baf11853d8f82b30d9edee8d4af6ed6fd1be8ba4c11a3493dc3c2",
+    "multiclass_refit": null,
+    "refit_details": {
+      "correction": {
+        "checks": {
+          "fitting": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 1.4718977212905884,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 7.724107098059188e-07,
+            "oracle_max_absolute_difference": 0.008381146528336103
+          },
+          "validation": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 1.4718977212905884,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 5.25557838132328e-07,
+            "oracle_max_absolute_difference": 0.0056973567234308575
+          }
+        },
+        "fold": {
+          "coefficient_rounding_absolute_bound": 0.00014374123160339203,
+          "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+          "inference_only": true,
+          "library": "xgboost",
+          "physical_trees": 56,
+          "prediction_oracle_absolute_tolerance": 1.4718977212905884,
+          "topology_sha256_after": "893096897a8b7bfddd2574d7ac2d4a7ea51578d57c4b1672c2800d21e0c9050d",
+          "topology_sha256_before": "893096897a8b7bfddd2574d7ac2d4a7ea51578d57c4b1672c2800d21e0c9050d"
+        },
+        "independent_sparse_raw_margin_oracle": true,
+        "memory": {
+          "array_budgets_bytes": {
+            "design_construction_temporary_budget": 1058144,
+            "lsqr_residual_and_vector_workspace_budget": 233792,
+            "native_leaf_result_and_int64_copy": 689024,
+            "native_raw_result_and_float64_copy": 12304,
+            "observed_leaf_maps": 23072,
+            "resident_csr_data_indices_indptr": 695184
+          },
+          "csr_nonzeros": 43064,
+          "excluded": [
+            "native model objects",
+            "input frames",
+            "categorical transform workspace",
+            "Python object/allocator overhead"
+          ],
+          "extra_certificate_vector_bytes": 935168,
+          "max_working_bytes": 6442450944,
+          "native_leaf_count": 2884,
+          "no_dense_hessian": true,
+          "parameters_upper_bound": 2884,
+          "physical_trees": 56,
+          "refit_array_budget_bytes": 2711520,
+          "rows": 769,
+          "scope": "named conservative refit arrays, not whole-process RSS",
+          "solver_kind": "regression"
+        },
+        "native_cv_adapter": {
+          "algorithm_controls_sha256": "5e01ffe774081b244c05e6c41e6d5b1063907cb7a170e57dc6bd56dfe5d61c89",
+          "effective_named_array_limit": 6442450944,
+          "fresh_payload_metadata_guard": true,
+          "inherited_named_array_limit": 4294967296,
+          "resource_override_only": true,
+          "temperature_unchanged": true
+        },
+        "preprocessing": {
+          "column_order": "physical tree order, then sorted observed native leaf IDs",
+          "design_nonzeros": 43064,
+          "design_shape": [
+            769,
+            2884
+          ],
+          "ordered_training_transform_replayed": false,
+          "training_leaf_ids_sha256": "1c2235dd0bcc35f03f650d82fc64c46c847994e6ede1adfd6351a2add12995a9",
+          "training_rows": 769,
+          "unobserved_leaf_correction": 0
+        },
+        "solve": {
+          "atol": 1e-12,
+          "btol": 1e-12,
+          "certificate": {
+            "certified": true,
+            "coefficient_l2_error_bound": 2.3593791005019178e-07,
+            "dual": 22325962.896932386,
+            "finite": true,
+            "fitting_prediction_rms_error_bound": 2.6905096756089123e-08,
+            "gradient_norm": 2.3593791005019176e-06,
+            "normalized_original_gradient": 1.6890210189959163e-11,
+            "original_gradient_dual_gap": 2.7833348699426194e-13,
+            "primal": 22325962.896932386,
+            "primal_minus_dual": 0.0,
+            "primal_zero": 78414180.20839608,
+            "relative_gap": 1.2466807737663368e-20
+          },
+          "conlim": 100000000.0,
+          "initial_coefficients": "zero",
+          "iterations_limit": 10000,
+          "native": {
+            "condition_estimate": 390.62313450694614,
+            "istop": 2,
+            "iterations": 107,
+            "matrix_norm": 367.57978829197435,
+            "normal_residual_norm": 2.3593912940128196e-06,
+            "regularized_residual_norm": 6682.20964905059,
+            "residual_norm": 4818.160734059795
+          },
+          "no_heldout_score": true,
+          "penalty": 10.0,
+          "solver_seconds_diagnostic_only": 0.011619099999734317,
+          "success": true,
+          "variant": "unscaled_lsqr_10000"
+        }
+      },
+      "corrections_disabled_before_fit": true,
+      "early_stopping": false,
+      "feature_names": [
+        "model",
+        "engine_power",
+        "age_in_days",
+        "km",
+        "previous_owners",
+        "lat",
+        "lon"
+      ],
+      "fit_controls_sha256": "48b7ec0a0ff6130ba651426836348a48677a74f5404771f87a4a9c182098ca78",
+      "fit_seconds": 0.0849421999992046,
+      "fitting_data": {
+        "exclusion_basis": "hash-verified historical roles and authorized expanded-source ordered IDs",
+        "normalization_performed": false,
+        "ordered_ids_sha256": "58f7a190e2dde748a025cbae705e42fa5857ee5c1daf85948bc54f49272310c6",
+        "original_stop_rows": 128,
+        "original_train_rows": 641,
+        "outside_cap_rows": 0,
+        "row_order": "original TRAIN, original STOP, then authorized outside-cap IDs ascending",
+        "rows": 769,
+        "source_roles": {
+          "stop": {
+            "index_sha256": "e4ff5aecc677409e8207582fe0236f8b69960d04dbde04a2f912653c090ef301",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\Another-Dataset-on-used-Fiat-500\\stop.pkl",
+            "rows": 128,
+            "sha256": "2abb866e9c9ccef26f3c9f6cccdf52540cb045c50dd23830cedcdac07e5e9768"
+          },
+          "train": {
+            "index_sha256": "2cdd25daa6280834253718148c7e690ba1942a7f7b4f38dce8170efc0c67e442",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\Another-Dataset-on-used-Fiat-500\\train.pkl",
+            "rows": 641,
+            "sha256": "4971790b94b148ac95999e371a510e4705012e227521497a30803c61b852efff"
+          }
+        },
+        "source_sha256": null
+      },
+      "fixed_corrections_disabled_before_fit": true,
+      "fold_category_schema": {
+        "model": [
+          "lounge",
+          "pop",
+          "sport"
+        ]
+      },
+      "model_bytes": 245195,
+      "model_retained": false,
+      "model_sha256": "b52a53ec233baf11853d8f82b30d9edee8d4af6ed6fd1be8ba4c11a3493dc3c2",
+      "native_cv_fresh_fit": true,
+      "parameters": {
+        "colsample_bytree": 0.8,
+        "eta": 0.1,
+        "eval_metric": "rmse",
+        "lambda": 10,
+        "max_bin": 256,
+        "max_depth": 8,
+        "min_child_weight": 1.25,
+        "multi_strategy": "one_output_per_tree",
+        "nthread": 1,
+        "objective": "reg:squarederror",
+        "seed": 47,
+        "subsample": 0.8,
+        "tree_method": "hist"
+      },
+      "prediction_array_sha256": "daa64f0cc730d40b9f563f75201889a52850d2089325f39b3a098ae97fc343d8",
+      "prediction_dtype": "<f4",
+      "prediction_shape": [
+        64
+      ],
+      "reload_bit_exact": true,
+      "requested_rounds": 56,
+      "retained_rounds": 56,
+      "seed": 47,
+      "structural_early_termination": false,
+      "temperature": null,
+      "training_rows": 769,
+      "validation_labels_received": false,
+      "validation_rows": 64,
+      "verification_scope": "Fitting-row prefix for reload only; no selection score"
+    },
+    "requested_rounds": 56,
+    "seed": 47,
+    "source_wave": 18,
+    "temperature": null
+  },
+  "started_at": "2026-10-22T10:43:13.054780+00:00",
+  "status": "ok"
+}

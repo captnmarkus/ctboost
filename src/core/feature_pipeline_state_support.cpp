@@ -84,9 +84,10 @@ std::vector<float> EmbeddingValues(const py::handle& value) {
   return ArrayToFloatVector(array.cast<py::array_t<float, py::array::forcecast>>(), "embedding");
 }
 
-std::pair<int, std::vector<float>> FitTargetMode(const std::vector<float>& labels) {
+std::pair<int, std::vector<double>> FitTargetMode(const std::vector<float>& labels,
+                                                 bool double_accumulation) {
   if (labels.empty()) {
-    return {1, std::vector<float>{0.0F}};
+    return {1, std::vector<double>{0.0}};
   }
 
   std::vector<float> unique = labels;
@@ -107,21 +108,30 @@ std::pair<int, std::vector<float>> FitTargetMode(const std::vector<float>& label
         }
       }
       if (contiguous) {
-        std::vector<float> prior(static_cast<std::size_t>(num_classes), 0.0F);
+        std::vector<double> prior(static_cast<std::size_t>(num_classes), 0.0);
         for (float label : labels) {
-          prior[static_cast<std::size_t>(std::llround(label))] += 1.0F;
+          double& value = prior[static_cast<std::size_t>(std::llround(label))];
+          value = double_accumulation ? value + 1.0
+                                      : static_cast<float>(static_cast<float>(value) + 1.0F);
         }
-        for (float& value : prior) {
-          value /= static_cast<float>(labels.size());
+        for (double& value : prior) {
+          value = double_accumulation
+                      ? value / static_cast<double>(labels.size())
+                      : static_cast<float>(value) / static_cast<float>(labels.size());
         }
         return {num_classes, prior};
       }
     }
   }
 
-  const float mean = std::accumulate(labels.begin(), labels.end(), 0.0F) /
-                     static_cast<float>(std::max<std::size_t>(labels.size(), 1U));
-  return {1, std::vector<float>{mean}};
+  // Widen before adding, not after a float sum has already lost information or
+  // overflowed. This improves precision; it is not exact arbitrary summation.
+  const double mean = double_accumulation
+                          ? std::accumulate(labels.begin(), labels.end(), 0.0) /
+                                static_cast<double>(labels.size())
+                          : std::accumulate(labels.begin(), labels.end(), 0.0F) /
+                                static_cast<float>(labels.size());
+  return {1, std::vector<double>{mean}};
 }
 
 std::vector<std::string> ExtractTextTokens(std::string text,

@@ -1,0 +1,238 @@
+{
+  "source_sha256": {
+    "plan.json": "9777715e53efc40a89126b1db3fca2caf01cb07ce219ff53828bdbf97e69535b",
+    "frozen_selections.json": "cf5610267cd1b3b23a33044dfce2803827ecfce0d936754c3bb6f3faa5c2aa5f",
+    "development.json": "1fb680f93f19e8aa03743f574a1412a69d60116c22e75f1ef87c0f060a180311",
+    "prepared_data.json": "b26b0058e2c41ff177a80badc7c7021946d60dca02d60c542dcdb7acafd7e9da",
+    "acquired_source.json": "5d434200939a4b3a899be8a57feb2a2085dfe4edb2c0e01a2d19fe0e606883a1",
+    "authorized_rows.json": "f562bc74ec3f8f352731e65653a681505b18edda64eb994d1a1e535aee8258d8",
+    "report_recovery_completed.json": "6a9b58be8f9cbc41c741ead8b40d0c66f3387211a135b84b2e9cb5286a5e6b36"
+  },
+  "all_three_fits_successful": true,
+  "new_fits": 3,
+  "carried_models": 33,
+  "total_quality_tree_fits_through_wave15": 2412,
+  "diagnostic_replays_separate": 8,
+  "expanded_rows": {
+    "dataset": "houses",
+    "rows": 11260,
+    "added_rows": 3760,
+    "original_train_rows": 6250,
+    "original_stop_rows": 1250,
+    "development_rows_excluded": 2500,
+    "official_test_rows_excluded": 6880,
+    "excluded_rows_decoded": 0,
+    "excluded_rows_tokenized": 0
+  },
+  "raw_source": {
+    "body_decoded": false,
+    "bytes": 1446365,
+    "created_at": "2026-10-16T13:44:15.974778+00:00",
+    "data_rows_parsed": 0,
+    "final_url": "https://www.openml.org/data/v1/download/22125245/houses.arff",
+    "md5": "5edd572964b0653b789bfc5e5c0293a8",
+    "original_receipt_sha256": "35959ee759d7fc8656a363922182494bb3d1303aff870118ea99c2c5f86ce7d3",
+    "path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave15\\houses-source.arff.bin",
+    "plan_sha256": "9777715e53efc40a89126b1db3fca2caf01cb07ce219ff53828bdbf97e69535b",
+    "reused_without_refetch": true,
+    "sha256": "c71f44ba2522f61a8ba1918c220074be4a771e1c8c8c07d031e98368f4f94c6c",
+    "source_url": "https://openml.org/data/v1/download/22125245/houses.arff"
+  },
+  "libraries": {
+    "ctboost": {
+      "new_fits": 1,
+      "carried_models": 11,
+      "requested_rounds": 167,
+      "retained_rounds": 167,
+      "native_fit_seconds": 0.8532526000017242,
+      "new_payload_bytes": 26988067,
+      "total_policy_payload_bytes": 83842776
+    },
+    "xgboost": {
+      "new_fits": 1,
+      "carried_models": 11,
+      "requested_rounds": 1087,
+      "retained_rounds": 1087,
+      "native_fit_seconds": 2.6994440000016766,
+      "new_payload_bytes": 4698370,
+      "total_policy_payload_bytes": 73145435
+    },
+    "lightgbm": {
+      "new_fits": 1,
+      "carried_models": 11,
+      "requested_rounds": 191,
+      "retained_rounds": 191,
+      "native_fit_seconds": 0.5187111999985063,
+      "new_payload_bytes": 2280233,
+      "total_policy_payload_bytes": 12212103
+    }
+  },
+  "maximum_job_seconds": 17.85900000000038,
+  "maximum_process_tree_rss_bytes": 795938816,
+  "sum_job_seconds": 36.01499999999578,
+  "resource_failures": [],
+  "development_target_met": false,
+  "development_summary": [
+    {
+      "comparator": "xgboost",
+      "datasets": 12,
+      "family": "all",
+      "median_relative_error_gain": -0.001425779611483997,
+      "ties": 0,
+      "wins": 6,
+      "worst_relative_regression": 0.15415019762845839
+    },
+    {
+      "comparator": "xgboost",
+      "datasets": 4,
+      "family": "binary",
+      "median_relative_error_gain": -0.058992011524321736,
+      "ties": 0,
+      "wins": 0,
+      "worst_relative_regression": 0.15415019762845839
+    },
+    {
+      "comparator": "xgboost",
+      "datasets": 4,
+      "family": "regression",
+      "median_relative_error_gain": 0.014124003484260572,
+      "ties": 0,
+      "wins": 3,
+      "worst_relative_regression": 0.007849029173999168
+    },
+    {
+      "comparator": "xgboost",
+      "datasets": 4,
+      "family": "multiclass",
+      "median_relative_error_gain": 0.16377799594100717,
+      "ties": 0,
+      "wins": 3,
+      "worst_relative_regression": 0.14490515986777322
+    },
+    {
+      "comparator": "lightgbm",
+      "datasets": 12,
+      "family": "all",
+      "median_relative_error_gain": -0.014386917889301586,
+      "ties": 0,
+      "wins": 6,
+      "worst_relative_regression": 0.23728813559322032
+    },
+    {
+      "comparator": "lightgbm",
+      "datasets": 4,
+      "family": "binary",
+      "median_relative_error_gain": -0.03834658032847048,
+      "ties": 0,
+      "wins": 2,
+      "worst_relative_regression": 0.23728813559322032
+    },
+    {
+      "comparator": "lightgbm",
+      "datasets": 4,
+      "family": "regression",
+      "median_relative_error_gain": -0.014386917889301586,
+      "ties": 0,
+      "wins": 2,
+      "worst_relative_regression": 0.03364633783552369
+    },
+    {
+      "comparator": "lightgbm",
+      "datasets": 4,
+      "family": "multiclass",
+      "median_relative_error_gain": -0.0010199284873890144,
+      "ties": 0,
+      "wins": 2,
+      "worst_relative_regression": 0.1891632924907889
+    }
+  ],
+  "conditional_seed349_run": false,
+  "official_test_scored": false,
+  "report_recovery_bit_exact": true,
+  "task_errors": [
+    {
+      "dataset": "blood-transfusion-service-center",
+      "problem_type": "binary",
+      "ctboost": 0.4141843971631206,
+      "xgboost": 0.35886524822695043,
+      "lightgbm": 0.33475177304964543
+    },
+    {
+      "dataset": "churn",
+      "problem_type": "binary",
+      "ctboost": 0.11834733893557425,
+      "xgboost": 0.10711911883397429,
+      "lightgbm": 0.10903598727626651
+    },
+    {
+      "dataset": "in_vehicle_coupon_recommendation",
+      "problem_type": "binary",
+      "ctboost": 0.17985001823486502,
+      "xgboost": 0.17751322027716998,
+      "lightgbm": 0.18142915754923405
+    },
+    {
+      "dataset": "GiveMeSomeCredit",
+      "problem_type": "binary",
+      "ctboost": 0.13406130033488528,
+      "xgboost": 0.13301478395818023,
+      "lightgbm": 0.1366188842603938
+    },
+    {
+      "dataset": "QSAR_fish_toxicity",
+      "problem_type": "regression",
+      "ctboost": 0.708013914861958,
+      "xgboost": 0.7289516601775194,
+      "lightgbm": 0.746461037809723
+    },
+    {
+      "dataset": "Another-Dataset-on-used-Fiat-500",
+      "problem_type": "regression",
+      "ctboost": 740.9502470452263,
+      "xgboost": 758.5878212645549,
+      "lightgbm": 719.360844407988
+    },
+    {
+      "dataset": "houses",
+      "problem_type": "regression",
+      "ctboost": 0.21717310323129246,
+      "xgboost": 0.21548178045007454,
+      "lightgbm": 0.21010387719851775
+    },
+    {
+      "dataset": "diamonds",
+      "problem_type": "regression",
+      "ctboost": 559.6031325953539,
+      "xgboost": 562.4137785537221,
+      "lightgbm": 560.2968292246047
+    },
+    {
+      "dataset": "anneal",
+      "problem_type": "multiclass",
+      "ctboost": 0.0005488118722595283,
+      "xgboost": 0.0024279283818770133,
+      "lightgbm": 0.0004615109427991189
+    },
+    {
+      "dataset": "website_phishing",
+      "problem_type": "multiclass",
+      "ctboost": 0.15724745958571648,
+      "xgboost": 0.1883146414360754,
+      "lightgbm": 0.20142463956960116
+    },
+    {
+      "dataset": "splice",
+      "problem_type": "multiclass",
+      "ctboost": 0.13392518984093865,
+      "xgboost": 0.11697492031253127,
+      "lightgbm": 0.12344988821302455
+    },
+    {
+      "dataset": "SDSS17",
+      "problem_type": "multiclass",
+      "ctboost": 0.09115024012201854,
+      "xgboost": 0.10884665183879842,
+      "lightgbm": 0.0993804120571123
+    }
+  ]
+}

@@ -1,0 +1,172 @@
+{
+  "component_stop_prediction_diagnostic": {
+    "exactly_equal": false,
+    "maximum_absolute_difference": 1636.01171875,
+    "purpose": "Diagnostic only; never replace a component or select seeds"
+  },
+  "components": [
+    {
+      "dataset": "diamonds",
+      "finished_at": "2026-10-16T12:19:00.058360+00:00",
+      "library": "ctboost",
+      "model_bytes": 3574711,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave9\\models\\diamonds\\ctboost.pkl",
+      "model_sha256": "f957f226ec872dfc6c3c8face3466c09705126de87c1b425dc2daf620af77de3",
+      "reused": true,
+      "seed": 47,
+      "started_at": "2026-10-16T12:19:00.055356+00:00",
+      "status": "ok"
+    },
+    {
+      "dataset": "diamonds",
+      "finished_at": "2026-10-16T12:19:02.470602+00:00",
+      "library": "ctboost",
+      "model_bytes": 3516867,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave11\\components\\diamonds\\ctboost-seed947.pkl",
+      "model_sha256": "4a5e4876c0bc404f5f4e952d725773910c03a5ae6b9fd9ab29f17643be1c04af",
+      "refit_details": {
+        "apparent_union_error_inference_transform": 455.5283026014839,
+        "early_stopping": false,
+        "fit_seconds": 0.28484689999822876,
+        "fixed_leaf_refit": {
+          "fold": {
+            "coefficient_rounding_absolute_bound": 0.0011275717489368751,
+            "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+            "inference_only": true,
+            "library": "ctboost",
+            "physical_trees": 256,
+            "prediction_oracle_absolute_tolerance": 12.092918395996094,
+            "topology_sha256_after": "065fd4988374785c8ef4ac8b237def0327f2519693c095ecc5f7950ef316998e",
+            "topology_sha256_before": "065fd4988374785c8ef4ac8b237def0327f2519693c095ecc5f7950ef316998e"
+          },
+          "inference_checks": {
+            "original_stop": {
+              "fixed_tolerance_atol": 1e-05,
+              "fixed_tolerance_rtol": 5e-05,
+              "leaf_routing_exact": true,
+              "oracle_absolute_tolerance": 12.092918395996094,
+              "oracle_difference_divided_by_max_one_or_prediction_magnitude": 6.120786680821046e-07,
+              "oracle_max_absolute_difference": 0.010838129519470385
+            },
+            "original_train": {
+              "fixed_tolerance_atol": 1e-05,
+              "fixed_tolerance_rtol": 5e-05,
+              "leaf_routing_exact": true,
+              "oracle_absolute_tolerance": 12.092918395996094,
+              "oracle_difference_divided_by_max_one_or_prediction_magnitude": 8.625548219244203e-07,
+              "oracle_max_absolute_difference": 0.015631698312063236
+            }
+          },
+          "lambda": 10,
+          "ordered_union_check": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 12.092918395996094,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 7.719795054801914e-07,
+            "oracle_max_absolute_difference": 0.013990242041472811
+          },
+          "preprocessing": {
+            "column_order": "physical tree order, then sorted observed native leaf IDs",
+            "design_nonzeros": 1920000,
+            "design_shape": [
+              7500,
+              2691
+            ],
+            "ordered_ctr": true,
+            "ordered_training_transform_replayed": true,
+            "pipeline_state_sha256": "23b039b435fe5193a48bf3e47936483f80c175d6ccd110f484313d4099231d96",
+            "training_leaf_ids_sha256": "629f9cdb619b0c7a0d535fc5389db6e94f915a870a94d824231bd1ddedd28209",
+            "training_rows": 7500,
+            "training_transform_sha256": "5bf1c705d3eb51b5d3091985860779348aef6897601e5337ef099e15b8e709c9",
+            "unobserved_leaf_correction": 0
+          },
+          "shrinkage": 0.25,
+          "solve": {
+            "coefficient_norm": 3313.6606229364506,
+            "condition_estimate": 5153.656525377134,
+            "istop": 2,
+            "iterations": 170,
+            "matrix_norm": 6906.009162747055,
+            "normal_residual_norm": 2.188244680655392,
+            "regularized_residual_norm": 33161.66708310618,
+            "residual_norm": 31462.56028187008
+          }
+        },
+        "parameters": {
+          "alpha": 0.05,
+          "bootstrap_type": "Bernoulli",
+          "cat_features": [
+            "cut",
+            "color",
+            "clarity"
+          ],
+          "eval_metric": "RMSE",
+          "feature_test": "grouped",
+          "feature_test_adjustment": "none",
+          "feature_test_bins": 8,
+          "iterations": 256,
+          "lambda_l2": 1,
+          "leaf_estimation_backtracking": true,
+          "leaf_estimation_iterations": 3,
+          "learning_rate": 0.15,
+          "max_bins": 256,
+          "max_cat_threshold": 64,
+          "max_depth": 8,
+          "multi_strategy": "one_output_per_tree",
+          "multiclass_feature_test": "single",
+          "ordered_ctr": true,
+          "random_seed": 947,
+          "subsample": 0.8,
+          "verbose": false
+        },
+        "requested_rounds": 256,
+        "retained_rounds": 256,
+        "structural_early_termination": false,
+        "union_data": {
+          "row_order": "original TRAIN followed by original STOP",
+          "source_roles": {
+            "stop": {
+              "index_sha256": "3e974c20b4b0dd9787cfa93cf2d14b18177838f3975c31d94f2dbb4d112e4653",
+              "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\diamonds\\stop.pkl",
+              "rows": 1250,
+              "sha256": "8aa0a52fd215f4cd95d3e65eaed49176d689e3c2de6c7842c886b3bb19fab9cb"
+            },
+            "train": {
+              "index_sha256": "da7aed652a62c60f83056933aa26a1fcc5aa72cd51f1668a28ecbc8ae4948bb3",
+              "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\diamonds\\train.pkl",
+              "rows": 6250,
+              "sha256": "7179128062904539b97310cd9f9e2e6058c6c17cf9e3a255a5db4e886eecb277"
+            }
+          },
+          "stop_ids_sha256": "3e974c20b4b0dd9787cfa93cf2d14b18177838f3975c31d94f2dbb4d112e4653",
+          "stop_rows": 1250,
+          "train_ids_sha256": "da7aed652a62c60f83056933aa26a1fcc5aa72cd51f1668a28ecbc8ae4948bb3",
+          "train_rows": 6250,
+          "union_category_counts": {
+            "clarity": 8,
+            "color": 7,
+            "cut": 5
+          },
+          "union_ids_sha256": "29a54833fffd8636859c085bd1c468385d43074835dc61e1e295fbbbda0dc995",
+          "union_rows": 7500,
+          "vocabulary_fit_on": "TRAIN+STOP union only"
+        }
+      },
+      "reused": false,
+      "seed": 947,
+      "started_at": "2026-10-16T12:19:00.058360+00:00",
+      "status": "ok"
+    }
+  ],
+  "dataset": "diamonds",
+  "library": "ctboost",
+  "model_bytes": 7091811,
+  "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave11\\ensembles\\diamonds\\ctboost.pkl",
+  "model_sha256": "67f96a068113e7edc12a544058470ad8c99ca637a215dcf271073100c7aa2bea",
+  "seed_pair": [
+    47,
+    947
+  ],
+  "status": "ok"
+}

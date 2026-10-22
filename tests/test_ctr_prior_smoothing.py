@@ -104,14 +104,14 @@ def test_corrected_ctr_pipeline_state_and_pickle_roundtrip(task):
     ).fit(data, labels)
     query = np.asarray([["category-0"], ["unseen"]], dtype=object)
     expected = pipeline.transform_array(query)[0]
-    assert pipeline.to_state()["feature_pipeline_format_version"] == 4
+    assert pipeline.to_state()["feature_pipeline_format_version"] == 5
     np.testing.assert_allclose(expected[1, 1:], prior)
     restored = [
         ctboost.FeaturePipeline.from_state(json.loads(json.dumps(pipeline.to_state()))),
         pickle.loads(pickle.dumps(pipeline)),
     ]
     for copy in restored:
-        assert copy.to_state()["feature_pipeline_format_version"] == 4
+        assert copy.to_state()["feature_pipeline_format_version"] == 5
         np.testing.assert_array_equal(copy.transform_array(query)[0], expected)
 
 
@@ -166,5 +166,5 @@ def test_fractional_ctr_classifier_probabilities_and_saved_model(num_classes, tm
     path = tmp_path / "fractional-ctr.ctb"
     model.save_model(path)
     restored = ctboost.CTBoostClassifier.load_model(path)
-    assert restored._feature_pipeline.to_state()["feature_pipeline_format_version"] == 4
+    assert restored._feature_pipeline.to_state()["feature_pipeline_format_version"] == 5
     np.testing.assert_array_equal(restored.predict_proba(query), expected)

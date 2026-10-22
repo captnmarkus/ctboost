@@ -1,0 +1,869 @@
+{
+  "label": "original-2",
+  "runtime": {
+    "version": "0.1.61",
+    "cuda_enabled": false,
+    "cuda_runtime": "not compiled",
+    "compiler": "MSVC 1950",
+    "cxx_standard": 17,
+    "package_version": "0.1.61"
+  },
+  "python": "3.10.14 | packaged by Anaconda, Inc. | (main, Mar 21 2024, 16:20:14) [MSC v.1916 64 bit (AMD64)]",
+  "package": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup-native\\baseline\\ctboost\\__init__.py",
+  "native_sha256": "e1f5f5a6e29d9f643189fe87e27cecf66248b9ddd65d1617321768e5320084ed",
+  "runner_sha256": "a9e5e613713d41a0244620cf5d4d671fdf8c09c99a5785302d19b43d08b15bcd",
+  "build_receipt": {
+    "source_head": "9e68e6d5a6fe4a402d7b465092f6690bdf979a94",
+    "source_file": "src/core/booster_predict.cpp",
+    "source_sha256": "445c02bc2d810969088af32a4e9a835bd20cc80a9b52124a55e7ff1d74c00651",
+    "build_recipe_sha256": "3daf4d3f40219d4672d1c7992531020b86e966bb67d69a900dc01f0ed76c8047",
+    "cmake_cache_sha256": "7213ad75a9069c0a0e576fd03d1f360c2981ead3a94017cd062785c942aa476f",
+    "compiler_flags": "/DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG",
+    "compiler": "MSVC 19.50.35737.0",
+    "cuda": false,
+    "native_sha256": "e1f5f5a6e29d9f643189fe87e27cecf66248b9ddd65d1617321768e5320084ed",
+    "changed_sources": {
+      "src/core/booster_prediction.cpp": "6bd513e631440ffd867da412612facaac1c7546a5e9607e1a04e8ef42204858b",
+      "src/core/booster_predict.cpp": "445c02bc2d810969088af32a4e9a835bd20cc80a9b52124a55e7ff1d74c00651",
+      "src/core/booster_internal.hpp": "a81b5916f30bb3145294671acc7336dc5bddad223a2f65fd7379a73312dee941"
+    }
+  },
+  "versions": {
+    "numpy": "1.26.4",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.3.2",
+    "psutil": "7.2.2"
+  },
+  "cpu_affinity": [
+    6
+  ],
+  "protocol": "One CPU/thread; 3 warmups; 5 calibration calls; 7 blocks targeting50ms.",
+  "limitations": "Reused development inputs, cycled/truncated; no new quality or leaderboard evidence.",
+  "records": [
+    {
+      "case": "hiva_agnostic",
+      "rows": 1,
+      "input_columns": 1617,
+      "categorical_columns": 1617,
+      "transformed_columns": 6468,
+      "trees": 3,
+      "nodes": 147,
+      "active_features": 22,
+      "model_sha256": "a83fe0f3b6f4cbda5814501ffef8a8fc2b475d1e93d5a9cb3b942ac8a11c63c0",
+      "input_sha256": "b665ebef74bba981668a934e5bf676a5f0ed15b6a50c7418e84181cda8864efe",
+      "expected_sha256": "c9af2114ace35193cd64f4bd8fbb2b5df292cb4d96f562024b21a64e4a8bb498",
+      "transformed_reference_sha256": "17b1aee257a40f3ebbf8e16d1fdefe167842499a3b21b876b3f37e38f47443b4",
+      "exact_prediction_parity": true,
+      "exact_transform_parity": true,
+      "raw": {
+        "median_ms": 37.1892499997557,
+        "block_ms": [
+          37.43614999984857,
+          37.1892499997557,
+          46.807300000182295,
+          36.846450000666664,
+          36.87005000028876,
+          36.75485000076151,
+          45.084399999723246
+        ],
+        "calls_per_block": 2
+      },
+      "prepared": {
+        "median_ms": 0.1799399122782026,
+        "block_ms": [
+          0.179875877197526,
+          0.18300526315279217,
+          0.18580482456424138,
+          0.1799399122782026,
+          0.18029385965315955,
+          0.1790267543870677,
+          0.17931315789865676
+        ],
+        "calls_per_block": 228
+      },
+      "native": {
+        "median_ms": 0.011339399999997113,
+        "block_ms": [
+          0.011339399999997113,
+          0.011322399999698973,
+          0.011305400001219823,
+          0.011399200000596466,
+          0.011333299999023438,
+          0.011359000000084052,
+          0.011346299999786424
+        ],
+        "calls_per_block": 1000
+      }
+    },
+    {
+      "case": "hiva_agnostic",
+      "rows": 64,
+      "input_columns": 1617,
+      "categorical_columns": 1617,
+      "transformed_columns": 6468,
+      "trees": 3,
+      "nodes": 147,
+      "active_features": 22,
+      "model_sha256": "a83fe0f3b6f4cbda5814501ffef8a8fc2b475d1e93d5a9cb3b942ac8a11c63c0",
+      "input_sha256": "b665ebef74bba981668a934e5bf676a5f0ed15b6a50c7418e84181cda8864efe",
+      "expected_sha256": "17888fdd7c49a21c4c297d73026fb3222329950803597045bbdc734d857d11e7",
+      "transformed_reference_sha256": "17b1aee257a40f3ebbf8e16d1fdefe167842499a3b21b876b3f37e38f47443b4",
+      "exact_prediction_parity": true,
+      "exact_transform_parity": true,
+      "raw": {
+        "median_ms": 55.54874999961612,
+        "block_ms": [
+          54.603149999820744,
+          55.94730000029813,
+          55.28409999988071,
+          91.032450000057,
+          58.40075000014622,
+          55.54874999961612,
+          53.97214999993594
+        ],
+        "calls_per_block": 2
+      },
+      "prepared": {
+        "median_ms": 0.20356419752813049,
+        "block_ms": [
+          0.20356419752813049,
+          0.20368724279685343,
+          0.20307777777655286,
+          0.2035209876519303,
+          0.2047131687197681,
+          0.20359876543058777,
+          0.2030765432067366
+        ],
+        "calls_per_block": 243
+      },
+      "native": {
+        "median_ms": 0.02658490000067104,
+        "block_ms": [
+          0.02646439999989525,
+          0.026303800001187483,
+          0.02658490000067104,
+          0.02691400000003341,
+          0.027084200000899727,
+          0.02697450000050594,
+          0.02653160000045318
+        ],
+        "calls_per_block": 1000
+      }
+    },
+    {
+      "case": "hiva_agnostic",
+      "rows": 1000,
+      "input_columns": 1617,
+      "categorical_columns": 1617,
+      "transformed_columns": 6468,
+      "trees": 3,
+      "nodes": 147,
+      "active_features": 22,
+      "model_sha256": "a83fe0f3b6f4cbda5814501ffef8a8fc2b475d1e93d5a9cb3b942ac8a11c63c0",
+      "input_sha256": "b665ebef74bba981668a934e5bf676a5f0ed15b6a50c7418e84181cda8864efe",
+      "expected_sha256": "7577a5c4efeaee7ba1bde3962fdaaaae36c8e46b62165a7d83f29176b68973e1",
+      "transformed_reference_sha256": "17b1aee257a40f3ebbf8e16d1fdefe167842499a3b21b876b3f37e38f47443b4",
+      "exact_prediction_parity": true,
+      "exact_transform_parity": true,
+      "raw": {
+        "median_ms": 311.1069000005955,
+        "block_ms": [
+          311.1529999996492,
+          311.1042999998972,
+          311.1069000005955,
+          320.72095000057743,
+          311.92915000065113,
+          310.85574999997334,
+          310.85615000029065
+        ],
+        "calls_per_block": 2
+      },
+      "prepared": {
+        "median_ms": 1.3952371428916064,
+        "block_ms": [
+          1.398719999997411,
+          1.3952371428916064,
+          1.3945542857462507,
+          1.395977142861479,
+          1.3900685713971532,
+          1.3895228571137912,
+          1.397240000005695
+        ],
+        "calls_per_block": 35
+      },
+      "native": {
+        "median_ms": 1.1803025000062917,
+        "block_ms": [
+          1.1803025000062917,
+          1.1814924999725918,
+          1.182364999976926,
+          1.1767999999847234,
+          1.1798725000062404,
+          1.1795150000125432,
+          1.1865750000197295
+        ],
+        "calls_per_block": 40
+      }
+    },
+    {
+      "case": "coil2000_insurance_policies",
+      "rows": 1,
+      "input_columns": 85,
+      "categorical_columns": 5,
+      "transformed_columns": 90,
+      "trees": 129,
+      "nodes": 2861,
+      "active_features": 73,
+      "model_sha256": "a43172592a5bf0e36ce446f73ee970388d11e1b103e4ed622ae71e588e8d710d",
+      "input_sha256": "e40a3f2dcbf1dc67578d0f301af14fe2a4891d8970903c3be10ca75aa412fc7c",
+      "expected_sha256": "98003ab4dd522c5fe11f016d2225a57ac7c0f709893eacfdba9b4a9461a6596b",
+      "transformed_reference_sha256": "79eb6a0f2891201ebb829316e2f68675b4f4a27f3ae041f972451c4811898d98",
+      "exact_prediction_parity": true,
+      "exact_transform_parity": true,
+      "raw": {
+        "median_ms": 0.3773377952819019,
+        "block_ms": [
+          0.3773377952819019,
+          0.37919055118730133,
+          0.37706062992254186,
+          0.3792385826767083,
+          0.37638818897058507,
+          0.37621811023873447,
+          0.38057244094624915
+        ],
+        "calls_per_block": 127
+      },
+      "prepared": {
+        "median_ms": 0.028086000000257627,
+        "block_ms": [
+          0.028456899999582674,
+          0.028417300000000978,
+          0.028054700000211596,
+          0.028086000000257627,
+          0.028171699999802513,
+          0.028069099998901947,
+          0.02806330000021262
+        ],
+        "calls_per_block": 1000
+      },
+      "native": {
+        "median_ms": 0.0039872999986982904,
+        "block_ms": [
+          0.004039499999635154,
+          0.003971999998611864,
+          0.003992300000390969,
+          0.003983000000516768,
+          0.003988700000263634,
+          0.003985100000136299,
+          0.0039872999986982904
+        ],
+        "calls_per_block": 1000
+      }
+    },
+    {
+      "case": "coil2000_insurance_policies",
+      "rows": 64,
+      "input_columns": 85,
+      "categorical_columns": 5,
+      "transformed_columns": 90,
+      "trees": 129,
+      "nodes": 2861,
+      "active_features": 73,
+      "model_sha256": "a43172592a5bf0e36ce446f73ee970388d11e1b103e4ed622ae71e588e8d710d",
+      "input_sha256": "e40a3f2dcbf1dc67578d0f301af14fe2a4891d8970903c3be10ca75aa412fc7c",
+      "expected_sha256": "e5d0f00a6e5ffcb5682506f65a5eda1ac8c4838b1fb26f055c68dbbe996a1b7a",
+      "transformed_reference_sha256": "79eb6a0f2891201ebb829316e2f68675b4f4a27f3ae041f972451c4811898d98",
+      "exact_prediction_parity": true,
+      "exact_transform_parity": true,
+      "raw": {
+        "median_ms": 0.7107164179180825,
+        "block_ms": [
+          0.7200104477604653,
+          0.7107164179180825,
+          0.7151925373051851,
+          0.721722388062965,
+          0.7067358208913183,
+          0.7088955223765363,
+          0.7077029850774831
+        ],
+        "calls_per_block": 67
+      },
+      "prepared": {
+        "median_ms": 0.15205769231075605,
+        "block_ms": [
+          0.15304615384336964,
+          0.15243878205276418,
+          0.15205769231075605,
+          0.15170512820543827,
+          0.15436474358792998,
+          0.15178685897901745,
+          0.15157628205577986
+        ],
+        "calls_per_block": 312
+      },
+      "native": {
+        "median_ms": 0.12107076166637147,
+        "block_ms": [
+          0.12124914004882462,
+          0.12081228501513956,
+          0.12118206388496248,
+          0.12130393120518133,
+          0.12107076166637147,
+          0.12067100737519626,
+          0.1209076167078842
+        ],
+        "calls_per_block": 407
+      }
+    },
+    {
+      "case": "coil2000_insurance_policies",
+      "rows": 1000,
+      "input_columns": 85,
+      "categorical_columns": 5,
+      "transformed_columns": 90,
+      "trees": 129,
+      "nodes": 2861,
+      "active_features": 73,
+      "model_sha256": "a43172592a5bf0e36ce446f73ee970388d11e1b103e4ed622ae71e588e8d710d",
+      "input_sha256": "e40a3f2dcbf1dc67578d0f301af14fe2a4891d8970903c3be10ca75aa412fc7c",
+      "expected_sha256": "8baa5331bf550faa494cf1b737f12a16211c4084adb9500bcd452ae8f8c35776",
+      "transformed_reference_sha256": "79eb6a0f2891201ebb829316e2f68675b4f4a27f3ae041f972451c4811898d98",
+      "exact_prediction_parity": true,
+      "exact_transform_parity": true,
+      "raw": {
+        "median_ms": 5.148722222252723,
+        "block_ms": [
+          5.143355555547815,
+          5.1368111111918955,
+          5.1540777777619144,
+          5.137466666686426,
+          5.149022222313862,
+          5.148722222252723,
+          5.150777777695718
+        ],
+        "calls_per_block": 9
+      },
+      "prepared": {
+        "median_ms": 1.970255999985966,
+        "block_ms": [
+          1.965219999983674,
+          1.970255999985966,
+          1.968328000002657,
+          1.9723239999439102,
+          1.966967999978806,
+          1.97275600003195,
+          1.9813799999974435
+        ],
+        "calls_per_block": 25
+      },
+      "native": {
+        "median_ms": 1.9291279999742983,
+        "block_ms": [
+          1.9257119999383576,
+          1.928228000033414,
+          1.9332479999866337,
+          1.9292039999709232,
+          1.9299559999490157,
+          1.9288480000250274,
+          1.9291279999742983
+        ],
+        "calls_per_block": 25
+      }
+    },
+    {
+      "case": "splice",
+      "rows": 1,
+      "input_columns": 60,
+      "categorical_columns": 60,
+      "transformed_columns": 240,
+      "trees": 711,
+      "nodes": 32367,
+      "active_features": 237,
+      "model_sha256": "046882a53ed41fe29f90889fdf807b8338b4d16748136e832014a43a4d5a0dfb",
+      "input_sha256": "0e3d8eb837856a9de102c6346a68b8b23cfc7442863485b7eb759fe1d7c6ab49",
+      "expected_sha256": "792abb971dcdb69bbfcefcc9420d96c189ec0a26c9311bd9cbe6c6a73aa84794",
+      "transformed_reference_sha256": "c74c0d01c6270528cd7353d28a221792e9780c31e9dc8a4e0fb890aed46b7715",
+      "exact_prediction_parity": true,
+      "exact_transform_parity": true,
+      "raw": {
+        "median_ms": 1.624206666626075,
+        "block_ms": [
+          1.6414266666591477,
+          1.6321233333049652,
+          1.622273333305202,
+          1.624206666626075,
+          1.6211699999985285,
+          1.6318799999983942,
+          1.619363333278064
+        ],
+        "calls_per_block": 30
+      },
+      "prepared": {
+        "median_ms": 0.0365083999986382,
+        "block_ms": [
+          0.036668099999587866,
+          0.036847800000032294,
+          0.03646149999985937,
+          0.0365083999986382,
+          0.03706430000056571,
+          0.03633749999971769,
+          0.03639660000044387
+        ],
+        "calls_per_block": 1000
+      },
+      "native": {
+        "median_ms": 0.012217499999678694,
+        "block_ms": [
+          0.012377799999740091,
+          0.012268799999219482,
+          0.012217499999678694,
+          0.012160700000094948,
+          0.012265499999557505,
+          0.012134900000091875,
+          0.012174499999673571
+        ],
+        "calls_per_block": 1000
+      }
+    },
+    {
+      "case": "splice",
+      "rows": 64,
+      "input_columns": 60,
+      "categorical_columns": 60,
+      "transformed_columns": 240,
+      "trees": 711,
+      "nodes": 32367,
+      "active_features": 237,
+      "model_sha256": "046882a53ed41fe29f90889fdf807b8338b4d16748136e832014a43a4d5a0dfb",
+      "input_sha256": "0e3d8eb837856a9de102c6346a68b8b23cfc7442863485b7eb759fe1d7c6ab49",
+      "expected_sha256": "1444de77a34c23ce25f9bab50339e572fb3245527f542120f675fc24b7066ff4",
+      "transformed_reference_sha256": "c74c0d01c6270528cd7353d28a221792e9780c31e9dc8a4e0fb890aed46b7715",
+      "exact_prediction_parity": true,
+      "exact_transform_parity": true,
+      "raw": {
+        "median_ms": 2.857729411784128,
+        "block_ms": [
+          2.893823529495207,
+          2.868035294180599,
+          2.8637000000076918,
+          2.857729411784128,
+          2.854023529460606,
+          2.841888235279304,
+          2.8530823529923937
+        ],
+        "calls_per_block": 17
+      },
+      "prepared": {
+        "median_ms": 0.6472157894773103,
+        "block_ms": [
+          0.6482302631555189,
+          0.6527999999937157,
+          0.6472157894773103,
+          0.6463973684156755,
+          0.6469855263132654,
+          0.6448144736886637,
+          0.6472763157992296
+        ],
+        "calls_per_block": 76
+      },
+      "native": {
+        "median_ms": 0.6160000000054874,
+        "block_ms": [
+          0.6170049382714673,
+          0.6146444444581263,
+          0.6190839506158272,
+          0.6160839506107696,
+          0.6160000000054874,
+          0.6159493827178749,
+          0.6156790123323271
+        ],
+        "calls_per_block": 81
+      }
+    },
+    {
+      "case": "splice",
+      "rows": 1000,
+      "input_columns": 60,
+      "categorical_columns": 60,
+      "transformed_columns": 240,
+      "trees": 711,
+      "nodes": 32367,
+      "active_features": 237,
+      "model_sha256": "046882a53ed41fe29f90889fdf807b8338b4d16748136e832014a43a4d5a0dfb",
+      "input_sha256": "0e3d8eb837856a9de102c6346a68b8b23cfc7442863485b7eb759fe1d7c6ab49",
+      "expected_sha256": "699bfb53f45579c075ab637e008b44d341eabf91350ca367e8576de856c3cb99",
+      "transformed_reference_sha256": "c74c0d01c6270528cd7353d28a221792e9780c31e9dc8a4e0fb890aed46b7715",
+      "exact_prediction_parity": true,
+      "exact_transform_parity": true,
+      "raw": {
+        "median_ms": 17.639700000472658,
+        "block_ms": [
+          17.637250000007043,
+          17.691899999590532,
+          17.693550000331015,
+          17.631499999879452,
+          17.639700000472658,
+          17.547499999636784,
+          17.641850000472914
+        ],
+        "calls_per_block": 2
+      },
+      "prepared": {
+        "median_ms": 5.979162500125312,
+        "block_ms": [
+          5.972037499986982,
+          5.985499999951571,
+          5.985550000104922,
+          5.9850625000308355,
+          5.968375000065862,
+          5.979162500125312,
+          5.975649999982124
+        ],
+        "calls_per_block": 8
+      },
+      "native": {
+        "median_ms": 5.939362499930212,
+        "block_ms": [
+          5.904062500121654,
+          5.9261500000502565,
+          5.934274999845002,
+          5.946725000057995,
+          5.968424999991839,
+          5.939362499930212,
+          5.983875000083572
+        ],
+        "calls_per_block": 8
+      }
+    },
+    {
+      "case": "GiveMeSomeCredit",
+      "rows": 1,
+      "input_columns": 10,
+      "categorical_columns": 0,
+      "transformed_columns": 10,
+      "trees": 105,
+      "nodes": 1611,
+      "active_features": 10,
+      "model_sha256": "88e25c61ec41db36aeda1ba4af90ff3e0f8f3108068fb834ecc575cc2bc7f365",
+      "input_sha256": "26085f3e375c80aacbac3b2f1c7f89a275bd7d0e59e9c7a91d48e449d76bdab0",
+      "expected_sha256": "f3fa25d72b1da0f863134fa0d4983aaebc095ad4ba9455104f2a801ac9ac0b62",
+      "transformed_reference_sha256": "1b1640f86e5b2ddf74562d271ff35c7978117308ac0263a691a7df98fed5d540",
+      "exact_prediction_parity": true,
+      "exact_transform_parity": true,
+      "raw": {
+        "median_ms": 0.1927200803228366,
+        "block_ms": [
+          0.19768514055861572,
+          0.20178192770905723,
+          0.1953927710848481,
+          0.19099357429428734,
+          0.1927200803228366,
+          0.1916373494022407,
+          0.1905726907623092
+        ],
+        "calls_per_block": 249
+      },
+      "prepared": {
+        "median_ms": 0.02390679999916756,
+        "block_ms": [
+          0.02413410000008298,
+          0.02390679999916756,
+          0.02376440000080038,
+          0.023785400000633672,
+          0.023988300001292373,
+          0.0238563000002614,
+          0.024180800000976888
+        ],
+        "calls_per_block": 1000
+      },
+      "native": {
+        "median_ms": 0.0025603000012779376,
+        "block_ms": [
+          0.002556600000389153,
+          0.002560799999628216,
+          0.002555999999458436,
+          0.00257670000064536,
+          0.002658800000062911,
+          0.0025549000001774402,
+          0.0025603000012779376
+        ],
+        "calls_per_block": 1000
+      }
+    },
+    {
+      "case": "GiveMeSomeCredit",
+      "rows": 64,
+      "input_columns": 10,
+      "categorical_columns": 0,
+      "transformed_columns": 10,
+      "trees": 105,
+      "nodes": 1611,
+      "active_features": 10,
+      "model_sha256": "88e25c61ec41db36aeda1ba4af90ff3e0f8f3108068fb834ecc575cc2bc7f365",
+      "input_sha256": "26085f3e375c80aacbac3b2f1c7f89a275bd7d0e59e9c7a91d48e449d76bdab0",
+      "expected_sha256": "fb98283c543261f0d3af38504555a3d7c1e0b591f1e8288120301b9b6c12582c",
+      "transformed_reference_sha256": "1b1640f86e5b2ddf74562d271ff35c7978117308ac0263a691a7df98fed5d540",
+      "exact_prediction_parity": true,
+      "exact_transform_parity": true,
+      "raw": {
+        "median_ms": 0.3427941605911198,
+        "block_ms": [
+          0.3436364963452925,
+          0.3420875912319136,
+          0.341027737219659,
+          0.3386124087633339,
+          0.3427941605911198,
+          0.3428321167924161,
+          0.34415766424029964
+        ],
+        "calls_per_block": 137
+      },
+      "prepared": {
+        "median_ms": 0.08784637404585195,
+        "block_ms": [
+          0.08854007633819062,
+          0.08784637404585195,
+          0.08685648855197271,
+          0.0878654580148355,
+          0.08894637404541789,
+          0.08675629770960205,
+          0.08657404580199068
+        ],
+        "calls_per_block": 524
+      },
+      "native": {
+        "median_ms": 0.062157888198542545,
+        "block_ms": [
+          0.06197689440991131,
+          0.061683602485934456,
+          0.06419267080690255,
+          0.06254596273211968,
+          0.06220832298105215,
+          0.06208832298019707,
+          0.062157888198542545
+        ],
+        "calls_per_block": 805
+      }
+    },
+    {
+      "case": "GiveMeSomeCredit",
+      "rows": 1000,
+      "input_columns": 10,
+      "categorical_columns": 0,
+      "transformed_columns": 10,
+      "trees": 105,
+      "nodes": 1611,
+      "active_features": 10,
+      "model_sha256": "88e25c61ec41db36aeda1ba4af90ff3e0f8f3108068fb834ecc575cc2bc7f365",
+      "input_sha256": "26085f3e375c80aacbac3b2f1c7f89a275bd7d0e59e9c7a91d48e449d76bdab0",
+      "expected_sha256": "48a183fc6ad8b8cd0595cadbf945708dde435b19de7e978b526032a0f7c7ad81",
+      "transformed_reference_sha256": "1b1640f86e5b2ddf74562d271ff35c7978117308ac0263a691a7df98fed5d540",
+      "exact_prediction_parity": true,
+      "exact_transform_parity": true,
+      "raw": {
+        "median_ms": 1.598977419322886,
+        "block_ms": [
+          1.6057935483859769,
+          1.607083870992703,
+          1.59881612900438,
+          1.5929709677420174,
+          1.598977419322886,
+          1.600651612886483,
+          1.5932645161346075
+        ],
+        "calls_per_block": 31
+      },
+      "prepared": {
+        "median_ms": 1.324791891887356,
+        "block_ms": [
+          1.3232567567143092,
+          1.3259189188927947,
+          1.3226054054177587,
+          1.3275459459691774,
+          1.324791891887356,
+          1.3217027026749328,
+          1.3318702702825838
+        ],
+        "calls_per_block": 37
+      },
+      "native": {
+        "median_ms": 1.2860487179120985,
+        "block_ms": [
+          1.2852256410182095,
+          1.285671794856824,
+          1.2862051281934748,
+          1.2947333333357118,
+          1.2852256410182095,
+          1.291456410259483,
+          1.2860487179120985
+        ],
+        "calls_per_block": 39
+      }
+    },
+    {
+      "case": "SDSS17",
+      "rows": 1,
+      "input_columns": 11,
+      "categorical_columns": 2,
+      "transformed_columns": 17,
+      "trees": 1062,
+      "nodes": 9180,
+      "active_features": 17,
+      "model_sha256": "b2fb5e783a8c08317f41e9ed4248c14af2aeddeb0e8a463e69427c534c53a5e3",
+      "input_sha256": "f04fd83a925c5f4fe4de03a13e983bd638ea450d8bc39e034e022559636bb476",
+      "expected_sha256": "25534e362b4a318c6e97f7205f7fc16248001ca1f99bc36b43d4c4f8f9395568",
+      "transformed_reference_sha256": "b6abebbbbdad8c3b3b8f9b7dea11156baeb16abad0fd03a06894fa6ae3d76567",
+      "exact_prediction_parity": true,
+      "exact_transform_parity": true,
+      "raw": {
+        "median_ms": 0.3064210191070603,
+        "block_ms": [
+          0.30794649680912906,
+          0.3064210191070603,
+          0.30662675159358627,
+          0.3039770700600277,
+          0.30602993630419656,
+          0.30633121018958276,
+          0.30916178344156087
+        ],
+        "calls_per_block": 157
+      },
+      "prepared": {
+        "median_ms": 0.020836100000451552,
+        "block_ms": [
+          0.021210999999311753,
+          0.020921900000757887,
+          0.02081960000032268,
+          0.020864199999778066,
+          0.02082949999930861,
+          0.020836100000451552,
+          0.020825100000365637
+        ],
+        "calls_per_block": 1000
+      },
+      "native": {
+        "median_ms": 0.004415899999003159,
+        "block_ms": [
+          0.004404900000736234,
+          0.004428199999892968,
+          0.004410100000313832,
+          0.004415899999003159,
+          0.004399900000862544,
+          0.004498099999182159,
+          0.0044275999989622505
+        ],
+        "calls_per_block": 1000
+      }
+    },
+    {
+      "case": "SDSS17",
+      "rows": 64,
+      "input_columns": 11,
+      "categorical_columns": 2,
+      "transformed_columns": 17,
+      "trees": 1062,
+      "nodes": 9180,
+      "active_features": 17,
+      "model_sha256": "b2fb5e783a8c08317f41e9ed4248c14af2aeddeb0e8a463e69427c534c53a5e3",
+      "input_sha256": "f04fd83a925c5f4fe4de03a13e983bd638ea450d8bc39e034e022559636bb476",
+      "expected_sha256": "f53d7ecd27d457c79e875d7dd25ce42e185c853a2ca3aa4b96d04cb605b954ab",
+      "transformed_reference_sha256": "b6abebbbbdad8c3b3b8f9b7dea11156baeb16abad0fd03a06894fa6ae3d76567",
+      "exact_prediction_parity": true,
+      "exact_transform_parity": true,
+      "raw": {
+        "median_ms": 0.4987927835096231,
+        "block_ms": [
+          0.5010298969001766,
+          0.5025226804081256,
+          0.4969329896919158,
+          0.49826082472792066,
+          0.5012659793905674,
+          0.4987927835096231,
+          0.4984422680395583
+        ],
+        "calls_per_block": 97
+      },
+      "prepared": {
+        "median_ms": 0.12130164835040917,
+        "block_ms": [
+          0.12343461538386272,
+          0.12130164835040917,
+          0.121056868130716,
+          0.12203269230607534,
+          0.12112445054819025,
+          0.12066181318584643,
+          0.1217730769235209
+        ],
+        "calls_per_block": 364
+      },
+      "native": {
+        "median_ms": 0.0962104330701693,
+        "block_ms": [
+          0.0962104330701693,
+          0.09619645669321414,
+          0.09560807086562295,
+          0.09728917323119227,
+          0.09668070866452373,
+          0.09637244094245564,
+          0.0958529527580806
+        ],
+        "calls_per_block": 508
+      }
+    },
+    {
+      "case": "SDSS17",
+      "rows": 1000,
+      "input_columns": 11,
+      "categorical_columns": 2,
+      "transformed_columns": 17,
+      "trees": 1062,
+      "nodes": 9180,
+      "active_features": 17,
+      "model_sha256": "b2fb5e783a8c08317f41e9ed4248c14af2aeddeb0e8a463e69427c534c53a5e3",
+      "input_sha256": "f04fd83a925c5f4fe4de03a13e983bd638ea450d8bc39e034e022559636bb476",
+      "expected_sha256": "e4b96187fb6d2771f0ab6bfd5fcc52c535b257c3ac55968488d6d8f541ed6d26",
+      "transformed_reference_sha256": "b6abebbbbdad8c3b3b8f9b7dea11156baeb16abad0fd03a06894fa6ae3d76567",
+      "exact_prediction_parity": true,
+      "exact_transform_parity": true,
+      "raw": {
+        "median_ms": 3.17968666665062,
+        "block_ms": [
+          3.1650600000527143,
+          3.1686999999995655,
+          3.17200000002534,
+          3.182666666665076,
+          3.191213333290458,
+          3.17968666665062,
+          3.1855733333941316
+        ],
+        "calls_per_block": 15
+      },
+      "prepared": {
+        "median_ms": 2.208909090851111,
+        "block_ms": [
+          2.210168181839187,
+          2.21064545447999,
+          2.2084090908472054,
+          2.211045454549259,
+          2.208909090851111,
+          2.207263636343917,
+          2.208095454493146
+        ],
+        "calls_per_block": 22
+      },
+      "native": {
+        "median_ms": 2.1243391304818466,
+        "block_ms": [
+          2.1294826086807954,
+          2.1248478260531556,
+          2.1243391304818466,
+          2.1217086955996067,
+          2.120069565179343,
+          2.1291130434964662,
+          2.1238565217493526
+        ],
+        "calls_per_block": 23
+      }
+    }
+  ]
+}

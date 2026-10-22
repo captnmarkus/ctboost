@@ -1,0 +1,60 @@
+{
+  "config_index": 7,
+  "controls": {
+    "lambda": 1000.0,
+    "shrinkage": 1.0
+  },
+  "dataset": "blood-transfusion-service-center",
+  "finished_at": "2026-10-16T12:11:46.659707+00:00",
+  "fold": {
+    "coefficient_rounding_absolute_bound": 4.830030590871788e-08,
+    "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+    "inference_only": true,
+    "library": "xgboost",
+    "physical_trees": 28,
+    "prediction_oracle_absolute_tolerance": 0.0001646360324230045,
+    "topology_sha256_after": "95cfad99e07718075d0897a97d9cab76847327eba33b542f18ab74a162f6e805",
+    "topology_sha256_before": "95cfad99e07718075d0897a97d9cab76847327eba33b542f18ab74a162f6e805"
+  },
+  "library": "xgboost",
+  "solve": {
+    "columns": 211,
+    "evaluations": 8,
+    "final_objective": 0.43582901847561645,
+    "ftol": 1e-13,
+    "gradient_gate": 1e-06,
+    "gtol": 1e-09,
+    "initial_coefficients": "all zero",
+    "initial_objective": 0.43826558459069115,
+    "iterations": 6,
+    "maxcor": 20,
+    "maximum_absolute_mean_gradient": 5.905352054936267e-10,
+    "maxiter": 2000,
+    "maxls": 50,
+    "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+    "method": "L-BFGS-B",
+    "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+    "penalty": 1000.0,
+    "rows": 312,
+    "status": 0
+  },
+  "started_at": "2026-10-16T12:11:46.627463+00:00",
+  "status": "ok",
+  "stop_check": {
+    "fixed_tolerance_atol": 1e-05,
+    "fixed_tolerance_rtol": 5e-05,
+    "leaf_routing_exact": true,
+    "oracle_absolute_tolerance": 0.0001646360324230045,
+    "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.6332206747239087e-07,
+    "oracle_max_absolute_difference": 4.471345946832628e-07
+  },
+  "stop_error": 0.06595744680851068,
+  "training_check": {
+    "fixed_tolerance_atol": 1e-05,
+    "fixed_tolerance_rtol": 5e-05,
+    "leaf_routing_exact": true,
+    "oracle_absolute_tolerance": 0.0001646360324230045,
+    "oracle_difference_divided_by_max_one_or_prediction_magnitude": 2.3579450191857504e-07,
+    "oracle_max_absolute_difference": 6.455458265719471e-07
+  }
+}

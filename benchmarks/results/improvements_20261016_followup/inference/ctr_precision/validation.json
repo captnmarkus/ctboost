@@ -1,0 +1,128 @@
+{
+  "status": "numerical_fix_validated_with_explicit_test_repairs_and_skips",
+  "production_scope": "Mean CTR precision, format5 and legacy compatibility only; tree training principle/objectives/metrics unchanged",
+  "builds": {
+    "cp310": {
+      "package": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\ctr-precision\\runtime-cp310",
+      "native_sha256": "21ed48b6234bf570413fd4336ffdf76279b0ff9e3d9003cbcf0b34620e2aee17",
+      "build_receipt_sha256": "01f6753a2a4c72bd8185ba64269a42e4a51603d16a76e6884d97a6db99c6b1a4"
+    },
+    "cp312": {
+      "package": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\ctr-precision\\runtime-cp312",
+      "native_sha256": "04adb21b0e4cea8046581a23b62585b6c8d631561d96a417ad87bc3c55041613",
+      "build_receipt_sha256": "a67c86014573fb8f7ca53b2121d545c1f032d8e67aaffc553e30521be319a247"
+    }
+  },
+  "native_source_manifest_sha256": "b76519d66583548f6e4626f222e0769effe15652cee3775106ab94fe33c5987b",
+  "native_source_entries": 110,
+  "current_source_equals_built_source": true,
+  "frozen_accuracy_native_sha256": "c5ea7e026942c3f1190ca5511fbf74f353bfeb08e7771f76bc5f6c1ca3e4d197",
+  "initial_full_setup_diagnostic": {
+    "passed": 2442,
+    "failed": 59,
+    "skipped": 106,
+    "failures": {
+      "missing_comparison_dependency": 19,
+      "insufficient_or_leaked_cpu_affinity": 40
+    },
+    "subprocess_native_provenance": "previous checkout native; this is not full candidate coverage"
+  },
+  "consistent_full_run": {
+    "passed": 2484,
+    "failed": 41,
+    "skipped": 125,
+    "failure_causes": {
+      "distributed_format_expectation": 1,
+      "leaked_affinity_controller_preflight": 40
+    },
+    "collection_limit": "Latest ridge-diagnostic test source changed during this run; its latest revision has separate validation."
+  },
+  "repairs": {
+    "distributed_format5_cp310": {
+      "passed": 1
+    },
+    "distributed_format5_cp312": {
+      "passed": 1
+    },
+    "controllers_two_worker_slots": {
+      "passed": 55,
+      "cpus": [
+        0,
+        2,
+        6,
+        8
+      ]
+    },
+    "normal_pytest_affinity_isolation": {
+      "passed": 56,
+      "external_validation_plugin": false,
+      "fixture": "tests/conftest.py",
+      "fixture_sha256": "7d1d3ba489fc1f2906a6dcc4609b492708db8bbdb1c9966f163016099bc77bc6",
+      "sequence": "known CPU4-setting identity transfer followed by both controller modules; no initial affinity override"
+    }
+  },
+  "combined_full_collection_passing_coverage": 2525,
+  "full_collection_explicit_skips": 125,
+  "single_zero_failure_full_run_claim": false,
+  "scientific_stack_validation": {
+    "cp312_passed": 34,
+    "cp310_validation_only_skipped": 19
+  },
+  "cp312_targeted": {
+    "focused": {
+      "passed": 103,
+      "skipped": 3
+    },
+    "wider": {
+      "passed": 125
+    },
+    "final_precision": {
+      "passed": 38
+    },
+    "subprocess_exports_before_expectation_repair": {
+      "passed": 73,
+      "failed": 1,
+      "skipped": 3
+    },
+    "counts_overlap": true
+  },
+  "native_checks": {
+    "cp310": {
+      "checks": 230,
+      "failures": 0
+    },
+    "cp312": {
+      "checks": 230,
+      "failures": 0
+    }
+  },
+  "legacy_oracle": {
+    "pipeline_cases": 16,
+    "old_model_and_warmstart": true,
+    "all_bytes_and_states_exact": true,
+    "reference_sha256": "29e44fe667d3753f996b294948a16ba6df3707d1fda88fd50b02db0e917bd312"
+  },
+  "saved_real_models": {
+    "models": 12,
+    "source": "frozen wave16 CT models",
+    "input_scope": "originalTRAIN features; full frame and1/64/1000 batches",
+    "fits": 0,
+    "scores": 0,
+    "confirmation_or_official_test_opened": false,
+    "reference_sha256": "453d8f7549f30cb19857dff5ec4ea0cf2cd76240dcb09de2b64978c35c65078b",
+    "verified_sha256": "3856529bf1695a6e48ed1c09f018d1a43ace8b3bb639fdc5a11979b3444b9c4b"
+  },
+  "sdist": {
+    "artifact_sha256": "ae1102da3c87ba958702c8f186fecdf49aa7d98c00de19a91836bdc3b9485e4a",
+    "members": 583,
+    "checked_members": 21,
+    "receipt_sha256": "dab0ba783ef44ea8d972ff473260c88c8ea861043f51cb423efbfcd8ab35fab2"
+  },
+  "limitations": [
+    "No accuracy or latency improvement has been established for this precision change.",
+    "Double accumulation is not exact arbitrary summation.",
+    "Mean CTR prior/total storage grows from float32 to float64.",
+    "Older runtimes reject newly fitted format5; old loaded pipelines intentionally retain legacy arithmetic.",
+    "CUDA builds and Python ABIs other than3.10/3.12 were not built here."
+  ]
+}

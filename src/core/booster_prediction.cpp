@@ -186,6 +186,15 @@ HistMatrix BuildPredictionHist(const Pool& pool, const QuantizationSchema& quant
 HistMatrix BuildPredictionHist(const Pool& pool,
                                const QuantizationSchema& quantization_schema,
                                const std::vector<std::uint8_t>* active_features) {
+  HistMatrix hist = BuildPredictionBins(pool, quantization_schema, active_features, false);
+  ApplyQuantizationSchema(quantization_schema, hist);
+  return hist;
+}
+
+HistMatrix BuildPredictionBins(const Pool& pool,
+                               const QuantizationSchema& quantization_schema,
+                               const std::vector<std::uint8_t>* active_features,
+                               bool omit_unused_storage) {
   if (pool.num_cols() != quantization_schema.num_cols()) {
     throw std::invalid_argument(
         "prediction pool must have the same number of columns as the fitted model");
@@ -194,7 +203,16 @@ HistMatrix BuildPredictionHist(const Pool& pool,
   HistMatrix hist;
   hist.num_rows = pool.num_rows();
   hist.num_cols = pool.num_cols();
-  ApplyQuantizationSchema(quantization_schema, hist);
+  // Root-only cached score/leaf traversal never reads a bin. Retain logical
+  // dimensions and the usual shape check, without allocating rows * columns.
+  // Full histograms still materialize their documented zero-filled storage.
+  if (omit_unused_storage && active_features != nullptr &&
+      active_features->size() >= hist.num_cols &&
+      std::none_of(active_features->begin(),
+                   active_features->begin() + static_cast<std::ptrdiff_t>(hist.num_cols),
+                   [](std::uint8_t active) { return active != 0U; })) {
+    return hist;
+  }
   if (CanUseCompactBins(quantization_schema)) {
     hist.compact_bin_indices.resize(hist.num_rows * hist.num_cols, 0);
     hist.bin_index_bytes = 1;

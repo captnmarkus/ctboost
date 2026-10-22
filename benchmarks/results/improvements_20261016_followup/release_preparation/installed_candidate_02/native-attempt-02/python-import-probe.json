@@ -1,0 +1,31 @@
+{
+  "classification": "Initial embedded-Python launch lacked required NumPy; unchanged native executable passed230 after explicitly exposing the installed venv site-packages.",
+  "created_at": "2026-10-16T16:41:56.022468+00:00",
+  "native_attempt_01_sha256": "ddd248a7483129f91bd13375451c96426b83e9b699a85515f9f30cc0cbfc5f04",
+  "native_attempt_02_sha256": "7fa40297409bba37cfeeef87182e0698f56d55ece4900ab2313363e46f999496",
+  "records": [
+    {
+      "command": [
+        "C:\\Users\\captn\\AppData\\Roaming\\uv\\python\\cpython-3.12-windows-x86_64-none\\python.exe",
+        "-I",
+        "-c",
+        "import importlib.util,sys,json; print(json.dumps({'executable':sys.executable,'numpy_spec':None if importlib.util.find_spec('numpy') is None else str(importlib.util.find_spec('numpy'))}))"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "{\"executable\": \"C:\\\\Users\\\\captn\\\\AppData\\\\Roaming\\\\uv\\\\python\\\\cpython-3.12-windows-x86_64-none\\\\python.exe\", \"numpy_spec\": null}\n"
+    },
+    {
+      "command": [
+        "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\release-installed-cp312\\env\\Scripts\\python.exe",
+        "-I",
+        "-c",
+        "import numpy,sys,json; print(json.dumps({'executable':sys.executable,'numpy_version':numpy.__version__,'numpy_file':numpy.__file__}))"
+      ],
+      "exit_code": 0,
+      "stderr": "",
+      "stdout": "{\"executable\": \"C:\\\\apps\\\\ctboost\\\\.tmp\\\\improvements-20261016\\\\release-installed-cp312\\\\env\\\\Scripts\\\\python.exe\", \"numpy_version\": \"2.0.2\", \"numpy_file\": \"C:\\\\apps\\\\ctboost\\\\.tmp\\\\improvements-20261016\\\\release-installed-cp312\\\\env\\\\Lib\\\\site-packages\\\\numpy\\\\__init__.py\"}\n"
+    }
+  ],
+  "runner_sha256": "ae0ef84c9795635714a8840bbffb45995ebc2ace18c9a55789330ba9dafca3bf"
+}

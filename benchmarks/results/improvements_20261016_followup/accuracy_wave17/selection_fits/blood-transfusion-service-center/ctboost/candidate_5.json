@@ -1,0 +1,79 @@
+{
+  "controls": {
+    "lambda": 100.0,
+    "shrinkage": 1.0
+  },
+  "evidence": {
+    "checks": {
+      "fitting": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 1.745641384331975e-05,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 6.606079582746365e-08,
+        "oracle_max_absolute_difference": 1.274539429552135e-07
+      },
+      "stop": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 1.745641384331975e-05,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 6.606079582746365e-08,
+        "oracle_max_absolute_difference": 1.274539429552135e-07
+      }
+    },
+    "fold": {
+      "coefficient_rounding_absolute_bound": 2.7286265136261534e-08,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "ctboost",
+      "physical_trees": 3,
+      "prediction_oracle_absolute_tolerance": 1.745641384331975e-05,
+      "topology_sha256_after": "81fa137f13ec28b48a342c2551538b1db34e26be2727377e1d728e4672990551",
+      "topology_sha256_before": "81fa137f13ec28b48a342c2551538b1db34e26be2727377e1d728e4672990551"
+    },
+    "independent_sparse_raw_margin_oracle": true,
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 936,
+      "design_shape": [
+        312,
+        18
+      ],
+      "ordered_ctr": true,
+      "ordered_training_transform_replayed": true,
+      "pipeline_state_sha256": "797804480e966c6b113ed9332a91c62dafcba23cd2c6741db0d753f913805ecc",
+      "training_leaf_ids_sha256": "3755f5e5571affc3c94897d3aafab49d05b7c891066ca1d7598af426853df88d",
+      "training_rows": 312,
+      "training_transform_sha256": "1d0375408a989c4e46af5e7eddaebf63b5dc40eaf5603dc9c9de65dafcd73e48",
+      "unobserved_leaf_correction": 0
+    }
+  },
+  "finished_at": "2026-10-16T14:18:13.526923+00:00",
+  "index": 5,
+  "predictions_sha256": "2b8210e0cccf94758633c04560e226d9f4e89dffd42551dab3b546d9364ee8fa",
+  "solve": {
+    "columns": 18,
+    "evaluations": 9,
+    "final_objective": 0.48683048386935457,
+    "ftol": 1e-13,
+    "gradient_gate": 1e-06,
+    "gtol": 1e-09,
+    "initial_coefficients": "all zero",
+    "initial_objective": 0.5004475323735318,
+    "iterations": 7,
+    "maxcor": 20,
+    "maximum_absolute_mean_gradient": 4.204219600661547e-10,
+    "maxiter": 2000,
+    "maxls": 50,
+    "message": "CONVERGENCE: NORM OF PROJECTED GRADIENT <= PGTOL",
+    "method": "L-BFGS-B",
+    "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+    "penalty": 100.0,
+    "rows": 312,
+    "status": 0
+  },
+  "started_at": "2026-10-16T14:18:13.508897+00:00",
+  "status": "ok",
+  "stop_error": 0.07375886524822695
+}

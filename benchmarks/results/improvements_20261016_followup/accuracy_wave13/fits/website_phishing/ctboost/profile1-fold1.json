@@ -1,0 +1,124 @@
+{
+  "correction": null,
+  "dataset": "website_phishing",
+  "early_stopping": false,
+  "feature_names": [
+    "SFH",
+    "popUpWidnow",
+    "SSLfinal_State",
+    "Request_URL",
+    "URL_of_Anchor",
+    "web_traffic",
+    "URL_Length",
+    "age_of_domain",
+    "having_IP_Address"
+  ],
+  "finished_at": "2026-10-16T13:17:18.693237+00:00",
+  "fit_seconds": 0.08159599999999045,
+  "fold": 1,
+  "fold_category_counts": {
+    "Request_URL": 3,
+    "SFH": 3,
+    "SSLfinal_State": 3,
+    "URL_Length": 3,
+    "URL_of_Anchor": 3,
+    "age_of_domain": 2,
+    "having_IP_Address": 2,
+    "popUpWidnow": 3,
+    "web_traffic": 3
+  },
+  "fold_category_schema": {
+    "Request_URL": [
+      "Legitimate",
+      "Phishy",
+      "Suspicious"
+    ],
+    "SFH": [
+      "Legitimate",
+      "Phishy",
+      "Suspicious"
+    ],
+    "SSLfinal_State": [
+      "Legitimate",
+      "Phishy",
+      "Suspicious"
+    ],
+    "URL_Length": [
+      "Legitimate",
+      "Phishy",
+      "Suspicious"
+    ],
+    "URL_of_Anchor": [
+      "Legitimate",
+      "Phishy",
+      "Suspicious"
+    ],
+    "age_of_domain": [
+      "Legitimate",
+      "Phishy"
+    ],
+    "having_IP_Address": [
+      "Legitimate",
+      "Suspicious"
+    ],
+    "popUpWidnow": [
+      "Legitimate",
+      "Phishy",
+      "Suspicious"
+    ],
+    "web_traffic": [
+      "Legitimate",
+      "Phishy",
+      "Suspicious"
+    ]
+  },
+  "library": "ctboost",
+  "model_bytes": 1156693,
+  "model_retained": false,
+  "model_sha256": "85314a7e9e751942ede79c2b3d37764cae560d710222cc585d2df583acc0a14b",
+  "parameters": {
+    "alpha": 0.05,
+    "bootstrap_type": "Bernoulli",
+    "cat_features": [
+      "SFH",
+      "popUpWidnow",
+      "SSLfinal_State",
+      "Request_URL",
+      "URL_of_Anchor",
+      "web_traffic",
+      "URL_Length",
+      "age_of_domain",
+      "having_IP_Address"
+    ],
+    "eval_metric": "MultiClass",
+    "feature_test": "grouped",
+    "feature_test_adjustment": "none",
+    "feature_test_bins": 8,
+    "iterations": 118,
+    "lambda_l2": 0.1,
+    "leaf_estimation_iterations": 3,
+    "learning_rate": 0.05,
+    "max_bins": 256,
+    "max_cat_threshold": 256,
+    "max_depth": 6,
+    "min_data_in_leaf": 1,
+    "multi_strategy": "multi_output_tree",
+    "multiclass_feature_test": "joint",
+    "multiclass_leaf_solver": "full",
+    "one_hot_max_size": 8,
+    "ordered_ctr": true,
+    "random_seed": 47,
+    "subsample": 0.8,
+    "verbose": false
+  },
+  "prediction_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave13\\fold_predictions\\website_phishing\\ctboost\\profile1-fold1.npz",
+  "prediction_sha256": "34471e19306a2866f507940974f356b2724b1f37cf81e75ebec87be0c6e1f41e",
+  "profile_index": 1,
+  "requested_rounds": 118,
+  "retained_rounds": 118,
+  "started_at": "2026-10-16T13:17:18.548774+00:00",
+  "status": "ok",
+  "structural_early_termination": false,
+  "temperature": 0.75,
+  "validation_error": 0.3191646778734671
+}

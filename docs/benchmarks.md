@@ -1,25 +1,61 @@
 # Benchmarks
 
-## Current public-evidence status
+## CTBoost 0.1.62: local evidence and scope
 
-The current public release is [0.1.61](release-0.1.61.md). Its local CPU
-inference measurements and development accuracy studies are separate from the
-latest downloadable author-run TabArena bundle below, which measures **0.1.58**. They do not
-establish an Elo increase or a general win over default XGBoost. The
-[accuracy archive](https://github.com/captnmarkus/ctboost/tree/8cc75aa/benchmarks/results/inference_accuracy_20260908/accuracy)
-retains protocols, every task result, and failed qualification gates. Learning
-defaults remain unchanged.
+[Release 0.1.62](release-0.1.62.md) reduces prediction preparation overhead,
+improves categorical target-statistic precision, and writes compact JSON.
+The conditional-inference feature-test-before-cut design and tree-growth and
+hyperparameter defaults remain unchanged. The [October follow-up archive](https://github.com/captnmarkus/ctboost/tree/master/benchmarks/results/improvements_20261016_followup) records the
+production changes, tests, fixed-model latency protocols and accuracy studies.
 
-As of **9 September 2026**, a fresh Full HPO25 evaluation on public **0.1.61**
-is prepared but has **not started**. It covers the default plus 25 frozen HPO
-configurations across all 816 outer splits, with eight-fold bagging. The
-0.1.60 run is retired; its results will not be relabeled or mixed into the
-0.1.61 evaluation. No complete Full result or official leaderboard entry is
-claimed.
+The accuracy study contains twelve tasks: four binary, four regression and
+four multiclass. It compares CTBoost, XGBoost and LightGBM with explicit fitting,
+selection and replication budgets. Development data were reused across
+successive hypotheses; their scores are development evidence, not unbiased
+estimates or an official TabArena ranking. Equal model-fit counts do not imply
+equal compute or model capacity. The immutable accuracy runtime is recorded
+separately from the final inference runtime; the CTR precision fix does not
+retroactively change the training of those frozen models.
 
-On 8 September, Lennart Purucker separately
+The final current-data round-count experiment completed 540 fold fits and 36
+selected full-data fits. CTBoost achieved a median relative error reduction of
+**+0.2075% versus XGBoost** (7/12 wins) and **-0.8217% versus LightGBM** (5/12
+wins), with no ties. The combined development target was not met. The original
+rules therefore kept the second-seed and official-test stages closed; the
+separate confirmation role remained sealed. The archive preserves the earlier
+resource failure and externally interrupted attempt, plus the unchanged-plan
+recovery that completed this experiment.
+
+Serving-cost comparisons use one complete, prospectively selected model policy
+and balanced library orders. They distinguish raw-input preparation from
+normalized-input prediction, and require exact prediction checks. Their task
+scope and differing model capacities must accompany any reported speedup;
+latency alone does not establish accuracy superiority.
+
+The completed three-pass diagnostic measured batches of 1, 64 and 1,000 rows
+on one CPU/thread. Across the 36 task/batch cases, CTBoost's geometric mean
+raw-input speed ratio was **2.247x versus XGBoost** and **1.915x versus LightGBM**;
+CTBoost was faster in 36/36 and 35/36 cases respectively. Full-development and
+every batch prediction matched the frozen references exactly. These selected
+models have the accuracy gap described above. See the
+[complete final timing report](https://github.com/captnmarkus/ctboost/tree/master/benchmarks/results/improvements_20261016_followup/inference/final_execution_20261022)
+for every case, normalized-input costs and source/runtime identities.
+
+## Historical public evaluations
+
+The [0.1.61 accuracy archive](https://github.com/captnmarkus/ctboost/tree/8cc75aa/benchmarks/results/inference_accuracy_20260908/accuracy)
+retains earlier local studies and failed qualification gates. Those studies
+did not establish an Elo increase or justify changing learning defaults.
+
+The status recorded on **9 September 2026** was that a fresh Full HPO25
+evaluation of public **0.1.61** was prepared but had **not started**. Its design
+covered the default plus 25 frozen HPO configurations across 816 outer splits,
+with eight-fold bagging. The 0.1.60 run was retired. This is a historical status
+record, not a completed 0.1.62 Full evaluation or an official leaderboard entry.
+
+On 8 September 2026, Lennart Purucker separately
 [reported TabArena-Lite results with 25 configurations and offered a Full run with 200](https://github.com/autogluon/tabarena/pull/479#issuecomment-5588951890).
-That report predates the 0.1.61 release; a completed 0.1.61 evaluation is still pending.
+That report predates 0.1.61 and is not evidence for 0.1.62.
 
 The [0.1.60 CTR and numeric-bin audit](https://github.com/captnmarkus/ctboost/tree/master/benchmarks/results/score_audit_20260907)
 and earlier grouped-statistic panels remain historical development evidence,
@@ -31,7 +67,7 @@ CTBoost has a committed adapter for the official TabArena protocol. It delegates
 folds, task metrics, bagging, tuning, ensembling, timing, and memory measurement to
 TabArena rather than recreating them locally.
 
-The latest [downloadable author-run result bundle](https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-hpo25-0.1.58)
+The historical [downloadable author-run result bundle](https://huggingface.co/datasets/Maiernator/ctboost-tabarena-lite-hpo25-0.1.58)
 covers all 51 TabArena-v0.1 Lite datasets with **CTBoost 0.1.58**, using the
 manual default plus the first 25 configurations of the frozen 200-configuration
 portfolio. Each configuration uses outer split `r0f0` and eight-fold bagging.

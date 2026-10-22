@@ -1,0 +1,401 @@
+{
+  "dataset": "Another-Dataset-on-used-Fiat-500",
+  "library": "lightgbm",
+  "selection": {
+    "best": {
+      "config_index": "incumbent",
+      "correction": null,
+      "fit_seconds": 0.014911899999788147,
+      "parameters": {
+        "bagging_fraction": 0.8,
+        "bagging_freq": 1,
+        "deterministic": true,
+        "force_col_wise": true,
+        "lambda_l2": 10,
+        "learning_rate": 0.15,
+        "max_bin": 255,
+        "metric": "rmse",
+        "num_leaves": 31,
+        "num_threads": 1,
+        "objective": "regression",
+        "seed": 47,
+        "verbosity": -1,
+        "zero_as_missing": false
+      },
+      "retained_at_round_cap": false,
+      "retained_rounds": 21,
+      "selection_key": [
+        648.9738421650532,
+        21,
+        7
+      ],
+      "stop_error": 648.9738421650532,
+      "trained_rounds_if_available": 71
+    },
+    "binary_refit": null,
+    "dataset": "Another-Dataset-on-used-Fiat-500",
+    "leaf_refit": null,
+    "library": "lightgbm",
+    "model_bytes": 33735,
+    "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave12\\models\\Another-Dataset-on-used-Fiat-500\\lightgbm.pkl",
+    "model_sha256": "34b86598d73a1fc6bd1e706f79ea05e705bc3d506a7bad7803ab257d3b5f9b39",
+    "refit_details": {
+      "apparent_union_error_inference_transform": 675.7295312166901,
+      "early_stopping": false,
+      "fit_seconds": 0.0055474999971920624,
+      "parameters": {
+        "bagging_fraction": 0.8,
+        "bagging_freq": 1,
+        "deterministic": true,
+        "force_col_wise": true,
+        "lambda_l2": 10,
+        "learning_rate": 0.15,
+        "max_bin": 255,
+        "metric": "rmse",
+        "num_leaves": 31,
+        "num_threads": 1,
+        "objective": "regression",
+        "seed": 47,
+        "verbosity": -1,
+        "zero_as_missing": false
+      },
+      "requested_rounds": 21,
+      "retained_rounds": 21,
+      "structural_early_termination": false,
+      "union_data": {
+        "row_order": "original TRAIN followed by original STOP",
+        "source_roles": {
+          "stop": {
+            "index_sha256": "e4ff5aecc677409e8207582fe0236f8b69960d04dbde04a2f912653c090ef301",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\Another-Dataset-on-used-Fiat-500\\stop.pkl",
+            "rows": 128,
+            "sha256": "2abb866e9c9ccef26f3c9f6cccdf52540cb045c50dd23830cedcdac07e5e9768"
+          },
+          "train": {
+            "index_sha256": "2cdd25daa6280834253718148c7e690ba1942a7f7b4f38dce8170efc0c67e442",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\Another-Dataset-on-used-Fiat-500\\train.pkl",
+            "rows": 641,
+            "sha256": "4971790b94b148ac95999e371a510e4705012e227521497a30803c61b852efff"
+          }
+        },
+        "stop_ids_sha256": "e4ff5aecc677409e8207582fe0236f8b69960d04dbde04a2f912653c090ef301",
+        "stop_rows": 128,
+        "train_ids_sha256": "2cdd25daa6280834253718148c7e690ba1942a7f7b4f38dce8170efc0c67e442",
+        "train_rows": 641,
+        "union_category_counts": {
+          "model": 3
+        },
+        "union_ids_sha256": "58f7a190e2dde748a025cbae705e42fa5857ee5c1daf85948bc54f49272310c6",
+        "union_rows": 769,
+        "vocabulary_fit_on": "TRAIN+STOP union only"
+      }
+    },
+    "source_wave": 12,
+    "temperature": null,
+    "training_selection": {
+      "all_four_successful": true,
+      "best": {
+        "config_index": "incumbent",
+        "correction": null,
+        "fit_seconds": 0.014911899999788147,
+        "parameters": {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 10,
+          "learning_rate": 0.15,
+          "max_bin": 255,
+          "metric": "rmse",
+          "num_leaves": 31,
+          "num_threads": 1,
+          "objective": "regression",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        "retained_at_round_cap": false,
+        "retained_rounds": 21,
+        "selection_key": [
+          648.9738421650532,
+          21,
+          7
+        ],
+        "stop_error": 648.9738421650532,
+        "trained_rounds_if_available": 71
+      },
+      "dataset": "Another-Dataset-on-used-Fiat-500",
+      "job": {
+        "binary_refit": null,
+        "dataset": "Another-Dataset-on-used-Fiat-500",
+        "leaf_refit": null,
+        "library": "lightgbm",
+        "original_selection": {
+          "all_eight_successful": true,
+          "base_selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 7,
+              "fit_seconds": 0.014911899999788147,
+              "parameters": {
+                "bagging_fraction": 0.8,
+                "bagging_freq": 1,
+                "deterministic": true,
+                "force_col_wise": true,
+                "lambda_l2": 10,
+                "learning_rate": 0.15,
+                "max_bin": 255,
+                "metric": "rmse",
+                "num_leaves": 31,
+                "num_threads": 1,
+                "objective": "regression",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 21,
+              "selection_key": [
+                648.9738421650532,
+                21,
+                7
+              ],
+              "stop_error": 648.9738421650532,
+              "trained_rounds_if_available": 71
+            },
+            "cumulative_search_fit_seconds": 1.0951067999976658,
+            "current_wave_all_eight_successful": true,
+            "dataset": "Another-Dataset-on-used-Fiat-500",
+            "library": "lightgbm",
+            "model_bytes": 30937,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\Another-Dataset-on-used-Fiat-500\\lightgbm.pkl",
+            "model_sha256": "b8d97b9293e52ca5904eeddb6875f43f4a2bd75e4ecdfd25021cfd82de7177fb",
+            "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+            "search_fit_seconds": 0.16001869999854534,
+            "source_wave": 1
+          },
+          "best": {
+            "config_index": 7,
+            "fit_seconds": 0.014911899999788147,
+            "parameters": {
+              "bagging_fraction": 0.8,
+              "bagging_freq": 1,
+              "deterministic": true,
+              "force_col_wise": true,
+              "lambda_l2": 10,
+              "learning_rate": 0.15,
+              "max_bin": 255,
+              "metric": "rmse",
+              "num_leaves": 31,
+              "num_threads": 1,
+              "objective": "regression",
+              "seed": 47,
+              "verbosity": -1,
+              "zero_as_missing": false
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 21,
+            "selection_key": [
+              648.9738421650532,
+              21,
+              7
+            ],
+            "stop_error": 648.9738421650532,
+            "trained_rounds_if_available": 71
+          },
+          "cumulative_search_fit_seconds": 1.311680199994953,
+          "current_wave_all_eight_successful": true,
+          "dataset": "Another-Dataset-on-used-Fiat-500",
+          "leaf_refit": null,
+          "library": "lightgbm",
+          "model_bytes": 30937,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\Another-Dataset-on-used-Fiat-500\\lightgbm.pkl",
+          "model_sha256": "b8d97b9293e52ca5904eeddb6875f43f4a2bd75e4ecdfd25021cfd82de7177fb",
+          "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+          "postfit_candidate_seconds": 0.2889723000007507,
+          "search_fit_seconds": 0.16001869999854534,
+          "source_wave": 1
+        },
+        "parameters": {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 10,
+          "learning_rate": 0.15,
+          "max_bin": 255,
+          "metric": "rmse",
+          "num_leaves": 31,
+          "num_threads": 1,
+          "objective": "regression",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        "profiles": [
+          {
+            "bagging_fraction": 0.8,
+            "bagging_freq": 1,
+            "deterministic": true,
+            "force_col_wise": true,
+            "lambda_l2": 10,
+            "learning_rate": 0.15,
+            "max_bin": 255,
+            "metric": "rmse",
+            "min_data_in_leaf": 20,
+            "num_leaves": 31,
+            "num_threads": 1,
+            "objective": "regression",
+            "seed": 47,
+            "verbosity": -1,
+            "zero_as_missing": false
+          },
+          {
+            "bagging_fraction": 0.8,
+            "bagging_freq": 1,
+            "deterministic": true,
+            "force_col_wise": true,
+            "lambda_l2": 10,
+            "learning_rate": 0.075,
+            "max_bin": 255,
+            "metric": "rmse",
+            "min_data_in_leaf": 20,
+            "num_leaves": 31,
+            "num_threads": 1,
+            "objective": "regression",
+            "seed": 47,
+            "verbosity": -1,
+            "zero_as_missing": false
+          },
+          {
+            "bagging_fraction": 0.8,
+            "bagging_freq": 1,
+            "deterministic": true,
+            "force_col_wise": true,
+            "lambda_l2": 10,
+            "learning_rate": 0.15,
+            "max_bin": 255,
+            "metric": "rmse",
+            "min_data_in_leaf": 5,
+            "num_leaves": 31,
+            "num_threads": 1,
+            "objective": "regression",
+            "seed": 47,
+            "verbosity": -1,
+            "zero_as_missing": false
+          },
+          {
+            "bagging_fraction": 0.8,
+            "bagging_freq": 1,
+            "deterministic": true,
+            "force_col_wise": true,
+            "lambda_l2": 10,
+            "learning_rate": 0.075,
+            "max_bin": 255,
+            "metric": "rmse",
+            "min_data_in_leaf": 5,
+            "num_leaves": 31,
+            "num_threads": 1,
+            "objective": "regression",
+            "seed": 47,
+            "verbosity": -1,
+            "zero_as_missing": false
+          }
+        ],
+        "rounds": 21,
+        "temperature": null,
+        "training_selection": {
+          "all_eight_successful": true,
+          "base_selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 7,
+              "fit_seconds": 0.014911899999788147,
+              "parameters": {
+                "bagging_fraction": 0.8,
+                "bagging_freq": 1,
+                "deterministic": true,
+                "force_col_wise": true,
+                "lambda_l2": 10,
+                "learning_rate": 0.15,
+                "max_bin": 255,
+                "metric": "rmse",
+                "num_leaves": 31,
+                "num_threads": 1,
+                "objective": "regression",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 21,
+              "selection_key": [
+                648.9738421650532,
+                21,
+                7
+              ],
+              "stop_error": 648.9738421650532,
+              "trained_rounds_if_available": 71
+            },
+            "cumulative_search_fit_seconds": 1.0951067999976658,
+            "current_wave_all_eight_successful": true,
+            "dataset": "Another-Dataset-on-used-Fiat-500",
+            "library": "lightgbm",
+            "model_bytes": 30937,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\Another-Dataset-on-used-Fiat-500\\lightgbm.pkl",
+            "model_sha256": "b8d97b9293e52ca5904eeddb6875f43f4a2bd75e4ecdfd25021cfd82de7177fb",
+            "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+            "search_fit_seconds": 0.16001869999854534,
+            "source_wave": 1
+          },
+          "best": {
+            "config_index": 7,
+            "fit_seconds": 0.014911899999788147,
+            "parameters": {
+              "bagging_fraction": 0.8,
+              "bagging_freq": 1,
+              "deterministic": true,
+              "force_col_wise": true,
+              "lambda_l2": 10,
+              "learning_rate": 0.15,
+              "max_bin": 255,
+              "metric": "rmse",
+              "num_leaves": 31,
+              "num_threads": 1,
+              "objective": "regression",
+              "seed": 47,
+              "verbosity": -1,
+              "zero_as_missing": false
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 21,
+            "selection_key": [
+              648.9738421650532,
+              21,
+              7
+            ],
+            "stop_error": 648.9738421650532,
+            "trained_rounds_if_available": 71
+          },
+          "cumulative_search_fit_seconds": 1.311680199994953,
+          "current_wave_all_eight_successful": true,
+          "dataset": "Another-Dataset-on-used-Fiat-500",
+          "leaf_refit": null,
+          "library": "lightgbm",
+          "model_bytes": 30937,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\Another-Dataset-on-used-Fiat-500\\lightgbm.pkl",
+          "model_sha256": "b8d97b9293e52ca5904eeddb6875f43f4a2bd75e4ecdfd25021cfd82de7177fb",
+          "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+          "postfit_candidate_seconds": 0.2889723000007507,
+          "search_fit_seconds": 0.16001869999854534,
+          "source_wave": 1
+        }
+      },
+      "library": "lightgbm",
+      "model_bytes": 30937,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave12\\training_winners\\Another-Dataset-on-used-Fiat-500\\lightgbm.pkl",
+      "model_sha256": "b8d97b9293e52ca5904eeddb6875f43f4a2bd75e4ecdfd25021cfd82de7177fb"
+    }
+  },
+  "status": "ok"
+}

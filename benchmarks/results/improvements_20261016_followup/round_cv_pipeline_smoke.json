@@ -1,0 +1,20 @@
+{
+  "created_at": "2026-10-16",
+  "runtime": "Frozen followup Python3.12 CTBoost/XGBoost3.4.1/LightGBM4.7.0",
+  "tests_passed": 16,
+  "test_seconds": 4.24,
+  "test_files": ["tests/test_round_cv_experiment.py", "tests/test_owned_process_watchdog.py"],
+  "coverage": [
+    "All three libraries across binary, regression and multiclass fold-local fitting",
+    "Observed fold-training category vocabulary excludes held-out and globally unused categories",
+    "Frozen native rounds with no early stopping; TRAIN-only corrections and fixed temperature",
+    "Rare class five preserves every class in every fitting and validation fold; four rejects",
+    "Exact native prediction pickle round-trip",
+    "Actual owned child RSS triggers limit; unrelated process survives",
+    "Actual timeout kills owned launcher and descendants",
+    "Already-exited and initial NoSuchProcess races complete safely",
+    "Denied memory inspection still cleans up all remembered owned processes"
+  ],
+  "real_quality_fits_started": false,
+  "official_test_features_or_labels_read": false
+}

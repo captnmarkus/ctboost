@@ -1,0 +1,94 @@
+{
+  "clean_fit_controls": {
+    "binary_refit": null,
+    "leaf_refit": null,
+    "multiclass_refit": null,
+    "parameters": {
+      "eta": 0.05,
+      "eval_metric": "auc",
+      "lambda": 0.3,
+      "max_bin": 256,
+      "max_cat_threshold": 256,
+      "max_cat_to_onehot": 8,
+      "max_depth": 4,
+      "min_child_weight": 5,
+      "multi_strategy": "one_output_per_tree",
+      "nthread": 1,
+      "objective": "binary:logistic",
+      "seed": 47,
+      "subsample": 1.0,
+      "tree_method": "hist"
+    },
+    "rounds": 56,
+    "temperature": null
+  },
+  "clean_fit_controls_sha256": "bb0c93cc96a69e835303a0ac19e957599e7adead7d3da46540403a01172b2099",
+  "fit": {
+    "apparent_union_error_inference_transform": 0.15211776859504134,
+    "early_stopping": false,
+    "fit_seconds": 0.049218699998164084,
+    "parameters": {
+      "eta": 0.05,
+      "eval_metric": "auc",
+      "lambda": 0.3,
+      "max_bin": 256,
+      "max_cat_threshold": 256,
+      "max_cat_to_onehot": 8,
+      "max_depth": 4,
+      "min_child_weight": 5,
+      "multi_strategy": "one_output_per_tree",
+      "nthread": 1,
+      "objective": "binary:logistic",
+      "seed": 47,
+      "subsample": 1.0,
+      "tree_method": "hist"
+    },
+    "requested_rounds": 56,
+    "retained_rounds": 56,
+    "structural_early_termination": false,
+    "union_data": {
+      "row_order": "original TRAIN followed by original STOP",
+      "source_roles": {
+        "stop": {
+          "index_sha256": "71a564af518385779257f7b6cca008a07627dfedd4905925a797260841b5dcdd",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\blood-transfusion-service-center\\stop.pkl",
+          "rows": 62,
+          "sha256": "59daf432712096f4ae9724df3db47ed8ac786d8e56b8a48e9ad86a6c0c2ce4c6"
+        },
+        "train": {
+          "index_sha256": "fac9f22e07f5ccbd69e89955d9f2de01cad1246ca69fa962e31753763caa7ea7",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\blood-transfusion-service-center\\train.pkl",
+          "rows": 312,
+          "sha256": "9d676cdf2a05bc27f6a21a9607b5a2d976ba87a5d8f4389356e129d84f17d54c"
+        }
+      },
+      "stop_ids_sha256": "71a564af518385779257f7b6cca008a07627dfedd4905925a797260841b5dcdd",
+      "stop_rows": 62,
+      "train_ids_sha256": "fac9f22e07f5ccbd69e89955d9f2de01cad1246ca69fa962e31753763caa7ea7",
+      "train_rows": 312,
+      "union_category_counts": {},
+      "union_ids_sha256": "7c36cebee258bd2f29ce4e3837c330fc04fab214a958911910078d193a67195d",
+      "union_rows": 374,
+      "vocabulary_fit_on": "TRAIN+STOP union only"
+    }
+  },
+  "old_scalar_corrections_disabled_before_fit": true,
+  "status": "ok",
+  "topology": {
+    "clean_native_state_sha256": "882fec547806db929a256231715e39926491969bc40962844e732d7c19ddb0d8",
+    "data_schema_sha256": null,
+    "exact_clean_refit_identity_except_scalar_leaf_outputs": true,
+    "feature_pipeline_sha256": null,
+    "leaf_outputs_ignored": true,
+    "library": "xgboost",
+    "limitation": "Fresh fit and disabled-correction provenance must also be enforced by the runner",
+    "nonleaf_state_sha256": "064b1153a17bda1aad7b6fa32e73a50853d330f779582fb3ec9568f6d13178e6",
+    "old_correction_subtracted": false,
+    "ordered_schema_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "parent_native_state_sha256": "f74e06913f4b72e390e7f7c012550b072ec5b6ccc9fa82418def878832c189eb",
+    "physical_trees": 56,
+    "problem": "binary",
+    "total_native_leaves": 399,
+    "training_metadata_sha256": null
+  }
+}

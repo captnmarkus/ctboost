@@ -1,0 +1,48 @@
+{
+  "status": "reviewed inactive executable preparation; not an activated experiment",
+  "created_at": "2026-10-16T15:27:52.281440+00:00",
+  "split_seed": 18018,
+  "primary_seed": 47,
+  "conditional_seed": 677,
+  "resources_proposed_before_parent_outcome": {
+    "workers": 1,
+    "cpu": 4,
+    "threads_per_fit": 1,
+    "maximum_named_array_bytes": 6442450944,
+    "maximum_job_rss_bytes": 10737418240,
+    "maximum_job_seconds": 1200,
+    "headroom_reserve_bytes": 4294967296,
+    "headroom_wait_seconds": 300,
+    "headroom_poll_seconds": 5
+  },
+  "parent_admission": "Completed numerically/resource-successful17b with failed primary47 gate, or a completed exact-linked569 mean-gate failure after primary pass. Always use final47 policy; never select the parent seed. Reject any official assessment access.",
+  "protocol_frozen": false,
+  "real_rows_models_opened": 0,
+  "real_fits": 0,
+  "real_quality_scores": 0,
+  "parent_source_sha256": "679fa5d344dc54f2e1cad232759b39efb51e87292864a358d159fcd0b6b40e55",
+  "accuracy_native_sha256": "c5ea7e026942c3f1190ca5511fbf74f353bfeb08e7771f76bc5f6c1ca3e4d197",
+  "final_source_sha256": {
+    "fair_accuracy_current_round_cv.py": "e0d4f773c209e2ef0ee116f2c5df4e83c26b30eaddaa72941cf9f4582bc3cf1d",
+    "fair_accuracy_current_round_cv_resources.py": "9e61c104a3ba37b8573b10db7196d53008d3e81b3e8bc7b6ee8ad96339e802f4",
+    "fair_accuracy_current_round_cv_seed_check.py": "c969335e2bceb11322ffb24a3605d8a620216540ea9851ec4020ad04c78b7584",
+    "fair_accuracy_current_round_cv_outer_test.py": "85600b0eb6d20f4a1756034fbaf3dff1844043cf5fb60bf4f017ef4027077456",
+    "fair_accuracy_current_round_cv_policy.json": "4da383b012181352db6ed5b1c9a23aef5d62735f4261e24236e9de14bdc10000",
+    "test_fair_accuracy_current_round_cv_runner.py": "c20cc28ea77762a40c2b9dfc3c0e412a42b67884a7af22d3fc609f5bbf5cd70d"
+  },
+  "validation": {
+    "original_support_checks": 46,
+    "original_native_checks": 30,
+    "original_toy_native_fits": 22,
+    "final_parent_pass01_runner_checks": 51,
+    "final_parent_pass01_native_checks": 30,
+    "final_parent_pass01_toy_native_fits": 22,
+    "final_pass02_runner_checks": 52,
+    "final_pass02_native_fits": 0,
+    "total_tiny_native_fits_across_preserved_runs": 44,
+    "unique_final_checks_across_support_backend_executable": 128,
+    "passed_all": true
+  },
+  "historical_snapshots": "runner-validation-01-sources preserves the exact three source files changed between pass01 and final pass02, verified against pass01 hashes; other pass01 sources are unchanged.",
+  "limitations": "Adaptive reused development and earlier STOP/CV tuning. Raw fold-local preprocessing prevents direct vocabulary/CTR leakage, but inherited tree/correction/temperature controls were selected using these authorized rows previously: fold errors are a selection criterion, not unbiased external estimates. Equal fit counts do not equal compute, capacity or effective regularization. Different fixed corrections can be suboptimal on folds. Models with fixed leaf corrections are inference artifacts; historical training metrics are not recomputed. Same-split seed sensitivity is not independent replication, significance, TabArena ranking or a universal claim. Named arrays are conservative accounting, not a whole-process RAM bound."
+}

@@ -1,0 +1,99 @@
+{
+  "protocol": "categorical_dictionary_crossover_v2",
+  "script_sha256": "75e9d193777b180c3dc801d411d97b0e10c6c8f86d42c2e89e631384180ed930",
+  "runtime": {
+    "python": "3.10.14",
+    "package": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup-native\\composed-cp310\\ctboost\\__init__.py",
+    "native_sha256": "d069a028a65f35656d977dfc808e5f43f113cba59c81cb19e16b26f05dedab24",
+    "build": {
+      "version": "0.1.61",
+      "cuda_enabled": false,
+      "cuda_runtime": "not compiled",
+      "compiler": "MSVC 1950",
+      "cxx_standard": 17,
+      "package_version": "0.1.61"
+    },
+    "pipeline_sha256": "f210e51c916089f0ff62e98d22854b24881c60f9474bb88474c51350dddc9df6",
+    "helper_sha256": "4475adc2083b4590a15ada903f6e9bbf79a0639762bf08298c7cd9eac35a4073",
+    "versions": {
+      "numpy": "1.26.4",
+      "pandas": "2.3.3",
+      "psutil": "7.2.2"
+    }
+  },
+  "seed": 20261016,
+  "widths": [
+    1,
+    32,
+    512
+  ],
+  "cardinalities": [
+    2,
+    8,
+    32
+  ],
+  "distributions": [
+    "uniform",
+    "skewed_85pct_first"
+  ],
+  "batch_sizes": [
+    128,
+    256,
+    512,
+    1000,
+    2048
+  ],
+  "training_rows": 2048,
+  "missing_probability": 0.02,
+  "profiles": [
+    "categorical_only",
+    "scalar_mean_frequency",
+    "multiclass_mean"
+  ],
+  "pipeline": {
+    "ctr_prior_strength": 1.0,
+    "labels": "synthetic independent continuous regression or3class float32; no real quality data"
+  },
+  "input_policy": "Each shape/distribution has deterministic independent training and request draws. All batches use prefixes of the same2048-row request. Both arms share identical frames and fitted state.",
+  "scope": "FeaturePipeline.transform_array plus fresh shallow DataFrame copy per call; no tree inference or benchmark normalization adapter. Code plan derived once outside measured calls. Candidate helper is identical to frozen broad-dispatch prototype.",
+  "passes": [
+    {
+      "arm": "baseline",
+      "order": "forward"
+    },
+    {
+      "arm": "dictionary",
+      "order": "reverse"
+    },
+    {
+      "arm": "dictionary",
+      "order": "forward"
+    },
+    {
+      "arm": "baseline",
+      "order": "reverse"
+    }
+  ],
+  "measurement": {
+    "cpu": 6,
+    "threads": 1,
+    "warmups": 1,
+    "calibration_calls": 1,
+    "blocks": 3,
+    "target_block_seconds": 0.03,
+    "minimum_calls": 1,
+    "maximum_calls": 50
+  },
+  "guard_selection": {
+    "candidate_minimum_rows": [
+      128,
+      256,
+      512,
+      1000,
+      2048
+    ],
+    "rule": "Choose the lowest threshold for which EVERY shape/cardinality/distribution at every tested batch>=threshold has pooled median speedup>=1.05 and both paired-order speedups>=1.00. Otherwise retain no automatic dictionary dispatch. No fixture-specific width/cardinality thresholds.",
+    "independent_real_replication": "Before production, freeze selected row threshold and compare all5 saved real fixtures in balanced order at1,64,128,256,512,1000,2048 rows. Preserve exact transform/prediction parity. Require each eligible row>=threshold to improve in both orderings, aggregate raw speedup>=1, and fallback controls without repeated>3pct slowdown. A failure rejects this guard rather than tuning it from real fixtures."
+  },
+  "limitations": "Local CPU/pandas2 object-string categorical serving experiment, not accuracy or statistical generalization evidence; sparse/highcardinality/mixed/custom inputs remain fallback."
+}

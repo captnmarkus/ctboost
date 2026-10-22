@@ -1,0 +1,123 @@
+{
+  "protocol": "native_codes_guard_replication_v1",
+  "script_sha256": "7a00fc82c42a6d2bcf7add2e7cb2f00dc7f0bd9f44c0696cbb4604e7d48ca11b",
+  "dependencies": {
+    "C:\\apps\\ctboost\\benchmarks\\native_categorical_codes_crossover.py": "25e487a3f61cea1464b74848e0de2fa62aa905b9a4d4a7a167c589d1bd8efddd",
+    "C:\\apps\\ctboost\\benchmarks\\results\\improvements_20261016_followup\\profile\\native_crossover\\plan.json": "435525695e9fb22c50941fd4c2a30aa2a01a5079bf29ada4c9eed5cb126246f7",
+    "C:\\apps\\ctboost\\benchmarks\\results\\improvements_20261016_followup\\profile\\native_crossover\\comparison.json": "5cde3420898d0739b5a31d0df0351aaee10d28147c3f8d10ad4f915d34eca883",
+    "C:\\apps\\ctboost\\benchmarks\\results\\improvements_20261016_followup\\profile\\native_crossover\\fixtures.json": "545578ba579529039cc746a304500a5f60b48e9a3c491b2bf86a486f5f0b1d05",
+    "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup-native\\real-guarded\\baseline-reference.json": "13f0512fcff3b18f9ad1693469a95420252b756e632bfa5387335527dc475594",
+    "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup-native\\real-guarded\\guarded-parity.json": "e4467afc7d3800f024e3fb1db439906c3d2397b1eae152c1a0e0217cda8edd5d"
+  },
+  "runtime": {
+    "baseline": {
+      "python": "3.10.14",
+      "package": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup-native\\composed-cp310\\ctboost\\__init__.py",
+      "native_sha256": "d069a028a65f35656d977dfc808e5f43f113cba59c81cb19e16b26f05dedab24",
+      "build": {
+        "version": "0.1.61",
+        "cuda_enabled": false,
+        "cuda_runtime": "not compiled",
+        "compiler": "MSVC 1950",
+        "cxx_standard": 17,
+        "package_version": "0.1.61"
+      },
+      "pipeline_sha256": "f210e51c916089f0ff62e98d22854b24881c60f9474bb88474c51350dddc9df6",
+      "helper_sha256": null,
+      "build_receipt_sha256": "6f9c02d079b9f4655bf87ec2260b2a63947b18008a0e16b0d9e05c567611e319",
+      "versions": {
+        "numpy": "1.26.4",
+        "pandas": "2.3.3",
+        "psutil": "7.2.2"
+      }
+    },
+    "candidate": {
+      "python": "3.10.14",
+      "package": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup-native\\codes-native-guarded-cp310\\ctboost\\__init__.py",
+      "native_sha256": "6df3e210c2086004519e7d2977e69db72d465e2e007799b9ba4288b5099d7479",
+      "build": {
+        "version": "0.1.61",
+        "cuda_enabled": false,
+        "cuda_runtime": "not compiled",
+        "compiler": "MSVC 1950",
+        "cxx_standard": 17,
+        "package_version": "0.1.61"
+      },
+      "pipeline_sha256": "e7949114086c396d015de5a32aabbb1674a7031220e582944be795921ef0c103",
+      "helper_sha256": "294b642b84206b556e2c846624107f783bf47ee30947e9aae3dfd85edd237de0",
+      "build_receipt_sha256": "d370ad8d7b622e726cd3aa477f2432801776675a116ad9becf1b49a3288fdb86",
+      "versions": {
+        "numpy": "1.26.4",
+        "pandas": "2.3.3",
+        "psutil": "7.2.2"
+      }
+    }
+  },
+  "guard": {
+    "minimum_fitted_input_columns": 32,
+    "minimum_request_rows": 1000,
+    "column_names": "Exact pandas.Index/objectdtype with exact builtinstr labels",
+    "fallback": "Public data.dtypes preflight rejects unsupported dtypes/cardinality beforeSeriescreation"
+  },
+  "selection_history": "Rows1000 chosen by preregistered360-case synthetic crossover. Its broad candidate failed four ofsix fallback controls; preserved unchanged. Width32 is the smallest studied nontrivial width, added conservatively before this replication, not a universal optimal cutoff. No thresholds selected here.",
+  "synthetic": "Reuse all96 eligible width32/512 cases at1000/2048rows and allsix original late33/object fallback controls. Same serialized states and bit signatures; no fitting.",
+  "real": {
+    "cases": [
+      "hiva_agnostic",
+      "coil2000_insurance_policies",
+      "splice",
+      "GiveMeSomeCredit",
+      "SDSS17"
+    ],
+    "rows": [
+      1,
+      64,
+      128,
+      256,
+      512,
+      1000,
+      2048
+    ],
+    "eligible_cases": [
+      "hiva_agnostic",
+      "splice"
+    ]
+  },
+  "scope": "Synthetic public transform_array plus fresh shallowcopy; real raw prediction including the existing normalize_tabarena_frame adapter, fresh percall. Native/prepared prediction and every transform/prediction bit check outsidetiming. Separate actualpackage processes inABBA with reversedcaseorder.",
+  "passes": [
+    {
+      "arm": "baseline",
+      "order": "forward"
+    },
+    {
+      "arm": "candidate",
+      "order": "reverse"
+    },
+    {
+      "arm": "candidate",
+      "order": "forward"
+    },
+    {
+      "arm": "baseline",
+      "order": "reverse"
+    }
+  ],
+  "measurement": {
+    "cpu": 6,
+    "threads": 1,
+    "warmups": 1,
+    "calibration_calls": 1,
+    "blocks": 3,
+    "target_block_seconds": 0.01,
+    "minimum_calls": 1,
+    "maximum_calls": 50,
+    "maximum_total_run_seconds": 900
+  },
+  "acceptance": {
+    "synthetic_eligible": "Every case pooledspeedup>=1.10 and bothpairedorderings>=1.0",
+    "real_eligible": "Every eligiblecase/batch improves inbothorderings; all35rawcases geometricmeanspeedup>=1",
+    "fallback": "No synthetic or realfallback case regresses>3percent inbothorderings",
+    "failure": "Preserve evidence and reject this candidate; no fixture-specific thresholdretuning"
+  },
+  "limitations": "Finite local serving evidence with existing developmentinputs only; no accuracy claim. Rows beyondcachedinputs arecycled. Width/range conservatism deliberately givesup some smaller eligiblegains."
+}

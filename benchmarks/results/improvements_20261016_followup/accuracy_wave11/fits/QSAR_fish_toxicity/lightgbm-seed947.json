@@ -1,0 +1,128 @@
+{
+  "dataset": "QSAR_fish_toxicity",
+  "finished_at": "2026-10-16T12:18:26.055610+00:00",
+  "library": "lightgbm",
+  "model_bytes": 35342,
+  "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave11\\components\\QSAR_fish_toxicity\\lightgbm-seed947.pkl",
+  "model_sha256": "f8fe105ea5a03dd6ae1dd0522a94460b095f39f18adda3f04da0f1a8afd50976",
+  "refit_details": {
+    "apparent_union_error_inference_transform": 0.7200875015502514,
+    "early_stopping": false,
+    "fit_seconds": 0.004654000000300584,
+    "fixed_leaf_refit": {
+      "fold": {
+        "coefficient_rounding_absolute_bound": 5.436560269756743e-16,
+        "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+        "inference_only": true,
+        "library": "lightgbm",
+        "physical_trees": 38,
+        "prediction_oracle_absolute_tolerance": 2.152280953458991e-12,
+        "topology_sha256_after": "70e43e10d3634adcb2f2e85002e2dbfe58698f594eb050ebd88c336b03a6bf83",
+        "topology_sha256_before": "70e43e10d3634adcb2f2e85002e2dbfe58698f594eb050ebd88c336b03a6bf83"
+      },
+      "inference_checks": {
+        "original_stop": {
+          "fixed_tolerance_atol": 1e-05,
+          "fixed_tolerance_rtol": 5e-05,
+          "leaf_routing_exact": true,
+          "oracle_absolute_tolerance": 2.152280953458991e-12,
+          "oracle_difference_divided_by_max_one_or_prediction_magnitude": 5.731032633778923e-16,
+          "oracle_max_absolute_difference": 3.9968028886505635e-15
+        },
+        "original_train": {
+          "fixed_tolerance_atol": 1e-05,
+          "fixed_tolerance_rtol": 5e-05,
+          "leaf_routing_exact": true,
+          "oracle_absolute_tolerance": 2.152280953458991e-12,
+          "oracle_difference_divided_by_max_one_or_prediction_magnitude": 6.122543085567978e-16,
+          "oracle_max_absolute_difference": 4.440892098500626e-15
+        }
+      },
+      "lambda": 1000,
+      "ordered_union_check": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 2.152280953458991e-12,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 6.122543085567978e-16,
+        "oracle_max_absolute_difference": 4.440892098500626e-15
+      },
+      "preprocessing": {
+        "column_order": "physical tree order, then sorted observed native leaf IDs",
+        "design_nonzeros": 17252,
+        "design_shape": [
+          454,
+          266
+        ],
+        "ordered_training_transform_replayed": false,
+        "training_leaf_ids_sha256": "519ce63bda94c157b04e0011af7d0427dda9a51081cb22fc22dcc2959785d91f",
+        "training_rows": 454,
+        "unobserved_leaf_correction": 0
+      },
+      "shrinkage": 1.0,
+      "solve": {
+        "coefficient_norm": 0.06790149332690688,
+        "condition_estimate": 12.506282120013434,
+        "istop": 2,
+        "iterations": 11,
+        "matrix_norm": 150.29198554801278,
+        "normal_residual_norm": 2.9489843587821077e-06,
+        "regularized_residual_norm": 15.49262473842238,
+        "residual_norm": 15.343102961577022
+      }
+    },
+    "parameters": {
+      "bagging_fraction": 0.8,
+      "bagging_freq": 1,
+      "cat_l2": 0,
+      "cat_smooth": 0,
+      "deterministic": true,
+      "force_col_wise": true,
+      "lambda_l2": 0,
+      "learning_rate": 0.1,
+      "max_bin": 255,
+      "max_cat_threshold": 256,
+      "max_cat_to_onehot": 1,
+      "metric": "rmse",
+      "min_data_in_leaf": 10,
+      "num_leaves": 7,
+      "num_threads": 1,
+      "objective": "regression",
+      "seed": 947,
+      "verbosity": -1,
+      "zero_as_missing": false
+    },
+    "requested_rounds": 38,
+    "retained_rounds": 38,
+    "structural_early_termination": false,
+    "union_data": {
+      "row_order": "original TRAIN followed by original STOP",
+      "source_roles": {
+        "stop": {
+          "index_sha256": "de393724061091abc721213073c612a2cb3947c29c7b7dc140f00abffbd62ccf",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\QSAR_fish_toxicity\\stop.pkl",
+          "rows": 75,
+          "sha256": "43ca4ebb2355030f59be5efac1b974303f0210a3fd60d7fec7b94fb5d7b1b210"
+        },
+        "train": {
+          "index_sha256": "26be8a0042fad36c4a38afc7ead69ffb0cef33bbddb18aa58b2a116ce973d933",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\QSAR_fish_toxicity\\train.pkl",
+          "rows": 379,
+          "sha256": "f5e842b299001515cdcfee2cc3b322864cdf0fc244fe067a9e0cc6f88147ea50"
+        }
+      },
+      "stop_ids_sha256": "de393724061091abc721213073c612a2cb3947c29c7b7dc140f00abffbd62ccf",
+      "stop_rows": 75,
+      "train_ids_sha256": "26be8a0042fad36c4a38afc7ead69ffb0cef33bbddb18aa58b2a116ce973d933",
+      "train_rows": 379,
+      "union_category_counts": {},
+      "union_ids_sha256": "69e84dd8c3c6712a016f2651feda5c5aed139b3d45496734fbee5a3f2fe5597c",
+      "union_rows": 454,
+      "vocabulary_fit_on": "TRAIN+STOP union only"
+    }
+  },
+  "reused": false,
+  "seed": 947,
+  "started_at": "2026-10-16T12:18:25.999064+00:00",
+  "status": "ok"
+}

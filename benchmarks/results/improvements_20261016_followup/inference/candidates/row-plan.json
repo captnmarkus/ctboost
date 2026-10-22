@@ -1,0 +1,24 @@
+{
+  "baseline": "combined accepted native565f + original DataFrame extraction",
+  "candidate": "row-fast strict exactDataFrame one-row all-string-small-categorical extraction; unchanged native565f",
+  "order": [
+    "accepted-1",
+    "row-fast-1",
+    "row-fast-2",
+    "accepted-2"
+  ],
+  "cases": [
+    "hiva_agnostic",
+    "coil2000_insurance_policies",
+    "splice",
+    "GiveMeSomeCredit",
+    "SDSS17"
+  ],
+  "rows": [
+    1,
+    64
+  ],
+  "runner_sha256": "a9e5e613713d41a0244620cf5d4d671fdf8c09c99a5785302d19b43d08b15bcd",
+  "checks": "Full64row transformed matrix bitwise parity, each raw/prepared output bitwise, native versus uncached. Separate row1 benefit and row64 guard-control.",
+  "decision": "Retain only stable material row1 benefit without broad regression; no general comparator inference claim."
+}

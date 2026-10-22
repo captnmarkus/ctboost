@@ -1,0 +1,86 @@
+{
+  "no_maven_tasks_run": true,
+  "proposed_resources": {
+    "approval": "pending root validation window",
+    "surefire_heap_mib": 256,
+    "process_tree_rss_limit_gib": 2,
+    "cpu": 0,
+    "native_processor_count": 1,
+    "surefire_forks": 1,
+    "wall_seconds_per_stage": 600,
+    "maven_heap_mib": 256
+  },
+  "executable": "C:/apps/ctboost/.tmp/improvements-20261016/release-jvm-tools/Apache-Maven/apache-maven-3.9.16/bin/mvn.cmd",
+  "source_hashes_at_preparation": {
+    "C:\\apps\\ctboost\\bindings\\jvm\\pom.xml": "7dc18608dbfdff2d7da5dde59b3422404c321bb7debe2fedf2bc214936c39243",
+    "C:\\apps\\ctboost\\bindings\\jvm\\src\\main\\java\\io\\github\\ctboost\\inference\\JsonPredictor.java": "67951b514abadac88503661416e4ccdb0e6a65d1ebe719172c47451cbe4b6096",
+    "C:\\apps\\ctboost\\tests\\export_conformance\\raw_pipeline_v2.json": "ecd61886b057cd59387577c2ef15bec11f0a20cdc23683f531f2b8cffaf6ae21",
+    "C:\\apps\\ctboost\\tests\\export_conformance\\prepared_binary_v2.json": "ed533bf256f85615240ce0ab86b242af082b7e73f69dc847109c0a3024ca3a9d",
+    "C:\\apps\\ctboost\\tests\\export_conformance\\prepared_regression_v1.cases.json": "3a77791e843ce79b6b22708c1378e34eb9abff329d3c3447df3b84d657132b28",
+    "C:\\apps\\ctboost\\tests\\export_conformance\\prepared_multiclass_v2.cases.json": "e3220db005265fa908c698f3685c7d5cf15d486921f2522fed841b66e2e75009",
+    "C:\\apps\\ctboost\\bindings\\jvm\\src\\test\\java\\io\\github\\ctboost\\inference\\JsonPredictorConformanceTest.java": "04ea7156ef0ccfb262fb94771e0549ee695c92918bcc0b5cdfa408a0b3daf314",
+    "C:\\apps\\ctboost\\tests\\export_conformance\\prepared_regression_v1.json": "217e6d6aadb9fc1feeb49a4ee8fa9647b42bd645577a9350b3a12f178782214e",
+    "C:\\apps\\ctboost\\tests\\export_conformance\\prepared_multiclass_v2.json": "2ec575dec7c973633bc91b150e6bb34b19eff2bb51d1ce861574d2eaecdf06f2",
+    "C:\\apps\\ctboost\\tests\\export_conformance\\prepared_binary_v2.cases.json": "366bc529e503c062d7b898f2a533ba4d238fcdb6e876bd75a1cff23a57af532e",
+    "C:\\apps\\ctboost\\tests\\export_conformance\\README.md": "0c62b3b566211a68eaf3c6959247a3112bc42078fa471aba8c8bc92551e0e7a2",
+    "C:\\apps\\ctboost\\bindings\\jvm\\src\\main\\java\\io\\github\\ctboost\\inference\\InvalidModelException.java": "d9462ab780fea53d3393b8c0eb641dcd3c4de7ef6f66295f6781a0e2ee72bca1",
+    "C:\\apps\\ctboost\\tests\\export_conformance\\duplicate_prepared_flag_v2.json": "ca6f7600718e8a848ce7196619d4301e1adb0b59f59c1f4dca0aa8120a11c6f8"
+  },
+  "release_version_changed": false,
+  "expected_conformance_tests": 9,
+  "no_global_install": true,
+  "no_cve_exploit_claim": true,
+  "expected_jackson": {
+    "databind": "2.21.7",
+    "core": "2.21.7",
+    "annotations": "2.21"
+  },
+  "upstream_bom_sha256": "ecf645e79390beae614e8f83e42bd3e91a166831c37a3e783f37e67e41939495",
+  "conformance_scope": [
+    "prepared regression/binary/multiclass prediction and probabilities",
+    "NaN/categorical routes and per-iteration rates",
+    "raw pipeline and vectorformat3 rejection",
+    "duplicate keys and byte limits",
+    "exact decimal schema integers",
+    "cyclic tree rejection"
+  ],
+  "working_directory": "C:/apps/ctboost/bindings/jvm",
+  "actual_validation_receipt_must_capture_current_sources": true,
+  "annotations_version_explanation": "Official Jackson2.21.7 BOM uses patchless annotations2.21; only databind/core share2.21.7",
+  "status": "Prepared only; Maven dependency resolution/build/tests await root CPU and memory window",
+  "maven_opts": "-Xms32m -Xmx256m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC",
+  "security_assertion": "Resolved databind version must be outside all5 archived advisory ranges; GitHub alert closure checked separately after default-branch update",
+  "upstream_bom_url": "https://repo.maven.apache.org/maven2/com/fasterxml/jackson/jackson-bom/2.21.7/jackson-bom-2.21.7.pom",
+  "java_home": "C:/apps/ctboost/.tmp/improvements-20261016/release-jvm-tools/Temurin17/jdk-17.0.20.1+1",
+  "output_root": "C:/apps/ctboost/.tmp/improvements-20261016/release-jvm-validation",
+  "stages": [
+    {
+      "name": "dependency-tree",
+      "args": [
+        "--batch-mode",
+        "--no-transfer-progress",
+        "-T",
+        "1",
+        "-Dmaven.repo.local=C:/apps/ctboost/.tmp/improvements-20261016/release-jvm-tools/repository",
+        "org.apache.maven.plugins:maven-dependency-plugin:3.8.1:tree",
+        "-DoutputType=json",
+        "-DoutputFile=C:/apps/ctboost/.tmp/improvements-20261016/release-jvm-validation/dependency-tree.json"
+      ]
+    },
+    {
+      "name": "conformance-tests",
+      "args": [
+        "--batch-mode",
+        "--no-transfer-progress",
+        "-T",
+        "1",
+        "-Dmaven.repo.local=C:/apps/ctboost/.tmp/improvements-20261016/release-jvm-tools/repository",
+        "test",
+        "-DforkCount=1",
+        "-DreuseForks=true",
+        "-DargLine=-Xms32m -Xmx256m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC"
+      ]
+    }
+  ],
+  "recorded_at": "2026-10-16T15:57:34Z"
+}

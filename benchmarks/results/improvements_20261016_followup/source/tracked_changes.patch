@@ -1,0 +1,1113 @@
+diff --git a/bindings/jvm/pom.xml b/bindings/jvm/pom.xml
+index d07a186..b8f6215 100644
+--- a/bindings/jvm/pom.xml
++++ b/bindings/jvm/pom.xml
+@@ -21,7 +21,7 @@
+   <properties>
+     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+     <maven.compiler.release>17</maven.compiler.release>
+-    <jackson.version>2.21.5</jackson.version>
++    <jackson.version>2.21.7</jackson.version>
+     <junit.version>5.14.2</junit.version>
+   </properties>
+ 
+diff --git a/ctboost/_serialization.py b/ctboost/_serialization.py
+index 9e39e91..dd6225a 100644
+--- a/ctboost/_serialization.py
++++ b/ctboost/_serialization.py
+@@ -172,7 +172,7 @@ def save_booster(
+     )
+     if resolved_format == "json":
+         with path.open("w", encoding="utf-8") as stream:
+-            json.dump(document, stream, indent=2, sort_keys=True)
++            json.dump(document, stream, separators=(",", ":"), sort_keys=True)
+         return
+ 
+     with path.open("wb") as stream:
+@@ -230,7 +230,7 @@ def save_estimator(
+             "fitted_state": serializable_state,
+         }
+         with path.open("w", encoding="utf-8") as stream:
+-            json.dump(document, stream, indent=2, sort_keys=True)
++            json.dump(document, stream, separators=(",", ":"), sort_keys=True)
+         return
+ 
+     with path.open("wb") as stream:
+diff --git a/ctboost/export_payload.py b/ctboost/export_payload.py
+index 1c73aa4..5d3847b 100644
+--- a/ctboost/export_payload.py
++++ b/ctboost/export_payload.py
+@@ -79,9 +79,9 @@ def _standalone_python_payload(
+         key_encoding = feature_pipeline_state.get(
+             "categorical_key_encoding_version"
+         )
+-        if pipeline_format not in (3, 4) or key_encoding != 2:
++        if pipeline_format not in (3, 4, 5) or key_encoding != 2:
+             raise ValueError(
+-                "raw-feature JSON export requires feature-pipeline format 3 or 4 and "
++                "raw-feature JSON export requires feature-pipeline format 3, 4 or 5 and "
+                 "categorical key encoding 2; export prepared features or refit the "
+                 "pipeline with CTBoost 0.1.55 or newer"
+             )
+diff --git a/ctboost/export_runtime.py b/ctboost/export_runtime.py
+index 400b5a3..bd54aed 100644
+--- a/ctboost/export_runtime.py
++++ b/ctboost/export_runtime.py
+@@ -138,9 +138,9 @@ class ExportedPredictor:
+                 raise ValueError("predictor format version 1 supports prepared features only")
+             if self.feature_pipeline_state is None:
+                 raise ValueError("raw-feature predictor is missing feature_pipeline_state")
+-            if self.feature_pipeline_state.get("feature_pipeline_format_version") not in (3, 4):
++            if self.feature_pipeline_state.get("feature_pipeline_format_version") not in (3, 4, 5):
+                 raise ValueError(
+-                    "raw-feature predictor exports require feature-pipeline format version 3 or 4"
++                    "raw-feature predictor exports require feature-pipeline format version 3, 4 or 5"
+                 )
+             if self.feature_pipeline_state.get("categorical_key_encoding_version") != 2:
+                 raise ValueError(
+@@ -184,9 +184,9 @@ class ExportedPredictor:
+                 raise ValueError(
+                     "raw-feature predictor exports require an inference manifest"
+                 )
+-            if self.feature_pipeline_state.get("feature_pipeline_format_version") not in (3, 4):
++            if self.feature_pipeline_state.get("feature_pipeline_format_version") not in (3, 4, 5):
+                 raise ValueError(
+-                    "raw-feature predictor exports require feature-pipeline format version 3 or 4"
++                    "raw-feature predictor exports require feature-pipeline format version 3, 4 or 5"
+                 )
+             if self.feature_pipeline_state.get("categorical_key_encoding_version") != 2:
+                 raise ValueError(
+@@ -443,9 +443,9 @@ class ExportedPredictor:
+             state = self.feature_pipeline_state
+             if state is None:
+                 raise ValueError("raw-feature predictor is missing feature_pipeline_state")
+-            if state.get("feature_pipeline_format_version") not in (3, 4):
++            if state.get("feature_pipeline_format_version") not in (3, 4, 5):
+                 raise ValueError(
+-                    "raw-feature predictor exports require feature-pipeline format version 3 or 4"
++                    "raw-feature predictor exports require feature-pipeline format version 3, 4 or 5"
+                 )
+             if state.get("categorical_key_encoding_version") != 2:
+                 raise ValueError(
+diff --git a/ctboost/feature_pipeline.py b/ctboost/feature_pipeline.py
+index b56797f..ac22083 100644
+--- a/ctboost/feature_pipeline.py
++++ b/ctboost/feature_pipeline.py
+@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+ import numpy as np
+ 
+ from . import _core
++from ._categorical_codes import build_code_plan, try_code_transform
+ from .core import Pool
+ from .core.columnar import (
+     _array_protocol_to_numpy,
+@@ -179,6 +180,8 @@ class FeaturePipeline:
+         self.cat_feature_indices_: List[int] = []
+         self.output_feature_names_: List[str] = []
+         self._numeric_only = False
++        self._categorical_only = False
++        self._categorical_code_plan = None
+ 
+         self._native = _core.NativeFeaturePipeline(
+             cat_features=self.cat_features,
+@@ -213,6 +216,7 @@ class FeaturePipeline:
+         feature_names: Optional[Sequence[str]] = None,
+         *,
+         allow_numeric: bool = False,
++        allow_categorical_row: bool = False,
+     ) -> Tuple[np.ndarray, Optional[List[str]]]:
+         if _is_pandas_dataframe(data):
+             # Keep float32 blocks intact; other numeric blocks go through double
+@@ -230,7 +234,25 @@ class FeaturePipeline:
+                         # NumPy's vectorized widening warnings or callbacks.
+                         dtype = float32[0]
+             try:
+-                matrix = data.to_numpy(dtype=dtype, copy=False)
++                if (
++                    allow_categorical_row
++                    and type(data) is pd.DataFrame
++                    and len(data) == 1
++                    and all(
++                        type(item) is pd.CategoricalDtype
++                        and type(item.categories) is pd.Index
++                        and item.categories.dtype == np.dtype(object)
++                        and 0 < len(item.categories) <= 32
++                        and all(type(value) is str for value in item.categories)
++                        for item in data.dtypes
++                    )
++                ):
++                    # Avoid converting every categorical block to an array for
++                    # one row. Numeric categories can coerce large integers, and
++                    # custom strings can run equality hooks during row assembly.
++                    matrix = data.iloc[0].to_numpy(dtype=object, copy=False).reshape(1, -1)
++                else:
++                    matrix = data.to_numpy(dtype=dtype, copy=False)
+             except (FloatingPointError, RuntimeWarning):
+                 if dtype is object:
+                     raise
+@@ -271,6 +293,10 @@ class FeaturePipeline:
+ 
+     def _refresh_metadata(self) -> None:
+         state = dict(self._native.to_state())
++        self._categorical_code_plan = (
++            build_code_plan(state)
++            if hasattr(self._native, "_transform_categorical_codes") else None
++        )
+         self.feature_names_in_ = state.get("feature_names_in_")
+         self.n_features_in_ = state.get("n_features_in_")
+         self.cat_feature_indices_ = list(state.get("cat_feature_indices_", []))
+@@ -286,6 +312,17 @@ class FeaturePipeline:
+                 "embedding_states",
+             )
+         )
++        categorical_sources = [item["source_index"] for item in state.get("categorical_states", [])]
++        self._categorical_only = (
++            self.n_features_in_ is not None
++            and self.n_features_in_ > 0
++            and len(categorical_sources) == self.n_features_in_
++            and set(categorical_sources) == set(range(self.n_features_in_))
++            and not any(
++                state.get(key)
++                for key in ("one_hot_states", "combination_states", "text_states", "embedding_states")
++            )
++        )
+ 
+     def fit(
+         self,
+@@ -308,8 +345,15 @@ class FeaturePipeline:
+         *,
+         feature_names: Optional[Sequence[str]] = None,
+     ) -> Tuple[np.ndarray, List[int], List[str]]:
++        if self._categorical_code_plan is not None:
++            candidate = try_code_transform(self, data, self._categorical_code_plan)
++            if candidate is not None:
++                return candidate
+         raw_matrix, resolved_feature_names = self._extract_frame(
+-            data, feature_names, allow_numeric=self._numeric_only
++            data,
++            feature_names,
++            allow_numeric=self._numeric_only,
++            allow_categorical_row=self._categorical_only,
+         )
+         transformed, cat_features, output_feature_names = self._native.transform_array(
+             raw_matrix,
+diff --git a/docs/guides/categorical-text.md b/docs/guides/categorical-text.md
+index 3a79e17..8267b58 100644
+--- a/docs/guides/categorical-text.md
++++ b/docs/guides/categorical-text.md
+@@ -24,10 +24,19 @@ missing values have deterministic routes.
+ 
+ Starting in 0.1.60, a positive `ctr_prior_strength` below one preserves the
+ unscaled target prior for first occurrences and unseen categories. Zero-prior
+-cold starts retain their previous behavior. New fits use pipeline format 4;
++cold starts retain their previous behavior. Pipeline format 4 introduced this correction;
+ loaded older pipelines preserve their original smoothing until explicitly
+ refitted. See [deployment](deployment.md) for saved-model compatibility.
+ 
++New pipelines now use format 5. Mean CTR priors, category totals, and ordered
++prefix totals accumulate in double precision, then the resulting features are
++checked and converted to float32. This reduces cancellation and accumulation
++drift and permits a finite mean when its total exceeds the float32 range. It is
++not exact summation for arbitrary target magnitudes. Frequency CTRs retain their
++existing arithmetic. Loaded formats 1–4 keep their previous accumulation,
++including during explicit refitting or warm-start replay; create a new pipeline
++to use the improved precision.
++
+ Fitted pipelines record `categorical_key_encoding_version` in their state and
+ inference manifest. New fits use version 2, which keeps actual missing values,
+ literal strings such as `__ctboost_missing__` and `__ctboost_other__`, synthetic
+diff --git a/docs/guides/deployment.md b/docs/guides/deployment.md
+index 90316e9..3fbfdba 100644
+--- a/docs/guides/deployment.md
++++ b/docs/guides/deployment.md
+@@ -93,16 +93,26 @@ ONNX export additionally requires `python -m pip install "ctboost[onnx]"`.
+ Scalar version-2 and vector version-3 JSON predictors can embed a fitted categorical,
+ text, or embedding pipeline for the Python `load_exported_predictor` runtime.
+ Raw-feature exports require a matching
+-inference manifest, pipeline format 3 or 4, and categorical key encoding 2; fingerprints and the
++inference manifest, pipeline format 3, 4 or 5, and categorical key encoding 2; fingerprints and the
+ full native pipeline state are validated before construction. Treat the JSON as trusted
+ input: its SHA-256 fingerprint detects accidental or uncoordinated changes but is not a
+ signature or authenticity boundary.
+ 
+-Starting in 0.1.60, new fitted pipelines use format 4 for
++Starting in 0.1.60, fitted pipelines use format 4 for
+ corrected fractional CTR smoothing. Release 0.1.59 uses format 3. Loaded
+ format-3 pipelines retain their original smoothing and re-export as format 3.
+ Older CTBoost runtimes that support only format 3 reject format-4 pipelines.
+ 
++New pipelines now use format 5 to store Mean CTR priors and target totals in
++double precision. Feature outputs remain float32. Formats 1–4 load with their
++original float32 accumulation and rounding, including ordered training replay
++and warm-start continuation. Explicit refitting of those loaded pipelines keeps
++legacy accumulation; formats 1–3 still upgrade smoothing to format 4 as before.
++Create a fresh pipeline to obtain format 5. Older runtimes reject format 5, so
++update the prediction runtime before deploying a newly fitted pipeline. Existing
++saved models retain their predictions. Formats 3 and 4 retain their format when
++loaded and saved; formats 1 and 2 re-export as format 3, as before.
++
+ Generated Python/C++/ONNX predictors and the R/JVM scorers do not silently reproduce a
+ fitted pipeline. Their manifest/profile requires prepared features. See
+ [portable inference](portable-inference.md) for the cross-language boundary.
+diff --git a/include/ctboost/feature_pipeline.hpp b/include/ctboost/feature_pipeline.hpp
+index 094baa4..1198e4f 100644
+--- a/include/ctboost/feature_pipeline.hpp
++++ b/include/ctboost/feature_pipeline.hpp
+@@ -49,6 +49,10 @@ class NativeFeaturePipeline {
+   pybind11::tuple transform_array(pybind11::array raw_matrix,
+                                   pybind11::object feature_names = pybind11::none()) const;
+ 
++  pybind11::tuple transform_categorical_codes(
++      pybind11::list codes, pybind11::list categories,
++      pybind11::object feature_names = pybind11::none()) const;
++
+   pybind11::dict to_state() const;
+   static NativeFeaturePipeline FromState(const pybind11::dict& state);
+ 
+@@ -73,9 +77,9 @@ class NativeFeaturePipeline {
+     std::vector<int> source_indices;
+     std::vector<std::string> output_names;
+     std::string ctr_type;
+-    std::vector<float> prior_values;
++    std::vector<double> prior_values;
+     std::unordered_map<std::string, int> total_counts;
+-    std::unordered_map<std::string, std::vector<float>> total_sums;
++    std::unordered_map<std::string, std::vector<double>> total_sums;
+     float global_frequency_prior{0.0F};
+     std::size_t total_rows{0};
+   };
+@@ -155,6 +159,9 @@ class NativeFeaturePipeline {
+   // Format 4 corrects fractional-prior smoothing. Loaded older pipelines keep
+   // the historical denominator until explicitly refitted.
+   int ctr_smoothing_version_{2};
++  // Format 5 accumulates and stores mean CTR statistics in double. Loaded
++  // formats 1-4 retain float rounding, including explicit training replay.
++  int ctr_accumulation_version_{2};
+   std::optional<std::vector<std::string>> feature_names_in_;
+   int n_features_in_{-1};
+   std::vector<int> cat_feature_indices_;
+diff --git a/pyproject.toml b/pyproject.toml
+index 484aeb5..48a818d 100644
+--- a/pyproject.toml
++++ b/pyproject.toml
+@@ -109,6 +109,8 @@ wheel.exclude = [
+   # Audited research snapshots live in Git; they are not runtime resources.
+   "benchmarks/results/inference_accuracy_20260908/**",
+   "benchmarks/results/release_readiness_20260908/**",
++  "benchmarks/results/improvements_20261016/**",
++  "benchmarks/results/improvements_20261016_followup/**",
+   "**/__pycache__/**",
+   "**/.pytest_cache/**",
+   "**/.mypy_cache/**",
+@@ -140,6 +142,7 @@ sdist.include = [
+   "/requirements-docs.txt",
+   "/ctboost/__init__.py",
+   "/ctboost/__main__.py",
++  "/ctboost/_categorical_codes.py",
+   "/ctboost/_export.py",
+   "/ctboost/_integration_utils.py",
+   "/ctboost/_prepared_data_support.py",
+diff --git a/src/bindings/module_registration_pipeline.cpp b/src/bindings/module_registration_pipeline.cpp
+index 68fa1b6..0948414 100644
+--- a/src/bindings/module_registration_pipeline.cpp
++++ b/src/bindings/module_registration_pipeline.cpp
+@@ -66,6 +66,10 @@ void BindNativeFeaturePipeline(py::module_& m) {
+            &ctboost::NativeFeaturePipeline::transform_array,
+            py::arg("raw_matrix"),
+            py::arg("feature_names") = py::none())
++      .def("_transform_categorical_codes",
++           &ctboost::NativeFeaturePipeline::transform_categorical_codes,
++           py::arg("codes"), py::arg("categories"),
++           py::arg("feature_names") = py::none())
+       .def("to_state", &ctboost::NativeFeaturePipeline::to_state)
+       .def_static("from_state", &ctboost::NativeFeaturePipeline::FromState);
+ }
+diff --git a/src/core/booster_internal.hpp b/src/core/booster_internal.hpp
+index 1b67af5..325c587 100644
+--- a/src/core/booster_internal.hpp
++++ b/src/core/booster_internal.hpp
+@@ -130,6 +130,12 @@ HistMatrix BuildPredictionHist(const Pool& pool,
+                                const QuantizationSchema& quantization_schema,
+                                const std::vector<std::uint8_t>* active_features);
+ HistMatrix BuildPredictionHist(const Pool& pool, const Tree& reference_tree);
++// Cached traversal consumes only row/column counts and bin storage, so it does
++// not need a private copy of the model's immutable quantization metadata.
++HistMatrix BuildPredictionBins(const Pool& pool,
++                               const QuantizationSchema& quantization_schema,
++                               const std::vector<std::uint8_t>* active_features,
++                               bool omit_unused_storage = true);
+ std::vector<GpuTreeNode> FlattenTreesForGpu(const std::vector<Tree>& trees,
+                                             std::size_t tree_limit,
+                                             const std::vector<double>& tree_learning_rates,
+diff --git a/src/core/booster_predict.cpp b/src/core/booster_predict.cpp
+index 64f1579..11378b6 100644
+--- a/src/core/booster_predict.cpp
++++ b/src/core/booster_predict.cpp
+@@ -304,10 +304,9 @@ std::vector<float> GradientBooster::PredictImpl(const Pool& pool,
+       booster_detail::MarkUsedFeatures(trees_[tree_index], active_features);
+     }
+   }
+-  const HistMatrix hist = booster_detail::BuildPredictionHist(
+-      pool,
+-      quantization_schema,
+-      &active_features);
++  const HistMatrix hist = cache != nullptr
++      ? booster_detail::BuildPredictionBins(pool, quantization_schema, &active_features)
++      : booster_detail::BuildPredictionHist(pool, quantization_schema, &active_features);
+   if (!use_cached_prediction) {
+     predictions = booster_detail::PredictFromHist(trees_,
+                                                 hist,
+@@ -357,10 +356,9 @@ std::vector<std::int32_t> GradientBooster::PredictLeafIndices(const Pool& pool,
+       booster_detail::MarkUsedFeatures(trees_[tree_index], active_features);
+     }
+   }
+-  const HistMatrix hist = booster_detail::BuildPredictionHist(
+-      pool,
+-      quantization_schema,
+-      &active_features);
++  const HistMatrix hist = cache != nullptr
++      ? booster_detail::BuildPredictionBins(pool, quantization_schema, &active_features)
++      : booster_detail::BuildPredictionHist(pool, quantization_schema, &active_features);
+   if (cache == nullptr) {
+     for (std::size_t tree_index = 0; tree_index < tree_limit; ++tree_index) {
+       for (std::size_t row = 0; row < hist.num_rows; ++row) {
+diff --git a/src/core/booster_prediction.cpp b/src/core/booster_prediction.cpp
+index adde928..9cf093a 100644
+--- a/src/core/booster_prediction.cpp
++++ b/src/core/booster_prediction.cpp
+@@ -186,6 +186,15 @@ HistMatrix BuildPredictionHist(const Pool& pool, const QuantizationSchema& quant
+ HistMatrix BuildPredictionHist(const Pool& pool,
+                                const QuantizationSchema& quantization_schema,
+                                const std::vector<std::uint8_t>* active_features) {
++  HistMatrix hist = BuildPredictionBins(pool, quantization_schema, active_features, false);
++  ApplyQuantizationSchema(quantization_schema, hist);
++  return hist;
++}
++
++HistMatrix BuildPredictionBins(const Pool& pool,
++                               const QuantizationSchema& quantization_schema,
++                               const std::vector<std::uint8_t>* active_features,
++                               bool omit_unused_storage) {
+   if (pool.num_cols() != quantization_schema.num_cols()) {
+     throw std::invalid_argument(
+         "prediction pool must have the same number of columns as the fitted model");
+@@ -194,7 +203,16 @@ HistMatrix BuildPredictionHist(const Pool& pool,
+   HistMatrix hist;
+   hist.num_rows = pool.num_rows();
+   hist.num_cols = pool.num_cols();
+-  ApplyQuantizationSchema(quantization_schema, hist);
++  // Root-only cached score/leaf traversal never reads a bin. Retain logical
++  // dimensions and the usual shape check, without allocating rows * columns.
++  // Full histograms still materialize their documented zero-filled storage.
++  if (omit_unused_storage && active_features != nullptr &&
++      active_features->size() >= hist.num_cols &&
++      std::none_of(active_features->begin(),
++                   active_features->begin() + static_cast<std::ptrdiff_t>(hist.num_cols),
++                   [](std::uint8_t active) { return active != 0U; })) {
++    return hist;
++  }
+   if (CanUseCompactBins(quantization_schema)) {
+     hist.compact_bin_indices.resize(hist.num_rows * hist.num_cols, 0);
+     hist.bin_index_bytes = 1;
+diff --git a/src/core/feature_pipeline_fit_ctr.cpp b/src/core/feature_pipeline_fit_ctr.cpp
+index 3a5a8b9..540690e 100644
+--- a/src/core/feature_pipeline_fit_ctr.cpp
++++ b/src/core/feature_pipeline_fit_ctr.cpp
+@@ -32,7 +32,13 @@ float CheckedCtrFloat(double value) {
+ 
+ void NativeFeaturePipeline::FitCtrState(pybind11::array object_matrix,
+                                         const std::vector<float>& label_values) {
+-  const auto [target_width, target_prior] = detail::FitTargetMode(label_values);
++  const bool double_accumulation = ctr_accumulation_version_ >= 2;
++  const auto [target_width, target_prior] =
++      detail::FitTargetMode(label_values, double_accumulation);
++  const auto add_target = [double_accumulation](double& sum, float value) {
++    sum = double_accumulation ? sum + static_cast<double>(value)
++                              : static_cast<float>(static_cast<float>(sum) + value);
++  };
+   const bool ctr_enabled =
+       ordered_ctr_ || !simple_ctr_.is_none() || !combinations_ctr_.is_none() || !per_feature_ctr_.is_none();
+   if (!ctr_enabled) {
+@@ -113,9 +119,9 @@ void NativeFeaturePipeline::FitCtrState(pybind11::array object_matrix,
+       }
+ 
+       std::unordered_map<std::string, int> total_counts;
+-      std::unordered_map<std::string, std::vector<float>> total_sums;
++      std::unordered_map<std::string, std::vector<double>> total_sums;
+       std::unordered_map<std::string, int> running_counts;
+-      std::unordered_map<std::string, std::vector<float>> running_sums;
++      std::unordered_map<std::string, std::vector<double>> running_sums;
+       std::vector<std::vector<float>> training_columns(
+           output_names.size(), std::vector<float>(matrix.rows, 0.0F));
+       std::size_t seen_rows = 0;
+@@ -130,8 +136,11 @@ void NativeFeaturePipeline::FitCtrState(pybind11::array object_matrix,
+         }
+ 
+         if (ctr_type == "Mean") {
++          const double mean_count = double_accumulation
++                                        ? static_cast<double>(running_counts[key])
++                                        : static_cast<double>(current_count);
+           const double denominator =
+-              static_cast<double>(current_count) + ctr_prior_strength_;
++              mean_count + ctr_prior_strength_;
+           for (int output_index = 0; output_index < target_width; ++output_index) {
+             const double numerator =
+                 static_cast<double>(
+@@ -162,12 +171,12 @@ void NativeFeaturePipeline::FitCtrState(pybind11::array object_matrix,
+             total_sum_values.assign(static_cast<std::size_t>(target_width), 0.0F);
+           }
+           if (target_width == 1) {
+-            total_sum_values[0] += label_values[row];
+-            current_sums[0] += label_values[row];
++            add_target(total_sum_values[0], label_values[row]);
++            add_target(current_sums[0], label_values[row]);
+           } else {
+             const int class_index = static_cast<int>(std::llround(label_values[row]));
+-            total_sum_values[static_cast<std::size_t>(class_index)] += 1.0F;
+-            current_sums[static_cast<std::size_t>(class_index)] += 1.0F;
++            add_target(total_sum_values[static_cast<std::size_t>(class_index)], 1.0F);
++            add_target(current_sums[static_cast<std::size_t>(class_index)], 1.0F);
+           }
+         }
+         running_counts[key] += 1;
+diff --git a/src/core/feature_pipeline_internal.hpp b/src/core/feature_pipeline_internal.hpp
+index c60beb2..47d0e6b 100644
+--- a/src/core/feature_pipeline_internal.hpp
++++ b/src/core/feature_pipeline_internal.hpp
+@@ -19,7 +19,7 @@ inline constexpr const char* kCodec2LiteralMissingKey = "\\m";
+ inline constexpr const char* kCodec2OtherKey = "\\o";
+ inline constexpr int kLegacyCategoricalKeyEncodingVersion = 1;
+ inline constexpr int kCurrentCategoricalKeyEncodingVersion = 2;
+-inline constexpr int kCurrentFeaturePipelineFormatVersion = 4;
++inline constexpr int kCurrentFeaturePipelineFormatVersion = 5;
+ 
+ struct MatrixView {
+   py::array array;
+@@ -66,7 +66,8 @@ std::string JoinNormalizedKey(const MatrixView& matrix,
+ const char* OtherKey(int encoding_version);
+ std::uint64_t BytesToLittleEndianU64(const py::bytes& digest);
+ std::vector<float> EmbeddingValues(const py::handle& value);
+-std::pair<int, std::vector<float>> FitTargetMode(const std::vector<float>& labels);
++std::pair<int, std::vector<double>> FitTargetMode(const std::vector<float>& labels,
++                                                bool double_accumulation = false);
+ std::vector<std::string> ExtractTextTokens(std::string text,
+                                            const std::string& tokenizer,
+                                            int ngram_min,
+diff --git a/src/core/feature_pipeline_normalize.cpp b/src/core/feature_pipeline_normalize.cpp
+index 14d4ce6..48f4d9c 100644
+--- a/src/core/feature_pipeline_normalize.cpp
++++ b/src/core/feature_pipeline_normalize.cpp
+@@ -98,6 +98,16 @@ bool IsMissing(const py::handle& value) {
+   if (value.is_none()) {
+     return true;
+   }
++  // These exact builtins cannot be missing arrays or NumPy scalar subclasses.
++  // Avoid Python/NumPy type checks for every categorical cell, while keeping
++  // the existing conversion and exception behavior for user-defined types.
++  if (PyUnicode_CheckExact(value.ptr()) || PyLong_CheckExact(value.ptr()) ||
++      PyBool_Check(value.ptr())) {
++    return false;
++  }
++  if (PyFloat_CheckExact(value.ptr())) {
++    return std::isnan(PyFloat_AS_DOUBLE(value.ptr()));
++  }
+   if (py::isinstance<py::array>(value)) {
+     return py::reinterpret_borrow<py::array>(value).size() == 0;
+   }
+@@ -112,7 +122,11 @@ std::string NormalizeKey(const py::handle& value, int encoding_version) {
+   if (IsMissing(value)) {
+     return kMissingKey;
+   }
+-  std::string key = py::str(value).cast<std::string>();
++  // Exact Python strings already have their final textual representation.
++  // Subclasses must still use __str__, and both paths share codec escaping.
++  std::string key = PyUnicode_CheckExact(value.ptr())
++      ? py::cast<std::string>(value)
++      : py::str(value).cast<std::string>();
+   if (encoding_version == kLegacyCategoricalKeyEncodingVersion) {
+     return key;
+   }
+diff --git a/src/core/feature_pipeline_state.cpp b/src/core/feature_pipeline_state.cpp
+index 4fcf7a9..bff61c9 100644
+--- a/src/core/feature_pipeline_state.cpp
++++ b/src/core/feature_pipeline_state.cpp
+@@ -9,7 +9,9 @@ namespace ctboost {
+ py::dict NativeFeaturePipeline::to_state() const {
+   py::dict state;
+   state["feature_pipeline_format_version"] =
+-      ctr_smoothing_version_ == 1 ? 3 : detail::kCurrentFeaturePipelineFormatVersion;
++      ctr_smoothing_version_ == 1 ? 3
++      : ctr_accumulation_version_ == 1 ? 4
++                                      : detail::kCurrentFeaturePipelineFormatVersion;
+   state["categorical_key_encoding_version"] = categorical_key_encoding_version_;
+   state["cat_features"] = cat_features_;
+   state["ordered_ctr"] = ordered_ctr_;
+@@ -98,7 +100,7 @@ py::dict NativeFeaturePipeline::to_state() const {
+     item["source_indices"] = detail::VectorToPyList(ctr_state.source_indices);
+     item["output_names"] = detail::VectorToPyList(ctr_state.output_names);
+     item["ctr_type"] = ctr_state.ctr_type;
+-    item["prior_values"] = detail::VectorToPyList(ctr_state.prior_values);
++    item["prior_values"] = py::cast(ctr_state.prior_values);
+     item["total_rows"] = ctr_state.total_rows;
+     py::dict total_counts;
+     for (const auto& [key, value] : ctr_state.total_counts) {
+@@ -107,7 +109,7 @@ py::dict NativeFeaturePipeline::to_state() const {
+     item["total_counts"] = std::move(total_counts);
+     py::dict total_sums;
+     for (const auto& [key, values] : ctr_state.total_sums) {
+-      total_sums[py::str(key)] = detail::VectorToPyList(values);
++      total_sums[py::str(key)] = py::cast(values);
+     }
+     item["total_sums"] = std::move(total_sums);
+     ctr_states.append(std::move(item));
+diff --git a/src/core/feature_pipeline_state_load.cpp b/src/core/feature_pipeline_state_load.cpp
+index 0c85b86..1f976a3 100644
+--- a/src/core/feature_pipeline_state_load.cpp
++++ b/src/core/feature_pipeline_state_load.cpp
+@@ -123,6 +123,7 @@ void NativeFeaturePipeline::LoadState(const py::dict& state) {
+         "feature pipeline formats before version 3 require categorical key encoding version 1");
+   }
+   ctr_smoothing_version_ = format_version < 4 ? 1 : 2;
++  ctr_accumulation_version_ = format_version < 5 ? 1 : 2;
+ 
+   cat_features_ = detail::NormalizeOptionalSequence(
+       state.contains("cat_features") ? py::reinterpret_borrow<py::object>(state["cat_features"])
+@@ -341,7 +342,16 @@ void NativeFeaturePipeline::LoadState(const py::dict& state) {
+       ctr_state.output_names = py::cast<std::vector<std::string>>(item["output_names"]);
+       ctr_state.ctr_type =
+           item.contains("ctr_type") ? py::cast<std::string>(item["ctr_type"]) : std::string("Mean");
+-      ctr_state.prior_values = py::cast<std::vector<float>>(item["prior_values"]);
++      const auto load_ctr_values = [this](const py::handle values) {
++        if (ctr_accumulation_version_ == 1) {
++          // Preserve the historical loader's rounding and range validation,
++          // including old JSON numbers with more precision than a float.
++          const auto rounded = py::cast<std::vector<float>>(values);
++          return std::vector<double>(rounded.begin(), rounded.end());
++        }
++        return py::cast<std::vector<double>>(values);
++      };
++      ctr_state.prior_values = load_ctr_values(item["prior_values"]);
+       ctr_state.total_rows =
+           item.contains("total_rows") ? py::cast<std::size_t>(item["total_rows"]) : 0U;
+       for (const auto& count_item : py::cast<py::dict>(item["total_counts"])) {
+@@ -350,7 +360,7 @@ void NativeFeaturePipeline::LoadState(const py::dict& state) {
+       }
+       for (const auto& sum_item : py::cast<py::dict>(item["total_sums"])) {
+         ctr_state.total_sums.emplace(py::cast<std::string>(sum_item.first),
+-                                     py::cast<std::vector<float>>(sum_item.second));
++                                     load_ctr_values(sum_item.second));
+       }
+       ctr_states_.push_back(std::move(ctr_state));
+     }
+@@ -635,7 +645,7 @@ void NativeFeaturePipeline::ValidateFittedState() const {
+     if (state.prior_values.empty()) {
+       throw std::invalid_argument("serialized CTR priors must not be empty");
+     }
+-    for (float value : state.prior_values) {
++    for (double value : state.prior_values) {
+       ValidateFinite(value, "CTR priors");
+     }
+     if (state.ctr_type == "Mean") {
+@@ -662,7 +672,7 @@ void NativeFeaturePipeline::ValidateFittedState() const {
+           throw std::invalid_argument(
+               "serialized mean CTR sum dimensions are inconsistent");
+         }
+-        for (float value : sums_it->second) {
++        for (double value : sums_it->second) {
+           ValidateFinite(value, "CTR sums");
+         }
+       }
+diff --git a/src/core/feature_pipeline_state_support.cpp b/src/core/feature_pipeline_state_support.cpp
+index 6eafef8..d13800e 100644
+--- a/src/core/feature_pipeline_state_support.cpp
++++ b/src/core/feature_pipeline_state_support.cpp
+@@ -84,9 +84,10 @@ std::vector<float> EmbeddingValues(const py::handle& value) {
+   return ArrayToFloatVector(array.cast<py::array_t<float, py::array::forcecast>>(), "embedding");
+ }
+ 
+-std::pair<int, std::vector<float>> FitTargetMode(const std::vector<float>& labels) {
++std::pair<int, std::vector<double>> FitTargetMode(const std::vector<float>& labels,
++                                                 bool double_accumulation) {
+   if (labels.empty()) {
+-    return {1, std::vector<float>{0.0F}};
++    return {1, std::vector<double>{0.0}};
+   }
+ 
+   std::vector<float> unique = labels;
+@@ -107,21 +108,30 @@ std::pair<int, std::vector<float>> FitTargetMode(const std::vector<float>& label
+         }
+       }
+       if (contiguous) {
+-        std::vector<float> prior(static_cast<std::size_t>(num_classes), 0.0F);
++        std::vector<double> prior(static_cast<std::size_t>(num_classes), 0.0);
+         for (float label : labels) {
+-          prior[static_cast<std::size_t>(std::llround(label))] += 1.0F;
++          double& value = prior[static_cast<std::size_t>(std::llround(label))];
++          value = double_accumulation ? value + 1.0
++                                      : static_cast<float>(static_cast<float>(value) + 1.0F);
+         }
+-        for (float& value : prior) {
+-          value /= static_cast<float>(labels.size());
++        for (double& value : prior) {
++          value = double_accumulation
++                      ? value / static_cast<double>(labels.size())
++                      : static_cast<float>(value) / static_cast<float>(labels.size());
+         }
+         return {num_classes, prior};
+       }
+     }
+   }
+ 
+-  const float mean = std::accumulate(labels.begin(), labels.end(), 0.0F) /
+-                     static_cast<float>(std::max<std::size_t>(labels.size(), 1U));
+-  return {1, std::vector<float>{mean}};
++  // Widen before adding, not after a float sum has already lost information or
++  // overflowed. This improves precision; it is not exact arbitrary summation.
++  const double mean = double_accumulation
++                          ? std::accumulate(labels.begin(), labels.end(), 0.0) /
++                                static_cast<double>(labels.size())
++                          : std::accumulate(labels.begin(), labels.end(), 0.0F) /
++                                static_cast<float>(labels.size());
++  return {1, std::vector<double>{mean}};
+ }
+ 
+ std::vector<std::string> ExtractTextTokens(std::string text,
+diff --git a/src/core/feature_pipeline_transform.cpp b/src/core/feature_pipeline_transform.cpp
+index a9692d2..a45b3bb 100644
+--- a/src/core/feature_pipeline_transform.cpp
++++ b/src/core/feature_pipeline_transform.cpp
+@@ -37,6 +37,166 @@ py::tuple NativeFeaturePipeline::transform_array(py::array raw_matrix,
+   return TransformInternal(std::move(raw_matrix), std::move(feature_names), false);
+ }
+ 
++py::tuple NativeFeaturePipeline::transform_categorical_codes(
++    py::list codes, py::list categories, py::object feature_names) const {
++  if (n_features_in_ < 0) {
++    throw std::invalid_argument("feature pipeline must be fitted before calling transform");
++  }
++  const std::size_t width = static_cast<std::size_t>(n_features_in_);
++  if (py::len(codes) != width || py::len(categories) != width) {
++    throw std::invalid_argument("input feature count does not match the fitted feature pipeline");
++  }
++  if (feature_names_in_.has_value() && !feature_names.is_none() &&
++      py::cast<std::vector<std::string>>(feature_names) != feature_names_in_.value()) {
++    throw std::invalid_argument("input feature names do not match the fitted feature pipeline");
++  }
++  if (width == 0U || categorical_states_.size() != width ||
++      numeric_indices_.size() != width || !one_hot_states_.empty() ||
++      !combination_states_.empty() || !text_states_.empty() || !embedding_states_.empty()) {
++    throw std::invalid_argument("categorical codes require independent categorical features");
++  }
++  std::vector<std::uint8_t> categorical_seen(width, 0U), numeric_seen(width, 0U);
++  for (const auto& state : categorical_states_) {
++    if (state.source_index < 0 || static_cast<std::size_t>(state.source_index) >= width ||
++        categorical_seen[static_cast<std::size_t>(state.source_index)]++ != 0U) {
++      throw std::invalid_argument("categorical codes require complete categorical coverage");
++    }
++  }
++  std::vector<std::size_t> output_sources;
++  output_sources.reserve(output_feature_names_.size());
++  for (int source : numeric_indices_) {
++    if (source < 0 || static_cast<std::size_t>(source) >= width ||
++        numeric_seen[static_cast<std::size_t>(source)]++ != 0U) {
++      throw std::invalid_argument("categorical codes require complete numeric coverage");
++    }
++    output_sources.push_back(static_cast<std::size_t>(source));
++  }
++  for (const auto& state : ctr_states_) {
++    if (state.source_indices.size() != 1U || state.source_indices.front() < 0 ||
++        static_cast<std::size_t>(state.source_indices.front()) >= width) {
++      throw std::invalid_argument("categorical codes require single-source CTR features");
++    }
++    output_sources.insert(output_sources.end(), state.output_names.size(),
++                          static_cast<std::size_t>(state.source_indices.front()));
++  }
++  if (output_sources.size() != output_feature_names_.size()) {
++    throw std::invalid_argument("categorical codes output layout does not match fitted state");
++  }
++
++  struct CodeColumn {
++    py::array category_array;
++    py::buffer_info category_info;
++    std::vector<std::int64_t> used_codes;
++    std::vector<std::uint8_t> row_indices;
++  };
++  std::vector<CodeColumn> columns;
++  columns.reserve(width);
++  std::size_t row_count = 0U, dictionary_rows = 0U;
++  for (std::size_t feature = 0; feature < width; ++feature) {
++    if (!py::isinstance<py::array>(codes[feature]) ||
++        !py::isinstance<py::array>(categories[feature])) {
++      throw std::invalid_argument("categorical codes and dictionaries must be NumPy arrays");
++    }
++    const py::array code_array = py::cast<py::array>(codes[feature]);
++    py::array category_array = py::cast<py::array>(categories[feature]);
++    if (code_array.ndim() != 1 || code_array.dtype().kind() != 'i' ||
++        !py::cast<bool>(code_array.dtype().attr("isnative")) ||
++        (code_array.itemsize() != 1 && code_array.itemsize() != 2 &&
++         code_array.itemsize() != 4 && code_array.itemsize() != 8)) {
++      throw std::invalid_argument("categorical codes must be native signed integer vectors");
++    }
++    if (category_array.ndim() != 1 || category_array.dtype().kind() != 'O' ||
++        category_array.shape(0) > 32) {
++      throw std::invalid_argument("categorical dictionaries require at most 32 exact strings");
++    }
++    if (feature == 0U) {
++      row_count = static_cast<std::size_t>(code_array.shape(0));
++    } else if (static_cast<std::size_t>(code_array.shape(0)) != row_count) {
++      throw std::invalid_argument("categorical code columns must have the same row count");
++    }
++    const auto code_info = code_array.request();
++    auto category_info = category_array.request();
++    const auto* category_data = static_cast<const char*>(category_info.ptr);
++    for (py::ssize_t index = 0; index < category_array.shape(0); ++index) {
++      PyObject* value;
++      std::memcpy(&value, category_data + index * category_info.strides[0], sizeof(value));
++      if (!PyUnicode_CheckExact(value)) {
++        throw std::invalid_argument("categorical dictionaries require at most 32 exact strings");
++      }
++    }
++    CodeColumn column{std::move(category_array), std::move(category_info), {}, {}};
++    column.row_indices.resize(row_count);
++    std::vector<int> slots(static_cast<std::size_t>(column.category_array.shape(0)) + 1U, -1);
++    const auto* code_data = static_cast<const char*>(code_info.ptr);
++    for (std::size_t row = 0; row < row_count; ++row) {
++      const char* ptr = code_data + static_cast<py::ssize_t>(row) * code_info.strides[0];
++      std::int64_t code;
++      switch (code_info.itemsize) {
++        case 1: { std::int8_t value; std::memcpy(&value, ptr, sizeof(value)); code = value; break; }
++        case 2: { std::int16_t value; std::memcpy(&value, ptr, sizeof(value)); code = value; break; }
++        case 4: { std::int32_t value; std::memcpy(&value, ptr, sizeof(value)); code = value; break; }
++        default: std::memcpy(&code, ptr, sizeof(code)); break;
++      }
++      if (code < -1 || code >= column.category_array.shape(0)) {
++        throw std::invalid_argument("categorical code is outside its dictionary");
++      }
++      int& slot = slots[static_cast<std::size_t>(code + 1)];
++      if (slot < 0) {
++        slot = static_cast<int>(column.used_codes.size());
++        column.used_codes.push_back(code);
++      }
++      column.row_indices[row] = static_cast<std::uint8_t>(slot);
++    }
++    dictionary_rows = std::max(dictionary_rows, column.used_codes.size());
++    columns.push_back(std::move(column));
++  }
++
++  // Reuse the established codec and CTR arithmetic on only the used dictionary
++  // entries. Encounter order preserves which invalid string raises first, and
++  // padding repeats an existing value instead of introducing a new missing key.
++  py::array table = detail::NumpyModule().attr("empty")(
++      py::make_tuple(dictionary_rows, width), py::arg("dtype") = py::dtype("O"),
++      py::arg("order") = "F").cast<py::array>();
++  auto** table_data = static_cast<PyObject**>(table.mutable_data());
++  const py::float_ missing(std::numeric_limits<double>::quiet_NaN());
++  for (std::size_t feature = 0; feature < width; ++feature) {
++    const auto& column = columns[feature];
++    const auto* category_data = static_cast<const char*>(column.category_info.ptr);
++    for (std::size_t row = 0; row < dictionary_rows; ++row) {
++      const auto code = column.used_codes[row < column.used_codes.size() ? row : 0U];
++      PyObject* value = missing.ptr();
++      if (code >= 0) {
++        std::memcpy(&value, category_data + code * column.category_info.strides[0], sizeof(value));
++      }
++      PyObject*& destination = table_data[feature * dictionary_rows + row];
++      Py_INCREF(value);
++      Py_XDECREF(destination);
++      destination = value;
++    }
++  }
++  py::tuple encoded_result = TransformInternal(std::move(table), std::move(feature_names), false);
++  const py::array_t<float> encoded = py::cast<py::array_t<float>>(encoded_result[0]);
++  const std::size_t output_width = output_sources.size();
++  if (row_count != 0U && output_width > std::numeric_limits<std::size_t>::max() / row_count) {
++    throw std::invalid_argument("feature-pipeline output dimensions are too large");
++  }
++  const std::size_t value_count = row_count * output_width;
++  float* data = new float[std::max<std::size_t>(value_count, 1U)];
++  py::capsule owner(data, [](void* ptr) { delete[] static_cast<float*>(ptr); });
++  py::array_t<float> transformed(
++      {static_cast<py::ssize_t>(row_count), static_cast<py::ssize_t>(output_width)},
++      {static_cast<py::ssize_t>(sizeof(float)), static_cast<py::ssize_t>(row_count * sizeof(float))},
++      data, owner);
++  const float* dictionary = encoded.data();
++  for (std::size_t column = 0; column < output_width; ++column) {
++    const auto& indices = columns[output_sources[column]].row_indices;
++    for (std::size_t row = 0; row < row_count; ++row) {
++      data[column * row_count + row] = dictionary[column * dictionary_rows + indices[row]];
++    }
++  }
++  return py::make_tuple(std::move(transformed), encoded_result[1], encoded_result[2]);
++}
++
+ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
+                                                    py::object feature_names,
+                                                    bool use_training_ctr_columns) const {
+@@ -258,11 +418,15 @@ py::tuple NativeFeaturePipeline::TransformInternal(py::array raw_matrix,
+         for (std::size_t output_index = 0; output_index < state.output_names.size(); ++output_index) {
+           float value = 0.0F;
+           if (state.ctr_type == "Mean") {
+-            const float summed =
+-                sums_it == state.total_sums.end() ? 0.0F : sums_it->second[output_index];
++            const double summed =
++                sums_it == state.total_sums.end() ? 0.0 : sums_it->second[output_index];
++            const double mean_count = ctr_accumulation_version_ >= 2
++                                          ? (count_it == state.total_counts.end()
++                                                 ? 0.0 : static_cast<double>(count_it->second))
++                                          : static_cast<double>(count);
+             const double denominator =
+-                static_cast<double>(count) + ctr_prior_strength_;
+-            const double numerator = static_cast<double>(summed) +
++                mean_count + ctr_prior_strength_;
++            const double numerator = summed +
+                                      ctr_prior_strength_ * static_cast<double>(
+                                          state.prior_values[output_index]);
+             value = CheckedCtrFloat(
+diff --git a/tests/test_categorical_key_codec.py b/tests/test_categorical_key_codec.py
+index 8b33717..258e243 100644
+--- a/tests/test_categorical_key_codec.py
++++ b/tests/test_categorical_key_codec.py
+@@ -14,6 +14,62 @@ MISSING_SENTINEL = "__ctboost_missing__"
+ OTHER_SENTINEL = "__ctboost_other__"
+ 
+ 
++@pytest.mark.parametrize("legacy", [False, True])
++def test_builtin_categorical_values_match_scalar_fallback(legacy):
++    class Text(str):
++        pass
++
++    class Integer(int):
++        pass
++
++    class Floating(float):
++        pass
++
++    values = ["", "snowman \u2603", MISSING_SENTINEL, r"\m", "a||b",
++              0, -1, 2**80, True, False, 0.0, -0.0, 1.25,
++              float("inf"), float("-inf"), float("nan"), None]
++    fallback = [Text(value) if type(value) is str else
++                Integer(value) if type(value) is int else
++                Floating(value) if type(value) is float else
++                Text(str(value)) if type(value) is bool else value
++                for value in values]
++    raw = np.asarray(values * 3, dtype=object).reshape(-1, 1)
++    slow = np.asarray(fallback * 3, dtype=object).reshape(-1, 1)
++    params = dict(cat_features=[0], simple_ctr=["Mean", "Frequency"])
++    pipeline = (_legacy_unfitted_pipeline(**params) if legacy
++                else ctboost.FeaturePipeline(**params))
++    pipeline.fit(raw, np.arange(len(raw), dtype=np.float32) / 7)
++    before = pipeline.to_state()
++    actual, categories, names = pipeline.transform_array(raw[::-1])
++    expected, expected_categories, expected_names = pipeline.transform_array(slow[::-1])
++    np.testing.assert_array_equal(actual.view(np.uint32), expected.view(np.uint32))
++    assert (categories, names) == (expected_categories, expected_names)
++    assert pipeline.to_state() == before
++
++
++def test_categorical_builtin_subclasses_keep_custom_string_conversion():
++    class Text(str):
++        def __str__(self):
++            return "custom text"
++
++    class Integer(int):
++        def __str__(self):
++            return "custom integer"
++
++    class Floating(float):
++        def __str__(self):
++            return "custom float"
++
++    pipeline = ctboost.FeaturePipeline(cat_features=[0]).fit(
++        np.asarray([["custom text"], ["custom integer"], ["custom float"]], dtype=object),
++        np.asarray([0, 1, 2], dtype=np.float32),
++    )
++    values = np.asarray([[Text("plain")], [Integer(123)], [Floating(2.0)]], dtype=object)
++    expected = np.asarray([["custom text"], ["custom integer"], ["custom float"]], dtype=object)
++    np.testing.assert_array_equal(pipeline.transform_array(values)[0],
++                                  pipeline.transform_array(expected)[0])
++
++
+ def _legacy_unfitted_pipeline(**kwargs):
+     state = ctboost.FeaturePipeline(**kwargs).to_state()
+     state["feature_pipeline_format_version"] = 2
+@@ -39,7 +95,7 @@ def test_codec2_scalar_keys_separate_missing_literals_and_escape_markers():
+     transformed, categorical, names = pipeline.fit_transform_array(values, labels)
+     state = pipeline.to_state()
+ 
+-    assert state["feature_pipeline_format_version"] == 4
++    assert state["feature_pipeline_format_version"] == 5
+     assert state["categorical_key_encoding_version"] == 2
+     assert categorical == []
+     assert transformed.shape == (6, 6)
+@@ -302,7 +358,7 @@ def test_golden_codec1_state_load_preserves_historical_missing_sentinel_behavior
+ @pytest.mark.parametrize(
+     ("updates", "message"),
+     [
+-        ({"feature_pipeline_format_version": 5}, "format version"),
++        ({"feature_pipeline_format_version": 6}, "format version"),
+         (
+             {
+                 "feature_pipeline_format_version": 3,
+diff --git a/tests/test_ctr_export_compatibility.py b/tests/test_ctr_export_compatibility.py
+index 1e794d7..bd13f69 100644
+--- a/tests/test_ctr_export_compatibility.py
++++ b/tests/test_ctr_export_compatibility.py
+@@ -37,7 +37,7 @@ def _ctr_booster(pipeline_version):
+     return booster
+ 
+ 
+-@pytest.mark.parametrize("pipeline_version, unseen_ctr", [(3, 4.0), (4, 20.0)])
++@pytest.mark.parametrize("pipeline_version, unseen_ctr", [(3, 4.0), (4, 20.0), (5, 20.0)])
+ def test_fractional_ctr_raw_export_and_saved_model_keep_fitted_semantics(
+     tmp_path, pipeline_version, unseen_ctr
+ ):
+@@ -79,12 +79,12 @@ def test_legacy_and_corrected_ctr_versions_can_change_unseen_predictions():
+ 
+ 
+ def test_raw_export_rejects_unknown_pipeline_version_before_model_access():
+-    with pytest.raises(ValueError, match="format 3 or 4"):
++    with pytest.raises(ValueError, match="format 3, 4 or 5"):
+         _standalone_python_payload(
+             object(),
+             expects_prepared_features=False,
+             feature_pipeline_state={
+-                "feature_pipeline_format_version": 5,
++                "feature_pipeline_format_version": 6,
+                 "categorical_key_encoding_version": 2,
+             },
+         )
+@@ -95,7 +95,7 @@ def test_raw_reader_rejects_unknown_pipeline_version_before_native_load(tmp_path
+     path = tmp_path / "valid.json"
+     booster.export_model(path)
+     payload = copy.deepcopy(json.loads(path.read_text(encoding="utf-8")))
+-    payload["feature_pipeline_state"]["feature_pipeline_format_version"] = 5
++    payload["feature_pipeline_state"]["feature_pipeline_format_version"] = 6
+     payload["inference_manifest"]["input"]["preprocessing"]["fingerprint"] = (
+         _fingerprint(payload["feature_pipeline_state"])
+     )
+@@ -104,5 +104,5 @@ def test_raw_reader_rejects_unknown_pipeline_version_before_native_load(tmp_path
+         pytest.fail("unknown pipeline version reached native construction")
+ 
+     monkeypatch.setattr(ctboost.FeaturePipeline, "from_state", unexpected_native_load)
+-    with pytest.raises(ValueError, match="format version 3 or 4"):
++    with pytest.raises(ValueError, match="format version 3, 4 or 5"):
+         ExportedPredictor(payload)
+diff --git a/tests/test_ctr_prior_smoothing.py b/tests/test_ctr_prior_smoothing.py
+index 57348cd..9efb61f 100644
+--- a/tests/test_ctr_prior_smoothing.py
++++ b/tests/test_ctr_prior_smoothing.py
+@@ -104,14 +104,14 @@ def test_corrected_ctr_pipeline_state_and_pickle_roundtrip(task):
+     ).fit(data, labels)
+     query = np.asarray([["category-0"], ["unseen"]], dtype=object)
+     expected = pipeline.transform_array(query)[0]
+-    assert pipeline.to_state()["feature_pipeline_format_version"] == 4
++    assert pipeline.to_state()["feature_pipeline_format_version"] == 5
+     np.testing.assert_allclose(expected[1, 1:], prior)
+     restored = [
+         ctboost.FeaturePipeline.from_state(json.loads(json.dumps(pipeline.to_state()))),
+         pickle.loads(pickle.dumps(pipeline)),
+     ]
+     for copy in restored:
+-        assert copy.to_state()["feature_pipeline_format_version"] == 4
++        assert copy.to_state()["feature_pipeline_format_version"] == 5
+         np.testing.assert_array_equal(copy.transform_array(query)[0], expected)
+ 
+ 
+@@ -166,5 +166,5 @@ def test_fractional_ctr_classifier_probabilities_and_saved_model(num_classes, tm
+     path = tmp_path / "fractional-ctr.ctb"
+     model.save_model(path)
+     restored = ctboost.CTBoostClassifier.load_model(path)
+-    assert restored._feature_pipeline.to_state()["feature_pipeline_format_version"] == 4
++    assert restored._feature_pipeline.to_state()["feature_pipeline_format_version"] == 5
+     np.testing.assert_array_equal(restored.predict_proba(query), expected)
+diff --git a/tests/test_distributed_training_raw_pipeline.py b/tests/test_distributed_training_raw_pipeline.py
+index 969874d..33ca727 100644
+--- a/tests/test_distributed_training_raw_pipeline.py
++++ b/tests/test_distributed_training_raw_pipeline.py
+@@ -139,7 +139,7 @@ def test_distributed_tcp_training_fits_raw_feature_pipeline_across_ranks(tmp_pat
+             (tmp_path / f"raw_pipeline_codec_{rank}.json").read_text(encoding="utf-8")
+         )
+         assert codec == {
+-            "feature_pipeline_format_version": 4,
++            "feature_pipeline_format_version": 5,
+             "categorical_key_encoding_version": 2,
+         }
+ 
+diff --git a/tests/test_feature_pipeline_ctr_inference.py b/tests/test_feature_pipeline_ctr_inference.py
+index 2062bdd..1597768 100644
+--- a/tests/test_feature_pipeline_ctr_inference.py
++++ b/tests/test_feature_pipeline_ctr_inference.py
+@@ -9,7 +9,7 @@ from ctboost import FeaturePipeline
+ 
+ 
+ @pytest.mark.parametrize("classes", [3, 8])
+-@pytest.mark.parametrize("format_version", [3, 4])
++@pytest.mark.parametrize("format_version", [3, 4, 5])
+ @pytest.mark.parametrize("strength", [0.0, 0.2, 2.0])
+ def test_wide_multiclass_ctr_matches_direct_category_statistics(
+     classes, format_version, strength
+@@ -33,6 +33,9 @@ def test_wide_multiclass_ctr_matches_direct_category_statistics(
+     state = pipeline.to_state()
+     state["feature_pipeline_format_version"] = format_version
+     pipeline = FeaturePipeline.from_state(state)
++    # Legacy loaders round stored priors through float32; use their actual
++    # persisted values when checking arithmetic against direct category sums.
++    state = pipeline.to_state()
+     before = copy.deepcopy(pipeline.to_state())
+     query = np.asarray(
+         [train[0].tolist(), ["unseen"] * width, [None] * width,
+diff --git a/tests/test_prediction_fast_path.py b/tests/test_prediction_fast_path.py
+index 90a49db..ec0ac14 100644
+--- a/tests/test_prediction_fast_path.py
++++ b/tests/test_prediction_fast_path.py
+@@ -398,6 +398,37 @@ def test_cached_prefix_does_not_quantize_features_first_used_later():
+             native.predict(pool, 2)
+ 
+ 
++@pytest.mark.parametrize("dimension,strategy", [
++    (1, "one_output_per_tree"),
++    (3, "one_output_per_tree"),
++    (3, "multi_output_tree"),
++])
++@pytest.mark.parametrize("wide", [False, True])
++def test_root_only_prefix_preserves_shape_checks_and_unused_forbidden_nans(dimension, strategy, wide):
++    state = _routing_state(dimension, strategy, wide=wide, nan_mode=0)
++    trees_per_iteration = 1 if strategy == "multi_output_tree" else dimension
++    for tree in state["trees"][:trees_per_iteration]:
++        tree["nodes"] = [tree["nodes"][1]]
++    native = ctboost._core.GradientBooster.from_state(state)
++    data = np.full((64, 3), np.nan, dtype=np.float32)
++    pool = ctboost.Pool(data)._handle
++    for _ in range(2):
++        expected = np.asarray(native._predict_uncached(pool, 1))
++        actual = np.asarray(native.predict(pool, 1))
++        np.testing.assert_array_equal(actual.view(np.uint32), expected.view(np.uint32))
++        np.testing.assert_array_equal(native.predict_leaf_indices(pool, 1), 0)
++        with pytest.raises(ValueError, match="NaN values are not allowed"):
++            native.predict(pool)
++        with pytest.raises(ValueError, match="NaN values are not allowed"):
++            native.predict_leaf_indices(pool)
++        for rows in (0, 1):
++            wrong_columns = ctboost.Pool(np.zeros((rows, 2), dtype=np.float32))._handle
++            with pytest.raises(ValueError, match="same number of columns"):
++                native.predict(wrong_columns, 1)
++            with pytest.raises(ValueError, match="same number of columns"):
++                native.predict_leaf_indices(wrong_columns, 1)
++
++
+ @pytest.mark.parametrize("difference", [
+     "numeric_threshold", "numeric_feature", "numeric_children",
+     "categorical_routes", "categorical_children", "constant_tree",
+diff --git a/tests/test_vector_exports.py b/tests/test_vector_exports.py
+index 40d0817..32aeee8 100644
+--- a/tests/test_vector_exports.py
++++ b/tests/test_vector_exports.py
+@@ -110,7 +110,7 @@ def test_vector_pipeline_exports_preserve_raw_and_prepared_inputs(tmp_path):
+     prepared_document = json.loads(prepared_path.read_text(encoding="utf-8"))
+     assert raw_document["format_version"] == prepared_document["format_version"] == 3
+     assert raw_document["expects_prepared_features"] is False
+-    assert raw_document["feature_pipeline_state"]["feature_pipeline_format_version"] == 4
++    assert raw_document["feature_pipeline_state"]["feature_pipeline_format_version"] == 5
+     assert prepared_document["expects_prepared_features"] is True
+     assert prepared_document["feature_pipeline_state"] is None
+     for predictor, values in (

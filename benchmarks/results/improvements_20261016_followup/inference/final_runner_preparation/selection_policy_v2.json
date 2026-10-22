@@ -1,0 +1,32 @@
+{
+  "recorded_at": "2026-10-16T14:50:26Z",
+  "status": "Prospective runtime amendment after the failed wave17 and before any numerical-retry STOP scoring or final single-model timing",
+  "previous_policy": "selection_policy.json",
+  "previous_policy_sha256": "11dd331ae836d14235412a2d3a95909ab9dcfa1e028806b31b145b9c272daaa2",
+  "reason": "Use the validated CTR-precision runtime for final serving measurements. New format5 training arithmetic is separate from the frozen c5 accuracy runtime. Legacy-model prediction parity has been checked; final selected models must still pass the runner's full-source and batch byte checks. No timing result motivated this amendment.",
+  "model_policy": "Use the first subsequent complete policy that passes the primary development gate and its fixed second-seed mean gate. Assess the official outer test before timing; report its outcome prominently. A failed official assessment cannot support a claim that the accuracy target was reached.",
+  "prediction_seed": 47,
+  "seed_selection": "Always the primary seed, never the seed with better quality or faster prediction. Keep the loaded single model's error separate from the two-seed mean.",
+  "runner": "benchmarks/fair_inference_final_scout.py",
+  "runner_sha256": "27a5ea2fa73f8c73d54c68f5f86323a430777e27d1e71e3315099e18b2a241af",
+  "runtime_path": "C:/apps/ctboost/.tmp/improvements-20261016/ctr-precision/runtime-cp312",
+  "runtime_native_sha256": "04adb21b0e4cea8046581a23b62585b6c8d631561d96a417ad87bc3c55041613",
+  "runtime_provenance": {
+    "C:/apps/ctboost/.tmp/improvements-20261016/ctr-precision/runtime-cp312/build_receipt.json": "a67c86014573fb8f7ca53b2121d545c1f032d8e67aaffc553e30521be319a247",
+    "C:/apps/ctboost/.tmp/improvements-20261016/ctr-precision/native-source-hashes.json": "b76519d66583548f6e4626f222e0769effe15652cee3775106ab94fe33c5987b",
+    "C:/apps/ctboost/.tmp/improvements-20261016/ctr-precision/real-model-reference.json": "453d8f7549f30cb19857dff5ec4ea0cf2cd76240dcb09de2b64978c35c65078b",
+    "C:/apps/ctboost/.tmp/improvements-20261016/ctr-precision/real-model-verified.json": "3856529bf1695a6e48ed1c09f018d1a43ace8b3bb639fdc5a11979b3444b9c4b"
+  },
+  "tasks": "All twelve preselected tasks, all three libraries; no task or model exclusions",
+  "batch_rows": [1, 64, 1000],
+  "library_orders": [
+    ["ctboost", "xgboost", "lightgbm"],
+    ["lightgbm", "ctboost", "xgboost"],
+    ["xgboost", "lightgbm", "ctboost"]
+  ],
+  "resources": "CPU6, one native thread; all fits, solver jobs, builds, tests and other heavy study jobs must finish before the first timing pass and stay stopped until all passes finish",
+  "reference": "Run check-only first. Freeze model, source, runtime, input and full-source/batch prediction identities. Require byte-exact outputs against saved quality predictions and XGBoost inplace-versus-DMatrix margins on every timed batch.",
+  "raw_scope": "One shared frozen vocabulary normalization, one complete native model prediction and its fixed temperature exactly once",
+  "normalized_scope": "Exclude only the shared vocabulary normalization; retain each library's own prediction preprocessing and fixed temperature",
+  "interpretation": "Warm serving diagnostic on the frozen policy; model capacities differ. Do not reinterpret earlier model-set timings as paired speedups or claim an official leaderboard ranking. Historical94b timings do not measure this04ad runtime."
+}

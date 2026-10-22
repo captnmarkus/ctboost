@@ -1,0 +1,148 @@
+Processing .\.
+  Installing build dependencies: started
+  Running command installing build dependencies
+  Using pip 26.2.1 from C:\apps\ctboost\.tmp\inference-accuracy-20260908\baseline-env\Lib\site-packages\pip (python 3.12)
+  Collecting pybind11<3,>=2.12
+    Obtaining dependency information for pybind11<3,>=2.12 from https://files.pythonhosted.org/packages/13/2f/0f24b288e2ce56f51c920137620b4434a38fd80583dbbe24fc2a1656c388/pybind11-2.13.6-py3-none-any.whl.metadata
+    Using cached pybind11-2.13.6-py3-none-any.whl.metadata (9.5 kB)
+  Collecting scikit-build-core>=0.10
+    Obtaining dependency information for scikit-build-core>=0.10 from https://files.pythonhosted.org/packages/07/49/b2f0fbe3165d55c02e7f9eec6a10685d518af0ef6e919ff2f589c2d15c85/scikit_build_core-0.12.2-py3-none-any.whl.metadata
+    Using cached scikit_build_core-0.12.2-py3-none-any.whl.metadata (16 kB)
+  Collecting packaging>=23.2 (from scikit-build-core>=0.10)
+    Obtaining dependency information for packaging>=23.2 from https://files.pythonhosted.org/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl.metadata
+    Using cached packaging-26.3-py3-none-any.whl.metadata (3.5 kB)
+  Collecting pathspec>=0.12.0 (from scikit-build-core>=0.10)
+    Obtaining dependency information for pathspec>=0.12.0 from https://files.pythonhosted.org/packages/f1/d9/7fb5aa316bc299258e68c73ba3bddbc499654a07f151cba08f6153988714/pathspec-1.1.1-py3-none-any.whl.metadata
+    Using cached pathspec-1.1.1-py3-none-any.whl.metadata (14 kB)
+  Using cached pybind11-2.13.6-py3-none-any.whl (243 kB)
+  Using cached scikit_build_core-0.12.2-py3-none-any.whl (192 kB)
+  Using cached packaging-26.3-py3-none-any.whl (129 kB)
+  Using cached pathspec-1.1.1-py3-none-any.whl (57 kB)
+  Installing collected packages: pybind11, pathspec, packaging, scikit-build-core
+    Creating C:\apps\ctboost\.tmp\improvements-20261016\release-wheel-cp312\candidate-02\tmp\pip-build-env-x8ux36ju\overlay\Scripts
+
+  Successfully installed packaging-26.3 pathspec-1.1.1 pybind11-2.13.6 scikit-build-core-0.12.2
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Running command Getting requirements to build wheel
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Running command Preparing metadata (pyproject.toml)
+  *** scikit-build-core 0.12.2 using CMake 4.3.1 (metadata_wheel)
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Building wheels for collected packages: ctboost
+  Building wheel for ctboost (pyproject.toml): started
+  Running command Building wheel for ctboost (pyproject.toml)
+  *** scikit-build-core 0.12.2 using CMake 4.3.1 (wheel)
+  *** Configuring CMake...
+  2026-10-16 18:20:48,433 - scikit_build_core - WARNING - Can't find a Python library, got libdir=None, ldlibrary=None, multiarch=None, masd=None
+  loading initial cache file C:\apps\ctboost\.tmp\improvements-20261016\release-wheel-cp312\build-cp312-02\CMakeInit.txt
+  -- Building for: Ninja
+  -- The CXX compiler identification is MSVC 19.50.35737.0
+  -- Detecting CXX compiler ABI info
+  -- Detecting CXX compiler ABI info - done
+  -- Check for working CXX compiler: C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.50.35717/bin/Hostx64/x64/cl.exe - skipped
+  -- Detecting CXX compile features
+  -- Detecting CXX compile features - done
+  -- Found Python: C:/apps/ctboost/.tmp/inference-accuracy-20260908/baseline-env/Scripts/python.exe (found version "3.12.11") found components: Interpreter Development.Module
+  -- Found pybind11: C:/apps/ctboost/.tmp/improvements-20261016/release-wheel-cp312/candidate-02/tmp/pip-build-env-x8ux36ju/overlay/Lib/site-packages/pybind11/include (found version "2.13.6")
+  -- CTBoost: CUDA support disabled explicitly, building CPU-only
+  -- Found Python: C:/apps/ctboost/.tmp/inference-accuracy-20260908/baseline-env/Scripts/python.exe (found version "3.12.11") found components: Interpreter Development.Module Development.Embed
+  -- Configuring done (4.0s)
+  -- Generating done (0.1s)
+  -- Build files have been written to: C:/apps/ctboost/.tmp/improvements-20261016/release-wheel-cp312/build-cp312-02
+  *** Building project with Ninja...
+  [1/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\booster.cpp.obj
+  [2/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\booster_accessors.cpp.obj
+  [3/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\booster_base_score.cpp.obj
+  [4/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\booster_constructor.cpp.obj
+  [5/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\booster_distributed.cpp.obj
+  [6/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\booster_fit.cpp.obj
+  [7/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\booster_fit_iteration.cpp.obj
+  [8/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\booster_leaf_estimation.cpp.obj
+  [9/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\booster_leaf_solver.cpp.obj
+  [10/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\booster_fit_loop.cpp.obj
+  [11/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\booster_fit_metrics.cpp.obj
+  [12/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\booster_fit_multiclass.cpp.obj
+  [13/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\booster_fit_single_output.cpp.obj
+  [14/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\booster_fit_support.cpp.obj
+  [15/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\booster_predict.cpp.obj
+  [16/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\booster_prediction.cpp.obj
+  [17/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\booster_sampling.cpp.obj
+  [18/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\booster_state.cpp.obj
+  [19/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\booster_tokens.cpp.obj
+  [20/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\booster_tree_updates.cpp.obj
+  [21/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\build_info.cpp.obj
+  [22/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\data.cpp.obj
+  [23/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\data_dense.cpp.obj
+  [24/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\data_metadata.cpp.obj
+  [25/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\data_validation.cpp.obj
+  [26/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\feature_pipeline.cpp.obj
+  [27/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\feature_pipeline_fit.cpp.obj
+  [28/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\feature_pipeline_fit_core.cpp.obj
+  [29/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\feature_pipeline_fit_ctr.cpp.obj
+  [30/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\feature_pipeline_normalize.cpp.obj
+  [31/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\feature_pipeline_state.cpp.obj
+  [32/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\feature_pipeline_state_load.cpp.obj
+  [33/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\feature_pipeline_state_support.cpp.obj
+  [34/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\feature_pipeline_transform.cpp.obj
+  [35/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\histogram.cpp.obj
+  [36/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\histogram_builder.cpp.obj
+  [37/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\histogram_builder_support.cpp.obj
+  [38/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\histogram_quantization.cpp.obj
+  [39/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\histogram_quantization_support.cpp.obj
+  [40/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\histogram_schema.cpp.obj
+  [41/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\histogram_storage.cpp.obj
+  [42/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\metric.cpp.obj
+  [43/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\metric_classification.cpp.obj
+  [44/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\metric_classification_scores.cpp.obj
+  [45/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\metric_ranking.cpp.obj
+  [46/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\metric_regression.cpp.obj
+  [47/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\metric_support.cpp.obj
+  [48/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\metric_survival.cpp.obj
+  [49/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\objective.cpp.obj
+  [50/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\objective_classification.cpp.obj
+  [51/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\objective_ranking.cpp.obj
+  [52/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\objective_regression.cpp.obj
+  [53/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\objective_support.cpp.obj
+  [54/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\objective_survival.cpp.obj
+  [55/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\profiler.cpp.obj
+  [56/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\statistics.cpp.obj
+  [57/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\multivariate_statistics.cpp.obj
+  [58/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\statistics_gamma.cpp.obj
+  [59/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\tree.cpp.obj
+  [60/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\tree_build.cpp.obj
+  [61/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\tree_build_cpu.cpp.obj
+  [62/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\tree_build_gpu.cpp.obj
+  [63/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\tree_build_children.cpp.obj
+  [64/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\tree_build_gpu_support.cpp.obj
+  [65/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\tree_build_support.cpp.obj
+  [66/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\tree_candidates.cpp.obj
+  [67/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\tree_distributed.cpp.obj
+  [68/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\tree_distributed_payloads.cpp.obj
+  [69/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\tree_predict.cpp.obj
+  [70/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\tree_split_scoring.cpp.obj
+  [71/85] Building CXX object CMakeFiles\ctboost_core.dir\src\core\cuda_backend_stub.cpp.obj
+  [72/85] Linking CXX static library ctboost_core.lib
+  [73/85] Building CXX object CMakeFiles\_core.dir\src\bindings\module.cpp.obj
+  [74/85] Building CXX object CMakeFiles\_core.dir\src\bindings\module_arrays.cpp.obj
+  [75/85] Building CXX object CMakeFiles\_core.dir\src\bindings\module_registration.cpp.obj
+  [76/85] Building CXX object CMakeFiles\_core.dir\src\bindings\module_registration_booster.cpp.obj
+  [77/85] Building CXX object CMakeFiles\_core.dir\src\bindings\module_registration_booster_accessors.cpp.obj
+  [78/85] Building CXX object CMakeFiles\_core.dir\src\bindings\module_registration_booster_state.cpp.obj
+  [79/85] Building CXX object CMakeFiles\_core.dir\src\bindings\module_registration_pipeline.cpp.obj
+  [80/85] Building CXX object CMakeFiles\_core.dir\src\bindings\module_registration_pool.cpp.obj
+  [81/85] Building CXX object CMakeFiles\_core.dir\src\bindings\module_state.cpp.obj
+  [82/85] Building CXX object CMakeFiles\_core.dir\src\bindings\module_state_booster.cpp.obj
+  [83/85] Building CXX object CMakeFiles\ctboost_prediction_cache_smoke.dir\tests\native\prediction_cache_smoke.cpp.obj
+  [84/85] Linking CXX shared module _core.cp312-win_amd64.pyd
+  [85/85] Linking CXX executable ctboost_prediction_cache_smoke.exe
+  *** Installing project into wheel...
+  -- Install configuration: "Release"
+  -- Installing: C:\apps\ctboost\.tmp\improvements-20261016\release-wheel-cp312\candidate-02\tmp\tmpyuo_11x7\wheel\platlib/ctboost/_core.cp312-win_amd64.pyd
+  *** Making wheel...
+  *** Created ctboost-0.1.62-cp312-cp312-win_amd64.whl
+  Building wheel for ctboost (pyproject.toml): finished with status 'done'
+  Created wheel for ctboost: filename=ctboost-0.1.62-cp312-cp312-win_amd64.whl size=2251470 sha256=d0e1256eddf0e439999d1b11eb058c93a448d93df1d96301145fbfec99d313b6
+  Stored in directory: C:\apps\ctboost\.tmp\improvements-20261016\release-wheel-cp312\candidate-02\tmp\pip-ephem-wheel-cache-e6pc30rb\wheels\82\6a\93\3c8ff5aa20c01eb07aa4e7c4a90f1707ffbaeccca2be55a02c
+Successfully built ctboost

@@ -1,0 +1,30 @@
+{
+  "protocol": "conditional_inference_accuracy_robustness_20261016",
+  "created_before": "wave3 fits and wave3 development scoring",
+  "continuation_clause_clarified_before": "wave4 development scoring and before any seed947 fit or official-test feature/label access",
+  "leaf_refit_clause_clarified_before": "Any real-data leaf-correction solve, seed947 fit, or official-test feature/label access",
+  "trigger": "The first cumulative development wave to meet its predeclared target against both XGBoost and LightGBM; if its seed check fails, a later separately predeclared continuation that passes the original gate also receives this fixed-config seed check. Preserve every failed check.",
+  "datasets": "All 12 frozen metadata-selected tasks; no exclusions based on results.",
+  "additional_seed": 947,
+  "additional_models": 36,
+  "configuration_policy": "For each dataset and library, refit exactly the selected configuration from the successful cumulative wave. Retain its original round cap and the same primary-metric early stopping patience of50, changing only the learner seed. If the selected policy includes a fixed-topology regression leaf correction, recompute that same fixed penalty/shrinkage correction on TRAIN only after fitting the new-seed tree model, using the checked ordered training transform. No extra configuration search, reselection, or replacement using development scores.",
+  "data_policy": "Use the same existing training and stopping roles. Development remains a separate scoring role. This checks learner-seed sensitivity on reused data, not independence of the datasets or split.",
+  "aggregation": "For each dataset and library, average the primary error of the original seed47 model and seed947 model. Compute CTBoost relative error gains against each comparator from these per-dataset means. Report 12 datasets, never 24 independent observations. Also report each seed separately.",
+  "gate": {
+    "all_36_refits_successful": true,
+    "median_relative_error_gain_against_each_comparator": 0,
+    "minimum_dataset_wins_or_ties_against_each_comparator": 6
+  },
+  "if_gate_fails": "Preserve the failed result, keep official outer test sealed, and continue only under a newly frozen development protocol with equal additional candidate budgets for all three libraries.",
+  "official_test_after_gate": {
+    "authorization": "Root confirmed the user authorized a one-shot official outer-test assessment after policy freeze.",
+    "split": "Original OpenML task repeat0, fold0, sample0 outer-test rows, uncapped.",
+    "cache": ".tmp/tabarena-full-hpo25-0160-20260907/local/openml_cache",
+    "preconditions": "Freeze the final configuration policy, script/native identities, both-seed model file hashes, and local dataset/split file hashes before loading test features or labels.",
+    "models": "Score the already trained seed47 and seed947 models. No refit on train+stop or full outer training; no adaptation after observing test results.",
+    "labels": "Use the classification label ordering learned from official outer-training labels; verify it matches the cached training-role labels. Regression labels unchanged.",
+    "primary_metrics": {"binary": "1-ROC-AUC", "regression": "RMSE", "multiclass": "logloss"},
+    "aggregation": "Same two-seed mean error per dataset and 12-task aggregation as development. Preserve all per-task and per-seed outcomes and failures.",
+    "limitations": "Bounded exploratory comparison using partial outer-training data and a small adaptive development portfolio. This is not a full TabArena run, Elo score, proof of universal superiority, or validation of a new default. Original14 failed-gate confirmation fold7 stays sealed."
+  }
+}

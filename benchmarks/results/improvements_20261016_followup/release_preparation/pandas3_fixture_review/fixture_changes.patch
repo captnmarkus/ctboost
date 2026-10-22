@@ -1,0 +1,321 @@
+--- a/tests/test_native_categorical_codes.py
++++ b/tests/test_native_categorical_codes.py
+@@ -105,6 +105,17 @@
+         np.array([["a"] * width, ["b"] * width] * 4, dtype=object), np.arange(8, dtype=np.float32))
+ 
+ 
++def object_categorical_frame(values, width=32, categories=("a", "b")):
++    """Keep positive-path fixtures eligible under pandas 2 and 3 inference."""
++    names = pd.Index([str(i) for i in range(width)], dtype=object)
++    vocabulary = pd.Index(categories, dtype=object)
++    frame = pd.DataFrame({name: pd.Categorical(values, categories=vocabulary)
++                          for name in names}, columns=names)
++    assert frame.columns.dtype == np.dtype(object)
++    assert all(dtype.categories.dtype == np.dtype(object) for dtype in frame.dtypes)
++    return frame
++
++
+ class MutatingName:
+     def __init__(self):
+         self.frame = None
+@@ -118,7 +129,7 @@
+ 
+ def mutating_frame():
+     name = MutatingName()
+-    frame = pd.DataFrame({str(i): pd.Categorical(["a"] * 4096, categories=["a", "b"]) for i in range(32)})
++    frame = object_categorical_frame(["a"] * 4096)
+     frame.columns = pd.Index([name] + [str(i) for i in range(1, 32)], dtype=object)
+     name.frame = frame
+     return frame, name
+@@ -134,7 +145,7 @@
+         def __iter__(self):
+             raise AssertionError("Index hook must not run during eligibility")
+ 
+-    frame = pd.DataFrame({str(i): pd.Categorical(["a"] * 4096, categories=["a", "b"]) for i in range(32)})
++    frame = object_categorical_frame(["a"] * 4096)
+     if kind == "range":
+         names = pd.RangeIndex(32)
+     elif kind == "numeric_index":
+@@ -156,7 +167,7 @@
+ @pytest.mark.parametrize("rows", [999, 1000])
+ def test_public_dispatch_width_and_row_boundary(width, rows):
+     model = pipeline(width)
+-    frame = pd.DataFrame({str(i): pd.Categorical((["a", "b"] * ((rows + 1) // 2))[:rows]) for i in range(width)})
++    frame = object_categorical_frame((["a", "b"] * ((rows + 1) // 2))[:rows], width)
+     plan = build_code_plan(model.to_state())
+     result = try_code_transform(model, frame, plan)
+     reference = model._native.transform_array(frame.to_numpy(dtype=object, copy=False), list(frame.columns))
+@@ -174,9 +185,12 @@
+ @pytest.mark.parametrize("kind", ["late_33", "objects"])
+ def test_unsupported_wide_frame_rejects_before_series_iteration(monkeypatch, kind):
+     model = pipeline()
+-    frame = pd.DataFrame({str(i): pd.Categorical(["a"] * 1000, categories=["a", "b"]) for i in range(32)})
++    frame = object_categorical_frame(["a"] * 1000)
+     if kind == "late_33":
+-        frame["31"] = frame["31"].cat.add_categories([str(i) for i in range(31)])
++        frame["31"] = pd.Categorical(["a"] * len(frame),
++                                      categories=pd.Index(["a", "b"] + [str(i) for i in range(31)], dtype=object))
++        assert len(frame["31"].cat.categories) == 33
++        assert frame["31"].cat.categories.dtype == np.dtype(object)
+     else:
+         frame = frame.astype(object)
+     def forbidden(*args, **kwargs):
+@@ -202,8 +216,8 @@
+         model = ctboost.FeaturePipeline.from_state(state)
+     model.fit(raw, labels)
+     vocabulary = [value for value in values if value is not None][::-1] + ["unseen", "unused"]
+-    frame = pd.DataFrame({str(col): pd.Categorical([None, "red", "unseen", "λ東京"] * 256,
+-                                                  categories=vocabulary) for col in range(32)})
++    frame = object_categorical_frame([None, "red", "unseen", "λ東京"] * 256,
++                                     categories=vocabulary)
+     state = copy.deepcopy(model.to_state())
+     assert model._categorical_code_plan is not None
+     reference = expected(model, frame)
+@@ -228,19 +242,48 @@
+ 
+ 
+ def test_public_native_codes_feature_names_still_validated():
+-    frame = pd.DataFrame({str(i): pd.Categorical(["a", "b"] * 500) for i in range(32)})
++    frame = object_categorical_frame(["a", "b"] * 500)
+     model = ctboost.FeaturePipeline(cat_features=list(frame.columns)).fit(frame, np.arange(1000, dtype=np.float32))
++    assert_exact(try_code_transform(model, frame, model._categorical_code_plan), expected(model, frame))
++    wrong = frame.rename(columns={"31": "wrong"})
++    wrong.columns = pd.Index(list(wrong.columns), dtype=object)
+     with pytest.raises(ValueError, match="feature names"):
+-        model.transform_array(frame.rename(columns={"31": "wrong"}))
++        model.transform_array(wrong)
++
++
++@pytest.mark.parametrize("extension_index", ["categories", "columns"])
++def test_string_extension_indexes_fall_back_with_public_bit_parity(extension_index):
++    model = pipeline()
++    frame = object_categorical_frame(["a", "b", None, "unseen"] * 256,
++                                     categories=["a", "b", "unseen"])
++    plan = model._categorical_code_plan
++    assert_exact(try_code_transform(model, frame, plan), expected(model, frame))
++    string_dtype = pd.StringDtype(storage="python")
++    if extension_index == "categories":
++        frame["31"] = pd.Categorical(["a", "b", None, "unseen"] * 256,
++                                      categories=pd.Index(["a", "b", "unseen"], dtype=string_dtype))
++        assert isinstance(frame["31"].cat.categories.dtype, pd.StringDtype)
++        assert frame.columns.dtype == np.dtype(object)
++    else:
++        frame.columns = pd.Index(list(frame.columns), dtype=string_dtype)
++        assert isinstance(frame.columns.dtype, pd.StringDtype)
++        assert all(dtype.categories.dtype == np.dtype(object) for dtype in frame.dtypes)
++    reference = expected(model, frame)
++    before = copy.deepcopy(model.to_state())
++    assert try_code_transform(model, frame, plan) is None
++    assert_exact(model.transform_array(frame), reference)
++    assert model.to_state() == before
+ 
+ 
+ def test_categorical_codes_new_python_falls_back_with_legacy_native():
+     """An older extension without the optional method keeps existing transforms."""
+-    frame = pd.DataFrame({str(i): pd.Categorical(["a", "b", None, "c"] * 256)
+-                          for i in range(32)})
++    frame = object_categorical_frame(["a", "b", None, "c"] * 256, categories=["a", "b", "c"])
+     labels = (np.arange(len(frame)) % 3).astype(np.float32)
+     pipeline = ctboost.FeaturePipeline(cat_features=list(frame.columns)).fit(frame, labels)
+-    expected = pipeline.transform_array(frame)
++    assert pipeline._categorical_code_plan is not None
++    assert_exact(try_code_transform(pipeline, frame, pipeline._categorical_code_plan),
++                 expected(pipeline, frame))
++    reference = pipeline.transform_array(frame)
+     native = pipeline._native
+ 
+     class LegacyNative:
+@@ -251,6 +294,7 @@
+ 
+     pipeline._native = LegacyNative()
+     pipeline._refresh_metadata()
++    assert pipeline._categorical_code_plan is None
+     actual = pipeline.transform_array(frame)
+-    np.testing.assert_array_equal(actual[0].view(np.uint32), expected[0].view(np.uint32))
+-    assert actual[1:] == expected[1:]
++    np.testing.assert_array_equal(actual[0].view(np.uint32), reference[0].view(np.uint32))
++    assert actual[1:] == reference[1:]
+--- a/tests/test_feature_pipeline_categorical_row.py
++++ b/tests/test_feature_pipeline_categorical_row.py
+@@ -24,20 +24,20 @@
+ 
+ def _frame_case(case):
+     if case == "empty_rows":
+-        return pd.DataFrame({"a": pd.Categorical([], categories=["a", "b"])})
++        return pd.DataFrame({"a": pd.Categorical([], categories=pd.Index(["a", "b"], dtype=object))})
+     if case == "empty_columns":
+         return pd.DataFrame(index=[0])
+     if case == "one_column":
+-        return pd.DataFrame({"a": pd.Categorical(["a"], categories=["b", "a"])})
++        return pd.DataFrame({"a": pd.Categorical(["a"], categories=pd.Index(["b", "a"], dtype=object))})
+     if case == "all_missing":
+-        return pd.DataFrame({"a": pd.Categorical([None], categories=["a", "b"]),
+-                             "b": pd.Categorical([None], categories=["b", "a"])})
++        return pd.DataFrame({"a": pd.Categorical([None], categories=pd.Index(["a", "b"], dtype=object)),
++                             "b": pd.Categorical([None], categories=pd.Index(["b", "a"], dtype=object))})
+     if case == "different_order":
+-        return pd.DataFrame({"a": pd.Categorical(["a"], categories=["a", "b"], ordered=True),
+-                             "b": pd.Categorical(["a"], categories=["b", "a"], ordered=True)})
++        return pd.DataFrame({"a": pd.Categorical(["a"], categories=pd.Index(["a", "b"], dtype=object), ordered=True),
++                             "b": pd.Categorical(["a"], categories=pd.Index(["b", "a"], dtype=object), ordered=True)})
+     if case == "unicode_escaped":
+-        return pd.DataFrame({"a": pd.Categorical(["λ|é\\n"], categories=["λ|é\\n", "東京"]),
+-                             "b": pd.Categorical(["\x00|\\"], categories=["\x00|\\", "😀"])})
++        return pd.DataFrame({"a": pd.Categorical(["λ|é\\n"], categories=pd.Index(["λ|é\\n", "東京"], dtype=object)),
++                             "b": pd.Categorical(["\x00|\\"], categories=pd.Index(["\x00|\\", "😀"], dtype=object))})
+     if case == "integer_float":
+         return pd.DataFrame({"a": pd.Categorical([2**62 + 1]), "b": pd.Categorical([1.5])})
+     if case == "integer_missing":
+@@ -59,11 +59,11 @@
+     if case == "nullable_text_categories":
+         return pd.DataFrame({"a": pd.Categorical(["a"], categories=pd.Index(["a", "b"], dtype="string"))})
+     if case == "large_vocabulary":
+-        return pd.DataFrame({"a": pd.Categorical(["a0"], categories=[f"a{i}" for i in range(33)])})
++        return pd.DataFrame({"a": pd.Categorical(["a0"], categories=pd.Index([f"a{i}" for i in range(33)], dtype=object))})
+     if case == "empty_vocabulary":
+         return pd.DataFrame({"a": pd.Categorical([None])})
+     if case == "multiple_rows":
+-        return pd.DataFrame({"a": pd.Categorical(["a", None], categories=["a", "b"])})
++        return pd.DataFrame({"a": pd.Categorical(["a", None], categories=pd.Index(["a", "b"], dtype=object))})
+     raise AssertionError(case)
+ 
+ 
+@@ -83,6 +83,7 @@
+ 
+ def test_small_string_categorical_row_avoids_dataframe_block_conversion(monkeypatch):
+     frame = _frame_case("different_order")
++    assert all(dtype.categories.dtype == np.dtype(object) for dtype in frame.dtypes)
+     expected = frame.to_numpy(dtype=object, copy=False)
+ 
+     def unexpected_conversion(*args, **kwargs):
+@@ -139,12 +140,14 @@
+ 
+ @pytest.mark.parametrize("first,second", [("new", "λ|é\\n"), (None, None), ("a", "東京")])
+ def test_categorical_row_native_transform_matches_existing_conversion(first, second, monkeypatch):
+-    train = pd.DataFrame({"a": pd.Categorical(["a", "b", "a", "b"]),
+-                          "b": pd.Categorical(["λ|é\\n", "東京", "東京", "λ|é\\n"])})
++    train = pd.DataFrame({"a": pd.Categorical(["a", "b", "a", "b"], categories=pd.Index(["a", "b"], dtype=object)),
++                          "b": pd.Categorical(["λ|é\\n", "東京", "東京", "λ|é\\n"],
++                                              categories=pd.Index(["λ|é\\n", "東京"], dtype=object))})
+     pipeline = FeaturePipeline(cat_features=["a", "b"], ordered_ctr=True)
+     pipeline.fit(train, np.array([0.0, 1.0, 0.0, 1.0], dtype=np.float32))
+-    frame = pd.DataFrame({"a": pd.Categorical([first], categories=["new", "b", "a"]),
+-                          "b": pd.Categorical([second], categories=["東京", "λ|é\\n"])})
++    frame = pd.DataFrame({"a": pd.Categorical([first], categories=pd.Index(["new", "b", "a"], dtype=object)),
++                          "b": pd.Categorical([second], categories=pd.Index(["東京", "λ|é\\n"], dtype=object))})
++    assert all(dtype.categories.dtype == np.dtype(object) for dtype in frame.dtypes)
+     expected, expected_cats, expected_names = pipeline._native.transform_array(
+         frame.to_numpy(dtype=object, copy=False), ["a", "b"])
+     state_before = pipeline.to_state()
+@@ -160,6 +163,34 @@
+     assert pipeline.to_state() == state_before
+     restored = FeaturePipeline.from_state(state_before)
+     np.testing.assert_array_equal(restored.transform_array(frame)[0].view(np.uint32), expected.view(np.uint32))
++
++
++def test_string_extension_categories_keep_row_fallback_and_public_bits(monkeypatch):
++    train = pd.DataFrame({"a": pd.Categorical(["a", "b"] * 2,
++                                              categories=pd.Index(["a", "b"], dtype=object))})
++    pipeline = FeaturePipeline(cat_features=["a"]).fit(train, [0.0, 1.0, 0.0, 1.0])
++    frame = pd.DataFrame({"a": pd.Categorical([None], categories=pd.Index(
++        ["a", "b"], dtype=pd.StringDtype(storage="python")))})
++    assert isinstance(frame["a"].cat.categories.dtype, pd.StringDtype)
++    expected_cells = frame.to_numpy(dtype=object, copy=False)
++    reference = pipeline._native.transform_array(expected_cells, ["a"])
++    original_to_numpy = pd.DataFrame.to_numpy
++    calls = []
++
++    def record_conversion(self, *args, **kwargs):
++        calls.append(self)
++        return original_to_numpy(self, *args, **kwargs)
++
++    monkeypatch.setattr(pd.DataFrame, "to_numpy", record_conversion)
++    actual_cells, _ = FeaturePipeline._extract_frame(frame, allow_categorical_row=True)
++    _assert_cells_equal(expected_cells, actual_cells)
++    assert len(calls) == 1 and calls[0] is frame
++    calls.clear()
++    actual = pipeline.transform_array(frame)
++    assert len(calls) == 1 and calls[0] is frame
++    np.testing.assert_array_equal(actual[0].view(np.uint32), reference[0].view(np.uint32))
++    assert list(actual[1]) == list(reference[1])
++    assert list(actual[2]) == list(reference[2])
+ 
+ 
+ @pytest.mark.parametrize("kind", ["numeric", "mixed", "one_hot", "combination"])
+--- a/tests/test_categorical_codes_prototype.py
++++ b/tests/test_categorical_codes_prototype.py
+@@ -40,8 +40,10 @@
+         pipeline = ctboost.FeaturePipeline.from_state(state)
+     pipeline.fit(raw, labels)
+     category_order = [value for value in values if value is not None][::-1] + ["unseen", "unused"]
+-    frame = pd.DataFrame({"0": pd.Categorical([None, "red", "unseen", "λ東京"] * 16, categories=category_order),
+-                          "1": pd.Categorical(["a||b", "", None, "\\m"] * 16, categories=category_order[::-1])})
++    frame = pd.DataFrame({"0": pd.Categorical([None, "red", "unseen", "λ東京"] * 16,
++                                              categories=pd.Index(category_order, dtype=object)),
++                          "1": pd.Categorical(["a||b", "", None, "\\m"] * 16,
++                                              categories=pd.Index(category_order[::-1], dtype=object))})
+     # Fit array used no feature names; the DataFrame's string names remain valid.
+     before = copy.deepcopy(pipeline.to_state())
+     plan = build_code_plan(before)
+@@ -65,7 +67,7 @@
+         categories += ["\ud800"]
+     elif mode == "empty_vocabulary":
+         values, categories = [None] * 16, []
+-    frame = pd.DataFrame({"0": pd.Categorical(values, categories=categories)})
++    frame = pd.DataFrame({"0": pd.Categorical(values, categories=pd.Index(categories, dtype=object))})
+     if mode == "sliced":
+         frame = frame.iloc[::-2]
+     assert_exact(try_code_transform(pipeline, frame, build_code_plan(pipeline.to_state())), expected(pipeline, frame))
+@@ -73,7 +75,8 @@
+ 
+ def test_codes_used_invalid_unicode_has_same_exception():
+     pipeline = ctboost.FeaturePipeline(cat_features=[0]).fit(np.array([["a"], ["b"]], dtype=object), [0, 1])
+-    frame = pd.DataFrame({"0": pd.Categorical(["a", "\ud800", "\ud801"])})
++    frame = pd.DataFrame({"0": pd.Categorical(pd.Index(["a", "\ud800", "\ud801"], dtype=object),
++                                              categories=pd.Index(["a", "\ud800", "\ud801"], dtype=object))})
+     with pytest.raises(Exception) as slow:
+         expected(pipeline, frame)
+     with pytest.raises(type(slow.value)) as fast:
+@@ -85,15 +88,16 @@
+ def test_codes_conservative_fallback(case):
+     pipeline = ctboost.FeaturePipeline(cat_features=[0]).fit(np.array([["a"], ["b"]], dtype=object), [0, 1])
+     if case == "one_row":
+-        frame = pd.DataFrame({"0": pd.Categorical(["a"])})
++        frame = pd.DataFrame({"0": pd.Categorical(["a"], categories=pd.Index(["a"], dtype=object))})
+     elif case == "empty":
+-        frame = pd.DataFrame({"0": pd.Categorical([], categories=["a"])})
++        frame = pd.DataFrame({"0": pd.Categorical([], categories=pd.Index(["a"], dtype=object))})
+     elif case == "numeric":
+         frame = pd.DataFrame({"0": pd.Categorical([2**62 + 1, 2**62 + 2])})
+     elif case == "mixed":
+         frame = pd.DataFrame({"0": ["a", "b"]})
+     elif case == "large":
+-        frame = pd.DataFrame({"0": pd.Categorical(["a", "b"], categories=["a", "b"] + [str(i) for i in range(31)])})
++        frame = pd.DataFrame({"0": pd.Categorical(["a", "b"], categories=pd.Index(
++            ["a", "b"] + [str(i) for i in range(31)], dtype=object))})
+     elif case == "custom":
+         class Text(str):
+             def __str__(self):
+@@ -127,7 +131,8 @@
+ 
+ 
+ def test_codes_feature_name_validation_preserved():
+-    frame = pd.DataFrame({"a": pd.Categorical(["red", "blue"] * 8)})
++    frame = pd.DataFrame({"a": pd.Categorical(["red", "blue"] * 8,
++                                              categories=pd.Index(["blue", "red"], dtype=object))})
+     pipeline = ctboost.FeaturePipeline(cat_features=["a"]).fit(frame, np.arange(16, dtype=np.float32))
+     wrong = frame.rename(columns={"a": "wrong"})
+     with pytest.raises(ValueError, match="feature names"):
+@@ -135,8 +140,10 @@
+ 
+ 
+ def test_codes_prediction_bits_after_preparation():
+-    frame = pd.DataFrame({"a": pd.Categorical(["red", "blue", None, "green"] * 24),
+-                          "b": pd.Categorical(["y", "x"] * 48)})
++    frame = pd.DataFrame({"a": pd.Categorical(["red", "blue", None, "green"] * 24,
++                                              categories=pd.Index(["blue", "green", "red"], dtype=object)),
++                          "b": pd.Categorical(["y", "x"] * 48,
++                                              categories=pd.Index(["x", "y"], dtype=object))})
+     y = (np.arange(len(frame)) % 3).astype(np.float32)
+     model = ctboost.CTBoostClassifier(iterations=5, max_depth=2, alpha=.2,
+                                      cat_features=["a", "b"], ordered_ctr=True, verbose=False).fit(frame, y)

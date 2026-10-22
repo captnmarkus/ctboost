@@ -1,0 +1,108 @@
+{
+  "label": "baseline-2",
+  "purpose": "Deliberately wide schema-copy stress case; no quality/general speed claim",
+  "runner_sha256": "bf433f5c933d94843e4ea5cf53cf771cf703e76f740fdcbd1f4c8c3cdbe8bda2",
+  "common_runner_sha256": "114c3fd5fc9a43d78e4dcd019310c603c93b13420a1468c1cd67034c8558c7c0",
+  "state_sha256": "8a267a9d7b92b1c3ed07f1fe579c899ce3ca005df10a92ff94e9d31994fd9d1e",
+  "input_sha256": "e769207428b9a1ccbe5c975a025eedac44f8732b945f720f438c314b5387ec49",
+  "native_sha256": "41ee0e2c10704693f18ae86f77039f49a6a6ddecc6cf77fe310df2121b2495af",
+  "build_info": {
+    "version": "0.1.61",
+    "cuda_enabled": false,
+    "cuda_runtime": "not compiled",
+    "compiler": "MSVC 1950",
+    "cxx_standard": 17,
+    "package_version": "0.1.61"
+  },
+  "build_receipt": {
+    "source_head": "9e68e6d5a6fe4a402d7b465092f6690bdf979a94",
+    "source_file": "src/core/booster_predict.cpp",
+    "source_sha256": "ed9f229501da4aba1b4f5e076d2c28c65fa0f796f6deb185b7ce9c0d884fc90e",
+    "build_recipe_sha256": "3daf4d3f40219d4672d1c7992531020b86e966bb67d69a900dc01f0ed76c8047",
+    "cmake_cache_sha256": "7213ad75a9069c0a0e576fd03d1f360c2981ead3a94017cd062785c942aa476f",
+    "compiler_flags": "/DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG",
+    "compiler": "MSVC 19.50.35737.0",
+    "cuda": false,
+    "native_sha256": "41ee0e2c10704693f18ae86f77039f49a6a6ddecc6cf77fe310df2121b2495af"
+  },
+  "versions": {
+    "numpy": "1.26.4",
+    "psutil": "7.2.2"
+  },
+  "python": "3.10.14 | packaged by Anaconda, Inc. | (main, Mar 21 2024, 16:20:14) [MSC v.1916 64 bit (AMD64)]",
+  "affinity": [
+    6
+  ],
+  "cases": [
+    {
+      "rows": 1,
+      "columns": 512,
+      "active_columns": 4,
+      "trees": 64,
+      "depth": 2,
+      "exact_parity": true,
+      "reference_sha256": "6da6609a59ef54e473516736e38af999105fabddabe4f401c492f910becc9cc7",
+      "raw": {
+        "median_ms": 0.04633937246967527,
+        "block_ms": [
+          0.04743087044594195,
+          0.046542206479423594,
+          0.04633785425237889,
+          0.04623259109382938,
+          0.04633937246967527,
+          0.04625819838111056,
+          0.04660050607294524
+        ],
+        "calls_per_block": 988
+      },
+      "prepared": {
+        "median_ms": 0.015696599999500904,
+        "block_ms": [
+          0.015825200000108453,
+          0.015711099998952704,
+          0.01571189999958733,
+          0.01567319999958272,
+          0.015695899999627727,
+          0.015664200000173878,
+          0.015696599999500904
+        ],
+        "calls_per_block": 1000
+      }
+    },
+    {
+      "rows": 64,
+      "columns": 512,
+      "active_columns": 4,
+      "trees": 64,
+      "depth": 2,
+      "exact_parity": true,
+      "reference_sha256": "6e03a468022c910a8a150c2c7613d28d9335277e3d1ab3d45d5ac99c3d8b9ba5",
+      "raw": {
+        "median_ms": 0.11099460674139143,
+        "block_ms": [
+          0.11120898876531479,
+          0.11131415730427291,
+          0.11085303370880743,
+          0.1108157303401078,
+          0.11141550561803618,
+          0.11089505617777566,
+          0.11099460674139143
+        ],
+        "calls_per_block": 445
+      },
+      "prepared": {
+        "median_ms": 0.03311460000077204,
+        "block_ms": [
+          0.03309040000021923,
+          0.03312100000039209,
+          0.03311460000077204,
+          0.033119199999418925,
+          0.03313669999988633,
+          0.033080699999118224,
+          0.03309430000081193
+        ],
+        "calls_per_block": 1000
+      }
+    }
+  ]
+}

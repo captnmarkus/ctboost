@@ -1,0 +1,272 @@
+{
+  "all_fits_successful": true,
+  "best": {
+    "mean_fold_error": 0.9366797205769558,
+    "profile_index": 0,
+    "requested_rounds": 59
+  },
+  "dataset": "QSAR_fish_toxicity",
+  "job": {
+    "anchor_rounds": 117,
+    "binary_refit": null,
+    "dataset": "QSAR_fish_toxicity",
+    "leaf_refit": null,
+    "library": "xgboost",
+    "original_selection": {
+      "all_eight_successful": true,
+      "base_selection": {
+        "all_eight_successful": true,
+        "best": {
+          "config_index": 7,
+          "fit_seconds": 0.30523209999955725,
+          "parameters": {
+            "eta": 0.15,
+            "eval_metric": "rmse",
+            "lambda": 10,
+            "max_bin": 256,
+            "max_depth": 6,
+            "multi_strategy": "one_output_per_tree",
+            "nthread": 1,
+            "objective": "reg:squarederror",
+            "seed": 47,
+            "subsample": 0.8,
+            "tree_method": "hist"
+          },
+          "retained_at_round_cap": false,
+          "retained_rounds": 117,
+          "selection_key": [
+            0.9191156358757825,
+            117,
+            7
+          ],
+          "stop_error": 0.9191156358757825,
+          "trained_rounds_if_available": 167
+        },
+        "cumulative_search_fit_seconds": 14.350266800001918,
+        "current_wave_all_eight_successful": true,
+        "dataset": "QSAR_fish_toxicity",
+        "library": "xgboost",
+        "model_bytes": 343458,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\QSAR_fish_toxicity\\xgboost.pkl",
+        "model_sha256": "ec17fdf5994fdd563bdeca123cb8e0842140e54a76769c841e7b707fd3fc1c76",
+        "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+        "search_fit_seconds": 2.3065904999966733,
+        "source_wave": 1
+      },
+      "best": {
+        "config_index": 7,
+        "fit_seconds": 0.30523209999955725,
+        "parameters": {
+          "eta": 0.15,
+          "eval_metric": "rmse",
+          "lambda": 10,
+          "max_bin": 256,
+          "max_depth": 6,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "reg:squarederror",
+          "seed": 47,
+          "subsample": 0.8,
+          "tree_method": "hist"
+        },
+        "retained_at_round_cap": false,
+        "retained_rounds": 117,
+        "selection_key": [
+          0.9191156358757825,
+          117,
+          7
+        ],
+        "stop_error": 0.9191156358757825,
+        "trained_rounds_if_available": 167
+      },
+      "cumulative_search_fit_seconds": 16.309237000001303,
+      "current_wave_all_eight_successful": true,
+      "dataset": "QSAR_fish_toxicity",
+      "leaf_refit": null,
+      "library": "xgboost",
+      "model_bytes": 343458,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\QSAR_fish_toxicity\\xgboost.pkl",
+      "model_sha256": "ec17fdf5994fdd563bdeca123cb8e0842140e54a76769c841e7b707fd3fc1c76",
+      "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+      "postfit_candidate_seconds": 1.236280799996166,
+      "search_fit_seconds": 2.3065904999966733,
+      "source_wave": 1
+    },
+    "parameters": {
+      "eta": 0.15,
+      "eval_metric": "rmse",
+      "lambda": 10,
+      "max_bin": 256,
+      "max_depth": 6,
+      "multi_strategy": "one_output_per_tree",
+      "nthread": 1,
+      "objective": "reg:squarederror",
+      "seed": 47,
+      "subsample": 0.8,
+      "tree_method": "hist"
+    },
+    "profiles": [
+      {
+        "eta": 0.15,
+        "eval_metric": "rmse",
+        "lambda": 10,
+        "max_bin": 256,
+        "max_depth": 6,
+        "min_child_weight": 1.0,
+        "multi_strategy": "one_output_per_tree",
+        "nthread": 1,
+        "objective": "reg:squarederror",
+        "seed": 47,
+        "subsample": 0.8,
+        "tree_method": "hist"
+      },
+      {
+        "eta": 0.075,
+        "eval_metric": "rmse",
+        "lambda": 10,
+        "max_bin": 256,
+        "max_depth": 6,
+        "min_child_weight": 1.0,
+        "multi_strategy": "one_output_per_tree",
+        "nthread": 1,
+        "objective": "reg:squarederror",
+        "seed": 47,
+        "subsample": 0.8,
+        "tree_method": "hist"
+      },
+      {
+        "eta": 0.15,
+        "eval_metric": "rmse",
+        "lambda": 10,
+        "max_bin": 256,
+        "max_depth": 6,
+        "min_child_weight": 0.25,
+        "multi_strategy": "one_output_per_tree",
+        "nthread": 1,
+        "objective": "reg:squarederror",
+        "seed": 47,
+        "subsample": 0.8,
+        "tree_method": "hist"
+      },
+      {
+        "eta": 0.075,
+        "eval_metric": "rmse",
+        "lambda": 10,
+        "max_bin": 256,
+        "max_depth": 6,
+        "min_child_weight": 0.25,
+        "multi_strategy": "one_output_per_tree",
+        "nthread": 1,
+        "objective": "reg:squarederror",
+        "seed": 47,
+        "subsample": 0.8,
+        "tree_method": "hist"
+      }
+    ],
+    "round_candidates": [
+      59,
+      117,
+      234
+    ],
+    "rounds": 59,
+    "temperature": null,
+    "training_selection": {
+      "all_eight_successful": true,
+      "base_selection": {
+        "all_eight_successful": true,
+        "best": {
+          "config_index": 7,
+          "fit_seconds": 0.30523209999955725,
+          "parameters": {
+            "eta": 0.15,
+            "eval_metric": "rmse",
+            "lambda": 10,
+            "max_bin": 256,
+            "max_depth": 6,
+            "multi_strategy": "one_output_per_tree",
+            "nthread": 1,
+            "objective": "reg:squarederror",
+            "seed": 47,
+            "subsample": 0.8,
+            "tree_method": "hist"
+          },
+          "retained_at_round_cap": false,
+          "retained_rounds": 117,
+          "selection_key": [
+            0.9191156358757825,
+            117,
+            7
+          ],
+          "stop_error": 0.9191156358757825,
+          "trained_rounds_if_available": 167
+        },
+        "cumulative_search_fit_seconds": 14.350266800001918,
+        "current_wave_all_eight_successful": true,
+        "dataset": "QSAR_fish_toxicity",
+        "library": "xgboost",
+        "model_bytes": 343458,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\QSAR_fish_toxicity\\xgboost.pkl",
+        "model_sha256": "ec17fdf5994fdd563bdeca123cb8e0842140e54a76769c841e7b707fd3fc1c76",
+        "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+        "search_fit_seconds": 2.3065904999966733,
+        "source_wave": 1
+      },
+      "best": {
+        "config_index": 7,
+        "fit_seconds": 0.30523209999955725,
+        "parameters": {
+          "eta": 0.15,
+          "eval_metric": "rmse",
+          "lambda": 10,
+          "max_bin": 256,
+          "max_depth": 6,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "reg:squarederror",
+          "seed": 47,
+          "subsample": 0.8,
+          "tree_method": "hist"
+        },
+        "retained_at_round_cap": false,
+        "retained_rounds": 117,
+        "selection_key": [
+          0.9191156358757825,
+          117,
+          7
+        ],
+        "stop_error": 0.9191156358757825,
+        "trained_rounds_if_available": 167
+      },
+      "cumulative_search_fit_seconds": 16.309237000001303,
+      "current_wave_all_eight_successful": true,
+      "dataset": "QSAR_fish_toxicity",
+      "leaf_refit": null,
+      "library": "xgboost",
+      "model_bytes": 343458,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\QSAR_fish_toxicity\\xgboost.pkl",
+      "model_sha256": "ec17fdf5994fdd563bdeca123cb8e0842140e54a76769c841e7b707fd3fc1c76",
+      "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+      "postfit_candidate_seconds": 1.236280799996166,
+      "search_fit_seconds": 2.3065904999966733,
+      "source_wave": 1
+    }
+  },
+  "library": "xgboost",
+  "scores": [
+    {
+      "mean_fold_error": 0.9366797205769558,
+      "profile_index": 0,
+      "requested_rounds": 59
+    },
+    {
+      "mean_fold_error": 0.953532805300263,
+      "profile_index": 1,
+      "requested_rounds": 117
+    },
+    {
+      "mean_fold_error": 0.9690543757970824,
+      "profile_index": 2,
+      "requested_rounds": 234
+    }
+  ]
+}

@@ -1,0 +1,180 @@
+{
+  "correction": {
+    "checks": {
+      "fitting": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 3.737928000387523e-12,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.1189578675706002e-15,
+        "oracle_max_absolute_difference": 8.881784197001252e-15
+      },
+      "validation": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 3.737928000387523e-12,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 8.472982695554848e-16,
+        "oracle_max_absolute_difference": 6.217248937900877e-15
+      }
+    },
+    "fold": {
+      "coefficient_rounding_absolute_bound": 6.063400649625184e-16,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "lightgbm",
+      "physical_trees": 76,
+      "prediction_oracle_absolute_tolerance": 3.737928000387523e-12,
+      "topology_sha256_after": "d5738f4f79a6ceac950d22bbeedf44884da3e2f138cdffab9ebe1bf3a8e214fd",
+      "topology_sha256_before": "d5738f4f79a6ceac950d22bbeedf44884da3e2f138cdffab9ebe1bf3a8e214fd"
+    },
+    "independent_sparse_raw_margin_oracle": true,
+    "memory": {
+      "array_budgets_bytes": {
+        "design_construction_temporary_budget": 673728,
+        "lsqr_residual_and_vector_workspace_budget": 57280,
+        "native_leaf_result_and_int64_copy": 441408,
+        "native_raw_result_and_float64_copy": 5808,
+        "observed_leaf_maps": 4256,
+        "resident_csr_data_indices_indptr": 444320
+      },
+      "csr_nonzeros": 27588,
+      "excluded": [
+        "native model objects",
+        "input frames",
+        "categorical transform workspace",
+        "Python object/allocator overhead"
+      ],
+      "extra_certificate_vector_bytes": 229120,
+      "max_working_bytes": 6442450944,
+      "native_leaf_count": 532,
+      "no_dense_hessian": true,
+      "parameters_upper_bound": 532,
+      "physical_trees": 76,
+      "refit_array_budget_bytes": 1626800,
+      "rows": 363,
+      "scope": "named conservative refit arrays, not whole-process RSS",
+      "solver_kind": "regression"
+    },
+    "native_cv_adapter": {
+      "algorithm_controls_sha256": "4aadd0583ab22ea01c26dfe0f08d128e3a4731bef17d6082c15c20b0f884101a",
+      "effective_named_array_limit": 6442450944,
+      "fresh_payload_metadata_guard": true,
+      "inherited_named_array_limit": 4294967296,
+      "resource_override_only": true,
+      "temperature_unchanged": true
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 27588,
+      "design_shape": [
+        363,
+        532
+      ],
+      "ordered_training_transform_replayed": false,
+      "training_leaf_ids_sha256": "a0918ef00cafc2bba0cb4a26b39d61136d3534baf0ae8bfb31ad02ea0223f3a4",
+      "training_rows": 363,
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "atol": 1e-12,
+      "btol": 1e-12,
+      "certificate": {
+        "certified": true,
+        "coefficient_l2_error_bound": 3.493126759261053e-13,
+        "dual": 68.43278964531444,
+        "finite": true,
+        "fitting_prediction_rms_error_bound": 5.797770673552111e-13,
+        "gradient_norm": 3.493126759261053e-10,
+        "normalized_original_gradient": 2.782573631409968e-12,
+        "original_gradient_dual_gap": 6.100967278132814e-23,
+        "primal": 68.43278964531444,
+        "primal_minus_dual": 0.0,
+        "primal_zero": 70.31998862057618,
+        "relative_gap": 8.915268995687572e-25
+      },
+      "conlim": 100000000.0,
+      "initial_coefficients": "zero",
+      "iterations_limit": 10000,
+      "native": {
+        "condition_estimate": 22.02998241111383,
+        "istop": 2,
+        "iterations": 17,
+        "matrix_norm": 216.1395789643921,
+        "normal_residual_norm": 3.493140848903032e-10,
+        "regularized_residual_norm": 11.698956333392688,
+        "residual_norm": 11.556100254048951
+      },
+      "no_heldout_score": true,
+      "penalty": 1000.0,
+      "solver_seconds_diagnostic_only": 0.0016039000001910608,
+      "success": true,
+      "variant": "unscaled_lsqr_10000"
+    }
+  },
+  "corrections_disabled_before_fit": true,
+  "dataset": "QSAR_fish_toxicity",
+  "early_stopping": false,
+  "feature_names": [
+    "CIC0",
+    "SM1_Dz(Z)",
+    "GATS1i",
+    "NdsCH",
+    "NdssC",
+    "MLOGP"
+  ],
+  "finished_at": "2026-10-16T16:16:37.570144+00:00",
+  "fit_controls_sha256": "2923d7ee526d22510207f1f0647995a95872dedf5d79c52333003d0eb7b53d1b",
+  "fit_seconds": 0.017414899997675093,
+  "fixed_corrections_disabled_before_fit": true,
+  "fold": 3,
+  "fold_category_schema": {},
+  "library": "lightgbm",
+  "model_bytes": 66038,
+  "model_retained": false,
+  "model_sha256": "83ed56ac1a2a92bbcb829d396bc2499f0de6bfc5d1a36badd0e5c73b87b3fdc1",
+  "native_cv_fresh_fit": true,
+  "native_fit_completed": true,
+  "native_fit_started": true,
+  "parameters": {
+    "bagging_fraction": 0.8,
+    "bagging_freq": 1,
+    "cat_l2": 0,
+    "cat_smooth": 0,
+    "deterministic": true,
+    "force_col_wise": true,
+    "lambda_l2": 0,
+    "learning_rate": 0.1,
+    "max_bin": 255,
+    "max_cat_threshold": 256,
+    "max_cat_to_onehot": 1,
+    "metric": "rmse",
+    "min_data_in_leaf": 10,
+    "num_leaves": 7,
+    "num_threads": 1,
+    "objective": "regression",
+    "seed": 47,
+    "verbosity": -1,
+    "zero_as_missing": false
+  },
+  "prediction_array_sha256": "90c8f47ec9a856f0e76f826cce9da477ec63bb7668d171ade175dcb36eaeb89d",
+  "prediction_dtype": "<f8",
+  "prediction_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave18b\\fold_predictions\\0223.npz",
+  "prediction_sha256": "1a5c228047628dbf9a73d3c511dcff58034086864ad79e04c9bc859e71ccee6e",
+  "prediction_shape": [
+    91
+  ],
+  "profile_index": 2,
+  "reload_bit_exact": true,
+  "requested_rounds": 76,
+  "retained_rounds": 76,
+  "seed": 47,
+  "started_at": "2026-10-16T16:16:37.445533+00:00",
+  "status": "ok",
+  "structural_early_termination": false,
+  "temperature": null,
+  "training_rows": 363,
+  "validation_error": 0.9997376855432698,
+  "validation_labels_received": false,
+  "validation_rows": 91
+}

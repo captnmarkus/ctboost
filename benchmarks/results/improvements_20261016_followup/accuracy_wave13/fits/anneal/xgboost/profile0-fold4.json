@@ -1,0 +1,254 @@
+{
+  "correction": null,
+  "dataset": "anneal",
+  "early_stopping": false,
+  "feature_names": [
+    "family",
+    "product-type",
+    "steel",
+    "carbon",
+    "hardness",
+    "temper_rolling",
+    "condition",
+    "formability",
+    "strength",
+    "non-ageing",
+    "surface-finish",
+    "surface-quality",
+    "enamelability",
+    "bc",
+    "bf",
+    "bt",
+    "bw_me",
+    "bl",
+    "m",
+    "chrom",
+    "phos",
+    "cbond",
+    "marvi",
+    "exptl",
+    "ferro",
+    "corr",
+    "blue_bright_varn_clean",
+    "lustre",
+    "jurofm",
+    "s",
+    "p",
+    "shape",
+    "thick",
+    "width",
+    "len",
+    "oil",
+    "bore",
+    "packing"
+  ],
+  "finished_at": "2026-10-16T13:17:10.143967+00:00",
+  "fit_seconds": 0.16189640000084182,
+  "fold": 4,
+  "fold_category_counts": {
+    "bc": 1,
+    "bf": 2,
+    "bl": 2,
+    "blue_bright_varn_clean": 3,
+    "bore": 3,
+    "bt": 2,
+    "bw_me": 3,
+    "cbond": 2,
+    "chrom": 2,
+    "condition": 3,
+    "corr": 1,
+    "enamelability": 3,
+    "exptl": 2,
+    "family": 3,
+    "ferro": 2,
+    "formability": 5,
+    "jurofm": 1,
+    "lustre": 2,
+    "m": 1,
+    "marvi": 1,
+    "non-ageing": 2,
+    "oil": 3,
+    "p": 1,
+    "packing": 2,
+    "phos": 2,
+    "product-type": 1,
+    "s": 1,
+    "shape": 2,
+    "steel": 8,
+    "surface-finish": 2,
+    "surface-quality": 5,
+    "temper_rolling": 2
+  },
+  "fold_category_schema": {
+    "bc": [
+      "not_applicable"
+    ],
+    "bf": [
+      "Y",
+      "not_applicable"
+    ],
+    "bl": [
+      "Y",
+      "not_applicable"
+    ],
+    "blue_bright_varn_clean": [
+      "B",
+      "V",
+      "not_applicable"
+    ],
+    "bore": [
+      "0",
+      "500",
+      "600"
+    ],
+    "bt": [
+      "Y",
+      "not_applicable"
+    ],
+    "bw_me": [
+      "B",
+      "M",
+      "not_applicable"
+    ],
+    "cbond": [
+      "Y",
+      "not_applicable"
+    ],
+    "chrom": [
+      "C",
+      "not_applicable"
+    ],
+    "condition": [
+      "A",
+      "S",
+      "not_applicable"
+    ],
+    "corr": [
+      "not_applicable"
+    ],
+    "enamelability": [
+      "1",
+      "2",
+      "not_applicable"
+    ],
+    "exptl": [
+      "Y",
+      "not_applicable"
+    ],
+    "family": [
+      "TN",
+      "ZS",
+      "not_applicable"
+    ],
+    "ferro": [
+      "Y",
+      "not_applicable"
+    ],
+    "formability": [
+      "1",
+      "2",
+      "3",
+      "5",
+      "not_applicable"
+    ],
+    "jurofm": [
+      "not_applicable"
+    ],
+    "lustre": [
+      "Y",
+      "not_applicable"
+    ],
+    "m": [
+      "not_applicable"
+    ],
+    "marvi": [
+      "not_applicable"
+    ],
+    "non-ageing": [
+      "N",
+      "not_applicable"
+    ],
+    "oil": [
+      "N",
+      "Y",
+      "not_applicable"
+    ],
+    "p": [
+      "not_applicable"
+    ],
+    "packing": [
+      "3",
+      "not_applicable"
+    ],
+    "phos": [
+      "P",
+      "not_applicable"
+    ],
+    "product-type": [
+      "C"
+    ],
+    "s": [
+      "not_applicable"
+    ],
+    "shape": [
+      "COIL",
+      "SHEET"
+    ],
+    "steel": [
+      "A",
+      "K",
+      "M",
+      "R",
+      "S",
+      "V",
+      "W",
+      "not_applicable"
+    ],
+    "surface-finish": [
+      "P",
+      "not_applicable"
+    ],
+    "surface-quality": [
+      "D",
+      "E",
+      "F",
+      "G",
+      "not_applicable"
+    ],
+    "temper_rolling": [
+      "T",
+      "not_applicable"
+    ]
+  },
+  "library": "xgboost",
+  "model_bytes": 663646,
+  "model_retained": false,
+  "model_sha256": "07ee46373bb6d9e5ad631f274bf6440ddbbd4083c334b9c1b35b7a5ef0e7277c",
+  "parameters": {
+    "eta": 0.05,
+    "eval_metric": "mlogloss",
+    "lambda": 0.3,
+    "max_bin": 256,
+    "max_cat_threshold": 256,
+    "max_cat_to_onehot": 8,
+    "max_depth": 8,
+    "min_child_weight": 0.1,
+    "multi_strategy": "one_output_per_tree",
+    "nthread": 1,
+    "num_class": 5,
+    "objective": "multi:softprob",
+    "seed": 47,
+    "subsample": 1.0,
+    "tree_method": "hist"
+  },
+  "prediction_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave13\\fold_predictions\\anneal\\xgboost\\profile0-fold4.npz",
+  "prediction_sha256": "0c4a88f2c312d1ddb7d0084b6f8c4306fda70af96ca1f699937918282c4451a3",
+  "profile_index": 0,
+  "requested_rounds": 120,
+  "retained_rounds": 120,
+  "started_at": "2026-10-16T13:17:09.878019+00:00",
+  "status": "ok",
+  "structural_early_termination": false,
+  "temperature": 1.0,
+  "validation_error": 0.07451064228730238
+}

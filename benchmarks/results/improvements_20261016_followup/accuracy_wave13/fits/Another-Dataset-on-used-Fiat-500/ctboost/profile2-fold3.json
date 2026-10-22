@@ -1,0 +1,119 @@
+{
+  "correction": {
+    "fold": {
+      "coefficient_rounding_absolute_bound": 0.00019890056788920973,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "ctboost",
+      "physical_trees": 116,
+      "prediction_oracle_absolute_tolerance": 2.871910572052002,
+      "topology_sha256_after": "b5c93280fcec7fcc9a8d416897b96f7f4680577ec92b8cee90515b82162beb0b",
+      "topology_sha256_before": "b5c93280fcec7fcc9a8d416897b96f7f4680577ec92b8cee90515b82162beb0b"
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 71340,
+      "design_shape": [
+        615,
+        688
+      ],
+      "ordered_ctr": true,
+      "ordered_training_transform_replayed": true,
+      "pipeline_state_sha256": "ea7e192a262598678ce47a261482367cef4af85f5bb59e5e28fdd3780d15f6ab",
+      "training_leaf_ids_sha256": "c13a9a98ef60e1061de7f0b7f6cd2fb9e8c040cccb0eac0f0800d15b821e16fd",
+      "training_rows": 615,
+      "training_transform_sha256": "1089dca81619842280c467e5eaddb8d318da946e2e71b83a3adb4ea7cee71569",
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "coefficient_norm": 1505.356911243555,
+      "condition_estimate": 553.1000019738898,
+      "istop": 2,
+      "iterations": 73,
+      "matrix_norm": 686.5347186063409,
+      "normal_residual_norm": 0.058108678255591725,
+      "regularized_residual_norm": 13488.274787519538,
+      "residual_norm": 12620.323389291294
+    },
+    "stop_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 2.871910572052002,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 5.993940112400986e-07,
+      "oracle_max_absolute_difference": 0.006341721778881038
+    },
+    "training_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 2.871910572052002,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 6.742085545607041e-07,
+      "oracle_max_absolute_difference": 0.007170539875005488
+    }
+  },
+  "dataset": "Another-Dataset-on-used-Fiat-500",
+  "early_stopping": false,
+  "feature_names": [
+    "model",
+    "engine_power",
+    "age_in_days",
+    "km",
+    "previous_owners",
+    "lat",
+    "lon"
+  ],
+  "finished_at": "2026-10-16T13:10:12.048852+00:00",
+  "fit_seconds": 0.018210799997177674,
+  "fold": 3,
+  "fold_category_counts": {
+    "model": 3
+  },
+  "fold_category_schema": {
+    "model": [
+      "lounge",
+      "pop",
+      "sport"
+    ]
+  },
+  "library": "ctboost",
+  "model_bytes": 876704,
+  "model_retained": false,
+  "model_sha256": "5f7f0b903dcc83eca313a8dcb3da7c8553f7c7514f05c9218bf06dd6bdaeb7df",
+  "parameters": {
+    "alpha": 0.05,
+    "bootstrap_type": "Bernoulli",
+    "cat_features": [
+      "model"
+    ],
+    "eval_metric": "RMSE",
+    "feature_test": "grouped",
+    "feature_test_adjustment": "none",
+    "feature_test_bins": 8,
+    "iterations": 116,
+    "lambda_l2": 3,
+    "leaf_estimation_iterations": 1,
+    "learning_rate": 0.05,
+    "max_bins": 256,
+    "max_cat_threshold": 256,
+    "max_depth": 8,
+    "min_data_in_leaf": 1,
+    "multi_strategy": "one_output_per_tree",
+    "multiclass_feature_test": "single",
+    "one_hot_max_size": 8,
+    "ordered_ctr": true,
+    "random_seed": 47,
+    "subsample": 1.0,
+    "verbose": false
+  },
+  "prediction_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave13\\fold_predictions\\Another-Dataset-on-used-Fiat-500\\ctboost\\profile2-fold3.npz",
+  "prediction_sha256": "2745ceee56e953f346a3c53d78df42654789df9165345225460e31eaa8ab76e3",
+  "profile_index": 2,
+  "requested_rounds": 116,
+  "retained_rounds": 116,
+  "started_at": "2026-10-16T13:10:11.749312+00:00",
+  "status": "ok",
+  "structural_early_termination": false,
+  "temperature": null,
+  "validation_error": 704.8006684475295
+}

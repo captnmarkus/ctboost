@@ -24,9 +24,18 @@ missing values have deterministic routes.
 
 Starting in 0.1.60, a positive `ctr_prior_strength` below one preserves the
 unscaled target prior for first occurrences and unseen categories. Zero-prior
-cold starts retain their previous behavior. New fits use pipeline format 4;
+cold starts retain their previous behavior. Pipeline format 4 introduced this correction;
 loaded older pipelines preserve their original smoothing until explicitly
 refitted. See [deployment](deployment.md) for saved-model compatibility.
+
+New pipelines now use format 5. Mean CTR priors, category totals, and ordered
+prefix totals accumulate in double precision, then the resulting features are
+checked and converted to float32. This reduces cancellation and accumulation
+drift and permits a finite mean when its total exceeds the float32 range. It is
+not exact summation for arbitrary target magnitudes. Frequency CTRs retain their
+existing arithmetic. Loaded formats 1–4 keep their previous accumulation,
+including during explicit refitting or warm-start replay; create a new pipeline
+to use the improved precision.
 
 Fitted pipelines record `categorical_key_encoding_version` in their state and
 inference manifest. New fits use version 2, which keeps actual missing values,

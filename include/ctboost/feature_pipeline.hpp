@@ -49,6 +49,10 @@ class NativeFeaturePipeline {
   pybind11::tuple transform_array(pybind11::array raw_matrix,
                                   pybind11::object feature_names = pybind11::none()) const;
 
+  pybind11::tuple transform_categorical_codes(
+      pybind11::list codes, pybind11::list categories,
+      pybind11::object feature_names = pybind11::none()) const;
+
   pybind11::dict to_state() const;
   static NativeFeaturePipeline FromState(const pybind11::dict& state);
 
@@ -73,9 +77,9 @@ class NativeFeaturePipeline {
     std::vector<int> source_indices;
     std::vector<std::string> output_names;
     std::string ctr_type;
-    std::vector<float> prior_values;
+    std::vector<double> prior_values;
     std::unordered_map<std::string, int> total_counts;
-    std::unordered_map<std::string, std::vector<float>> total_sums;
+    std::unordered_map<std::string, std::vector<double>> total_sums;
     float global_frequency_prior{0.0F};
     std::size_t total_rows{0};
   };
@@ -155,6 +159,9 @@ class NativeFeaturePipeline {
   // Format 4 corrects fractional-prior smoothing. Loaded older pipelines keep
   // the historical denominator until explicitly refitted.
   int ctr_smoothing_version_{2};
+  // Format 5 accumulates and stores mean CTR statistics in double. Loaded
+  // formats 1-4 retain float rounding, including explicit training replay.
+  int ctr_accumulation_version_{2};
   std::optional<std::vector<std::string>> feature_names_in_;
   int n_features_in_{-1};
   std::vector<int> cat_feature_indices_;

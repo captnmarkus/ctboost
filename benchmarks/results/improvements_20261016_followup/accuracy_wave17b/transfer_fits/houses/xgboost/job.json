@@ -1,0 +1,1178 @@
+{
+  "dataset": "houses",
+  "finished_at": "2026-10-16T15:35:30.468910+00:00",
+  "library": "xgboost",
+  "selection": {
+    "base_selection": {
+      "best": {
+        "parameters": {
+          "eta": 0.05,
+          "eval_metric": "rmse",
+          "lambda": 10,
+          "max_bin": 256,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 8,
+          "max_depth": 6,
+          "min_child_weight": 1,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "reg:squarederror",
+          "seed": 47,
+          "subsample": 0.8,
+          "tree_method": "hist"
+        },
+        "retained_rounds": 1087
+      },
+      "binary_refit": null,
+      "dataset": "houses",
+      "fixed_job": {
+        "anchor_rounds": 1087,
+        "binary_refit": null,
+        "dataset": "houses",
+        "expanded_source": {
+          "dataset": "houses",
+          "path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave15b\\expanded\\houses.pkl",
+          "receipt": {
+            "added_rows": 3760,
+            "attributes": [
+              "MedianIncome",
+              "HousingMedianAge",
+              "TotalRooms",
+              "TotalBedrooms",
+              "Population",
+              "Households",
+              "Latitude",
+              "Longitude",
+              "LnMedianHouseValue"
+            ],
+            "authorized_rows_file_sha256": "f562bc74ec3f8f352731e65653a681505b18edda64eb994d1a1e535aee8258d8",
+            "authorized_rows_hash_encoding": "ordered little-endian signed int64, no length prefix",
+            "authorized_rows_sha256": "96c62274d5478d5d4bc326a4f6a17eea5a753f8b6fefe3945557a0d431bc9d81",
+            "dataset": "houses",
+            "draft_only": false,
+            "excluded_rows_decoded": 0,
+            "excluded_rows_tokenized": 0,
+            "missing_values_supported": false,
+            "normalization": "common numeric float32 after selected-only float64 parse",
+            "original_train_stop_exact_parity": true,
+            "raw_md5": "5edd572964b0653b789bfc5e5c0293a8",
+            "raw_sha256": "c71f44ba2522f61a8ba1918c220074be4a771e1c8c8c07d031e98368f4f94c6c",
+            "rows": 11260,
+            "selected_rows": 11260,
+            "source_receipt_sha256": "5d434200939a4b3a899be8a57feb2a2085dfe4edb2c0e01a2d19fe0e606883a1",
+            "total_rows": 20640
+          },
+          "sha256": "ea7db54b000d474826b35085254e6b0c66172e75a4870759b34317c40b696a06"
+        },
+        "leaf_refit": {
+          "fold": {
+            "coefficient_rounding_absolute_bound": 2.3409015831909033e-07,
+            "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+            "inference_only": true,
+            "library": "xgboost",
+            "physical_trees": 1087,
+            "prediction_oracle_absolute_tolerance": 0.03969679772853851,
+            "topology_sha256_after": "585bbbfcdef0fbf761e0774c479b87e10eab2fb99a707972bca5834e5257225e",
+            "topology_sha256_before": "585bbbfcdef0fbf761e0774c479b87e10eab2fb99a707972bca5834e5257225e"
+          },
+          "lambda": 100,
+          "shrinkage": 0.25,
+          "solver": {
+            "atol": 1e-08,
+            "btol": 1e-08,
+            "damp": "sqrt(lambda)",
+            "iter_lim": 2000,
+            "method": "scipy.sparse.linalg.lsqr"
+          }
+        },
+        "library": "xgboost",
+        "original_selection": {
+          "all_eight_successful": true,
+          "base_selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 3,
+              "fit_seconds": 3.2742283000006864,
+              "parameters": {
+                "eta": 0.05,
+                "eval_metric": "rmse",
+                "lambda": 10,
+                "max_bin": 256,
+                "max_cat_threshold": 256,
+                "max_cat_to_onehot": 8,
+                "max_depth": 6,
+                "min_child_weight": 1,
+                "multi_strategy": "one_output_per_tree",
+                "nthread": 1,
+                "objective": "reg:squarederror",
+                "seed": 47,
+                "subsample": 0.8,
+                "tree_method": "hist"
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 1087,
+              "selection_key": [
+                0.228771841445333,
+                1087,
+                3
+              ],
+              "stop_error": 0.228771841445333,
+              "trained_rounds_if_available": 1137
+            },
+            "cumulative_search_fit_seconds": 74.77279879999514,
+            "current_wave_all_eight_successful": true,
+            "dataset": "houses",
+            "library": "xgboost",
+            "model_bytes": 4618793,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave4\\models\\houses\\xgboost.pkl",
+            "model_sha256": "764509682fd72d5a13d9da10d3baf21d31b8da3304b947d24b2e507b55322618",
+            "plan_sha256": "b63459620d4e35f543ce3b366d33767b82da8c98a96fa30155442825ce3c585a",
+            "search_fit_seconds": 17.112907700002324,
+            "source_wave": 4
+          },
+          "best": {
+            "config_index": 4,
+            "fit_seconds": 3.2742283000006864,
+            "parameters": {
+              "eta": 0.05,
+              "eval_metric": "rmse",
+              "lambda": 10,
+              "max_bin": 256,
+              "max_cat_threshold": 256,
+              "max_cat_to_onehot": 8,
+              "max_depth": 6,
+              "min_child_weight": 1,
+              "multi_strategy": "one_output_per_tree",
+              "nthread": 1,
+              "objective": "reg:squarederror",
+              "seed": 47,
+              "subsample": 0.8,
+              "tree_method": "hist"
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 1087,
+            "selection_key": [
+              0.22865130123499905,
+              1,
+              -100,
+              0.25
+            ],
+            "stop_error": 0.22865130123499905,
+            "trained_rounds_if_available": 1137
+          },
+          "cumulative_search_fit_seconds": 83.29311379999672,
+          "current_wave_all_eight_successful": true,
+          "dataset": "houses",
+          "leaf_refit": {
+            "fold": {
+              "coefficient_rounding_absolute_bound": 2.3409015831909033e-07,
+              "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+              "inference_only": true,
+              "library": "xgboost",
+              "physical_trees": 1087,
+              "prediction_oracle_absolute_tolerance": 0.03969679772853851,
+              "topology_sha256_after": "585bbbfcdef0fbf761e0774c479b87e10eab2fb99a707972bca5834e5257225e",
+              "topology_sha256_before": "585bbbfcdef0fbf761e0774c479b87e10eab2fb99a707972bca5834e5257225e"
+            },
+            "lambda": 100,
+            "shrinkage": 0.25,
+            "solver": {
+              "atol": 1e-08,
+              "btol": 1e-08,
+              "damp": "sqrt(lambda)",
+              "iter_lim": 2000,
+              "method": "scipy.sparse.linalg.lsqr"
+            }
+          },
+          "library": "xgboost",
+          "model_bytes": 4619184,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave6_v2\\models\\houses\\xgboost.pkl",
+          "model_sha256": "e99f242d7a8e51e53698ebb76bb512807fdbcf9e21f4c9fc34a523fd5c6f3e88",
+          "plan_sha256": "b2af792e292900317ec8086ecd6974224bffc52fd315e12a213c3f44a5e4978f",
+          "postfit_candidate_seconds": 55.98390219999965,
+          "search_fit_seconds": 17.112907700002324,
+          "source_wave": 6
+        },
+        "parameters": {
+          "eta": 0.05,
+          "eval_metric": "rmse",
+          "lambda": 10,
+          "max_bin": 256,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 8,
+          "max_depth": 6,
+          "min_child_weight": 1,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "reg:squarederror",
+          "seed": 47,
+          "subsample": 0.8,
+          "tree_method": "hist"
+        },
+        "profiles": [
+          {
+            "eta": 0.05,
+            "eval_metric": "rmse",
+            "lambda": 10,
+            "max_bin": 256,
+            "max_cat_threshold": 256,
+            "max_cat_to_onehot": 8,
+            "max_depth": 6,
+            "min_child_weight": 1,
+            "multi_strategy": "one_output_per_tree",
+            "nthread": 1,
+            "objective": "reg:squarederror",
+            "seed": 47,
+            "subsample": 0.8,
+            "tree_method": "hist"
+          },
+          {
+            "eta": 0.025,
+            "eval_metric": "rmse",
+            "lambda": 10,
+            "max_bin": 256,
+            "max_cat_threshold": 256,
+            "max_cat_to_onehot": 8,
+            "max_depth": 6,
+            "min_child_weight": 1,
+            "multi_strategy": "one_output_per_tree",
+            "nthread": 1,
+            "objective": "reg:squarederror",
+            "seed": 47,
+            "subsample": 0.8,
+            "tree_method": "hist"
+          },
+          {
+            "eta": 0.05,
+            "eval_metric": "rmse",
+            "lambda": 10,
+            "max_bin": 256,
+            "max_cat_threshold": 256,
+            "max_cat_to_onehot": 8,
+            "max_depth": 6,
+            "min_child_weight": 0.25,
+            "multi_strategy": "one_output_per_tree",
+            "nthread": 1,
+            "objective": "reg:squarederror",
+            "seed": 47,
+            "subsample": 0.8,
+            "tree_method": "hist"
+          },
+          {
+            "eta": 0.025,
+            "eval_metric": "rmse",
+            "lambda": 10,
+            "max_bin": 256,
+            "max_cat_threshold": 256,
+            "max_cat_to_onehot": 8,
+            "max_depth": 6,
+            "min_child_weight": 0.25,
+            "multi_strategy": "one_output_per_tree",
+            "nthread": 1,
+            "objective": "reg:squarederror",
+            "seed": 47,
+            "subsample": 0.8,
+            "tree_method": "hist"
+          }
+        ],
+        "round_candidates": [
+          544,
+          1087,
+          2174
+        ],
+        "rounds": 1087,
+        "temperature": null,
+        "training_selection": {
+          "all_eight_successful": true,
+          "base_selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 3,
+              "fit_seconds": 3.2742283000006864,
+              "parameters": {
+                "eta": 0.05,
+                "eval_metric": "rmse",
+                "lambda": 10,
+                "max_bin": 256,
+                "max_cat_threshold": 256,
+                "max_cat_to_onehot": 8,
+                "max_depth": 6,
+                "min_child_weight": 1,
+                "multi_strategy": "one_output_per_tree",
+                "nthread": 1,
+                "objective": "reg:squarederror",
+                "seed": 47,
+                "subsample": 0.8,
+                "tree_method": "hist"
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 1087,
+              "selection_key": [
+                0.228771841445333,
+                1087,
+                3
+              ],
+              "stop_error": 0.228771841445333,
+              "trained_rounds_if_available": 1137
+            },
+            "cumulative_search_fit_seconds": 74.77279879999514,
+            "current_wave_all_eight_successful": true,
+            "dataset": "houses",
+            "library": "xgboost",
+            "model_bytes": 4618793,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave4\\models\\houses\\xgboost.pkl",
+            "model_sha256": "764509682fd72d5a13d9da10d3baf21d31b8da3304b947d24b2e507b55322618",
+            "plan_sha256": "b63459620d4e35f543ce3b366d33767b82da8c98a96fa30155442825ce3c585a",
+            "search_fit_seconds": 17.112907700002324,
+            "source_wave": 4
+          },
+          "best": {
+            "config_index": 4,
+            "fit_seconds": 3.2742283000006864,
+            "parameters": {
+              "eta": 0.05,
+              "eval_metric": "rmse",
+              "lambda": 10,
+              "max_bin": 256,
+              "max_cat_threshold": 256,
+              "max_cat_to_onehot": 8,
+              "max_depth": 6,
+              "min_child_weight": 1,
+              "multi_strategy": "one_output_per_tree",
+              "nthread": 1,
+              "objective": "reg:squarederror",
+              "seed": 47,
+              "subsample": 0.8,
+              "tree_method": "hist"
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 1087,
+            "selection_key": [
+              0.22865130123499905,
+              1,
+              -100,
+              0.25
+            ],
+            "stop_error": 0.22865130123499905,
+            "trained_rounds_if_available": 1137
+          },
+          "cumulative_search_fit_seconds": 83.29311379999672,
+          "current_wave_all_eight_successful": true,
+          "dataset": "houses",
+          "leaf_refit": {
+            "fold": {
+              "coefficient_rounding_absolute_bound": 2.3409015831909033e-07,
+              "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+              "inference_only": true,
+              "library": "xgboost",
+              "physical_trees": 1087,
+              "prediction_oracle_absolute_tolerance": 0.03969679772853851,
+              "topology_sha256_after": "585bbbfcdef0fbf761e0774c479b87e10eab2fb99a707972bca5834e5257225e",
+              "topology_sha256_before": "585bbbfcdef0fbf761e0774c479b87e10eab2fb99a707972bca5834e5257225e"
+            },
+            "lambda": 100,
+            "shrinkage": 0.25,
+            "solver": {
+              "atol": 1e-08,
+              "btol": 1e-08,
+              "damp": "sqrt(lambda)",
+              "iter_lim": 2000,
+              "method": "scipy.sparse.linalg.lsqr"
+            }
+          },
+          "library": "xgboost",
+          "model_bytes": 4619184,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave6_v2\\models\\houses\\xgboost.pkl",
+          "model_sha256": "e99f242d7a8e51e53698ebb76bb512807fdbcf9e21f4c9fc34a523fd5c6f3e88",
+          "plan_sha256": "b2af792e292900317ec8086ecd6974224bffc52fd315e12a213c3f44a5e4978f",
+          "postfit_candidate_seconds": 55.98390219999965,
+          "search_fit_seconds": 17.112907700002324,
+          "source_wave": 6
+        }
+      },
+      "leaf_refit": {
+        "fold": {
+          "coefficient_rounding_absolute_bound": 2.3409015831909033e-07,
+          "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+          "inference_only": true,
+          "library": "xgboost",
+          "physical_trees": 1087,
+          "prediction_oracle_absolute_tolerance": 0.03969679772853851,
+          "topology_sha256_after": "585bbbfcdef0fbf761e0774c479b87e10eab2fb99a707972bca5834e5257225e",
+          "topology_sha256_before": "585bbbfcdef0fbf761e0774c479b87e10eab2fb99a707972bca5834e5257225e"
+        },
+        "lambda": 100,
+        "shrinkage": 0.25,
+        "solver": {
+          "atol": 1e-08,
+          "btol": 1e-08,
+          "damp": "sqrt(lambda)",
+          "iter_lim": 2000,
+          "method": "scipy.sparse.linalg.lsqr"
+        }
+      },
+      "library": "xgboost",
+      "model_bytes": 4698370,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave15b\\models\\houses\\xgboost.pkl",
+      "model_sha256": "f2d80248be435bc4c2b50c7401ae75956caf46890a7e1bd359e111fda46b58b5",
+      "refit_details": {
+        "correction": {
+          "fold": {
+            "coefficient_rounding_absolute_bound": 2.949029924547989e-07,
+            "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+            "inference_only": true,
+            "library": "xgboost",
+            "physical_trees": 1087,
+            "prediction_oracle_absolute_tolerance": 0.04362478107213974,
+            "topology_sha256_after": "dddc75ba932adf400b6834c9f2cb50d97a47ec373211982e46ed453c243a6a5f",
+            "topology_sha256_before": "dddc75ba932adf400b6834c9f2cb50d97a47ec373211982e46ed453c243a6a5f"
+          },
+          "preprocessing": {
+            "column_order": "physical tree order, then sorted observed native leaf IDs",
+            "design_nonzeros": 12239620,
+            "design_shape": [
+              11260,
+              58950
+            ],
+            "ordered_training_transform_replayed": false,
+            "training_leaf_ids_sha256": "84b9fe92dab510f66e3e61d8428fe8f0c50311e2623bfaf36155e82e5dd09b96",
+            "training_rows": 11260,
+            "unobserved_leaf_correction": 0
+          },
+          "solve": {
+            "coefficient_norm": 0.4590535104472269,
+            "condition_estimate": 3106.728418682256,
+            "istop": 2,
+            "iterations": 261,
+            "matrix_norm": 12691.63342461066,
+            "normal_residual_norm": 0.0008934373273109799,
+            "regularized_residual_norm": 7.082028756173031,
+            "residual_norm": 5.392783957285081
+          },
+          "stop_check": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.04362478107213974,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 3.278212751676913e-06,
+            "oracle_max_absolute_difference": 4.3123834803537875e-05
+          },
+          "training_check": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.04362478107213974,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 3.429267896749471e-06,
+            "oracle_max_absolute_difference": 4.528613195731168e-05
+          }
+        },
+        "early_stopping": false,
+        "expanded_category_schema": {},
+        "expanded_data": {
+          "added_rows": 3760,
+          "attributes": [
+            "MedianIncome",
+            "HousingMedianAge",
+            "TotalRooms",
+            "TotalBedrooms",
+            "Population",
+            "Households",
+            "Latitude",
+            "Longitude",
+            "LnMedianHouseValue"
+          ],
+          "authorized_rows_file_sha256": "f562bc74ec3f8f352731e65653a681505b18edda64eb994d1a1e535aee8258d8",
+          "authorized_rows_hash_encoding": "ordered little-endian signed int64, no length prefix",
+          "authorized_rows_sha256": "96c62274d5478d5d4bc326a4f6a17eea5a753f8b6fefe3945557a0d431bc9d81",
+          "dataset": "houses",
+          "draft_only": false,
+          "excluded_rows_decoded": 0,
+          "excluded_rows_tokenized": 0,
+          "missing_values_supported": false,
+          "normalization": "common numeric float32 after selected-only float64 parse",
+          "original_train_stop_exact_parity": true,
+          "raw_md5": "5edd572964b0653b789bfc5e5c0293a8",
+          "raw_sha256": "c71f44ba2522f61a8ba1918c220074be4a771e1c8c8c07d031e98368f4f94c6c",
+          "rows": 11260,
+          "selected_rows": 11260,
+          "source_receipt_sha256": "5d434200939a4b3a899be8a57feb2a2085dfe4edb2c0e01a2d19fe0e606883a1",
+          "total_rows": 20640
+        },
+        "fit_seconds": 2.6994440000016766,
+        "parameters": {
+          "eta": 0.05,
+          "eval_metric": "rmse",
+          "lambda": 10,
+          "max_bin": 256,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 8,
+          "max_depth": 6,
+          "min_child_weight": 1,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "reg:squarederror",
+          "seed": 47,
+          "subsample": 0.8,
+          "tree_method": "hist"
+        },
+        "requested_rounds": 1087,
+        "retained_rounds": 1087,
+        "structural_early_termination": false,
+        "temperature": null,
+        "vocabulary_fit_on": "expanded fitting rows only"
+      },
+      "requested_rounds": 1087,
+      "seed": 47,
+      "source_wave": 15,
+      "temperature": null
+    },
+    "best": {
+      "parameters": {
+        "eta": 0.05,
+        "eval_metric": "rmse",
+        "lambda": 10,
+        "max_bin": 256,
+        "max_cat_threshold": 256,
+        "max_cat_to_onehot": 8,
+        "max_depth": 6,
+        "min_child_weight": 1,
+        "multi_strategy": "one_output_per_tree",
+        "nthread": 1,
+        "objective": "reg:squarederror",
+        "seed": 47,
+        "subsample": 0.8,
+        "tree_method": "hist"
+      },
+      "retained_rounds": 1087
+    },
+    "binary_refit": null,
+    "clean_refit_check": {
+      "clean_native_state_sha256": "af5814774e753568efb1e3f355f242f0acbde79ffb0584e9811fe09b9aaf138f",
+      "data_schema_sha256": null,
+      "exact_clean_refit_identity_except_scalar_leaf_outputs": true,
+      "feature_pipeline_sha256": null,
+      "leaf_outputs_ignored": true,
+      "library": "xgboost",
+      "limitation": "Fresh fit and disabled-correction provenance must also be enforced by the runner",
+      "nonleaf_state_sha256": "dddc75ba932adf400b6834c9f2cb50d97a47ec373211982e46ed453c243a6a5f",
+      "old_correction_subtracted": false,
+      "ordered_schema_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "parent_native_state_sha256": "7c8b5cef0f65351c6f6ace16442a9874dc51c312a60a2440f051d1cfb564f196",
+      "physical_trees": 1087,
+      "problem": "regression",
+      "total_native_leaves": 58950,
+      "training_metadata_sha256": null
+    },
+    "dataset": "houses",
+    "fixed_job": {
+      "anchor_rounds": 1087,
+      "binary_refit": null,
+      "dataset": "houses",
+      "expanded_source": {
+        "dataset": "houses",
+        "path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave15b\\expanded\\houses.pkl",
+        "receipt": {
+          "added_rows": 3760,
+          "attributes": [
+            "MedianIncome",
+            "HousingMedianAge",
+            "TotalRooms",
+            "TotalBedrooms",
+            "Population",
+            "Households",
+            "Latitude",
+            "Longitude",
+            "LnMedianHouseValue"
+          ],
+          "authorized_rows_file_sha256": "f562bc74ec3f8f352731e65653a681505b18edda64eb994d1a1e535aee8258d8",
+          "authorized_rows_hash_encoding": "ordered little-endian signed int64, no length prefix",
+          "authorized_rows_sha256": "96c62274d5478d5d4bc326a4f6a17eea5a753f8b6fefe3945557a0d431bc9d81",
+          "dataset": "houses",
+          "draft_only": false,
+          "excluded_rows_decoded": 0,
+          "excluded_rows_tokenized": 0,
+          "missing_values_supported": false,
+          "normalization": "common numeric float32 after selected-only float64 parse",
+          "original_train_stop_exact_parity": true,
+          "raw_md5": "5edd572964b0653b789bfc5e5c0293a8",
+          "raw_sha256": "c71f44ba2522f61a8ba1918c220074be4a771e1c8c8c07d031e98368f4f94c6c",
+          "rows": 11260,
+          "selected_rows": 11260,
+          "source_receipt_sha256": "5d434200939a4b3a899be8a57feb2a2085dfe4edb2c0e01a2d19fe0e606883a1",
+          "total_rows": 20640
+        },
+        "sha256": "ea7db54b000d474826b35085254e6b0c66172e75a4870759b34317c40b696a06"
+      },
+      "leaf_refit": {
+        "lambda": 1000.0,
+        "max_working_bytes": 4294967296,
+        "shrinkage": 0.25,
+        "solver": {
+          "iterations": 10000,
+          "variant": "unscaled_lsqr_10000"
+        }
+      },
+      "library": "xgboost",
+      "multiclass_refit": null,
+      "original_selection": {
+        "all_eight_successful": true,
+        "base_selection": {
+          "all_eight_successful": true,
+          "best": {
+            "config_index": 3,
+            "fit_seconds": 3.2742283000006864,
+            "parameters": {
+              "eta": 0.05,
+              "eval_metric": "rmse",
+              "lambda": 10,
+              "max_bin": 256,
+              "max_cat_threshold": 256,
+              "max_cat_to_onehot": 8,
+              "max_depth": 6,
+              "min_child_weight": 1,
+              "multi_strategy": "one_output_per_tree",
+              "nthread": 1,
+              "objective": "reg:squarederror",
+              "seed": 47,
+              "subsample": 0.8,
+              "tree_method": "hist"
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 1087,
+            "selection_key": [
+              0.228771841445333,
+              1087,
+              3
+            ],
+            "stop_error": 0.228771841445333,
+            "trained_rounds_if_available": 1137
+          },
+          "cumulative_search_fit_seconds": 74.77279879999514,
+          "current_wave_all_eight_successful": true,
+          "dataset": "houses",
+          "library": "xgboost",
+          "model_bytes": 4618793,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave4\\models\\houses\\xgboost.pkl",
+          "model_sha256": "764509682fd72d5a13d9da10d3baf21d31b8da3304b947d24b2e507b55322618",
+          "plan_sha256": "b63459620d4e35f543ce3b366d33767b82da8c98a96fa30155442825ce3c585a",
+          "search_fit_seconds": 17.112907700002324,
+          "source_wave": 4
+        },
+        "best": {
+          "config_index": 4,
+          "fit_seconds": 3.2742283000006864,
+          "parameters": {
+            "eta": 0.05,
+            "eval_metric": "rmse",
+            "lambda": 10,
+            "max_bin": 256,
+            "max_cat_threshold": 256,
+            "max_cat_to_onehot": 8,
+            "max_depth": 6,
+            "min_child_weight": 1,
+            "multi_strategy": "one_output_per_tree",
+            "nthread": 1,
+            "objective": "reg:squarederror",
+            "seed": 47,
+            "subsample": 0.8,
+            "tree_method": "hist"
+          },
+          "retained_at_round_cap": false,
+          "retained_rounds": 1087,
+          "selection_key": [
+            0.22865130123499905,
+            1,
+            -100,
+            0.25
+          ],
+          "stop_error": 0.22865130123499905,
+          "trained_rounds_if_available": 1137
+        },
+        "cumulative_search_fit_seconds": 83.29311379999672,
+        "current_wave_all_eight_successful": true,
+        "dataset": "houses",
+        "leaf_refit": {
+          "fold": {
+            "coefficient_rounding_absolute_bound": 2.3409015831909033e-07,
+            "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+            "inference_only": true,
+            "library": "xgboost",
+            "physical_trees": 1087,
+            "prediction_oracle_absolute_tolerance": 0.03969679772853851,
+            "topology_sha256_after": "585bbbfcdef0fbf761e0774c479b87e10eab2fb99a707972bca5834e5257225e",
+            "topology_sha256_before": "585bbbfcdef0fbf761e0774c479b87e10eab2fb99a707972bca5834e5257225e"
+          },
+          "lambda": 100,
+          "shrinkage": 0.25,
+          "solver": {
+            "atol": 1e-08,
+            "btol": 1e-08,
+            "damp": "sqrt(lambda)",
+            "iter_lim": 2000,
+            "method": "scipy.sparse.linalg.lsqr"
+          }
+        },
+        "library": "xgboost",
+        "model_bytes": 4619184,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave6_v2\\models\\houses\\xgboost.pkl",
+        "model_sha256": "e99f242d7a8e51e53698ebb76bb512807fdbcf9e21f4c9fc34a523fd5c6f3e88",
+        "plan_sha256": "b2af792e292900317ec8086ecd6974224bffc52fd315e12a213c3f44a5e4978f",
+        "postfit_candidate_seconds": 55.98390219999965,
+        "search_fit_seconds": 17.112907700002324,
+        "source_wave": 6
+      },
+      "parameters": {
+        "eta": 0.05,
+        "eval_metric": "rmse",
+        "lambda": 10,
+        "max_bin": 256,
+        "max_cat_threshold": 256,
+        "max_cat_to_onehot": 8,
+        "max_depth": 6,
+        "min_child_weight": 1,
+        "multi_strategy": "one_output_per_tree",
+        "nthread": 1,
+        "objective": "reg:squarederror",
+        "seed": 47,
+        "subsample": 0.8,
+        "tree_method": "hist"
+      },
+      "profiles": [
+        {
+          "eta": 0.05,
+          "eval_metric": "rmse",
+          "lambda": 10,
+          "max_bin": 256,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 8,
+          "max_depth": 6,
+          "min_child_weight": 1,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "reg:squarederror",
+          "seed": 47,
+          "subsample": 0.8,
+          "tree_method": "hist"
+        },
+        {
+          "eta": 0.025,
+          "eval_metric": "rmse",
+          "lambda": 10,
+          "max_bin": 256,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 8,
+          "max_depth": 6,
+          "min_child_weight": 1,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "reg:squarederror",
+          "seed": 47,
+          "subsample": 0.8,
+          "tree_method": "hist"
+        },
+        {
+          "eta": 0.05,
+          "eval_metric": "rmse",
+          "lambda": 10,
+          "max_bin": 256,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 8,
+          "max_depth": 6,
+          "min_child_weight": 0.25,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "reg:squarederror",
+          "seed": 47,
+          "subsample": 0.8,
+          "tree_method": "hist"
+        },
+        {
+          "eta": 0.025,
+          "eval_metric": "rmse",
+          "lambda": 10,
+          "max_bin": 256,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 8,
+          "max_depth": 6,
+          "min_child_weight": 0.25,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "reg:squarederror",
+          "seed": 47,
+          "subsample": 0.8,
+          "tree_method": "hist"
+        }
+      ],
+      "round_candidates": [
+        544,
+        1087,
+        2174
+      ],
+      "rounds": 1087,
+      "temperature": null,
+      "training_selection": {
+        "all_eight_successful": true,
+        "base_selection": {
+          "all_eight_successful": true,
+          "best": {
+            "config_index": 3,
+            "fit_seconds": 3.2742283000006864,
+            "parameters": {
+              "eta": 0.05,
+              "eval_metric": "rmse",
+              "lambda": 10,
+              "max_bin": 256,
+              "max_cat_threshold": 256,
+              "max_cat_to_onehot": 8,
+              "max_depth": 6,
+              "min_child_weight": 1,
+              "multi_strategy": "one_output_per_tree",
+              "nthread": 1,
+              "objective": "reg:squarederror",
+              "seed": 47,
+              "subsample": 0.8,
+              "tree_method": "hist"
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 1087,
+            "selection_key": [
+              0.228771841445333,
+              1087,
+              3
+            ],
+            "stop_error": 0.228771841445333,
+            "trained_rounds_if_available": 1137
+          },
+          "cumulative_search_fit_seconds": 74.77279879999514,
+          "current_wave_all_eight_successful": true,
+          "dataset": "houses",
+          "library": "xgboost",
+          "model_bytes": 4618793,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave4\\models\\houses\\xgboost.pkl",
+          "model_sha256": "764509682fd72d5a13d9da10d3baf21d31b8da3304b947d24b2e507b55322618",
+          "plan_sha256": "b63459620d4e35f543ce3b366d33767b82da8c98a96fa30155442825ce3c585a",
+          "search_fit_seconds": 17.112907700002324,
+          "source_wave": 4
+        },
+        "best": {
+          "config_index": 4,
+          "fit_seconds": 3.2742283000006864,
+          "parameters": {
+            "eta": 0.05,
+            "eval_metric": "rmse",
+            "lambda": 10,
+            "max_bin": 256,
+            "max_cat_threshold": 256,
+            "max_cat_to_onehot": 8,
+            "max_depth": 6,
+            "min_child_weight": 1,
+            "multi_strategy": "one_output_per_tree",
+            "nthread": 1,
+            "objective": "reg:squarederror",
+            "seed": 47,
+            "subsample": 0.8,
+            "tree_method": "hist"
+          },
+          "retained_at_round_cap": false,
+          "retained_rounds": 1087,
+          "selection_key": [
+            0.22865130123499905,
+            1,
+            -100,
+            0.25
+          ],
+          "stop_error": 0.22865130123499905,
+          "trained_rounds_if_available": 1137
+        },
+        "cumulative_search_fit_seconds": 83.29311379999672,
+        "current_wave_all_eight_successful": true,
+        "dataset": "houses",
+        "leaf_refit": {
+          "fold": {
+            "coefficient_rounding_absolute_bound": 2.3409015831909033e-07,
+            "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+            "inference_only": true,
+            "library": "xgboost",
+            "physical_trees": 1087,
+            "prediction_oracle_absolute_tolerance": 0.03969679772853851,
+            "topology_sha256_after": "585bbbfcdef0fbf761e0774c479b87e10eab2fb99a707972bca5834e5257225e",
+            "topology_sha256_before": "585bbbfcdef0fbf761e0774c479b87e10eab2fb99a707972bca5834e5257225e"
+          },
+          "lambda": 100,
+          "shrinkage": 0.25,
+          "solver": {
+            "atol": 1e-08,
+            "btol": 1e-08,
+            "damp": "sqrt(lambda)",
+            "iter_lim": 2000,
+            "method": "scipy.sparse.linalg.lsqr"
+          }
+        },
+        "library": "xgboost",
+        "model_bytes": 4619184,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave6_v2\\models\\houses\\xgboost.pkl",
+        "model_sha256": "e99f242d7a8e51e53698ebb76bb512807fdbcf9e21f4c9fc34a523fd5c6f3e88",
+        "plan_sha256": "b2af792e292900317ec8086ecd6974224bffc52fd315e12a213c3f44a5e4978f",
+        "postfit_candidate_seconds": 55.98390219999965,
+        "search_fit_seconds": 17.112907700002324,
+        "source_wave": 6
+      }
+    },
+    "independent_stop_selection": {
+      "anchor": {
+        "model_bytes": 4690920,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\houses\\xgboost.pkl",
+        "model_sha256": "1065680f78ecaedfc5bc9531025add76393d82b338a4767db0fc727845f1efbb"
+      },
+      "correction": {
+        "lambda": 1000.0,
+        "max_working_bytes": 4294967296,
+        "shrinkage": 0.25,
+        "solver": {
+          "iterations": 10000,
+          "variant": "unscaled_lsqr_10000"
+        }
+      },
+      "dataset": "houses",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 3.029323499999009,
+        "parameters": {
+          "eta": 0.05,
+          "eval_metric": "rmse",
+          "lambda": 10,
+          "max_bin": 256,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 8,
+          "max_depth": 6,
+          "min_child_weight": 1,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "reg:squarederror",
+          "seed": 47,
+          "subsample": 0.8,
+          "tree_method": "hist"
+        },
+        "requested_rounds": 1087,
+        "retained_rounds": 1087,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 1250,
+        "original_train_rows": 6250,
+        "outside_cap_rows": 3760,
+        "row_ids_sha256": "9857daa2efbadb9d3cec56b74d3fdfa7856096f2c32d4b0ad5a883c6325ef01d",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 10010,
+        "schema": {},
+        "source_sha256": "ea7db54b000d474826b35085254e6b0c66172e75a4870759b34317c40b696a06",
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "xgboost",
+      "stop_error": 0.21927970288703907
+    },
+    "leaf_refit": {
+      "lambda": 1000.0,
+      "max_working_bytes": 4294967296,
+      "shrinkage": 0.25,
+      "solver": {
+        "iterations": 10000,
+        "variant": "unscaled_lsqr_10000"
+      }
+    },
+    "library": "xgboost",
+    "model_bytes": 4698462,
+    "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17b\\models\\houses\\xgboost.pkl",
+    "model_sha256": "93315f72ee36b4ea7d6ad8343666f619333bcc3d9daeb17e61f760f1deb7c455",
+    "multiclass_refit": null,
+    "refit_details": {
+      "correction": null,
+      "early_stopping": false,
+      "expanded_category_schema": {},
+      "expanded_data": {
+        "added_rows": 3760,
+        "attributes": [
+          "MedianIncome",
+          "HousingMedianAge",
+          "TotalRooms",
+          "TotalBedrooms",
+          "Population",
+          "Households",
+          "Latitude",
+          "Longitude",
+          "LnMedianHouseValue"
+        ],
+        "authorized_rows_file_sha256": "f562bc74ec3f8f352731e65653a681505b18edda64eb994d1a1e535aee8258d8",
+        "authorized_rows_hash_encoding": "ordered little-endian signed int64, no length prefix",
+        "authorized_rows_sha256": "96c62274d5478d5d4bc326a4f6a17eea5a753f8b6fefe3945557a0d431bc9d81",
+        "dataset": "houses",
+        "draft_only": false,
+        "excluded_rows_decoded": 0,
+        "excluded_rows_tokenized": 0,
+        "missing_values_supported": false,
+        "normalization": "common numeric float32 after selected-only float64 parse",
+        "original_train_stop_exact_parity": true,
+        "raw_md5": "5edd572964b0653b789bfc5e5c0293a8",
+        "raw_sha256": "c71f44ba2522f61a8ba1918c220074be4a771e1c8c8c07d031e98368f4f94c6c",
+        "rows": 11260,
+        "selected_rows": 11260,
+        "source_receipt_sha256": "5d434200939a4b3a899be8a57feb2a2085dfe4edb2c0e01a2d19fe0e606883a1",
+        "total_rows": 20640
+      },
+      "fit_seconds": 2.908709200000885,
+      "parameters": {
+        "eta": 0.05,
+        "eval_metric": "rmse",
+        "lambda": 10,
+        "max_bin": 256,
+        "max_cat_threshold": 256,
+        "max_cat_to_onehot": 8,
+        "max_depth": 6,
+        "min_child_weight": 1,
+        "multi_strategy": "one_output_per_tree",
+        "nthread": 1,
+        "objective": "reg:squarederror",
+        "seed": 47,
+        "subsample": 0.8,
+        "tree_method": "hist"
+      },
+      "requested_rounds": 1087,
+      "retained_rounds": 1087,
+      "scalar_fitting_data": {
+        "original_stop_rows": 1250,
+        "original_train_rows": 6250,
+        "outside_cap_rows": 3760,
+        "row_ids_sha256": "96c62274d5478d5d4bc326a4f6a17eea5a753f8b6fefe3945557a0d431bc9d81",
+        "row_order": "TRAIN, STOP, ascending outside-cap",
+        "rows": 11260,
+        "schema": {},
+        "source_sha256": "ea7db54b000d474826b35085254e6b0c66172e75a4870759b34317c40b696a06",
+        "stop_excluded": false,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "scalar_refresh": {
+        "checks": {
+          "fitting": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.04312644153833389,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 3.036543327961936e-06,
+            "oracle_max_absolute_difference": 4.014324369450151e-05
+          },
+          "original_stop": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.04312644153833389,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 2.3422091902642932e-06,
+            "oracle_max_absolute_difference": 3.0811820401766e-05
+          },
+          "original_train": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.04312644153833389,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 3.041903787101979e-06,
+            "oracle_max_absolute_difference": 4.014324369450151e-05
+          }
+        },
+        "fold": {
+          "coefficient_rounding_absolute_bound": 2.769882266903843e-07,
+          "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+          "inference_only": true,
+          "library": "xgboost",
+          "physical_trees": 1087,
+          "prediction_oracle_absolute_tolerance": 0.04312644153833389,
+          "topology_sha256_after": "dddc75ba932adf400b6834c9f2cb50d97a47ec373211982e46ed453c243a6a5f",
+          "topology_sha256_before": "dddc75ba932adf400b6834c9f2cb50d97a47ec373211982e46ed453c243a6a5f"
+        },
+        "independent_sparse_raw_margin_oracle": true,
+        "memory": {
+          "array_budgets_bytes": {
+            "design_construction_temporary_budget": 294111200,
+            "lsqr_residual_and_vector_workspace_budget": 4493440,
+            "native_leaf_result_and_int64_copy": 195833920,
+            "native_raw_result_and_float64_copy": 180160,
+            "observed_leaf_maps": 471600,
+            "resident_csr_data_indices_indptr": 195924008
+          },
+          "csr_nonzeros": 12239620,
+          "excluded": [
+            "native model objects",
+            "input frames",
+            "categorical transform workspace",
+            "Python object/allocator overhead"
+          ],
+          "extra_certificate_vector_bytes": 17973760,
+          "max_working_bytes": 4294967296,
+          "native_leaf_count": 58950,
+          "no_dense_hessian": true,
+          "parameters_upper_bound": 58950,
+          "physical_trees": 1087,
+          "refit_array_budget_bytes": 691014328,
+          "rows": 11260,
+          "scope": "named conservative refit arrays, not whole-process RSS",
+          "solver_kind": "regression"
+        },
+        "preprocessing": {
+          "column_order": "physical tree order, then sorted observed native leaf IDs",
+          "design_nonzeros": 12239620,
+          "design_shape": [
+            11260,
+            58950
+          ],
+          "ordered_training_transform_replayed": false,
+          "training_leaf_ids_sha256": "84b9fe92dab510f66e3e61d8428fe8f0c50311e2623bfaf36155e82e5dd09b96",
+          "training_rows": 11260,
+          "unobserved_leaf_correction": 0
+        },
+        "solve": {
+          "atol": 1e-12,
+          "btol": 1e-12,
+          "certificate": {
+            "certified": true,
+            "coefficient_l2_error_bound": 7.509236408330868e-11,
+            "dual": 49.887288490282884,
+            "finite": true,
+            "fitting_prediction_rms_error_bound": 2.237827373397304e-11,
+            "gradient_norm": 7.509236408330869e-08,
+            "normalized_original_gradient": 1.7904544244282797e-10,
+            "original_gradient_dual_gap": 2.8194315718100943e-18,
+            "primal": 49.887288490282835,
+            "primal_minus_dual": -4.973799150320701e-14,
+            "primal_zero": 66.37387487188148,
+            "relative_gap": 5.651603158105636e-20
+          },
+          "conlim": 100000000.0,
+          "initial_coefficients": "zero",
+          "iterations_limit": 10000,
+          "native": {
+            "condition_estimate": 1037.5537584618564,
+            "istop": 2,
+            "iterations": 155,
+            "matrix_norm": 9767.696820939873,
+            "normal_residual_norm": 7.508659574336403e-08,
+            "regularized_residual_norm": 9.988722489916599,
+            "residual_norm": 9.017896521234833
+          },
+          "no_heldout_score": true,
+          "penalty": 1000.0,
+          "solver_seconds_diagnostic_only": 3.6838693999998213,
+          "success": true,
+          "variant": "unscaled_lsqr_10000"
+        }
+      },
+      "structural_early_termination": false,
+      "temperature": null,
+      "vocabulary_fit_on": "expanded fitting rows only"
+    },
+    "requested_rounds": 1087,
+    "seed": 47,
+    "source_wave": "17b",
+    "temperature": null
+  },
+  "started_at": "2026-10-16T15:35:11.059721+00:00",
+  "status": "ok"
+}

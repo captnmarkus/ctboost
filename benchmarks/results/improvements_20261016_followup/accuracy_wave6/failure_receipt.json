@@ -1,0 +1,9 @@
+{
+  "status": "failed_infrastructure_receipt_serialization",
+  "plan_sha256": "327d500d37c5930b785d6164a2c1be7c034502502be236612870d6c234b0a838",
+  "cause": "Native correction/oracle work returned diagnostic NumPy float32 analytical tolerances for CTBoost and XGBoost; the strict JSON writer rejected those scalars. All eight CTBoost/XGBoost jobs stopped at the first candidate receipt. All four LightGBM jobs completed eight candidates. The controller refused to freeze selections because required jobs were missing.",
+  "partial_work": "32 LightGBM candidate records and selections are preserved; eight CTBoost/XGBoost initial candidate computations did not produce JSON records. Resource receipts and tracebacks are retained for all12 jobs. No final frozen selection or development score was created.",
+  "development_scored": false,
+  "official_test_scored": false,
+  "retry": "accuracy_wave6_v2 re-runs the entire identical grid from the original wave5 models, with diagnostic scalars converted to Python values. No coefficients, native outputs, routing, selection rule, grid or helper code changed. The failed attempt is not used to select a model."
+}

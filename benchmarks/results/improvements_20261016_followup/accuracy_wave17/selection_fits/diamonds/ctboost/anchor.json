@@ -1,0 +1,118 @@
+{
+  "clean_fit_controls": {
+    "binary_refit": null,
+    "leaf_refit": null,
+    "multiclass_refit": null,
+    "parameters": {
+      "alpha": 0.05,
+      "bootstrap_type": "Bernoulli",
+      "cat_features": [
+        "cut",
+        "color",
+        "clarity"
+      ],
+      "eval_metric": "RMSE",
+      "feature_test": "grouped",
+      "feature_test_adjustment": "none",
+      "feature_test_bins": 8,
+      "iterations": 1000,
+      "lambda_l2": 1,
+      "leaf_estimation_backtracking": true,
+      "leaf_estimation_iterations": 3,
+      "learning_rate": 0.15,
+      "max_bins": 256,
+      "max_cat_threshold": 64,
+      "max_depth": 8,
+      "multi_strategy": "one_output_per_tree",
+      "multiclass_feature_test": "single",
+      "ordered_ctr": true,
+      "random_seed": 47,
+      "subsample": 0.8,
+      "verbose": false
+    },
+    "rounds": 512,
+    "temperature": null
+  },
+  "clean_fit_controls_sha256": "074646faa4b7bbc91a4039da0d817b37ac728d7b1412071d0de0d0f80cc90550",
+  "fit": {
+    "early_stopping": false,
+    "fit_seconds": 2.392048800000339,
+    "parameters": {
+      "alpha": 0.05,
+      "bootstrap_type": "Bernoulli",
+      "cat_features": [
+        "cut",
+        "color",
+        "clarity"
+      ],
+      "eval_metric": "RMSE",
+      "feature_test": "grouped",
+      "feature_test_adjustment": "none",
+      "feature_test_bins": 8,
+      "iterations": 512,
+      "lambda_l2": 1,
+      "leaf_estimation_backtracking": true,
+      "leaf_estimation_iterations": 3,
+      "learning_rate": 0.15,
+      "max_bins": 256,
+      "max_cat_threshold": 64,
+      "max_depth": 8,
+      "multi_strategy": "one_output_per_tree",
+      "multiclass_feature_test": "single",
+      "ordered_ctr": true,
+      "random_seed": 47,
+      "subsample": 0.8,
+      "verbose": false
+    },
+    "requested_rounds": 512,
+    "retained_rounds": 512,
+    "structural_early_termination": false
+  },
+  "fitting_data": {
+    "original_stop_rows": 1250,
+    "original_train_rows": 6250,
+    "outside_cap_rows": 25960,
+    "row_ids_sha256": "ec88c865061d9bb68ed908585b63e91dcaf1416356a2802e2874f3df8932bac6",
+    "row_order": "TRAIN then ascending outside-cap",
+    "rows": 32210,
+    "schema": {
+      "clarity": [
+        "I1",
+        "IF",
+        "SI1",
+        "SI2",
+        "VS1",
+        "VS2",
+        "VVS1",
+        "VVS2"
+      ],
+      "color": [
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J"
+      ],
+      "cut": [
+        "Fair",
+        "Good",
+        "Ideal",
+        "Premium",
+        "Very Good"
+      ]
+    },
+    "source_sha256": "7cc55e82fc485dbe8fdcba4170005f13dcb12e4cde4570f243ff0ed9be7d4416",
+    "stop_excluded": true,
+    "vocabulary_fit_on": "actual fitting rows only"
+  },
+  "model": {
+    "model_bytes": 6462694,
+    "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\diamonds\\ctboost.pkl",
+    "model_sha256": "4591b6a716e2fabc50bca6aa8cb8f95247e9ebc297208eaab92f8c90bd0c9362"
+  },
+  "old_scalar_corrections_disabled_before_fit": true,
+  "status": "ok",
+  "temperature": null
+}

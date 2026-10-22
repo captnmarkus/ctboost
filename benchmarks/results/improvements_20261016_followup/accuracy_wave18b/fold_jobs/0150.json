@@ -1,0 +1,166 @@
+{
+  "correction": {
+    "checks": {
+      "fitting": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 0.0005863002734258771,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 3.3019266499412604e-07,
+        "oracle_max_absolute_difference": 1.4837279200818898e-06
+      },
+      "validation": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 0.0005863002734258771,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 3.517841715676646e-07,
+        "oracle_max_absolute_difference": 1.5807498243702867e-06
+      }
+    },
+    "fold": {
+      "coefficient_rounding_absolute_bound": 2.661278301792358e-07,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "xgboost",
+      "physical_trees": 32,
+      "prediction_oracle_absolute_tolerance": 0.0005863002734258771,
+      "topology_sha256_after": "690e17eda51daf10690e4ec39a244ff8da6cf69780cf0fc0ff8f9b2446b34e3b",
+      "topology_sha256_before": "690e17eda51daf10690e4ec39a244ff8da6cf69780cf0fc0ff8f9b2446b34e3b"
+    },
+    "independent_sparse_raw_margin_oracle": true,
+    "memory": {
+      "array_budgets_bytes": {
+        "design_construction_temporary_budget": 62400000,
+        "lbfgsb_float_and_integer_work_arrays": 131340,
+        "native_leaf_result_and_int64_copy": 39936000,
+        "native_raw_result_and_float64_copy": 1248000,
+        "objective_workspace_budget": 7488000,
+        "observed_leaf_maps": 2040,
+        "optimizer_vector_budget": 25500,
+        "resident_csr_data_indices_indptr": 40560008
+      },
+      "csr_nonzeros": 2496000,
+      "excluded": [
+        "native model objects",
+        "input frames",
+        "categorical transform workspace",
+        "Python object/allocator overhead"
+      ],
+      "max_working_bytes": 6442450944,
+      "native_leaf_count": 255,
+      "no_dense_hessian": true,
+      "parameters_upper_bound": 255,
+      "physical_trees": 32,
+      "refit_array_budget_bytes": 151790888,
+      "rows": 78000,
+      "scope": "named conservative refit arrays, not whole-process RSS",
+      "solver_kind": "binary"
+    },
+    "native_cv_adapter": {
+      "algorithm_controls_sha256": "87154146c79456bb1faf80aeb4a7e286a78d5c2118092c284e1daa0bf012de87",
+      "effective_named_array_limit": 6442450944,
+      "fresh_payload_metadata_guard": true,
+      "inherited_named_array_limit": 4294967296,
+      "resource_override_only": true,
+      "temperature_unchanged": true
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 2496000,
+      "design_shape": [
+        78000,
+        255
+      ],
+      "ordered_training_transform_replayed": false,
+      "training_leaf_ids_sha256": "20a423104cd8deeefcc1361d16c5cb2b4a6f4a69e02098c2aa27504c40db4e03",
+      "training_rows": 78000,
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "columns": 255,
+      "evaluations": 491,
+      "final_objective": 0.18001033915249634,
+      "ftol": 1e-13,
+      "gradient_gate": 1e-06,
+      "gtol": 1e-09,
+      "initial_coefficients": "all zero",
+      "initial_objective": 0.1867945167370513,
+      "iterations": 453,
+      "maxcor": 20,
+      "maximum_absolute_mean_gradient": 3.1153684562418436e-08,
+      "maxiter": 2000,
+      "maxls": 50,
+      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+      "method": "L-BFGS-B",
+      "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+      "penalty": 1.0,
+      "rows": 78000,
+      "status": 0
+    }
+  },
+  "corrections_disabled_before_fit": true,
+  "dataset": "GiveMeSomeCredit",
+  "early_stopping": false,
+  "feature_names": [
+    "RevolvingUtilizationOfUnsecuredLines",
+    "age",
+    "NumberOfTime30-59DaysPastDueNotWorse",
+    "DebtRatio",
+    "MonthlyIncome",
+    "NumberOfOpenCreditLinesAndLoans",
+    "NumberOfTimes90DaysLate",
+    "NumberRealEstateLoansOrLines",
+    "NumberOfTime60-89DaysPastDueNotWorse",
+    "NumberOfDependents"
+  ],
+  "finished_at": "2026-10-16T16:07:56.875661+00:00",
+  "fit_controls_sha256": "35714a96cf83e3123589c9c2096d944c0bb15e9afc50625c4343ef7ad39b3c84",
+  "fit_seconds": 0.17429819999961182,
+  "fixed_corrections_disabled_before_fit": true,
+  "fold": 0,
+  "fold_category_schema": {},
+  "library": "xgboost",
+  "model_bytes": 47429,
+  "model_retained": false,
+  "model_sha256": "e7f16023df73dd9370cbdfa157a3f466e363cbc44a574dabd065d1b74492f618",
+  "native_cv_fresh_fit": true,
+  "native_fit_completed": true,
+  "native_fit_started": true,
+  "parameters": {
+    "eta": 0.05,
+    "eval_metric": "auc",
+    "lambda": 10,
+    "max_bin": 256,
+    "max_cat_threshold": 256,
+    "max_cat_to_onehot": 8,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "multi_strategy": "one_output_per_tree",
+    "nthread": 1,
+    "objective": "binary:logistic",
+    "seed": 47,
+    "subsample": 1.0,
+    "tree_method": "hist"
+  },
+  "prediction_array_sha256": "232b400d1470c59a50c95c576013d7e2fa62051ef8cc4555131d99ba1b59369b",
+  "prediction_dtype": "<f4",
+  "prediction_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave18b\\fold_predictions\\0150.npz",
+  "prediction_sha256": "43379cfe4b49ae8c0d825e84c5f8ed8748dc56ee52567de4ede2a9610422bf47",
+  "prediction_shape": [
+    19500
+  ],
+  "profile_index": 0,
+  "reload_bit_exact": true,
+  "requested_rounds": 32,
+  "retained_rounds": 32,
+  "seed": 47,
+  "started_at": "2026-10-16T16:07:51.711435+00:00",
+  "status": "ok",
+  "structural_early_termination": false,
+  "temperature": null,
+  "training_rows": 78000,
+  "validation_error": 0.15391177338526318,
+  "validation_labels_received": false,
+  "validation_rows": 19500
+}

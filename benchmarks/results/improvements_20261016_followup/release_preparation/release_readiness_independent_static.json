@@ -1,0 +1,44 @@
+{
+  "recorded_at": "2026-10-16T16:26:46.978157+00:00",
+  "scope": "Read-only release-source allowlist review and pending public archive textual pattern scan; no archive execution, test, data decoding, install or build.",
+  "release_root": "C:\\Users\\captn\\.codex\\worktrees\\release-0-1-62\\ctboost",
+  "publication_hygiene": {
+    "scan_scope": "C:\\apps\\ctboost\\benchmarks\\results\\improvements_20261016_followup",
+    "text_files": 7115,
+    "text_bytes": 87428889,
+    "findings": [],
+    "undecodable_text_paths": [],
+    "scanned_inventory_sha256": "14967b75b83b812658d0d727f87483fb0dd1bc52212d381b7fecc4ae92b98880",
+    "pattern_names": [
+      "private_key_header",
+      "github_token",
+      "pypi_token",
+      "openai_token",
+      "aws_access_id",
+      "bearer_literal",
+      "url_password"
+    ],
+    "matched_values_emitted": false,
+    "limitations": "Pattern matching is not a comprehensive secret detector. NPZ/model/binary contents were not decoded. Existing logs/source fixtures may contain synthetic tokens."
+  },
+  "sdist_static_allowlist": {
+    "pyproject_sha256": "fb296b73b244409e7c4de1477ee008ee152871f9546dd551e13a3a4b5bc11a01",
+    "matching_files": 595,
+    "required_members": {
+      "ctboost/_categorical_codes.py": true,
+      "benchmarks/fair_accuracy_current_round_cv_policy.json": true,
+      "benchmarks/results/improvements_20261016_followup/robustness_protocol_multiclass.json": true,
+      "benchmarks/results/improvements_20261016_followup/robustness_protocol_scalar_refresh.json": true,
+      "benchmarks/results/improvements_20261016_followup/robustness_protocol_scalar_numerical.json": true,
+      "tests/conftest.py": true,
+      "docs/release-0.1.62.md": true
+    },
+    "study_archive_members": [
+      "benchmarks/results/improvements_20261016_followup/robustness_protocol_multiclass.json",
+      "benchmarks/results/improvements_20261016_followup/robustness_protocol_scalar_numerical.json",
+      "benchmarks/results/improvements_20261016_followup/robustness_protocol_scalar_refresh.json"
+    ],
+    "unexpected_binary_data_members": [],
+    "unrelated_fullhpo0161_matches": []
+  }
+}

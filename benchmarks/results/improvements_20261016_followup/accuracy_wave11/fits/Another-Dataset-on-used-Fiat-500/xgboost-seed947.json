@@ -1,0 +1,62 @@
+{
+  "dataset": "Another-Dataset-on-used-Fiat-500",
+  "finished_at": "2026-10-16T12:18:26.491604+00:00",
+  "library": "xgboost",
+  "model_bytes": 100785,
+  "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave11\\components\\Another-Dataset-on-used-Fiat-500\\xgboost-seed947.pkl",
+  "model_sha256": "04b3c223fd0108a6089170915f069dc213eb335f71384ea5d8995cb3a3093a25",
+  "refit_details": {
+    "apparent_union_error_inference_transform": 605.897996542521,
+    "early_stopping": false,
+    "fit_seconds": 0.04191249999712454,
+    "parameters": {
+      "colsample_bytree": 0.8,
+      "eta": 0.1,
+      "eval_metric": "rmse",
+      "lambda": 10,
+      "max_bin": 256,
+      "max_depth": 8,
+      "min_child_weight": 5,
+      "multi_strategy": "one_output_per_tree",
+      "nthread": 1,
+      "objective": "reg:squarederror",
+      "seed": 947,
+      "subsample": 0.8,
+      "tree_method": "hist"
+    },
+    "requested_rounds": 32,
+    "retained_rounds": 32,
+    "structural_early_termination": false,
+    "union_data": {
+      "row_order": "original TRAIN followed by original STOP",
+      "source_roles": {
+        "stop": {
+          "index_sha256": "e4ff5aecc677409e8207582fe0236f8b69960d04dbde04a2f912653c090ef301",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\Another-Dataset-on-used-Fiat-500\\stop.pkl",
+          "rows": 128,
+          "sha256": "2abb866e9c9ccef26f3c9f6cccdf52540cb045c50dd23830cedcdac07e5e9768"
+        },
+        "train": {
+          "index_sha256": "2cdd25daa6280834253718148c7e690ba1942a7f7b4f38dce8170efc0c67e442",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\Another-Dataset-on-used-Fiat-500\\train.pkl",
+          "rows": 641,
+          "sha256": "4971790b94b148ac95999e371a510e4705012e227521497a30803c61b852efff"
+        }
+      },
+      "stop_ids_sha256": "e4ff5aecc677409e8207582fe0236f8b69960d04dbde04a2f912653c090ef301",
+      "stop_rows": 128,
+      "train_ids_sha256": "2cdd25daa6280834253718148c7e690ba1942a7f7b4f38dce8170efc0c67e442",
+      "train_rows": 641,
+      "union_category_counts": {
+        "model": 3
+      },
+      "union_ids_sha256": "58f7a190e2dde748a025cbae705e42fa5857ee5c1daf85948bc54f49272310c6",
+      "union_rows": 769,
+      "vocabulary_fit_on": "TRAIN+STOP union only"
+    }
+  },
+  "reused": false,
+  "seed": 947,
+  "started_at": "2026-10-16T12:18:26.426009+00:00",
+  "status": "ok"
+}

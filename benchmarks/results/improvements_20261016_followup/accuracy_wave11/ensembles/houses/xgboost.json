@@ -1,0 +1,154 @@
+{
+  "component_stop_prediction_diagnostic": {
+    "exactly_equal": false,
+    "maximum_absolute_difference": 0.06988525390625,
+    "purpose": "Diagnostic only; never replace a component or select seeds"
+  },
+  "components": [
+    {
+      "dataset": "houses",
+      "finished_at": "2026-10-16T12:18:35.754709+00:00",
+      "library": "xgboost",
+      "model_bytes": 4672940,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave9\\models\\houses\\xgboost.pkl",
+      "model_sha256": "5f46798c0fa5b8dc07b7a16a37e23f1b66835ba7c45cd7afc28153b6bdcfddd1",
+      "reused": true,
+      "seed": 47,
+      "started_at": "2026-10-16T12:18:35.752198+00:00",
+      "status": "ok"
+    },
+    {
+      "dataset": "houses",
+      "finished_at": "2026-10-16T12:18:48.894122+00:00",
+      "library": "xgboost",
+      "model_bytes": 4647537,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave11\\components\\houses\\xgboost-seed947.pkl",
+      "model_sha256": "1218a667bd84da70162da9f66aeeff1641be82aaf6cea83bfc2835c604141b0f",
+      "refit_details": {
+        "apparent_union_error_inference_transform": 0.07467290743760208,
+        "early_stopping": false,
+        "fit_seconds": 2.383361200001673,
+        "fixed_leaf_refit": {
+          "fold": {
+            "coefficient_rounding_absolute_bound": 2.505531146477824e-07,
+            "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+            "inference_only": true,
+            "library": "xgboost",
+            "physical_trees": 1087,
+            "prediction_oracle_absolute_tolerance": 0.04116195812821388,
+            "topology_sha256_after": "3ccb2e1e8252e3c8608041fc6b9a691bbf5a43e415080227ef3635a658ca55c5",
+            "topology_sha256_before": "3ccb2e1e8252e3c8608041fc6b9a691bbf5a43e415080227ef3635a658ca55c5"
+          },
+          "inference_checks": {
+            "original_stop": {
+              "fixed_tolerance_atol": 1e-05,
+              "fixed_tolerance_rtol": 5e-05,
+              "leaf_routing_exact": true,
+              "oracle_absolute_tolerance": 0.04116195812821388,
+              "oracle_difference_divided_by_max_one_or_prediction_magnitude": 3.3207386957006285e-06,
+              "oracle_max_absolute_difference": 4.372462832158419e-05
+            },
+            "original_train": {
+              "fixed_tolerance_atol": 1e-05,
+              "fixed_tolerance_rtol": 5e-05,
+              "leaf_routing_exact": true,
+              "oracle_absolute_tolerance": 0.04116195812821388,
+              "oracle_difference_divided_by_max_one_or_prediction_magnitude": 3.876895506774949e-06,
+              "oracle_max_absolute_difference": 5.115929920940232e-05
+            }
+          },
+          "lambda": 100,
+          "ordered_union_check": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.04116195812821388,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 3.876895506774949e-06,
+            "oracle_max_absolute_difference": 5.115929920940232e-05
+          },
+          "preprocessing": {
+            "column_order": "physical tree order, then sorted observed native leaf IDs",
+            "design_nonzeros": 8152500,
+            "design_shape": [
+              7500,
+              58203
+            ],
+            "ordered_training_transform_replayed": false,
+            "training_leaf_ids_sha256": "95c89a72a7ebe13fc957e242347215b6f94dae6081cd2e8c8bf18a2f23d1a8f9",
+            "training_rows": 7500,
+            "unobserved_leaf_correction": 0
+          },
+          "shrinkage": 0.25,
+          "solve": {
+            "coefficient_norm": 0.309793808513863,
+            "condition_estimate": 2220.8664384889294,
+            "istop": 2,
+            "iterations": 217,
+            "matrix_norm": 9107.00696063813,
+            "normal_residual_norm": 0.00039306861968528935,
+            "regularized_residual_norm": 4.429411270440166,
+            "residual_norm": 3.1658275113270853
+          }
+        },
+        "parameters": {
+          "eta": 0.05,
+          "eval_metric": "rmse",
+          "lambda": 10,
+          "max_bin": 256,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 8,
+          "max_depth": 6,
+          "min_child_weight": 1,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "reg:squarederror",
+          "seed": 947,
+          "subsample": 0.8,
+          "tree_method": "hist"
+        },
+        "requested_rounds": 1087,
+        "retained_rounds": 1087,
+        "structural_early_termination": false,
+        "union_data": {
+          "row_order": "original TRAIN followed by original STOP",
+          "source_roles": {
+            "stop": {
+              "index_sha256": "f164721c3663e300a6127b9aeb570ca8c03ea420efb2a68a90abb490895891b6",
+              "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\houses\\stop.pkl",
+              "rows": 1250,
+              "sha256": "1da0730eed74fbdd7a0831fa74200d3117b82ea731fdb47ce5fd52b0d0ba30b3"
+            },
+            "train": {
+              "index_sha256": "036bed52ffebff5d0b4a6c9101cde13e1332a6d9038bc668310af3412d831c20",
+              "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\houses\\train.pkl",
+              "rows": 6250,
+              "sha256": "757cf06af21d8499a235403d3d23b75e0a7de7d7d5505ac47c3108326b1ac92b"
+            }
+          },
+          "stop_ids_sha256": "f164721c3663e300a6127b9aeb570ca8c03ea420efb2a68a90abb490895891b6",
+          "stop_rows": 1250,
+          "train_ids_sha256": "036bed52ffebff5d0b4a6c9101cde13e1332a6d9038bc668310af3412d831c20",
+          "train_rows": 6250,
+          "union_category_counts": {},
+          "union_ids_sha256": "d205cf77e877fc4493228e55449a38474e9feb62f1deec3ad5c33cfe0b356a4c",
+          "union_rows": 7500,
+          "vocabulary_fit_on": "TRAIN+STOP union only"
+        }
+      },
+      "reused": false,
+      "seed": 947,
+      "started_at": "2026-10-16T12:18:35.757162+00:00",
+      "status": "ok"
+    }
+  ],
+  "dataset": "houses",
+  "library": "xgboost",
+  "model_bytes": 9320864,
+  "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave11\\ensembles\\houses\\xgboost.pkl",
+  "model_sha256": "1f77045bd173b19d61463c5ba446aaa26f551326b62ad1ab86cf0aa206bad3b8",
+  "seed_pair": [
+    47,
+    947
+  ],
+  "status": "ok"
+}

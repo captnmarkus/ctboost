@@ -1,0 +1,71 @@
+{
+  "date": "2026-10-16",
+  "scope": "Independent read-only source, synthetic oracle and test receipt review; no real data/model access or new fitting by reviewer",
+  "status": "no_unresolved_material_source_or_focused_test_issue",
+  "compiled_source_manifest_entries_checked": 110,
+  "compiled_source_matches_checkout": true,
+  "previous_native_sha256": "94b2b0bf3f0b4863b8c27eb308a41354a92025b6b81f2c7f539c6a4923a7e233",
+  "candidate_native_sha256": "04adb21b0e4cea8046581a23b62585b6c8d631561d96a417ad87bc3c55041613",
+  "focused": {
+    "passed": 103,
+    "skipped": 3,
+    "skip_scope": "two optional standalone C++ compiler checks and unavailable onnxruntime"
+  },
+  "wider": {
+    "passed": 125,
+    "skipped": 0
+  },
+  "native": {
+    "checks": 230,
+    "failures": 0
+  },
+  "independent_previous_runtime_oracle": {
+    "pipelines": 16,
+    "formats": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "families": [
+      "regression",
+      "binary",
+      "multiclass",
+      "Frequency"
+    ],
+    "combinations": true,
+    "loaded_prediction_bits": "exact",
+    "ordered_replay_bits": "exact",
+    "canonical_state": "exact",
+    "persisted_model_and_warmstart_predictions": "exact",
+    "warmstart_native_and_pipeline_state": "exact"
+  },
+  "test_corrections_reviewed": [
+    "future unsupported pipeline version changed5to6",
+    "old explicit refit expected4 retained",
+    "legacy wide prior oracle now uses loader-rounded state while raw category sums are independently derived",
+    "format5 wide case and exact replay added"
+  ],
+  "limits": [
+    "double accumulation is not exact arbitrary summation",
+    "no measured accuracy improvement attributed",
+    "full CP310 suite and prior-real-model parity are separately owned pending adoption checks",
+    "one documentation wording correction requested for formats1/2 canonicalizing to3"
+  ],
+  "artifacts": {
+    ".tmp/improvements-20261016/ctr-precision/native-source-hashes.json": "b76519d66583548f6e4626f222e0769effe15652cee3775106ab94fe33c5987b",
+    ".tmp/improvements-20261016/ctr-precision/baseline-source-hashes.json": "51828b298b806c869105f7ba2fb90b6dd9096d348e45634a701e22c585a3ba9b",
+    ".tmp/improvements-20261016/ctr-precision/legacy_parity.py": "1ab214bc54c39bdf34129f7415e48d41e2a82a365523b1d28fc06c79f18815b7",
+    ".tmp/improvements-20261016/ctr-precision/legacy-reference.json": "29e44fe667d3753f996b294948a16ba6df3707d1fda88fd50b02db0e917bd312",
+    ".tmp/improvements-20261016/ctr-precision/legacy-capture.log": "bbecf8c5b8edac7cab78be108ff27df694bb373d4c2c099d88d1f7883c451ffb",
+    ".tmp/improvements-20261016/ctr-precision/legacy-verify.log": "0162df7db3c2760c5c41118581ebaa1cf3f98443e16323763ae8201263a40069",
+    ".tmp/improvements-20261016/ctr-precision/focused.log": "491002cba1f6b2ad47e152136c5c93d9d4023ff6908a00a7bd61a0c7000756f7",
+    ".tmp/improvements-20261016/ctr-precision/focused-02.log": "82245366a598f1845e207afdc633dad2f835786ab756bf7dd942b817eaaa0d67",
+    ".tmp/improvements-20261016/ctr-precision/wider-cp312.log": "5da2e007d9834303af8f8b01fc04964fee9db6319b03ed315043031f74b7824c",
+    ".tmp/improvements-20261016/ctr-precision/wider-cp312-02.log": "375c070bfa82fc402dcae03bd6e6d1475ae5c6b420c76d76456dccf0f1d07806",
+    ".tmp/improvements-20261016/ctr-precision/native-cp312-04.log": "2d7d702d23f0ff2e761044ccc4bfa39475fe97e0ca81134f3863f614dbf15209",
+    "tests/test_ctr_precision.py": "ba44717da41dccd7cb6a5d6bd7276b020b8bda35daa52229a67ceed8b185a2b3",
+    "tests/test_feature_pipeline_ctr_inference.py": "8d704982d4c4b0245bdcd8f3a222643cdb759fd9a3585af2111dddddd19b46ed",
+    "tests/test_categorical_key_codec.py": "42c395a181ac1cab29eff06f50bdc80da2e85f59758be6efcb1a018959e224e1"
+  }
+}

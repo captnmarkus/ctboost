@@ -1,0 +1,52 @@
+{
+  "protocol": "independent_stop_scalar_correction_refresh_20261016",
+  "created_before": "Any real wave 17 TRAIN anchor or clean union fit, correction solve or STOP candidate score",
+  "parent": "Complete failed wave 16 seed 47 policy, retaining all four expanded fitting sources and all twelve fixed multiclass native models; no fallback",
+  "anchors": "Eight binary/regression tasks by three libraries: 24 fresh TRAIN anchors, current fixed tree controls and requested counts, seed 47, no early stopping. Remove BOTH inherited binary_refit and leaf_refit before fitting; the clean native zero correction is identity. Credit, diamonds and houses use original TRAIN followed by ascending outside-cap rows from existing expanded sources, excluding original STOP; other anchors use original TRAIN only. Fit vocabulary only on these rows; preserve both binary classes in fitting and STOP.",
+  "selection": "Four TRAIN-only solves per task/library, lambda [1,10,100,1000], each evaluated at shrinkage [0.25,1], plus clean native identity. Regression uses existing sum-residual ridge LSQR; binary uses existing positive logistic-offset ridge. Actual native-folded STOP RMSE or 1-AUC chooses. Exact ties favor identity, then larger lambda, then smaller shrinkage. All 192 nonidentity candidates plus 24 identity evaluations and 24 choices must succeed and freeze before final fits.",
+  "transfer": "Mandatory 24 fresh CLEAN union/expanded native fits, including identity choices. Disable BOTH old correction fields before every fit. Same fixed tree parameters, requested counts, seed 47 and exact original union/expanded row order. Compare nonleaf native state, schema and CT training pipeline against the corrected parent (only old scalar leaf values may differ) before the new fold; failure closes the gate, no fallback. Apply ONLY the newly selected correction via one fixed solve on fresh fitting rows. Never use the old corrected parent as baseline. Keep 12 multiclass models exactly. No DEV model choice.",
+  "solver": {
+    "binary": {
+      "maxiter": 2000,
+      "ftol": 1e-13,
+      "gtol": 1e-09,
+      "gradient_gate": 1e-06,
+      "maxls": 50,
+      "maxcor": 20
+    },
+    "regression": {
+      "atol": 1e-08,
+      "btol": 1e-08,
+      "iter_lim": 2000,
+      "accepted_statuses": [
+        0,
+        1,
+        2,
+        4,
+        5
+      ]
+    }
+  },
+  "native_validation": "Exact reconstructed ordered fitting transform and state for CTBoost. Full nonleaf features, thresholds, category routes, class bias and schema preserved; exact routing, analytical roundoff bound and strict rtol 5e-5 / atol 1e-5 raw prediction oracle plus independent sparse-matrix oracle and exact pickle checks. No correction stacking. Historical native training statistics remain unchanged by leaf correction; corrected models are inference artifacts.",
+  "resources": {
+    "workers": 1,
+    "cpus": [
+      4
+    ],
+    "threads_per_fit": 1,
+    "maximum_job_seconds": 1200,
+    "maximum_process_tree_rss_bytes": 8589934592,
+    "maximum_named_array_bytes": 4294967296,
+    "scope": "Each complete TRAIN anchor job (fit plus 4 solves and 8 evaluations/checks), each complete clean union fit plus selected solve/checks, and each fresh seed job. Scalar preflight covers native leaf-index result/copy, CSR resident/build arrays, raw prediction/maps and binary L-BFGS history 20 or regression LSQR workspace before design allocation; excludes model/input/CTR/Python overhead. Separate 8 GiB total owned RSS watchdog. Any terminal failure is retained and closes the gate; no resource or convergence relaxation or model fallback."
+  },
+  "conditional_seed": 569,
+  "conditional_seed_trigger": "The full 12-dataset primary seed 47 development gate passes both comparators",
+  "conditional_seed_policy": "All 36 fresh seed 569 models, same requested counts, parameters and four expanded sources. For 8 binary/regression tasks remove both old scalar corrections before fitting, then apply only fixed new controls with no STOP selection. For 4 multiclass tasks delegate the unchanged wave 16 fixed multiclass correction and temperature policy. Recompute coefficients only on fitting rows. Same watchdogs; average 47/569 errors within 12 datasets before aggregation and report both seeds. Cross-seed native topology is not expected equal; the required clean-parent topology check applies to deterministic seed 47 final refits.",
+  "gate": {
+    "all_fits_successful": true,
+    "median_relative_error_gain_against_each_comparator": 0,
+    "minimum_wins_or_ties_against_each_comparator": 6
+  },
+  "official_test": "Only after primary and mean-seed gates, freeze 72 already-trained native models and executable/runtime/source/split hashes, then perform one official test assessment. No fit or adjustment after test; original confirmation remains unopened.",
+  "limitations": "Adaptive reused development. Fresh TRAIN anchors retain tree controls and counts chosen using prior STOP/CV. Equal penalty and shrinkage counts do not equal compute, capacity or effective regularization. The binary solver optimizes logistic loss while STOP selection uses AUC. Refitting and expanded rows alter the baseline and penalty optimum; no union STOP reselection. Mandatory clean identity can differ from the old corrected parent, with no DEV fallback. Same-split seed sensitivity is not independent replication, significance or an official ranking."
+}

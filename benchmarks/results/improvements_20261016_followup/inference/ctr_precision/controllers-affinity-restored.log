@@ -1,0 +1,57 @@
+{"package": "C:\\apps\\ctboost\\ctboost\\__init__.py", "native": "C:\\apps\\ctboost\\ctboost\\_core.cp310-win_amd64.pyd", "native_sha256": "21ed48b6234bf570413fd4336ffdf76279b0ff9e3d9003cbcf0b34620e2aee17", "build_info": {"version": "0.1.61", "cuda_enabled": false, "cuda_runtime": "not compiled", "compiler": "MSVC 1950", "cxx_standard": 17, "package_version": "0.1.61"}, "python": "C:\\Users\\captn\\miniconda3\\python.exe", "cpu_affinity": [0, 2]}
+{"validation_only_optional_dependency_skips": []}
+............................F.......F..................                  [100%]
+================================== FAILURES ===================================
+______________ test_dispatch_scans_past_unknown_high_memory_jobs ______________
+
+make_controller = <function make_controller.<locals>.make at 0x000001900F93FE20>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001900F8263E0>
+
+    def test_dispatch_scans_past_unknown_high_memory_jobs(make_controller, monkeypatch):
+        parents = [parent(0, "unknown"), parent(1, "known"), parent(2, "known")]
+        run = make_controller(parents)
+        run.state["observed_dataset_peak_bytes"]["known"] = GIB // 3
+        monkeypatch.setattr(
+            controller.psutil,
+            "virtual_memory",
+            lambda: SimpleNamespace(available=6 * GIB, total=32 * GIB),
+        )
+        launched = []
+    
+        def launch(key, slot, reservation):
+            launched.append((key, slot, reservation))
+            run.state["parents"][key].update(
+                status="running", slot=slot, reservation_bytes=reservation, rss_bytes=0
+            )
+    
+        monkeypatch.setattr(run, "launch", launch)
+        run.dispatch()
+>       assert [entry[0] for entry in launched] == [
+            controller.parent_key(p) for p in parents[1:]
+        ]
+E       AssertionError: assert ['SYNTHETIC_C...G_1/1001/0_0'] == ['SYNTHETIC_C...G_2/1002/0_0']
+E         
+E         Right contains one more item: 'SYNTHETIC_CONFIG_2/1002/0_0'
+E         Use -v to get more diff
+
+tests\test_tabarena_local_hpo_controller.py:165: AssertionError
+______________ test_execution_policy_is_frozen_before_any_launch ______________
+
+make_controller = <function make_controller.<locals>.make at 0x000001900F9EDD80>
+
+    def test_execution_policy_is_frozen_before_any_launch(make_controller):
+        run = make_controller()
+        manifest = controller.read_json(run.output / "controller_execution.json")
+        assert manifest["controller_source_sha256"] == controller.file_hash(
+            controller.__file__
+        )
+        assert manifest["allocation_policy"]["timeout_seconds"] == 4500
+        assert manifest["allocation_policy"]["physical_free_reserve_bytes"] == 4 * GIB
+>       with pytest.raises(ValueError, match="Frozen controller"):
+E       Failed: DID NOT RAISE <class 'ValueError'>
+
+tests\test_tabarena_local_hpo_controller.py:285: Failed
+=========================== short test summary info ===========================
+FAILED tests/test_tabarena_local_hpo_controller.py::test_dispatch_scans_past_unknown_high_memory_jobs
+FAILED tests/test_tabarena_local_hpo_controller.py::test_execution_policy_is_frozen_before_any_launch
+2 failed, 53 passed in 4.44s

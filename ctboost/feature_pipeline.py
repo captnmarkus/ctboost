@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
 import numpy as np
 
 from . import _core
+from ._categorical_codes import build_code_plan, try_code_transform
 from .core import Pool
 from .core.columnar import (
     _array_protocol_to_numpy,
@@ -179,6 +180,8 @@ class FeaturePipeline:
         self.cat_feature_indices_: List[int] = []
         self.output_feature_names_: List[str] = []
         self._numeric_only = False
+        self._categorical_only = False
+        self._categorical_code_plan = None
 
         self._native = _core.NativeFeaturePipeline(
             cat_features=self.cat_features,
@@ -213,6 +216,7 @@ class FeaturePipeline:
         feature_names: Optional[Sequence[str]] = None,
         *,
         allow_numeric: bool = False,
+        allow_categorical_row: bool = False,
     ) -> Tuple[np.ndarray, Optional[List[str]]]:
         if _is_pandas_dataframe(data):
             # Keep float32 blocks intact; other numeric blocks go through double
@@ -230,7 +234,25 @@ class FeaturePipeline:
                         # NumPy's vectorized widening warnings or callbacks.
                         dtype = float32[0]
             try:
-                matrix = data.to_numpy(dtype=dtype, copy=False)
+                if (
+                    allow_categorical_row
+                    and type(data) is pd.DataFrame
+                    and len(data) == 1
+                    and all(
+                        type(item) is pd.CategoricalDtype
+                        and type(item.categories) is pd.Index
+                        and item.categories.dtype == np.dtype(object)
+                        and 0 < len(item.categories) <= 32
+                        and all(type(value) is str for value in item.categories)
+                        for item in data.dtypes
+                    )
+                ):
+                    # Avoid converting every categorical block to an array for
+                    # one row. Numeric categories can coerce large integers, and
+                    # custom strings can run equality hooks during row assembly.
+                    matrix = data.iloc[0].to_numpy(dtype=object, copy=False).reshape(1, -1)
+                else:
+                    matrix = data.to_numpy(dtype=dtype, copy=False)
             except (FloatingPointError, RuntimeWarning):
                 if dtype is object:
                     raise
@@ -271,6 +293,10 @@ class FeaturePipeline:
 
     def _refresh_metadata(self) -> None:
         state = dict(self._native.to_state())
+        self._categorical_code_plan = (
+            build_code_plan(state)
+            if hasattr(self._native, "_transform_categorical_codes") else None
+        )
         self.feature_names_in_ = state.get("feature_names_in_")
         self.n_features_in_ = state.get("n_features_in_")
         self.cat_feature_indices_ = list(state.get("cat_feature_indices_", []))
@@ -284,6 +310,17 @@ class FeaturePipeline:
                 "ctr_states",
                 "text_states",
                 "embedding_states",
+            )
+        )
+        categorical_sources = [item["source_index"] for item in state.get("categorical_states", [])]
+        self._categorical_only = (
+            self.n_features_in_ is not None
+            and self.n_features_in_ > 0
+            and len(categorical_sources) == self.n_features_in_
+            and set(categorical_sources) == set(range(self.n_features_in_))
+            and not any(
+                state.get(key)
+                for key in ("one_hot_states", "combination_states", "text_states", "embedding_states")
             )
         )
 
@@ -308,8 +345,15 @@ class FeaturePipeline:
         *,
         feature_names: Optional[Sequence[str]] = None,
     ) -> Tuple[np.ndarray, List[int], List[str]]:
+        if self._categorical_code_plan is not None:
+            candidate = try_code_transform(self, data, self._categorical_code_plan)
+            if candidate is not None:
+                return candidate
         raw_matrix, resolved_feature_names = self._extract_frame(
-            data, feature_names, allow_numeric=self._numeric_only
+            data,
+            feature_names,
+            allow_numeric=self._numeric_only,
+            allow_categorical_row=self._categorical_only,
         )
         transformed, cat_features, output_feature_names = self._native.transform_array(
             raw_matrix,

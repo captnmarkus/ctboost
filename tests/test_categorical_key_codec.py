@@ -14,6 +14,62 @@ MISSING_SENTINEL = "__ctboost_missing__"
 OTHER_SENTINEL = "__ctboost_other__"
 
 
+@pytest.mark.parametrize("legacy", [False, True])
+def test_builtin_categorical_values_match_scalar_fallback(legacy):
+    class Text(str):
+        pass
+
+    class Integer(int):
+        pass
+
+    class Floating(float):
+        pass
+
+    values = ["", "snowman \u2603", MISSING_SENTINEL, r"\m", "a||b",
+              0, -1, 2**80, True, False, 0.0, -0.0, 1.25,
+              float("inf"), float("-inf"), float("nan"), None]
+    fallback = [Text(value) if type(value) is str else
+                Integer(value) if type(value) is int else
+                Floating(value) if type(value) is float else
+                Text(str(value)) if type(value) is bool else value
+                for value in values]
+    raw = np.asarray(values * 3, dtype=object).reshape(-1, 1)
+    slow = np.asarray(fallback * 3, dtype=object).reshape(-1, 1)
+    params = dict(cat_features=[0], simple_ctr=["Mean", "Frequency"])
+    pipeline = (_legacy_unfitted_pipeline(**params) if legacy
+                else ctboost.FeaturePipeline(**params))
+    pipeline.fit(raw, np.arange(len(raw), dtype=np.float32) / 7)
+    before = pipeline.to_state()
+    actual, categories, names = pipeline.transform_array(raw[::-1])
+    expected, expected_categories, expected_names = pipeline.transform_array(slow[::-1])
+    np.testing.assert_array_equal(actual.view(np.uint32), expected.view(np.uint32))
+    assert (categories, names) == (expected_categories, expected_names)
+    assert pipeline.to_state() == before
+
+
+def test_categorical_builtin_subclasses_keep_custom_string_conversion():
+    class Text(str):
+        def __str__(self):
+            return "custom text"
+
+    class Integer(int):
+        def __str__(self):
+            return "custom integer"
+
+    class Floating(float):
+        def __str__(self):
+            return "custom float"
+
+    pipeline = ctboost.FeaturePipeline(cat_features=[0]).fit(
+        np.asarray([["custom text"], ["custom integer"], ["custom float"]], dtype=object),
+        np.asarray([0, 1, 2], dtype=np.float32),
+    )
+    values = np.asarray([[Text("plain")], [Integer(123)], [Floating(2.0)]], dtype=object)
+    expected = np.asarray([["custom text"], ["custom integer"], ["custom float"]], dtype=object)
+    np.testing.assert_array_equal(pipeline.transform_array(values)[0],
+                                  pipeline.transform_array(expected)[0])
+
+
 def _legacy_unfitted_pipeline(**kwargs):
     state = ctboost.FeaturePipeline(**kwargs).to_state()
     state["feature_pipeline_format_version"] = 2
@@ -39,7 +95,7 @@ def test_codec2_scalar_keys_separate_missing_literals_and_escape_markers():
     transformed, categorical, names = pipeline.fit_transform_array(values, labels)
     state = pipeline.to_state()
 
-    assert state["feature_pipeline_format_version"] == 4
+    assert state["feature_pipeline_format_version"] == 5
     assert state["categorical_key_encoding_version"] == 2
     assert categorical == []
     assert transformed.shape == (6, 6)
@@ -302,7 +358,7 @@ def test_golden_codec1_state_load_preserves_historical_missing_sentinel_behavior
 @pytest.mark.parametrize(
     ("updates", "message"),
     [
-        ({"feature_pipeline_format_version": 5}, "format version"),
+        ({"feature_pipeline_format_version": 6}, "format version"),
         (
             {
                 "feature_pipeline_format_version": 3,

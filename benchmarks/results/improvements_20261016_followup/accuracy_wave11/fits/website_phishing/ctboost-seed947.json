@@ -1,0 +1,91 @@
+{
+  "dataset": "website_phishing",
+  "finished_at": "2026-10-16T12:19:16.188053+00:00",
+  "library": "ctboost",
+  "model_bytes": 1342095,
+  "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave11\\components\\website_phishing\\ctboost-seed947.pkl",
+  "model_sha256": "54bf7581c8f20eba1d6eb908927b2c2a638a90d8cce4776c0aa0571b7bb6c417",
+  "refit_details": {
+    "apparent_union_error_inference_transform": 0.18617207338276406,
+    "early_stopping": false,
+    "fit_seconds": 0.09928109999964363,
+    "parameters": {
+      "alpha": 0.05,
+      "bootstrap_type": "Bernoulli",
+      "cat_features": [
+        "SFH",
+        "popUpWidnow",
+        "SSLfinal_State",
+        "Request_URL",
+        "URL_of_Anchor",
+        "web_traffic",
+        "URL_Length",
+        "age_of_domain",
+        "having_IP_Address"
+      ],
+      "eval_metric": "MultiClass",
+      "feature_test": "grouped",
+      "feature_test_adjustment": "none",
+      "feature_test_bins": 8,
+      "iterations": 118,
+      "lambda_l2": 0.1,
+      "leaf_estimation_iterations": 3,
+      "learning_rate": 0.05,
+      "max_bins": 256,
+      "max_cat_threshold": 256,
+      "max_depth": 6,
+      "min_data_in_leaf": 1,
+      "multi_strategy": "multi_output_tree",
+      "multiclass_feature_test": "joint",
+      "multiclass_leaf_solver": "full",
+      "one_hot_max_size": 8,
+      "ordered_ctr": true,
+      "random_seed": 947,
+      "subsample": 0.8,
+      "verbose": false
+    },
+    "requested_rounds": 118,
+    "retained_rounds": 118,
+    "structural_early_termination": false,
+    "temperature": 0.75,
+    "union_data": {
+      "row_order": "original TRAIN followed by original STOP",
+      "source_roles": {
+        "stop": {
+          "index_sha256": "f1e1fc92f5b0d729ec6071939acd7ccc8d60f3133fd02e10d16163b79dad46f2",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\website_phishing\\stop.pkl",
+          "rows": 113,
+          "sha256": "33b55b90145e55aedcdfff2c8418ec782225accf2d90bb6b16afc34cf8a1e785"
+        },
+        "train": {
+          "index_sha256": "ee3eee0b7c0c312c9fab03d76edc2b2a89ff8ebf1b1b4b5f5143bd2210d149cc",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\website_phishing\\train.pkl",
+          "rows": 565,
+          "sha256": "ff284a41ad64eae6888d41871274e8ca70f6f0a2c303ed887adff29f3d1a7f9b"
+        }
+      },
+      "stop_ids_sha256": "f1e1fc92f5b0d729ec6071939acd7ccc8d60f3133fd02e10d16163b79dad46f2",
+      "stop_rows": 113,
+      "train_ids_sha256": "ee3eee0b7c0c312c9fab03d76edc2b2a89ff8ebf1b1b4b5f5143bd2210d149cc",
+      "train_rows": 565,
+      "union_category_counts": {
+        "Request_URL": 3,
+        "SFH": 3,
+        "SSLfinal_State": 3,
+        "URL_Length": 3,
+        "URL_of_Anchor": 3,
+        "age_of_domain": 2,
+        "having_IP_Address": 2,
+        "popUpWidnow": 3,
+        "web_traffic": 3
+      },
+      "union_ids_sha256": "4fd8afc6ec1942285276157af29d270c34e9643b7cc35ac3377b7d300dc6380b",
+      "union_rows": 678,
+      "vocabulary_fit_on": "TRAIN+STOP union only"
+    }
+  },
+  "reused": false,
+  "seed": 947,
+  "started_at": "2026-10-16T12:19:16.034395+00:00",
+  "status": "ok"
+}

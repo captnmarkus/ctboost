@@ -1,0 +1,143 @@
+{
+  "dataset": "GiveMeSomeCredit",
+  "finished_at": "2026-10-16T12:18:24.356743+00:00",
+  "library": "ctboost",
+  "model_bytes": 666955,
+  "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave11\\components\\GiveMeSomeCredit\\ctboost-seed947.pkl",
+  "model_sha256": "bb92ed5dc52ad802cc877ab46a7f20c57d0ab16f5dc50ac94c8454042ded37f0",
+  "refit_details": {
+    "apparent_union_error_inference_transform": 0.11568100000000003,
+    "early_stopping": false,
+    "fit_seconds": 0.2970846000025631,
+    "fixed_binary_refit": {
+      "fold": {
+        "coefficient_rounding_absolute_bound": 2.1699597247670506e-07,
+        "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+        "inference_only": true,
+        "library": "ctboost",
+        "physical_trees": 164,
+        "prediction_oracle_absolute_tolerance": 0.002328544622287154,
+        "topology_sha256_after": "a4f673fe18716f6604ffeff9e367841c165b760f139e8a7c29d4b70069463984",
+        "topology_sha256_before": "a4f673fe18716f6604ffeff9e367841c165b760f139e8a7c29d4b70069463984"
+      },
+      "inference_checks": {
+        "original_stop": {
+          "fixed_tolerance_atol": 1e-05,
+          "fixed_tolerance_rtol": 5e-05,
+          "leaf_routing_exact": true,
+          "oracle_absolute_tolerance": 0.002328544622287154,
+          "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.0130164182173316e-06,
+          "oracle_max_absolute_difference": 5.2007450594970805e-06
+        },
+        "original_train": {
+          "fixed_tolerance_atol": 1e-05,
+          "fixed_tolerance_rtol": 5e-05,
+          "leaf_routing_exact": true,
+          "oracle_absolute_tolerance": 0.002328544622287154,
+          "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.0954162329894968e-06,
+          "oracle_max_absolute_difference": 5.623779101071591e-06
+        }
+      },
+      "preprocessing": {
+        "column_order": "physical tree order, then sorted observed native leaf IDs",
+        "design_nonzeros": 1230000,
+        "design_shape": [
+          7500,
+          548
+        ],
+        "ordered_ctr": true,
+        "ordered_training_transform_replayed": true,
+        "pipeline_state_sha256": "06c7e0f8b0806310980aabaf284f8d5bc110113c97661ab7bf78bd3d825368e8",
+        "training_leaf_ids_sha256": "a98fdd28836cc90c91a2122e970b0130978e32bb08887e6c42b67a26a510b873",
+        "training_rows": 7500,
+        "training_transform_sha256": "557a1ee466bb0ae40d3c57c43d21c9d5aa4ac2d1b99d5a5e67e5aa06f9babaf5",
+        "unobserved_leaf_correction": 0
+      },
+      "solve": {
+        "columns": 548,
+        "evaluations": 16,
+        "final_objective": 0.1661458494660759,
+        "ftol": 1e-13,
+        "gradient_gate": 1e-06,
+        "gtol": 1e-09,
+        "initial_coefficients": "all zero",
+        "initial_objective": 0.16719017941250774,
+        "iterations": 13,
+        "maxcor": 20,
+        "maximum_absolute_mean_gradient": 7.283588027107157e-09,
+        "maxiter": 2000,
+        "maxls": 50,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "method": "L-BFGS-B",
+        "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+        "penalty": 1000.0,
+        "rows": 7500,
+        "status": 0
+      },
+      "training_check": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 0.002328544622287154,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.0954162329894968e-06,
+        "oracle_max_absolute_difference": 5.623779101071591e-06
+      }
+    },
+    "parameters": {
+      "alpha": 0.05,
+      "bootstrap_type": "Bernoulli",
+      "cat_features": null,
+      "eval_metric": "AUC",
+      "feature_test": "grouped",
+      "feature_test_adjustment": "none",
+      "feature_test_bins": 8,
+      "iterations": 164,
+      "lambda_l2": 10,
+      "leaf_estimation_backtracking": true,
+      "leaf_estimation_iterations": 3,
+      "learning_rate": 0.1,
+      "max_bins": 256,
+      "max_cat_threshold": 64,
+      "max_depth": 10,
+      "min_data_in_leaf": 20,
+      "multi_strategy": "one_output_per_tree",
+      "multiclass_feature_test": "single",
+      "ordered_ctr": true,
+      "random_seed": 947,
+      "subsample": 0.8,
+      "verbose": false
+    },
+    "requested_rounds": 164,
+    "retained_rounds": 164,
+    "structural_early_termination": false,
+    "union_data": {
+      "row_order": "original TRAIN followed by original STOP",
+      "source_roles": {
+        "stop": {
+          "index_sha256": "95f86bc27511af6fa1201005a0abbd270a05687b2dc0c8dfae0562f1eac9237c",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\GiveMeSomeCredit\\stop.pkl",
+          "rows": 1250,
+          "sha256": "f47b44ca78b5a9f4eeb21e24cf673e2dad101b4bb5f585429c57f238883d633c"
+        },
+        "train": {
+          "index_sha256": "dcd223be41a510aa11519a689b24f8807f4deb63a673f010836c73773a74370d",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\GiveMeSomeCredit\\train.pkl",
+          "rows": 6250,
+          "sha256": "7e35bf05917689ae8658a253efeb6c9d0b7788d59071e66bf03a13804937b46d"
+        }
+      },
+      "stop_ids_sha256": "95f86bc27511af6fa1201005a0abbd270a05687b2dc0c8dfae0562f1eac9237c",
+      "stop_rows": 1250,
+      "train_ids_sha256": "dcd223be41a510aa11519a689b24f8807f4deb63a673f010836c73773a74370d",
+      "train_rows": 6250,
+      "union_category_counts": {},
+      "union_ids_sha256": "8c582af6c776addcaf6092bd2ba7040992c68522986f89629afa62163de740f5",
+      "union_rows": 7500,
+      "vocabulary_fit_on": "TRAIN+STOP union only"
+    }
+  },
+  "reused": false,
+  "seed": 947,
+  "started_at": "2026-10-16T12:18:23.350122+00:00",
+  "status": "ok"
+}

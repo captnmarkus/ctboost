@@ -1,0 +1,116 @@
+{
+  "component_stop_prediction_diagnostic": {
+    "exactly_equal": false,
+    "maximum_absolute_difference": 1.1445255279541016,
+    "purpose": "Diagnostic only; never replace a component or select seeds"
+  },
+  "components": [
+    {
+      "dataset": "in_vehicle_coupon_recommendation",
+      "finished_at": "2026-10-16T12:18:19.317868+00:00",
+      "library": "xgboost",
+      "model_bytes": 3762636,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave9\\models\\in_vehicle_coupon_recommendation\\xgboost.pkl",
+      "model_sha256": "598a3b0aa10dd99c222a3673a852ea473cb638fdfcb6435e03269ffd06e94dcb",
+      "reused": true,
+      "seed": 47,
+      "started_at": "2026-10-16T12:18:19.314862+00:00",
+      "status": "ok"
+    },
+    {
+      "dataset": "in_vehicle_coupon_recommendation",
+      "finished_at": "2026-10-16T12:18:20.420451+00:00",
+      "library": "xgboost",
+      "model_bytes": 3788046,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave11\\components\\in_vehicle_coupon_recommendation\\xgboost-seed947.pkl",
+      "model_sha256": "ad18196b19b849ed89e9fc993713105aef3f8d96793ed55a21acbca8726c56ea",
+      "refit_details": {
+        "apparent_union_error_inference_transform": 0.0001060711841538442,
+        "early_stopping": false,
+        "fit_seconds": 0.8866873999977543,
+        "parameters": {
+          "eta": 0.05,
+          "eval_metric": "auc",
+          "lambda": 1,
+          "max_bin": 256,
+          "max_depth": 8,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "binary:logistic",
+          "seed": 947,
+          "subsample": 0.8,
+          "tree_method": "hist"
+        },
+        "requested_rounds": 235,
+        "retained_rounds": 235,
+        "structural_early_termination": false,
+        "union_data": {
+          "row_order": "original TRAIN followed by original STOP",
+          "source_roles": {
+            "stop": {
+              "index_sha256": "046d57cce251fdfdb2c4d5999bb1b3add867fed8c21d77339d5273c99e24a7c6",
+              "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\in_vehicle_coupon_recommendation\\stop.pkl",
+              "rows": 1057,
+              "sha256": "aa8945b3b51c5a8e35e2dedd95fc61952d1d74579a5311d7a29e0941e7b42cde"
+            },
+            "train": {
+              "index_sha256": "a9943111493fdf3fb8fa87727ff777bbeac325ea2e7d51f8d567bd3b2f2d301e",
+              "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\in_vehicle_coupon_recommendation\\train.pkl",
+              "rows": 5285,
+              "sha256": "a4ffda38caa481cea4b7b79c4615a71cd9e9524005425181a79d7db49a22f9bb"
+            }
+          },
+          "stop_ids_sha256": "046d57cce251fdfdb2c4d5999bb1b3add867fed8c21d77339d5273c99e24a7c6",
+          "stop_rows": 1057,
+          "train_ids_sha256": "a9943111493fdf3fb8fa87727ff777bbeac325ea2e7d51f8d567bd3b2f2d301e",
+          "train_rows": 5285,
+          "union_category_counts": {
+            "Bar": 6,
+            "CarryAway": 6,
+            "CoffeeHouse": 6,
+            "Restaurant20To50": 6,
+            "RestaurantLessThan20": 6,
+            "age": 8,
+            "car": 6,
+            "coupon": 5,
+            "destination": 3,
+            "direction_opp": 2,
+            "direction_same": 2,
+            "education": 6,
+            "expiration": 2,
+            "gender": 2,
+            "has_children": 2,
+            "income": 9,
+            "maritalStatus": 5,
+            "occupation": 25,
+            "passenger": 4,
+            "toCoupon_GEQ15min": 2,
+            "toCoupon_GEQ25min": 2,
+            "weather": 3
+          },
+          "union_ids_sha256": "ef26974f581af575edbb971ee3796e290156a97616a8a1c9c8f37fe4899cb797",
+          "union_rows": 6342,
+          "vocabulary_fit_on": "TRAIN+STOP union only"
+        }
+      },
+      "reused": false,
+      "seed": 947,
+      "started_at": "2026-10-16T12:18:19.318867+00:00",
+      "status": "ok"
+    }
+  ],
+  "dataset": "in_vehicle_coupon_recommendation",
+  "library": "xgboost",
+  "model_bytes": 7551492,
+  "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave11\\ensembles\\in_vehicle_coupon_recommendation\\xgboost.pkl",
+  "model_sha256": "441bcc9fe6c5aa81672bd224f869e4dfafb2e111cab12202489be724a93f05df",
+  "seed_pair": [
+    47,
+    947
+  ],
+  "shared_encoded_label_ids": [
+    0,
+    1
+  ],
+  "status": "ok"
+}

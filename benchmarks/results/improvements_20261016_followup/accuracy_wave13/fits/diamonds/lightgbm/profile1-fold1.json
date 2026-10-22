@@ -1,0 +1,136 @@
+{
+  "correction": {
+    "fold": {
+      "coefficient_rounding_absolute_bound": 2.0444904449967716e-12,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "lightgbm",
+      "physical_trees": 1195,
+      "prediction_oracle_absolute_tolerance": 1.3746625274808977e-07,
+      "topology_sha256_after": "9bd8ee7b4a54b501f4161cbedd09c24d2bd38f13439aef68e9495db24d1ec9a0",
+      "topology_sha256_before": "9bd8ee7b4a54b501f4161cbedd09c24d2bd38f13439aef68e9495db24d1ec9a0"
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 7170000,
+      "design_shape": [
+        6000,
+        37045
+      ],
+      "ordered_training_transform_replayed": false,
+      "training_leaf_ids_sha256": "1f9d83016cb18688d08262fd23f7801a3ef30453ceaf44ac9bc014624ca8551f",
+      "training_rows": 6000,
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "coefficient_norm": 182.89732398122706,
+      "condition_estimate": 485.97691398301595,
+      "istop": 2,
+      "iterations": 78,
+      "matrix_norm": 5895.329951497353,
+      "normal_residual_norm": 0.6171685972086229,
+      "regularized_residual_norm": 14289.673793552083,
+      "residual_norm": 13066.879735296767
+    },
+    "stop_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 1.3746625274808977e-07,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 5.887482826150196e-15,
+      "oracle_max_absolute_difference": 1.0550138540565968e-10
+    },
+    "training_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 1.3746625274808977e-07,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 6.005364412926323e-15,
+      "oracle_max_absolute_difference": 1.127773430198431e-10
+    }
+  },
+  "dataset": "diamonds",
+  "early_stopping": false,
+  "feature_names": [
+    "carat",
+    "cut",
+    "color",
+    "clarity",
+    "depth",
+    "table",
+    "x",
+    "y",
+    "z"
+  ],
+  "finished_at": "2026-10-16T13:14:40.399728+00:00",
+  "fit_seconds": 0.7803118000010727,
+  "fold": 1,
+  "fold_category_counts": {
+    "clarity": 8,
+    "color": 7,
+    "cut": 5
+  },
+  "fold_category_schema": {
+    "clarity": [
+      "I1",
+      "IF",
+      "SI1",
+      "SI2",
+      "VS1",
+      "VS2",
+      "VVS1",
+      "VVS2"
+    ],
+    "color": [
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "J"
+    ],
+    "cut": [
+      "Fair",
+      "Good",
+      "Ideal",
+      "Premium",
+      "Very Good"
+    ]
+  },
+  "library": "lightgbm",
+  "model_bytes": 3388861,
+  "model_retained": false,
+  "model_sha256": "3b1e7bf72800ce9952961d60054813612596d482c8a8c50a72eb70a161729345",
+  "parameters": {
+    "bagging_fraction": 0.8,
+    "bagging_freq": 1,
+    "cat_l2": 10,
+    "cat_smooth": 10,
+    "deterministic": true,
+    "force_col_wise": true,
+    "lambda_l2": 3,
+    "learning_rate": 0.025,
+    "max_bin": 255,
+    "max_cat_threshold": 256,
+    "max_cat_to_onehot": 8,
+    "metric": "rmse",
+    "min_data_in_leaf": 5,
+    "num_leaves": 31,
+    "num_threads": 1,
+    "objective": "regression",
+    "seed": 47,
+    "verbosity": -1,
+    "zero_as_missing": false
+  },
+  "prediction_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave13\\fold_predictions\\diamonds\\lightgbm\\profile1-fold1.npz",
+  "prediction_sha256": "1e3e8830d7a994b011002d938f0a6e97df24a64682d818625d749e2021cefa09",
+  "profile_index": 1,
+  "requested_rounds": 1195,
+  "retained_rounds": 1195,
+  "started_at": "2026-10-16T13:14:29.236517+00:00",
+  "status": "ok",
+  "structural_early_termination": false,
+  "temperature": null,
+  "validation_error": 605.8534414362015
+}

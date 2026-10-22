@@ -1,0 +1,39 @@
+{
+  "baseline": "combined accepted source (builtin missing check + zero-active allocation)",
+  "candidates": [
+    "exact-string direct cast only",
+    "nodes24 union only"
+  ],
+  "order": [
+    "accepted-1",
+    "exact-string-1",
+    "nodes24-1",
+    "nodes24-2",
+    "exact-string-2",
+    "accepted-2"
+  ],
+  "real_cases": [
+    "hiva_agnostic",
+    "coil2000_insurance_policies",
+    "splice",
+    "GiveMeSomeCredit",
+    "SDSS17"
+  ],
+  "real_rows": [
+    1,
+    64,
+    1000
+  ],
+  "synthetic_cases": [
+    "categorical_2000"
+  ],
+  "synthetic_rows": [
+    1,
+    64,
+    4096
+  ],
+  "real_runner_sha256": "a9e5e613713d41a0244620cf5d4d671fdf8c09c99a5785302d19b43d08b15bcd",
+  "synthetic_runner_sha256": "a11f74ca95148692b75c2e79a8e86937c6e55b2de5db2ee0c7e131c4c0ba2535",
+  "checks": "Bitwise full transform and output baseline parity; native versus uncached. Separate candidates; repeated shared baseline control.",
+  "decision": "Retain only stable material benefit; no general ranking claims."
+}

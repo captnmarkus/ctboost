@@ -1,0 +1,110 @@
+{
+  "clean_fit_controls": {
+    "binary_refit": null,
+    "leaf_refit": null,
+    "multiclass_refit": null,
+    "parameters": {
+      "alpha": 0.5,
+      "bootstrap_type": "Bernoulli",
+      "cat_features": null,
+      "eval_metric": "AUC",
+      "feature_test": "grouped",
+      "feature_test_adjustment": "none",
+      "feature_test_bins": 8,
+      "iterations": 2000,
+      "lambda_l2": 1,
+      "leaf_estimation_backtracking": true,
+      "leaf_estimation_iterations": 3,
+      "learning_rate": 0.1,
+      "max_bins": 256,
+      "max_cat_threshold": 64,
+      "max_depth": 4,
+      "min_data_in_leaf": 20,
+      "multi_strategy": "one_output_per_tree",
+      "multiclass_feature_test": "single",
+      "ordered_ctr": true,
+      "random_seed": 47,
+      "subsample": 0.8,
+      "verbose": false
+    },
+    "rounds": 3,
+    "temperature": null
+  },
+  "clean_fit_controls_sha256": "3b0c51a317d4b3c158292e3e782b9cc7e178cd244b099b09008198230d73d9ee",
+  "fit": {
+    "apparent_union_error_inference_transform": 0.18016926255562615,
+    "early_stopping": false,
+    "fit_seconds": 0.12208989999999176,
+    "parameters": {
+      "alpha": 0.5,
+      "bootstrap_type": "Bernoulli",
+      "cat_features": null,
+      "eval_metric": "AUC",
+      "feature_test": "grouped",
+      "feature_test_adjustment": "none",
+      "feature_test_bins": 8,
+      "iterations": 3,
+      "lambda_l2": 1,
+      "leaf_estimation_backtracking": true,
+      "leaf_estimation_iterations": 3,
+      "learning_rate": 0.1,
+      "max_bins": 256,
+      "max_cat_threshold": 64,
+      "max_depth": 4,
+      "min_data_in_leaf": 20,
+      "multi_strategy": "one_output_per_tree",
+      "multiclass_feature_test": "single",
+      "ordered_ctr": true,
+      "random_seed": 47,
+      "subsample": 0.8,
+      "verbose": false
+    },
+    "requested_rounds": 3,
+    "retained_rounds": 3,
+    "structural_early_termination": false,
+    "union_data": {
+      "row_order": "original TRAIN followed by original STOP",
+      "source_roles": {
+        "stop": {
+          "index_sha256": "71a564af518385779257f7b6cca008a07627dfedd4905925a797260841b5dcdd",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\blood-transfusion-service-center\\stop.pkl",
+          "rows": 62,
+          "sha256": "59daf432712096f4ae9724df3db47ed8ac786d8e56b8a48e9ad86a6c0c2ce4c6"
+        },
+        "train": {
+          "index_sha256": "fac9f22e07f5ccbd69e89955d9f2de01cad1246ca69fa962e31753763caa7ea7",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\blood-transfusion-service-center\\train.pkl",
+          "rows": 312,
+          "sha256": "9d676cdf2a05bc27f6a21a9607b5a2d976ba87a5d8f4389356e129d84f17d54c"
+        }
+      },
+      "stop_ids_sha256": "71a564af518385779257f7b6cca008a07627dfedd4905925a797260841b5dcdd",
+      "stop_rows": 62,
+      "train_ids_sha256": "fac9f22e07f5ccbd69e89955d9f2de01cad1246ca69fa962e31753763caa7ea7",
+      "train_rows": 312,
+      "union_category_counts": {},
+      "union_ids_sha256": "7c36cebee258bd2f29ce4e3837c330fc04fab214a958911910078d193a67195d",
+      "union_rows": 374,
+      "vocabulary_fit_on": "TRAIN+STOP union only"
+    }
+  },
+  "old_scalar_corrections_disabled_before_fit": true,
+  "status": "ok",
+  "topology": {
+    "clean_native_state_sha256": "04b10859fc040244d21c2ea1420c7ee71306c2e629fa80b1b7c3718083d14173",
+    "data_schema_sha256": "307bb9ce47ef61744b3f8840f692b6bc89540533e43c775dfb3759b81716e145",
+    "exact_clean_refit_identity_except_scalar_leaf_outputs": true,
+    "feature_pipeline_sha256": "797804480e966c6b113ed9332a91c62dafcba23cd2c6741db0d753f913805ecc",
+    "leaf_outputs_ignored": true,
+    "library": "ctboost",
+    "limitation": "Fresh fit and disabled-correction provenance must also be enforced by the runner",
+    "nonleaf_state_sha256": "65d4ef6add9a71a880e4f07b6a09d8209d3f03b4ea9965cab3e9ae1e27f426b4",
+    "old_correction_subtracted": false,
+    "ordered_schema_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "parent_native_state_sha256": "04b10859fc040244d21c2ea1420c7ee71306c2e629fa80b1b7c3718083d14173",
+    "physical_trees": 3,
+    "problem": "binary",
+    "total_native_leaves": 19,
+    "training_metadata_sha256": "72815384b54243b405c143febd046d048d6722b7131cc717c028ec93850541d1"
+  }
+}

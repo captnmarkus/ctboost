@@ -1,0 +1,26 @@
+Traceback (most recent call last):
+  File "C:\apps\ctboost\benchmarks\fair_accuracy_leaf_refit.py", line 299, in <module>
+    {"prepare": prepare, "run": run, "fit": fit_job, "development": development}[args.stage](args)
+  File "C:\apps\ctboost\benchmarks\fair_accuracy_leaf_refit.py", line 231, in fit_job
+    base.write(directory / f"config_{index}.json", record)
+  File "C:\apps\ctboost\benchmarks\fair_accuracy_scout.py", line 49, in write
+    temporary.write_text(json.dumps(value, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\captn\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\json\__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "C:\Users\captn\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\json\encoder.py", line 202, in encode
+    chunks = list(chunks)
+             ^^^^^^^^^^^^
+  File "C:\Users\captn\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\json\encoder.py", line 432, in _iterencode
+    yield from _iterencode_dict(o, _current_indent_level)
+  File "C:\Users\captn\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\json\encoder.py", line 406, in _iterencode_dict
+    yield from chunks
+  File "C:\Users\captn\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\json\encoder.py", line 406, in _iterencode_dict
+    yield from chunks
+  File "C:\Users\captn\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\json\encoder.py", line 439, in _iterencode
+    o = _default(o)
+        ^^^^^^^^^^^
+  File "C:\Users\captn\AppData\Roaming\uv\python\cpython-3.12-windows-x86_64-none\Lib\json\encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type float32 is not JSON serializable

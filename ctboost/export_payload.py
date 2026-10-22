@@ -79,9 +79,9 @@ def _standalone_python_payload(
         key_encoding = feature_pipeline_state.get(
             "categorical_key_encoding_version"
         )
-        if pipeline_format not in (3, 4) or key_encoding != 2:
+        if pipeline_format not in (3, 4, 5) or key_encoding != 2:
             raise ValueError(
-                "raw-feature JSON export requires feature-pipeline format 3 or 4 and "
+                "raw-feature JSON export requires feature-pipeline format 3, 4 or 5 and "
                 "categorical key encoding 2; export prepared features or refit the "
                 "pipeline with CTBoost 0.1.55 or newer"
             )

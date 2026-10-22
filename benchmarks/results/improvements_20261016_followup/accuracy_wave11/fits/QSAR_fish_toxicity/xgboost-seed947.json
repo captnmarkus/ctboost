@@ -1,0 +1,58 @@
+{
+  "dataset": "QSAR_fish_toxicity",
+  "finished_at": "2026-10-16T12:18:25.955488+00:00",
+  "library": "xgboost",
+  "model_bytes": 353997,
+  "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave11\\components\\QSAR_fish_toxicity\\xgboost-seed947.pkl",
+  "model_sha256": "ff2df5100d5403f36ad9915d059be5c5041893a2bb9cf0e241e0e7c278996cb6",
+  "refit_details": {
+    "apparent_union_error_inference_transform": 0.24658644673422372,
+    "early_stopping": false,
+    "fit_seconds": 0.1328390999988187,
+    "parameters": {
+      "eta": 0.15,
+      "eval_metric": "rmse",
+      "lambda": 10,
+      "max_bin": 256,
+      "max_depth": 6,
+      "multi_strategy": "one_output_per_tree",
+      "nthread": 1,
+      "objective": "reg:squarederror",
+      "seed": 947,
+      "subsample": 0.8,
+      "tree_method": "hist"
+    },
+    "requested_rounds": 117,
+    "retained_rounds": 117,
+    "structural_early_termination": false,
+    "union_data": {
+      "row_order": "original TRAIN followed by original STOP",
+      "source_roles": {
+        "stop": {
+          "index_sha256": "de393724061091abc721213073c612a2cb3947c29c7b7dc140f00abffbd62ccf",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\QSAR_fish_toxicity\\stop.pkl",
+          "rows": 75,
+          "sha256": "43ca4ebb2355030f59be5efac1b974303f0210a3fd60d7fec7b94fb5d7b1b210"
+        },
+        "train": {
+          "index_sha256": "26be8a0042fad36c4a38afc7ead69ffb0cef33bbddb18aa58b2a116ce973d933",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\QSAR_fish_toxicity\\train.pkl",
+          "rows": 379,
+          "sha256": "f5e842b299001515cdcfee2cc3b322864cdf0fc244fe067a9e0cc6f88147ea50"
+        }
+      },
+      "stop_ids_sha256": "de393724061091abc721213073c612a2cb3947c29c7b7dc140f00abffbd62ccf",
+      "stop_rows": 75,
+      "train_ids_sha256": "26be8a0042fad36c4a38afc7ead69ffb0cef33bbddb18aa58b2a116ce973d933",
+      "train_rows": 379,
+      "union_category_counts": {},
+      "union_ids_sha256": "69e84dd8c3c6712a016f2651feda5c5aed139b3d45496734fbee5a3f2fe5597c",
+      "union_rows": 454,
+      "vocabulary_fit_on": "TRAIN+STOP union only"
+    }
+  },
+  "reused": false,
+  "seed": 947,
+  "started_at": "2026-10-16T12:18:25.796277+00:00",
+  "status": "ok"
+}

@@ -1,0 +1,142 @@
+{"native": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\ctr-precision\\runtime-cp312\\ctboost\\_core.cp312-win_amd64.pyd", "native_sha256": "04adb21b0e4cea8046581a23b62585b6c8d631561d96a417ad87bc3c55041613", "versions": {"numpy": "2.0.2", "pandas": "2.3.3", "scipy": "1.16.3", "pytest": "9.1.1"}}
+...................F.................................................... [ 93%]
+.sss.                                                                    [100%]
+================================== FAILURES ===================================
+____ test_distributed_tcp_training_fits_raw_feature_pipeline_across_ranks _____
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-901/test_distributed_tcp_training_0')
+
+    def test_distributed_tcp_training_fits_raw_feature_pipeline_across_ranks(tmp_path: Path):
+        pd = pytest.importorskip("pandas")
+    
+        rng = np.random.default_rng(79)
+        city_values = np.asarray(
+            [
+                "berlin",
+                "rome",
+                None,
+                "__ctboost_missing__",
+                r"\m",
+                "__ctboost_other__",
+                r"\o",
+            ],
+            dtype=object,
+        )
+        frame = pd.DataFrame(
+            {
+                "city": rng.choice(city_values, size=72),
+                "text": rng.choice(["red quick fox", "blue slow fox"], size=72),
+                "value": rng.normal(size=72).astype(np.float32),
+            }
+        )
+        target = (
+            0.8 * frame["value"].to_numpy(dtype=np.float32)
+            + (frame["city"] == "berlin").to_numpy(dtype=np.float32)
+            + 0.15 * (frame["text"] == "red quick fox").to_numpy(dtype=np.float32)
+        ).astype(np.float32)
+    
+        shard_indices = [np.arange(0, 36), np.arange(36, 72)]
+        frame.to_pickle(tmp_path / "frame_full.pkl")
+        np.save(tmp_path / "target_full.npy", target)
+        for rank, indices in enumerate(shard_indices):
+            frame.iloc[indices].to_pickle(tmp_path / f"frame_train_{rank}.pkl")
+            np.save(tmp_path / f"target_train_{rank}.npy", target[indices])
+    
+        port = _find_free_tcp_port()
+        worker_script = tmp_path / "distributed_raw_pipeline_worker.py"
+        worker_script.write_text(
+            textwrap.dedent(
+                """
+                from pathlib import Path
+                import json
+                import sys
+                import numpy as np
+                import pandas as pd
+                import ctboost
+    
+                rank = int(sys.argv[1])
+                root = Path(sys.argv[2])
+                port = int(sys.argv[3])
+    
+                frame_train = pd.read_pickle(root / f"frame_train_{rank}.pkl")
+                target_train = np.load(root / f"target_train_{rank}.npy")
+                frame_full = pd.read_pickle(root / "frame_full.pkl")
+    
+                booster = ctboost.train(
+                    frame_train,
+                    {
+                        "objective": "RMSE",
+                        "learning_rate": 0.2,
+                        "max_depth": 2,
+                        "alpha": 1.0,
+                        "lambda_l2": 1.0,
+                        "random_seed": 11,
+                        "cat_features": ["city"],
+                        "ordered_ctr": True,
+                        "text_features": ["text"],
+                        "text_hash_dim": 16,
+                        "distributed_world_size": 2,
+                        "distributed_rank": rank,
+                        "distributed_root": f"tcp://127.0.0.1:{port}/auth/{'a' * 64}",
+                        "distributed_run_id": "raw-pipeline-case",
+                        "distributed_timeout": 120.0,
+                    },
+                    label=target_train,
+                    num_boost_round=8,
+                )
+                np.save(root / f"raw_pipeline_pred_{rank}.npy", booster.predict(frame_full))
+                (root / f"raw_pipeline_codec_{rank}.json").write_text(
+                    json.dumps(
+                        {
+                            "feature_pipeline_format_version": booster._feature_pipeline.to_state()[
+                                "feature_pipeline_format_version"
+                            ],
+                            "categorical_key_encoding_version": booster._feature_pipeline.to_state()[
+                                "categorical_key_encoding_version"
+                            ],
+                        }
+                    ),
+                    encoding="utf-8",
+                )
+                """
+            ),
+            encoding="utf-8",
+        )
+    
+        worker_env = os.environ.copy()
+        worker_env["PYTHONPATH"] = str(Path.cwd()) + os.pathsep + worker_env.get("PYTHONPATH", "")
+        worker_zero = subprocess.Popen(
+            [sys.executable, str(worker_script), "0", str(tmp_path), str(port)],
+            env=worker_env,
+        )
+        _wait_for_tcp_listener(port)
+        worker_one = subprocess.Popen(
+            [sys.executable, str(worker_script), "1", str(tmp_path), str(port)],
+            env=worker_env,
+        )
+        assert worker_one.wait(timeout=180) == 0
+        assert worker_zero.wait(timeout=180) == 0
+    
+        distributed_pred_0 = np.load(tmp_path / "raw_pipeline_pred_0.npy")
+        distributed_pred_1 = np.load(tmp_path / "raw_pipeline_pred_1.npy")
+        for rank in range(2):
+            codec = json.loads(
+                (tmp_path / f"raw_pipeline_codec_{rank}.json").read_text(encoding="utf-8")
+            )
+>           assert codec == {
+                "feature_pipeline_format_version": 4,
+                "categorical_key_encoding_version": 2,
+            }
+E           AssertionError: assert {'feature_pip...g_version': 2} == {'feature_pip...g_version': 2}
+E             
+E             Omitting 1 identical items, use -vv to show
+E             Differing items:
+E             {'feature_pipeline_format_version': 5} != {'feature_pipeline_format_version': 4}
+E             Use -v to get more diff
+
+tests\test_distributed_training_raw_pipeline.py:141: AssertionError
+=========================== short test summary info ===========================
+SKIPPED [2] tests\test_vector_exports.py:230: C++ compiler unavailable
+SKIPPED [1] tests\test_vector_exports.py:284: could not import 'onnxruntime': No module named 'onnxruntime'
+FAILED tests/test_distributed_training_raw_pipeline.py::test_distributed_tcp_training_fits_raw_feature_pipeline_across_ranks
+1 failed, 73 passed, 3 skipped in 39.92s

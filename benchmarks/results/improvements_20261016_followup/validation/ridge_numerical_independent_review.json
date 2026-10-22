@@ -1,0 +1,34 @@
+{
+  "created_at": "2026-10-16T14:45:10.600411+00:00",
+  "disposition": "cleared_for_frozen_train_only_numerical_diagnostic",
+  "sha256": {
+    "plan": "36e6a9370b2fd786387beb893da49039db24035fe019dce0583302d3660e9f21",
+    "source": "2e6148d7a6cb74397f8bd78ab33c6cfa565574d5e05bd150bc428d782420dca0",
+    "tests": "d42e52533a374477f0becd10ec18139b0dfebc7325bd7972e9f0c736d73dde97",
+    "synthetic_validation": "da50c79b3634d8b35bb91187199583452818e43529ce9ab445b28437b9039cd0",
+    "wave17_summary": "237df627e5a65cb1c569f82529e91e1d86c52b3341229dc1896d7b93f51b165b"
+  },
+  "independent_source_review": true,
+  "reported_synthetic_validation": {
+    "passed": 43,
+    "skipped": 0,
+    "native_sha256": "c5ea7e026942c3f1190ca5511fbf74f353bfeb08e7771f76bc5f6c1ca3e4d197"
+  },
+  "checked": [
+    "augmented right scaling preserves original ridge penalty; solver damp zero for scaled variants",
+    "original-coordinate gradient dual gap and normalized-gradient acceptance independent of transformed solver norm",
+    "iteration-limit status seven remains failure",
+    "saved anchor/source digests, TRAIN-only row count/order/schema and previous-path binding",
+    "canonical float64 CSR exact-one invariant",
+    "extra 256*(rows+columns) vector reserve plus 4GiB named and 8GiB owned-RSS watchdog",
+    "tiny independent dense solve, adjoint, explicit augmented operator, dependent/rare partitions, target scales, zero RHS, wrong-damping counterexample and forced failure"
+  ],
+  "scope_limits": [
+    "no real data or prediction arrays read by reviewer",
+    "no new fits or scores",
+    "expanded pickle physically contains authorized STOP block; STOP rows excluded from residual/design and no STOP score",
+    "float64 certificates are numerical, not interval arithmetic proofs",
+    "different solver tolerances preclude a speed superiority claim",
+    "no promotion of partial wave17 controls and no change to frozen helper/settings"
+  ]
+}

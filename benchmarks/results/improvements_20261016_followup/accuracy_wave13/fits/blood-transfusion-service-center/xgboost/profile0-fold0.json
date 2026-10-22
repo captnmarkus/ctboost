@@ -1,0 +1,108 @@
+{
+  "correction": {
+    "fold": {
+      "coefficient_rounding_absolute_bound": 3.965990111320927e-08,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "xgboost",
+      "physical_trees": 14,
+      "prediction_oracle_absolute_tolerance": 7.004437065916136e-05,
+      "topology_sha256_after": "fa1e875ed38596c898521439dcf6e572bb3f2777e717f1b33f1b5771b2d2e479",
+      "topology_sha256_before": "fa1e875ed38596c898521439dcf6e572bb3f2777e717f1b33f1b5771b2d2e479"
+    },
+    "inference_checks": {
+      "stop": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 7.004437065916136e-05,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.7622180084111694e-07,
+        "oracle_max_absolute_difference": 3.6554183080461655e-07
+      }
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 4186,
+      "design_shape": [
+        299,
+        102
+      ],
+      "ordered_training_transform_replayed": false,
+      "training_leaf_ids_sha256": "dae047c917adc87b6d021088f4a50e58c25beebcdcb550cc4bec25faa475910b",
+      "training_rows": 299,
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "columns": 102,
+      "evaluations": 7,
+      "final_objective": 0.44552841672242777,
+      "ftol": 1e-13,
+      "gradient_gate": 1e-06,
+      "gtol": 1e-09,
+      "initial_coefficients": "all zero",
+      "initial_objective": 0.4497687884693524,
+      "iterations": 5,
+      "maxcor": 20,
+      "maximum_absolute_mean_gradient": 1.1042889768717954e-09,
+      "maxiter": 2000,
+      "maxls": 50,
+      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+      "method": "L-BFGS-B",
+      "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+      "penalty": 1000.0,
+      "rows": 299,
+      "status": 0
+    },
+    "training_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 7.004437065916136e-05,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.7622180084111694e-07,
+      "oracle_max_absolute_difference": 3.6554183080461655e-07
+    }
+  },
+  "dataset": "blood-transfusion-service-center",
+  "early_stopping": false,
+  "feature_names": [
+    "MonthsSinceLastDonation",
+    "NumberOfDonations",
+    "TotalBloodDonated",
+    "MonthsSinceFirstDonation"
+  ],
+  "finished_at": "2026-10-16T13:08:41.337156+00:00",
+  "fit_seconds": 0.016824100002850173,
+  "fold": 0,
+  "fold_category_counts": {},
+  "fold_category_schema": {},
+  "library": "xgboost",
+  "model_bytes": 25383,
+  "model_retained": false,
+  "model_sha256": "45a5526057e380aa0dbe29a7cf1678137e05fd44a3bc3205d9d62fcda393ec1e",
+  "parameters": {
+    "eta": 0.05,
+    "eval_metric": "auc",
+    "lambda": 0.3,
+    "max_bin": 256,
+    "max_cat_threshold": 256,
+    "max_cat_to_onehot": 8,
+    "max_depth": 4,
+    "min_child_weight": 5,
+    "multi_strategy": "one_output_per_tree",
+    "nthread": 1,
+    "objective": "binary:logistic",
+    "seed": 47,
+    "subsample": 1.0,
+    "tree_method": "hist"
+  },
+  "prediction_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave13\\fold_predictions\\blood-transfusion-service-center\\xgboost\\profile0-fold0.npz",
+  "prediction_sha256": "530709860a1994feec5a08bafa13d32ad654748ed45ac504420555dff9e8af06",
+  "profile_index": 0,
+  "requested_rounds": 14,
+  "retained_rounds": 14,
+  "started_at": "2026-10-16T13:08:41.253377+00:00",
+  "status": "ok",
+  "structural_early_termination": false,
+  "temperature": null,
+  "validation_error": 0.3088235294117647
+}

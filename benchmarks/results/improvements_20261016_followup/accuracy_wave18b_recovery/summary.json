@@ -1,0 +1,1180 @@
+{
+  "status": "complete_development_assessment",
+  "source_sha256": {
+    "plan.json": "d368d34f9245e27d818f105b70163474878f9a6fdfd0f720a1204440b0ca09d2",
+    "fold_manifest.json": "1ea66f8f87242708f9df4ad483f21474e0a48bc7c912495fea2b53cf622e972e",
+    "recovery_plan.json": "2f4faaa1f896f20d12a528da3fb93a36f88c4e23b3a610eaa61624e54aaab57e",
+    "recovery_completion.json": "ccb8f20754b852759b32d1288bea5de28611ecacf8d2417aeded9bfd19c1caa9",
+    "fold_completion.json": "52c10dfc284a0a489e2f0568ce02765af3f82bd4d74bb07e45c44befaac61481",
+    "selected_cv.json": "0c1d68453a4bbf6a457f052aa9ab9b79eb432088df940a235ed5e50a8d3e6223",
+    "frozen_selections.json": "777fe737302e61eb9dfab0fa7d9a09d99d27f02554f8a86e2f4f7b520a474a68",
+    "development.json": "93fbe5310c9afdeb2316c87f205671b1e16c24bfc22f48c20e01c4caf7333652"
+  },
+  "report_source_sha256": "559099bff5c06bd6d6f3ee71e62fe030b8eeda94d259f6a74fb554adc33607de",
+  "scientific_plan_unchanged": true,
+  "reused_verified_fold_jobs": 297,
+  "new_fold_process_counts": {
+    "fully_verified_jobs": 243,
+    "limits": "Completed means the native fit returned and passed clean-fit checks. A terminated fit without this checkpoint is not counted.",
+    "native_fits_completed": 243,
+    "native_fits_started": 243,
+    "planned_jobs": 243
+  },
+  "scientific_fold_completion_counts": {
+    "fully_verified_jobs": 540,
+    "limits": "Completed means the native fit returned and passed clean-fit checks. A terminated fit without this checkpoint is not counted.",
+    "native_fits_completed": 540,
+    "native_fits_started": 540,
+    "planned_jobs": 540
+  },
+  "new_union_fits_completed": 36,
+  "fully_verified_union_jobs": 36,
+  "extra_original_interrupted_native_fit": 1,
+  "total_quality_tree_fits": 3107,
+  "diagnostic_replay_fits_separate": 8,
+  "original18_resource_failure": {
+    "native_fits_completed": 58,
+    "summary_sha256": "8f2f9c0b9a5897745671c33e39c3cfcd09cbc9a0a621500e1821540454156820"
+  },
+  "original18b_external_interruption": {
+    "native_fits_completed": 298,
+    "fully_verified_jobs": 297,
+    "summary_sha256": "cd6ff7d6a02d35bbe39678e9e1f87ffdf9daa9526e7841ba7bae65f4b4a62989",
+    "incident_sha256": "156d9ce25a987c10f1a7ad345224539d2d5c5274b5d6b980c8a57cdfba6519a9",
+    "cause": "A reviewing agent mistakenly terminated the owned worker. This was not a scientific or watchdog failure."
+  },
+  "terminal_failures": [],
+  "resources": {
+    "cpu": 4,
+    "headroom_poll_seconds": 5.0,
+    "headroom_reserve_bytes": 4294967296,
+    "headroom_wait_seconds": 300.0,
+    "maximum_job_rss_bytes": 8589934592,
+    "maximum_job_seconds": 1200.0,
+    "maximum_named_array_bytes": 6442450944,
+    "threads_per_fit": 1,
+    "workers": 1
+  },
+  "maximum_new_job_seconds": 96.25,
+  "maximum_new_process_tree_rss_bytes": 3698835456,
+  "new_job_seconds": {
+    "fold": 2453.825999999972,
+    "union": 354.1109999999935
+  },
+  "new_resource_failures": [],
+  "timing_interpretation": "Diagnostic process costs only. Some workers overlapped separately bounded release correctness/build work on other CPUs; no isolated training or inference-speed claim.",
+  "development_scored": true,
+  "development_target_met": false,
+  "conditional_seed677_run": false,
+  "official_test_scored": false,
+  "limitations": "Adaptive reused development and earlier STOP/CV tuning. Raw fold-local preprocessing prevents direct vocabulary/CTR leakage, but inherited tree/correction/temperature controls were selected using these authorized rows previously: fold errors are a selection criterion, not unbiased external estimates. Equal fit counts do not equal compute, capacity or effective regularization. Different fixed corrections can be suboptimal on folds. Models with fixed leaf corrections are inference artifacts; historical training metrics are not recomputed. Same-split seed sensitivity is not independent replication, significance, TabArena ranking or a universal claim. Named arrays are conservative accounting, not a whole-process RAM bound.",
+  "selected_rounds": [
+    {
+      "dataset": "blood-transfusion-service-center",
+      "library": "ctboost",
+      "anchor_requested_rounds": 3,
+      "selected_requested_rounds": 6,
+      "selected_profile_index": 2,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.2596690904633682,
+          "profile_index": 0,
+          "requested_rounds": 2
+        },
+        {
+          "mean_fold_error": 0.24622018196268222,
+          "profile_index": 1,
+          "requested_rounds": 3
+        },
+        {
+          "mean_fold_error": 0.2354732334555117,
+          "profile_index": 2,
+          "requested_rounds": 6
+        }
+      ],
+      "native_retained_rounds": 6
+    },
+    {
+      "dataset": "blood-transfusion-service-center",
+      "library": "xgboost",
+      "anchor_requested_rounds": 56,
+      "selected_requested_rounds": 56,
+      "selected_profile_index": 1,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.23360517023909785,
+          "profile_index": 0,
+          "requested_rounds": 28
+        },
+        {
+          "mean_fold_error": 0.22081084500749276,
+          "profile_index": 1,
+          "requested_rounds": 56
+        },
+        {
+          "mean_fold_error": 0.22332044332151088,
+          "profile_index": 2,
+          "requested_rounds": 112
+        }
+      ],
+      "native_retained_rounds": 56
+    },
+    {
+      "dataset": "blood-transfusion-service-center",
+      "library": "lightgbm",
+      "anchor_requested_rounds": 2,
+      "selected_requested_rounds": 4,
+      "selected_profile_index": 2,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.2586922568987264,
+          "profile_index": 0,
+          "requested_rounds": 1
+        },
+        {
+          "mean_fold_error": 0.22879652365079933,
+          "profile_index": 1,
+          "requested_rounds": 2
+        },
+        {
+          "mean_fold_error": 0.22725229232648897,
+          "profile_index": 2,
+          "requested_rounds": 4
+        }
+      ],
+      "native_retained_rounds": 4
+    },
+    {
+      "dataset": "churn",
+      "library": "ctboost",
+      "anchor_requested_rounds": 61,
+      "selected_requested_rounds": 122,
+      "selected_profile_index": 2,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.08259274201069153,
+          "profile_index": 0,
+          "requested_rounds": 31
+        },
+        {
+          "mean_fold_error": 0.07177696198331636,
+          "profile_index": 1,
+          "requested_rounds": 61
+        },
+        {
+          "mean_fold_error": 0.07159505632483032,
+          "profile_index": 2,
+          "requested_rounds": 122
+        }
+      ],
+      "native_retained_rounds": 122
+    },
+    {
+      "dataset": "churn",
+      "library": "xgboost",
+      "anchor_requested_rounds": 230,
+      "selected_requested_rounds": 460,
+      "selected_profile_index": 2,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.07647971332085317,
+          "profile_index": 0,
+          "requested_rounds": 115
+        },
+        {
+          "mean_fold_error": 0.0756004616630231,
+          "profile_index": 1,
+          "requested_rounds": 230
+        },
+        {
+          "mean_fold_error": 0.07551457844481105,
+          "profile_index": 2,
+          "requested_rounds": 460
+        }
+      ],
+      "native_retained_rounds": 460
+    },
+    {
+      "dataset": "churn",
+      "library": "lightgbm",
+      "anchor_requested_rounds": 12,
+      "selected_requested_rounds": 12,
+      "selected_profile_index": 1,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.08857347096619947,
+          "profile_index": 0,
+          "requested_rounds": 6
+        },
+        {
+          "mean_fold_error": 0.08283816925513618,
+          "profile_index": 1,
+          "requested_rounds": 12
+        },
+        {
+          "mean_fold_error": 0.08669544921723112,
+          "profile_index": 2,
+          "requested_rounds": 24
+        }
+      ],
+      "native_retained_rounds": 12
+    },
+    {
+      "dataset": "in_vehicle_coupon_recommendation",
+      "library": "ctboost",
+      "anchor_requested_rounds": 534,
+      "selected_requested_rounds": 534,
+      "selected_profile_index": 1,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.19296272583891455,
+          "profile_index": 0,
+          "requested_rounds": 267
+        },
+        {
+          "mean_fold_error": 0.19074909934498605,
+          "profile_index": 1,
+          "requested_rounds": 534
+        },
+        {
+          "mean_fold_error": 0.19271781799001544,
+          "profile_index": 2,
+          "requested_rounds": 1068
+        }
+      ],
+      "native_retained_rounds": 534
+    },
+    {
+      "dataset": "in_vehicle_coupon_recommendation",
+      "library": "xgboost",
+      "anchor_requested_rounds": 682,
+      "selected_requested_rounds": 682,
+      "selected_profile_index": 1,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.17945277891836015,
+          "profile_index": 0,
+          "requested_rounds": 341
+        },
+        {
+          "mean_fold_error": 0.17858952758034669,
+          "profile_index": 1,
+          "requested_rounds": 682
+        },
+        {
+          "mean_fold_error": 0.1806019683094156,
+          "profile_index": 2,
+          "requested_rounds": 1364
+        }
+      ],
+      "native_retained_rounds": 682
+    },
+    {
+      "dataset": "in_vehicle_coupon_recommendation",
+      "library": "lightgbm",
+      "anchor_requested_rounds": 424,
+      "selected_requested_rounds": 848,
+      "selected_profile_index": 2,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.18962519134577113,
+          "profile_index": 0,
+          "requested_rounds": 212
+        },
+        {
+          "mean_fold_error": 0.18890566265903574,
+          "profile_index": 1,
+          "requested_rounds": 424
+        },
+        {
+          "mean_fold_error": 0.1886131394766899,
+          "profile_index": 2,
+          "requested_rounds": 848
+        }
+      ],
+      "native_retained_rounds": 848
+    },
+    {
+      "dataset": "GiveMeSomeCredit",
+      "library": "ctboost",
+      "anchor_requested_rounds": 328,
+      "selected_requested_rounds": 656,
+      "selected_profile_index": 2,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.13725280474711393,
+          "profile_index": 0,
+          "requested_rounds": 164
+        },
+        {
+          "mean_fold_error": 0.13718006689558937,
+          "profile_index": 1,
+          "requested_rounds": 328
+        },
+        {
+          "mean_fold_error": 0.1371732421031069,
+          "profile_index": 2,
+          "requested_rounds": 656
+        }
+      ],
+      "native_retained_rounds": 656
+    },
+    {
+      "dataset": "GiveMeSomeCredit",
+      "library": "xgboost",
+      "anchor_requested_rounds": 64,
+      "selected_requested_rounds": 64,
+      "selected_profile_index": 1,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.15186620264810408,
+          "profile_index": 0,
+          "requested_rounds": 32
+        },
+        {
+          "mean_fold_error": 0.14259443298682148,
+          "profile_index": 1,
+          "requested_rounds": 64
+        },
+        {
+          "mean_fold_error": 0.14291269456999134,
+          "profile_index": 2,
+          "requested_rounds": 128
+        }
+      ],
+      "native_retained_rounds": 64
+    },
+    {
+      "dataset": "GiveMeSomeCredit",
+      "library": "lightgbm",
+      "anchor_requested_rounds": 87,
+      "selected_requested_rounds": 174,
+      "selected_profile_index": 2,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.15110448183549657,
+          "profile_index": 0,
+          "requested_rounds": 44
+        },
+        {
+          "mean_fold_error": 0.1426166875102212,
+          "profile_index": 1,
+          "requested_rounds": 87
+        },
+        {
+          "mean_fold_error": 0.14018182250596795,
+          "profile_index": 2,
+          "requested_rounds": 174
+        }
+      ],
+      "native_retained_rounds": 174
+    },
+    {
+      "dataset": "QSAR_fish_toxicity",
+      "library": "ctboost",
+      "anchor_requested_rounds": 32,
+      "selected_requested_rounds": 16,
+      "selected_profile_index": 0,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.9943962174997892,
+          "profile_index": 0,
+          "requested_rounds": 16
+        },
+        {
+          "mean_fold_error": 0.9960935800007482,
+          "profile_index": 1,
+          "requested_rounds": 32
+        },
+        {
+          "mean_fold_error": 1.000574702136219,
+          "profile_index": 2,
+          "requested_rounds": 64
+        }
+      ],
+      "native_retained_rounds": 16
+    },
+    {
+      "dataset": "QSAR_fish_toxicity",
+      "library": "xgboost",
+      "anchor_requested_rounds": 59,
+      "selected_requested_rounds": 30,
+      "selected_profile_index": 0,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.9436489317397676,
+          "profile_index": 0,
+          "requested_rounds": 30
+        },
+        {
+          "mean_fold_error": 0.9493703891840978,
+          "profile_index": 1,
+          "requested_rounds": 59
+        },
+        {
+          "mean_fold_error": 0.9672668132071571,
+          "profile_index": 2,
+          "requested_rounds": 118
+        }
+      ],
+      "native_retained_rounds": 30
+    },
+    {
+      "dataset": "QSAR_fish_toxicity",
+      "library": "lightgbm",
+      "anchor_requested_rounds": 38,
+      "selected_requested_rounds": 19,
+      "selected_profile_index": 0,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.9654084140150431,
+          "profile_index": 0,
+          "requested_rounds": 19
+        },
+        {
+          "mean_fold_error": 0.968070359539488,
+          "profile_index": 1,
+          "requested_rounds": 38
+        },
+        {
+          "mean_fold_error": 0.9928357417780729,
+          "profile_index": 2,
+          "requested_rounds": 76
+        }
+      ],
+      "native_retained_rounds": 19
+    },
+    {
+      "dataset": "Another-Dataset-on-used-Fiat-500",
+      "library": "ctboost",
+      "anchor_requested_rounds": 116,
+      "selected_requested_rounds": 232,
+      "selected_profile_index": 2,
+      "profile_scores": [
+        {
+          "mean_fold_error": 806.3625597825019,
+          "profile_index": 0,
+          "requested_rounds": 58
+        },
+        {
+          "mean_fold_error": 801.5684824107441,
+          "profile_index": 1,
+          "requested_rounds": 116
+        },
+        {
+          "mean_fold_error": 801.5678228692559,
+          "profile_index": 2,
+          "requested_rounds": 232
+        }
+      ],
+      "native_retained_rounds": 232
+    },
+    {
+      "dataset": "Another-Dataset-on-used-Fiat-500",
+      "library": "xgboost",
+      "anchor_requested_rounds": 56,
+      "selected_requested_rounds": 56,
+      "selected_profile_index": 1,
+      "profile_scores": [
+        {
+          "mean_fold_error": 808.7320552904231,
+          "profile_index": 0,
+          "requested_rounds": 28
+        },
+        {
+          "mean_fold_error": 786.6232605219692,
+          "profile_index": 1,
+          "requested_rounds": 56
+        },
+        {
+          "mean_fold_error": 791.0829330327059,
+          "profile_index": 2,
+          "requested_rounds": 112
+        }
+      ],
+      "native_retained_rounds": 56
+    },
+    {
+      "dataset": "Another-Dataset-on-used-Fiat-500",
+      "library": "lightgbm",
+      "anchor_requested_rounds": 42,
+      "selected_requested_rounds": 42,
+      "selected_profile_index": 1,
+      "profile_scores": [
+        {
+          "mean_fold_error": 806.5314831510253,
+          "profile_index": 0,
+          "requested_rounds": 21
+        },
+        {
+          "mean_fold_error": 787.0555948066394,
+          "profile_index": 1,
+          "requested_rounds": 42
+        },
+        {
+          "mean_fold_error": 791.2014962701703,
+          "profile_index": 2,
+          "requested_rounds": 84
+        }
+      ],
+      "native_retained_rounds": 42
+    },
+    {
+      "dataset": "houses",
+      "library": "ctboost",
+      "anchor_requested_rounds": 167,
+      "selected_requested_rounds": 334,
+      "selected_profile_index": 2,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.22853907696747583,
+          "profile_index": 0,
+          "requested_rounds": 84
+        },
+        {
+          "mean_fold_error": 0.22524186726271173,
+          "profile_index": 1,
+          "requested_rounds": 167
+        },
+        {
+          "mean_fold_error": 0.22524111371695038,
+          "profile_index": 2,
+          "requested_rounds": 334
+        }
+      ],
+      "native_retained_rounds": 334
+    },
+    {
+      "dataset": "houses",
+      "library": "xgboost",
+      "anchor_requested_rounds": 1087,
+      "selected_requested_rounds": 1087,
+      "selected_profile_index": 1,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.2263466588477216,
+          "profile_index": 0,
+          "requested_rounds": 544
+        },
+        {
+          "mean_fold_error": 0.2243229058913244,
+          "profile_index": 1,
+          "requested_rounds": 1087
+        },
+        {
+          "mean_fold_error": 0.22441195370367706,
+          "profile_index": 2,
+          "requested_rounds": 2174
+        }
+      ],
+      "native_retained_rounds": 1087
+    },
+    {
+      "dataset": "houses",
+      "library": "lightgbm",
+      "anchor_requested_rounds": 191,
+      "selected_requested_rounds": 382,
+      "selected_profile_index": 2,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.22710602478819983,
+          "profile_index": 0,
+          "requested_rounds": 96
+        },
+        {
+          "mean_fold_error": 0.21952826740869372,
+          "profile_index": 1,
+          "requested_rounds": 191
+        },
+        {
+          "mean_fold_error": 0.21892718630658967,
+          "profile_index": 2,
+          "requested_rounds": 382
+        }
+      ],
+      "native_retained_rounds": 382
+    },
+    {
+      "dataset": "diamonds",
+      "library": "ctboost",
+      "anchor_requested_rounds": 512,
+      "selected_requested_rounds": 1024,
+      "selected_profile_index": 2,
+      "profile_scores": [
+        {
+          "mean_fold_error": 553.2903864429738,
+          "profile_index": 0,
+          "requested_rounds": 256
+        },
+        {
+          "mean_fold_error": 552.969226139847,
+          "profile_index": 1,
+          "requested_rounds": 512
+        },
+        {
+          "mean_fold_error": 552.7807065429878,
+          "profile_index": 2,
+          "requested_rounds": 1024
+        }
+      ],
+      "native_retained_rounds": 1024
+    },
+    {
+      "dataset": "diamonds",
+      "library": "xgboost",
+      "anchor_requested_rounds": 154,
+      "selected_requested_rounds": 154,
+      "selected_profile_index": 1,
+      "profile_scores": [
+        {
+          "mean_fold_error": 558.2916063657598,
+          "profile_index": 0,
+          "requested_rounds": 77
+        },
+        {
+          "mean_fold_error": 540.2188717204456,
+          "profile_index": 1,
+          "requested_rounds": 154
+        },
+        {
+          "mean_fold_error": 541.3069296699429,
+          "profile_index": 2,
+          "requested_rounds": 308
+        }
+      ],
+      "native_retained_rounds": 154
+    },
+    {
+      "dataset": "diamonds",
+      "library": "lightgbm",
+      "anchor_requested_rounds": 1195,
+      "selected_requested_rounds": 598,
+      "selected_profile_index": 0,
+      "profile_scores": [
+        {
+          "mean_fold_error": 546.2098318710634,
+          "profile_index": 0,
+          "requested_rounds": 598
+        },
+        {
+          "mean_fold_error": 548.5495368338848,
+          "profile_index": 1,
+          "requested_rounds": 1195
+        },
+        {
+          "mean_fold_error": 553.2652432760373,
+          "profile_index": 2,
+          "requested_rounds": 2390
+        }
+      ],
+      "native_retained_rounds": 598
+    },
+    {
+      "dataset": "anneal",
+      "library": "ctboost",
+      "anchor_requested_rounds": 389,
+      "selected_requested_rounds": 195,
+      "selected_profile_index": 0,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.29442224952344903,
+          "profile_index": 0,
+          "requested_rounds": 195
+        },
+        {
+          "mean_fold_error": 0.3332932195858141,
+          "profile_index": 1,
+          "requested_rounds": 389
+        },
+        {
+          "mean_fold_error": 0.35578693334002687,
+          "profile_index": 2,
+          "requested_rounds": 778
+        }
+      ],
+      "native_retained_rounds": 195
+    },
+    {
+      "dataset": "anneal",
+      "library": "xgboost",
+      "anchor_requested_rounds": 240,
+      "selected_requested_rounds": 120,
+      "selected_profile_index": 0,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.07722593388004119,
+          "profile_index": 0,
+          "requested_rounds": 120
+        },
+        {
+          "mean_fold_error": 0.0856968799444772,
+          "profile_index": 1,
+          "requested_rounds": 240
+        },
+        {
+          "mean_fold_error": 0.09033690894945501,
+          "profile_index": 2,
+          "requested_rounds": 480
+        }
+      ],
+      "native_retained_rounds": 120
+    },
+    {
+      "dataset": "anneal",
+      "library": "lightgbm",
+      "anchor_requested_rounds": 69,
+      "selected_requested_rounds": 35,
+      "selected_profile_index": 0,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.22751234361263495,
+          "profile_index": 0,
+          "requested_rounds": 35
+        },
+        {
+          "mean_fold_error": 0.39468697850416795,
+          "profile_index": 1,
+          "requested_rounds": 69
+        },
+        {
+          "mean_fold_error": 0.6024852478400662,
+          "profile_index": 2,
+          "requested_rounds": 138
+        }
+      ],
+      "native_retained_rounds": 35
+    },
+    {
+      "dataset": "website_phishing",
+      "library": "ctboost",
+      "anchor_requested_rounds": 118,
+      "selected_requested_rounds": 118,
+      "selected_profile_index": 1,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.32579576217017303,
+          "profile_index": 0,
+          "requested_rounds": 59
+        },
+        {
+          "mean_fold_error": 0.3242449516600922,
+          "profile_index": 1,
+          "requested_rounds": 118
+        },
+        {
+          "mean_fold_error": 0.32691826938124413,
+          "profile_index": 2,
+          "requested_rounds": 236
+        }
+      ],
+      "native_retained_rounds": 118
+    },
+    {
+      "dataset": "website_phishing",
+      "library": "xgboost",
+      "anchor_requested_rounds": 122,
+      "selected_requested_rounds": 61,
+      "selected_profile_index": 0,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.35165789539945613,
+          "profile_index": 0,
+          "requested_rounds": 61
+        },
+        {
+          "mean_fold_error": 0.35244234867414376,
+          "profile_index": 1,
+          "requested_rounds": 122
+        },
+        {
+          "mean_fold_error": 0.3737586287467318,
+          "profile_index": 2,
+          "requested_rounds": 244
+        }
+      ],
+      "native_retained_rounds": 61
+    },
+    {
+      "dataset": "website_phishing",
+      "library": "lightgbm",
+      "anchor_requested_rounds": 43,
+      "selected_requested_rounds": 43,
+      "selected_profile_index": 1,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.36091102008168685,
+          "profile_index": 0,
+          "requested_rounds": 22
+        },
+        {
+          "mean_fold_error": 0.3339429528096948,
+          "profile_index": 1,
+          "requested_rounds": 43
+        },
+        {
+          "mean_fold_error": 0.3611912187056071,
+          "profile_index": 2,
+          "requested_rounds": 86
+        }
+      ],
+      "native_retained_rounds": 43
+    },
+    {
+      "dataset": "splice",
+      "library": "ctboost",
+      "anchor_requested_rounds": 169,
+      "selected_requested_rounds": 169,
+      "selected_profile_index": 1,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.12443915609886505,
+          "profile_index": 0,
+          "requested_rounds": 85
+        },
+        {
+          "mean_fold_error": 0.12249900186664173,
+          "profile_index": 1,
+          "requested_rounds": 169
+        },
+        {
+          "mean_fold_error": 0.12882756220209252,
+          "profile_index": 2,
+          "requested_rounds": 338
+        }
+      ],
+      "native_retained_rounds": 169
+    },
+    {
+      "dataset": "splice",
+      "library": "xgboost",
+      "anchor_requested_rounds": 69,
+      "selected_requested_rounds": 35,
+      "selected_profile_index": 0,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.12465978939806097,
+          "profile_index": 0,
+          "requested_rounds": 35
+        },
+        {
+          "mean_fold_error": 0.12584767127719904,
+          "profile_index": 1,
+          "requested_rounds": 69
+        },
+        {
+          "mean_fold_error": 0.13237649670264334,
+          "profile_index": 2,
+          "requested_rounds": 138
+        }
+      ],
+      "native_retained_rounds": 35
+    },
+    {
+      "dataset": "splice",
+      "library": "lightgbm",
+      "anchor_requested_rounds": 157,
+      "selected_requested_rounds": 157,
+      "selected_profile_index": 1,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.14116819942036024,
+          "profile_index": 0,
+          "requested_rounds": 79
+        },
+        {
+          "mean_fold_error": 0.1332776876639671,
+          "profile_index": 1,
+          "requested_rounds": 157
+        },
+        {
+          "mean_fold_error": 0.1479799781418479,
+          "profile_index": 2,
+          "requested_rounds": 314
+        }
+      ],
+      "native_retained_rounds": 157
+    },
+    {
+      "dataset": "SDSS17",
+      "library": "ctboost",
+      "anchor_requested_rounds": 173,
+      "selected_requested_rounds": 173,
+      "selected_profile_index": 1,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.08467294137219901,
+          "profile_index": 0,
+          "requested_rounds": 87
+        },
+        {
+          "mean_fold_error": 0.08311872439962768,
+          "profile_index": 1,
+          "requested_rounds": 173
+        },
+        {
+          "mean_fold_error": 0.08315057710137087,
+          "profile_index": 2,
+          "requested_rounds": 346
+        }
+      ],
+      "native_retained_rounds": 173
+    },
+    {
+      "dataset": "SDSS17",
+      "library": "xgboost",
+      "anchor_requested_rounds": 440,
+      "selected_requested_rounds": 440,
+      "selected_profile_index": 1,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.10958892560795772,
+          "profile_index": 0,
+          "requested_rounds": 220
+        },
+        {
+          "mean_fold_error": 0.10481509050495534,
+          "profile_index": 1,
+          "requested_rounds": 440
+        },
+        {
+          "mean_fold_error": 0.1097945224283573,
+          "profile_index": 2,
+          "requested_rounds": 880
+        }
+      ],
+      "native_retained_rounds": 440
+    },
+    {
+      "dataset": "SDSS17",
+      "library": "lightgbm",
+      "anchor_requested_rounds": 160,
+      "selected_requested_rounds": 160,
+      "selected_profile_index": 1,
+      "profile_scores": [
+        {
+          "mean_fold_error": 0.117095016163839,
+          "profile_index": 0,
+          "requested_rounds": 80
+        },
+        {
+          "mean_fold_error": 0.09137498644514055,
+          "profile_index": 1,
+          "requested_rounds": 160
+        },
+        {
+          "mean_fold_error": 0.10680360709873157,
+          "profile_index": 2,
+          "requested_rounds": 320
+        }
+      ],
+      "native_retained_rounds": 160
+    }
+  ],
+  "round_profiles_by_library": {
+    "ctboost": {
+      "half": 2,
+      "same": 4,
+      "double": 6
+    },
+    "xgboost": {
+      "half": 4,
+      "same": 7,
+      "double": 1
+    },
+    "lightgbm": {
+      "half": 3,
+      "same": 5,
+      "double": 4
+    }
+  },
+  "all_stages_successful": true,
+  "policy_payload_bytes": {
+    "ctboost": 83945659,
+    "xgboost": 72254542,
+    "lightgbm": 14770735
+  },
+  "development_summary": [
+    {
+      "comparator": "xgboost",
+      "datasets": 12,
+      "family": "all",
+      "median_relative_error_gain": 0.0020749597374117644,
+      "ties": 0,
+      "wins": 7,
+      "worst_relative_regression": 0.1397637795275591
+    },
+    {
+      "comparator": "xgboost",
+      "datasets": 4,
+      "family": "binary",
+      "median_relative_error_gain": -0.021488055295639918,
+      "ties": 0,
+      "wins": 1,
+      "worst_relative_regression": 0.1397637795275591
+    },
+    {
+      "comparator": "xgboost",
+      "datasets": 4,
+      "family": "regression",
+      "median_relative_error_gain": 0.010381669971661402,
+      "ties": 0,
+      "wins": 3,
+      "worst_relative_regression": 0.005097158415586552
+    },
+    {
+      "comparator": "xgboost",
+      "datasets": 4,
+      "family": "multiclass",
+      "median_relative_error_gain": 0.20560671402562927,
+      "ties": 0,
+      "wins": 3,
+      "worst_relative_regression": 0.0026009105938182933
+    },
+    {
+      "comparator": "lightgbm",
+      "datasets": 12,
+      "family": "all",
+      "median_relative_error_gain": -0.00821725077894224,
+      "ties": 0,
+      "wins": 5,
+      "worst_relative_regression": 2.375793028541386
+    },
+    {
+      "comparator": "lightgbm",
+      "datasets": 4,
+      "family": "binary",
+      "median_relative_error_gain": 0.004814165673394759,
+      "ties": 0,
+      "wins": 2,
+      "worst_relative_regression": 0.23454157782515994
+    },
+    {
+      "comparator": "lightgbm",
+      "datasets": 4,
+      "family": "regression",
+      "median_relative_error_gain": -0.011535297345770683,
+      "ties": 0,
+      "wins": 1,
+      "worst_relative_regression": 0.029999921499529552
+    },
+    {
+      "comparator": "lightgbm",
+      "datasets": 4,
+      "family": "multiclass",
+      "median_relative_error_gain": 0.0022012476804029804,
+      "ties": 0,
+      "wins": 2,
+      "worst_relative_regression": 2.375793028541386
+    }
+  ],
+  "results": [
+    {
+      "dataset": "blood-transfusion-service-center",
+      "problem_type": "binary",
+      "errors": {
+        "ctboost": 0.4106382978723404,
+        "lightgbm": 0.3326241134751773,
+        "xgboost": 0.3602836879432624
+      }
+    },
+    {
+      "dataset": "churn",
+      "problem_type": "binary",
+      "errors": {
+        "ctboost": 0.11059678108531545,
+        "lightgbm": 0.10903598727626651,
+        "xgboost": 0.10733869819114084
+      }
+    },
+    {
+      "dataset": "in_vehicle_coupon_recommendation",
+      "problem_type": "binary",
+      "errors": {
+        "ctboost": 0.1797086980306345,
+        "lightgbm": 0.18411697665937277,
+        "xgboost": 0.17746854485776797
+      }
+    },
+    {
+      "dataset": "GiveMeSomeCredit",
+      "problem_type": "binary",
+      "errors": {
+        "ctboost": 0.13321898227558593,
+        "lightgbm": 0.14154006370987515,
+        "xgboost": 0.13368863840561962
+      }
+    },
+    {
+      "dataset": "QSAR_fish_toxicity",
+      "problem_type": "regression",
+      "errors": {
+        "ctboost": 0.7142123432179336,
+        "lightgbm": 0.7503008167413185,
+        "xgboost": 0.7288821756650105
+      }
+    },
+    {
+      "dataset": "Another-Dataset-on-used-Fiat-500",
+      "problem_type": "regression",
+      "errors": {
+        "ctboost": 740.9416132700629,
+        "lightgbm": 719.360844407988,
+        "xgboost": 763.0178677254431
+      }
+    },
+    {
+      "dataset": "houses",
+      "problem_type": "regression",
+      "errors": {
+        "ctboost": 0.21522968602292183,
+        "lightgbm": 0.21081303151218705,
+        "xgboost": 0.21536684456410582
+      }
+    },
+    {
+      "dataset": "diamonds",
+      "problem_type": "regression",
+      "errors": {
+        "ctboost": 561.5216516571435,
+        "lightgbm": 560.3337338598928,
+        "xgboost": 558.674001767465
+      }
+    },
+    {
+      "dataset": "anneal",
+      "problem_type": "multiclass",
+      "errors": {
+        "ctboost": 0.0012314895795364424,
+        "lightgbm": 0.0003648000837505565,
+        "xgboost": 0.005287588780374877
+      }
+    },
+    {
+      "dataset": "website_phishing",
+      "problem_type": "multiclass",
+      "errors": {
+        "ctboost": 0.14585961823606258,
+        "lightgbm": 0.1946229709421187,
+        "xgboost": 0.18687924906511583
+      }
+    },
+    {
+      "dataset": "splice",
+      "problem_type": "multiclass",
+      "errors": {
+        "ctboost": 0.13395668997757226,
+        "lightgbm": 0.12064673755102932,
+        "xgboost": 0.13360918443434555
+      }
+    },
+    {
+      "dataset": "SDSS17",
+      "problem_type": "multiclass",
+      "errors": {
+        "ctboost": 0.08797907487489148,
+        "lightgbm": 0.0993804120571123,
+        "xgboost": 0.10884665183879842
+      }
+    }
+  ]
+}

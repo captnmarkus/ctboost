@@ -1,0 +1,104 @@
+{
+  "component_stop_prediction_diagnostic": {
+    "exactly_equal": false,
+    "maximum_absolute_difference": 0.8139016318172665,
+    "purpose": "Diagnostic only; never replace a component or select seeds"
+  },
+  "components": [
+    {
+      "dataset": "SDSS17",
+      "finished_at": "2026-10-16T12:19:25.901601+00:00",
+      "library": "lightgbm",
+      "model_bytes": 1522406,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave9\\models\\SDSS17\\lightgbm.pkl",
+      "model_sha256": "aef2bb1a9f06922328d537475215bc138a244f36f78c97d2543b4dece003c6eb",
+      "reused": true,
+      "seed": 47,
+      "started_at": "2026-10-16T12:19:25.900599+00:00",
+      "status": "ok"
+    },
+    {
+      "dataset": "SDSS17",
+      "finished_at": "2026-10-16T12:19:26.608678+00:00",
+      "library": "lightgbm",
+      "model_bytes": 1513655,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave11\\components\\SDSS17\\lightgbm-seed947.pkl",
+      "model_sha256": "a427169bd81267f9fd63c529d39700438b69d11e9d2701c1f5cd3954916046e4",
+      "refit_details": {
+        "apparent_union_error_inference_transform": 0.038787901312323944,
+        "early_stopping": false,
+        "fit_seconds": 0.3590063999981794,
+        "parameters": {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "feature_fraction": 0.8,
+          "force_col_wise": true,
+          "lambda_l2": 5,
+          "learning_rate": 0.03,
+          "max_bin": 255,
+          "metric": "multi_logloss",
+          "min_data_in_leaf": 5,
+          "num_class": 3,
+          "num_leaves": 31,
+          "num_threads": 1,
+          "objective": "multiclass",
+          "seed": 947,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        "requested_rounds": 160,
+        "retained_rounds": 160,
+        "structural_early_termination": false,
+        "temperature": 1.0,
+        "union_data": {
+          "row_order": "original TRAIN followed by original STOP",
+          "source_roles": {
+            "stop": {
+              "index_sha256": "d9821736c8ceb76ddb2733e406ec6f1869e41be81694c0a160cb2ba97eb14a8b",
+              "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\SDSS17\\stop.pkl",
+              "rows": 1250,
+              "sha256": "8e54588d8c042eda1ac88c6c9ac1bcec66e16eff36152d5a4e77088dc582d906"
+            },
+            "train": {
+              "index_sha256": "94e134faaca82faf4f922f10033aaf76b1ceeec42989573fc9ef2d1093024181",
+              "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\SDSS17\\train.pkl",
+              "rows": 6250,
+              "sha256": "f7b15212eef242cba1a06ffc3e918ba474bdbeab2ded06404dbcefd74e2a5a76"
+            }
+          },
+          "stop_ids_sha256": "d9821736c8ceb76ddb2733e406ec6f1869e41be81694c0a160cb2ba97eb14a8b",
+          "stop_rows": 1250,
+          "train_ids_sha256": "94e134faaca82faf4f922f10033aaf76b1ceeec42989573fc9ef2d1093024181",
+          "train_rows": 6250,
+          "union_category_counts": {
+            "fiber_ID": 1000,
+            "plate": 3870
+          },
+          "union_ids_sha256": "504437c55bc098c03f86beda8656e77f9e0f9a2443962ca12ea7499ad157b7bc",
+          "union_rows": 7500,
+          "vocabulary_fit_on": "TRAIN+STOP union only"
+        }
+      },
+      "reused": false,
+      "seed": 947,
+      "started_at": "2026-10-16T12:19:25.903107+00:00",
+      "status": "ok"
+    }
+  ],
+  "dataset": "SDSS17",
+  "library": "lightgbm",
+  "model_bytes": 3060061,
+  "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave11\\ensembles\\SDSS17\\lightgbm.pkl",
+  "model_sha256": "8536d2c2b807643cbd441e400ddfb2bcd82104ead68524dc123932dd54f2a10e",
+  "seed_pair": [
+    47,
+    947
+  ],
+  "shared_encoded_label_ids": [
+    0,
+    1,
+    2
+  ],
+  "status": "ok"
+}

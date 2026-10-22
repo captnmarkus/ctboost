@@ -1,0 +1,108 @@
+{
+  "clean_fit_controls": {
+    "binary_refit": null,
+    "leaf_refit": null,
+    "multiclass_refit": null,
+    "parameters": {
+      "alpha": 0.5,
+      "bootstrap_type": "Bernoulli",
+      "cat_features": null,
+      "eval_metric": "RMSE",
+      "feature_test": "grouped",
+      "feature_test_adjustment": "none",
+      "feature_test_bins": 8,
+      "iterations": 2000,
+      "lambda_l2": 1,
+      "leaf_estimation_backtracking": true,
+      "leaf_estimation_iterations": 3,
+      "learning_rate": 0.15,
+      "max_bins": 256,
+      "max_cat_threshold": 64,
+      "max_depth": 8,
+      "multi_strategy": "one_output_per_tree",
+      "multiclass_feature_test": "single",
+      "ordered_ctr": true,
+      "random_seed": 47,
+      "subsample": 0.8,
+      "verbose": false
+    },
+    "rounds": 32,
+    "temperature": null
+  },
+  "clean_fit_controls_sha256": "2ede6ea8a3fdfe4b529fc006254b92ab6081874b9b0b04d26912820ff244896f",
+  "fit": {
+    "apparent_union_error_inference_transform": 0.35223936255689636,
+    "early_stopping": false,
+    "fit_seconds": 0.1463579999981448,
+    "parameters": {
+      "alpha": 0.5,
+      "bootstrap_type": "Bernoulli",
+      "cat_features": null,
+      "eval_metric": "RMSE",
+      "feature_test": "grouped",
+      "feature_test_adjustment": "none",
+      "feature_test_bins": 8,
+      "iterations": 32,
+      "lambda_l2": 1,
+      "leaf_estimation_backtracking": true,
+      "leaf_estimation_iterations": 3,
+      "learning_rate": 0.15,
+      "max_bins": 256,
+      "max_cat_threshold": 64,
+      "max_depth": 8,
+      "multi_strategy": "one_output_per_tree",
+      "multiclass_feature_test": "single",
+      "ordered_ctr": true,
+      "random_seed": 47,
+      "subsample": 0.8,
+      "verbose": false
+    },
+    "requested_rounds": 32,
+    "retained_rounds": 32,
+    "structural_early_termination": false,
+    "union_data": {
+      "row_order": "original TRAIN followed by original STOP",
+      "source_roles": {
+        "stop": {
+          "index_sha256": "de393724061091abc721213073c612a2cb3947c29c7b7dc140f00abffbd62ccf",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\QSAR_fish_toxicity\\stop.pkl",
+          "rows": 75,
+          "sha256": "43ca4ebb2355030f59be5efac1b974303f0210a3fd60d7fec7b94fb5d7b1b210"
+        },
+        "train": {
+          "index_sha256": "26be8a0042fad36c4a38afc7ead69ffb0cef33bbddb18aa58b2a116ce973d933",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\QSAR_fish_toxicity\\train.pkl",
+          "rows": 379,
+          "sha256": "f5e842b299001515cdcfee2cc3b322864cdf0fc244fe067a9e0cc6f88147ea50"
+        }
+      },
+      "stop_ids_sha256": "de393724061091abc721213073c612a2cb3947c29c7b7dc140f00abffbd62ccf",
+      "stop_rows": 75,
+      "train_ids_sha256": "26be8a0042fad36c4a38afc7ead69ffb0cef33bbddb18aa58b2a116ce973d933",
+      "train_rows": 379,
+      "union_category_counts": {},
+      "union_ids_sha256": "69e84dd8c3c6712a016f2651feda5c5aed139b3d45496734fbee5a3f2fe5597c",
+      "union_rows": 454,
+      "vocabulary_fit_on": "TRAIN+STOP union only"
+    }
+  },
+  "old_scalar_corrections_disabled_before_fit": true,
+  "status": "ok",
+  "topology": {
+    "clean_native_state_sha256": "e1a92a9ca34a802675995732171033bb0020e5def07d2b9f5de7d21697f7a1ad",
+    "data_schema_sha256": "d7a994e5e812e7afa3cbcab72441bb54bcf0673c482be5bda4762b3fe5844a0c",
+    "exact_clean_refit_identity_except_scalar_leaf_outputs": true,
+    "feature_pipeline_sha256": "aec3030b714d519945402f53a4a2419328ac129a41dbe7acbb789b6d472ce918",
+    "leaf_outputs_ignored": true,
+    "library": "ctboost",
+    "limitation": "Fresh fit and disabled-correction provenance must also be enforced by the runner",
+    "nonleaf_state_sha256": "8e04e23a03b0d093b1f68ac77b477ac902f0daf1157587a717139d11ab908d59",
+    "old_correction_subtracted": false,
+    "ordered_schema_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "parent_native_state_sha256": "22fb4e78e01433796819e43215d0607dd6a99436b982d1db3da9cc0cb8ce7c8c",
+    "physical_trees": 32,
+    "problem": "regression",
+    "total_native_leaves": 1708,
+    "training_metadata_sha256": "00ce327f9dfa54d305ca1f0c11754376fa8a7b6db7dbfe0e25b61081edef4ae8"
+  }
+}

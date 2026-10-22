@@ -1,0 +1,381 @@
+{
+  "dataset": "GiveMeSomeCredit",
+  "library": "xgboost",
+  "selection": {
+    "best": {
+      "parameters": {
+        "eta": 0.05,
+        "eval_metric": "auc",
+        "lambda": 10,
+        "max_bin": 256,
+        "max_cat_threshold": 256,
+        "max_cat_to_onehot": 8,
+        "max_depth": 3,
+        "min_child_weight": 1,
+        "multi_strategy": "one_output_per_tree",
+        "nthread": 1,
+        "objective": "binary:logistic",
+        "seed": 47,
+        "subsample": 1.0,
+        "tree_method": "hist"
+      },
+      "retained_rounds": 64,
+      "stop_error": null
+    },
+    "binary_refit": {
+      "lambda": 100.0,
+      "shrinkage": 1.0,
+      "solver": {
+        "ftol": 1e-13,
+        "gradient_gate": 1e-06,
+        "gtol": 1e-09,
+        "maxiter": 2000
+      }
+    },
+    "cv_selection": {
+      "all_fits_successful": true,
+      "best": {
+        "mean_fold_error": 0.1429885714285714,
+        "profile_index": 1,
+        "requested_rounds": 64
+      },
+      "dataset": "GiveMeSomeCredit",
+      "job": {
+        "anchor_rounds": 64,
+        "binary_refit": {
+          "lambda": 100.0,
+          "shrinkage": 1.0,
+          "solver": {
+            "ftol": 1e-13,
+            "gradient_gate": 1e-06,
+            "gtol": 1e-09,
+            "maxiter": 2000
+          }
+        },
+        "dataset": "GiveMeSomeCredit",
+        "leaf_refit": null,
+        "library": "xgboost",
+        "original_selection": {
+          "all_eight_successful": true,
+          "best": {
+            "config_index": 5,
+            "fit_seconds": 0.24200949999976729,
+            "parameters": {
+              "eta": 0.05,
+              "eval_metric": "auc",
+              "lambda": 10,
+              "max_bin": 256,
+              "max_cat_threshold": 256,
+              "max_cat_to_onehot": 8,
+              "max_depth": 3,
+              "min_child_weight": 1,
+              "multi_strategy": "one_output_per_tree",
+              "nthread": 1,
+              "objective": "binary:logistic",
+              "seed": 47,
+              "subsample": 1.0,
+              "tree_method": "hist"
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 64,
+            "selection_key": [
+              0.18673425630972795,
+              64,
+              5
+            ],
+            "stop_error": 0.18673425630972795,
+            "trained_rounds_if_available": 114
+          },
+          "cumulative_search_fit_seconds": 10.179364800003896,
+          "current_wave_all_eight_successful": true,
+          "dataset": "GiveMeSomeCredit",
+          "library": "xgboost",
+          "model_bytes": 83451,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave4\\models\\GiveMeSomeCredit\\xgboost.pkl",
+          "model_sha256": "0bf4fbfc88932ff7b20b72d25f00298b70ccba9e3608d6a3549c4cc38364df8d",
+          "plan_sha256": "b63459620d4e35f543ce3b366d33767b82da8c98a96fa30155442825ce3c585a",
+          "search_fit_seconds": 1.7137800000018615,
+          "source_wave": 4
+        },
+        "parameters": {
+          "eta": 0.05,
+          "eval_metric": "auc",
+          "lambda": 10,
+          "max_bin": 256,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 8,
+          "max_depth": 3,
+          "min_child_weight": 1,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "binary:logistic",
+          "seed": 47,
+          "subsample": 1.0,
+          "tree_method": "hist"
+        },
+        "profiles": [
+          {
+            "eta": 0.05,
+            "eval_metric": "auc",
+            "lambda": 10,
+            "max_bin": 256,
+            "max_cat_threshold": 256,
+            "max_cat_to_onehot": 8,
+            "max_depth": 3,
+            "min_child_weight": 1,
+            "multi_strategy": "one_output_per_tree",
+            "nthread": 1,
+            "objective": "binary:logistic",
+            "seed": 47,
+            "subsample": 1.0,
+            "tree_method": "hist"
+          },
+          {
+            "eta": 0.025,
+            "eval_metric": "auc",
+            "lambda": 10,
+            "max_bin": 256,
+            "max_cat_threshold": 256,
+            "max_cat_to_onehot": 8,
+            "max_depth": 3,
+            "min_child_weight": 1,
+            "multi_strategy": "one_output_per_tree",
+            "nthread": 1,
+            "objective": "binary:logistic",
+            "seed": 47,
+            "subsample": 1.0,
+            "tree_method": "hist"
+          },
+          {
+            "eta": 0.05,
+            "eval_metric": "auc",
+            "lambda": 10,
+            "max_bin": 256,
+            "max_cat_threshold": 256,
+            "max_cat_to_onehot": 8,
+            "max_depth": 3,
+            "min_child_weight": 0.25,
+            "multi_strategy": "one_output_per_tree",
+            "nthread": 1,
+            "objective": "binary:logistic",
+            "seed": 47,
+            "subsample": 1.0,
+            "tree_method": "hist"
+          },
+          {
+            "eta": 0.025,
+            "eval_metric": "auc",
+            "lambda": 10,
+            "max_bin": 256,
+            "max_cat_threshold": 256,
+            "max_cat_to_onehot": 8,
+            "max_depth": 3,
+            "min_child_weight": 0.25,
+            "multi_strategy": "one_output_per_tree",
+            "nthread": 1,
+            "objective": "binary:logistic",
+            "seed": 47,
+            "subsample": 1.0,
+            "tree_method": "hist"
+          }
+        ],
+        "round_candidates": [
+          32,
+          64,
+          128
+        ],
+        "rounds": 64,
+        "temperature": null,
+        "training_selection": {
+          "all_eight_successful": true,
+          "best": {
+            "config_index": 5,
+            "fit_seconds": 0.24200949999976729,
+            "parameters": {
+              "eta": 0.05,
+              "eval_metric": "auc",
+              "lambda": 10,
+              "max_bin": 256,
+              "max_cat_threshold": 256,
+              "max_cat_to_onehot": 8,
+              "max_depth": 3,
+              "min_child_weight": 1,
+              "multi_strategy": "one_output_per_tree",
+              "nthread": 1,
+              "objective": "binary:logistic",
+              "seed": 47,
+              "subsample": 1.0,
+              "tree_method": "hist"
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 64,
+            "selection_key": [
+              0.18673425630972795,
+              64,
+              5
+            ],
+            "stop_error": 0.18673425630972795,
+            "trained_rounds_if_available": 114
+          },
+          "cumulative_search_fit_seconds": 10.179364800003896,
+          "current_wave_all_eight_successful": true,
+          "dataset": "GiveMeSomeCredit",
+          "library": "xgboost",
+          "model_bytes": 83451,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave4\\models\\GiveMeSomeCredit\\xgboost.pkl",
+          "model_sha256": "0bf4fbfc88932ff7b20b72d25f00298b70ccba9e3608d6a3549c4cc38364df8d",
+          "plan_sha256": "b63459620d4e35f543ce3b366d33767b82da8c98a96fa30155442825ce3c585a",
+          "search_fit_seconds": 1.7137800000018615,
+          "source_wave": 4
+        }
+      },
+      "library": "xgboost",
+      "scores": [
+        {
+          "mean_fold_error": 0.14636714285714286,
+          "profile_index": 0,
+          "requested_rounds": 32
+        },
+        {
+          "mean_fold_error": 0.1429885714285714,
+          "profile_index": 1,
+          "requested_rounds": 64
+        },
+        {
+          "mean_fold_error": 0.15362142857142855,
+          "profile_index": 2,
+          "requested_rounds": 128
+        }
+      ]
+    },
+    "dataset": "GiveMeSomeCredit",
+    "leaf_refit": null,
+    "library": "xgboost",
+    "model_bytes": 83973,
+    "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave13\\models\\GiveMeSomeCredit\\xgboost.pkl",
+    "model_sha256": "da119c73b7b4e4451f157e996f05ae29228a6d473bdb8408aa98ee74da6cf4e6",
+    "refit_details": {
+      "apparent_union_error_inference_transform": 0.11718585714285712,
+      "early_stopping": false,
+      "fit_seconds": 0.07912149999901885,
+      "fixed_binary_refit": {
+        "fold": {
+          "coefficient_rounding_absolute_bound": 1.54520891891617e-07,
+          "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+          "inference_only": true,
+          "library": "xgboost",
+          "physical_trees": 64,
+          "prediction_oracle_absolute_tolerance": 0.0008964688167907298,
+          "topology_sha256_after": "621c24a56b63338d8d0016dcbd5e4a3af11ba0a9aa86a2e15ca0bbcbf31e98e7",
+          "topology_sha256_before": "621c24a56b63338d8d0016dcbd5e4a3af11ba0a9aa86a2e15ca0bbcbf31e98e7"
+        },
+        "inference_checks": {
+          "original_stop": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.0008964688167907298,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 3.89726429057627e-07,
+            "oracle_max_absolute_difference": 1.9701746065692305e-06
+          },
+          "original_train": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.0008964688167907298,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 4.1508857694514685e-07,
+            "oracle_max_absolute_difference": 2.0983872603963505e-06
+          }
+        },
+        "preprocessing": {
+          "column_order": "physical tree order, then sorted observed native leaf IDs",
+          "design_nonzeros": 480000,
+          "design_shape": [
+            7500,
+            500
+          ],
+          "ordered_training_transform_replayed": false,
+          "training_leaf_ids_sha256": "eb816aa203cea813ed3cfb7bd5221a5d330640c1e5c4acbd231a3deb262fa4c7",
+          "training_rows": 7500,
+          "unobserved_leaf_correction": 0
+        },
+        "solve": {
+          "columns": 500,
+          "evaluations": 33,
+          "final_objective": 0.16539332268686968,
+          "ftol": 1e-13,
+          "gradient_gate": 1e-06,
+          "gtol": 1e-09,
+          "initial_coefficients": "all zero",
+          "initial_objective": 0.17158352595766396,
+          "iterations": 31,
+          "maxcor": 20,
+          "maximum_absolute_mean_gradient": 1.3822196905621808e-08,
+          "maxiter": 2000,
+          "maxls": 50,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "method": "L-BFGS-B",
+          "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+          "penalty": 100.0,
+          "rows": 7500,
+          "status": 0
+        },
+        "training_check": {
+          "fixed_tolerance_atol": 1e-05,
+          "fixed_tolerance_rtol": 5e-05,
+          "leaf_routing_exact": true,
+          "oracle_absolute_tolerance": 0.0008964688167907298,
+          "oracle_difference_divided_by_max_one_or_prediction_magnitude": 4.1508857694514685e-07,
+          "oracle_max_absolute_difference": 2.0983872603963505e-06
+        }
+      },
+      "parameters": {
+        "eta": 0.05,
+        "eval_metric": "auc",
+        "lambda": 10,
+        "max_bin": 256,
+        "max_cat_threshold": 256,
+        "max_cat_to_onehot": 8,
+        "max_depth": 3,
+        "min_child_weight": 1,
+        "multi_strategy": "one_output_per_tree",
+        "nthread": 1,
+        "objective": "binary:logistic",
+        "seed": 47,
+        "subsample": 1.0,
+        "tree_method": "hist"
+      },
+      "requested_rounds": 64,
+      "retained_rounds": 64,
+      "structural_early_termination": false,
+      "union_data": {
+        "row_order": "original TRAIN followed by original STOP",
+        "source_roles": {
+          "stop": {
+            "index_sha256": "95f86bc27511af6fa1201005a0abbd270a05687b2dc0c8dfae0562f1eac9237c",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\GiveMeSomeCredit\\stop.pkl",
+            "rows": 1250,
+            "sha256": "f47b44ca78b5a9f4eeb21e24cf673e2dad101b4bb5f585429c57f238883d633c"
+          },
+          "train": {
+            "index_sha256": "dcd223be41a510aa11519a689b24f8807f4deb63a673f010836c73773a74370d",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\GiveMeSomeCredit\\train.pkl",
+            "rows": 6250,
+            "sha256": "7e35bf05917689ae8658a253efeb6c9d0b7788d59071e66bf03a13804937b46d"
+          }
+        },
+        "stop_ids_sha256": "95f86bc27511af6fa1201005a0abbd270a05687b2dc0c8dfae0562f1eac9237c",
+        "stop_rows": 1250,
+        "train_ids_sha256": "dcd223be41a510aa11519a689b24f8807f4deb63a673f010836c73773a74370d",
+        "train_rows": 6250,
+        "union_category_counts": {},
+        "union_ids_sha256": "8c582af6c776addcaf6092bd2ba7040992c68522986f89629afa62163de740f5",
+        "union_rows": 7500,
+        "vocabulary_fit_on": "TRAIN+STOP union only"
+      }
+    },
+    "source_wave": 13,
+    "temperature": null
+  },
+  "status": "ok"
+}

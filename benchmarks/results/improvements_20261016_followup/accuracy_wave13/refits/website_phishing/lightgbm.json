@@ -1,0 +1,354 @@
+{
+  "dataset": "website_phishing",
+  "library": "lightgbm",
+  "selection": {
+    "best": {
+      "parameters": {
+        "bagging_fraction": 1.0,
+        "bagging_freq": 1,
+        "deterministic": true,
+        "force_col_wise": true,
+        "lambda_l2": 0.3,
+        "learning_rate": 0.05,
+        "max_bin": 255,
+        "max_cat_threshold": 256,
+        "max_cat_to_onehot": 8,
+        "metric": "multi_logloss",
+        "min_data_in_leaf": 1,
+        "num_class": 3,
+        "num_leaves": 15,
+        "num_threads": 1,
+        "objective": "multiclass",
+        "seed": 47,
+        "verbosity": -1,
+        "zero_as_missing": false
+      },
+      "retained_rounds": 43,
+      "stop_error": null
+    },
+    "binary_refit": null,
+    "cv_selection": {
+      "all_fits_successful": true,
+      "best": {
+        "mean_fold_error": 0.34943581774396504,
+        "profile_index": 0,
+        "requested_rounds": 43
+      },
+      "dataset": "website_phishing",
+      "job": {
+        "anchor_rounds": 85,
+        "binary_refit": null,
+        "dataset": "website_phishing",
+        "leaf_refit": null,
+        "library": "lightgbm",
+        "original_selection": {
+          "all_eight_successful": true,
+          "base_selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 0,
+              "fit_seconds": 0.09655469999961497,
+              "parameters": {
+                "bagging_fraction": 1.0,
+                "bagging_freq": 1,
+                "deterministic": true,
+                "force_col_wise": true,
+                "lambda_l2": 0.3,
+                "learning_rate": 0.05,
+                "max_bin": 255,
+                "max_cat_threshold": 256,
+                "max_cat_to_onehot": 8,
+                "metric": "multi_logloss",
+                "min_data_in_leaf": 1,
+                "num_class": 3,
+                "num_leaves": 15,
+                "num_threads": 1,
+                "objective": "multiclass",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 85,
+              "selection_key": [
+                0.23989572483692387,
+                85,
+                0
+              ],
+              "stop_error": 0.23989572483692387,
+              "trained_rounds_if_available": 135
+            },
+            "cumulative_search_fit_seconds": 5.912297100005162,
+            "current_wave_all_eight_successful": true,
+            "dataset": "website_phishing",
+            "library": "lightgbm",
+            "model_bytes": 405333,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave5\\models\\website_phishing\\lightgbm.pkl",
+            "model_sha256": "11c1e91c05d45d95ee112f3cf9af7d991c3d4e52e241dcb48d1994bd2ac79714",
+            "plan_sha256": "70b439625ede1a0f4fcde32e08ced81995eee0ab020ccbeb76e6d39a8784abb3",
+            "search_fit_seconds": 1.1150135999996564,
+            "source_wave": 5
+          },
+          "best": {
+            "config_index": 0,
+            "fit_seconds": 0.09655469999961497,
+            "parameters": {
+              "bagging_fraction": 1.0,
+              "bagging_freq": 1,
+              "deterministic": true,
+              "force_col_wise": true,
+              "lambda_l2": 0.3,
+              "learning_rate": 0.05,
+              "max_bin": 255,
+              "max_cat_threshold": 256,
+              "max_cat_to_onehot": 8,
+              "metric": "multi_logloss",
+              "min_data_in_leaf": 1,
+              "num_class": 3,
+              "num_leaves": 15,
+              "num_threads": 1,
+              "objective": "multiclass",
+              "seed": 47,
+              "verbosity": -1,
+              "zero_as_missing": false
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 85,
+            "selection_key": [
+              0.2382086442570669,
+              1,
+              0.2876820724517809,
+              0.75
+            ],
+            "stop_error": 0.2382086442570669,
+            "trained_rounds_if_available": 135
+          },
+          "cumulative_search_fit_seconds": 5.912297100005162,
+          "current_wave_all_eight_successful": true,
+          "dataset": "website_phishing",
+          "library": "lightgbm",
+          "model_bytes": 405356,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave7\\models\\website_phishing\\lightgbm.pkl",
+          "model_sha256": "3d39a86ead7cb764aee381777868a14a9170da5788cdea9d5aef65eab23e36d6",
+          "plan_sha256": "caa9857e7fed25876734720058e208566b971ed00d2627df8737f3837ab164a9",
+          "search_fit_seconds": 1.1150135999996564,
+          "source_wave": 7,
+          "temperature": 0.75
+        },
+        "parameters": {
+          "bagging_fraction": 1.0,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 0.3,
+          "learning_rate": 0.05,
+          "max_bin": 255,
+          "max_cat_threshold": 256,
+          "max_cat_to_onehot": 8,
+          "metric": "multi_logloss",
+          "min_data_in_leaf": 1,
+          "num_class": 3,
+          "num_leaves": 15,
+          "num_threads": 1,
+          "objective": "multiclass",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        "profiles": [],
+        "round_candidates": [
+          43,
+          85,
+          170
+        ],
+        "rounds": 43,
+        "temperature": 0.75,
+        "training_selection": {
+          "all_eight_successful": true,
+          "base_selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 0,
+              "fit_seconds": 0.09655469999961497,
+              "parameters": {
+                "bagging_fraction": 1.0,
+                "bagging_freq": 1,
+                "deterministic": true,
+                "force_col_wise": true,
+                "lambda_l2": 0.3,
+                "learning_rate": 0.05,
+                "max_bin": 255,
+                "max_cat_threshold": 256,
+                "max_cat_to_onehot": 8,
+                "metric": "multi_logloss",
+                "min_data_in_leaf": 1,
+                "num_class": 3,
+                "num_leaves": 15,
+                "num_threads": 1,
+                "objective": "multiclass",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 85,
+              "selection_key": [
+                0.23989572483692387,
+                85,
+                0
+              ],
+              "stop_error": 0.23989572483692387,
+              "trained_rounds_if_available": 135
+            },
+            "cumulative_search_fit_seconds": 5.912297100005162,
+            "current_wave_all_eight_successful": true,
+            "dataset": "website_phishing",
+            "library": "lightgbm",
+            "model_bytes": 405333,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave5\\models\\website_phishing\\lightgbm.pkl",
+            "model_sha256": "11c1e91c05d45d95ee112f3cf9af7d991c3d4e52e241dcb48d1994bd2ac79714",
+            "plan_sha256": "70b439625ede1a0f4fcde32e08ced81995eee0ab020ccbeb76e6d39a8784abb3",
+            "search_fit_seconds": 1.1150135999996564,
+            "source_wave": 5
+          },
+          "best": {
+            "config_index": 0,
+            "fit_seconds": 0.09655469999961497,
+            "parameters": {
+              "bagging_fraction": 1.0,
+              "bagging_freq": 1,
+              "deterministic": true,
+              "force_col_wise": true,
+              "lambda_l2": 0.3,
+              "learning_rate": 0.05,
+              "max_bin": 255,
+              "max_cat_threshold": 256,
+              "max_cat_to_onehot": 8,
+              "metric": "multi_logloss",
+              "min_data_in_leaf": 1,
+              "num_class": 3,
+              "num_leaves": 15,
+              "num_threads": 1,
+              "objective": "multiclass",
+              "seed": 47,
+              "verbosity": -1,
+              "zero_as_missing": false
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 85,
+            "selection_key": [
+              0.2382086442570669,
+              1,
+              0.2876820724517809,
+              0.75
+            ],
+            "stop_error": 0.2382086442570669,
+            "trained_rounds_if_available": 135
+          },
+          "cumulative_search_fit_seconds": 5.912297100005162,
+          "current_wave_all_eight_successful": true,
+          "dataset": "website_phishing",
+          "library": "lightgbm",
+          "model_bytes": 405356,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave7\\models\\website_phishing\\lightgbm.pkl",
+          "model_sha256": "3d39a86ead7cb764aee381777868a14a9170da5788cdea9d5aef65eab23e36d6",
+          "plan_sha256": "caa9857e7fed25876734720058e208566b971ed00d2627df8737f3837ab164a9",
+          "search_fit_seconds": 1.1150135999996564,
+          "source_wave": 7,
+          "temperature": 0.75
+        }
+      },
+      "library": "lightgbm",
+      "scores": [
+        {
+          "mean_fold_error": 0.34943581774396504,
+          "profile_index": 0,
+          "requested_rounds": 43
+        },
+        {
+          "mean_fold_error": 0.3837034391516947,
+          "profile_index": 1,
+          "requested_rounds": 85
+        },
+        {
+          "mean_fold_error": 0.4514088086674022,
+          "profile_index": 2,
+          "requested_rounds": 170
+        }
+      ]
+    },
+    "dataset": "website_phishing",
+    "leaf_refit": null,
+    "library": "lightgbm",
+    "model_bytes": 205743,
+    "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave13\\models\\website_phishing\\lightgbm.pkl",
+    "model_sha256": "a64c24412b1ff04b12eb47e8d7a46bb59836f0f0424c78e2875c353f84a88bc7",
+    "refit_details": {
+      "apparent_union_error_inference_transform": 0.19153839275863832,
+      "early_stopping": false,
+      "fit_seconds": 0.01913599999897997,
+      "parameters": {
+        "bagging_fraction": 1.0,
+        "bagging_freq": 1,
+        "deterministic": true,
+        "force_col_wise": true,
+        "lambda_l2": 0.3,
+        "learning_rate": 0.05,
+        "max_bin": 255,
+        "max_cat_threshold": 256,
+        "max_cat_to_onehot": 8,
+        "metric": "multi_logloss",
+        "min_data_in_leaf": 1,
+        "num_class": 3,
+        "num_leaves": 15,
+        "num_threads": 1,
+        "objective": "multiclass",
+        "seed": 47,
+        "verbosity": -1,
+        "zero_as_missing": false
+      },
+      "requested_rounds": 43,
+      "retained_rounds": 43,
+      "structural_early_termination": false,
+      "temperature": 0.75,
+      "union_data": {
+        "row_order": "original TRAIN followed by original STOP",
+        "source_roles": {
+          "stop": {
+            "index_sha256": "f1e1fc92f5b0d729ec6071939acd7ccc8d60f3133fd02e10d16163b79dad46f2",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\website_phishing\\stop.pkl",
+            "rows": 113,
+            "sha256": "33b55b90145e55aedcdfff2c8418ec782225accf2d90bb6b16afc34cf8a1e785"
+          },
+          "train": {
+            "index_sha256": "ee3eee0b7c0c312c9fab03d76edc2b2a89ff8ebf1b1b4b5f5143bd2210d149cc",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\website_phishing\\train.pkl",
+            "rows": 565,
+            "sha256": "ff284a41ad64eae6888d41871274e8ca70f6f0a2c303ed887adff29f3d1a7f9b"
+          }
+        },
+        "stop_ids_sha256": "f1e1fc92f5b0d729ec6071939acd7ccc8d60f3133fd02e10d16163b79dad46f2",
+        "stop_rows": 113,
+        "train_ids_sha256": "ee3eee0b7c0c312c9fab03d76edc2b2a89ff8ebf1b1b4b5f5143bd2210d149cc",
+        "train_rows": 565,
+        "union_category_counts": {
+          "Request_URL": 3,
+          "SFH": 3,
+          "SSLfinal_State": 3,
+          "URL_Length": 3,
+          "URL_of_Anchor": 3,
+          "age_of_domain": 2,
+          "having_IP_Address": 2,
+          "popUpWidnow": 3,
+          "web_traffic": 3
+        },
+        "union_ids_sha256": "4fd8afc6ec1942285276157af29d270c34e9643b7cc35ac3377b7d300dc6380b",
+        "union_rows": 678,
+        "vocabulary_fit_on": "TRAIN+STOP union only"
+      }
+    },
+    "source_wave": 13,
+    "temperature": 0.75
+  },
+  "status": "ok"
+}

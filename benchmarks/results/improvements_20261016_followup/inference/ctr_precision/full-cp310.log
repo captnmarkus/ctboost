@@ -1,0 +1,2203 @@
+{"package": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\ctr-precision\\runtime-cp310\\ctboost\\__init__.py", "native": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\ctr-precision\\runtime-cp310\\ctboost\\_core.cp310-win_amd64.pyd", "native_sha256": "21ed48b6234bf570413fd4336ffdf76279b0ff9e3d9003cbcf0b34620e2aee17", "build_info": {"version": "0.1.61", "cuda_enabled": false, "cuda_runtime": "not compiled", "compiler": "MSVC 1950", "cxx_standard": 17, "package_version": "0.1.61"}, "python": "C:\\Users\\captn\\miniconda3\\python.exe"}
+........................................................................ [  2%]
+.........................sss.......s..................................ss [  5%]
+sssssss................................................................. [  8%]
+........................................................................ [ 11%]
+................s.............................ssssssss.................. [ 13%]
+........................................................................ [ 16%]
+........................................................................ [ 19%]
+........................................................................ [ 22%]
+........................................................................ [ 24%]
+........................................................................ [ 27%]
+........................................................................ [ 30%]
+........................................................................ [ 33%]
+......................s..s..s..s..s..s..s..s.........s...s..s....s..s..s [ 35%]
+...sss..sss..ssss...s..sss.............................................. [ 38%]
+...ss..........................s........................................ [ 41%]
+......................................................ss...........FFF.. [ 44%]
+..FFF.............................sss...........................sss..... [ 46%]
+................................................s....................... [ 49%]
+........................................................................ [ 52%]
+.....................FFFFF.............................................. [ 55%]
+..........................................................sss........... [ 57%]
+........................................................................ [ 60%]
+........................................................................ [ 63%]
+........................................................................ [ 66%]
+....sssssssss..FFFFFFFF...sssssssss..................................... [ 69%]
+........................................................................ [ 71%]
+.....................................................s.................. [ 74%]
+........................................................................ [ 77%]
+..........................sss........................................... [ 80%]
+........................................................................ [ 82%]
+.......................s................................................ [ 85%]
+........................................................................ [ 88%]
+..............................................sssFFFFFFFFFFFFFFFFFFF.... [ 91%]
+....FFF......FFFFFFFFFFFFFFFFFF......................................... [ 93%]
+........................ssssss...................................sssssss [ 96%]
+ss...................................................................... [ 99%]
+...............                                                          [100%]
+================================== FAILURES ===================================
+__________ test_native_houses_policy_roundtrip_and_seed349[ctboost] ___________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-894/test_native_houses_policy_roun0')
+library = 'ctboost'
+
+    @pytest.mark.parametrize('library', ['ctboost','xgboost','lightgbm'])
+    def test_native_houses_policy_roundtrip_and_seed349(tmp_path, library):
+        rng = np.random.default_rng(62)
+        frame = pd.DataFrame(rng.normal(size=(80, 8)), columns=main.selector.ATTRIBUTES[:-1])
+        labels = 2 * frame.iloc[:, 0].to_numpy() + frame.iloc[:, 1].to_numpy()
+        expanded = {'X': frame, 'y': labels, 'verification_frame': frame.iloc[:8], 'receipt': {'synthetic': True}}
+        path = tmp_path/'expanded.pkl'
+        path.write_bytes(pickle.dumps(expanded, protocol=5))
+        source = {'dataset':'houses','path':str(path),'sha256':main.base.digest(path),'receipt':expanded['receipt']}
+        if library == 'ctboost':
+            params = {'learning_rate':.1,'max_depth':3,'min_data_in_leaf':3,'alpha':.5,'verbose':False}
+        elif library == 'xgboost':
+            params = {'objective':'reg:squarederror','tree_method':'hist','eta':.1,'max_depth':3,'nthread':1}
+        else:
+            params = {'objective':'regression','learning_rate':.1,'num_leaves':7,'min_data_in_leaf':3,'num_threads':1,'verbosity':-1}
+        job = {'dataset':'houses','library':library,'parameters':params,'rounds':4,'expanded_source':source,
+               'binary_refit':None,'temperature':None,'leaf_refit':{'lambda':10.,'shrinkage':.25,'solver':{'atol':1e-8,'btol':1e-8,'iter_lim':2000}}}
+        snapshot = copy.deepcopy(job)
+        case = {'dataset_name':'houses','problem_type':'regression','num_classes':-1}
+        for seed in (47,349):
+>           payload, details, verification = main.fit_policy(job, case, seed)
+
+tests\test_houses_cap_experiment.py:108: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+benchmarks\fair_accuracy_houses_cap.py:52: in fit_policy
+    return cap.fit_expansion(job, case, expanded, seed, cv)
+benchmarks\fair_accuracy_cap_expansion.py:169: in fit_expansion
+    payload, details = cv.union.fit_fixed(job, case, X, expanded["y"], schema, seed)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'houses', 'expanded_source': {'dataset': 'houses', 'path': 'C:\\Users\\captn\\AppDat...'}, 'leaf_refit': {'lambda': 10.0, 'shrinkage': 0.25, 'solver': {'atol': 1e-08, 'btol': 1e-08, 'iter_lim': 2000}}, ...}
+case = {'dataset_name': 'houses', 'num_classes': -1, 'problem_type': 'regression'}
+X =     MedianIncome  HousingMedianAge  TotalRooms  ...  Households  Latitude  Longitude
+0      -1.022257         -1.47481...   1.433281
+79     -0.219039          0.954929   -1.022316  ...    1.318581  0.364710  -1.421857
+
+[80 rows x 8 columns]
+y = array([-3.51932977, -2.59577392, -0.93467667, -2.5016976 , -0.34222625,
+        4.19772179, -0.50158314,  4.04411991, ...062694,  5.60548298, -0.65689723, -4.17462155,
+       -0.29277261,  0.31611738,  3.81418702,  1.40735166,  0.51685004])
+schema = {}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+__________ test_native_houses_policy_roundtrip_and_seed349[xgboost] ___________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-894/test_native_houses_policy_roun1')
+library = 'xgboost'
+
+    @pytest.mark.parametrize('library', ['ctboost','xgboost','lightgbm'])
+    def test_native_houses_policy_roundtrip_and_seed349(tmp_path, library):
+        rng = np.random.default_rng(62)
+        frame = pd.DataFrame(rng.normal(size=(80, 8)), columns=main.selector.ATTRIBUTES[:-1])
+        labels = 2 * frame.iloc[:, 0].to_numpy() + frame.iloc[:, 1].to_numpy()
+        expanded = {'X': frame, 'y': labels, 'verification_frame': frame.iloc[:8], 'receipt': {'synthetic': True}}
+        path = tmp_path/'expanded.pkl'
+        path.write_bytes(pickle.dumps(expanded, protocol=5))
+        source = {'dataset':'houses','path':str(path),'sha256':main.base.digest(path),'receipt':expanded['receipt']}
+        if library == 'ctboost':
+            params = {'learning_rate':.1,'max_depth':3,'min_data_in_leaf':3,'alpha':.5,'verbose':False}
+        elif library == 'xgboost':
+            params = {'objective':'reg:squarederror','tree_method':'hist','eta':.1,'max_depth':3,'nthread':1}
+        else:
+            params = {'objective':'regression','learning_rate':.1,'num_leaves':7,'min_data_in_leaf':3,'num_threads':1,'verbosity':-1}
+        job = {'dataset':'houses','library':library,'parameters':params,'rounds':4,'expanded_source':source,
+               'binary_refit':None,'temperature':None,'leaf_refit':{'lambda':10.,'shrinkage':.25,'solver':{'atol':1e-8,'btol':1e-8,'iter_lim':2000}}}
+        snapshot = copy.deepcopy(job)
+        case = {'dataset_name':'houses','problem_type':'regression','num_classes':-1}
+        for seed in (47,349):
+>           payload, details, verification = main.fit_policy(job, case, seed)
+
+tests\test_houses_cap_experiment.py:108: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+benchmarks\fair_accuracy_houses_cap.py:52: in fit_policy
+    return cap.fit_expansion(job, case, expanded, seed, cv)
+benchmarks\fair_accuracy_cap_expansion.py:169: in fit_expansion
+    payload, details = cv.union.fit_fixed(job, case, X, expanded["y"], schema, seed)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'houses', 'expanded_source': {'dataset': 'houses', 'path': 'C:\\Users\\captn\\AppDat...'}, 'leaf_refit': {'lambda': 10.0, 'shrinkage': 0.25, 'solver': {'atol': 1e-08, 'btol': 1e-08, 'iter_lim': 2000}}, ...}
+case = {'dataset_name': 'houses', 'num_classes': -1, 'problem_type': 'regression'}
+X =     MedianIncome  HousingMedianAge  TotalRooms  ...  Households  Latitude  Longitude
+0      -1.022257         -1.47481...   1.433281
+79     -0.219039          0.954929   -1.022316  ...    1.318581  0.364710  -1.421857
+
+[80 rows x 8 columns]
+y = array([-3.51932977, -2.59577392, -0.93467667, -2.5016976 , -0.34222625,
+        4.19772179, -0.50158314,  4.04411991, ...062694,  5.60548298, -0.65689723, -4.17462155,
+       -0.29277261,  0.31611738,  3.81418702,  1.40735166,  0.51685004])
+schema = {}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+__________ test_native_houses_policy_roundtrip_and_seed349[lightgbm] __________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-894/test_native_houses_policy_roun2')
+library = 'lightgbm'
+
+    @pytest.mark.parametrize('library', ['ctboost','xgboost','lightgbm'])
+    def test_native_houses_policy_roundtrip_and_seed349(tmp_path, library):
+        rng = np.random.default_rng(62)
+        frame = pd.DataFrame(rng.normal(size=(80, 8)), columns=main.selector.ATTRIBUTES[:-1])
+        labels = 2 * frame.iloc[:, 0].to_numpy() + frame.iloc[:, 1].to_numpy()
+        expanded = {'X': frame, 'y': labels, 'verification_frame': frame.iloc[:8], 'receipt': {'synthetic': True}}
+        path = tmp_path/'expanded.pkl'
+        path.write_bytes(pickle.dumps(expanded, protocol=5))
+        source = {'dataset':'houses','path':str(path),'sha256':main.base.digest(path),'receipt':expanded['receipt']}
+        if library == 'ctboost':
+            params = {'learning_rate':.1,'max_depth':3,'min_data_in_leaf':3,'alpha':.5,'verbose':False}
+        elif library == 'xgboost':
+            params = {'objective':'reg:squarederror','tree_method':'hist','eta':.1,'max_depth':3,'nthread':1}
+        else:
+            params = {'objective':'regression','learning_rate':.1,'num_leaves':7,'min_data_in_leaf':3,'num_threads':1,'verbosity':-1}
+        job = {'dataset':'houses','library':library,'parameters':params,'rounds':4,'expanded_source':source,
+               'binary_refit':None,'temperature':None,'leaf_refit':{'lambda':10.,'shrinkage':.25,'solver':{'atol':1e-8,'btol':1e-8,'iter_lim':2000}}}
+        snapshot = copy.deepcopy(job)
+        case = {'dataset_name':'houses','problem_type':'regression','num_classes':-1}
+        for seed in (47,349):
+>           payload, details, verification = main.fit_policy(job, case, seed)
+
+tests\test_houses_cap_experiment.py:108: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+benchmarks\fair_accuracy_houses_cap.py:52: in fit_policy
+    return cap.fit_expansion(job, case, expanded, seed, cv)
+benchmarks\fair_accuracy_cap_expansion.py:169: in fit_expansion
+    payload, details = cv.union.fit_fixed(job, case, X, expanded["y"], schema, seed)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'houses', 'expanded_source': {'dataset': 'houses', 'path': 'C:\\Users\\captn\\AppDat...'}, 'leaf_refit': {'lambda': 10.0, 'shrinkage': 0.25, 'solver': {'atol': 1e-08, 'btol': 1e-08, 'iter_lim': 2000}}, ...}
+case = {'dataset_name': 'houses', 'num_classes': -1, 'problem_type': 'regression'}
+X =     MedianIncome  HousingMedianAge  TotalRooms  ...  Households  Latitude  Longitude
+0      -1.022257         -1.47481...   1.433281
+79     -0.219039          0.954929   -1.022316  ...    1.318581  0.364710  -1.421857
+
+[80 rows x 8 columns]
+y = array([-3.51932977, -2.59577392, -0.93467667, -2.5016976 , -0.34222625,
+        4.19772179, -0.50158314,  4.04411991, ...062694,  5.60548298, -0.65689723, -4.17462155,
+       -0.29277261,  0.31611738,  3.81418702,  1.40735166,  0.51685004])
+schema = {}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+__________ test_native_houses_policy_roundtrip_and_seed349[ctboost] ___________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-894/test_native_houses_policy_roun3')
+library = 'ctboost'
+
+    @pytest.mark.parametrize('library', ['ctboost','xgboost','lightgbm'])
+    def test_native_houses_policy_roundtrip_and_seed349(tmp_path, library):
+        rng = np.random.default_rng(62)
+        frame = pd.DataFrame(rng.normal(size=(80, 8)), columns=main.selector.ATTRIBUTES[:-1])
+        labels = 2 * frame.iloc[:, 0].to_numpy() + frame.iloc[:, 1].to_numpy()
+        expanded = {'X': frame, 'y': labels, 'verification_frame': frame.iloc[:8], 'receipt': {'synthetic': True}}
+        path = tmp_path/'expanded.pkl'
+        path.write_bytes(pickle.dumps(expanded, protocol=5))
+        source = {'dataset':'houses','path':str(path),'sha256':main.base.digest(path),'receipt':expanded['receipt']}
+        if library == 'ctboost':
+            params = {'learning_rate':.1,'max_depth':3,'min_data_in_leaf':3,'alpha':.5,'verbose':False}
+        elif library == 'xgboost':
+            params = {'objective':'reg:squarederror','tree_method':'hist','eta':.1,'max_depth':3,'nthread':1}
+        else:
+            params = {'objective':'regression','learning_rate':.1,'num_leaves':7,'min_data_in_leaf':3,'num_threads':1,'verbosity':-1}
+        job = {'dataset':'houses','library':library,'parameters':params,'rounds':4,'expanded_source':source,
+               'binary_refit':None,'temperature':None,'leaf_refit':{'lambda':10.,'shrinkage':.25,'solver':{'atol':1e-8,'btol':1e-8,'iter_lim':2000}}}
+        snapshot = copy.deepcopy(job)
+        case = {'dataset_name':'houses','problem_type':'regression','num_classes':-1}
+        for seed in (47,349):
+>           payload, details, verification = main.fit_policy(job, case, seed)
+
+tests\test_houses_cap_experiment_v2.py:108: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+benchmarks\fair_accuracy_houses_cap_v2.py:53: in fit_policy
+    return cap.fit_expansion(job, case, expanded, seed, cv)
+benchmarks\fair_accuracy_cap_expansion.py:169: in fit_expansion
+    payload, details = cv.union.fit_fixed(job, case, X, expanded["y"], schema, seed)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'houses', 'expanded_source': {'dataset': 'houses', 'path': 'C:\\Users\\captn\\AppDat...'}, 'leaf_refit': {'lambda': 10.0, 'shrinkage': 0.25, 'solver': {'atol': 1e-08, 'btol': 1e-08, 'iter_lim': 2000}}, ...}
+case = {'dataset_name': 'houses', 'num_classes': -1, 'problem_type': 'regression'}
+X =     MedianIncome  HousingMedianAge  TotalRooms  ...  Households  Latitude  Longitude
+0      -1.022257         -1.47481...   1.433281
+79     -0.219039          0.954929   -1.022316  ...    1.318581  0.364710  -1.421857
+
+[80 rows x 8 columns]
+y = array([-3.51932977, -2.59577392, -0.93467667, -2.5016976 , -0.34222625,
+        4.19772179, -0.50158314,  4.04411991, ...062694,  5.60548298, -0.65689723, -4.17462155,
+       -0.29277261,  0.31611738,  3.81418702,  1.40735166,  0.51685004])
+schema = {}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+__________ test_native_houses_policy_roundtrip_and_seed349[xgboost] ___________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-894/test_native_houses_policy_roun4')
+library = 'xgboost'
+
+    @pytest.mark.parametrize('library', ['ctboost','xgboost','lightgbm'])
+    def test_native_houses_policy_roundtrip_and_seed349(tmp_path, library):
+        rng = np.random.default_rng(62)
+        frame = pd.DataFrame(rng.normal(size=(80, 8)), columns=main.selector.ATTRIBUTES[:-1])
+        labels = 2 * frame.iloc[:, 0].to_numpy() + frame.iloc[:, 1].to_numpy()
+        expanded = {'X': frame, 'y': labels, 'verification_frame': frame.iloc[:8], 'receipt': {'synthetic': True}}
+        path = tmp_path/'expanded.pkl'
+        path.write_bytes(pickle.dumps(expanded, protocol=5))
+        source = {'dataset':'houses','path':str(path),'sha256':main.base.digest(path),'receipt':expanded['receipt']}
+        if library == 'ctboost':
+            params = {'learning_rate':.1,'max_depth':3,'min_data_in_leaf':3,'alpha':.5,'verbose':False}
+        elif library == 'xgboost':
+            params = {'objective':'reg:squarederror','tree_method':'hist','eta':.1,'max_depth':3,'nthread':1}
+        else:
+            params = {'objective':'regression','learning_rate':.1,'num_leaves':7,'min_data_in_leaf':3,'num_threads':1,'verbosity':-1}
+        job = {'dataset':'houses','library':library,'parameters':params,'rounds':4,'expanded_source':source,
+               'binary_refit':None,'temperature':None,'leaf_refit':{'lambda':10.,'shrinkage':.25,'solver':{'atol':1e-8,'btol':1e-8,'iter_lim':2000}}}
+        snapshot = copy.deepcopy(job)
+        case = {'dataset_name':'houses','problem_type':'regression','num_classes':-1}
+        for seed in (47,349):
+>           payload, details, verification = main.fit_policy(job, case, seed)
+
+tests\test_houses_cap_experiment_v2.py:108: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+benchmarks\fair_accuracy_houses_cap_v2.py:53: in fit_policy
+    return cap.fit_expansion(job, case, expanded, seed, cv)
+benchmarks\fair_accuracy_cap_expansion.py:169: in fit_expansion
+    payload, details = cv.union.fit_fixed(job, case, X, expanded["y"], schema, seed)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'houses', 'expanded_source': {'dataset': 'houses', 'path': 'C:\\Users\\captn\\AppDat...'}, 'leaf_refit': {'lambda': 10.0, 'shrinkage': 0.25, 'solver': {'atol': 1e-08, 'btol': 1e-08, 'iter_lim': 2000}}, ...}
+case = {'dataset_name': 'houses', 'num_classes': -1, 'problem_type': 'regression'}
+X =     MedianIncome  HousingMedianAge  TotalRooms  ...  Households  Latitude  Longitude
+0      -1.022257         -1.47481...   1.433281
+79     -0.219039          0.954929   -1.022316  ...    1.318581  0.364710  -1.421857
+
+[80 rows x 8 columns]
+y = array([-3.51932977, -2.59577392, -0.93467667, -2.5016976 , -0.34222625,
+        4.19772179, -0.50158314,  4.04411991, ...062694,  5.60548298, -0.65689723, -4.17462155,
+       -0.29277261,  0.31611738,  3.81418702,  1.40735166,  0.51685004])
+schema = {}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+__________ test_native_houses_policy_roundtrip_and_seed349[lightgbm] __________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-894/test_native_houses_policy_roun5')
+library = 'lightgbm'
+
+    @pytest.mark.parametrize('library', ['ctboost','xgboost','lightgbm'])
+    def test_native_houses_policy_roundtrip_and_seed349(tmp_path, library):
+        rng = np.random.default_rng(62)
+        frame = pd.DataFrame(rng.normal(size=(80, 8)), columns=main.selector.ATTRIBUTES[:-1])
+        labels = 2 * frame.iloc[:, 0].to_numpy() + frame.iloc[:, 1].to_numpy()
+        expanded = {'X': frame, 'y': labels, 'verification_frame': frame.iloc[:8], 'receipt': {'synthetic': True}}
+        path = tmp_path/'expanded.pkl'
+        path.write_bytes(pickle.dumps(expanded, protocol=5))
+        source = {'dataset':'houses','path':str(path),'sha256':main.base.digest(path),'receipt':expanded['receipt']}
+        if library == 'ctboost':
+            params = {'learning_rate':.1,'max_depth':3,'min_data_in_leaf':3,'alpha':.5,'verbose':False}
+        elif library == 'xgboost':
+            params = {'objective':'reg:squarederror','tree_method':'hist','eta':.1,'max_depth':3,'nthread':1}
+        else:
+            params = {'objective':'regression','learning_rate':.1,'num_leaves':7,'min_data_in_leaf':3,'num_threads':1,'verbosity':-1}
+        job = {'dataset':'houses','library':library,'parameters':params,'rounds':4,'expanded_source':source,
+               'binary_refit':None,'temperature':None,'leaf_refit':{'lambda':10.,'shrinkage':.25,'solver':{'atol':1e-8,'btol':1e-8,'iter_lim':2000}}}
+        snapshot = copy.deepcopy(job)
+        case = {'dataset_name':'houses','problem_type':'regression','num_classes':-1}
+        for seed in (47,349):
+>           payload, details, verification = main.fit_policy(job, case, seed)
+
+tests\test_houses_cap_experiment_v2.py:108: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+benchmarks\fair_accuracy_houses_cap_v2.py:53: in fit_policy
+    return cap.fit_expansion(job, case, expanded, seed, cv)
+benchmarks\fair_accuracy_cap_expansion.py:169: in fit_expansion
+    payload, details = cv.union.fit_fixed(job, case, X, expanded["y"], schema, seed)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'houses', 'expanded_source': {'dataset': 'houses', 'path': 'C:\\Users\\captn\\AppDat...'}, 'leaf_refit': {'lambda': 10.0, 'shrinkage': 0.25, 'solver': {'atol': 1e-08, 'btol': 1e-08, 'iter_lim': 2000}}, ...}
+case = {'dataset_name': 'houses', 'num_classes': -1, 'problem_type': 'regression'}
+X =     MedianIncome  HousingMedianAge  TotalRooms  ...  Households  Latitude  Longitude
+0      -1.022257         -1.47481...   1.433281
+79     -0.219039          0.954929   -1.022316  ...    1.318581  0.364710  -1.421857
+
+[80 rows x 8 columns]
+y = array([-3.51932977, -2.59577392, -0.93467667, -2.5016976 , -0.34222625,
+        4.19772179, -0.50158314,  4.04411991, ...062694,  5.60548298, -0.65689723, -4.17462155,
+       -0.29277261,  0.31611738,  3.81418702,  1.40735166,  0.51685004])
+schema = {}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+_________ test_anchor_stop_and_seed_transfer_pipeline[ctboost-False] __________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-894/test_anchor_stop_and_seed_tran0')
+library = 'ctboost', vector = False
+
+    @pytest.mark.parametrize("library,vector", [("ctboost", False), ("ctboost", True), ("xgboost", False), ("xgboost", True), ("lightgbm", False)])
+    def test_anchor_stop_and_seed_transfer_pipeline(tmp_path, library, vector):
+        module = runner()
+        case, source = fixture(module, tmp_path)
+        job = {"dataset": "SDSS17", "library": library, "parameters": params(library, vector), "rounds": 4,
+            "expanded_source": source, "leaf_refit": None, "binary_refit": None, "temperature": .75,
+            "multiclass_refit": controls()}
+        snapshot = copy.deepcopy(job)
+        X, labels, schema, train, stop, receipt = module.fitting_data(job, case, train_only=True)
+        assert len(labels) == 60 and receipt["outside_cap_rows"] == 12 and receipt["stop_excluded"]
+        assert "STOP_ONLY" not in schema["category"] and "extra" in schema["category"]
+>       anchor, fit = module.union.fit_fixed(job, case, X, labels, schema, 47)
+
+tests\test_multiclass_refit_experiment.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'SDSS17', 'expanded_source': {'dataset': 'SDSS17', 'path': 'C:\\Users\\captn\\AppDat...thetic': True}, 'sha256': '3663e7d0c48d8a96dcaa7bffcccd787d45c7306184c2db20ed36d9a6cfcb7308'}, 'leaf_refit': None, ...}
+case = {'dataset_name': 'SDSS17', 'num_classes': 3, 'problem_type': 'multiclass', 'roles': {'stop': {'path': 'C:\\Users\\capt...anchor_stop_and_seed_tran0\\train.pkl', 'sha256': 'd9a852e83b40a0282df26657587cd9f8f11c00fd018121e25d31d36870253573'}}}
+X =       number category
+0   0.000000        a
+1   1.168294        b
+2   2.181859        c
+3   0.028224        a
+4   0.84...    extra
+55  0.828896        a
+56  1.820414        b
+57 -0.022957    extra
+58  1.154778        a
+59  2.190211        b
+y = array([0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0,
+       1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1,
+       2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2])
+schema = {'category': ['a', 'b', 'c', 'extra']}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+__________ test_anchor_stop_and_seed_transfer_pipeline[ctboost-True] __________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-894/test_anchor_stop_and_seed_tran1')
+library = 'ctboost', vector = True
+
+    @pytest.mark.parametrize("library,vector", [("ctboost", False), ("ctboost", True), ("xgboost", False), ("xgboost", True), ("lightgbm", False)])
+    def test_anchor_stop_and_seed_transfer_pipeline(tmp_path, library, vector):
+        module = runner()
+        case, source = fixture(module, tmp_path)
+        job = {"dataset": "SDSS17", "library": library, "parameters": params(library, vector), "rounds": 4,
+            "expanded_source": source, "leaf_refit": None, "binary_refit": None, "temperature": .75,
+            "multiclass_refit": controls()}
+        snapshot = copy.deepcopy(job)
+        X, labels, schema, train, stop, receipt = module.fitting_data(job, case, train_only=True)
+        assert len(labels) == 60 and receipt["outside_cap_rows"] == 12 and receipt["stop_excluded"]
+        assert "STOP_ONLY" not in schema["category"] and "extra" in schema["category"]
+>       anchor, fit = module.union.fit_fixed(job, case, X, labels, schema, 47)
+
+tests\test_multiclass_refit_experiment.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'SDSS17', 'expanded_source': {'dataset': 'SDSS17', 'path': 'C:\\Users\\captn\\AppDat...thetic': True}, 'sha256': '3663e7d0c48d8a96dcaa7bffcccd787d45c7306184c2db20ed36d9a6cfcb7308'}, 'leaf_refit': None, ...}
+case = {'dataset_name': 'SDSS17', 'num_classes': 3, 'problem_type': 'multiclass', 'roles': {'stop': {'path': 'C:\\Users\\capt...anchor_stop_and_seed_tran1\\train.pkl', 'sha256': 'd9a852e83b40a0282df26657587cd9f8f11c00fd018121e25d31d36870253573'}}}
+X =       number category
+0   0.000000        a
+1   1.168294        b
+2   2.181859        c
+3   0.028224        a
+4   0.84...    extra
+55  0.828896        a
+56  1.820414        b
+57 -0.022957    extra
+58  1.154778        a
+59  2.190211        b
+y = array([0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0,
+       1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1,
+       2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2])
+schema = {'category': ['a', 'b', 'c', 'extra']}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+_________ test_anchor_stop_and_seed_transfer_pipeline[xgboost-False] __________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-894/test_anchor_stop_and_seed_tran2')
+library = 'xgboost', vector = False
+
+    @pytest.mark.parametrize("library,vector", [("ctboost", False), ("ctboost", True), ("xgboost", False), ("xgboost", True), ("lightgbm", False)])
+    def test_anchor_stop_and_seed_transfer_pipeline(tmp_path, library, vector):
+        module = runner()
+        case, source = fixture(module, tmp_path)
+        job = {"dataset": "SDSS17", "library": library, "parameters": params(library, vector), "rounds": 4,
+            "expanded_source": source, "leaf_refit": None, "binary_refit": None, "temperature": .75,
+            "multiclass_refit": controls()}
+        snapshot = copy.deepcopy(job)
+        X, labels, schema, train, stop, receipt = module.fitting_data(job, case, train_only=True)
+        assert len(labels) == 60 and receipt["outside_cap_rows"] == 12 and receipt["stop_excluded"]
+        assert "STOP_ONLY" not in schema["category"] and "extra" in schema["category"]
+>       anchor, fit = module.union.fit_fixed(job, case, X, labels, schema, 47)
+
+tests\test_multiclass_refit_experiment.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'SDSS17', 'expanded_source': {'dataset': 'SDSS17', 'path': 'C:\\Users\\captn\\AppDat...thetic': True}, 'sha256': '3663e7d0c48d8a96dcaa7bffcccd787d45c7306184c2db20ed36d9a6cfcb7308'}, 'leaf_refit': None, ...}
+case = {'dataset_name': 'SDSS17', 'num_classes': 3, 'problem_type': 'multiclass', 'roles': {'stop': {'path': 'C:\\Users\\capt...anchor_stop_and_seed_tran2\\train.pkl', 'sha256': 'd9a852e83b40a0282df26657587cd9f8f11c00fd018121e25d31d36870253573'}}}
+X =       number category
+0   0.000000        a
+1   1.168294        b
+2   2.181859        c
+3   0.028224        a
+4   0.84...    extra
+55  0.828896        a
+56  1.820414        b
+57 -0.022957    extra
+58  1.154778        a
+59  2.190211        b
+y = array([0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0,
+       1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1,
+       2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2])
+schema = {'category': ['a', 'b', 'c', 'extra']}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+__________ test_anchor_stop_and_seed_transfer_pipeline[xgboost-True] __________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-894/test_anchor_stop_and_seed_tran3')
+library = 'xgboost', vector = True
+
+    @pytest.mark.parametrize("library,vector", [("ctboost", False), ("ctboost", True), ("xgboost", False), ("xgboost", True), ("lightgbm", False)])
+    def test_anchor_stop_and_seed_transfer_pipeline(tmp_path, library, vector):
+        module = runner()
+        case, source = fixture(module, tmp_path)
+        job = {"dataset": "SDSS17", "library": library, "parameters": params(library, vector), "rounds": 4,
+            "expanded_source": source, "leaf_refit": None, "binary_refit": None, "temperature": .75,
+            "multiclass_refit": controls()}
+        snapshot = copy.deepcopy(job)
+        X, labels, schema, train, stop, receipt = module.fitting_data(job, case, train_only=True)
+        assert len(labels) == 60 and receipt["outside_cap_rows"] == 12 and receipt["stop_excluded"]
+        assert "STOP_ONLY" not in schema["category"] and "extra" in schema["category"]
+>       anchor, fit = module.union.fit_fixed(job, case, X, labels, schema, 47)
+
+tests\test_multiclass_refit_experiment.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'SDSS17', 'expanded_source': {'dataset': 'SDSS17', 'path': 'C:\\Users\\captn\\AppDat...thetic': True}, 'sha256': '3663e7d0c48d8a96dcaa7bffcccd787d45c7306184c2db20ed36d9a6cfcb7308'}, 'leaf_refit': None, ...}
+case = {'dataset_name': 'SDSS17', 'num_classes': 3, 'problem_type': 'multiclass', 'roles': {'stop': {'path': 'C:\\Users\\capt...anchor_stop_and_seed_tran3\\train.pkl', 'sha256': 'd9a852e83b40a0282df26657587cd9f8f11c00fd018121e25d31d36870253573'}}}
+X =       number category
+0   0.000000        a
+1   1.168294        b
+2   2.181859        c
+3   0.028224        a
+4   0.84...    extra
+55  0.828896        a
+56  1.820414        b
+57 -0.022957    extra
+58  1.154778        a
+59  2.190211        b
+y = array([0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0,
+       1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1,
+       2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2])
+schema = {'category': ['a', 'b', 'c', 'extra']}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+_________ test_anchor_stop_and_seed_transfer_pipeline[lightgbm-False] _________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-894/test_anchor_stop_and_seed_tran4')
+library = 'lightgbm', vector = False
+
+    @pytest.mark.parametrize("library,vector", [("ctboost", False), ("ctboost", True), ("xgboost", False), ("xgboost", True), ("lightgbm", False)])
+    def test_anchor_stop_and_seed_transfer_pipeline(tmp_path, library, vector):
+        module = runner()
+        case, source = fixture(module, tmp_path)
+        job = {"dataset": "SDSS17", "library": library, "parameters": params(library, vector), "rounds": 4,
+            "expanded_source": source, "leaf_refit": None, "binary_refit": None, "temperature": .75,
+            "multiclass_refit": controls()}
+        snapshot = copy.deepcopy(job)
+        X, labels, schema, train, stop, receipt = module.fitting_data(job, case, train_only=True)
+        assert len(labels) == 60 and receipt["outside_cap_rows"] == 12 and receipt["stop_excluded"]
+        assert "STOP_ONLY" not in schema["category"] and "extra" in schema["category"]
+>       anchor, fit = module.union.fit_fixed(job, case, X, labels, schema, 47)
+
+tests\test_multiclass_refit_experiment.py:70: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'SDSS17', 'expanded_source': {'dataset': 'SDSS17', 'path': 'C:\\Users\\captn\\AppDat...thetic': True}, 'sha256': '3663e7d0c48d8a96dcaa7bffcccd787d45c7306184c2db20ed36d9a6cfcb7308'}, 'leaf_refit': None, ...}
+case = {'dataset_name': 'SDSS17', 'num_classes': 3, 'problem_type': 'multiclass', 'roles': {'stop': {'path': 'C:\\Users\\capt...anchor_stop_and_seed_tran4\\train.pkl', 'sha256': 'd9a852e83b40a0282df26657587cd9f8f11c00fd018121e25d31d36870253573'}}}
+X =       number category
+0   0.000000        a
+1   1.168294        b
+2   2.181859        c
+3   0.028224        a
+4   0.84...    extra
+55  0.828896        a
+56  1.820414        b
+57 -0.022957    extra
+58  1.154778        a
+59  2.190211        b
+y = array([0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0,
+       1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1,
+       2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2])
+schema = {'category': ['a', 'b', 'c', 'extra']}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+__________ test_fresh_anchor_and_fixed_seed_pipeline[binary-ctboost] __________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-894/test_fresh_anchor_and_fixed_se0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000239C0B762C0>
+library = 'ctboost', problem = 'binary'
+
+    @pytest.mark.parametrize("library", ["ctboost", "xgboost", "lightgbm"])
+    @pytest.mark.parametrize("problem", ["binary", "regression"])
+    def test_fresh_anchor_and_fixed_seed_pipeline(tmp_path, monkeypatch, library, problem):
+        module = runner()
+        case, source = fixture(module, tmp_path, problem)
+        job = job_for(module, case, source, library)
+        original = copy.deepcopy(job)
+        X, labels, schema, train, stop, receipt = module.fitting_data(job, case, train_only=True)
+        assert len(labels) == 84 and receipt["outside_cap_rows"] == 24 and receipt["stop_excluded"]
+        assert "STOP_ONLY" not in schema["category"] and "extra" in schema["category"]
+        clean_job = module.clean_job(job)
+        assert clean_job["leaf_refit"] is None and clean_job["binary_refit"] is None
+>       anchor, _ = module.union.fit_fixed(clean_job, case, X, labels, schema, 47)
+
+tests\test_scalar_refresh_experiment.py:82: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'GiveMeSomeCredit', 'expanded_source': {'dataset': 'GiveMeSomeCredit', 'path': 'C:\\...thetic': True}, 'sha256': '99a875eec4088ca7ac8ed3ebc4341e8371a9520f0f5b47c87e11c508460a2099'}, 'leaf_refit': None, ...}
+case = {'dataset_name': 'GiveMeSomeCredit', 'num_classes': 2, 'problem_type': 'binary', 'roles': {'stop': {'path': 'C:\\Users...fresh_anchor_and_fixed_se0\\train.pkl', 'sha256': '6b4469456e20436de502f94ab5c6bcc7eccd094d09eddbb943b58616404c7275'}}}
+X =            x         z category
+0  -0.647977  1.186947        a
+1   0.032345  0.730127        b
+2   0.965086  1.288942...
+81 -1.260853  0.266861    extra
+82  0.577248  0.012923        a
+83  0.747492 -1.544371        b
+
+[84 rows x 3 columns]
+y = array([0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1,
+       0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1,... 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0,
+       0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0])
+schema = {'category': ['a', 'b', 'c', 'extra']}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+__________ test_fresh_anchor_and_fixed_seed_pipeline[binary-xgboost] __________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-894/test_fresh_anchor_and_fixed_se1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000239C1F32680>
+library = 'xgboost', problem = 'binary'
+
+    @pytest.mark.parametrize("library", ["ctboost", "xgboost", "lightgbm"])
+    @pytest.mark.parametrize("problem", ["binary", "regression"])
+    def test_fresh_anchor_and_fixed_seed_pipeline(tmp_path, monkeypatch, library, problem):
+        module = runner()
+        case, source = fixture(module, tmp_path, problem)
+        job = job_for(module, case, source, library)
+        original = copy.deepcopy(job)
+        X, labels, schema, train, stop, receipt = module.fitting_data(job, case, train_only=True)
+        assert len(labels) == 84 and receipt["outside_cap_rows"] == 24 and receipt["stop_excluded"]
+        assert "STOP_ONLY" not in schema["category"] and "extra" in schema["category"]
+        clean_job = module.clean_job(job)
+        assert clean_job["leaf_refit"] is None and clean_job["binary_refit"] is None
+>       anchor, _ = module.union.fit_fixed(clean_job, case, X, labels, schema, 47)
+
+tests\test_scalar_refresh_experiment.py:82: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'GiveMeSomeCredit', 'expanded_source': {'dataset': 'GiveMeSomeCredit', 'path': 'C:\\...thetic': True}, 'sha256': '99a875eec4088ca7ac8ed3ebc4341e8371a9520f0f5b47c87e11c508460a2099'}, 'leaf_refit': None, ...}
+case = {'dataset_name': 'GiveMeSomeCredit', 'num_classes': 2, 'problem_type': 'binary', 'roles': {'stop': {'path': 'C:\\Users...fresh_anchor_and_fixed_se1\\train.pkl', 'sha256': '6b4469456e20436de502f94ab5c6bcc7eccd094d09eddbb943b58616404c7275'}}}
+X =            x         z category
+0  -0.647977  1.186947        a
+1   0.032345  0.730127        b
+2   0.965086  1.288942...
+81 -1.260853  0.266861    extra
+82  0.577248  0.012923        a
+83  0.747492 -1.544371        b
+
+[84 rows x 3 columns]
+y = array([0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1,
+       0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1,... 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0,
+       0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0])
+schema = {'category': ['a', 'b', 'c', 'extra']}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+_________ test_fresh_anchor_and_fixed_seed_pipeline[binary-lightgbm] __________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-894/test_fresh_anchor_and_fixed_se2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000239C1F06950>
+library = 'lightgbm', problem = 'binary'
+
+    @pytest.mark.parametrize("library", ["ctboost", "xgboost", "lightgbm"])
+    @pytest.mark.parametrize("problem", ["binary", "regression"])
+    def test_fresh_anchor_and_fixed_seed_pipeline(tmp_path, monkeypatch, library, problem):
+        module = runner()
+        case, source = fixture(module, tmp_path, problem)
+        job = job_for(module, case, source, library)
+        original = copy.deepcopy(job)
+        X, labels, schema, train, stop, receipt = module.fitting_data(job, case, train_only=True)
+        assert len(labels) == 84 and receipt["outside_cap_rows"] == 24 and receipt["stop_excluded"]
+        assert "STOP_ONLY" not in schema["category"] and "extra" in schema["category"]
+        clean_job = module.clean_job(job)
+        assert clean_job["leaf_refit"] is None and clean_job["binary_refit"] is None
+>       anchor, _ = module.union.fit_fixed(clean_job, case, X, labels, schema, 47)
+
+tests\test_scalar_refresh_experiment.py:82: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'GiveMeSomeCredit', 'expanded_source': {'dataset': 'GiveMeSomeCredit', 'path': 'C:\\...thetic': True}, 'sha256': '99a875eec4088ca7ac8ed3ebc4341e8371a9520f0f5b47c87e11c508460a2099'}, 'leaf_refit': None, ...}
+case = {'dataset_name': 'GiveMeSomeCredit', 'num_classes': 2, 'problem_type': 'binary', 'roles': {'stop': {'path': 'C:\\Users...fresh_anchor_and_fixed_se2\\train.pkl', 'sha256': '6b4469456e20436de502f94ab5c6bcc7eccd094d09eddbb943b58616404c7275'}}}
+X =            x         z category
+0  -0.647977  1.186947        a
+1   0.032345  0.730127        b
+2   0.965086  1.288942...
+81 -1.260853  0.266861    extra
+82  0.577248  0.012923        a
+83  0.747492 -1.544371        b
+
+[84 rows x 3 columns]
+y = array([0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1,
+       0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1,... 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0,
+       0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0])
+schema = {'category': ['a', 'b', 'c', 'extra']}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+________ test_fresh_anchor_and_fixed_seed_pipeline[regression-ctboost] ________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-894/test_fresh_anchor_and_fixed_se3')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000239C0B742E0>
+library = 'ctboost', problem = 'regression'
+
+    @pytest.mark.parametrize("library", ["ctboost", "xgboost", "lightgbm"])
+    @pytest.mark.parametrize("problem", ["binary", "regression"])
+    def test_fresh_anchor_and_fixed_seed_pipeline(tmp_path, monkeypatch, library, problem):
+        module = runner()
+        case, source = fixture(module, tmp_path, problem)
+        job = job_for(module, case, source, library)
+        original = copy.deepcopy(job)
+        X, labels, schema, train, stop, receipt = module.fitting_data(job, case, train_only=True)
+        assert len(labels) == 84 and receipt["outside_cap_rows"] == 24 and receipt["stop_excluded"]
+        assert "STOP_ONLY" not in schema["category"] and "extra" in schema["category"]
+        clean_job = module.clean_job(job)
+        assert clean_job["leaf_refit"] is None and clean_job["binary_refit"] is None
+>       anchor, _ = module.union.fit_fixed(clean_job, case, X, labels, schema, 47)
+
+tests\test_scalar_refresh_experiment.py:82: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'diamonds', 'expanded_source': {'dataset': 'diamonds', 'path': 'C:\\Users\\captn\\Ap...thetic': True}, 'sha256': '615a0a4f37bfb865ee342915ab5b9dc844088e6a3c8799ea7fb74ebd309cf055'}, 'leaf_refit': None, ...}
+case = {'dataset_name': 'diamonds', 'num_classes': 0, 'problem_type': 'regression', 'roles': {'stop': {'path': 'C:\\Users\\ca...fresh_anchor_and_fixed_se3\\train.pkl', 'sha256': 'a1744b7edded28a64b1fb14c042258f005fe1822c27091bde8204f11a54e8474'}}}
+X =            x         z category
+0  -0.647977  1.186947        a
+1   0.032345  0.730127        b
+2   0.965086  1.288942...
+81 -1.260853  0.266861    extra
+82  0.577248  0.012923        a
+83  0.747492 -1.544371        b
+
+[84 rows x 3 columns]
+y = array([ 1.28763261e-01,  6.77806222e-01,  3.42765162e+00, -2.91878063e+00,
+       -2.21959894e-02,  3.81263497e+00,  6...6480e+00,  1.03728452e+00, -1.10044554e+00,
+        2.77697140e+00, -2.02864352e+00,  9.14276899e-01,  3.31244036e-01])
+schema = {'category': ['a', 'b', 'c', 'extra']}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+________ test_fresh_anchor_and_fixed_seed_pipeline[regression-xgboost] ________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-894/test_fresh_anchor_and_fixed_se4')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000239C1F3FC70>
+library = 'xgboost', problem = 'regression'
+
+    @pytest.mark.parametrize("library", ["ctboost", "xgboost", "lightgbm"])
+    @pytest.mark.parametrize("problem", ["binary", "regression"])
+    def test_fresh_anchor_and_fixed_seed_pipeline(tmp_path, monkeypatch, library, problem):
+        module = runner()
+        case, source = fixture(module, tmp_path, problem)
+        job = job_for(module, case, source, library)
+        original = copy.deepcopy(job)
+        X, labels, schema, train, stop, receipt = module.fitting_data(job, case, train_only=True)
+        assert len(labels) == 84 and receipt["outside_cap_rows"] == 24 and receipt["stop_excluded"]
+        assert "STOP_ONLY" not in schema["category"] and "extra" in schema["category"]
+        clean_job = module.clean_job(job)
+        assert clean_job["leaf_refit"] is None and clean_job["binary_refit"] is None
+>       anchor, _ = module.union.fit_fixed(clean_job, case, X, labels, schema, 47)
+
+tests\test_scalar_refresh_experiment.py:82: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'diamonds', 'expanded_source': {'dataset': 'diamonds', 'path': 'C:\\Users\\captn\\Ap...thetic': True}, 'sha256': '615a0a4f37bfb865ee342915ab5b9dc844088e6a3c8799ea7fb74ebd309cf055'}, 'leaf_refit': None, ...}
+case = {'dataset_name': 'diamonds', 'num_classes': 0, 'problem_type': 'regression', 'roles': {'stop': {'path': 'C:\\Users\\ca...fresh_anchor_and_fixed_se4\\train.pkl', 'sha256': 'a1744b7edded28a64b1fb14c042258f005fe1822c27091bde8204f11a54e8474'}}}
+X =            x         z category
+0  -0.647977  1.186947        a
+1   0.032345  0.730127        b
+2   0.965086  1.288942...
+81 -1.260853  0.266861    extra
+82  0.577248  0.012923        a
+83  0.747492 -1.544371        b
+
+[84 rows x 3 columns]
+y = array([ 1.28763261e-01,  6.77806222e-01,  3.42765162e+00, -2.91878063e+00,
+       -2.21959894e-02,  3.81263497e+00,  6...6480e+00,  1.03728452e+00, -1.10044554e+00,
+        2.77697140e+00, -2.02864352e+00,  9.14276899e-01,  3.31244036e-01])
+schema = {'category': ['a', 'b', 'c', 'extra']}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+_______ test_fresh_anchor_and_fixed_seed_pipeline[regression-lightgbm] ________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-894/test_fresh_anchor_and_fixed_se5')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000239BF22C2B0>
+library = 'lightgbm', problem = 'regression'
+
+    @pytest.mark.parametrize("library", ["ctboost", "xgboost", "lightgbm"])
+    @pytest.mark.parametrize("problem", ["binary", "regression"])
+    def test_fresh_anchor_and_fixed_seed_pipeline(tmp_path, monkeypatch, library, problem):
+        module = runner()
+        case, source = fixture(module, tmp_path, problem)
+        job = job_for(module, case, source, library)
+        original = copy.deepcopy(job)
+        X, labels, schema, train, stop, receipt = module.fitting_data(job, case, train_only=True)
+        assert len(labels) == 84 and receipt["outside_cap_rows"] == 24 and receipt["stop_excluded"]
+        assert "STOP_ONLY" not in schema["category"] and "extra" in schema["category"]
+        clean_job = module.clean_job(job)
+        assert clean_job["leaf_refit"] is None and clean_job["binary_refit"] is None
+>       anchor, _ = module.union.fit_fixed(clean_job, case, X, labels, schema, 47)
+
+tests\test_scalar_refresh_experiment.py:82: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'diamonds', 'expanded_source': {'dataset': 'diamonds', 'path': 'C:\\Users\\captn\\Ap...thetic': True}, 'sha256': '615a0a4f37bfb865ee342915ab5b9dc844088e6a3c8799ea7fb74ebd309cf055'}, 'leaf_refit': None, ...}
+case = {'dataset_name': 'diamonds', 'num_classes': 0, 'problem_type': 'regression', 'roles': {'stop': {'path': 'C:\\Users\\ca...fresh_anchor_and_fixed_se5\\train.pkl', 'sha256': 'a1744b7edded28a64b1fb14c042258f005fe1822c27091bde8204f11a54e8474'}}}
+X =            x         z category
+0  -0.647977  1.186947        a
+1   0.032345  0.730127        b
+2   0.965086  1.288942...
+81 -1.260853  0.266861    extra
+82  0.577248  0.012923        a
+83  0.747492 -1.544371        b
+
+[84 rows x 3 columns]
+y = array([ 1.28763261e-01,  6.77806222e-01,  3.42765162e+00, -2.91878063e+00,
+       -2.21959894e-02,  3.81263497e+00,  6...6480e+00,  1.03728452e+00, -1.10044554e+00,
+        2.77697140e+00, -2.02864352e+00,  9.14276899e-01,  3.31244036e-01])
+schema = {'category': ['a', 'b', 'c', 'extra']}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+______________ test_identity_union_is_fresh_and_clean_not_parent ______________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-894/test_identity_union_is_fresh_a0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000239BEE02320>
+
+    def test_identity_union_is_fresh_and_clean_not_parent(tmp_path, monkeypatch):
+        module = runner()
+        case, source = fixture(module, tmp_path, "regression")
+        job = job_for(module, case, source, "ctboost")
+>       clean, _, verification = module.parent.fit_policy(module.clean_job(job), case, 47)
+
+tests\test_scalar_refresh_experiment.py:114: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+benchmarks\fair_accuracy_multiclass_refit.py:122: in fit_policy
+    payload, details, frame = parent.fit_policy(job, case, seed)
+benchmarks\fair_accuracy_houses_cap_v2.py:45: in fit_policy
+    return cap.fit_policy(job, case, seed)
+benchmarks\fair_accuracy_cap_expansion.py:65: in fit_policy
+    return fit_expansion(job, case, expanded, seed, cv)
+benchmarks\fair_accuracy_cap_expansion.py:169: in fit_expansion
+    payload, details = cv.union.fit_fixed(job, case, X, expanded["y"], schema, seed)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+job = {'binary_refit': None, 'dataset': 'diamonds', 'expanded_source': {'dataset': 'diamonds', 'path': 'C:\\Users\\captn\\Ap...thetic': True}, 'sha256': '615a0a4f37bfb865ee342915ab5b9dc844088e6a3c8799ea7fb74ebd309cf055'}, 'leaf_refit': None, ...}
+case = {'dataset_name': 'diamonds', 'num_classes': 0, 'problem_type': 'regression', 'roles': {'stop': {'path': 'C:\\Users\\ca...identity_union_is_fresh_a0\\train.pkl', 'sha256': 'a1744b7edded28a64b1fb14c042258f005fe1822c27091bde8204f11a54e8474'}}}
+X =            x         z category
+0  -0.647977  1.186947        a
+1   0.032345  0.730127        b
+2   0.965086  1.288942...
+93 -1.260853  0.266861    extra
+94  0.577248  0.012923        a
+95  0.747492 -1.544371        b
+
+[96 rows x 3 columns]
+y = array([ 1.28763261e-01,  6.77806222e-01,  3.42765162e+00, -2.91878063e+00,
+       -2.21959894e-02,  3.81263497e+00,  6...6480e+00,  1.03728452e+00, -1.10044554e+00,
+        2.77697140e+00, -2.02864352e+00,  9.14276899e-01,  3.31244036e-01])
+schema = {'category': ['STOP_ONLY', 'a', 'b', 'c', 'extra']}, seed = 47
+
+    def fit_fixed(job, case, X, y, schema, seed):
+        import ctboost
+>       import lightgbm as lgb
+E       ModuleNotFoundError: No module named 'lightgbm'
+
+benchmarks\fair_accuracy_union_refit.py:61: ModuleNotFoundError
+_________ test_selection_runs_all_eight_candidates_from_clean_anchor __________
+
+tmp_path = WindowsPath('C:/Users/captn/AppData/Local/Temp/pytest-of-captn/pytest-894/test_selection_runs_all_eight_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000239C1D887F0>
+
+    def test_selection_runs_all_eight_candidates_from_clean_anchor(tmp_path, monkeypatch):
+        module = runner()
+        case, source = fixture(module, tmp_path, "binary")
+        job = job_for(module, case, source, "xgboost")
+        plan = {"resources": {"cpus": [4], "maximum_named_array_bytes": 4 * 1024**3}, "jobs": [job], "cases": [case],
+            "solvers": {"binary": controls("binary")["solver"]},
+            "grid": [{"lambda": p, "shrinkage": s} for p in (1., 10., 100., 1000.) for s in (.25, 1.)]}
+        monkeypatch.setattr(module, "checked", lambda _: plan)
+        args = SimpleNamespace(dataset=job["dataset"], library="xgboost", output=tmp_path / "result", artifacts=tmp_path / "artifacts")
+        module.selection_job(args)
+        directory = args.output / "selection_fits" / job["dataset"] / "xgboost"
+        result = module.base.read(directory / "job.json")
+>       assert result["status"] == "ok", result.get("error", result.get("candidates"))
+E       AssertionError: Traceback (most recent call last):
+E           File "C:\apps\ctboost\benchmarks\fair_accuracy_scalar_refresh.py", line 231, in selection_job
+E             payload, fit = union.fit_fixed(clean_job(job), case, X, labels, schema, 47)
+E           File "C:\apps\ctboost\benchmarks\fair_accuracy_union_refit.py", line 61, in fit_fixed
+E             import lightgbm as lgb
+E         ModuleNotFoundError: No module named 'lightgbm'
+E         
+E       assert 'failed' == 'ok'
+E         
+E         - ok
+E         + failed
+
+tests\test_scalar_refresh_experiment.py:159: AssertionError
+_______________ test_dispatch_owns_only_fixed_local_assignments _______________
+
+factory = <function factory.<locals>.make at 0x00000239BEDE6D40>
+
+    def test_dispatch_owns_only_fixed_local_assignments(factory):
+>       run = factory([parent(0), parent(1, owner="kaggle"), parent(2)])
+
+tests\test_tabarena_local_hpo_0160.py:118: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_____ test_worker_command_binds_local_identity_receipt_wheel_and_affinity _____
+
+factory = <function factory.<locals>.make at 0x00000239C1EC3EB0>
+
+    def test_worker_command_binds_local_identity_receipt_wheel_and_affinity(factory):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:129: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_____ test_canonical_plan_hash_allows_only_whitespace_reformat_on_resume ______
+
+factory = <function factory.<locals>.make at 0x00000239C1EC2B00>
+
+    def test_canonical_plan_hash_allows_only_whitespace_reformat_on_resume(factory):
+>       first = factory()
+
+tests\test_tabarena_local_hpo_0160.py:141: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+________ test_registration_failure_prevents_controller_state_or_launch ________
+
+factory = <function factory.<locals>.make at 0x00000239C1EC3D00>
+
+    def test_registration_failure_prevents_controller_state_or_launch(factory):
+        def refuse(*_):
+            raise ValueError("Unregistered synthetic plan")
+        factory.worker.verify_registration = refuse
+        with pytest.raises(ValueError, match="Unregistered"):
+>           factory()
+
+tests\test_tabarena_local_hpo_0160.py:156: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+
+During handling of the above exception, another exception occurred:
+
+factory = <function factory.<locals>.make at 0x00000239C1EC3D00>
+
+    def test_registration_failure_prevents_controller_state_or_launch(factory):
+        def refuse(*_):
+            raise ValueError("Unregistered synthetic plan")
+        factory.worker.verify_registration = refuse
+>       with pytest.raises(ValueError, match="Unregistered"):
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'Unregistered'
+E         Actual message: 'Two available logical CPUs are required per parent'
+
+tests\test_tabarena_local_hpo_0160.py:155: AssertionError
+____________ test_execution_provenance_drift_refuses_resume[wheel] ____________
+
+factory = <function factory.<locals>.make at 0x00000239C1E788B0>
+field = 'wheel'
+
+    @pytest.mark.parametrize("field", ["wheel", "runtime", "registration", "worker"])
+    def test_execution_provenance_drift_refuses_resume(factory, field):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:162: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+___________ test_execution_provenance_drift_refuses_resume[runtime] ___________
+
+factory = <function factory.<locals>.make at 0x00000239C1E79510>
+field = 'runtime'
+
+    @pytest.mark.parametrize("field", ["wheel", "runtime", "registration", "worker"])
+    def test_execution_provenance_drift_refuses_resume(factory, field):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:162: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+________ test_execution_provenance_drift_refuses_resume[registration] _________
+
+factory = <function factory.<locals>.make at 0x00000239C1E7A320>
+field = 'registration'
+
+    @pytest.mark.parametrize("field", ["wheel", "runtime", "registration", "worker"])
+    def test_execution_provenance_drift_refuses_resume(factory, field):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:162: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+___________ test_execution_provenance_drift_refuses_resume[worker] ____________
+
+factory = <function factory.<locals>.make at 0x00000239C1E7BB50>
+field = 'worker'
+
+    @pytest.mark.parametrize("field", ["wheel", "runtime", "registration", "worker"])
+    def test_execution_provenance_drift_refuses_resume(factory, field):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:162: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+________ test_result_requires_complete_local_attested_runtime[runtime] ________
+
+factory = <function factory.<locals>.make at 0x00000239C1EC1870>
+change = 'runtime'
+
+    @pytest.mark.parametrize("change", ["runtime", "host", "resources", "registration", "status", "raw"])
+    def test_result_requires_complete_local_attested_runtime(factory, change):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:177: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_________ test_result_requires_complete_local_attested_runtime[host] __________
+
+factory = <function factory.<locals>.make at 0x00000239BEDE6C20>
+change = 'host'
+
+    @pytest.mark.parametrize("change", ["runtime", "host", "resources", "registration", "status", "raw"])
+    def test_result_requires_complete_local_attested_runtime(factory, change):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:177: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_______ test_result_requires_complete_local_attested_runtime[resources] _______
+
+factory = <function factory.<locals>.make at 0x00000239C1EC2B90>
+change = 'resources'
+
+    @pytest.mark.parametrize("change", ["runtime", "host", "resources", "registration", "status", "raw"])
+    def test_result_requires_complete_local_attested_runtime(factory, change):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:177: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_____ test_result_requires_complete_local_attested_runtime[registration] ______
+
+factory = <function factory.<locals>.make at 0x00000239C1E7AEF0>
+change = 'registration'
+
+    @pytest.mark.parametrize("change", ["runtime", "host", "resources", "registration", "status", "raw"])
+    def test_result_requires_complete_local_attested_runtime(factory, change):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:177: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+________ test_result_requires_complete_local_attested_runtime[status] _________
+
+factory = <function factory.<locals>.make at 0x00000239C1E79870>
+change = 'status'
+
+    @pytest.mark.parametrize("change", ["runtime", "host", "resources", "registration", "status", "raw"])
+    def test_result_requires_complete_local_attested_runtime(factory, change):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:177: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+__________ test_result_requires_complete_local_attested_runtime[raw] __________
+
+factory = <function factory.<locals>.make at 0x00000239C1E78EE0>, change = 'raw'
+
+    @pytest.mark.parametrize("change", ["runtime", "host", "resources", "registration", "status", "raw"])
+    def test_result_requires_complete_local_attested_runtime(factory, change):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:177: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+______________ test_resource_timeout_preserves_terminal_evidence ______________
+
+factory = <function factory.<locals>.make at 0x00000239C1E79AB0>
+
+    def test_resource_timeout_preserves_terminal_evidence(factory):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:190: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+___________ test_raw_runtime_digest_must_match_manifest_attestation ___________
+
+factory = <function factory.<locals>.make at 0x00000239C1E7B0A0>
+
+    def test_raw_runtime_digest_must_match_manifest_attestation(factory):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:201: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_____ test_terminal_launch_failure_does_not_block_independent_assignments _____
+
+factory = <function factory.<locals>.make at 0x00000239C1EC3490>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000239C0B74580>
+
+    def test_terminal_launch_failure_does_not_block_independent_assignments(factory, monkeypatch):
+>       run = factory([parent(0), parent(1)])
+
+tests\test_tabarena_local_hpo_0160.py:213: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+___________ test_completed_cache_verified_and_reused_without_launch ___________
+
+factory = <function factory.<locals>.make at 0x00000239BF061630>
+
+    def test_completed_cache_verified_and_reused_without_launch(factory):
+>       run = factory()
+
+tests\test_tabarena_local_hpo_0160.py:230: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+___ test_synthetic_process_failure_continues_next_parent_and_never_retries ____
+
+factory = <function factory.<locals>.make at 0x00000239C1E7A320>
+
+    def test_synthetic_process_failure_continues_next_parent_and_never_retries(factory):
+        parents = [parent(0, outcome="failed"), parent(1), parent(2, owner="kaggle")]
+>       run = factory(parents)
+
+tests\test_tabarena_local_hpo_0160.py:241: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_0160.py:98: in make
+    return local.Controller(output=root / "output", plan_path=plan_path,
+benchmarks\tabarena\local_hpo_0160.py:36: in __init__
+    self.policy = base.allocation_policy(base.psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+______ test_running_import_rss_does_not_establish_completed_dataset_peak ______
+
+make_controller = <function make_controller.<locals>.make at 0x00000239C1E7A560>
+
+    def test_running_import_rss_does_not_establish_completed_dataset_peak(make_controller):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:137: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+______________ test_dispatch_scans_past_unknown_high_memory_jobs ______________
+
+make_controller = <function make_controller.<locals>.make at 0x00000239C1E7B2E0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000239C35F4D30>
+
+    def test_dispatch_scans_past_unknown_high_memory_jobs(make_controller, monkeypatch):
+        parents = [parent(0, "unknown"), parent(1, "known"), parent(2, "known")]
+>       run = make_controller(parents)
+
+tests\test_tabarena_local_hpo_controller.py:148: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+______________________ test_pause_prevents_new_dispatch _______________________
+
+make_controller = <function make_controller.<locals>.make at 0x00000239C1E79750>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000239C1D850C0>
+
+    def test_pause_prevents_new_dispatch(make_controller, monkeypatch):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:172: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+______________ test_execution_policy_is_frozen_before_any_launch ______________
+
+make_controller = <function make_controller.<locals>.make at 0x00000239C1E79BD0>
+
+    def test_execution_policy_is_frozen_before_any_launch(make_controller):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:278: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+________ test_resume_imports_valid_completed_artifact_without_fitting _________
+
+make_controller = <function make_controller.<locals>.make at 0x00000239C1E7B370>
+
+    def test_resume_imports_valid_completed_artifact_without_fitting(make_controller):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:290: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+______________ test_completed_raw_modified_on_restart_is_refused ______________
+
+make_controller = <function make_controller.<locals>.make at 0x00000239C1E6B2E0>
+
+    def test_completed_raw_modified_on_restart_is_refused(make_controller):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:303: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_______ test_terminal_failures_are_preserved_and_never_requeued[failed] _______
+
+make_controller = <function make_controller.<locals>.make at 0x00000239BC0CACB0>
+status = 'failed'
+
+    @pytest.mark.parametrize(
+        "status", ["failed", "interrupted", "resource_pressure", "timed_out"]
+    )
+    def test_terminal_failures_are_preserved_and_never_requeued(make_controller, status):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:315: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+____ test_terminal_failures_are_preserved_and_never_requeued[interrupted] _____
+
+make_controller = <function make_controller.<locals>.make at 0x00000239C1E7B370>
+status = 'interrupted'
+
+    @pytest.mark.parametrize(
+        "status", ["failed", "interrupted", "resource_pressure", "timed_out"]
+    )
+    def test_terminal_failures_are_preserved_and_never_requeued(make_controller, status):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:315: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_ test_terminal_failures_are_preserved_and_never_requeued[resource_pressure] __
+
+make_controller = <function make_controller.<locals>.make at 0x00000239C1E79FC0>
+status = 'resource_pressure'
+
+    @pytest.mark.parametrize(
+        "status", ["failed", "interrupted", "resource_pressure", "timed_out"]
+    )
+    def test_terminal_failures_are_preserved_and_never_requeued(make_controller, status):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:315: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_____ test_terminal_failures_are_preserved_and_never_requeued[timed_out] ______
+
+make_controller = <function make_controller.<locals>.make at 0x00000239C1E7B010>
+status = 'timed_out'
+
+    @pytest.mark.parametrize(
+        "status", ["failed", "interrupted", "resource_pressure", "timed_out"]
+    )
+    def test_terminal_failures_are_preserved_and_never_requeued(make_controller, status):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:315: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+________ test_started_worker_without_raw_becomes_terminal_interrupted _________
+
+make_controller = <function make_controller.<locals>.make at 0x00000239C1E7B0A0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000239C35CCF70>
+
+    def test_started_worker_without_raw_becomes_terminal_interrupted(
+        make_controller, monkeypatch
+    ):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:330: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+___________ test_launch_claim_recovers_crash_before_pid_state_write ___________
+
+make_controller = <function make_controller.<locals>.make at 0x00000239C1E7B2E0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000239C1D68D30>
+
+    def test_launch_claim_recovers_crash_before_pid_state_write(
+        make_controller, monkeypatch
+    ):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:353: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+____________________ test_foreign_launch_claim_is_refused _____________________
+
+make_controller = <function make_controller.<locals>.make at 0x00000239C1E78700>
+
+    def test_foreign_launch_claim_is_refused(make_controller):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:381: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+________ test_started_worker_with_valid_raw_is_completed_without_retry ________
+
+make_controller = <function make_controller.<locals>.make at 0x00000239C1E695A0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000239C1DDA350>
+
+    def test_started_worker_with_valid_raw_is_completed_without_retry(
+        make_controller, monkeypatch
+    ):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:398: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_______________ test_failed_worker_even_with_raw_remains_failed _______________
+
+make_controller = <function make_controller.<locals>.make at 0x00000239C1E7B010>
+
+    def test_failed_worker_even_with_raw_remains_failed(make_controller):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:408: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_________________ test_resource_failure_artifact_is_preserved _________________
+
+make_controller = <function make_controller.<locals>.make at 0x00000239C1E78040>
+
+    def test_resource_failure_artifact_is_preserved(make_controller):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:417: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+___________ test_raw_without_worker_provenance_is_terminal_invalid ____________
+
+make_controller = <function make_controller.<locals>.make at 0x00000239C1E7BD90>
+
+    def test_raw_without_worker_provenance_is_terminal_invalid(make_controller):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:429: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+______________ test_timeout_stops_owned_worker_and_never_retries ______________
+
+make_controller = <function make_controller.<locals>.make at 0x00000239C1E79750>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000239BF2A0FD0>
+
+    def test_timeout_stops_owned_worker_and_never_retries(make_controller, monkeypatch):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:440: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_____________ test_memory_pressure_stops_only_newest_owned_parent _____________
+
+make_controller = <function make_controller.<locals>.make at 0x00000239C1E6B520>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000239C1C28670>
+
+    def test_memory_pressure_stops_only_newest_owned_parent(make_controller, monkeypatch):
+>       run = make_controller([parent(0), parent(1)])
+
+tests\test_tabarena_local_hpo_controller.py:462: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+__________ test_synthetic_worker_launch_cache_validation_and_resume ___________
+
+make_controller = <function make_controller.<locals>.make at 0x00000239C1E6A290>
+
+    def test_synthetic_worker_launch_cache_validation_and_resume(make_controller):
+        """A real child process writes synthetic JSON only; no model libraries or fitting."""
+        make_controller.script.write_text(
+            """
+    import argparse, hashlib, json, time
+    from pathlib import Path
+    import psutil
+    parser = argparse.ArgumentParser()
+    parser.add_argument("command")
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--dataset")
+    parser.add_argument("--config-index", type=int)
+    parser.add_argument("--affinity")
+    args, _ = parser.parse_known_args()
+    psutil.Process().cpu_affinity([int(value) for value in args.affinity.split(",")])
+    plan_path = args.output / "plan.json"
+    plan = json.loads(plan_path.read_text())
+    parent = next(p for p in plan["parents"] if p["config_index"] == args.config_index)
+    plan_hash = hashlib.sha256(plan_path.read_bytes()).hexdigest()
+    key = f"{parent['config_name']}/{parent['task_id']}/0_0"
+    raw = args.output / "data" / key / "results.pkl"
+    raw.parent.mkdir(parents=True)
+    time.sleep(0.2)
+    raw.write_text(json.dumps({"synthetic_parent": parent, "plan_sha256": plan_hash}))
+    manifest = args.output / "artifacts" / key / "manifest.json"
+    manifest.parent.mkdir(parents=True)
+    manifest.write_text(json.dumps({
+        "parent": parent, "plan_sha256": plan_hash, "status": "complete",
+        "peak_rss_bytes": psutil.Process().memory_info().rss, "elapsed_seconds": 0.2,
+        "validation": {"raw_sha256": hashlib.sha256(raw.read_bytes()).hexdigest()},
+        "synthetic_affinity": psutil.Process().cpu_affinity(),
+    }))
+    """,
+            encoding="utf-8",
+        )
+>       run = make_controller(max_workers=1)
+
+tests\test_tabarena_local_hpo_controller.py:527: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 1
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+_________ test_main_revalidates_existing_plan_once_before_controller __________
+
+make_controller = <function make_controller.<locals>.make at 0x00000239C1E6A320>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000239C1BDB880>
+
+    def test_main_revalidates_existing_plan_once_before_controller(
+        make_controller, monkeypatch
+    ):
+>       run = make_controller()
+
+tests\test_tabarena_local_hpo_controller.py:565: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_tabarena_local_hpo_controller.py:58: in make
+    return controller.Controller(
+benchmarks\tabarena\local_hpo_controller.py:328: in __init__
+    self.policy = allocation_policy(psutil.Process().cpu_affinity(), max_workers)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+allowed_cpus = [4], max_workers = 2
+
+    def allocation_policy(allowed_cpus, max_workers):
+        if isinstance(max_workers, bool) or not 1 <= max_workers <= 8:
+            raise ValueError("max_workers must be between 1 and 8")
+        cpus = sorted(set(allowed_cpus))
+        count = min(max_workers, len(cpus) // 2)
+        if not count:
+>           raise ValueError("Two available logical CPUs are required per parent")
+E           ValueError: Two available logical CPUs are required per parent
+
+benchmarks\tabarena\local_hpo_controller.py:231: ValueError
+=========================== short test summary info ===========================
+SKIPPED [3] tests\test_binary_union_experiment.py:23: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [1] tests\test_booster_constraints.py:238: CUDA support is not compiled into this build
+SKIPPED [9] tests\test_cap_expansion_experiment.py:199: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [1] tests\test_cuda_multi_device_workspace.py:173: CUDA support is not compiled into this build
+SKIPPED [8] tests\test_cuda_quantized_pool.py:346: CUDA support is not compiled into this build
+SKIPPED [3] tests\test_fixed_binary_leaf_refit.py:35: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [1] tests\test_fixed_binary_leaf_refit.py:144: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [7] tests\test_fixed_clean_refit_check.py:42: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [3] tests\test_fixed_leaf_refit.py:32: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [10] tests\test_fixed_multiclass_leaf_refit.py:33: Native serialization tests require the frozen XGBoost3.4.1 runtime
+SKIPPED [4] tests\test_fixed_multiclass_leaf_refit.py:39: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [2] tests\test_fixed_seed_ensemble.py:224: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [1] tests\test_framework_integrations.py:280: could not import 'pyspark': No module named 'pyspark'
+SKIPPED [1] tests\test_grouped_feature_test.py:752: CUDA support is not compiled into this build
+SKIPPED [1] tests\test_grouped_feature_test.py:800: CUDA support is not compiled into this build
+SKIPPED [3] tests\test_hpo_full_0160.py:377: Optional pinned TabArena environment
+SKIPPED [3] tests\test_hpo_full_0161.py:377: Optional pinned TabArena environment
+SKIPPED [1] tests\test_leaf_estimation.py:440: CUDA support is not compiled into this build
+SKIPPED [3] tests\test_multivariate_statistics.py:271: requires a CUDA-enabled build
+SKIPPED [9] tests\test_round_cv_experiment.py:23: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [9] tests\test_seed_ensemble_experiment.py:23: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [1] tests\test_tabarena_grouped_scout.py:590: real pinned TabArena API is only present in the scout environment
+SKIPPED [3] tests\test_tabarena_hpo_0160.py:427: Optional pinned TabArena benchmark environment
+SKIPPED [1] tests\test_tabarena_kaggle_hpo.py:194: could not import 'tabarena': No module named 'tabarena'
+SKIPPED [3] tests\test_tabarena_local_hpo.py:688: Optional pinned TabArena benchmark environment
+SKIPPED [6] tests\test_threshold_scout_experiment.py:15: could not import 'lightgbm': No module named 'lightgbm'
+SKIPPED [9] tests\test_union_refit_experiment.py:23: could not import 'lightgbm': No module named 'lightgbm'
+FAILED tests/test_houses_cap_experiment.py::test_native_houses_policy_roundtrip_and_seed349[ctboost]
+FAILED tests/test_houses_cap_experiment.py::test_native_houses_policy_roundtrip_and_seed349[xgboost]
+FAILED tests/test_houses_cap_experiment.py::test_native_houses_policy_roundtrip_and_seed349[lightgbm]
+FAILED tests/test_houses_cap_experiment_v2.py::test_native_houses_policy_roundtrip_and_seed349[ctboost]
+FAILED tests/test_houses_cap_experiment_v2.py::test_native_houses_policy_roundtrip_and_seed349[xgboost]
+FAILED tests/test_houses_cap_experiment_v2.py::test_native_houses_policy_roundtrip_and_seed349[lightgbm]
+FAILED tests/test_multiclass_refit_experiment.py::test_anchor_stop_and_seed_transfer_pipeline[ctboost-False]
+FAILED tests/test_multiclass_refit_experiment.py::test_anchor_stop_and_seed_transfer_pipeline[ctboost-True]
+FAILED tests/test_multiclass_refit_experiment.py::test_anchor_stop_and_seed_transfer_pipeline[xgboost-False]
+FAILED tests/test_multiclass_refit_experiment.py::test_anchor_stop_and_seed_transfer_pipeline[xgboost-True]
+FAILED tests/test_multiclass_refit_experiment.py::test_anchor_stop_and_seed_transfer_pipeline[lightgbm-False]
+FAILED tests/test_scalar_refresh_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[binary-ctboost]
+FAILED tests/test_scalar_refresh_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[binary-xgboost]
+FAILED tests/test_scalar_refresh_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[binary-lightgbm]
+FAILED tests/test_scalar_refresh_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[regression-ctboost]
+FAILED tests/test_scalar_refresh_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[regression-xgboost]
+FAILED tests/test_scalar_refresh_experiment.py::test_fresh_anchor_and_fixed_seed_pipeline[regression-lightgbm]
+FAILED tests/test_scalar_refresh_experiment.py::test_identity_union_is_fresh_and_clean_not_parent
+FAILED tests/test_scalar_refresh_experiment.py::test_selection_runs_all_eight_candidates_from_clean_anchor
+FAILED tests/test_tabarena_local_hpo_0160.py::test_dispatch_owns_only_fixed_local_assignments
+FAILED tests/test_tabarena_local_hpo_0160.py::test_worker_command_binds_local_identity_receipt_wheel_and_affinity
+FAILED tests/test_tabarena_local_hpo_0160.py::test_canonical_plan_hash_allows_only_whitespace_reformat_on_resume
+FAILED tests/test_tabarena_local_hpo_0160.py::test_registration_failure_prevents_controller_state_or_launch
+FAILED tests/test_tabarena_local_hpo_0160.py::test_execution_provenance_drift_refuses_resume[wheel]
+FAILED tests/test_tabarena_local_hpo_0160.py::test_execution_provenance_drift_refuses_resume[runtime]
+FAILED tests/test_tabarena_local_hpo_0160.py::test_execution_provenance_drift_refuses_resume[registration]
+FAILED tests/test_tabarena_local_hpo_0160.py::test_execution_provenance_drift_refuses_resume[worker]
+FAILED tests/test_tabarena_local_hpo_0160.py::test_result_requires_complete_local_attested_runtime[runtime]
+FAILED tests/test_tabarena_local_hpo_0160.py::test_result_requires_complete_local_attested_runtime[host]
+FAILED tests/test_tabarena_local_hpo_0160.py::test_result_requires_complete_local_attested_runtime[resources]
+FAILED tests/test_tabarena_local_hpo_0160.py::test_result_requires_complete_local_attested_runtime[registration]
+FAILED tests/test_tabarena_local_hpo_0160.py::test_result_requires_complete_local_attested_runtime[status]
+FAILED tests/test_tabarena_local_hpo_0160.py::test_result_requires_complete_local_attested_runtime[raw]
+FAILED tests/test_tabarena_local_hpo_0160.py::test_resource_timeout_preserves_terminal_evidence
+FAILED tests/test_tabarena_local_hpo_0160.py::test_raw_runtime_digest_must_match_manifest_attestation
+FAILED tests/test_tabarena_local_hpo_0160.py::test_terminal_launch_failure_does_not_block_independent_assignments
+FAILED tests/test_tabarena_local_hpo_0160.py::test_completed_cache_verified_and_reused_without_launch
+FAILED tests/test_tabarena_local_hpo_0160.py::test_synthetic_process_failure_continues_next_parent_and_never_retries
+FAILED tests/test_tabarena_local_hpo_controller.py::test_running_import_rss_does_not_establish_completed_dataset_peak
+FAILED tests/test_tabarena_local_hpo_controller.py::test_dispatch_scans_past_unknown_high_memory_jobs
+FAILED tests/test_tabarena_local_hpo_controller.py::test_pause_prevents_new_dispatch
+FAILED tests/test_tabarena_local_hpo_controller.py::test_execution_policy_is_frozen_before_any_launch
+FAILED tests/test_tabarena_local_hpo_controller.py::test_resume_imports_valid_completed_artifact_without_fitting
+FAILED tests/test_tabarena_local_hpo_controller.py::test_completed_raw_modified_on_restart_is_refused
+FAILED tests/test_tabarena_local_hpo_controller.py::test_terminal_failures_are_preserved_and_never_requeued[failed]
+FAILED tests/test_tabarena_local_hpo_controller.py::test_terminal_failures_are_preserved_and_never_requeued[interrupted]
+FAILED tests/test_tabarena_local_hpo_controller.py::test_terminal_failures_are_preserved_and_never_requeued[resource_pressure]
+FAILED tests/test_tabarena_local_hpo_controller.py::test_terminal_failures_are_preserved_and_never_requeued[timed_out]
+FAILED tests/test_tabarena_local_hpo_controller.py::test_started_worker_without_raw_becomes_terminal_interrupted
+FAILED tests/test_tabarena_local_hpo_controller.py::test_launch_claim_recovers_crash_before_pid_state_write
+FAILED tests/test_tabarena_local_hpo_controller.py::test_foreign_launch_claim_is_refused
+FAILED tests/test_tabarena_local_hpo_controller.py::test_started_worker_with_valid_raw_is_completed_without_retry
+FAILED tests/test_tabarena_local_hpo_controller.py::test_failed_worker_even_with_raw_remains_failed
+FAILED tests/test_tabarena_local_hpo_controller.py::test_resource_failure_artifact_is_preserved
+FAILED tests/test_tabarena_local_hpo_controller.py::test_raw_without_worker_provenance_is_terminal_invalid
+FAILED tests/test_tabarena_local_hpo_controller.py::test_timeout_stops_owned_worker_and_never_retries
+FAILED tests/test_tabarena_local_hpo_controller.py::test_memory_pressure_stops_only_newest_owned_parent
+FAILED tests/test_tabarena_local_hpo_controller.py::test_synthetic_worker_launch_cache_validation_and_resume
+FAILED tests/test_tabarena_local_hpo_controller.py::test_main_revalidates_existing_plan_once_before_controller
+59 failed, 2442 passed, 106 skipped in 232.47s (0:03:52)

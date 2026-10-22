@@ -1,0 +1,190 @@
+{
+  "dataset": "in_vehicle_coupon_recommendation",
+  "finished_at": "2026-10-16T12:18:18.905155+00:00",
+  "library": "ctboost",
+  "model_bytes": 4277448,
+  "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave11\\components\\in_vehicle_coupon_recommendation\\ctboost-seed947.pkl",
+  "model_sha256": "b66180d01a3b0bc0d3a5fa255e8b865ba4e778f400f39e1b1905bfc47d0ae25e",
+  "refit_details": {
+    "apparent_union_error_inference_transform": 0.07125140482237213,
+    "early_stopping": false,
+    "fit_seconds": 0.7081759000029706,
+    "fixed_binary_refit": {
+      "fold": {
+        "coefficient_rounding_absolute_bound": 5.793633371634251e-07,
+        "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+        "inference_only": true,
+        "library": "ctboost",
+        "physical_trees": 72,
+        "prediction_oracle_absolute_tolerance": 0.0012718582293018699,
+        "topology_sha256_after": "0e92fff2131ec0cc0f9a39405faea5dacc1afc98892fa99aa6d9ab12eeb6dde1",
+        "topology_sha256_before": "0e92fff2131ec0cc0f9a39405faea5dacc1afc98892fa99aa6d9ab12eeb6dde1"
+      },
+      "inference_checks": {
+        "original_stop": {
+          "fixed_tolerance_atol": 1e-05,
+          "fixed_tolerance_rtol": 5e-05,
+          "leaf_routing_exact": true,
+          "oracle_absolute_tolerance": 0.0012718582293018699,
+          "oracle_difference_divided_by_max_one_or_prediction_magnitude": 5.257990416989562e-07,
+          "oracle_max_absolute_difference": 1.8093526872320354e-06
+        },
+        "original_train": {
+          "fixed_tolerance_atol": 1e-05,
+          "fixed_tolerance_rtol": 5e-05,
+          "leaf_routing_exact": true,
+          "oracle_absolute_tolerance": 0.0012718582293018699,
+          "oracle_difference_divided_by_max_one_or_prediction_magnitude": 5.506859152430924e-07,
+          "oracle_max_absolute_difference": 2.1912093983722514e-06
+        }
+      },
+      "preprocessing": {
+        "column_order": "physical tree order, then sorted observed native leaf IDs",
+        "design_nonzeros": 456624,
+        "design_shape": [
+          6342,
+          3148
+        ],
+        "ordered_ctr": true,
+        "ordered_training_transform_replayed": true,
+        "pipeline_state_sha256": "88e1dae305b3dc51c2276eaeb6d471ac2e1ea6e3aa15c57d910d2dc022a4374e",
+        "training_leaf_ids_sha256": "a48b70164eed57f29bb9992dfa05ad8f03aa73c0702058b89a76b817fca75e93",
+        "training_rows": 6342,
+        "training_transform_sha256": "e23891a0da01633ca317a78d9f561043d89584f8cae8e7a1e6e215f96e304d7e",
+        "unobserved_leaf_correction": 0
+      },
+      "solve": {
+        "columns": 3148,
+        "evaluations": 30,
+        "final_objective": 0.3541901457901726,
+        "ftol": 1e-13,
+        "gradient_gate": 1e-06,
+        "gtol": 1e-09,
+        "initial_coefficients": "all zero",
+        "initial_objective": 0.40289088556603037,
+        "iterations": 27,
+        "maxcor": 20,
+        "maximum_absolute_mean_gradient": 2.3397632008716082e-08,
+        "maxiter": 2000,
+        "maxls": 50,
+        "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+        "method": "L-BFGS-B",
+        "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+        "penalty": 100.0,
+        "rows": 6342,
+        "status": 0
+      },
+      "training_check": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 0.0012718582293018699,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 5.271649769550849e-07,
+        "oracle_max_absolute_difference": 2.1912093983722514e-06
+      }
+    },
+    "parameters": {
+      "alpha": 0.2,
+      "bootstrap_type": "Bernoulli",
+      "cat_features": [
+        "destination",
+        "passenger",
+        "weather",
+        "coupon",
+        "expiration",
+        "gender",
+        "age",
+        "maritalStatus",
+        "has_children",
+        "education",
+        "occupation",
+        "income",
+        "car",
+        "Bar",
+        "CoffeeHouse",
+        "CarryAway",
+        "RestaurantLessThan20",
+        "Restaurant20To50",
+        "toCoupon_GEQ15min",
+        "toCoupon_GEQ25min",
+        "direction_same",
+        "direction_opp"
+      ],
+      "eval_metric": "AUC",
+      "feature_test": "grouped",
+      "feature_test_adjustment": "none",
+      "feature_test_bins": 8,
+      "iterations": 72,
+      "lambda_l2": 3,
+      "leaf_estimation_backtracking": true,
+      "leaf_estimation_iterations": 3,
+      "learning_rate": 0.1,
+      "max_bins": 256,
+      "max_cat_threshold": 256,
+      "max_depth": 8,
+      "min_data_in_leaf": 10,
+      "multi_strategy": "one_output_per_tree",
+      "multiclass_feature_test": "single",
+      "one_hot_max_size": 8,
+      "ordered_ctr": true,
+      "random_seed": 947,
+      "subsample": 0.8,
+      "verbose": false
+    },
+    "requested_rounds": 72,
+    "retained_rounds": 72,
+    "structural_early_termination": false,
+    "union_data": {
+      "row_order": "original TRAIN followed by original STOP",
+      "source_roles": {
+        "stop": {
+          "index_sha256": "046d57cce251fdfdb2c4d5999bb1b3add867fed8c21d77339d5273c99e24a7c6",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\in_vehicle_coupon_recommendation\\stop.pkl",
+          "rows": 1057,
+          "sha256": "aa8945b3b51c5a8e35e2dedd95fc61952d1d74579a5311d7a29e0941e7b42cde"
+        },
+        "train": {
+          "index_sha256": "a9943111493fdf3fb8fa87727ff777bbeac325ea2e7d51f8d567bd3b2f2d301e",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\in_vehicle_coupon_recommendation\\train.pkl",
+          "rows": 5285,
+          "sha256": "a4ffda38caa481cea4b7b79c4615a71cd9e9524005425181a79d7db49a22f9bb"
+        }
+      },
+      "stop_ids_sha256": "046d57cce251fdfdb2c4d5999bb1b3add867fed8c21d77339d5273c99e24a7c6",
+      "stop_rows": 1057,
+      "train_ids_sha256": "a9943111493fdf3fb8fa87727ff777bbeac325ea2e7d51f8d567bd3b2f2d301e",
+      "train_rows": 5285,
+      "union_category_counts": {
+        "Bar": 6,
+        "CarryAway": 6,
+        "CoffeeHouse": 6,
+        "Restaurant20To50": 6,
+        "RestaurantLessThan20": 6,
+        "age": 8,
+        "car": 6,
+        "coupon": 5,
+        "destination": 3,
+        "direction_opp": 2,
+        "direction_same": 2,
+        "education": 6,
+        "expiration": 2,
+        "gender": 2,
+        "has_children": 2,
+        "income": 9,
+        "maritalStatus": 5,
+        "occupation": 25,
+        "passenger": 4,
+        "toCoupon_GEQ15min": 2,
+        "toCoupon_GEQ25min": 2,
+        "weather": 3
+      },
+      "union_ids_sha256": "ef26974f581af575edbb971ee3796e290156a97616a8a1c9c8f37fe4899cb797",
+      "union_rows": 6342,
+      "vocabulary_fit_on": "TRAIN+STOP union only"
+    }
+  },
+  "reused": false,
+  "seed": 947,
+  "started_at": "2026-10-16T12:18:16.580668+00:00",
+  "status": "ok"
+}

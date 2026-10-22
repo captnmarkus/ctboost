@@ -1,0 +1,33 @@
+{
+  "protocol": "conditional_threshold_union_robustness_20261016",
+  "created_before": "Any wave12 fit or development score",
+  "preserved_parent_policy": "The failed wave11 mandatory ensemble and all earlier gates remain unchanged",
+  "population": "All twelve original metadata-selected datasets and all three libraries",
+  "new_hypothesis": "A mandatory new single-model policy: four frozen profile refits on each of eight binary/regression tasks and each library; carry all four multiclass wave10 single-model policies unchanged. This is a predeclared policy change after failed ensemble development, not a per-task selection between ensembles and singles.",
+  "grid": {
+    "ctboost": "Original wave8 selected tree controls except alpha in [0.5,0.8] times learning rate [original,original/2]. Alpha remains strictly below1; feature testing precedes cut selection.",
+    "xgboost": "Original selected controls except min_child_weight in [original(default1),max(0.25,original/4)] times eta [original,original/2].",
+    "lightgbm": "Original selected controls except min_data_in_leaf in [original(default20),max(1,floor(original/4))] times learning rate [original,original/2].",
+    "budgets": "96 fresh tree fits in total. Base-rate profiles use cap2000/patience50; half-rate profiles use cap4000/patience100. Apply this scaling to all libraries, record cap hits and actual fit costs. This approximately preserves learning-rate-times-rounds horizon, not equal compute. Original-control repeats remain explicit reproducibility/control fits, not unique hypotheses."
+  },
+  "stopping_and_selection": "Use only original TRAIN and independent STOP. Native primary-metric early stopping first selects each uncorrected tree prefix. Recompute already-selected fixed regression/binary correction controls on TRAIN using exact original ordered CT preprocessing, then select the profile by its actual corrected native STOP error. This is not corrected-prefix optimization. The incumbent is the original wave8 TRAIN model with the frozen post-fit policy: saved regression correction already folded, selected binary correction recomputed without new selection. Exact STOP ties preserve this incumbent; new-profile ties prefer fewer retained rounds, then index.",
+  "mandatory_refit": "Freeze all24 TRAIN-profile choices before refitting every chosen binary/regression model on TRAIN+STOP at its selected retained rounds, with fresh union vocabulary and unchanged correction controls. No early stopping, union STOP selection or original-versus-union fallback. Carry12 multiclass wave10 single models and freeze all36 final native models before development.",
+  "seed947_trigger": "Only a successful36-model wave12 development gate opens the independent fixed947 robustness run. Existing947 models from failed wave11 are never substituted for these new required refits.",
+  "seed947_policy": "Refit all36 policies on the same union, changing only learner seed. Reuse exact selected requested rounds, tree parameters, correction penalties/shrinkages/solvers and multiclass temperatures. No HPO, early stopping or post-fit reselection.",
+  "aggregation": "Average primary error across47 and947 within each of12 datasets, then compare dataset means. Report both seeds separately. Same-split seeds are not independent datasets or a significance test.",
+  "gate": {
+    "all_models_successful": true,
+    "median_relative_error_gain_against_each_comparator": 0,
+    "minimum_dataset_wins_or_ties_against_each_comparator": 6
+  },
+  "primary_errors": {"binary": "1-ROC-AUC", "regression": "RMSE", "multiclass": "logloss"},
+  "if_gate_fails": "Preserve this failed mandatory policy and keep official outer test and original14 confirmation sealed. Further work needs a new predeclared hypothesis.",
+  "official_test_after_gate": {
+    "authorization": "User authorized one-shot assessment after final policy/model freeze",
+    "split": "Original OpenML repeat0/fold0/sample0 outer-test rows, uncapped",
+    "preconditions": "Freeze72 native model hashes plus exact source/runtime/policy/cache/split identities before reading official test features or labels",
+    "models": "Score already trained47 and947 policies with no further fit or adjustment",
+    "aggregation": "Same two-seed mean primary error within each of twelve datasets",
+    "limitations": "Adaptive reused development, partial capped outer training, twelve tasks and two learner seeds; not an official TabArena ranking, universal superiority or significance claim. Original14 confirmation fold7 remains sealed."
+  }
+}

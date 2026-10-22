@@ -1,0 +1,117 @@
+{
+  "correction": {
+    "fold": {
+      "coefficient_rounding_absolute_bound": 5.004406177649967e-16,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "lightgbm",
+      "physical_trees": 174,
+      "prediction_oracle_absolute_tolerance": 5.353844918709954e-12,
+      "topology_sha256_after": "f4a3de8b2a5f8ab6679a32333939325c0588d135f8b3ef99e9e5ef0f58cd208b",
+      "topology_sha256_before": "f4a3de8b2a5f8ab6679a32333939325c0588d135f8b3ef99e9e5ef0f58cd208b"
+    },
+    "inference_checks": {
+      "stop": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 5.353844918709954e-12,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.6569961012970017e-15,
+        "oracle_max_absolute_difference": 8.881784197001252e-15
+      }
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 1044000,
+      "design_shape": [
+        6000,
+        1218
+      ],
+      "ordered_training_transform_replayed": false,
+      "training_leaf_ids_sha256": "bf9c909e1f257d56e6c937f4dc22ed1b5c138b4d7b491a2981704acc60ee5f4d",
+      "training_rows": 6000,
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "columns": 1218,
+      "evaluations": 19,
+      "final_objective": 0.15872054470036712,
+      "ftol": 1e-13,
+      "gradient_gate": 1e-06,
+      "gtol": 1e-09,
+      "initial_coefficients": "all zero",
+      "initial_objective": 0.16309010394243909,
+      "iterations": 17,
+      "maxcor": 20,
+      "maximum_absolute_mean_gradient": 3.1109108723133734e-09,
+      "maxiter": 2000,
+      "maxls": 50,
+      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+      "method": "L-BFGS-B",
+      "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+      "penalty": 1000.0,
+      "rows": 6000,
+      "status": 0
+    },
+    "training_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 5.353844918709954e-12,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.6447632195915078e-15,
+      "oracle_max_absolute_difference": 8.881784197001252e-15
+    }
+  },
+  "dataset": "GiveMeSomeCredit",
+  "early_stopping": false,
+  "feature_names": [
+    "RevolvingUtilizationOfUnsecuredLines",
+    "age",
+    "NumberOfTime30-59DaysPastDueNotWorse",
+    "DebtRatio",
+    "MonthlyIncome",
+    "NumberOfOpenCreditLinesAndLoans",
+    "NumberOfTimes90DaysLate",
+    "NumberRealEstateLoansOrLines",
+    "NumberOfTime60-89DaysPastDueNotWorse",
+    "NumberOfDependents"
+  ],
+  "finished_at": "2026-10-16T13:10:01.048721+00:00",
+  "fit_seconds": 0.06090839999887976,
+  "fold": 3,
+  "fold_category_counts": {},
+  "fold_category_schema": {},
+  "library": "lightgbm",
+  "model_bytes": 162704,
+  "model_retained": false,
+  "model_sha256": "5250fba4d41a9563d7a33095df5b08284a76f867470bb03ab62ee1874afbcece",
+  "parameters": {
+    "bagging_fraction": 1.0,
+    "bagging_freq": 1,
+    "deterministic": true,
+    "force_col_wise": true,
+    "lambda_l2": 10,
+    "learning_rate": 0.025,
+    "max_bin": 255,
+    "max_cat_threshold": 256,
+    "max_cat_to_onehot": 8,
+    "metric": "auc",
+    "min_data_in_leaf": 5,
+    "num_leaves": 7,
+    "num_threads": 1,
+    "objective": "binary",
+    "seed": 47,
+    "verbosity": -1,
+    "zero_as_missing": false
+  },
+  "prediction_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave13\\fold_predictions\\GiveMeSomeCredit\\lightgbm\\profile2-fold3.npz",
+  "prediction_sha256": "1eeb951c1b6c18bf7ec3c80f78c24f5131429f261457f5f4192bbeba1e6980b0",
+  "profile_index": 2,
+  "requested_rounds": 174,
+  "retained_rounds": 174,
+  "started_at": "2026-10-16T13:10:00.360701+00:00",
+  "status": "ok",
+  "structural_early_termination": false,
+  "temperature": null,
+  "validation_error": 0.18063928571428567
+}

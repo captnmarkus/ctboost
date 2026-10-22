@@ -1,0 +1,105 @@
+{
+  "clean_fit_controls": {
+    "binary_refit": null,
+    "leaf_refit": null,
+    "multiclass_refit": null,
+    "parameters": {
+      "bagging_fraction": 0.8,
+      "bagging_freq": 1,
+      "deterministic": true,
+      "force_col_wise": true,
+      "lambda_l2": 0.1,
+      "learning_rate": 0.05,
+      "max_bin": 255,
+      "max_cat_threshold": 256,
+      "max_cat_to_onehot": 8,
+      "metric": "auc",
+      "min_data_in_leaf": 5,
+      "num_leaves": 31,
+      "num_threads": 1,
+      "objective": "binary",
+      "seed": 47,
+      "verbosity": -1,
+      "zero_as_missing": false
+    },
+    "rounds": 12,
+    "temperature": null
+  },
+  "clean_fit_controls_sha256": "3524e4fefb607d84a34d460cf768e0c8a52dedcecc8e516c09f5b2cf897b1237",
+  "fit": {
+    "apparent_union_error_inference_transform": 0.020165012845469343,
+    "early_stopping": false,
+    "fit_seconds": 0.025622999997722218,
+    "parameters": {
+      "bagging_fraction": 0.8,
+      "bagging_freq": 1,
+      "deterministic": true,
+      "force_col_wise": true,
+      "lambda_l2": 0.1,
+      "learning_rate": 0.05,
+      "max_bin": 255,
+      "max_cat_threshold": 256,
+      "max_cat_to_onehot": 8,
+      "metric": "auc",
+      "min_data_in_leaf": 5,
+      "num_leaves": 31,
+      "num_threads": 1,
+      "objective": "binary",
+      "seed": 47,
+      "verbosity": -1,
+      "zero_as_missing": false
+    },
+    "requested_rounds": 12,
+    "retained_rounds": 12,
+    "structural_early_termination": false,
+    "union_data": {
+      "row_order": "original TRAIN followed by original STOP",
+      "source_roles": {
+        "stop": {
+          "index_sha256": "86cca4564cf26e9a7d4e20eda6a3d98ccc2d40b37adcac57ad52ec52ac6b84fe",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\churn\\stop.pkl",
+          "rows": 416,
+          "sha256": "39074b7e402e872977a2c9758a2b7a8cc28c9495860e8ac384c962b1a8633d2f"
+        },
+        "train": {
+          "index_sha256": "ac9963bd0d5ae11b11341d1e0cb332d69a36ef646ecca5f0eb857a96109c4370",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\churn\\train.pkl",
+          "rows": 2085,
+          "sha256": "54578e8d3e6dd9f1cee6edc4a61fcf09510996a5adf063f9b0820376c7935a37"
+        }
+      },
+      "stop_ids_sha256": "86cca4564cf26e9a7d4e20eda6a3d98ccc2d40b37adcac57ad52ec52ac6b84fe",
+      "stop_rows": 416,
+      "train_ids_sha256": "ac9963bd0d5ae11b11341d1e0cb332d69a36ef646ecca5f0eb857a96109c4370",
+      "train_rows": 2085,
+      "union_category_counts": {
+        "area_code": 3,
+        "international_plan": 2,
+        "state": 51,
+        "voice_mail_plan": 2
+      },
+      "union_ids_sha256": "791e41637f8b5d602f8e20531bf8687b93b7128a1ac451e121d4023d16e39569",
+      "union_rows": 2501,
+      "vocabulary_fit_on": "TRAIN+STOP union only"
+    }
+  },
+  "old_scalar_corrections_disabled_before_fit": true,
+  "status": "ok",
+  "topology": {
+    "clean_native_state_sha256": "41e2de4d31e0691f7d308c10ea791152921524e93bc5a07aa737325048cb2c0f",
+    "data_schema_sha256": null,
+    "exact_clean_refit_identity_except_scalar_leaf_outputs": true,
+    "feature_pipeline_sha256": null,
+    "leaf_outputs_ignored": true,
+    "library": "lightgbm",
+    "limitation": "Fresh fit and disabled-correction provenance must also be enforced by the runner",
+    "nonleaf_state_sha256": "f6db3b3f49b9c5c35080f16183c1f766a0608163dcde32c8d26b27f639ef2a8a",
+    "old_correction_subtracted": false,
+    "ordered_schema_sha256": "9a7b94ad82290a71cf8072aa2ae58063579165ff85e5d50dced1b61f2fadc23e",
+    "parent_native_state_sha256": "41e2de4d31e0691f7d308c10ea791152921524e93bc5a07aa737325048cb2c0f",
+    "physical_trees": 12,
+    "problem": "binary",
+    "total_native_leaves": 372,
+    "training_metadata_sha256": null
+  }
+}

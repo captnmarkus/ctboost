@@ -1,0 +1,97 @@
+{
+  "label": "exact-string-2",
+  "runtime": {
+    "version": "0.1.61",
+    "cuda_enabled": false,
+    "cuda_runtime": "not compiled",
+    "compiler": "MSVC 1950",
+    "cxx_standard": 17,
+    "package_version": "0.1.61"
+  },
+  "python": "3.10.14 | packaged by Anaconda, Inc. | (main, Mar 21 2024, 16:20:14) [MSC v.1916 64 bit (AMD64)]",
+  "package": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup-native\\exact-string\\ctboost\\__init__.py",
+  "native_sha256": "ef830aabf6e0bc3ac1c11aa61febe8f153b037fb31234fc2d59bfc3e6204fc9c",
+  "runner_sha256": "a9e5e613713d41a0244620cf5d4d671fdf8c09c99a5785302d19b43d08b15bcd",
+  "build_receipt": {
+    "label": "exact-string",
+    "source_head": "9e68e6d5a6fe4a402d7b465092f6690bdf979a94",
+    "baseline_native_sha256": "565f490d1e9ae4fe2ee7333c9a3bd41ab21375705c294442ab0ae7d925a961fb",
+    "native_sha256": "ef830aabf6e0bc3ac1c11aa61febe8f153b037fb31234fc2d59bfc3e6204fc9c",
+    "compiler_flags": "/DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG",
+    "compiler": "MSVC19.50.35737.0",
+    "source_hashes": {
+      "src/core/feature_pipeline_normalize.cpp": "353acc2dece858c4a957c4b31f3dbc969d527230c37eb75de28c97d6a7bb66c6",
+      "src/core/booster_predict.cpp": "445c02bc2d810969088af32a4e9a835bd20cc80a9b52124a55e7ff1d74c00651",
+      "src/core/booster_prediction.cpp": "fd46d9cd6ef29b04af8fa8039ff37bbfc69c5282554ab6fefc713b69ddc791ba",
+      "src/core/booster_internal.hpp": "b409c652374ea48f51cfe6b53a893872dc7f34ad8251e6ca7b1122181df74cae"
+    }
+  },
+  "versions": {
+    "numpy": "1.26.4",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.3.2",
+    "psutil": "7.2.2"
+  },
+  "cpu_affinity": [
+    6
+  ],
+  "protocol": "One CPU/thread; 3 warmups; 5 calibration calls; 7 blocks targeting50ms.",
+  "limitations": "Reused development inputs, cycled/truncated; no new quality or leaderboard evidence.",
+  "records": [
+    {
+      "case": "coil2000_insurance_policies",
+      "rows": 64,
+      "input_columns": 85,
+      "categorical_columns": 5,
+      "transformed_columns": 90,
+      "trees": 129,
+      "nodes": 2861,
+      "active_features": 73,
+      "model_sha256": "a43172592a5bf0e36ce446f73ee970388d11e1b103e4ed622ae71e588e8d710d",
+      "input_sha256": "e40a3f2dcbf1dc67578d0f301af14fe2a4891d8970903c3be10ca75aa412fc7c",
+      "expected_sha256": "e5d0f00a6e5ffcb5682506f65a5eda1ac8c4838b1fb26f055c68dbbe996a1b7a",
+      "transformed_reference_sha256": "1c40646fd9844c7896bf81621818a6c962141c26d33c069c7fd3b9ba64a2beee",
+      "exact_prediction_parity": true,
+      "exact_transform_parity": true,
+      "raw": {
+        "median_ms": 0.7028420289619438,
+        "block_ms": [
+          0.7189173912869908,
+          0.7140057970927033,
+          0.7121710144850152,
+          0.7011072463775644,
+          0.7028420289619438,
+          0.7015101449381462,
+          0.6981579710185727
+        ],
+        "calls_per_block": 69
+      },
+      "prepared": {
+        "median_ms": 0.1492800632932594,
+        "block_ms": [
+          0.15021898733824787,
+          0.14968481013102639,
+          0.14899240506243194,
+          0.1492800632932594,
+          0.14964936708796053,
+          0.14789272152000515,
+          0.147781962023376
+        ],
+        "calls_per_block": 316
+      },
+      "native": {
+        "median_ms": 0.11717848699729384,
+        "block_ms": [
+          0.11755319149116435,
+          0.11712009456059863,
+          0.1174716312056666,
+          0.11729196217431231,
+          0.11717848699729384,
+          0.11686264775265735,
+          0.11683026004429763
+        ],
+        "calls_per_block": 423
+      }
+    }
+  ]
+}

@@ -1,0 +1,114 @@
+{
+  "correction": {
+    "fold": {
+      "coefficient_rounding_absolute_bound": 1.1376756912381087e-07,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "xgboost",
+      "physical_trees": 32,
+      "prediction_oracle_absolute_tolerance": 0.00038175922236405313,
+      "topology_sha256_after": "db083624d747cb07304b22aa715033231c9a2c5fc99cce30a76584b243d36d11",
+      "topology_sha256_before": "db083624d747cb07304b22aa715033231c9a2c5fc99cce30a76584b243d36d11"
+    },
+    "inference_checks": {
+      "stop": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 0.00038175922236405313,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 2.669999751836847e-07,
+        "oracle_max_absolute_difference": 1.226756684680197e-06
+      }
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 192000,
+      "design_shape": [
+        6000,
+        239
+      ],
+      "ordered_training_transform_replayed": false,
+      "training_leaf_ids_sha256": "e8ccbf7e76ab4387cb5cbe06bbab7577c38ebd7d100920696147e97c761f5620",
+      "training_rows": 6000,
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "columns": 239,
+      "evaluations": 22,
+      "final_objective": 0.16897627638900176,
+      "ftol": 1e-13,
+      "gradient_gate": 1e-06,
+      "gtol": 1e-09,
+      "initial_coefficients": "all zero",
+      "initial_objective": 0.1794277221309538,
+      "iterations": 20,
+      "maxcor": 20,
+      "maximum_absolute_mean_gradient": 1.0126684077516045e-08,
+      "maxiter": 2000,
+      "maxls": 50,
+      "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+      "method": "L-BFGS-B",
+      "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+      "penalty": 100.0,
+      "rows": 6000,
+      "status": 0
+    },
+    "training_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 0.00038175922236405313,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 2.669999751836847e-07,
+      "oracle_max_absolute_difference": 1.226756684680197e-06
+    }
+  },
+  "dataset": "GiveMeSomeCredit",
+  "early_stopping": false,
+  "feature_names": [
+    "RevolvingUtilizationOfUnsecuredLines",
+    "age",
+    "NumberOfTime30-59DaysPastDueNotWorse",
+    "DebtRatio",
+    "MonthlyIncome",
+    "NumberOfOpenCreditLinesAndLoans",
+    "NumberOfTimes90DaysLate",
+    "NumberRealEstateLoansOrLines",
+    "NumberOfTime60-89DaysPastDueNotWorse",
+    "NumberOfDependents"
+  ],
+  "finished_at": "2026-10-16T13:12:53.098960+00:00",
+  "fit_seconds": 0.044016399999236455,
+  "fold": 3,
+  "fold_category_counts": {},
+  "fold_category_schema": {},
+  "library": "xgboost",
+  "model_bytes": 46247,
+  "model_retained": false,
+  "model_sha256": "0859c10acd560b9457cb435c29b1df42ecfebd1b479f5ee7dc690da4424b51dd",
+  "parameters": {
+    "eta": 0.05,
+    "eval_metric": "auc",
+    "lambda": 10,
+    "max_bin": 256,
+    "max_cat_threshold": 256,
+    "max_cat_to_onehot": 8,
+    "max_depth": 3,
+    "min_child_weight": 1,
+    "multi_strategy": "one_output_per_tree",
+    "nthread": 1,
+    "objective": "binary:logistic",
+    "seed": 47,
+    "subsample": 1.0,
+    "tree_method": "hist"
+  },
+  "prediction_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave13\\fold_predictions\\GiveMeSomeCredit\\xgboost\\profile0-fold3.npz",
+  "prediction_sha256": "d7faff5f7b9a3b663df445de75f1d29f25bf534841901ddb6c44ca04d86b5da3",
+  "profile_index": 0,
+  "requested_rounds": 32,
+  "retained_rounds": 32,
+  "started_at": "2026-10-16T13:12:52.896928+00:00",
+  "status": "ok",
+  "structural_early_termination": false,
+  "temperature": null,
+  "validation_error": 0.18253571428571425
+}

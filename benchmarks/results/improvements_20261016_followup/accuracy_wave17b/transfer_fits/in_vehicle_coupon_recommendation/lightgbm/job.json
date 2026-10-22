@@ -1,0 +1,867 @@
+{
+  "dataset": "in_vehicle_coupon_recommendation",
+  "finished_at": "2026-10-16T15:33:46.001760+00:00",
+  "library": "lightgbm",
+  "selection": {
+    "base_selection": {
+      "best": {
+        "parameters": {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "feature_fraction": 0.8,
+          "force_col_wise": true,
+          "lambda_l2": 5,
+          "learning_rate": 0.1,
+          "max_bin": 255,
+          "metric": "auc",
+          "min_data_in_leaf": 40,
+          "num_leaves": 127,
+          "num_threads": 1,
+          "objective": "binary",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        "retained_rounds": 424,
+        "stop_error": null
+      },
+      "binary_refit": null,
+      "cv_selection": {
+        "all_fits_successful": true,
+        "best": {
+          "mean_fold_error": 0.18238139906171566,
+          "profile_index": 1,
+          "requested_rounds": 424
+        },
+        "dataset": "in_vehicle_coupon_recommendation",
+        "job": {
+          "anchor_rounds": 424,
+          "binary_refit": null,
+          "dataset": "in_vehicle_coupon_recommendation",
+          "leaf_refit": null,
+          "library": "lightgbm",
+          "original_selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 7,
+              "fit_seconds": 0.7517843999994511,
+              "parameters": {
+                "bagging_fraction": 0.8,
+                "bagging_freq": 1,
+                "deterministic": true,
+                "feature_fraction": 0.8,
+                "force_col_wise": true,
+                "lambda_l2": 5,
+                "learning_rate": 0.1,
+                "max_bin": 255,
+                "metric": "auc",
+                "min_data_in_leaf": 40,
+                "num_leaves": 127,
+                "num_threads": 1,
+                "objective": "binary",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 424,
+              "selection_key": [
+                0.19857620340368398,
+                424,
+                7
+              ],
+              "stop_error": 0.19857620340368398,
+              "trained_rounds_if_available": 474
+            },
+            "cumulative_search_fit_seconds": 25.079529699996783,
+            "current_wave_all_eight_successful": true,
+            "dataset": "in_vehicle_coupon_recommendation",
+            "library": "lightgbm",
+            "model_bytes": 1975608,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave2\\models\\in_vehicle_coupon_recommendation\\lightgbm.pkl",
+            "model_sha256": "89bf2942f31f980cab05011dafca6c17ba3c1858d9c0e74c28d353028c34df6b",
+            "plan_sha256": "f724c37603c865a54a492ab8b022cdd0351c2cfbda124571d880b0fbcd799dc3",
+            "search_fit_seconds": 6.143122799998309,
+            "source_wave": 2
+          },
+          "parameters": {
+            "bagging_fraction": 0.8,
+            "bagging_freq": 1,
+            "deterministic": true,
+            "feature_fraction": 0.8,
+            "force_col_wise": true,
+            "lambda_l2": 5,
+            "learning_rate": 0.1,
+            "max_bin": 255,
+            "metric": "auc",
+            "min_data_in_leaf": 40,
+            "num_leaves": 127,
+            "num_threads": 1,
+            "objective": "binary",
+            "seed": 47,
+            "verbosity": -1,
+            "zero_as_missing": false
+          },
+          "profiles": [
+            {
+              "bagging_fraction": 0.8,
+              "bagging_freq": 1,
+              "deterministic": true,
+              "feature_fraction": 0.8,
+              "force_col_wise": true,
+              "lambda_l2": 5,
+              "learning_rate": 0.1,
+              "max_bin": 255,
+              "metric": "auc",
+              "min_data_in_leaf": 40,
+              "num_leaves": 127,
+              "num_threads": 1,
+              "objective": "binary",
+              "seed": 47,
+              "verbosity": -1,
+              "zero_as_missing": false
+            },
+            {
+              "bagging_fraction": 0.8,
+              "bagging_freq": 1,
+              "deterministic": true,
+              "feature_fraction": 0.8,
+              "force_col_wise": true,
+              "lambda_l2": 5,
+              "learning_rate": 0.05,
+              "max_bin": 255,
+              "metric": "auc",
+              "min_data_in_leaf": 40,
+              "num_leaves": 127,
+              "num_threads": 1,
+              "objective": "binary",
+              "seed": 47,
+              "verbosity": -1,
+              "zero_as_missing": false
+            },
+            {
+              "bagging_fraction": 0.8,
+              "bagging_freq": 1,
+              "deterministic": true,
+              "feature_fraction": 0.8,
+              "force_col_wise": true,
+              "lambda_l2": 5,
+              "learning_rate": 0.1,
+              "max_bin": 255,
+              "metric": "auc",
+              "min_data_in_leaf": 10,
+              "num_leaves": 127,
+              "num_threads": 1,
+              "objective": "binary",
+              "seed": 47,
+              "verbosity": -1,
+              "zero_as_missing": false
+            },
+            {
+              "bagging_fraction": 0.8,
+              "bagging_freq": 1,
+              "deterministic": true,
+              "feature_fraction": 0.8,
+              "force_col_wise": true,
+              "lambda_l2": 5,
+              "learning_rate": 0.05,
+              "max_bin": 255,
+              "metric": "auc",
+              "min_data_in_leaf": 10,
+              "num_leaves": 127,
+              "num_threads": 1,
+              "objective": "binary",
+              "seed": 47,
+              "verbosity": -1,
+              "zero_as_missing": false
+            }
+          ],
+          "round_candidates": [
+            212,
+            424,
+            848
+          ],
+          "rounds": 424,
+          "temperature": null,
+          "training_selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 7,
+              "fit_seconds": 0.7517843999994511,
+              "parameters": {
+                "bagging_fraction": 0.8,
+                "bagging_freq": 1,
+                "deterministic": true,
+                "feature_fraction": 0.8,
+                "force_col_wise": true,
+                "lambda_l2": 5,
+                "learning_rate": 0.1,
+                "max_bin": 255,
+                "metric": "auc",
+                "min_data_in_leaf": 40,
+                "num_leaves": 127,
+                "num_threads": 1,
+                "objective": "binary",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 424,
+              "selection_key": [
+                0.19857620340368398,
+                424,
+                7
+              ],
+              "stop_error": 0.19857620340368398,
+              "trained_rounds_if_available": 474
+            },
+            "cumulative_search_fit_seconds": 25.079529699996783,
+            "current_wave_all_eight_successful": true,
+            "dataset": "in_vehicle_coupon_recommendation",
+            "library": "lightgbm",
+            "model_bytes": 1975608,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave2\\models\\in_vehicle_coupon_recommendation\\lightgbm.pkl",
+            "model_sha256": "89bf2942f31f980cab05011dafca6c17ba3c1858d9c0e74c28d353028c34df6b",
+            "plan_sha256": "f724c37603c865a54a492ab8b022cdd0351c2cfbda124571d880b0fbcd799dc3",
+            "search_fit_seconds": 6.143122799998309,
+            "source_wave": 2
+          }
+        },
+        "library": "lightgbm",
+        "scores": [
+          {
+            "mean_fold_error": 0.18474138571925985,
+            "profile_index": 0,
+            "requested_rounds": 212
+          },
+          {
+            "mean_fold_error": 0.18238139906171566,
+            "profile_index": 1,
+            "requested_rounds": 424
+          },
+          {
+            "mean_fold_error": 0.18322466258402897,
+            "profile_index": 2,
+            "requested_rounds": 848
+          }
+        ]
+      },
+      "dataset": "in_vehicle_coupon_recommendation",
+      "leaf_refit": null,
+      "library": "lightgbm",
+      "model_bytes": 2333389,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave13\\models\\in_vehicle_coupon_recommendation\\lightgbm.pkl",
+      "model_sha256": "6bd43aa67ed01655539e440636d1d172766e85d3e478326d05d013fb1f909c72",
+      "refit_details": {
+        "apparent_union_error_inference_transform": 0.004172859642635807,
+        "early_stopping": false,
+        "fit_seconds": 0.5834924000009778,
+        "parameters": {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "feature_fraction": 0.8,
+          "force_col_wise": true,
+          "lambda_l2": 5,
+          "learning_rate": 0.1,
+          "max_bin": 255,
+          "metric": "auc",
+          "min_data_in_leaf": 40,
+          "num_leaves": 127,
+          "num_threads": 1,
+          "objective": "binary",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        "requested_rounds": 424,
+        "retained_rounds": 424,
+        "structural_early_termination": false,
+        "union_data": {
+          "row_order": "original TRAIN followed by original STOP",
+          "source_roles": {
+            "stop": {
+              "index_sha256": "046d57cce251fdfdb2c4d5999bb1b3add867fed8c21d77339d5273c99e24a7c6",
+              "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\in_vehicle_coupon_recommendation\\stop.pkl",
+              "rows": 1057,
+              "sha256": "aa8945b3b51c5a8e35e2dedd95fc61952d1d74579a5311d7a29e0941e7b42cde"
+            },
+            "train": {
+              "index_sha256": "a9943111493fdf3fb8fa87727ff777bbeac325ea2e7d51f8d567bd3b2f2d301e",
+              "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\in_vehicle_coupon_recommendation\\train.pkl",
+              "rows": 5285,
+              "sha256": "a4ffda38caa481cea4b7b79c4615a71cd9e9524005425181a79d7db49a22f9bb"
+            }
+          },
+          "stop_ids_sha256": "046d57cce251fdfdb2c4d5999bb1b3add867fed8c21d77339d5273c99e24a7c6",
+          "stop_rows": 1057,
+          "train_ids_sha256": "a9943111493fdf3fb8fa87727ff777bbeac325ea2e7d51f8d567bd3b2f2d301e",
+          "train_rows": 5285,
+          "union_category_counts": {
+            "Bar": 6,
+            "CarryAway": 6,
+            "CoffeeHouse": 6,
+            "Restaurant20To50": 6,
+            "RestaurantLessThan20": 6,
+            "age": 8,
+            "car": 6,
+            "coupon": 5,
+            "destination": 3,
+            "direction_opp": 2,
+            "direction_same": 2,
+            "education": 6,
+            "expiration": 2,
+            "gender": 2,
+            "has_children": 2,
+            "income": 9,
+            "maritalStatus": 5,
+            "occupation": 25,
+            "passenger": 4,
+            "toCoupon_GEQ15min": 2,
+            "toCoupon_GEQ25min": 2,
+            "weather": 3
+          },
+          "union_ids_sha256": "ef26974f581af575edbb971ee3796e290156a97616a8a1c9c8f37fe4899cb797",
+          "union_rows": 6342,
+          "vocabulary_fit_on": "TRAIN+STOP union only"
+        }
+      },
+      "source_wave": 13,
+      "temperature": null
+    },
+    "best": {
+      "parameters": {
+        "bagging_fraction": 0.8,
+        "bagging_freq": 1,
+        "deterministic": true,
+        "feature_fraction": 0.8,
+        "force_col_wise": true,
+        "lambda_l2": 5,
+        "learning_rate": 0.1,
+        "max_bin": 255,
+        "metric": "auc",
+        "min_data_in_leaf": 40,
+        "num_leaves": 127,
+        "num_threads": 1,
+        "objective": "binary",
+        "seed": 47,
+        "verbosity": -1,
+        "zero_as_missing": false
+      },
+      "retained_rounds": 424
+    },
+    "binary_refit": null,
+    "clean_refit_check": {
+      "clean_native_state_sha256": "6dfa75bdb9e4c584f351592c2e31c1a0dc68837f5c4da086bbc9b8f8b96d2863",
+      "data_schema_sha256": null,
+      "exact_clean_refit_identity_except_scalar_leaf_outputs": true,
+      "feature_pipeline_sha256": null,
+      "leaf_outputs_ignored": true,
+      "library": "lightgbm",
+      "limitation": "Fresh fit and disabled-correction provenance must also be enforced by the runner",
+      "nonleaf_state_sha256": "dd3f176864ca862b5808353452f92d54352693cc7e44e2af3b564b07eefd89e9",
+      "old_correction_subtracted": false,
+      "ordered_schema_sha256": "f0d27ebe46c74c557715bf387ca4926c6529e8b13a421429a6fed409a728e1b8",
+      "parent_native_state_sha256": "6dfa75bdb9e4c584f351592c2e31c1a0dc68837f5c4da086bbc9b8f8b96d2863",
+      "physical_trees": 424,
+      "problem": "binary",
+      "total_native_leaves": 22856,
+      "training_metadata_sha256": null
+    },
+    "dataset": "in_vehicle_coupon_recommendation",
+    "fixed_job": {
+      "anchor_rounds": 424,
+      "binary_refit": null,
+      "dataset": "in_vehicle_coupon_recommendation",
+      "leaf_refit": null,
+      "library": "lightgbm",
+      "multiclass_refit": null,
+      "original_selection": {
+        "all_eight_successful": true,
+        "best": {
+          "config_index": 7,
+          "fit_seconds": 0.7517843999994511,
+          "parameters": {
+            "bagging_fraction": 0.8,
+            "bagging_freq": 1,
+            "deterministic": true,
+            "feature_fraction": 0.8,
+            "force_col_wise": true,
+            "lambda_l2": 5,
+            "learning_rate": 0.1,
+            "max_bin": 255,
+            "metric": "auc",
+            "min_data_in_leaf": 40,
+            "num_leaves": 127,
+            "num_threads": 1,
+            "objective": "binary",
+            "seed": 47,
+            "verbosity": -1,
+            "zero_as_missing": false
+          },
+          "retained_at_round_cap": false,
+          "retained_rounds": 424,
+          "selection_key": [
+            0.19857620340368398,
+            424,
+            7
+          ],
+          "stop_error": 0.19857620340368398,
+          "trained_rounds_if_available": 474
+        },
+        "cumulative_search_fit_seconds": 25.079529699996783,
+        "current_wave_all_eight_successful": true,
+        "dataset": "in_vehicle_coupon_recommendation",
+        "library": "lightgbm",
+        "model_bytes": 1975608,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave2\\models\\in_vehicle_coupon_recommendation\\lightgbm.pkl",
+        "model_sha256": "89bf2942f31f980cab05011dafca6c17ba3c1858d9c0e74c28d353028c34df6b",
+        "plan_sha256": "f724c37603c865a54a492ab8b022cdd0351c2cfbda124571d880b0fbcd799dc3",
+        "search_fit_seconds": 6.143122799998309,
+        "source_wave": 2
+      },
+      "parameters": {
+        "bagging_fraction": 0.8,
+        "bagging_freq": 1,
+        "deterministic": true,
+        "feature_fraction": 0.8,
+        "force_col_wise": true,
+        "lambda_l2": 5,
+        "learning_rate": 0.1,
+        "max_bin": 255,
+        "metric": "auc",
+        "min_data_in_leaf": 40,
+        "num_leaves": 127,
+        "num_threads": 1,
+        "objective": "binary",
+        "seed": 47,
+        "verbosity": -1,
+        "zero_as_missing": false
+      },
+      "profiles": [
+        {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "feature_fraction": 0.8,
+          "force_col_wise": true,
+          "lambda_l2": 5,
+          "learning_rate": 0.1,
+          "max_bin": 255,
+          "metric": "auc",
+          "min_data_in_leaf": 40,
+          "num_leaves": 127,
+          "num_threads": 1,
+          "objective": "binary",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "feature_fraction": 0.8,
+          "force_col_wise": true,
+          "lambda_l2": 5,
+          "learning_rate": 0.05,
+          "max_bin": 255,
+          "metric": "auc",
+          "min_data_in_leaf": 40,
+          "num_leaves": 127,
+          "num_threads": 1,
+          "objective": "binary",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "feature_fraction": 0.8,
+          "force_col_wise": true,
+          "lambda_l2": 5,
+          "learning_rate": 0.1,
+          "max_bin": 255,
+          "metric": "auc",
+          "min_data_in_leaf": 10,
+          "num_leaves": 127,
+          "num_threads": 1,
+          "objective": "binary",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "feature_fraction": 0.8,
+          "force_col_wise": true,
+          "lambda_l2": 5,
+          "learning_rate": 0.05,
+          "max_bin": 255,
+          "metric": "auc",
+          "min_data_in_leaf": 10,
+          "num_leaves": 127,
+          "num_threads": 1,
+          "objective": "binary",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        }
+      ],
+      "round_candidates": [
+        212,
+        424,
+        848
+      ],
+      "rounds": 424,
+      "temperature": null,
+      "training_selection": {
+        "all_eight_successful": true,
+        "best": {
+          "config_index": 7,
+          "fit_seconds": 0.7517843999994511,
+          "parameters": {
+            "bagging_fraction": 0.8,
+            "bagging_freq": 1,
+            "deterministic": true,
+            "feature_fraction": 0.8,
+            "force_col_wise": true,
+            "lambda_l2": 5,
+            "learning_rate": 0.1,
+            "max_bin": 255,
+            "metric": "auc",
+            "min_data_in_leaf": 40,
+            "num_leaves": 127,
+            "num_threads": 1,
+            "objective": "binary",
+            "seed": 47,
+            "verbosity": -1,
+            "zero_as_missing": false
+          },
+          "retained_at_round_cap": false,
+          "retained_rounds": 424,
+          "selection_key": [
+            0.19857620340368398,
+            424,
+            7
+          ],
+          "stop_error": 0.19857620340368398,
+          "trained_rounds_if_available": 474
+        },
+        "cumulative_search_fit_seconds": 25.079529699996783,
+        "current_wave_all_eight_successful": true,
+        "dataset": "in_vehicle_coupon_recommendation",
+        "library": "lightgbm",
+        "model_bytes": 1975608,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave2\\models\\in_vehicle_coupon_recommendation\\lightgbm.pkl",
+        "model_sha256": "89bf2942f31f980cab05011dafca6c17ba3c1858d9c0e74c28d353028c34df6b",
+        "plan_sha256": "f724c37603c865a54a492ab8b022cdd0351c2cfbda124571d880b0fbcd799dc3",
+        "search_fit_seconds": 6.143122799998309,
+        "source_wave": 2
+      }
+    },
+    "independent_stop_selection": {
+      "anchor": {
+        "model_bytes": 1974147,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\in_vehicle_coupon_recommendation\\lightgbm.pkl",
+        "model_sha256": "940f1301887f9520184bd7b10483757013f9801c0252664a89c7660f80afdf46"
+      },
+      "correction": null,
+      "dataset": "in_vehicle_coupon_recommendation",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 0.493166399999609,
+        "parameters": {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "feature_fraction": 0.8,
+          "force_col_wise": true,
+          "lambda_l2": 5,
+          "learning_rate": 0.1,
+          "max_bin": 255,
+          "metric": "auc",
+          "min_data_in_leaf": 40,
+          "num_leaves": 127,
+          "num_threads": 1,
+          "objective": "binary",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        "requested_rounds": 424,
+        "retained_rounds": 424,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 1057,
+        "original_train_rows": 5285,
+        "outside_cap_rows": 0,
+        "row_ids_sha256": "a9943111493fdf3fb8fa87727ff777bbeac325ea2e7d51f8d567bd3b2f2d301e",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 5285,
+        "schema": {
+          "Bar": [
+            "1~3",
+            "4~8",
+            "gt8",
+            "less1",
+            "nan",
+            "never"
+          ],
+          "CarryAway": [
+            "1~3",
+            "4~8",
+            "gt8",
+            "less1",
+            "nan",
+            "never"
+          ],
+          "CoffeeHouse": [
+            "1~3",
+            "4~8",
+            "gt8",
+            "less1",
+            "nan",
+            "never"
+          ],
+          "Restaurant20To50": [
+            "1~3",
+            "4~8",
+            "gt8",
+            "less1",
+            "nan",
+            "never"
+          ],
+          "RestaurantLessThan20": [
+            "1~3",
+            "4~8",
+            "gt8",
+            "less1",
+            "nan",
+            "never"
+          ],
+          "age": [
+            "21",
+            "26",
+            "31",
+            "36",
+            "41",
+            "46",
+            "50plus",
+            "below21"
+          ],
+          "car": [
+            "Car that is too old to install Onstar :D",
+            "Mazda5",
+            "Scooter and motorcycle",
+            "crossover",
+            "do not drive",
+            "nan"
+          ],
+          "coupon": [
+            "Bar",
+            "Carry out & Take away",
+            "Coffee House",
+            "Restaurant(20-50)",
+            "Restaurant(<20)"
+          ],
+          "destination": [
+            "Home",
+            "No Urgent Place",
+            "Work"
+          ],
+          "direction_opp": [
+            "0",
+            "1"
+          ],
+          "direction_same": [
+            "0",
+            "1"
+          ],
+          "education": [
+            "Associates degree",
+            "Bachelors degree",
+            "Graduate degree (Masters or Doctorate)",
+            "High School Graduate",
+            "Some High School",
+            "Some college - no degree"
+          ],
+          "expiration": [
+            "1d",
+            "2h"
+          ],
+          "gender": [
+            "Female",
+            "Male"
+          ],
+          "has_children": [
+            "0",
+            "1"
+          ],
+          "income": [
+            "$100000 or More",
+            "$12500 - $24999",
+            "$25000 - $37499",
+            "$37500 - $49999",
+            "$50000 - $62499",
+            "$62500 - $74999",
+            "$75000 - $87499",
+            "$87500 - $99999",
+            "Less than $12500"
+          ],
+          "maritalStatus": [
+            "Divorced",
+            "Married partner",
+            "Single",
+            "Unmarried partner",
+            "Widowed"
+          ],
+          "occupation": [
+            "Architecture & Engineering",
+            "Arts Design Entertainment Sports & Media",
+            "Building & Grounds Cleaning & Maintenance",
+            "Business & Financial",
+            "Community & Social Services",
+            "Computer & Mathematical",
+            "Construction & Extraction",
+            "Education&Training&Library",
+            "Farming Fishing & Forestry",
+            "Food Preparation & Serving Related",
+            "Healthcare Practitioners & Technical",
+            "Healthcare Support",
+            "Installation Maintenance & Repair",
+            "Legal",
+            "Life Physical Social Science",
+            "Management",
+            "Office & Administrative Support",
+            "Personal Care & Service",
+            "Production Occupations",
+            "Protective Service",
+            "Retired",
+            "Sales & Related",
+            "Student",
+            "Transportation & Material Moving",
+            "Unemployed"
+          ],
+          "passenger": [
+            "Alone",
+            "Friend(s)",
+            "Kid(s)",
+            "Partner"
+          ],
+          "toCoupon_GEQ15min": [
+            "0",
+            "1"
+          ],
+          "toCoupon_GEQ25min": [
+            "0",
+            "1"
+          ],
+          "weather": [
+            "Rainy",
+            "Snowy",
+            "Sunny"
+          ]
+        },
+        "source_sha256": null,
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "lightgbm",
+      "stop_error": 0.19857620340368398
+    },
+    "leaf_refit": null,
+    "library": "lightgbm",
+    "model_bytes": 2333389,
+    "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17b\\models\\in_vehicle_coupon_recommendation\\lightgbm.pkl",
+    "model_sha256": "6bd43aa67ed01655539e440636d1d172766e85d3e478326d05d013fb1f909c72",
+    "multiclass_refit": null,
+    "refit_details": {
+      "apparent_union_error_inference_transform": 0.004172859642635807,
+      "early_stopping": false,
+      "fit_seconds": 0.5947448000006261,
+      "parameters": {
+        "bagging_fraction": 0.8,
+        "bagging_freq": 1,
+        "deterministic": true,
+        "feature_fraction": 0.8,
+        "force_col_wise": true,
+        "lambda_l2": 5,
+        "learning_rate": 0.1,
+        "max_bin": 255,
+        "metric": "auc",
+        "min_data_in_leaf": 40,
+        "num_leaves": 127,
+        "num_threads": 1,
+        "objective": "binary",
+        "seed": 47,
+        "verbosity": -1,
+        "zero_as_missing": false
+      },
+      "requested_rounds": 424,
+      "retained_rounds": 424,
+      "structural_early_termination": false,
+      "union_data": {
+        "row_order": "original TRAIN followed by original STOP",
+        "source_roles": {
+          "stop": {
+            "index_sha256": "046d57cce251fdfdb2c4d5999bb1b3add867fed8c21d77339d5273c99e24a7c6",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\in_vehicle_coupon_recommendation\\stop.pkl",
+            "rows": 1057,
+            "sha256": "aa8945b3b51c5a8e35e2dedd95fc61952d1d74579a5311d7a29e0941e7b42cde"
+          },
+          "train": {
+            "index_sha256": "a9943111493fdf3fb8fa87727ff777bbeac325ea2e7d51f8d567bd3b2f2d301e",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\in_vehicle_coupon_recommendation\\train.pkl",
+            "rows": 5285,
+            "sha256": "a4ffda38caa481cea4b7b79c4615a71cd9e9524005425181a79d7db49a22f9bb"
+          }
+        },
+        "stop_ids_sha256": "046d57cce251fdfdb2c4d5999bb1b3add867fed8c21d77339d5273c99e24a7c6",
+        "stop_rows": 1057,
+        "train_ids_sha256": "a9943111493fdf3fb8fa87727ff777bbeac325ea2e7d51f8d567bd3b2f2d301e",
+        "train_rows": 5285,
+        "union_category_counts": {
+          "Bar": 6,
+          "CarryAway": 6,
+          "CoffeeHouse": 6,
+          "Restaurant20To50": 6,
+          "RestaurantLessThan20": 6,
+          "age": 8,
+          "car": 6,
+          "coupon": 5,
+          "destination": 3,
+          "direction_opp": 2,
+          "direction_same": 2,
+          "education": 6,
+          "expiration": 2,
+          "gender": 2,
+          "has_children": 2,
+          "income": 9,
+          "maritalStatus": 5,
+          "occupation": 25,
+          "passenger": 4,
+          "toCoupon_GEQ15min": 2,
+          "toCoupon_GEQ25min": 2,
+          "weather": 3
+        },
+        "union_ids_sha256": "ef26974f581af575edbb971ee3796e290156a97616a8a1c9c8f37fe4899cb797",
+        "union_rows": 6342,
+        "vocabulary_fit_on": "TRAIN+STOP union only"
+      }
+    },
+    "requested_rounds": 424,
+    "seed": 47,
+    "source_wave": "17b",
+    "temperature": null
+  },
+  "started_at": "2026-10-16T15:33:42.819866+00:00",
+  "status": "ok"
+}

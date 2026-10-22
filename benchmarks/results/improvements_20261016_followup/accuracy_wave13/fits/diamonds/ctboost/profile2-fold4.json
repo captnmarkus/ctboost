@@ -1,0 +1,145 @@
+{
+  "correction": {
+    "fold": {
+      "coefficient_rounding_absolute_bound": 0.0011494024657260626,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "ctboost",
+      "physical_trees": 512,
+      "prediction_oracle_absolute_tolerance": 23.71158218383789,
+      "topology_sha256_after": "50278624bc6cbf9fb743a4e324934fe258640b082a257b6fb341341ee3c4f281",
+      "topology_sha256_before": "50278624bc6cbf9fb743a4e324934fe258640b082a257b6fb341341ee3c4f281"
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 3072000,
+      "design_shape": [
+        6000,
+        2697
+      ],
+      "ordered_ctr": true,
+      "ordered_training_transform_replayed": true,
+      "pipeline_state_sha256": "907b8ce32ba46c5b647a0ecb5e3515d1f609cd4f059633ff62805433ee8cb58b",
+      "training_leaf_ids_sha256": "8000e8b703f85005492c13795499b4dcfca096bcfb6ff4e5bfdf1f8d841a424d",
+      "training_rows": 6000,
+      "training_transform_sha256": "ff3ced77108aaed2a319e34ae839408eea63b5c5fb6eb4277d11084b7ab19d58",
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "coefficient_norm": 3163.5143483850143,
+      "condition_estimate": 6919.253991153943,
+      "istop": 2,
+      "iterations": 159,
+      "matrix_norm": 9251.579674254861,
+      "normal_residual_norm": 2.033872836136374,
+      "regularized_residual_norm": 27879.912229275444,
+      "residual_norm": 26023.283390077668
+    },
+    "stop_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 23.71158218383789,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 8.908455691841801e-07,
+      "oracle_max_absolute_difference": 0.015566858422971563
+    },
+    "training_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 23.71158218383789,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.2172779802850947e-06,
+      "oracle_max_absolute_difference": 0.022031630116543965
+    }
+  },
+  "dataset": "diamonds",
+  "early_stopping": false,
+  "feature_names": [
+    "carat",
+    "cut",
+    "color",
+    "clarity",
+    "depth",
+    "table",
+    "x",
+    "y",
+    "z"
+  ],
+  "finished_at": "2026-10-16T13:13:48.773593+00:00",
+  "fit_seconds": 0.37354229999982635,
+  "fold": 4,
+  "fold_category_counts": {
+    "clarity": 8,
+    "color": 7,
+    "cut": 5
+  },
+  "fold_category_schema": {
+    "clarity": [
+      "I1",
+      "IF",
+      "SI1",
+      "SI2",
+      "VS1",
+      "VS2",
+      "VVS1",
+      "VVS2"
+    ],
+    "color": [
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "J"
+    ],
+    "cut": [
+      "Fair",
+      "Good",
+      "Ideal",
+      "Premium",
+      "Very Good"
+    ]
+  },
+  "library": "ctboost",
+  "model_bytes": 3401207,
+  "model_retained": false,
+  "model_sha256": "a8d5d3b7e8d2b479bd412b9d968ba0ff882a9615e731b957f23e6a6c70fc9325",
+  "parameters": {
+    "alpha": 0.05,
+    "bootstrap_type": "Bernoulli",
+    "cat_features": [
+      "cut",
+      "color",
+      "clarity"
+    ],
+    "eval_metric": "RMSE",
+    "feature_test": "grouped",
+    "feature_test_adjustment": "none",
+    "feature_test_bins": 8,
+    "iterations": 512,
+    "lambda_l2": 1,
+    "leaf_estimation_backtracking": true,
+    "leaf_estimation_iterations": 3,
+    "learning_rate": 0.15,
+    "max_bins": 256,
+    "max_cat_threshold": 64,
+    "max_depth": 8,
+    "multi_strategy": "one_output_per_tree",
+    "multiclass_feature_test": "single",
+    "ordered_ctr": true,
+    "random_seed": 47,
+    "subsample": 0.8,
+    "verbose": false
+  },
+  "prediction_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave13\\fold_predictions\\diamonds\\ctboost\\profile2-fold4.npz",
+  "prediction_sha256": "af55198af96a77e260b75acce313ff9cab7f500d7e9b25b2579449684ea1caf2",
+  "profile_index": 2,
+  "requested_rounds": 512,
+  "retained_rounds": 512,
+  "started_at": "2026-10-16T13:13:45.974494+00:00",
+  "status": "ok",
+  "structural_early_termination": false,
+  "temperature": null,
+  "validation_error": 631.1954662275253
+}

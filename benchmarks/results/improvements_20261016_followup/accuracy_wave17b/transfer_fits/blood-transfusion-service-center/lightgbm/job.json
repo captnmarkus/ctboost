@@ -1,0 +1,628 @@
+{
+  "dataset": "blood-transfusion-service-center",
+  "finished_at": "2026-10-16T15:32:45.553816+00:00",
+  "library": "lightgbm",
+  "selection": {
+    "base_selection": {
+      "best": {
+        "parameters": {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 0,
+          "learning_rate": 0.05,
+          "max_bin": 255,
+          "metric": "auc",
+          "num_leaves": 15,
+          "num_threads": 1,
+          "objective": "binary",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        "retained_rounds": 2,
+        "stop_error": null
+      },
+      "binary_refit": null,
+      "cv_selection": {
+        "all_fits_successful": true,
+        "best": {
+          "mean_fold_error": 0.2532918955039164,
+          "profile_index": 2,
+          "requested_rounds": 2
+        },
+        "dataset": "blood-transfusion-service-center",
+        "job": {
+          "anchor_rounds": 1,
+          "binary_refit": null,
+          "dataset": "blood-transfusion-service-center",
+          "leaf_refit": null,
+          "library": "lightgbm",
+          "original_selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 0,
+              "fit_seconds": 0.016201399999772548,
+              "parameters": {
+                "bagging_fraction": 0.8,
+                "bagging_freq": 1,
+                "deterministic": true,
+                "force_col_wise": true,
+                "lambda_l2": 0,
+                "learning_rate": 0.05,
+                "max_bin": 255,
+                "metric": "auc",
+                "num_leaves": 15,
+                "num_threads": 1,
+                "objective": "binary",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 1,
+              "selection_key": [
+                0.06595744680851057,
+                1,
+                0
+              ],
+              "stop_error": 0.06595744680851057,
+              "trained_rounds_if_available": 51
+            },
+            "cumulative_search_fit_seconds": 0.42410179999569664,
+            "current_wave_all_eight_successful": true,
+            "dataset": "blood-transfusion-service-center",
+            "library": "lightgbm",
+            "model_bytes": 6464,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\blood-transfusion-service-center\\lightgbm.pkl",
+            "model_sha256": "db669924407280288f40600852d9eab3e54e0046abef388136bf2af9b1d35bba",
+            "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+            "search_fit_seconds": 0.054282200000670855,
+            "source_wave": 1
+          },
+          "parameters": {
+            "bagging_fraction": 0.8,
+            "bagging_freq": 1,
+            "deterministic": true,
+            "force_col_wise": true,
+            "lambda_l2": 0,
+            "learning_rate": 0.05,
+            "max_bin": 255,
+            "metric": "auc",
+            "num_leaves": 15,
+            "num_threads": 1,
+            "objective": "binary",
+            "seed": 47,
+            "verbosity": -1,
+            "zero_as_missing": false
+          },
+          "profiles": [
+            {
+              "bagging_fraction": 0.8,
+              "bagging_freq": 1,
+              "deterministic": true,
+              "force_col_wise": true,
+              "lambda_l2": 0,
+              "learning_rate": 0.05,
+              "max_bin": 255,
+              "metric": "auc",
+              "min_data_in_leaf": 20,
+              "num_leaves": 15,
+              "num_threads": 1,
+              "objective": "binary",
+              "seed": 47,
+              "verbosity": -1,
+              "zero_as_missing": false
+            },
+            {
+              "bagging_fraction": 0.8,
+              "bagging_freq": 1,
+              "deterministic": true,
+              "force_col_wise": true,
+              "lambda_l2": 0,
+              "learning_rate": 0.025,
+              "max_bin": 255,
+              "metric": "auc",
+              "min_data_in_leaf": 20,
+              "num_leaves": 15,
+              "num_threads": 1,
+              "objective": "binary",
+              "seed": 47,
+              "verbosity": -1,
+              "zero_as_missing": false
+            },
+            {
+              "bagging_fraction": 0.8,
+              "bagging_freq": 1,
+              "deterministic": true,
+              "force_col_wise": true,
+              "lambda_l2": 0,
+              "learning_rate": 0.05,
+              "max_bin": 255,
+              "metric": "auc",
+              "min_data_in_leaf": 5,
+              "num_leaves": 15,
+              "num_threads": 1,
+              "objective": "binary",
+              "seed": 47,
+              "verbosity": -1,
+              "zero_as_missing": false
+            },
+            {
+              "bagging_fraction": 0.8,
+              "bagging_freq": 1,
+              "deterministic": true,
+              "force_col_wise": true,
+              "lambda_l2": 0,
+              "learning_rate": 0.025,
+              "max_bin": 255,
+              "metric": "auc",
+              "min_data_in_leaf": 5,
+              "num_leaves": 15,
+              "num_threads": 1,
+              "objective": "binary",
+              "seed": 47,
+              "verbosity": -1,
+              "zero_as_missing": false
+            }
+          ],
+          "round_candidates": [
+            1,
+            1,
+            2
+          ],
+          "rounds": 2,
+          "temperature": null,
+          "training_selection": {
+            "all_eight_successful": true,
+            "best": {
+              "config_index": 0,
+              "fit_seconds": 0.016201399999772548,
+              "parameters": {
+                "bagging_fraction": 0.8,
+                "bagging_freq": 1,
+                "deterministic": true,
+                "force_col_wise": true,
+                "lambda_l2": 0,
+                "learning_rate": 0.05,
+                "max_bin": 255,
+                "metric": "auc",
+                "num_leaves": 15,
+                "num_threads": 1,
+                "objective": "binary",
+                "seed": 47,
+                "verbosity": -1,
+                "zero_as_missing": false
+              },
+              "retained_at_round_cap": false,
+              "retained_rounds": 1,
+              "selection_key": [
+                0.06595744680851057,
+                1,
+                0
+              ],
+              "stop_error": 0.06595744680851057,
+              "trained_rounds_if_available": 51
+            },
+            "cumulative_search_fit_seconds": 0.42410179999569664,
+            "current_wave_all_eight_successful": true,
+            "dataset": "blood-transfusion-service-center",
+            "library": "lightgbm",
+            "model_bytes": 6464,
+            "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\blood-transfusion-service-center\\lightgbm.pkl",
+            "model_sha256": "db669924407280288f40600852d9eab3e54e0046abef388136bf2af9b1d35bba",
+            "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+            "search_fit_seconds": 0.054282200000670855,
+            "source_wave": 1
+          }
+        },
+        "library": "lightgbm",
+        "scores": [
+          {
+            "mean_fold_error": 0.29245894768474034,
+            "profile_index": 0,
+            "requested_rounds": 1
+          },
+          {
+            "mean_fold_error": 0.29245894768474034,
+            "profile_index": 1,
+            "requested_rounds": 1
+          },
+          {
+            "mean_fold_error": 0.2532918955039164,
+            "profile_index": 2,
+            "requested_rounds": 2
+          }
+        ]
+      },
+      "dataset": "blood-transfusion-service-center",
+      "leaf_refit": null,
+      "library": "lightgbm",
+      "model_bytes": 6238,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave13\\models\\blood-transfusion-service-center\\lightgbm.pkl",
+      "model_sha256": "5e49831fa442dd34c342bea625b4dd58f83ae2b750ef1dff1e0ef445deb4b57c",
+      "refit_details": {
+        "apparent_union_error_inference_transform": 0.18352670057215514,
+        "early_stopping": false,
+        "fit_seconds": 0.011606000000028871,
+        "parameters": {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 0,
+          "learning_rate": 0.05,
+          "max_bin": 255,
+          "metric": "auc",
+          "num_leaves": 15,
+          "num_threads": 1,
+          "objective": "binary",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        "requested_rounds": 2,
+        "retained_rounds": 2,
+        "structural_early_termination": false,
+        "union_data": {
+          "row_order": "original TRAIN followed by original STOP",
+          "source_roles": {
+            "stop": {
+              "index_sha256": "71a564af518385779257f7b6cca008a07627dfedd4905925a797260841b5dcdd",
+              "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\blood-transfusion-service-center\\stop.pkl",
+              "rows": 62,
+              "sha256": "59daf432712096f4ae9724df3db47ed8ac786d8e56b8a48e9ad86a6c0c2ce4c6"
+            },
+            "train": {
+              "index_sha256": "fac9f22e07f5ccbd69e89955d9f2de01cad1246ca69fa962e31753763caa7ea7",
+              "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\blood-transfusion-service-center\\train.pkl",
+              "rows": 312,
+              "sha256": "9d676cdf2a05bc27f6a21a9607b5a2d976ba87a5d8f4389356e129d84f17d54c"
+            }
+          },
+          "stop_ids_sha256": "71a564af518385779257f7b6cca008a07627dfedd4905925a797260841b5dcdd",
+          "stop_rows": 62,
+          "train_ids_sha256": "fac9f22e07f5ccbd69e89955d9f2de01cad1246ca69fa962e31753763caa7ea7",
+          "train_rows": 312,
+          "union_category_counts": {},
+          "union_ids_sha256": "7c36cebee258bd2f29ce4e3837c330fc04fab214a958911910078d193a67195d",
+          "union_rows": 374,
+          "vocabulary_fit_on": "TRAIN+STOP union only"
+        }
+      },
+      "source_wave": 13,
+      "temperature": null
+    },
+    "best": {
+      "parameters": {
+        "bagging_fraction": 0.8,
+        "bagging_freq": 1,
+        "deterministic": true,
+        "force_col_wise": true,
+        "lambda_l2": 0,
+        "learning_rate": 0.05,
+        "max_bin": 255,
+        "metric": "auc",
+        "num_leaves": 15,
+        "num_threads": 1,
+        "objective": "binary",
+        "seed": 47,
+        "verbosity": -1,
+        "zero_as_missing": false
+      },
+      "retained_rounds": 2
+    },
+    "binary_refit": null,
+    "clean_refit_check": {
+      "clean_native_state_sha256": "176a9c58d0beb28fa1001e52526f77f76fc6c46921e995b0d69dd8a9e7ac3b3c",
+      "data_schema_sha256": null,
+      "exact_clean_refit_identity_except_scalar_leaf_outputs": true,
+      "feature_pipeline_sha256": null,
+      "leaf_outputs_ignored": true,
+      "library": "lightgbm",
+      "limitation": "Fresh fit and disabled-correction provenance must also be enforced by the runner",
+      "nonleaf_state_sha256": "8d5414b7294ce706113a05dc40fdee55ad966a04a79ef526647e7ab1c794ee16",
+      "old_correction_subtracted": false,
+      "ordered_schema_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "parent_native_state_sha256": "176a9c58d0beb28fa1001e52526f77f76fc6c46921e995b0d69dd8a9e7ac3b3c",
+      "physical_trees": 2,
+      "problem": "binary",
+      "total_native_leaves": 20,
+      "training_metadata_sha256": null
+    },
+    "dataset": "blood-transfusion-service-center",
+    "fixed_job": {
+      "anchor_rounds": 1,
+      "binary_refit": null,
+      "dataset": "blood-transfusion-service-center",
+      "leaf_refit": null,
+      "library": "lightgbm",
+      "multiclass_refit": null,
+      "original_selection": {
+        "all_eight_successful": true,
+        "best": {
+          "config_index": 0,
+          "fit_seconds": 0.016201399999772548,
+          "parameters": {
+            "bagging_fraction": 0.8,
+            "bagging_freq": 1,
+            "deterministic": true,
+            "force_col_wise": true,
+            "lambda_l2": 0,
+            "learning_rate": 0.05,
+            "max_bin": 255,
+            "metric": "auc",
+            "num_leaves": 15,
+            "num_threads": 1,
+            "objective": "binary",
+            "seed": 47,
+            "verbosity": -1,
+            "zero_as_missing": false
+          },
+          "retained_at_round_cap": false,
+          "retained_rounds": 1,
+          "selection_key": [
+            0.06595744680851057,
+            1,
+            0
+          ],
+          "stop_error": 0.06595744680851057,
+          "trained_rounds_if_available": 51
+        },
+        "cumulative_search_fit_seconds": 0.42410179999569664,
+        "current_wave_all_eight_successful": true,
+        "dataset": "blood-transfusion-service-center",
+        "library": "lightgbm",
+        "model_bytes": 6464,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\blood-transfusion-service-center\\lightgbm.pkl",
+        "model_sha256": "db669924407280288f40600852d9eab3e54e0046abef388136bf2af9b1d35bba",
+        "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+        "search_fit_seconds": 0.054282200000670855,
+        "source_wave": 1
+      },
+      "parameters": {
+        "bagging_fraction": 0.8,
+        "bagging_freq": 1,
+        "deterministic": true,
+        "force_col_wise": true,
+        "lambda_l2": 0,
+        "learning_rate": 0.05,
+        "max_bin": 255,
+        "metric": "auc",
+        "num_leaves": 15,
+        "num_threads": 1,
+        "objective": "binary",
+        "seed": 47,
+        "verbosity": -1,
+        "zero_as_missing": false
+      },
+      "profiles": [
+        {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 0,
+          "learning_rate": 0.05,
+          "max_bin": 255,
+          "metric": "auc",
+          "min_data_in_leaf": 20,
+          "num_leaves": 15,
+          "num_threads": 1,
+          "objective": "binary",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 0,
+          "learning_rate": 0.025,
+          "max_bin": 255,
+          "metric": "auc",
+          "min_data_in_leaf": 20,
+          "num_leaves": 15,
+          "num_threads": 1,
+          "objective": "binary",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 0,
+          "learning_rate": 0.05,
+          "max_bin": 255,
+          "metric": "auc",
+          "min_data_in_leaf": 5,
+          "num_leaves": 15,
+          "num_threads": 1,
+          "objective": "binary",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 0,
+          "learning_rate": 0.025,
+          "max_bin": 255,
+          "metric": "auc",
+          "min_data_in_leaf": 5,
+          "num_leaves": 15,
+          "num_threads": 1,
+          "objective": "binary",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        }
+      ],
+      "round_candidates": [
+        1,
+        1,
+        2
+      ],
+      "rounds": 2,
+      "temperature": null,
+      "training_selection": {
+        "all_eight_successful": true,
+        "best": {
+          "config_index": 0,
+          "fit_seconds": 0.016201399999772548,
+          "parameters": {
+            "bagging_fraction": 0.8,
+            "bagging_freq": 1,
+            "deterministic": true,
+            "force_col_wise": true,
+            "lambda_l2": 0,
+            "learning_rate": 0.05,
+            "max_bin": 255,
+            "metric": "auc",
+            "num_leaves": 15,
+            "num_threads": 1,
+            "objective": "binary",
+            "seed": 47,
+            "verbosity": -1,
+            "zero_as_missing": false
+          },
+          "retained_at_round_cap": false,
+          "retained_rounds": 1,
+          "selection_key": [
+            0.06595744680851057,
+            1,
+            0
+          ],
+          "stop_error": 0.06595744680851057,
+          "trained_rounds_if_available": 51
+        },
+        "cumulative_search_fit_seconds": 0.42410179999569664,
+        "current_wave_all_eight_successful": true,
+        "dataset": "blood-transfusion-service-center",
+        "library": "lightgbm",
+        "model_bytes": 6464,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\blood-transfusion-service-center\\lightgbm.pkl",
+        "model_sha256": "db669924407280288f40600852d9eab3e54e0046abef388136bf2af9b1d35bba",
+        "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+        "search_fit_seconds": 0.054282200000670855,
+        "source_wave": 1
+      }
+    },
+    "independent_stop_selection": {
+      "anchor": {
+        "model_bytes": 6034,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17\\anchors\\blood-transfusion-service-center\\lightgbm.pkl",
+        "model_sha256": "f8b9d3c535961625a2ffcbcac2b1f2f0bf4b9880615e7d5e135c73b714eaea02"
+      },
+      "correction": null,
+      "dataset": "blood-transfusion-service-center",
+      "fit": {
+        "early_stopping": false,
+        "fit_seconds": 0.011934500002098503,
+        "parameters": {
+          "bagging_fraction": 0.8,
+          "bagging_freq": 1,
+          "deterministic": true,
+          "force_col_wise": true,
+          "lambda_l2": 0,
+          "learning_rate": 0.05,
+          "max_bin": 255,
+          "metric": "auc",
+          "num_leaves": 15,
+          "num_threads": 1,
+          "objective": "binary",
+          "seed": 47,
+          "verbosity": -1,
+          "zero_as_missing": false
+        },
+        "requested_rounds": 2,
+        "retained_rounds": 2,
+        "structural_early_termination": false
+      },
+      "fitting_data": {
+        "original_stop_rows": 62,
+        "original_train_rows": 312,
+        "outside_cap_rows": 0,
+        "row_ids_sha256": "fac9f22e07f5ccbd69e89955d9f2de01cad1246ca69fa962e31753763caa7ea7",
+        "row_order": "TRAIN then ascending outside-cap",
+        "rows": 312,
+        "schema": {},
+        "source_sha256": null,
+        "stop_excluded": true,
+        "vocabulary_fit_on": "actual fitting rows only"
+      },
+      "library": "lightgbm",
+      "stop_error": 0.06737588652482263
+    },
+    "leaf_refit": null,
+    "library": "lightgbm",
+    "model_bytes": 6238,
+    "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave17b\\models\\blood-transfusion-service-center\\lightgbm.pkl",
+    "model_sha256": "5e49831fa442dd34c342bea625b4dd58f83ae2b750ef1dff1e0ef445deb4b57c",
+    "multiclass_refit": null,
+    "refit_details": {
+      "apparent_union_error_inference_transform": 0.18352670057215514,
+      "early_stopping": false,
+      "fit_seconds": 0.012796200000593672,
+      "parameters": {
+        "bagging_fraction": 0.8,
+        "bagging_freq": 1,
+        "deterministic": true,
+        "force_col_wise": true,
+        "lambda_l2": 0,
+        "learning_rate": 0.05,
+        "max_bin": 255,
+        "metric": "auc",
+        "num_leaves": 15,
+        "num_threads": 1,
+        "objective": "binary",
+        "seed": 47,
+        "verbosity": -1,
+        "zero_as_missing": false
+      },
+      "requested_rounds": 2,
+      "retained_rounds": 2,
+      "structural_early_termination": false,
+      "union_data": {
+        "row_order": "original TRAIN followed by original STOP",
+        "source_roles": {
+          "stop": {
+            "index_sha256": "71a564af518385779257f7b6cca008a07627dfedd4905925a797260841b5dcdd",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\blood-transfusion-service-center\\stop.pkl",
+            "rows": 62,
+            "sha256": "59daf432712096f4ae9724df3db47ed8ac786d8e56b8a48e9ad86a6c0c2ce4c6"
+          },
+          "train": {
+            "index_sha256": "fac9f22e07f5ccbd69e89955d9f2de01cad1246ca69fa962e31753763caa7ea7",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\blood-transfusion-service-center\\train.pkl",
+            "rows": 312,
+            "sha256": "9d676cdf2a05bc27f6a21a9607b5a2d976ba87a5d8f4389356e129d84f17d54c"
+          }
+        },
+        "stop_ids_sha256": "71a564af518385779257f7b6cca008a07627dfedd4905925a797260841b5dcdd",
+        "stop_rows": 62,
+        "train_ids_sha256": "fac9f22e07f5ccbd69e89955d9f2de01cad1246ca69fa962e31753763caa7ea7",
+        "train_rows": 312,
+        "union_category_counts": {},
+        "union_ids_sha256": "7c36cebee258bd2f29ce4e3837c330fc04fab214a958911910078d193a67195d",
+        "union_rows": 374,
+        "vocabulary_fit_on": "TRAIN+STOP union only"
+      }
+    },
+    "requested_rounds": 2,
+    "seed": 47,
+    "source_wave": "17b",
+    "temperature": null
+  },
+  "started_at": "2026-10-16T15:32:45.514648+00:00",
+  "status": "ok"
+}

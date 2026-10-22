@@ -1,0 +1,127 @@
+{
+  "clean_fit_controls": {
+    "binary_refit": null,
+    "leaf_refit": null,
+    "multiclass_refit": null,
+    "parameters": {
+      "alpha": 0.5,
+      "bootstrap_type": "Bernoulli",
+      "cat_features": [
+        "state",
+        "area_code",
+        "international_plan",
+        "voice_mail_plan"
+      ],
+      "eval_metric": "AUC",
+      "feature_test": "grouped",
+      "feature_test_adjustment": "none",
+      "feature_test_bins": 8,
+      "iterations": 2000,
+      "lambda_l2": 0.1,
+      "leaf_estimation_backtracking": true,
+      "leaf_estimation_iterations": 3,
+      "learning_rate": 0.05,
+      "max_bins": 256,
+      "max_cat_threshold": 256,
+      "max_depth": 4,
+      "min_data_in_leaf": 1,
+      "multi_strategy": "one_output_per_tree",
+      "multiclass_feature_test": "single",
+      "one_hot_max_size": 8,
+      "ordered_ctr": true,
+      "random_seed": 47,
+      "subsample": 0.8,
+      "verbose": false
+    },
+    "rounds": 61,
+    "temperature": null
+  },
+  "clean_fit_controls_sha256": "8c7e7f817e906a2a56f7e87c916e73309011366d38f335f5a0a85cefca42399a",
+  "fit": {
+    "apparent_union_error_inference_transform": 0.02486798444827787,
+    "early_stopping": false,
+    "fit_seconds": 0.2109426999995776,
+    "parameters": {
+      "alpha": 0.5,
+      "bootstrap_type": "Bernoulli",
+      "cat_features": [
+        "state",
+        "area_code",
+        "international_plan",
+        "voice_mail_plan"
+      ],
+      "eval_metric": "AUC",
+      "feature_test": "grouped",
+      "feature_test_adjustment": "none",
+      "feature_test_bins": 8,
+      "iterations": 61,
+      "lambda_l2": 0.1,
+      "leaf_estimation_backtracking": true,
+      "leaf_estimation_iterations": 3,
+      "learning_rate": 0.05,
+      "max_bins": 256,
+      "max_cat_threshold": 256,
+      "max_depth": 4,
+      "min_data_in_leaf": 1,
+      "multi_strategy": "one_output_per_tree",
+      "multiclass_feature_test": "single",
+      "one_hot_max_size": 8,
+      "ordered_ctr": true,
+      "random_seed": 47,
+      "subsample": 0.8,
+      "verbose": false
+    },
+    "requested_rounds": 61,
+    "retained_rounds": 61,
+    "structural_early_termination": false,
+    "union_data": {
+      "row_order": "original TRAIN followed by original STOP",
+      "source_roles": {
+        "stop": {
+          "index_sha256": "86cca4564cf26e9a7d4e20eda6a3d98ccc2d40b37adcac57ad52ec52ac6b84fe",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\churn\\stop.pkl",
+          "rows": 416,
+          "sha256": "39074b7e402e872977a2c9758a2b7a8cc28c9495860e8ac384c962b1a8633d2f"
+        },
+        "train": {
+          "index_sha256": "ac9963bd0d5ae11b11341d1e0cb332d69a36ef646ecca5f0eb857a96109c4370",
+          "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\churn\\train.pkl",
+          "rows": 2085,
+          "sha256": "54578e8d3e6dd9f1cee6edc4a61fcf09510996a5adf063f9b0820376c7935a37"
+        }
+      },
+      "stop_ids_sha256": "86cca4564cf26e9a7d4e20eda6a3d98ccc2d40b37adcac57ad52ec52ac6b84fe",
+      "stop_rows": 416,
+      "train_ids_sha256": "ac9963bd0d5ae11b11341d1e0cb332d69a36ef646ecca5f0eb857a96109c4370",
+      "train_rows": 2085,
+      "union_category_counts": {
+        "area_code": 3,
+        "international_plan": 2,
+        "state": 51,
+        "voice_mail_plan": 2
+      },
+      "union_ids_sha256": "791e41637f8b5d602f8e20531bf8687b93b7128a1ac451e121d4023d16e39569",
+      "union_rows": 2501,
+      "vocabulary_fit_on": "TRAIN+STOP union only"
+    }
+  },
+  "old_scalar_corrections_disabled_before_fit": true,
+  "status": "ok",
+  "topology": {
+    "clean_native_state_sha256": "f730689c9ffb190d985f7c7f38ae8b20627c037dbfc2794fa8e1fdfd9c18ca5b",
+    "data_schema_sha256": "cac43e01273c2a0366071a8e252abbc81ba3995d2181bfea8a2faee806251a1b",
+    "exact_clean_refit_identity_except_scalar_leaf_outputs": true,
+    "feature_pipeline_sha256": "aaf460bc92fce9af3403090a0dd5b3cec583491a847a5eb88e36e6c7341335a1",
+    "leaf_outputs_ignored": true,
+    "library": "ctboost",
+    "limitation": "Fresh fit and disabled-correction provenance must also be enforced by the runner",
+    "nonleaf_state_sha256": "bd640a5a53c3bbe1b4bf1d3f8c5c119843a0569065cc5b98c57c1ae52a0b1449",
+    "old_correction_subtracted": false,
+    "ordered_schema_sha256": "9a7b94ad82290a71cf8072aa2ae58063579165ff85e5d50dced1b61f2fadc23e",
+    "parent_native_state_sha256": "f730689c9ffb190d985f7c7f38ae8b20627c037dbfc2794fa8e1fdfd9c18ca5b",
+    "physical_trees": 61,
+    "problem": "binary",
+    "total_native_leaves": 896,
+    "training_metadata_sha256": "13f5b7112b33ee2be3f431e9bc780b054fcc0f8503b28999f1cd845851f36be4"
+  }
+}

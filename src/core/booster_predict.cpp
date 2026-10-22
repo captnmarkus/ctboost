@@ -304,10 +304,9 @@ std::vector<float> GradientBooster::PredictImpl(const Pool& pool,
       booster_detail::MarkUsedFeatures(trees_[tree_index], active_features);
     }
   }
-  const HistMatrix hist = booster_detail::BuildPredictionHist(
-      pool,
-      quantization_schema,
-      &active_features);
+  const HistMatrix hist = cache != nullptr
+      ? booster_detail::BuildPredictionBins(pool, quantization_schema, &active_features)
+      : booster_detail::BuildPredictionHist(pool, quantization_schema, &active_features);
   if (!use_cached_prediction) {
     predictions = booster_detail::PredictFromHist(trees_,
                                                 hist,
@@ -357,10 +356,9 @@ std::vector<std::int32_t> GradientBooster::PredictLeafIndices(const Pool& pool,
       booster_detail::MarkUsedFeatures(trees_[tree_index], active_features);
     }
   }
-  const HistMatrix hist = booster_detail::BuildPredictionHist(
-      pool,
-      quantization_schema,
-      &active_features);
+  const HistMatrix hist = cache != nullptr
+      ? booster_detail::BuildPredictionBins(pool, quantization_schema, &active_features)
+      : booster_detail::BuildPredictionHist(pool, quantization_schema, &active_features);
   if (cache == nullptr) {
     for (std::size_t tree_index = 0; tree_index < tree_limit; ++tree_index) {
       for (std::size_t row = 0; row < hist.num_rows; ++row) {

@@ -1,0 +1,101 @@
+{
+  "component_stop_prediction_diagnostic": {
+    "exactly_equal": false,
+    "maximum_absolute_difference": 0.32787971496582013,
+    "purpose": "Diagnostic only; never replace a component or select seeds"
+  },
+  "components": [
+    {
+      "dataset": "SDSS17",
+      "finished_at": "2026-10-16T12:19:23.378705+00:00",
+      "library": "xgboost",
+      "model_bytes": 10193414,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave9\\models\\SDSS17\\xgboost.pkl",
+      "model_sha256": "28dc150ea06df727de21067c7acab28d6eb6a55dc1575bcdffc59432c661d2e8",
+      "reused": true,
+      "seed": 47,
+      "started_at": "2026-10-16T12:19:23.371195+00:00",
+      "status": "ok"
+    },
+    {
+      "dataset": "SDSS17",
+      "finished_at": "2026-10-16T12:19:25.653205+00:00",
+      "library": "xgboost",
+      "model_bytes": 11103214,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave11\\components\\SDSS17\\xgboost-seed947.pkl",
+      "model_sha256": "7c463c92266168412362cc80f12dc5d34b6e7f0c12db476cf7d9875b545c2854",
+      "refit_details": {
+        "apparent_union_error_inference_transform": 0.022900222729774024,
+        "early_stopping": false,
+        "fit_seconds": 2.1115809000002628,
+        "parameters": {
+          "colsample_bytree": 0.8,
+          "eta": 0.03,
+          "eval_metric": "mlogloss",
+          "lambda": 1,
+          "max_bin": 256,
+          "max_depth": 8,
+          "min_child_weight": 5,
+          "multi_strategy": "multi_output_tree",
+          "nthread": 1,
+          "num_class": 3,
+          "objective": "multi:softprob",
+          "seed": 947,
+          "subsample": 0.8,
+          "tree_method": "hist"
+        },
+        "requested_rounds": 220,
+        "retained_rounds": 220,
+        "structural_early_termination": false,
+        "temperature": 1.25,
+        "union_data": {
+          "row_order": "original TRAIN followed by original STOP",
+          "source_roles": {
+            "stop": {
+              "index_sha256": "d9821736c8ceb76ddb2733e406ec6f1869e41be81694c0a160cb2ba97eb14a8b",
+              "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\SDSS17\\stop.pkl",
+              "rows": 1250,
+              "sha256": "8e54588d8c042eda1ac88c6c9ac1bcec66e16eff36152d5a4e77088dc582d906"
+            },
+            "train": {
+              "index_sha256": "94e134faaca82faf4f922f10033aaf76b1ceeec42989573fc9ef2d1093024181",
+              "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\SDSS17\\train.pkl",
+              "rows": 6250,
+              "sha256": "f7b15212eef242cba1a06ffc3e918ba474bdbeab2ded06404dbcefd74e2a5a76"
+            }
+          },
+          "stop_ids_sha256": "d9821736c8ceb76ddb2733e406ec6f1869e41be81694c0a160cb2ba97eb14a8b",
+          "stop_rows": 1250,
+          "train_ids_sha256": "94e134faaca82faf4f922f10033aaf76b1ceeec42989573fc9ef2d1093024181",
+          "train_rows": 6250,
+          "union_category_counts": {
+            "fiber_ID": 1000,
+            "plate": 3870
+          },
+          "union_ids_sha256": "504437c55bc098c03f86beda8656e77f9e0f9a2443962ca12ea7499ad157b7bc",
+          "union_rows": 7500,
+          "vocabulary_fit_on": "TRAIN+STOP union only"
+        }
+      },
+      "reused": false,
+      "seed": 947,
+      "started_at": "2026-10-16T12:19:23.381525+00:00",
+      "status": "ok"
+    }
+  ],
+  "dataset": "SDSS17",
+  "library": "xgboost",
+  "model_bytes": 21320687,
+  "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave11\\ensembles\\SDSS17\\xgboost.pkl",
+  "model_sha256": "1bb4491a38b335ea914b527692267632ebcd96937df5e48043a1fc74aaca9262",
+  "seed_pair": [
+    47,
+    947
+  ],
+  "shared_encoded_label_ids": [
+    0,
+    1,
+    2
+  ],
+  "status": "ok"
+}

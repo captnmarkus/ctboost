@@ -130,6 +130,12 @@ HistMatrix BuildPredictionHist(const Pool& pool,
                                const QuantizationSchema& quantization_schema,
                                const std::vector<std::uint8_t>* active_features);
 HistMatrix BuildPredictionHist(const Pool& pool, const Tree& reference_tree);
+// Cached traversal consumes only row/column counts and bin storage, so it does
+// not need a private copy of the model's immutable quantization metadata.
+HistMatrix BuildPredictionBins(const Pool& pool,
+                               const QuantizationSchema& quantization_schema,
+                               const std::vector<std::uint8_t>* active_features,
+                               bool omit_unused_storage = true);
 std::vector<GpuTreeNode> FlattenTreesForGpu(const std::vector<Tree>& trees,
                                             std::size_t tree_limit,
                                             const std::vector<double>& tree_learning_rates,

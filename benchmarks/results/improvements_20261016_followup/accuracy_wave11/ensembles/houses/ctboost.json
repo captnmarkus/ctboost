@@ -1,0 +1,165 @@
+{
+  "component_stop_prediction_diagnostic": {
+    "exactly_equal": true,
+    "maximum_absolute_difference": 0.0,
+    "purpose": "Diagnostic only; never replace a component or select seeds"
+  },
+  "components": [
+    {
+      "dataset": "houses",
+      "finished_at": "2026-10-16T12:18:26.607176+00:00",
+      "library": "ctboost",
+      "model_bytes": 22669311,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave9\\models\\houses\\ctboost.pkl",
+      "model_sha256": "a28827f576a9d7d89cc9cd870e057db6a0fada695c74cd02d92767a64a5964ec",
+      "reused": true,
+      "seed": 47,
+      "started_at": "2026-10-16T12:18:26.591391+00:00",
+      "status": "ok"
+    },
+    {
+      "dataset": "houses",
+      "finished_at": "2026-10-16T12:18:33.915203+00:00",
+      "library": "ctboost",
+      "model_bytes": 22669313,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave11\\components\\houses\\ctboost-seed947.pkl",
+      "model_sha256": "2a26571960e34d8bbcb3acc2d58400c0a3a5b1b004adb912110d31f6fb8b91d5",
+      "refit_details": {
+        "apparent_union_error_inference_transform": 0.10861693266144125,
+        "early_stopping": false,
+        "fit_seconds": 0.5558435000020836,
+        "fixed_leaf_refit": {
+          "fold": {
+            "coefficient_rounding_absolute_bound": 1.809619656800883e-07,
+            "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+            "inference_only": true,
+            "library": "ctboost",
+            "physical_trees": 167,
+            "prediction_oracle_absolute_tolerance": 0.004720337223261595,
+            "topology_sha256_after": "062792cd100977bbeccc111ed2c49f91c08acdbc45577bbd04032c93ac28ebde",
+            "topology_sha256_before": "062792cd100977bbeccc111ed2c49f91c08acdbc45577bbd04032c93ac28ebde"
+          },
+          "inference_checks": {
+            "original_stop": {
+              "fixed_tolerance_atol": 1e-05,
+              "fixed_tolerance_rtol": 5e-05,
+              "leaf_routing_exact": true,
+              "oracle_absolute_tolerance": 0.004720337223261595,
+              "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.269995036992781e-06,
+              "oracle_max_absolute_difference": 1.6800532780081312e-05
+            },
+            "original_train": {
+              "fixed_tolerance_atol": 1e-05,
+              "fixed_tolerance_rtol": 5e-05,
+              "leaf_routing_exact": true,
+              "oracle_absolute_tolerance": 0.004720337223261595,
+              "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.3867902295526052e-06,
+              "oracle_max_absolute_difference": 1.8351661019266885e-05
+            }
+          },
+          "lambda": 100,
+          "ordered_union_check": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.004720337223261595,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.3867902295526052e-06,
+            "oracle_max_absolute_difference": 1.8351661019266885e-05
+          },
+          "preprocessing": {
+            "column_order": "physical tree order, then sorted observed native leaf IDs",
+            "design_nonzeros": 1252500,
+            "design_shape": [
+              7500,
+              16897
+            ],
+            "ordered_ctr": true,
+            "ordered_training_transform_replayed": true,
+            "pipeline_state_sha256": "d8d53aeebc631a23894fd29cbea388b2955c261d58ae51b0d0d03b554019434e",
+            "training_leaf_ids_sha256": "9dbcbc4feb6bb1c8306e5821647640d855f409963211b50c143e9309ec8522ab",
+            "training_rows": 7500,
+            "training_transform_sha256": "2e5dcf6f01050b8e900811a9d6e1c815da698601821c73a0bd1c65b3b78e3426",
+            "unobserved_leaf_correction": 0
+          },
+          "shrinkage": 1.0,
+          "solve": {
+            "coefficient_norm": 0.5176909983526102,
+            "condition_estimate": 634.3760005038799,
+            "istop": 2,
+            "iterations": 86,
+            "matrix_norm": 2422.4030267778544,
+            "normal_residual_norm": 0.00018774341166130263,
+            "regularized_residual_norm": 10.736976994589575,
+            "residual_norm": 9.406501900874865
+          }
+        },
+        "parameters": {
+          "alpha": 0.5,
+          "bootstrap_type": "Bernoulli",
+          "cat_features": null,
+          "eval_metric": "RMSE",
+          "feature_test": "grouped",
+          "feature_test_adjustment": "none",
+          "feature_test_bins": 8,
+          "iterations": 167,
+          "lambda_l2": 3,
+          "leaf_estimation_iterations": 1,
+          "learning_rate": 0.05,
+          "max_bins": 256,
+          "max_cat_threshold": 256,
+          "max_depth": 8,
+          "min_data_in_leaf": 1,
+          "multi_strategy": "one_output_per_tree",
+          "multiclass_feature_test": "single",
+          "one_hot_max_size": 8,
+          "ordered_ctr": true,
+          "random_seed": 947,
+          "subsample": 1.0,
+          "verbose": false
+        },
+        "requested_rounds": 167,
+        "retained_rounds": 167,
+        "structural_early_termination": false,
+        "union_data": {
+          "row_order": "original TRAIN followed by original STOP",
+          "source_roles": {
+            "stop": {
+              "index_sha256": "f164721c3663e300a6127b9aeb570ca8c03ea420efb2a68a90abb490895891b6",
+              "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\houses\\stop.pkl",
+              "rows": 1250,
+              "sha256": "1da0730eed74fbdd7a0831fa74200d3117b82ea731fdb47ce5fd52b0d0ba30b3"
+            },
+            "train": {
+              "index_sha256": "036bed52ffebff5d0b4a6c9101cde13e1332a6d9038bc668310af3412d831c20",
+              "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\houses\\train.pkl",
+              "rows": 6250,
+              "sha256": "757cf06af21d8499a235403d3d23b75e0a7de7d7d5505ac47c3108326b1ac92b"
+            }
+          },
+          "stop_ids_sha256": "f164721c3663e300a6127b9aeb570ca8c03ea420efb2a68a90abb490895891b6",
+          "stop_rows": 1250,
+          "train_ids_sha256": "036bed52ffebff5d0b4a6c9101cde13e1332a6d9038bc668310af3412d831c20",
+          "train_rows": 6250,
+          "union_category_counts": {},
+          "union_ids_sha256": "d205cf77e877fc4493228e55449a38474e9feb62f1deec3ad5c33cfe0b356a4c",
+          "union_rows": 7500,
+          "vocabulary_fit_on": "TRAIN+STOP union only"
+        }
+      },
+      "reused": false,
+      "seed": 947,
+      "started_at": "2026-10-16T12:18:26.609175+00:00",
+      "status": "ok"
+    }
+  ],
+  "dataset": "houses",
+  "library": "ctboost",
+  "model_bytes": 45338939,
+  "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave11\\ensembles\\houses\\ctboost.pkl",
+  "model_sha256": "7ae341ad17811e6e4d16b1648c0be6602ee5e383583c6f590a7166e9f492aba5",
+  "seed_pair": [
+    47,
+    947
+  ],
+  "status": "ok"
+}

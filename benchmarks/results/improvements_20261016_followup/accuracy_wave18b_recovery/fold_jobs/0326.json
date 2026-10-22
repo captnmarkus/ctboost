@@ -1,0 +1,219 @@
+{
+  "correction": {
+    "checks": {
+      "fitting": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 54.43429946899414,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 2.202360185030821e-06,
+        "oracle_max_absolute_difference": 0.039526690872662584
+      },
+      "validation": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 54.43429946899414,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.8205383018352362e-06,
+        "oracle_max_absolute_difference": 0.03179492218623636
+      }
+    },
+    "fold": {
+      "coefficient_rounding_absolute_bound": 0.0014192904953726632,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "ctboost",
+      "physical_trees": 1024,
+      "prediction_oracle_absolute_tolerance": 54.43429946899414,
+      "topology_sha256_after": "ef123449e367c3d41888a44a07c00af31f1874e55e722f5e7c2eb0b14c6f3463",
+      "topology_sha256_before": "ef123449e367c3d41888a44a07c00af31f1874e55e722f5e7c2eb0b14c6f3463"
+    },
+    "independent_sparse_raw_margin_oracle": true,
+    "memory": {
+      "array_budgets_bytes": {
+        "design_construction_temporary_budget": 658706944,
+        "lsqr_residual_and_vector_workspace_budget": 2054208,
+        "native_leaf_result_and_int64_copy": 438566912,
+        "native_raw_result_and_float64_copy": 428288,
+        "observed_leaf_maps": 42632,
+        "resident_csr_data_indices_indptr": 438781064
+      },
+      "csr_nonzeros": 27410432,
+      "excluded": [
+        "native model objects",
+        "input frames",
+        "categorical transform workspace",
+        "Python object/allocator overhead"
+      ],
+      "extra_certificate_vector_bytes": 8216832,
+      "max_working_bytes": 6442450944,
+      "native_leaf_count": 5329,
+      "no_dense_hessian": true,
+      "parameters_upper_bound": 5329,
+      "physical_trees": 1024,
+      "refit_array_budget_bytes": 1538580048,
+      "rows": 26768,
+      "scope": "named conservative refit arrays, not whole-process RSS",
+      "solver_kind": "regression"
+    },
+    "native_cv_adapter": {
+      "algorithm_controls_sha256": "fc84691257990994532917628913170972b9e3b141d7801403ac429dfdaef9f6",
+      "effective_named_array_limit": 6442450944,
+      "fresh_payload_metadata_guard": true,
+      "inherited_named_array_limit": 4294967296,
+      "resource_override_only": true,
+      "temperature_unchanged": true
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 27410432,
+      "design_shape": [
+        26768,
+        5329
+      ],
+      "ordered_ctr": true,
+      "ordered_training_transform_replayed": true,
+      "pipeline_state_sha256": "d78a93b305108bd321daa9ec90ecc0d8db3443f8af5fa98ac41925e96bbec98f",
+      "training_leaf_ids_sha256": "6f008a686a163462c8d448fbf0de8266657a497c7209c13c734b74fd37ed17b9",
+      "training_rows": 26768,
+      "training_transform_sha256": "fd54b54e9b9649f297c48469a091d3c47b9f5fc43db1ceffba2e9372fa1e2a4c",
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "atol": 1e-12,
+      "btol": 1e-12,
+      "certificate": {
+        "certified": true,
+        "coefficient_l2_error_bound": 1.3095593322988152e-06,
+        "dual": 2906296688.59373,
+        "finite": true,
+        "fitting_prediction_rms_error_bound": 2.5311461248534376e-07,
+        "gradient_norm": 0.0013095593322988153,
+        "normalized_original_gradient": 1.4931778310123244e-09,
+        "original_gradient_dual_gap": 8.574728224054593e-10,
+        "primal": 2906296688.5937314,
+        "primal_minus_dual": 1.430511474609375e-06,
+        "primal_zero": 2975993106.449424,
+        "relative_gap": 2.9503967222987285e-19
+      },
+      "conlim": 100000000.0,
+      "initial_coefficients": "zero",
+      "iterations_limit": 10000,
+      "native": {
+        "condition_estimate": 1920.149590464334,
+        "istop": 2,
+        "iterations": 67,
+        "matrix_norm": 19162.062031505488,
+        "normal_residual_norm": 0.0013095290531556479,
+        "regularized_residual_norm": 76240.36579914494,
+        "residual_norm": 75628.20012619451
+      },
+      "no_heldout_score": true,
+      "penalty": 1000.0,
+      "solver_seconds_diagnostic_only": 2.7278006999986246,
+      "success": true,
+      "variant": "unscaled_lsqr_10000"
+    }
+  },
+  "corrections_disabled_before_fit": true,
+  "dataset": "diamonds",
+  "early_stopping": false,
+  "feature_names": [
+    "carat",
+    "cut",
+    "color",
+    "clarity",
+    "depth",
+    "table",
+    "x",
+    "y",
+    "z"
+  ],
+  "finished_at": "2026-10-16T16:42:12.969654+00:00",
+  "fit_controls_sha256": "9b85a593afe8dbbebb7eb3f7b906b316a4ae46a5b0e2fc69d8cd0f2f2ede3a60",
+  "fit_seconds": 3.2489291000019875,
+  "fixed_corrections_disabled_before_fit": true,
+  "fold": 1,
+  "fold_category_schema": {
+    "clarity": [
+      "I1",
+      "IF",
+      "SI1",
+      "SI2",
+      "VS1",
+      "VS2",
+      "VVS1",
+      "VVS2"
+    ],
+    "color": [
+      "D",
+      "E",
+      "F",
+      "G",
+      "H",
+      "I",
+      "J"
+    ],
+    "cut": [
+      "Fair",
+      "Good",
+      "Ideal",
+      "Premium",
+      "Very Good"
+    ]
+  },
+  "library": "ctboost",
+  "model_bytes": 6695888,
+  "model_retained": false,
+  "model_sha256": "6d41479e06a527612861b296ba385cdf4d21e25e53af21431b435d4bd837c713",
+  "native_cv_fresh_fit": true,
+  "native_fit_completed": true,
+  "native_fit_started": true,
+  "parameters": {
+    "alpha": 0.05,
+    "bootstrap_type": "Bernoulli",
+    "cat_features": [
+      "cut",
+      "color",
+      "clarity"
+    ],
+    "eval_metric": "RMSE",
+    "feature_test": "grouped",
+    "feature_test_adjustment": "none",
+    "feature_test_bins": 8,
+    "iterations": 1024,
+    "lambda_l2": 1,
+    "leaf_estimation_backtracking": true,
+    "leaf_estimation_iterations": 3,
+    "learning_rate": 0.15,
+    "max_bins": 256,
+    "max_cat_threshold": 64,
+    "max_depth": 8,
+    "multi_strategy": "one_output_per_tree",
+    "multiclass_feature_test": "single",
+    "ordered_ctr": true,
+    "random_seed": 47,
+    "subsample": 0.8,
+    "verbose": false
+  },
+  "prediction_array_sha256": "5b866fb388ed2679e967c7f72c98e396fa25bdbbdfbef2e53f48647360d062fc",
+  "prediction_dtype": "<f4",
+  "prediction_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave18b_recovery\\fold_predictions\\0326.npz",
+  "prediction_sha256": "02fa199ff5088b0646927ff1df433b8190eacdfbd92de92b8f82c5c4628334b2",
+  "prediction_shape": [
+    6692
+  ],
+  "profile_index": 2,
+  "reload_bit_exact": true,
+  "requested_rounds": 1024,
+  "retained_rounds": 1024,
+  "seed": 47,
+  "started_at": "2026-10-16T16:41:56.097985+00:00",
+  "status": "ok",
+  "structural_early_termination": false,
+  "temperature": null,
+  "training_rows": 26768,
+  "validation_error": 547.5383055240586,
+  "validation_labels_received": false,
+  "validation_rows": 6692
+}

@@ -1,0 +1,96 @@
+{
+  "recorded_at": "2026-10-16T16:30:50.692248+00:00",
+  "status": "DRAFT prospective external-interruption recovery binding; not executable until the exact recovery manifest/controller and independent review are frozen",
+  "previous_policy": "selection_policy_v3.json",
+  "previous_policy_sha256": "45d10b3adca85da4a03dde5dc6f7b4c54ce41e49bd34ce8b1edb6687e378761d",
+  "reason": "An agent mistakenly terminated the owned job297 worker after its native fit returned. This confirmed external interruption is not a numerical or resource failure and does not authorize fallback under v3. Finish the same current experiment in a separate recovery directory with byte-identical scientific plan, inputs, controls, runtime and worker sources; preserve the interrupted attempt and all297 verified prefix jobs. This amendment binds that recovery before any new development result or timing measurement; no score, speed, model-size or seed preference motivates it. The user-authorized release scope and no-new-method-search rule are unchanged.",
+  "selection_rule": {
+    "primary": "Use all36 primary-seed47 native models from accuracy_wave18b_recovery only after all540 unique fold jobs are verified (297 byte-identical copied successful prefix receipts plus243 newly executed original global indices297..539), all36 mandatory union jobs, a frozen model manifest and its linked development receipt succeed. Select this complete scientific policy regardless of primary, seed677-mean or official-test quality outcome. No partial policy or per-task mixing is permitted.",
+    "fallback": "Only if the prospectively frozen recovery terminates with a documented numerical or resource failure before that complete policy and development receipt exist, use the entire already-complete wave17b primary-seed47 policy. The original18b external interruption alone never authorizes fallback. Preserve and prominently report every failure/interruption and the recovery lineage.",
+    "incomplete_or_unexpected_state": "An active/interrupted wave18b is not a terminal failure and does not authorize fallback. Provenance mismatch, corrupted artifacts, unexplained missing receipts or unexpected exceptions require investigation; they cannot silently trigger fallback or relaxation of correctness checks.",
+    "selection_basis": "Completion status alone under this fixed priority; never score, speed, model size, task-specific wins, seed preference or an old-versus-new development comparison.",
+    "prediction_seed": 47,
+    "no_new_accuracy_waves": true
+  },
+  "candidate_policy": {
+    "name": "accuracy_wave18b_recovery",
+    "accuracy_results": "C:/apps/ctboost/benchmarks/results/improvements_20261016_followup/accuracy_wave18b_recovery",
+    "accuracy_artifacts": "C:/apps/ctboost/.tmp/improvements-20261016/followup/accuracy_wave18b_recovery",
+    "plan_sha256": "d368d34f9245e27d818f105b70163474878f9a6fdfd0f720a1204440b0ca09d2",
+    "plan_wave_field": 18,
+    "note": "Same scientific plan bytes and wave18 field as original18b. Recovery changes only execution/output lineage after confirmed agent interruption. Bind the recovery controller, prefix manifest and independent verification before execution; bind final model/development hashes after completion."
+  },
+  "fallback_policy": {
+    "name": "accuracy_wave17b",
+    "accuracy_results": "C:/apps/ctboost/benchmarks/results/improvements_20261016_followup/accuracy_wave17b",
+    "accuracy_artifacts": "C:/apps/ctboost/.tmp/improvements-20261016/followup/accuracy_wave17b",
+    "plan_sha256": "7f5d13d6dcd43e946b87a8e7bbbe12b9eba593b61410601033266548293b5617",
+    "frozen_selections_sha256": "74829c7d70d494d5bcefb2ecea5a6936f8dc455b766d26a5df354cc069a1f480",
+    "development_sha256": "53e43f050de0019b61d346edcc9ec15b80d5bebb040447d5208cbb242aefbce7"
+  },
+  "quality_work": {
+    "unchanged_gate_contract": "Seed677 fits occur only if wave18b passes its original primary development gate; official outer assessment occurs only if the original primary and fixed-seed mean gates both pass. This timing amendment never opens official or confirmation data and never waives a quality gate.",
+    "ordering": "Finish all quality work permitted by the original experiment gates, including gated seed677 and one-shot official assessment when applicable, before entering the exclusive timing window.",
+    "reporting": "Report the selected primary47 model's error separately from any 47/677 mean, and explicitly report each quality gate as passed, failed or not run with its reason. An official result, when available, is prominent. Failed or unperformed accuracy gates cannot support an accuracy-superiority claim; resource failure is not a quality result."
+  },
+  "runner": "benchmarks/fair_inference_final_scout.py",
+  "runner_sha256": "27a5ea2fa73f8c73d54c68f5f86323a430777e27d1e71e3315099e18b2a241af",
+  "runtime_path": "C:/apps/ctboost/.tmp/improvements-20261016/ctr-precision/runtime-cp312",
+  "runtime_native_sha256": "04adb21b0e4cea8046581a23b62585b6c8d631561d96a417ad87bc3c55041613",
+  "runtime_provenance": {
+    "C:/apps/ctboost/.tmp/improvements-20261016/ctr-precision/runtime-cp312/build_receipt.json": "a67c86014573fb8f7ca53b2121d545c1f032d8e67aaffc553e30521be319a247",
+    "C:/apps/ctboost/.tmp/improvements-20261016/ctr-precision/native-source-hashes.json": "b76519d66583548f6e4626f222e0769effe15652cee3775106ab94fe33c5987b",
+    "C:/apps/ctboost/.tmp/improvements-20261016/ctr-precision/real-model-reference.json": "453d8f7549f30cb19857dff5ec4ea0cf2cd76240dcb09de2b64978c35c65078b",
+    "C:/apps/ctboost/.tmp/improvements-20261016/ctr-precision/real-model-verified.json": "3856529bf1695a6e48ed1c09f018d1a43ace8b3bb639fdc5a11979b3444b9c4b"
+  },
+  "prediction_seed": 47,
+  "tasks": "All twelve preselected tasks and all three libraries of one complete policy; no task, library or model exclusions",
+  "batch_rows": [
+    1,
+    64,
+    1000
+  ],
+  "library_orders": [
+    [
+      "ctboost",
+      "xgboost",
+      "lightgbm"
+    ],
+    [
+      "lightgbm",
+      "ctboost",
+      "xgboost"
+    ],
+    [
+      "xgboost",
+      "lightgbm",
+      "ctboost"
+    ]
+  ],
+  "resources": "CPU6, one native thread. All fits, solver jobs, builds, tests and other heavy study work must finish before the first timing pass and remain stopped through all three passes. Root coordinates exclusive release.",
+  "reference": "Run the unchanged check-only runner first. Freeze chosen model/plan/development, source, runtime, input and full-source/batch prediction identities. Require byte-exact outputs against saved quality predictions and XGBoost inplace-versus-DMatrix margins on every timed batch. Check-only failure blocks timing; it does not select another policy or weaken parity.",
+  "raw_scope": "One shared frozen vocabulary normalization, one complete native model prediction and its fixed temperature exactly once",
+  "normalized_scope": "Exclude only shared vocabulary normalization; retain each library's own prediction preprocessing and fixed temperature",
+  "interpretation": "Warm serving-cost diagnostic on a prospectively chosen complete policy. Accuracy and model capacities may differ; timings are not an accuracy-matched comparison, evidence that CTBoost meets the quality target, or an official leaderboard ranking. Do not combine earlier model-set timings into paired speedups. Historical94b results do not measure this04ad runtime.",
+  "independent_audit_required_before_execution": [
+    "Verify byte-identical plan/fold/runtime/source/controls and copied297-job prefix; each new job uses its original global index and unchanged resources. Original interrupted receipts remain immutable. This is recovery of the same experiment, not a new scientific policy.",
+    "Review and finalize this prospective amendment before any wave18b development outcome or timing result is inspected for selection.",
+    "Verify the selected branch and whole36-model membership, terminal/completion evidence, exact plan/source/runtime/dependency hashes and untouched previous policies.",
+    "Verify all permitted quality stages are terminal and accurately reported; official access stays governed by original gates.",
+    "Verify complete check-only references and all three successful balanced orders before describing the final diagnostic as a three-pass comparison."
+  ],
+  "external_interruption": {
+    "incident_path": "C:\\apps\\ctboost\\benchmarks\\results\\improvements_20261016_followup\\release_preparation\\wave18b_external_interruption_incident.json",
+    "incident_sha256": "156d9ce25a987c10f1a7ad345224539d2d5c5274b5d6b980c8a57cdfba6519a9",
+    "original_plan_sha256": "d368d34f9245e27d818f105b70163474878f9a6fdfd0f720a1204440b0ca09d2",
+    "original_verified_prefix_jobs": 297,
+    "original_native_fits_completed": 298,
+    "interrupted_global_index": 297,
+    "recovery_new_fold_indices": [
+      297,
+      539
+    ],
+    "counting": "Count the interrupted native fit once as additional compute. Copied prefix jobs are not new fits. If all540 successful folds and36 union fits finish, cumulative benchmark fits are3107, with8 earlier diagnostic replays separate. No new diagnostic replay of the interrupted job was performed."
+  },
+  "recovery_binding": "PENDING exact frozen controller/manifest/test/independent review hashes"
+}

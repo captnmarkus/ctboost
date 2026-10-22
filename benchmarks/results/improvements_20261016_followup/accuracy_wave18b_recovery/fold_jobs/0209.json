@@ -1,0 +1,172 @@
+{
+  "correction": {
+    "checks": {
+      "fitting": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 0.002448947634547949,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 7.134383482091401e-07,
+        "oracle_max_absolute_difference": 6.6000382865638585e-06
+      },
+      "validation": {
+        "fixed_tolerance_atol": 1e-05,
+        "fixed_tolerance_rtol": 5e-05,
+        "leaf_routing_exact": true,
+        "oracle_absolute_tolerance": 0.002448947634547949,
+        "oracle_difference_divided_by_max_one_or_prediction_magnitude": 7.492139111193979e-07,
+        "oracle_max_absolute_difference": 5.046527398633316e-06
+      }
+    },
+    "fold": {
+      "coefficient_rounding_absolute_bound": 1.9911524460657147e-07,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "xgboost",
+      "physical_trees": 118,
+      "prediction_oracle_absolute_tolerance": 0.002448947634547949,
+      "topology_sha256_after": "ac41ee3c6f42753841857ff4b8baaa01d329bbf4a585ad08f54fe0cba41c3de2",
+      "topology_sha256_before": "ac41ee3c6f42753841857ff4b8baaa01d329bbf4a585ad08f54fe0cba41c3de2"
+    },
+    "independent_sparse_raw_margin_oracle": true,
+    "memory": {
+      "array_budgets_bytes": {
+        "design_construction_temporary_budget": 1042496,
+        "lsqr_residual_and_vector_workspace_budget": 267328,
+        "native_leaf_result_and_int64_copy": 687232,
+        "native_raw_result_and_float64_copy": 5824,
+        "observed_leaf_maps": 30504,
+        "resident_csr_data_indices_indptr": 690152
+      },
+      "csr_nonzeros": 42952,
+      "excluded": [
+        "native model objects",
+        "input frames",
+        "categorical transform workspace",
+        "Python object/allocator overhead"
+      ],
+      "extra_certificate_vector_bytes": 1069312,
+      "max_working_bytes": 6442450944,
+      "native_leaf_count": 3813,
+      "no_dense_hessian": true,
+      "parameters_upper_bound": 3813,
+      "physical_trees": 118,
+      "refit_array_budget_bytes": 2723536,
+      "rows": 364,
+      "scope": "named conservative refit arrays, not whole-process RSS",
+      "solver_kind": "regression"
+    },
+    "native_cv_adapter": {
+      "algorithm_controls_sha256": "1a722d604793cb6a271a1ff187c847f996f78c79e90f09331b48238cac9e7d58",
+      "effective_named_array_limit": 6442450944,
+      "fresh_payload_metadata_guard": true,
+      "inherited_named_array_limit": 4294967296,
+      "resource_override_only": true,
+      "temperature_unchanged": true
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 42952,
+      "design_shape": [
+        364,
+        3813
+      ],
+      "ordered_training_transform_replayed": false,
+      "training_leaf_ids_sha256": "34e25c0efbb1c7ffd2cca31a559e5fbea51cfcfef021e85c59fda0d62f848fe8",
+      "training_rows": 364,
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "atol": 1e-12,
+      "btol": 1e-12,
+      "certificate": {
+        "certified": true,
+        "coefficient_l2_error_bound": 5.023720208375032e-12,
+        "dual": 5.995490426208635,
+        "finite": true,
+        "fitting_prediction_rms_error_bound": 2.6331448591865106e-12,
+        "gradient_norm": 5.023720208375032e-10,
+        "normalized_original_gradient": 9.382536318276888e-12,
+        "original_gradient_dual_gap": 1.2618882366017836e-21,
+        "primal": 5.9954904262086375,
+        "primal_minus_dual": 2.6645352591003757e-15,
+        "primal_zero": 8.693376358211225,
+        "relative_gap": 2.1047289661002138e-22
+      },
+      "conlim": 100000000.0,
+      "initial_coefficients": "zero",
+      "iterations_limit": 10000,
+      "native": {
+        "condition_estimate": 82.0303498689303,
+        "istop": 2,
+        "iterations": 43,
+        "matrix_norm": 242.17277749454516,
+        "normal_residual_norm": 5.023709920908307e-10,
+        "regularized_residual_norm": 3.46279956861746,
+        "residual_norm": 3.1038640771730375
+      },
+      "no_heldout_score": true,
+      "penalty": 100.0,
+      "solver_seconds_diagnostic_only": 0.00488979999863659,
+      "success": true,
+      "variant": "unscaled_lsqr_10000"
+    }
+  },
+  "corrections_disabled_before_fit": true,
+  "dataset": "QSAR_fish_toxicity",
+  "early_stopping": false,
+  "feature_names": [
+    "CIC0",
+    "SM1_Dz(Z)",
+    "GATS1i",
+    "NdsCH",
+    "NdssC",
+    "MLOGP"
+  ],
+  "finished_at": "2026-10-16T16:16:02.015417+00:00",
+  "fit_controls_sha256": "6121701426f3b971df0fe2e16298cc6f1aa36b48809711a91ffbe569714c2fc2",
+  "fit_seconds": 0.13430560000051628,
+  "fixed_corrections_disabled_before_fit": true,
+  "fold": 4,
+  "fold_category_schema": {},
+  "library": "xgboost",
+  "model_bytes": 342634,
+  "model_retained": false,
+  "model_sha256": "d0cf20253c83d0033727a8df4c755cb61207b5fbbeb8c70e359351b9d42382bf",
+  "native_cv_fresh_fit": true,
+  "native_fit_completed": true,
+  "native_fit_started": true,
+  "parameters": {
+    "eta": 0.15,
+    "eval_metric": "rmse",
+    "lambda": 10,
+    "max_bin": 256,
+    "max_depth": 6,
+    "multi_strategy": "one_output_per_tree",
+    "nthread": 1,
+    "objective": "reg:squarederror",
+    "seed": 47,
+    "subsample": 0.8,
+    "tree_method": "hist"
+  },
+  "prediction_array_sha256": "a48a6655d11e1c7a3e825b72e78f1f79bf15e36cc9e341886868e97035df5435",
+  "prediction_dtype": "<f4",
+  "prediction_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave18b\\fold_predictions\\0209.npz",
+  "prediction_sha256": "d5fb0384e07fd9501362a53c18486d5d5e072203d87db84c9a1e85190743d262",
+  "prediction_shape": [
+    90
+  ],
+  "profile_index": 2,
+  "reload_bit_exact": true,
+  "requested_rounds": 118,
+  "retained_rounds": 118,
+  "seed": 47,
+  "started_at": "2026-10-16T16:16:01.637712+00:00",
+  "status": "ok",
+  "structural_early_termination": false,
+  "temperature": null,
+  "training_rows": 364,
+  "validation_error": 0.8634346550181783,
+  "validation_labels_received": false,
+  "validation_rows": 90
+}

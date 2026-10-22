@@ -19,7 +19,7 @@ inline constexpr const char* kCodec2LiteralMissingKey = "\\m";
 inline constexpr const char* kCodec2OtherKey = "\\o";
 inline constexpr int kLegacyCategoricalKeyEncodingVersion = 1;
 inline constexpr int kCurrentCategoricalKeyEncodingVersion = 2;
-inline constexpr int kCurrentFeaturePipelineFormatVersion = 4;
+inline constexpr int kCurrentFeaturePipelineFormatVersion = 5;
 
 struct MatrixView {
   py::array array;
@@ -66,7 +66,8 @@ std::string JoinNormalizedKey(const MatrixView& matrix,
 const char* OtherKey(int encoding_version);
 std::uint64_t BytesToLittleEndianU64(const py::bytes& digest);
 std::vector<float> EmbeddingValues(const py::handle& value);
-std::pair<int, std::vector<float>> FitTargetMode(const std::vector<float>& labels);
+std::pair<int, std::vector<double>> FitTargetMode(const std::vector<float>& labels,
+                                                bool double_accumulation = false);
 std::vector<std::string> ExtractTextTokens(std::string text,
                                            const std::string& tokenizer,
                                            int ngram_min,

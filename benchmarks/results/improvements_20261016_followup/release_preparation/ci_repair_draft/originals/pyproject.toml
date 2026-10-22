@@ -1,0 +1,246 @@
+[build-system]
+requires = [
+  "pybind11>=2.12,<3",
+  "scikit-build-core>=0.10",
+]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "ctboost"
+version = "0.1.61"
+description = "A GPU-accelerated gradient boosting library using Conditional Inference Trees."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { file = "LICENSE" }
+authors = [
+  { name = "CTBoost Contributors" },
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: C++",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+  "numpy>=1.24",
+]
+
+[project.urls]
+Homepage = "https://github.com/captnmarkus/ctboost"
+Documentation = "https://captnmarkus.github.io/ctboost/"
+Repository = "https://github.com/captnmarkus/ctboost"
+Issues = "https://github.com/captnmarkus/ctboost/issues"
+
+[project.scripts]
+ctboost = "ctboost.cli:main"
+ctboost-tabarena = "benchmarks.tabarena.run:main"
+ctboost-install-gpu = "ctboost.gpu_install:main"
+
+[project.optional-dependencies]
+cli = [
+  "pandas>=1.5",
+  "pyarrow>=12",
+  "scikit-learn>=1.3",
+]
+sklearn = [
+  "scikit-learn>=1.3",
+  "scipy>=1.10",
+]
+plot = [
+  "matplotlib>=3.6",
+]
+arrow = [
+  "pyarrow>=12",
+]
+polars = [
+  "polars>=0.20",
+]
+dataframes = [
+  "pyarrow>=12",
+  "polars>=0.20",
+]
+dask = [
+  "dask[dataframe]>=2023.5",
+  "distributed>=2023.5",
+  "pandas>=1.5",
+]
+ray = [
+  "ray[data]>=2.9",
+  "pandas>=1.5",
+]
+spark = [
+  "pyspark>=3.4",
+  "pyarrow>=12",
+  "pandas>=1.5",
+]
+onnx = [
+  "onnx>=1.16",
+]
+dev = [
+  "jsonschema>=4.18",
+  "pandas",
+  "pytest>=8.0",
+  "scikit-learn>=1.3",
+  "scipy>=1.10",
+]
+
+[tool.scikit-build]
+minimum-version = "build-system.requires"
+cmake.version = ">=3.24"
+# Keep the wheel build cache out of the shared build/ tree so repeated
+# release attempts do not trip over stale or cross-user CMake state.
+build-dir = ".ctbuild/{wheel_tag}"
+wheel.packages = ["ctboost", "benchmarks"]
+# ``wheel.packages`` copies package directories directly from the checkout, so
+# Git ignores alone do not prevent local scratch files from entering a wheel.
+# Keep common cache, credential, editor, and backup artifacts out of the final
+# archive even when they happen to exist below a packaged directory.
+wheel.exclude = [
+  # Audited research snapshots live in Git; they are not runtime resources.
+  "benchmarks/results/inference_accuracy_20260908/**",
+  "benchmarks/results/release_readiness_20260908/**",
+  "benchmarks/results/improvements_20261016/**",
+  "benchmarks/results/improvements_20261016_followup/**",
+  "**/__pycache__/**",
+  "**/.pytest_cache/**",
+  "**/.mypy_cache/**",
+  "**/.pyright/**",
+  "**/.ruff_cache/**",
+  "**/.hypothesis/**",
+  "**/.ipynb_checkpoints/**",
+  "**/.env",
+  "**/.env.*",
+  "**/.pypirc",
+  "**/.npmrc",
+  "**/pip.conf",
+  "**/*.pem",
+  "**/*.key",
+  "**/*.bak",
+  "**/*.tmp",
+  "**/*.log",
+  "**/* copy.*",
+  "**/.DS_Store",
+  "**/Thumbs.db",
+  "**/Desktop.ini",
+]
+sdist.include = [
+  "/CMakeLists.txt",
+  "/LICENSE",
+  "/README.md",
+  "/mkdocs.yml",
+  "/pyproject.toml",
+  "/requirements-docs.txt",
+  "/ctboost/__init__.py",
+  "/ctboost/__main__.py",
+  "/ctboost/_categorical_codes.py",
+  "/ctboost/_export.py",
+  "/ctboost/_integration_utils.py",
+  "/ctboost/_prepared_data_support.py",
+  "/ctboost/_serialization.py",
+  "/ctboost/_version.py",
+  "/ctboost/cli.py",
+  "/ctboost/export_codegen.py",
+  "/ctboost/export_cpp.py",
+  "/ctboost/export_onnx.py",
+  "/ctboost/export_payload.py",
+  "/ctboost/export_runtime.py",
+  "/ctboost/dask.py",
+  "/ctboost/gpu_install.py",
+  "/ctboost/explain.py",
+  "/ctboost/inference_manifest.py",
+  "/ctboost/feature_pipeline.py",
+  "/ctboost/prepared_data.py",
+  "/ctboost/ray.py",
+  "/ctboost/spark.py",
+  "/ctboost/streaming.py",
+  "/ctboost/core/*.py",
+  "/ctboost/distributed/*.py",
+  "/ctboost/sklearn/*.py",
+  "/ctboost/training/*.py",
+  "/demo/*.md",
+  "/demo/*.py",
+  "/benchmarks/*.py",
+  "/benchmarks/*.md",
+  "/benchmarks/*.cpp",
+  "/benchmarks/results/*.json",
+  "/benchmarks/tabarena/*.md",
+  "/benchmarks/tabarena/*.json",
+  "/benchmarks/tabarena/*.py",
+  "/benchmarks/split_research/*.md",
+  "/benchmarks/split_research/*.py",
+  "/benchmarks/split_research/G8S1_SCOUT_MANIFEST.json",
+  "/benchmarks/split_research/g8s1_harness/g8s1_scout/*.py",
+  "/benchmarks/split_research/g8s1_harness/g8s1_scout/p200.json",
+  "/benchmarks/split_research/results/*.json",
+  "/bindings/R/ctboost/DESCRIPTION",
+  "/bindings/R/ctboost/.Rbuildignore",
+  "/bindings/R/ctboost/NAMESPACE",
+  "/bindings/R/ctboost/README.md",
+  "/bindings/R/ctboost/R/*.R",
+  "/bindings/R/ctboost/inst/extdata/export_conformance/*.json",
+  "/bindings/R/ctboost/man/*.Rd",
+  "/bindings/R/ctboost/tests/*.R",
+  "/bindings/R/ctboost/tests/testthat/*.R",
+  "/bindings/jvm/README.md",
+  "/bindings/jvm/pom.xml",
+  "/bindings/jvm/src/main/java/**/*.java",
+  "/bindings/jvm/src/test/java/**/*.java",
+  "/docs/*.md",
+  "/docs/guides/*.md",
+  "/docs/reference/*.md",
+  "/docs/stylesheets/*.css",
+  "/scripts/prepare_cuda_runtime_license.py",
+  "/scripts/validate_release_artifacts.py",
+  "/cuda/*.cu",
+  "/cuda/*.cuh",
+  "/include/ctboost/*.hpp",
+  "/src/bindings/*.cpp",
+  "/src/bindings/*.hpp",
+  "/src/core/*.cpp",
+  "/src/core/*.hpp",
+  "/spec/json-predictor-prepared.md",
+  "/spec/json-predictor-prepared.schema.json",
+  "/spec/json-predictor-vector.md",
+  "/tests/*.py",
+  "/tests/cpp_export_smoke/CMakeLists.txt",
+  "/tests/native/*.cpp",
+  "/tests/export_conformance/*.json",
+  "/tests/export_conformance/*.md",
+]
+# Build source distributions from an explicit source allowlist.  The backend
+# otherwise walks every non-ignored workspace file, which can accidentally
+# package local virtual environments, compiled extensions, logs, and scratch
+# copies when a release is built from an active development checkout.
+sdist.exclude = ["*"]
+
+[tool.cibuildwheel]
+build = ["cp38-*", "cp39-*", "cp310-*", "cp311-*", "cp312-*", "cp313-*", "cp314-*"]
+skip = ["*-musllinux_*"]
+dependency-versions = "pinned"
+build-verbosity = 1
+test-requires = ["pytest", "scikit-learn>=1.3", "pandas>=1.5"]
+test-command = "python {project}/tests/run_installed_smoke.py {project}/tests/test_wheel_smoke.py {project}/tests/test_prediction_fast_path.py {project}/tests/test_feature_pipeline_numeric_inference.py {project}/tests/test_feature_pipeline_ctr_inference.py {project}/tests/test_feature_pipeline_optional_input_inference.py {project}/tests/test_loss_optima.py {project}/tests/test_training_prediction_arithmetic.py"
+
+[tool.cibuildwheel.config-settings]
+"cmake.define.CTBOOST_ENABLE_CUDA" = "OFF"
+
+[tool.cibuildwheel.linux]
+manylinux-x86_64-image = "manylinux_2_28"
+manylinux-aarch64-image = "manylinux_2_28"
+
+[tool.cibuildwheel.macos]
+skip = ["cp38-*", "cp39-*"]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]

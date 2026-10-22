@@ -1,0 +1,83 @@
+{
+  "config_index": 1,
+  "correction": {
+    "fold": {
+      "coefficient_rounding_absolute_bound": 2.2404881180530135e-07,
+      "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+      "inference_only": true,
+      "library": "xgboost",
+      "physical_trees": 1934,
+      "prediction_oracle_absolute_tolerance": 0.06928711384534836,
+      "topology_sha256_after": "6b91c18a4f8b92d6bd244f07e5da5e0e6fcbc984a9094d9a026cdd2495a0d29b",
+      "topology_sha256_before": "6b91c18a4f8b92d6bd244f07e5da5e0e6fcbc984a9094d9a026cdd2495a0d29b"
+    },
+    "preprocessing": {
+      "column_order": "physical tree order, then sorted observed native leaf IDs",
+      "design_nonzeros": 12087500,
+      "design_shape": [
+        6250,
+        101489
+      ],
+      "ordered_training_transform_replayed": false,
+      "training_leaf_ids_sha256": "7c6658c53808c60d6348c5591aa8e62d18396f4617e7365a83dc04d8a59e3124",
+      "training_rows": 6250,
+      "unobserved_leaf_correction": 0
+    },
+    "solve": {
+      "coefficient_norm": 0.24952537540149203,
+      "condition_estimate": 2587.2712586761672,
+      "istop": 2,
+      "iterations": 240,
+      "matrix_norm": 11596.292285357313,
+      "normal_residual_norm": 0.0003215149088876902,
+      "regularized_residual_norm": 3.129257101237701,
+      "residual_norm": 1.888374622609262
+    },
+    "stop_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 0.06928711384534836,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 3.823782267730278e-06,
+      "oracle_max_absolute_difference": 5.052745978773032e-05
+    },
+    "training_check": {
+      "fixed_tolerance_atol": 1e-05,
+      "fixed_tolerance_rtol": 5e-05,
+      "leaf_routing_exact": true,
+      "oracle_absolute_tolerance": 0.06928711384534836,
+      "oracle_difference_divided_by_max_one_or_prediction_magnitude": 4.3832557545561214e-06,
+      "oracle_max_absolute_difference": 5.780325245474671e-05
+    }
+  },
+  "dataset": "houses",
+  "finished_at": "2026-10-16T12:29:46.482178+00:00",
+  "fit_seconds": 5.577342399999907,
+  "library": "xgboost",
+  "parameters": {
+    "eta": 0.025,
+    "eval_metric": "rmse",
+    "lambda": 10,
+    "max_bin": 256,
+    "max_cat_threshold": 256,
+    "max_cat_to_onehot": 8,
+    "max_depth": 6,
+    "min_child_weight": 1,
+    "multi_strategy": "one_output_per_tree",
+    "nthread": 1,
+    "objective": "reg:squarederror",
+    "seed": 47,
+    "subsample": 0.8,
+    "tree_method": "hist"
+  },
+  "patience": 100,
+  "retained_at_round_cap": false,
+  "retained_rounds": 1934,
+  "round_cap": 4000,
+  "started_at": "2026-10-16T12:29:26.720462+00:00",
+  "status": "ok",
+  "stop_error": 0.22873814543089127,
+  "trained_at_round_cap": false,
+  "trained_rounds_if_available": 2034,
+  "uncorrected_stop_error": 0.22919174652750962
+}

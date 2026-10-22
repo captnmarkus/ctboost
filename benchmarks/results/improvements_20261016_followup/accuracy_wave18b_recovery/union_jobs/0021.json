@@ -1,0 +1,770 @@
+{
+  "dataset": "diamonds",
+  "finished_at": "2026-10-22T10:44:36.461244+00:00",
+  "library": "ctboost",
+  "native_fit_completed": true,
+  "native_fit_started": true,
+  "requested_rounds": 1024,
+  "seed": 47,
+  "selection": {
+    "best": {
+      "parameters": {
+        "alpha": 0.05,
+        "bootstrap_type": "Bernoulli",
+        "cat_features": [
+          "cut",
+          "color",
+          "clarity"
+        ],
+        "eval_metric": "RMSE",
+        "feature_test": "grouped",
+        "feature_test_adjustment": "none",
+        "feature_test_bins": 8,
+        "iterations": 1000,
+        "lambda_l2": 1,
+        "leaf_estimation_backtracking": true,
+        "leaf_estimation_iterations": 3,
+        "learning_rate": 0.15,
+        "max_bins": 256,
+        "max_cat_threshold": 64,
+        "max_depth": 8,
+        "multi_strategy": "one_output_per_tree",
+        "multiclass_feature_test": "single",
+        "ordered_ctr": true,
+        "random_seed": 47,
+        "subsample": 0.8,
+        "verbose": false
+      },
+      "retained_rounds": 1024
+    },
+    "binary_refit": null,
+    "dataset": "diamonds",
+    "fixed_job": {
+      "anchor_rounds": 256,
+      "binary_refit": null,
+      "dataset": "diamonds",
+      "expanded_source": {
+        "dataset": "diamonds",
+        "path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave14\\expanded\\diamonds.pkl",
+        "receipt": {
+          "added_rows": 25960,
+          "additional_positions_sha256": "557db062bdea4570f12627701def40d92193084a97c68f3631e4881a7e6dfc21",
+          "cap_positions_sha256": "dba69b49a53d422e5d4056026de8181832e0f6a46f1b94bbcd6cdae61800a468",
+          "cap_rows": 10000,
+          "cap_seed": 47,
+          "class_vocabulary": null,
+          "confirmation_positions_sha256": "3c01c12ad0d9b96baad439c0697d3cd997790632820740c5145157561fa945ca",
+          "confirmation_rows_excluded": 1250,
+          "dataset": "diamonds",
+          "development_positions_sha256": "e433b4cd4d73ba63497637d582e3424217fab3ed7cc1cda31d5e3e4b9e818739",
+          "development_rows_excluded": 1250,
+          "expanded_positions_sha256": "e1c946d0ddc008e95d4592ad7ff6c9bd69a9ce8122e81889c1bd169ad02f01f7",
+          "feature_names": [
+            "carat",
+            "cut",
+            "color",
+            "clarity",
+            "depth",
+            "table",
+            "x",
+            "y",
+            "z"
+          ],
+          "label_access": "Full official-TRAIN labels only for historical cap stratification/class vocabulary; excluded labels never enter fitting, normalization, correction, or confirmation scoring",
+          "original_stop_rows": 1250,
+          "original_train_rows": 6250,
+          "outer_train_index_hash_encoding": "SHA256(length_uint64_le || int64_le positions)",
+          "outer_train_indices_sha256": "c3646fff5b345f76ebe8e5659b47608dbc77f136e1734ff06713b694cec2f53e",
+          "provenance": {
+            "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\diamonds\\development.pkl": "b43f9e4ca7ad15e06c2d928de347d787815dc9517cc8af1f57538fdc9409bbe3",
+            "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\diamonds\\stop.pkl": "8aa0a52fd215f4cd95d3e65eaed49176d689e3c2de6c7842c886b3bb19fab9cb",
+            "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\diamonds\\train.pkl": "7179128062904539b97310cd9f9e2e6058c6c17cf9e3a255a5db4e886eecb277",
+            "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\plan.json": "d53e13021fb0d5d7f29353876c9f971ca3d56cb7857937c1b3c3afe436904a7b",
+            "C:\\apps\\ctboost\\.tmp\\tabarena-local-0159\\pilot\\data\\diamonds\\outer_train.pkl": "c2bc8052f073a196a3ca1c72331eff333c091d822eca1adc5f175f0c116566a0",
+            "C:\\apps\\ctboost\\.tmp\\tabarena-local-0159\\pilot\\data\\diamonds\\prepared.json": "d99f01f09e06e16dea07be0c082d2f6c37a0fc82a73d71a32e74edac553f5325",
+            "C:\\apps\\ctboost\\benchmarks\\tabarena\\pilot_0159_v1.json": "1fa7e1b482a9048a52f75d2b554b015ee027da5eddad78bb43908c213c55eff5"
+          },
+          "raw_dtypes": [
+            "float64",
+            "category",
+            "category",
+            "category",
+            "float64",
+            "float64",
+            "float64",
+            "float64",
+            "float64"
+          ],
+          "role_index_hash_encoding": "SHA256(int64_le positions), no length prefix",
+          "row_order": "original TRAIN, original STOP, then outside-cap source positions ascending",
+          "rows": 33460,
+          "source_data_sha256": "c2bc8052f073a196a3ca1c72331eff333c091d822eca1adc5f175f0c116566a0",
+          "source_prepared_sha256": "d99f01f09e06e16dea07be0c082d2f6c37a0fc82a73d71a32e74edac553f5325"
+        },
+        "sha256": "7cc55e82fc485dbe8fdcba4170005f13dcb12e4cde4570f243ff0ed9be7d4416"
+      },
+      "leaf_refit": {
+        "lambda": 1000.0,
+        "max_working_bytes": 4294967296,
+        "shrinkage": 0.25,
+        "solver": {
+          "iterations": 10000,
+          "variant": "unscaled_lsqr_10000"
+        }
+      },
+      "library": "ctboost",
+      "multiclass_refit": null,
+      "original_selection": {
+        "all_eight_successful": true,
+        "base_selection": {
+          "all_eight_successful": true,
+          "best": {
+            "config_index": 7,
+            "fit_seconds": 0.26838929999939865,
+            "parameters": {
+              "alpha": 0.05,
+              "bootstrap_type": "Bernoulli",
+              "cat_features": [
+                "cut",
+                "color",
+                "clarity"
+              ],
+              "eval_metric": "RMSE",
+              "feature_test": "grouped",
+              "feature_test_adjustment": "none",
+              "feature_test_bins": 8,
+              "iterations": 1000,
+              "lambda_l2": 1,
+              "leaf_estimation_backtracking": true,
+              "leaf_estimation_iterations": 3,
+              "learning_rate": 0.15,
+              "max_bins": 256,
+              "max_cat_threshold": 64,
+              "max_depth": 8,
+              "multi_strategy": "one_output_per_tree",
+              "multiclass_feature_test": "single",
+              "ordered_ctr": true,
+              "random_seed": 47,
+              "subsample": 0.8,
+              "verbose": false
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 256,
+            "selection_key": [
+              574.5308350044576,
+              256,
+              7
+            ],
+            "stop_error": 574.5308350044576,
+            "trained_rounds_if_available": null
+          },
+          "cumulative_search_fit_seconds": 16.913751199996113,
+          "current_wave_all_eight_successful": true,
+          "dataset": "diamonds",
+          "library": "ctboost",
+          "model_bytes": 3087518,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\diamonds\\ctboost.pkl",
+          "model_sha256": "4ff063d5c98996406c62c6b08e3f8fb5751189d6f165582596f42b3e057fa895",
+          "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+          "search_fit_seconds": 2.1646498999980395,
+          "source_wave": 1
+        },
+        "best": {
+          "config_index": 2,
+          "fit_seconds": 0.26838929999939865,
+          "parameters": {
+            "alpha": 0.05,
+            "bootstrap_type": "Bernoulli",
+            "cat_features": [
+              "cut",
+              "color",
+              "clarity"
+            ],
+            "eval_metric": "RMSE",
+            "feature_test": "grouped",
+            "feature_test_adjustment": "none",
+            "feature_test_bins": 8,
+            "iterations": 1000,
+            "lambda_l2": 1,
+            "leaf_estimation_backtracking": true,
+            "leaf_estimation_iterations": 3,
+            "learning_rate": 0.15,
+            "max_bins": 256,
+            "max_cat_threshold": 64,
+            "max_depth": 8,
+            "multi_strategy": "one_output_per_tree",
+            "multiclass_feature_test": "single",
+            "ordered_ctr": true,
+            "random_seed": 47,
+            "subsample": 0.8,
+            "verbose": false
+          },
+          "retained_at_round_cap": false,
+          "retained_rounds": 256,
+          "selection_key": [
+            570.9981560559784,
+            1,
+            -10,
+            0.25
+          ],
+          "stop_error": 570.9981560559784,
+          "trained_rounds_if_available": null
+        },
+        "cumulative_search_fit_seconds": 21.745491899997432,
+        "current_wave_all_eight_successful": true,
+        "dataset": "diamonds",
+        "leaf_refit": {
+          "fold": {
+            "coefficient_rounding_absolute_bound": 0.0011269777682449411,
+            "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+            "inference_only": true,
+            "library": "ctboost",
+            "physical_trees": 256,
+            "prediction_oracle_absolute_tolerance": 11.505845069885254,
+            "topology_sha256_after": "58bc99ae420c636a3f36c2f9b841bb9baab2f0ef3b97346013b71146a7776a17",
+            "topology_sha256_before": "58bc99ae420c636a3f36c2f9b841bb9baab2f0ef3b97346013b71146a7776a17"
+          },
+          "lambda": 10,
+          "shrinkage": 0.25,
+          "solver": {
+            "atol": 1e-08,
+            "btol": 1e-08,
+            "damp": "sqrt(lambda)",
+            "iter_lim": 2000,
+            "method": "scipy.sparse.linalg.lsqr"
+          }
+        },
+        "library": "ctboost",
+        "model_bytes": 3087954,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave6_v2\\models\\diamonds\\ctboost.pkl",
+        "model_sha256": "5ec8a3a18538253f859d03409d20b3b285b7c0430d2b7e9c92a3631978d93946",
+        "plan_sha256": "b2af792e292900317ec8086ecd6974224bffc52fd315e12a213c3f44a5e4978f",
+        "postfit_candidate_seconds": 10.7205273999989,
+        "search_fit_seconds": 2.1646498999980395,
+        "source_wave": 6
+      },
+      "parameters": {
+        "alpha": 0.05,
+        "bootstrap_type": "Bernoulli",
+        "cat_features": [
+          "cut",
+          "color",
+          "clarity"
+        ],
+        "eval_metric": "RMSE",
+        "feature_test": "grouped",
+        "feature_test_adjustment": "none",
+        "feature_test_bins": 8,
+        "iterations": 1000,
+        "lambda_l2": 1,
+        "leaf_estimation_backtracking": true,
+        "leaf_estimation_iterations": 3,
+        "learning_rate": 0.15,
+        "max_bins": 256,
+        "max_cat_threshold": 64,
+        "max_depth": 8,
+        "multi_strategy": "one_output_per_tree",
+        "multiclass_feature_test": "single",
+        "ordered_ctr": true,
+        "random_seed": 47,
+        "subsample": 0.8,
+        "verbose": false
+      },
+      "profiles": [
+        {
+          "alpha": 0.5,
+          "bootstrap_type": "Bernoulli",
+          "cat_features": [
+            "cut",
+            "color",
+            "clarity"
+          ],
+          "eval_metric": "RMSE",
+          "feature_test": "grouped",
+          "feature_test_adjustment": "none",
+          "feature_test_bins": 8,
+          "lambda_l2": 1,
+          "leaf_estimation_backtracking": true,
+          "leaf_estimation_iterations": 3,
+          "learning_rate": 0.15,
+          "max_bins": 256,
+          "max_cat_threshold": 64,
+          "max_depth": 8,
+          "multi_strategy": "one_output_per_tree",
+          "multiclass_feature_test": "single",
+          "ordered_ctr": true,
+          "random_seed": 47,
+          "subsample": 0.8,
+          "verbose": false
+        },
+        {
+          "alpha": 0.5,
+          "bootstrap_type": "Bernoulli",
+          "cat_features": [
+            "cut",
+            "color",
+            "clarity"
+          ],
+          "eval_metric": "RMSE",
+          "feature_test": "grouped",
+          "feature_test_adjustment": "none",
+          "feature_test_bins": 8,
+          "lambda_l2": 1,
+          "leaf_estimation_backtracking": true,
+          "leaf_estimation_iterations": 3,
+          "learning_rate": 0.075,
+          "max_bins": 256,
+          "max_cat_threshold": 64,
+          "max_depth": 8,
+          "multi_strategy": "one_output_per_tree",
+          "multiclass_feature_test": "single",
+          "ordered_ctr": true,
+          "random_seed": 47,
+          "subsample": 0.8,
+          "verbose": false
+        },
+        {
+          "alpha": 0.8,
+          "bootstrap_type": "Bernoulli",
+          "cat_features": [
+            "cut",
+            "color",
+            "clarity"
+          ],
+          "eval_metric": "RMSE",
+          "feature_test": "grouped",
+          "feature_test_adjustment": "none",
+          "feature_test_bins": 8,
+          "lambda_l2": 1,
+          "leaf_estimation_backtracking": true,
+          "leaf_estimation_iterations": 3,
+          "learning_rate": 0.15,
+          "max_bins": 256,
+          "max_cat_threshold": 64,
+          "max_depth": 8,
+          "multi_strategy": "one_output_per_tree",
+          "multiclass_feature_test": "single",
+          "ordered_ctr": true,
+          "random_seed": 47,
+          "subsample": 0.8,
+          "verbose": false
+        },
+        {
+          "alpha": 0.8,
+          "bootstrap_type": "Bernoulli",
+          "cat_features": [
+            "cut",
+            "color",
+            "clarity"
+          ],
+          "eval_metric": "RMSE",
+          "feature_test": "grouped",
+          "feature_test_adjustment": "none",
+          "feature_test_bins": 8,
+          "lambda_l2": 1,
+          "leaf_estimation_backtracking": true,
+          "leaf_estimation_iterations": 3,
+          "learning_rate": 0.075,
+          "max_bins": 256,
+          "max_cat_threshold": 64,
+          "max_depth": 8,
+          "multi_strategy": "one_output_per_tree",
+          "multiclass_feature_test": "single",
+          "ordered_ctr": true,
+          "random_seed": 47,
+          "subsample": 0.8,
+          "verbose": false
+        }
+      ],
+      "round_candidates": [
+        128,
+        256,
+        512
+      ],
+      "rounds": 1024,
+      "temperature": null,
+      "training_selection": {
+        "all_eight_successful": true,
+        "base_selection": {
+          "all_eight_successful": true,
+          "best": {
+            "config_index": 7,
+            "fit_seconds": 0.26838929999939865,
+            "parameters": {
+              "alpha": 0.05,
+              "bootstrap_type": "Bernoulli",
+              "cat_features": [
+                "cut",
+                "color",
+                "clarity"
+              ],
+              "eval_metric": "RMSE",
+              "feature_test": "grouped",
+              "feature_test_adjustment": "none",
+              "feature_test_bins": 8,
+              "iterations": 1000,
+              "lambda_l2": 1,
+              "leaf_estimation_backtracking": true,
+              "leaf_estimation_iterations": 3,
+              "learning_rate": 0.15,
+              "max_bins": 256,
+              "max_cat_threshold": 64,
+              "max_depth": 8,
+              "multi_strategy": "one_output_per_tree",
+              "multiclass_feature_test": "single",
+              "ordered_ctr": true,
+              "random_seed": 47,
+              "subsample": 0.8,
+              "verbose": false
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 256,
+            "selection_key": [
+              574.5308350044576,
+              256,
+              7
+            ],
+            "stop_error": 574.5308350044576,
+            "trained_rounds_if_available": null
+          },
+          "cumulative_search_fit_seconds": 16.913751199996113,
+          "current_wave_all_eight_successful": true,
+          "dataset": "diamonds",
+          "library": "ctboost",
+          "model_bytes": 3087518,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\diamonds\\ctboost.pkl",
+          "model_sha256": "4ff063d5c98996406c62c6b08e3f8fb5751189d6f165582596f42b3e057fa895",
+          "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+          "search_fit_seconds": 2.1646498999980395,
+          "source_wave": 1
+        },
+        "best": {
+          "config_index": 2,
+          "fit_seconds": 0.26838929999939865,
+          "parameters": {
+            "alpha": 0.05,
+            "bootstrap_type": "Bernoulli",
+            "cat_features": [
+              "cut",
+              "color",
+              "clarity"
+            ],
+            "eval_metric": "RMSE",
+            "feature_test": "grouped",
+            "feature_test_adjustment": "none",
+            "feature_test_bins": 8,
+            "iterations": 1000,
+            "lambda_l2": 1,
+            "leaf_estimation_backtracking": true,
+            "leaf_estimation_iterations": 3,
+            "learning_rate": 0.15,
+            "max_bins": 256,
+            "max_cat_threshold": 64,
+            "max_depth": 8,
+            "multi_strategy": "one_output_per_tree",
+            "multiclass_feature_test": "single",
+            "ordered_ctr": true,
+            "random_seed": 47,
+            "subsample": 0.8,
+            "verbose": false
+          },
+          "retained_at_round_cap": false,
+          "retained_rounds": 256,
+          "selection_key": [
+            570.9981560559784,
+            1,
+            -10,
+            0.25
+          ],
+          "stop_error": 570.9981560559784,
+          "trained_rounds_if_available": null
+        },
+        "cumulative_search_fit_seconds": 21.745491899997432,
+        "current_wave_all_eight_successful": true,
+        "dataset": "diamonds",
+        "leaf_refit": {
+          "fold": {
+            "coefficient_rounding_absolute_bound": 0.0011269777682449411,
+            "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+            "inference_only": true,
+            "library": "ctboost",
+            "physical_trees": 256,
+            "prediction_oracle_absolute_tolerance": 11.505845069885254,
+            "topology_sha256_after": "58bc99ae420c636a3f36c2f9b841bb9baab2f0ef3b97346013b71146a7776a17",
+            "topology_sha256_before": "58bc99ae420c636a3f36c2f9b841bb9baab2f0ef3b97346013b71146a7776a17"
+          },
+          "lambda": 10,
+          "shrinkage": 0.25,
+          "solver": {
+            "atol": 1e-08,
+            "btol": 1e-08,
+            "damp": "sqrt(lambda)",
+            "iter_lim": 2000,
+            "method": "scipy.sparse.linalg.lsqr"
+          }
+        },
+        "library": "ctboost",
+        "model_bytes": 3087954,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave6_v2\\models\\diamonds\\ctboost.pkl",
+        "model_sha256": "5ec8a3a18538253f859d03409d20b3b285b7c0430d2b7e9c92a3631978d93946",
+        "plan_sha256": "b2af792e292900317ec8086ecd6974224bffc52fd315e12a213c3f44a5e4978f",
+        "postfit_candidate_seconds": 10.7205273999989,
+        "search_fit_seconds": 2.1646498999980395,
+        "source_wave": 6
+      }
+    },
+    "leaf_refit": {
+      "lambda": 1000.0,
+      "max_working_bytes": 4294967296,
+      "shrinkage": 0.25,
+      "solver": {
+        "iterations": 10000,
+        "variant": "unscaled_lsqr_10000"
+      }
+    },
+    "library": "ctboost",
+    "model_bytes": 7017704,
+    "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave18b_recovery\\models\\diamonds\\ctboost.pkl",
+    "model_sha256": "51fa8defef54a082bf9e9043be1f68c5f6cfecb884f76ad566f8104828cab6f6",
+    "multiclass_refit": null,
+    "refit_details": {
+      "correction": {
+        "checks": {
+          "fitting": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 56.907039642333984,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.804600323644497e-06,
+            "oracle_max_absolute_difference": 0.03205981370047084
+          },
+          "validation": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 56.907039642333984,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 1.0111925129624923e-06,
+            "oracle_max_absolute_difference": 0.016472581867674307
+          }
+        },
+        "fold": {
+          "coefficient_rounding_absolute_bound": 0.0014454674284613829,
+          "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+          "inference_only": true,
+          "library": "ctboost",
+          "physical_trees": 1024,
+          "prediction_oracle_absolute_tolerance": 56.907039642333984,
+          "topology_sha256_after": "3da9e6bc561fcbd4b6c075827d3b8663030907abfcf9da3dbceecbe9a6ca1af7",
+          "topology_sha256_before": "3da9e6bc561fcbd4b6c075827d3b8663030907abfcf9da3dbceecbe9a6ca1af7"
+        },
+        "independent_sparse_raw_margin_oracle": true,
+        "memory": {
+          "array_budgets_bytes": {
+            "design_construction_temporary_budget": 823383680,
+            "lsqr_residual_and_vector_workspace_budget": 2497792,
+            "native_leaf_result_and_int64_copy": 548208640,
+            "native_raw_result_and_float64_copy": 535360,
+            "observed_leaf_maps": 44544,
+            "resident_csr_data_indices_indptr": 548476328
+          },
+          "csr_nonzeros": 34263040,
+          "excluded": [
+            "native model objects",
+            "input frames",
+            "categorical transform workspace",
+            "Python object/allocator overhead"
+          ],
+          "extra_certificate_vector_bytes": 9991168,
+          "max_working_bytes": 6442450944,
+          "native_leaf_count": 5568,
+          "no_dense_hessian": true,
+          "parameters_upper_bound": 5568,
+          "physical_trees": 1024,
+          "refit_array_budget_bytes": 1923146344,
+          "rows": 33460,
+          "scope": "named conservative refit arrays, not whole-process RSS",
+          "solver_kind": "regression"
+        },
+        "native_cv_adapter": {
+          "algorithm_controls_sha256": "fc84691257990994532917628913170972b9e3b141d7801403ac429dfdaef9f6",
+          "effective_named_array_limit": 6442450944,
+          "fresh_payload_metadata_guard": true,
+          "inherited_named_array_limit": 4294967296,
+          "resource_override_only": true,
+          "temperature_unchanged": true
+        },
+        "preprocessing": {
+          "column_order": "physical tree order, then sorted observed native leaf IDs",
+          "design_nonzeros": 34263040,
+          "design_shape": [
+            33460,
+            5568
+          ],
+          "ordered_ctr": true,
+          "ordered_training_transform_replayed": true,
+          "pipeline_state_sha256": "5210dec541bf2c0e33366ee014d8a0b47e9ff2e17fd0b40c11bfb0ac9e0e1f54",
+          "training_leaf_ids_sha256": "fd82970d88d146783942092c90fac9acc5411129df60c0a9ce1ad0ceb4e53770",
+          "training_rows": 33460,
+          "training_transform_sha256": "4be3e7a9bbae913477f283303f781bda4058296e0aa35e3ecc3690cebe6f5b83",
+          "unobserved_leaf_correction": 0
+        },
+        "solve": {
+          "atol": 1e-12,
+          "btol": 1e-12,
+          "certificate": {
+            "certified": true,
+            "coefficient_l2_error_bound": 1.530703911134774e-06,
+            "dual": 3631733829.8689785,
+            "finite": true,
+            "fitting_prediction_rms_error_bound": 2.646233868478086e-07,
+            "gradient_norm": 0.001530703911134774,
+            "normalized_original_gradient": 1.2787561111700822e-09,
+            "original_gradient_dual_gap": 1.171527231781647e-09,
+            "primal": 3631733829.868975,
+            "primal_minus_dual": -3.337860107421875e-06,
+            "primal_zero": 3718977327.499937,
+            "relative_gap": 3.2258069744717857e-19
+          },
+          "conlim": 100000000.0,
+          "initial_coefficients": "zero",
+          "iterations_limit": 10000,
+          "native": {
+            "condition_estimate": 2229.640214661828,
+            "istop": 2,
+            "iterations": 72,
+            "matrix_norm": 22181.00458265842,
+            "normal_residual_norm": 0.0015388589350926434,
+            "regularized_residual_norm": 85225.9799576272,
+            "residual_norm": 84563.46656680372
+          },
+          "no_heldout_score": true,
+          "penalty": 1000.0,
+          "solver_seconds_diagnostic_only": 4.34953189999942,
+          "success": true,
+          "variant": "unscaled_lsqr_10000"
+        }
+      },
+      "corrections_disabled_before_fit": true,
+      "early_stopping": false,
+      "feature_names": [
+        "carat",
+        "cut",
+        "color",
+        "clarity",
+        "depth",
+        "table",
+        "x",
+        "y",
+        "z"
+      ],
+      "fit_controls_sha256": "9b85a593afe8dbbebb7eb3f7b906b316a4ae46a5b0e2fc69d8cd0f2f2ede3a60",
+      "fit_seconds": 4.679425499998615,
+      "fitting_data": {
+        "exclusion_basis": "hash-verified historical roles and authorized expanded-source ordered IDs",
+        "normalization_performed": false,
+        "ordered_ids_sha256": "e1c946d0ddc008e95d4592ad7ff6c9bd69a9ce8122e81889c1bd169ad02f01f7",
+        "original_stop_rows": 1250,
+        "original_train_rows": 6250,
+        "outside_cap_rows": 25960,
+        "row_order": "original TRAIN, original STOP, then authorized outside-cap IDs ascending",
+        "rows": 33460,
+        "source_roles": {
+          "stop": {
+            "index_sha256": "3e974c20b4b0dd9787cfa93cf2d14b18177838f3975c31d94f2dbb4d112e4653",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\diamonds\\stop.pkl",
+            "rows": 1250,
+            "sha256": "8aa0a52fd215f4cd95d3e65eaed49176d689e3c2de6c7842c886b3bb19fab9cb"
+          },
+          "train": {
+            "index_sha256": "da7aed652a62c60f83056933aa26a1fcc5aa72cd51f1668a28ecbc8ae4948bb3",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-grouped-scout-v1\\data\\diamonds\\train.pkl",
+            "rows": 6250,
+            "sha256": "7179128062904539b97310cd9f9e2e6058c6c17cf9e3a255a5db4e886eecb277"
+          }
+        },
+        "source_sha256": "7cc55e82fc485dbe8fdcba4170005f13dcb12e4cde4570f243ff0ed9be7d4416"
+      },
+      "fixed_corrections_disabled_before_fit": true,
+      "fold_category_schema": {
+        "clarity": [
+          "I1",
+          "IF",
+          "SI1",
+          "SI2",
+          "VS1",
+          "VS2",
+          "VVS1",
+          "VVS2"
+        ],
+        "color": [
+          "D",
+          "E",
+          "F",
+          "G",
+          "H",
+          "I",
+          "J"
+        ],
+        "cut": [
+          "Fair",
+          "Good",
+          "Ideal",
+          "Premium",
+          "Very Good"
+        ]
+      },
+      "model_bytes": 7017704,
+      "model_retained": false,
+      "model_sha256": "51fa8defef54a082bf9e9043be1f68c5f6cfecb884f76ad566f8104828cab6f6",
+      "native_cv_fresh_fit": true,
+      "parameters": {
+        "alpha": 0.05,
+        "bootstrap_type": "Bernoulli",
+        "cat_features": [
+          "cut",
+          "color",
+          "clarity"
+        ],
+        "eval_metric": "RMSE",
+        "feature_test": "grouped",
+        "feature_test_adjustment": "none",
+        "feature_test_bins": 8,
+        "iterations": 1024,
+        "lambda_l2": 1,
+        "leaf_estimation_backtracking": true,
+        "leaf_estimation_iterations": 3,
+        "learning_rate": 0.15,
+        "max_bins": 256,
+        "max_cat_threshold": 64,
+        "max_depth": 8,
+        "multi_strategy": "one_output_per_tree",
+        "multiclass_feature_test": "single",
+        "ordered_ctr": true,
+        "random_seed": 47,
+        "subsample": 0.8,
+        "verbose": false
+      },
+      "prediction_array_sha256": "ef6e821424343ae39ec8aa5d82ced3f47c4502c7e2c441b43df04424cd115b7b",
+      "prediction_dtype": "<f4",
+      "prediction_shape": [
+        64
+      ],
+      "reload_bit_exact": true,
+      "requested_rounds": 1024,
+      "retained_rounds": 1024,
+      "seed": 47,
+      "structural_early_termination": false,
+      "temperature": null,
+      "training_rows": 33460,
+      "validation_labels_received": false,
+      "validation_rows": 64,
+      "verification_scope": "Fitting-row prefix for reload only; no selection score"
+    },
+    "requested_rounds": 1024,
+    "seed": 47,
+    "source_wave": 18,
+    "temperature": null
+  },
+  "started_at": "2026-10-22T10:44:14.370479+00:00",
+  "status": "ok"
+}

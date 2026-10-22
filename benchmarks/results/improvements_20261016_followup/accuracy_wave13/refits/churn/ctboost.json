@@ -1,0 +1,419 @@
+{
+  "dataset": "churn",
+  "library": "ctboost",
+  "selection": {
+    "best": {
+      "parameters": {
+        "alpha": 0.5,
+        "bootstrap_type": "Bernoulli",
+        "cat_features": [
+          "state",
+          "area_code",
+          "international_plan",
+          "voice_mail_plan"
+        ],
+        "eval_metric": "AUC",
+        "feature_test": "grouped",
+        "feature_test_adjustment": "none",
+        "feature_test_bins": 8,
+        "iterations": 2000,
+        "lambda_l2": 0.1,
+        "leaf_estimation_backtracking": true,
+        "leaf_estimation_iterations": 3,
+        "learning_rate": 0.05,
+        "max_bins": 256,
+        "max_cat_threshold": 256,
+        "max_depth": 4,
+        "min_data_in_leaf": 1,
+        "multi_strategy": "one_output_per_tree",
+        "multiclass_feature_test": "single",
+        "one_hot_max_size": 8,
+        "ordered_ctr": true,
+        "random_seed": 47,
+        "subsample": 0.8,
+        "verbose": false
+      },
+      "retained_rounds": 61,
+      "stop_error": null
+    },
+    "binary_refit": null,
+    "cv_selection": {
+      "all_fits_successful": true,
+      "best": {
+        "mean_fold_error": 0.07264823679432261,
+        "profile_index": 1,
+        "requested_rounds": 61
+      },
+      "dataset": "churn",
+      "job": {
+        "anchor_rounds": 61,
+        "binary_refit": null,
+        "dataset": "churn",
+        "leaf_refit": null,
+        "library": "ctboost",
+        "original_selection": {
+          "all_eight_successful": true,
+          "best": {
+            "config_index": 0,
+            "fit_seconds": 0.3514441999996052,
+            "parameters": {
+              "alpha": 0.05,
+              "bootstrap_type": "Bernoulli",
+              "cat_features": [
+                "state",
+                "area_code",
+                "international_plan",
+                "voice_mail_plan"
+              ],
+              "eval_metric": "AUC",
+              "feature_test": "grouped",
+              "feature_test_adjustment": "none",
+              "feature_test_bins": 8,
+              "iterations": 2000,
+              "lambda_l2": 0.1,
+              "leaf_estimation_backtracking": true,
+              "leaf_estimation_iterations": 3,
+              "learning_rate": 0.05,
+              "max_bins": 256,
+              "max_cat_threshold": 256,
+              "max_depth": 4,
+              "min_data_in_leaf": 1,
+              "multi_strategy": "one_output_per_tree",
+              "multiclass_feature_test": "single",
+              "one_hot_max_size": 8,
+              "ordered_ctr": true,
+              "random_seed": 47,
+              "subsample": 0.8,
+              "verbose": false
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 137,
+            "selection_key": [
+              0.06164515507609314,
+              137,
+              0
+            ],
+            "stop_error": 0.06164515507609314,
+            "trained_rounds_if_available": null
+          },
+          "cumulative_search_fit_seconds": 9.586626499996783,
+          "current_wave_all_eight_successful": true,
+          "dataset": "churn",
+          "library": "ctboost",
+          "model_bytes": 954061,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave4\\models\\churn\\ctboost.pkl",
+          "model_sha256": "6fdb47171b7ec6a8da62e10c34777ce1e1300b8cad3d98fc9b1976d056ee766c",
+          "plan_sha256": "b63459620d4e35f543ce3b366d33767b82da8c98a96fa30155442825ce3c585a",
+          "search_fit_seconds": 1.279098499995598,
+          "source_wave": 4
+        },
+        "parameters": {
+          "alpha": 0.5,
+          "bootstrap_type": "Bernoulli",
+          "cat_features": [
+            "state",
+            "area_code",
+            "international_plan",
+            "voice_mail_plan"
+          ],
+          "eval_metric": "AUC",
+          "feature_test": "grouped",
+          "feature_test_adjustment": "none",
+          "feature_test_bins": 8,
+          "iterations": 2000,
+          "lambda_l2": 0.1,
+          "leaf_estimation_backtracking": true,
+          "leaf_estimation_iterations": 3,
+          "learning_rate": 0.05,
+          "max_bins": 256,
+          "max_cat_threshold": 256,
+          "max_depth": 4,
+          "min_data_in_leaf": 1,
+          "multi_strategy": "one_output_per_tree",
+          "multiclass_feature_test": "single",
+          "one_hot_max_size": 8,
+          "ordered_ctr": true,
+          "random_seed": 47,
+          "subsample": 0.8,
+          "verbose": false
+        },
+        "profiles": [
+          {
+            "alpha": 0.5,
+            "bootstrap_type": "Bernoulli",
+            "cat_features": [
+              "state",
+              "area_code",
+              "international_plan",
+              "voice_mail_plan"
+            ],
+            "eval_metric": "AUC",
+            "feature_test": "grouped",
+            "feature_test_adjustment": "none",
+            "feature_test_bins": 8,
+            "lambda_l2": 0.1,
+            "leaf_estimation_backtracking": true,
+            "leaf_estimation_iterations": 3,
+            "learning_rate": 0.05,
+            "max_bins": 256,
+            "max_cat_threshold": 256,
+            "max_depth": 4,
+            "min_data_in_leaf": 1,
+            "multi_strategy": "one_output_per_tree",
+            "multiclass_feature_test": "single",
+            "one_hot_max_size": 8,
+            "ordered_ctr": true,
+            "random_seed": 47,
+            "subsample": 0.8,
+            "verbose": false
+          },
+          {
+            "alpha": 0.5,
+            "bootstrap_type": "Bernoulli",
+            "cat_features": [
+              "state",
+              "area_code",
+              "international_plan",
+              "voice_mail_plan"
+            ],
+            "eval_metric": "AUC",
+            "feature_test": "grouped",
+            "feature_test_adjustment": "none",
+            "feature_test_bins": 8,
+            "lambda_l2": 0.1,
+            "leaf_estimation_backtracking": true,
+            "leaf_estimation_iterations": 3,
+            "learning_rate": 0.025,
+            "max_bins": 256,
+            "max_cat_threshold": 256,
+            "max_depth": 4,
+            "min_data_in_leaf": 1,
+            "multi_strategy": "one_output_per_tree",
+            "multiclass_feature_test": "single",
+            "one_hot_max_size": 8,
+            "ordered_ctr": true,
+            "random_seed": 47,
+            "subsample": 0.8,
+            "verbose": false
+          },
+          {
+            "alpha": 0.8,
+            "bootstrap_type": "Bernoulli",
+            "cat_features": [
+              "state",
+              "area_code",
+              "international_plan",
+              "voice_mail_plan"
+            ],
+            "eval_metric": "AUC",
+            "feature_test": "grouped",
+            "feature_test_adjustment": "none",
+            "feature_test_bins": 8,
+            "lambda_l2": 0.1,
+            "leaf_estimation_backtracking": true,
+            "leaf_estimation_iterations": 3,
+            "learning_rate": 0.05,
+            "max_bins": 256,
+            "max_cat_threshold": 256,
+            "max_depth": 4,
+            "min_data_in_leaf": 1,
+            "multi_strategy": "one_output_per_tree",
+            "multiclass_feature_test": "single",
+            "one_hot_max_size": 8,
+            "ordered_ctr": true,
+            "random_seed": 47,
+            "subsample": 0.8,
+            "verbose": false
+          },
+          {
+            "alpha": 0.8,
+            "bootstrap_type": "Bernoulli",
+            "cat_features": [
+              "state",
+              "area_code",
+              "international_plan",
+              "voice_mail_plan"
+            ],
+            "eval_metric": "AUC",
+            "feature_test": "grouped",
+            "feature_test_adjustment": "none",
+            "feature_test_bins": 8,
+            "lambda_l2": 0.1,
+            "leaf_estimation_backtracking": true,
+            "leaf_estimation_iterations": 3,
+            "learning_rate": 0.025,
+            "max_bins": 256,
+            "max_cat_threshold": 256,
+            "max_depth": 4,
+            "min_data_in_leaf": 1,
+            "multi_strategy": "one_output_per_tree",
+            "multiclass_feature_test": "single",
+            "one_hot_max_size": 8,
+            "ordered_ctr": true,
+            "random_seed": 47,
+            "subsample": 0.8,
+            "verbose": false
+          }
+        ],
+        "round_candidates": [
+          31,
+          61,
+          122
+        ],
+        "rounds": 61,
+        "temperature": null,
+        "training_selection": {
+          "all_eight_successful": true,
+          "best": {
+            "config_index": 0,
+            "fit_seconds": 0.3514441999996052,
+            "parameters": {
+              "alpha": 0.05,
+              "bootstrap_type": "Bernoulli",
+              "cat_features": [
+                "state",
+                "area_code",
+                "international_plan",
+                "voice_mail_plan"
+              ],
+              "eval_metric": "AUC",
+              "feature_test": "grouped",
+              "feature_test_adjustment": "none",
+              "feature_test_bins": 8,
+              "iterations": 2000,
+              "lambda_l2": 0.1,
+              "leaf_estimation_backtracking": true,
+              "leaf_estimation_iterations": 3,
+              "learning_rate": 0.05,
+              "max_bins": 256,
+              "max_cat_threshold": 256,
+              "max_depth": 4,
+              "min_data_in_leaf": 1,
+              "multi_strategy": "one_output_per_tree",
+              "multiclass_feature_test": "single",
+              "one_hot_max_size": 8,
+              "ordered_ctr": true,
+              "random_seed": 47,
+              "subsample": 0.8,
+              "verbose": false
+            },
+            "retained_at_round_cap": false,
+            "retained_rounds": 137,
+            "selection_key": [
+              0.06164515507609314,
+              137,
+              0
+            ],
+            "stop_error": 0.06164515507609314,
+            "trained_rounds_if_available": null
+          },
+          "cumulative_search_fit_seconds": 9.586626499996783,
+          "current_wave_all_eight_successful": true,
+          "dataset": "churn",
+          "library": "ctboost",
+          "model_bytes": 954061,
+          "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave4\\models\\churn\\ctboost.pkl",
+          "model_sha256": "6fdb47171b7ec6a8da62e10c34777ce1e1300b8cad3d98fc9b1976d056ee766c",
+          "plan_sha256": "b63459620d4e35f543ce3b366d33767b82da8c98a96fa30155442825ce3c585a",
+          "search_fit_seconds": 1.279098499995598,
+          "source_wave": 4
+        }
+      },
+      "library": "ctboost",
+      "scores": [
+        {
+          "mean_fold_error": 0.08033035247316282,
+          "profile_index": 0,
+          "requested_rounds": 31
+        },
+        {
+          "mean_fold_error": 0.07264823679432261,
+          "profile_index": 1,
+          "requested_rounds": 61
+        },
+        {
+          "mean_fold_error": 0.07319518018830173,
+          "profile_index": 2,
+          "requested_rounds": 122
+        }
+      ]
+    },
+    "dataset": "churn",
+    "leaf_refit": null,
+    "library": "ctboost",
+    "model_bytes": 1213134,
+    "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave13\\models\\churn\\ctboost.pkl",
+    "model_sha256": "4210f43199a5286ae6e80b5df8084e9a35df9055322850d08fa20834a604d64a",
+    "refit_details": {
+      "apparent_union_error_inference_transform": 0.02486798444827787,
+      "early_stopping": false,
+      "fit_seconds": 0.09007040000142297,
+      "parameters": {
+        "alpha": 0.5,
+        "bootstrap_type": "Bernoulli",
+        "cat_features": [
+          "state",
+          "area_code",
+          "international_plan",
+          "voice_mail_plan"
+        ],
+        "eval_metric": "AUC",
+        "feature_test": "grouped",
+        "feature_test_adjustment": "none",
+        "feature_test_bins": 8,
+        "iterations": 61,
+        "lambda_l2": 0.1,
+        "leaf_estimation_backtracking": true,
+        "leaf_estimation_iterations": 3,
+        "learning_rate": 0.05,
+        "max_bins": 256,
+        "max_cat_threshold": 256,
+        "max_depth": 4,
+        "min_data_in_leaf": 1,
+        "multi_strategy": "one_output_per_tree",
+        "multiclass_feature_test": "single",
+        "one_hot_max_size": 8,
+        "ordered_ctr": true,
+        "random_seed": 47,
+        "subsample": 0.8,
+        "verbose": false
+      },
+      "requested_rounds": 61,
+      "retained_rounds": 61,
+      "structural_early_termination": false,
+      "union_data": {
+        "row_order": "original TRAIN followed by original STOP",
+        "source_roles": {
+          "stop": {
+            "index_sha256": "86cca4564cf26e9a7d4e20eda6a3d98ccc2d40b37adcac57ad52ec52ac6b84fe",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\churn\\stop.pkl",
+            "rows": 416,
+            "sha256": "39074b7e402e872977a2c9758a2b7a8cc28c9495860e8ac384c962b1a8633d2f"
+          },
+          "train": {
+            "index_sha256": "ac9963bd0d5ae11b11341d1e0cb332d69a36ef646ecca5f0eb857a96109c4370",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\churn\\train.pkl",
+            "rows": 2085,
+            "sha256": "54578e8d3e6dd9f1cee6edc4a61fcf09510996a5adf063f9b0820376c7935a37"
+          }
+        },
+        "stop_ids_sha256": "86cca4564cf26e9a7d4e20eda6a3d98ccc2d40b37adcac57ad52ec52ac6b84fe",
+        "stop_rows": 416,
+        "train_ids_sha256": "ac9963bd0d5ae11b11341d1e0cb332d69a36ef646ecca5f0eb857a96109c4370",
+        "train_rows": 2085,
+        "union_category_counts": {
+          "area_code": 3,
+          "international_plan": 2,
+          "state": 51,
+          "voice_mail_plan": 2
+        },
+        "union_ids_sha256": "791e41637f8b5d602f8e20531bf8687b93b7128a1ac451e121d4023d16e39569",
+        "union_rows": 2501,
+        "vocabulary_fit_on": "TRAIN+STOP union only"
+      }
+    },
+    "source_wave": 13,
+    "temperature": null
+  },
+  "status": "ok"
+}

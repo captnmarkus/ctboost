@@ -1,0 +1,501 @@
+{
+  "dataset": "churn",
+  "finished_at": "2026-10-22T10:41:01.785014+00:00",
+  "library": "xgboost",
+  "native_fit_completed": true,
+  "native_fit_started": true,
+  "requested_rounds": 460,
+  "seed": 47,
+  "selection": {
+    "best": {
+      "parameters": {
+        "alpha": 10.0,
+        "colsample_bytree": 1.0,
+        "eta": 0.025,
+        "eval_metric": "auc",
+        "lambda": 1.0,
+        "max_bin": 256,
+        "max_depth": 6,
+        "min_child_weight": 1.0,
+        "multi_strategy": "one_output_per_tree",
+        "nthread": 1,
+        "objective": "binary:logistic",
+        "seed": 47,
+        "subsample": 1.0,
+        "tree_method": "hist"
+      },
+      "retained_rounds": 460
+    },
+    "binary_refit": {
+      "lambda": 1000.0,
+      "max_working_bytes": 4294967296,
+      "shrinkage": 1.0,
+      "solver": {
+        "ftol": 1e-13,
+        "gradient_gate": 1e-06,
+        "gtol": 1e-09,
+        "maxiter": 2000
+      }
+    },
+    "dataset": "churn",
+    "fixed_job": {
+      "anchor_rounds": 115,
+      "binary_refit": {
+        "lambda": 1000.0,
+        "max_working_bytes": 4294967296,
+        "shrinkage": 1.0,
+        "solver": {
+          "ftol": 1e-13,
+          "gradient_gate": 1e-06,
+          "gtol": 1e-09,
+          "maxiter": 2000
+        }
+      },
+      "dataset": "churn",
+      "leaf_refit": null,
+      "library": "xgboost",
+      "multiclass_refit": null,
+      "original_selection": {
+        "all_eight_successful": true,
+        "best": {
+          "config_index": 5,
+          "fit_seconds": 0.23327050000079907,
+          "parameters": {
+            "alpha": 10.0,
+            "colsample_bytree": 1.0,
+            "eta": 0.05,
+            "eval_metric": "auc",
+            "lambda": 1.0,
+            "max_bin": 256,
+            "max_depth": 6,
+            "min_child_weight": 1.0,
+            "multi_strategy": "one_output_per_tree",
+            "nthread": 1,
+            "objective": "binary:logistic",
+            "seed": 47,
+            "subsample": 1.0,
+            "tree_method": "hist"
+          },
+          "retained_at_round_cap": false,
+          "retained_rounds": 52,
+          "selection_key": [
+            0.06337892506260834,
+            52,
+            5
+          ],
+          "stop_error": 0.06337892506260834,
+          "trained_rounds_if_available": 102
+        },
+        "cumulative_search_fit_seconds": 15.105804400001944,
+        "current_wave_all_eight_successful": true,
+        "dataset": "churn",
+        "library": "xgboost",
+        "model_bytes": 112769,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave8\\models\\churn\\xgboost.pkl",
+        "model_sha256": "f606be99077050d61c736a803178186fbca66995a9c741fea226d032525848aa",
+        "plan_sha256": "a8b864e4ef75e9f0b385789433f26fe82ec913c85f7c0fb38376e7dbd53712e8",
+        "search_fit_seconds": 2.4826948000027187,
+        "source_wave": 8
+      },
+      "parameters": {
+        "alpha": 10.0,
+        "colsample_bytree": 1.0,
+        "eta": 0.025,
+        "eval_metric": "auc",
+        "lambda": 1.0,
+        "max_bin": 256,
+        "max_depth": 6,
+        "min_child_weight": 1.0,
+        "multi_strategy": "one_output_per_tree",
+        "nthread": 1,
+        "objective": "binary:logistic",
+        "seed": 47,
+        "subsample": 1.0,
+        "tree_method": "hist"
+      },
+      "profiles": [
+        {
+          "alpha": 10.0,
+          "colsample_bytree": 1.0,
+          "eta": 0.05,
+          "eval_metric": "auc",
+          "lambda": 1.0,
+          "max_bin": 256,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "binary:logistic",
+          "seed": 47,
+          "subsample": 1.0,
+          "tree_method": "hist"
+        },
+        {
+          "alpha": 10.0,
+          "colsample_bytree": 1.0,
+          "eta": 0.025,
+          "eval_metric": "auc",
+          "lambda": 1.0,
+          "max_bin": 256,
+          "max_depth": 6,
+          "min_child_weight": 1.0,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "binary:logistic",
+          "seed": 47,
+          "subsample": 1.0,
+          "tree_method": "hist"
+        },
+        {
+          "alpha": 10.0,
+          "colsample_bytree": 1.0,
+          "eta": 0.05,
+          "eval_metric": "auc",
+          "lambda": 1.0,
+          "max_bin": 256,
+          "max_depth": 6,
+          "min_child_weight": 0.25,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "binary:logistic",
+          "seed": 47,
+          "subsample": 1.0,
+          "tree_method": "hist"
+        },
+        {
+          "alpha": 10.0,
+          "colsample_bytree": 1.0,
+          "eta": 0.025,
+          "eval_metric": "auc",
+          "lambda": 1.0,
+          "max_bin": 256,
+          "max_depth": 6,
+          "min_child_weight": 0.25,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "binary:logistic",
+          "seed": 47,
+          "subsample": 1.0,
+          "tree_method": "hist"
+        }
+      ],
+      "round_candidates": [
+        58,
+        115,
+        230
+      ],
+      "rounds": 460,
+      "temperature": null,
+      "training_selection": {
+        "all_eight_successful": true,
+        "best": {
+          "config_index": 5,
+          "fit_seconds": 0.23327050000079907,
+          "parameters": {
+            "alpha": 10.0,
+            "colsample_bytree": 1.0,
+            "eta": 0.05,
+            "eval_metric": "auc",
+            "lambda": 1.0,
+            "max_bin": 256,
+            "max_depth": 6,
+            "min_child_weight": 1.0,
+            "multi_strategy": "one_output_per_tree",
+            "nthread": 1,
+            "objective": "binary:logistic",
+            "seed": 47,
+            "subsample": 1.0,
+            "tree_method": "hist"
+          },
+          "retained_at_round_cap": false,
+          "retained_rounds": 52,
+          "selection_key": [
+            0.06337892506260834,
+            52,
+            5
+          ],
+          "stop_error": 0.06337892506260834,
+          "trained_rounds_if_available": 102
+        },
+        "cumulative_search_fit_seconds": 15.105804400001944,
+        "current_wave_all_eight_successful": true,
+        "dataset": "churn",
+        "library": "xgboost",
+        "model_bytes": 112769,
+        "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave8\\models\\churn\\xgboost.pkl",
+        "model_sha256": "f606be99077050d61c736a803178186fbca66995a9c741fea226d032525848aa",
+        "plan_sha256": "a8b864e4ef75e9f0b385789433f26fe82ec913c85f7c0fb38376e7dbd53712e8",
+        "search_fit_seconds": 2.4826948000027187,
+        "source_wave": 8
+      }
+    },
+    "leaf_refit": null,
+    "library": "xgboost",
+    "model_bytes": 673282,
+    "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave18b_recovery\\models\\churn\\xgboost.pkl",
+    "model_sha256": "aa1f74421ac59a9c9412cd80471d631536b99f306881dbc946bfbfafec59bcb8",
+    "multiclass_refit": null,
+    "refit_details": {
+      "correction": {
+        "checks": {
+          "fitting": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.007776269689202309,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 6.1275914812027106e-06,
+            "oracle_max_absolute_difference": 3.4860879500442365e-05
+          },
+          "validation": {
+            "fixed_tolerance_atol": 1e-05,
+            "fixed_tolerance_rtol": 5e-05,
+            "leaf_routing_exact": true,
+            "oracle_absolute_tolerance": 0.007776269689202309,
+            "oracle_difference_divided_by_max_one_or_prediction_magnitude": 5.830030152567934e-06,
+            "oracle_max_absolute_difference": 3.205303510345203e-05
+          }
+        },
+        "fold": {
+          "coefficient_rounding_absolute_bound": 2.346088400953083e-07,
+          "historical_training_metadata": "Preserved, not recomputed; no resume-training claim",
+          "inference_only": true,
+          "library": "xgboost",
+          "physical_trees": 460,
+          "prediction_oracle_absolute_tolerance": 0.007776269689202309,
+          "topology_sha256_after": "8e8be32632b645dadcbf9e9fbeaa14c5e44e973ec19aed16b30068774b58005c",
+          "topology_sha256_before": "8e8be32632b645dadcbf9e9fbeaa14c5e44e973ec19aed16b30068774b58005c"
+        },
+        "independent_sparse_raw_margin_oracle": true,
+        "memory": {
+          "array_budgets_bytes": {
+            "design_construction_temporary_budget": 27691072,
+            "lbfgsb_float_and_integer_work_arrays": 1841052,
+            "native_leaf_result_and_int64_copy": 18407360,
+            "native_raw_result_and_float64_copy": 40016,
+            "objective_workspace_budget": 240096,
+            "observed_leaf_maps": 38808,
+            "optimizer_vector_budget": 485100,
+            "resident_csr_data_indices_indptr": 18427376
+          },
+          "csr_nonzeros": 1150460,
+          "excluded": [
+            "native model objects",
+            "input frames",
+            "categorical transform workspace",
+            "Python object/allocator overhead"
+          ],
+          "max_working_bytes": 6442450944,
+          "native_leaf_count": 4851,
+          "no_dense_hessian": true,
+          "parameters_upper_bound": 4851,
+          "physical_trees": 460,
+          "refit_array_budget_bytes": 67170880,
+          "rows": 2501,
+          "scope": "named conservative refit arrays, not whole-process RSS",
+          "solver_kind": "binary"
+        },
+        "native_cv_adapter": {
+          "algorithm_controls_sha256": "9143edd63c5afa865a1c4f763db150ff8310622a482438912f3ed480bdcf5768",
+          "effective_named_array_limit": 6442450944,
+          "fresh_payload_metadata_guard": true,
+          "inherited_named_array_limit": 4294967296,
+          "resource_override_only": true,
+          "temperature_unchanged": true
+        },
+        "preprocessing": {
+          "column_order": "physical tree order, then sorted observed native leaf IDs",
+          "design_nonzeros": 1150460,
+          "design_shape": [
+            2501,
+            4851
+          ],
+          "ordered_training_transform_replayed": false,
+          "training_leaf_ids_sha256": "31ef18e4b3de9c4707090f88b77d9c861993cd48a759ac471a0d0d0cda954322",
+          "training_rows": 2501,
+          "unobserved_leaf_correction": 0
+        },
+        "solve": {
+          "columns": 4851,
+          "evaluations": 18,
+          "final_objective": 0.1261813435719849,
+          "ftol": 1e-13,
+          "gradient_gate": 1e-06,
+          "gtol": 1e-09,
+          "initial_coefficients": "all zero",
+          "initial_objective": 0.1457055723086167,
+          "iterations": 14,
+          "maxcor": 20,
+          "maximum_absolute_mean_gradient": 1.3331400739211446e-08,
+          "maxiter": 2000,
+          "maxls": 50,
+          "message": "CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH",
+          "method": "L-BFGS-B",
+          "objective": "sum binary logistic loss with fixed baseline offset + lambda/2 * ||delta||^2, scaled by rows",
+          "penalty": 1000.0,
+          "rows": 2501,
+          "status": 0
+        }
+      },
+      "corrections_disabled_before_fit": true,
+      "early_stopping": false,
+      "feature_names": [
+        "state",
+        "account_length",
+        "area_code",
+        "international_plan",
+        "voice_mail_plan",
+        "number_vmail_messages",
+        "total_day_minutes",
+        "total_day_calls",
+        "total_day_charge",
+        "total_eve_minutes",
+        "total_eve_calls",
+        "total_eve_charge",
+        "total_night_minutes",
+        "total_night_calls",
+        "total_night_charge",
+        "total_intl_minutes",
+        "total_intl_calls",
+        "total_intl_charge",
+        "number_customer_service_calls"
+      ],
+      "fit_controls_sha256": "74dd46753dea29791af343998e732cd35fae0f3abdcd75d940cfd6b136e7bccc",
+      "fit_seconds": 0.753194999999323,
+      "fitting_data": {
+        "exclusion_basis": "hash-verified historical roles and authorized expanded-source ordered IDs",
+        "normalization_performed": false,
+        "ordered_ids_sha256": "791e41637f8b5d602f8e20531bf8687b93b7128a1ac451e121d4023d16e39569",
+        "original_stop_rows": 416,
+        "original_train_rows": 2085,
+        "outside_cap_rows": 0,
+        "row_order": "original TRAIN, original STOP, then authorized outside-cap IDs ascending",
+        "rows": 2501,
+        "source_roles": {
+          "stop": {
+            "index_sha256": "86cca4564cf26e9a7d4e20eda6a3d98ccc2d40b37adcac57ad52ec52ac6b84fe",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\churn\\stop.pkl",
+            "rows": 416,
+            "sha256": "39074b7e402e872977a2c9758a2b7a8cc28c9495860e8ac384c962b1a8633d2f"
+          },
+          "train": {
+            "index_sha256": "ac9963bd0d5ae11b11341d1e0cb332d69a36ef646ecca5f0eb857a96109c4370",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\churn\\train.pkl",
+            "rows": 2085,
+            "sha256": "54578e8d3e6dd9f1cee6edc4a61fcf09510996a5adf063f9b0820376c7935a37"
+          }
+        },
+        "source_sha256": null
+      },
+      "fixed_corrections_disabled_before_fit": true,
+      "fold_category_schema": {
+        "area_code": [
+          "408.0",
+          "415.0",
+          "510.0"
+        ],
+        "international_plan": [
+          "0",
+          "1"
+        ],
+        "state": [
+          "0",
+          "1",
+          "10",
+          "11",
+          "12",
+          "13",
+          "14",
+          "15",
+          "16",
+          "17",
+          "18",
+          "19",
+          "2",
+          "20",
+          "21",
+          "22",
+          "23",
+          "24",
+          "25",
+          "26",
+          "27",
+          "28",
+          "29",
+          "3",
+          "30",
+          "31",
+          "32",
+          "33",
+          "34",
+          "35",
+          "36",
+          "37",
+          "38",
+          "39",
+          "4",
+          "40",
+          "41",
+          "42",
+          "43",
+          "44",
+          "45",
+          "46",
+          "47",
+          "48",
+          "49",
+          "5",
+          "50",
+          "6",
+          "7",
+          "8",
+          "9"
+        ],
+        "voice_mail_plan": [
+          "0",
+          "1"
+        ]
+      },
+      "model_bytes": 673282,
+      "model_retained": false,
+      "model_sha256": "aa1f74421ac59a9c9412cd80471d631536b99f306881dbc946bfbfafec59bcb8",
+      "native_cv_fresh_fit": true,
+      "parameters": {
+        "alpha": 10.0,
+        "colsample_bytree": 1.0,
+        "eta": 0.025,
+        "eval_metric": "auc",
+        "lambda": 1.0,
+        "max_bin": 256,
+        "max_depth": 6,
+        "min_child_weight": 1.0,
+        "multi_strategy": "one_output_per_tree",
+        "nthread": 1,
+        "objective": "binary:logistic",
+        "seed": 47,
+        "subsample": 1.0,
+        "tree_method": "hist"
+      },
+      "prediction_array_sha256": "ee12e3743341f984c330ad336fd269ffdf17b276fb6c837588eb6a44681fd701",
+      "prediction_dtype": "<f4",
+      "prediction_shape": [
+        64
+      ],
+      "reload_bit_exact": true,
+      "requested_rounds": 460,
+      "retained_rounds": 460,
+      "seed": 47,
+      "structural_early_termination": false,
+      "temperature": null,
+      "training_rows": 2501,
+      "validation_labels_received": false,
+      "validation_rows": 64,
+      "verification_scope": "Fitting-row prefix for reload only; no selection score"
+    },
+    "requested_rounds": 460,
+    "seed": 47,
+    "source_wave": 18,
+    "temperature": null
+  },
+  "started_at": "2026-10-22T10:41:00.011148+00:00",
+  "status": "ok"
+}

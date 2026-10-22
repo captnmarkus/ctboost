@@ -1,0 +1,151 @@
+{
+  "dataset": "in_vehicle_coupon_recommendation",
+  "finished_at": "2026-10-16T12:02:15.118402+00:00",
+  "library": "xgboost",
+  "selection": {
+    "all_eight_successful": true,
+    "base_selection": {
+      "all_eight_successful": true,
+      "best": {
+        "config_index": 2,
+        "fit_seconds": 1.3270763000000443,
+        "parameters": {
+          "eta": 0.05,
+          "eval_metric": "auc",
+          "lambda": 1,
+          "max_bin": 256,
+          "max_depth": 8,
+          "multi_strategy": "one_output_per_tree",
+          "nthread": 1,
+          "objective": "binary:logistic",
+          "seed": 47,
+          "subsample": 0.8,
+          "tree_method": "hist"
+        },
+        "retained_at_round_cap": false,
+        "retained_rounds": 235,
+        "selection_key": [
+          0.1944602562979828,
+          235,
+          2
+        ],
+        "stop_error": 0.1944602562979828,
+        "trained_rounds_if_available": 285
+      },
+      "cumulative_search_fit_seconds": 54.236201499990784,
+      "current_wave_all_eight_successful": true,
+      "dataset": "in_vehicle_coupon_recommendation",
+      "library": "xgboost",
+      "model_bytes": 3513126,
+      "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave1_v2\\models\\in_vehicle_coupon_recommendation\\xgboost.pkl",
+      "model_sha256": "ded3b1b425e3b0f17372f29b7aabd694f19da73adac9b2ae3215fad7614aad83",
+      "plan_sha256": "df79833efcb4734458cfea214676568fd7970dd22922fe2ea8b3638d210a66ed",
+      "search_fit_seconds": 8.28501150000011,
+      "source_wave": 1
+    },
+    "best": {
+      "config_index": 2,
+      "fit_seconds": 1.3270763000000443,
+      "parameters": {
+        "eta": 0.05,
+        "eval_metric": "auc",
+        "lambda": 1,
+        "max_bin": 256,
+        "max_depth": 8,
+        "multi_strategy": "one_output_per_tree",
+        "nthread": 1,
+        "objective": "binary:logistic",
+        "seed": 47,
+        "subsample": 0.8,
+        "tree_method": "hist"
+      },
+      "retained_at_round_cap": false,
+      "retained_rounds": 235,
+      "selection_key": null,
+      "stop_error": null,
+      "trained_rounds_if_available": 285
+    },
+    "cumulative_search_fit_seconds": 54.236201499990784,
+    "current_wave_all_eight_successful": true,
+    "dataset": "in_vehicle_coupon_recommendation",
+    "library": "xgboost",
+    "mandatory_union_refit": true,
+    "model_bytes": 3762636,
+    "model_path": "C:\\apps\\ctboost\\.tmp\\improvements-20261016\\followup\\accuracy_wave9\\models\\in_vehicle_coupon_recommendation\\xgboost.pkl",
+    "model_sha256": "598a3b0aa10dd99c222a3673a852ea473cb638fdfcb6435e03269ffd06e94dcb",
+    "plan_sha256": "fb82afcb096c6346ff1dd3c99281004efafe948d9bde4221bea5a50a4e095107",
+    "refit_details": {
+      "apparent_union_error_inference_transform": 0.00011235538235498943,
+      "early_stopping": false,
+      "fit_seconds": 0.8753538999990269,
+      "parameters": {
+        "eta": 0.05,
+        "eval_metric": "auc",
+        "lambda": 1,
+        "max_bin": 256,
+        "max_depth": 8,
+        "multi_strategy": "one_output_per_tree",
+        "nthread": 1,
+        "objective": "binary:logistic",
+        "seed": 47,
+        "subsample": 0.8,
+        "tree_method": "hist"
+      },
+      "requested_rounds": 235,
+      "retained_rounds": 235,
+      "structural_early_termination": false,
+      "union_data": {
+        "row_order": "original TRAIN followed by original STOP",
+        "source_roles": {
+          "stop": {
+            "index_sha256": "046d57cce251fdfdb2c4d5999bb1b3add867fed8c21d77339d5273c99e24a7c6",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\in_vehicle_coupon_recommendation\\stop.pkl",
+            "rows": 1057,
+            "sha256": "aa8945b3b51c5a8e35e2dedd95fc61952d1d74579a5311d7a29e0941e7b42cde"
+          },
+          "train": {
+            "index_sha256": "a9943111493fdf3fb8fa87727ff777bbeac325ea2e7d51f8d567bd3b2f2d301e",
+            "path": "C:\\apps\\ctboost\\.tmp\\inference-accuracy-20260908\\accuracy-remaining-scout-v1\\data\\in_vehicle_coupon_recommendation\\train.pkl",
+            "rows": 5285,
+            "sha256": "a4ffda38caa481cea4b7b79c4615a71cd9e9524005425181a79d7db49a22f9bb"
+          }
+        },
+        "stop_ids_sha256": "046d57cce251fdfdb2c4d5999bb1b3add867fed8c21d77339d5273c99e24a7c6",
+        "stop_rows": 1057,
+        "train_ids_sha256": "a9943111493fdf3fb8fa87727ff777bbeac325ea2e7d51f8d567bd3b2f2d301e",
+        "train_rows": 5285,
+        "union_category_counts": {
+          "Bar": 6,
+          "CarryAway": 6,
+          "CoffeeHouse": 6,
+          "Restaurant20To50": 6,
+          "RestaurantLessThan20": 6,
+          "age": 8,
+          "car": 6,
+          "coupon": 5,
+          "destination": 3,
+          "direction_opp": 2,
+          "direction_same": 2,
+          "education": 6,
+          "expiration": 2,
+          "gender": 2,
+          "has_children": 2,
+          "income": 9,
+          "maritalStatus": 5,
+          "occupation": 25,
+          "passenger": 4,
+          "toCoupon_GEQ15min": 2,
+          "toCoupon_GEQ25min": 2,
+          "weather": 3
+        },
+        "union_ids_sha256": "ef26974f581af575edbb971ee3796e290156a97616a8a1c9c8f37fe4899cb797",
+        "union_rows": 6342,
+        "vocabulary_fit_on": "TRAIN+STOP union only"
+      }
+    },
+    "search_fit_seconds": 8.28501150000011,
+    "source_wave": 9
+  },
+  "started_at": "2026-10-16T12:02:14.024585+00:00",
+  "status": "ok"
+}
