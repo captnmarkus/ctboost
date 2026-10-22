@@ -238,15 +238,49 @@ def test_completed_cache_verified_and_reused_without_launch(factory):
     assert resumed.progress()["counts"]["complete"] == 1
 
 
-def test_synthetic_process_failure_continues_next_parent_and_never_retries(factory):
+def test_synthetic_process_failure_continues_next_parent_and_never_retries(factory, monkeypatch):
+    process = base.psutil.Process()
+    interpreter = {
+        "executable": sys.executable,
+        "resolved_executable": str(Path(sys.executable).resolve()),
+        "base_executable": sys._base_executable,
+        "resolved_base_executable": str(Path(sys._base_executable).resolve()),
+        "process_exe": process.exe(),
+        "resolved_process_exe": str(Path(process.exe()).resolve()),
+        "process_cmdline": process.cmdline(),
+    }
+    comparisons = []
+    original_same_command = base.same_command
+
+    def traced_same_command(actual, expected):
+        result = original_same_command(actual, expected)
+        comparisons.append({"actual": actual, "expected": expected, "matches": result})
+        return result
+
+    monkeypatch.setattr(base, "same_command", traced_same_command)
     parents = [parent(0, outcome="failed"), parent(1), parent(2, owner="kaggle")]
     run = factory(parents)
     with base.controller_lock(run.output):
-        assert run.run() == 1
+        result = run.run()
     records = run.state["parents"]
     failed, completed = records[base.parent_key(parents[0])], records[base.parent_key(parents[1])]
-    assert failed["status"] == "failed" and "Deliberate synthetic" in failed["worker_error"]
-    assert completed["status"] == "complete"
+    diagnostic = {
+        "interpreter": interpreter,
+        "command_comparisons": comparisons,
+        "result": result,
+        "records": records,
+        "fixture_files": {
+            str(path.relative_to(factory.root)): path.read_text(encoding="utf-8", errors="replace")
+            for path in sorted(factory.root.rglob("*"))
+            if path.is_file() and path.suffix in {".json", ".log"}
+        },
+    }
+    evidence = json.dumps(diagnostic, indent=2)
+    (factory.root / "macos_probe_diagnostic.json").write_text(evidence, encoding="utf-8")
+    print(evidence)
+    assert result == 1, evidence
+    assert failed["status"] == "failed" and "Deliberate synthetic" in failed.get("worker_error", ""), evidence
+    assert completed["status"] == "complete", evidence
     assert not base.parent_paths(run.output, parents[2])[2].exists()
     identity = completed["identity"]
     resumed = factory()
