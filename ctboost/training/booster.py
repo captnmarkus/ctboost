@@ -139,7 +139,8 @@ class Booster:
             return data
         if self._feature_pipeline is None:
             if _is_pandas_dataframe(data):
-                data = align_pandas_categories(data, self.data_schema.get("categorical_schema"))
+                schema = self.data_schema
+                data = align_pandas_categories(data, schema.get("categorical_schema"), schema.get("cat_features"))
             return _prediction_pool(data)
         transformed, cat_features, feature_names = self._feature_pipeline.transform_array(data)
         pool = Pool(

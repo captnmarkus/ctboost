@@ -97,8 +97,10 @@ ensemble across all tasks, datasets and splits. All three entries are verified
 with 0% imputation. The Space does not identify a package version in these
 rows. [TabArena results at the checked revision](https://huggingface.co/spaces/TabArena/leaderboard/blob/8ce4c3037c2b8f9385f6b35375776f610af2e9dd/data/entrants_models/imputation_yes/splits_all/tasks_all/datasets_all/website_leaderboard.csv)
 
-The [benchmark guide](https://captnmarkus.github.io/ctboost/benchmarks/) covers
-local development experiments and the older author-run Lite evaluation.
+CTBoost ranks fourth of CatBoost, LightGBM, XGBoost and CTBoost by official
+Elo in each configuration. The public 0.1.63 wheel ranked third on 51 local
+TabArena development splits, ahead of XGBoost and behind CatBoost and LightGBM.
+All four models used one seed and a 200-round cap. [Dataset results and methodology](benchmarks/tabarena/FOUR_MODEL_DEVELOPMENT.md)
 
 For opt-in CPU learning controls, see
 [safeguarded leaves and joint multiclass tests](https://captnmarkus.github.io/ctboost/guides/learning-options/).

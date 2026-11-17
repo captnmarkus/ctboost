@@ -6,20 +6,32 @@ The 17 November 2026 snapshot includes 110 rows in the models-only view with
 all datasets, task types and splits and with imputed entries included. All three
 CTBoost rows are marked verified and have 0% imputation.
 
-| CTBoost entry | Elo | 95% interval |
-|---|---:|---:|
-| Default | 1177 | 1111 to 1241 |
-| Tuned | 1298 | 1246 to 1337 |
-| Tuned + ensembled | 1327 | 1279 to 1367 |
+| Configuration | CTBoost Elo (95% interval) | CatBoost Elo | LightGBM Elo | XGBoost Elo |
+|---|---:|---:|---:|---:|
+| Default | 1177 (1111 to 1241) | 1363 | 1183 | 1208 |
+| Tuned | 1298 (1246 to 1337) | 1391 | 1368 | 1336 |
+| Tuned + ensembled | 1327 (1279 to 1367) | 1402 | 1411 | 1360 |
 
-The Space table omits package versions. These ratings predate 0.1.63.
+CTBoost ranks fourth among these four libraries in each configuration by Elo
+point estimate. The six-point gap to default LightGBM is small relative to the
+reported uncertainty. The Space table omits package versions. Its snapshot
+predates 0.1.63, and the upstream CTBoost integration pins 0.1.61.
 The older author-run Lite study below used a different task and competitor
 roster. [Versioned leaderboard table](https://huggingface.co/spaces/TabArena/leaderboard/blob/8ce4c3037c2b8f9385f6b35375776f610af2e9dd/data/entrants_models/imputation_yes/splits_all/tasks_all/datasets_all/website_leaderboard.csv) and
-[Upstream adapter](https://github.com/autogluon/tabarena/pull/479)
+[upstream version pin](https://github.com/autogluon/tabarena/blob/cc507b84d1f32d2ca5b5704326bf4f086ee6519a/packages/tabarena/src/tabarena/models/ctboost/info.py)
 
 ## CTBoost 0.1.63 development comparisons
 
-Across all 51 cached TabArena tasks at seed 0, the corrected build improved
+In a separate four-library comparison on the 51 cached development splits,
+the public 0.1.63 wheel ranked **third of four** by mean task rank. CatBoost
+averaged 1.86, LightGBM 2.41, CTBoost 2.73 and XGBoost 3.00 (lower is better).
+CTBoost won nine tasks outright. It placed second on binary classification,
+third on multiclass classification and fourth on regression. All 204 fits
+completed using one seed and a maximum of 200 boosting rounds. Replaying
+CTBoost after the pandas schema fixes reproduced the published wheel's
+predictions on all 51 tasks. [Four-model protocol and per-task results](https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/FOUR_MODEL_DEVELOPMENT.md)
+
+In the earlier comparison against CTBoost 0.1.62 on these tasks, 0.1.63 improved
 three, produced identical predictions on 46 and worsened two. All 102 fits
 completed. Median relative error reduction across tasks was **0.00%** and the
 unweighted mean was **+0.17%**. Each fit used a 200-round cap, 25 rounds of

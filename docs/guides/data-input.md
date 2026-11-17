@@ -113,3 +113,22 @@ print(booster.data_schema)
 The scikit-learn estimators expose the persisted schema through
 `data_schema_`. Schema metadata also participates in snapshot/resume validation
 and is included in inference manifests.
+
+In an inference manifest, a metadata key such as `"1"` belongs to the column
+named `"1"` when that name exists. Otherwise it can identify the column at
+zero-based position 1. Use column names for metadata when the frame contains
+numeric-looking names.
+
+## Infinite numeric values and JSON export
+
+Use finite numeric values and `NaN` for missing values when training a model
+for portable JSON inference. An infinite training value can produce an
+infinite quantile border. CTBoost's Python loader can reopen a native model
+with that border, but strict JSON readers reject the `Infinity` token and the
+portable predictor exporter requires finite borders.
+
+If infinity means missing in your data, apply `np.where(np.isinf(X), np.nan, X)`
+to the numeric matrix before fitting and apply the same conversion at inference.
+If infinity has a distinct meaning, encode it in a separate finite indicator
+and use a finite replacement for the original feature. Retrain an existing
+model before exporting it with this preprocessing.

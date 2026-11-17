@@ -8,6 +8,7 @@ import numpy as np
 
 from ..core import Pool
 from ..core.columnar import _array_protocol_to_numpy
+from ..core.normalization import _is_pandas_dataframe
 from ..core.pandas_categories import align_pandas_categories, pandas_category_schema
 from ..feature_pipeline import FeaturePipeline
 from ..training import _apply_sample_weight_to_pool, _normalize_eval_sets, _pool_from_data_and_label, train
@@ -121,23 +122,27 @@ class _BaseFitMixin:
             else:
                 self._feature_pipeline = None
                 seed_booster = getattr(resolved_init_model, "_booster", resolved_init_model)
+                fitted_cat_features = None
+                if seed_booster is None and resume_from_snapshot and _is_pandas_dataframe(X):
+                    snapshot = _resolve_resume_snapshot_path(resume_from_snapshot, snapshot_path)
+                    seed_booster = Booster.load_model(snapshot)
                 if seed_booster is None:
                     category_schema = pandas_category_schema(X)
-                    if category_schema and resume_from_snapshot:
-                        snapshot = _resolve_resume_snapshot_path(resume_from_snapshot, snapshot_path)
-                        if not Booster.load_model(snapshot).data_schema.get("categorical_schema"):
-                            category_schema = None
                 else:
                     # Earlier models have no fitted vocabulary. Keep their code
                     # space intact on continuation as well as on prediction.
-                    saved_schema = getattr(seed_booster, "data_schema", {}).get("categorical_schema")
+                    data_schema = getattr(seed_booster, "data_schema", {})
+                    saved_schema = data_schema.get("categorical_schema")
                     category_schema = None
                     if isinstance(saved_schema, dict) and any(
-                        isinstance(column, dict) and "pandas_category_labels" in column
+                        isinstance(column, dict) and (
+                            "pandas_category_labels" in column or "pandas_category_labels_by_position" in column
+                        )
                         for column in saved_schema.values()
                     ):
                         category_schema = saved_schema
-                        X = align_pandas_categories(X, category_schema)
+                        fitted_cat_features = data_schema.get("cat_features")
+                        X = align_pandas_categories(X, category_schema, fitted_cat_features)
                 train_pool = (
                     X
                     if (
@@ -160,6 +165,7 @@ class _BaseFitMixin:
                         baseline=baseline,
                         pairs=pairs,
                         pairs_weight=pairs_weight,
+                        cat_features=fitted_cat_features,
                         categorical_schema=category_schema,
                     )
                 )
@@ -171,7 +177,9 @@ class _BaseFitMixin:
                         X_eval, y_eval = resolved_eval_set[:2]
                         group_eval = resolved_eval_set[2] if len(resolved_eval_set) == 3 else None
                         eval_pools.append(_pool_from_data_and_label(
-                            align_pandas_categories(X_eval, category_schema), y_eval, group_id=group_eval
+                            align_pandas_categories(X_eval, category_schema, train_pool.cat_features), y_eval,
+                            group_id=group_eval,
+                            cat_features=train_pool.cat_features if category_schema else None,
                         ))
     
             train_pool = _apply_sample_weight_to_pool(train_pool, sample_weight)

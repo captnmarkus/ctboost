@@ -1,0 +1,1752 @@
+{
+  "protocol": {
+    "seed": 0,
+    "round_cap": 200,
+    "patience": 25,
+    "threads_per_fit": 1,
+    "source_plan_sha256": {
+      "accuracy-grouped-scout-v1": "d53e13021fb0d5d7f29353876c9f971ca3d56cb7857937c1b3c3afe436904a7b",
+      "accuracy-remaining-scout-v1": "07cd7841988b2f32cc034470ef295fb54ad68d90c6dcf39a2b81105db1ac2e94"
+    },
+    "metrics": {
+      "binary": "1 - ROC-AUC",
+      "multiclass": "log loss",
+      "regression": "RMSE"
+    }
+  },
+  "packages": {
+    "ctboost": {
+      "library": "ctboost",
+      "versions": {
+        "ctboost": "0.1.63",
+        "numpy": "2.0.2",
+        "pandas": "2.3.3",
+        "scikit-learn": "1.6.1",
+        "scipy": "1.16.3"
+      },
+      "python": "3.12.11"
+    },
+    "catboost": {
+      "library": "catboost",
+      "versions": {
+        "catboost": "1.2.10",
+        "numpy": "2.0.2",
+        "pandas": "2.3.3",
+        "scikit-learn": "1.6.1",
+        "scipy": "1.16.3"
+      },
+      "python": "3.12.11"
+    },
+    "lightgbm": {
+      "library": "lightgbm",
+      "versions": {
+        "lightgbm": "4.7.0",
+        "numpy": "2.0.2",
+        "pandas": "2.3.3",
+        "scikit-learn": "1.6.1",
+        "scipy": "1.16.3"
+      },
+      "python": "3.12.11"
+    },
+    "xgboost": {
+      "library": "xgboost",
+      "versions": {
+        "xgboost": "3.4.1",
+        "numpy": "2.0.2",
+        "pandas": "2.3.3",
+        "scikit-learn": "1.6.1",
+        "scipy": "1.16.3"
+      },
+      "python": "3.12.11"
+    }
+  },
+  "groups": {
+    "all": {
+      "complete_tasks": 51,
+      "average_rank": {
+        "ctboost": 2.7254901960784315,
+        "catboost": 1.8627450980392157,
+        "lightgbm": 2.411764705882353,
+        "xgboost": 3.0
+      },
+      "ctboost_head_to_head": {
+        "catboost": {
+          "wins": 14,
+          "ties": 0,
+          "losses": 37
+        },
+        "lightgbm": {
+          "wins": 24,
+          "ties": 0,
+          "losses": 27
+        },
+        "xgboost": {
+          "wins": 27,
+          "ties": 0,
+          "losses": 24
+        }
+      }
+    },
+    "binary": {
+      "complete_tasks": 30,
+      "average_rank": {
+        "ctboost": 2.466666666666667,
+        "catboost": 1.7333333333333334,
+        "lightgbm": 2.7666666666666666,
+        "xgboost": 3.033333333333333
+      },
+      "ctboost_head_to_head": {
+        "catboost": {
+          "wins": 9,
+          "ties": 0,
+          "losses": 21
+        },
+        "lightgbm": {
+          "wins": 18,
+          "ties": 0,
+          "losses": 12
+        },
+        "xgboost": {
+          "wins": 19,
+          "ties": 0,
+          "losses": 11
+        }
+      }
+    },
+    "multiclass": {
+      "complete_tasks": 8,
+      "average_rank": {
+        "ctboost": 2.5,
+        "catboost": 2.375,
+        "lightgbm": 1.875,
+        "xgboost": 3.25
+      },
+      "ctboost_head_to_head": {
+        "catboost": {
+          "wins": 3,
+          "ties": 0,
+          "losses": 5
+        },
+        "lightgbm": {
+          "wins": 3,
+          "ties": 0,
+          "losses": 5
+        },
+        "xgboost": {
+          "wins": 6,
+          "ties": 0,
+          "losses": 2
+        }
+      }
+    },
+    "regression": {
+      "complete_tasks": 13,
+      "average_rank": {
+        "ctboost": 3.4615384615384617,
+        "catboost": 1.8461538461538463,
+        "lightgbm": 1.9230769230769231,
+        "xgboost": 2.769230769230769
+      },
+      "ctboost_head_to_head": {
+        "catboost": {
+          "wins": 2,
+          "ties": 0,
+          "losses": 11
+        },
+        "lightgbm": {
+          "wins": 3,
+          "ties": 0,
+          "losses": 10
+        },
+        "xgboost": {
+          "wins": 2,
+          "ties": 0,
+          "losses": 11
+        }
+      }
+    }
+  },
+  "tasks": [
+    {
+      "dataset": "blood-transfusion-service-center",
+      "problem": "binary",
+      "development_rows": 62,
+      "models": {
+        "ctboost": {
+          "error": 0.41914893617021276,
+          "selected_rounds": 89,
+          "prediction_sha256": "495fe0975814f10145f5325075115339dc5f3654f10be421e9d0c4486132155d",
+          "rank": 4.0
+        },
+        "catboost": {
+          "error": 0.38510638297872335,
+          "selected_rounds": 52,
+          "prediction_sha256": "49a85182029cedefd85b14a2ca97b8e584806b5e51760022cbe17219054a6543",
+          "rank": 3.0
+        },
+        "lightgbm": {
+          "error": 0.3773049645390071,
+          "selected_rounds": 22,
+          "prediction_sha256": "bfb40dafb73bd5b88ded0d62173deb5c0ec3f94c4e89356a36fc418726ed0742",
+          "rank": 2.0
+        },
+        "xgboost": {
+          "error": 0.34822695035460993,
+          "selected_rounds": 6,
+          "prediction_sha256": "aa922f50353945a8f11c458d767366d3bcc49b2ad510b6cc041ca492d4fe474c",
+          "rank": 1.0
+        }
+      }
+    },
+    {
+      "dataset": "coil2000_insurance_policies",
+      "problem": "binary",
+      "development_rows": 818,
+      "models": {
+        "ctboost": {
+          "error": 0.31986943021682024,
+          "selected_rounds": 116,
+          "prediction_sha256": "6e9cdb276d034f6906fddd5f13be0f4e32491b0c1cddb31c6297ba4059cd641a",
+          "rank": 2.0
+        },
+        "catboost": {
+          "error": 0.30644091186539635,
+          "selected_rounds": 57,
+          "prediction_sha256": "a89d5e94034190b6f28ad62116488fee8591d66dac9884ab268abd2c76c7263f",
+          "rank": 1.0
+        },
+        "lightgbm": {
+          "error": 0.3375043125182453,
+          "selected_rounds": 15,
+          "prediction_sha256": "e113cb08819018ebffd4c85ce51f1c0dbea2fb353032c41c58dcbf98b494cc48",
+          "rank": 3.0
+        },
+        "xgboost": {
+          "error": 0.3376635439611475,
+          "selected_rounds": 2,
+          "prediction_sha256": "2a572cd15a5e0da059aad0c88bf306807d4c2f16fa646ef4342fa6c735183ff0",
+          "rank": 4.0
+        }
+      }
+    },
+    {
+      "dataset": "GiveMeSomeCredit",
+      "problem": "binary",
+      "development_rows": 1250,
+      "models": {
+        "ctboost": {
+          "error": 0.14107040757984157,
+          "selected_rounds": 141,
+          "prediction_sha256": "6c0e1a18b5b33970ec3c08b6ed536d51b93226ab4148f96d8d1436e9cda07b03",
+          "rank": 1.0
+        },
+        "catboost": {
+          "error": 0.14582312341746317,
+          "selected_rounds": 27,
+          "prediction_sha256": "a11ee36526056db84fe7942c5d0ba54cf97c3806e5c1e6bde2ee5b7a870d9504",
+          "rank": 3.0
+        },
+        "lightgbm": {
+          "error": 0.14356673201012815,
+          "selected_rounds": 16,
+          "prediction_sha256": "a512d2b038f75feee07fb3140ffeb3b9b697e8a92aca250e38d4b20c2b51650c",
+          "rank": 2.0
+        },
+        "xgboost": {
+          "error": 0.1576206812055868,
+          "selected_rounds": 4,
+          "prediction_sha256": "b5146dccfbde9377fbb5cd75c6e308fcc29aec73f88d15d9eb6390f0fb672c17",
+          "rank": 4.0
+        }
+      }
+    },
+    {
+      "dataset": "QSAR_fish_toxicity",
+      "problem": "regression",
+      "development_rows": 75,
+      "models": {
+        "ctboost": {
+          "error": 0.770438147237556,
+          "selected_rounds": 200,
+          "prediction_sha256": "fae528eaabd4e86572c01a242344578446c334c50aa03e39c535f9cbf5ec8eb7",
+          "rank": 4.0
+        },
+        "catboost": {
+          "error": 0.6879543946145755,
+          "selected_rounds": 124,
+          "prediction_sha256": "f17fa03c817d110d8bb4c02fcd8779565094d4a06f30090f5481ed264f4a38e5",
+          "rank": 2.0
+        },
+        "lightgbm": {
+          "error": 0.7195192176659226,
+          "selected_rounds": 44,
+          "prediction_sha256": "a58d519f254c370d5c3cc1f50fe78247c7e0e1e3ad08ca7396c6b9c3b8c6d28c",
+          "rank": 3.0
+        },
+        "xgboost": {
+          "error": 0.6689182319731981,
+          "selected_rounds": 23,
+          "prediction_sha256": "418e0ff13ba4e23cbdedb647ec8955ae89a6a4e57660e12c2eeada1d0b477884",
+          "rank": 1.0
+        }
+      }
+    },
+    {
+      "dataset": "wine_quality",
+      "problem": "regression",
+      "development_rows": 541,
+      "models": {
+        "ctboost": {
+          "error": 0.6748561016432743,
+          "selected_rounds": 182,
+          "prediction_sha256": "9d53c4a466a27230b02c3e065add9dfb0adefcf712eddcdca4573ec4b63224bb",
+          "rank": 4.0
+        },
+        "catboost": {
+          "error": 0.6405501771733619,
+          "selected_rounds": 129,
+          "prediction_sha256": "a1ebcdcec642c8583d45a25ce0ffbe6c13fb2c579b8e865b8a4ef2007c052061",
+          "rank": 2.0
+        },
+        "lightgbm": {
+          "error": 0.6369134803242001,
+          "selected_rounds": 63,
+          "prediction_sha256": "a4fcd75b1b6d957ac756e01296dcb8a96f81ab57cffd8be230940522f47e8d03",
+          "rank": 1.0
+        },
+        "xgboost": {
+          "error": 0.6700877000791033,
+          "selected_rounds": 48,
+          "prediction_sha256": "52b47068f4333466ab328d74a7d96a6abb0fe8213ed0ffd85074e5895b214f6d",
+          "rank": 3.0
+        }
+      }
+    },
+    {
+      "dataset": "diamonds",
+      "problem": "regression",
+      "development_rows": 1250,
+      "models": {
+        "ctboost": {
+          "error": 663.563189417893,
+          "selected_rounds": 194,
+          "prediction_sha256": "15cd33d66263132c9f9dfd89740ed72e4b79607f4961ee39bc93f281f3cc10c6",
+          "rank": 3.0
+        },
+        "catboost": {
+          "error": 638.97148227757,
+          "selected_rounds": 182,
+          "prediction_sha256": "7ee4661c98b139da5ca2a0e710ca2de40f222358a49740dc8db9e095cfd66821",
+          "rank": 1.0
+        },
+        "lightgbm": {
+          "error": 688.4399784573226,
+          "selected_rounds": 186,
+          "prediction_sha256": "1fa9454e2fab9edb73698a24eb6dc0efb535b3172cae7ff244b1a1fd02ad64ff",
+          "rank": 4.0
+        },
+        "xgboost": {
+          "error": 660.8200699735658,
+          "selected_rounds": 12,
+          "prediction_sha256": "1614c7b40291a365214e3f13951920412cf5b75c81f7eeffd6123b20ded29e73",
+          "rank": 2.0
+        }
+      }
+    },
+    {
+      "dataset": "MIC",
+      "problem": "multiclass",
+      "development_rows": 141,
+      "models": {
+        "ctboost": {
+          "error": 0.3933327126636736,
+          "selected_rounds": 144,
+          "prediction_sha256": "1681d63d1ec3cdbe75ecac873a443e5f2762b5476a4cac131d1e9b1f0a2513f6",
+          "rank": 1.0
+        },
+        "catboost": {
+          "error": 0.4378881501586937,
+          "selected_rounds": 93,
+          "prediction_sha256": "dc7415450a10ad53654b3ec8d0b381f7bc8bb1ff51d2cfed2cec7f34b5f7f93b",
+          "rank": 3.0
+        },
+        "lightgbm": {
+          "error": 0.4381498268093536,
+          "selected_rounds": 11,
+          "prediction_sha256": "77eac87dddbb0828e76f39407da39a0d9da5e7747eb8cfd81580ff19f6c77456",
+          "rank": 4.0
+        },
+        "xgboost": {
+          "error": 0.43419698957558256,
+          "selected_rounds": 10,
+          "prediction_sha256": "3271850a69a7a651e7049249ec215b133f56477014b7c2f6806f229c16da57d9",
+          "rank": 2.0
+        }
+      }
+    },
+    {
+      "dataset": "SDSS17",
+      "problem": "multiclass",
+      "development_rows": 1250,
+      "models": {
+        "ctboost": {
+          "error": 0.10622205592132261,
+          "selected_rounds": 166,
+          "prediction_sha256": "d586ded5e339c27e371e4fd134670aea670a8cad9ffb2c3110081ef600cfebb4",
+          "rank": 2.0
+        },
+        "catboost": {
+          "error": 0.1007530535245397,
+          "selected_rounds": 200,
+          "prediction_sha256": "577596d502d52371789faf0649ff11625454791e5a4da3112720fb8682065e26",
+          "rank": 1.0
+        },
+        "lightgbm": {
+          "error": 0.10897659722221974,
+          "selected_rounds": 32,
+          "prediction_sha256": "ecaee8a2b5f00107b3559593af1345944ed2ada09d4f557b8b663c2c49e204e5",
+          "rank": 3.0
+        },
+        "xgboost": {
+          "error": 0.2523043428350662,
+          "selected_rounds": 9,
+          "prediction_sha256": "4149dd251de57630216249d145071193857051c3e6539eff7be800ccb2bf30a2",
+          "rank": 4.0
+        }
+      }
+    },
+    {
+      "dataset": "anneal",
+      "problem": "multiclass",
+      "development_rows": 74,
+      "models": {
+        "ctboost": {
+          "error": 0.0413184075545485,
+          "selected_rounds": 200,
+          "prediction_sha256": "48e3cc9e9180e05a98dd4c2f560db20c896e9f813c68a87db9c98b46616978d4",
+          "rank": 2.0
+        },
+        "catboost": {
+          "error": 0.04212973571619919,
+          "selected_rounds": 167,
+          "prediction_sha256": "d9d6a5f9f0b7966cd21c9e63642bbd76f30b2a955b02b99b7f4d630a6c0d1931",
+          "rank": 3.0
+        },
+        "lightgbm": {
+          "error": 0.019269354161578343,
+          "selected_rounds": 144,
+          "prediction_sha256": "05a8526b080f48c27e02a3c1d540a7b977384e301a51df5bf597df5e0f62d8cc",
+          "rank": 1.0
+        },
+        "xgboost": {
+          "error": 0.04238576580196642,
+          "selected_rounds": 30,
+          "prediction_sha256": "f38d1894a1a3593b25c5207e64bd5daf4df1073b1fd7eae6f1ec812f006d0abc",
+          "rank": 4.0
+        }
+      }
+    },
+    {
+      "dataset": "hiva_agnostic",
+      "problem": "multiclass",
+      "development_rows": 320,
+      "models": {
+        "ctboost": {
+          "error": 0.17115155326745976,
+          "selected_rounds": 3,
+          "prediction_sha256": "3fccc2434d4e974aa071c670cb20af34e40c9af6a45369acf8bc464b6afced37",
+          "rank": 3.0
+        },
+        "catboost": {
+          "error": 0.170656254004292,
+          "selected_rounds": 35,
+          "prediction_sha256": "8969629d5f1b4891964e92c9749e55448f8f5b3aca26e44dcebb57397f90b840",
+          "rank": 2.0
+        },
+        "lightgbm": {
+          "error": 0.16954969245798013,
+          "selected_rounds": 1,
+          "prediction_sha256": "83ce9bfbdc966f278020a0516529d134a04db806b3321d94153c2bb4f5203865",
+          "rank": 1.0
+        },
+        "xgboost": {
+          "error": 0.17130782004310155,
+          "selected_rounds": 1,
+          "prediction_sha256": "a35cf4f940beaf506c2099aa43b688968f7a0667d6155a5751435b6aff45a006",
+          "rank": 4.0
+        }
+      }
+    },
+    {
+      "dataset": "maternal_health_risk",
+      "problem": "multiclass",
+      "development_rows": 84,
+      "models": {
+        "ctboost": {
+          "error": 0.7158572921763495,
+          "selected_rounds": 125,
+          "prediction_sha256": "813f8ec3e31b99754dceb20f1595210e63c4193f2e425e9f29b02289df9a8c9f",
+          "rank": 4.0
+        },
+        "catboost": {
+          "error": 0.5982253698716326,
+          "selected_rounds": 173,
+          "prediction_sha256": "0dba746335b85a582726d8d722aafd5fc3834ab72af3d96db2d1a2e32533c14b",
+          "rank": 2.0
+        },
+        "lightgbm": {
+          "error": 0.5665229543548074,
+          "selected_rounds": 88,
+          "prediction_sha256": "d0c0a2826b0feb7e07ed66f6cbc051d11848aad1e5281b79f61416ac2fe79535",
+          "rank": 1.0
+        },
+        "xgboost": {
+          "error": 0.6177793029462101,
+          "selected_rounds": 46,
+          "prediction_sha256": "c8adb71fe8e038311867180404a36974dcecf78091d4a8ae7fbf2da3f1b730e7",
+          "rank": 3.0
+        }
+      }
+    },
+    {
+      "dataset": "splice",
+      "problem": "multiclass",
+      "development_rows": 265,
+      "models": {
+        "ctboost": {
+          "error": 0.12796248121070095,
+          "selected_rounds": 200,
+          "prediction_sha256": "059555c130868bdc7cceb790f29afef62bc391d81d90c2165d873bbf5501622a",
+          "rank": 2.0
+        },
+        "catboost": {
+          "error": 0.1639887476210487,
+          "selected_rounds": 109,
+          "prediction_sha256": "4cd7243b0a496f7075a2e17fd1a7d515c349f3c57cd5acbf5ce1691009ca4918",
+          "rank": 4.0
+        },
+        "lightgbm": {
+          "error": 0.12171005671207283,
+          "selected_rounds": 158,
+          "prediction_sha256": "724a25c82eb158819f1615c267ae02c47736ba227da821614762d89e0e660c34",
+          "rank": 1.0
+        },
+        "xgboost": {
+          "error": 0.14659932875296716,
+          "selected_rounds": 28,
+          "prediction_sha256": "ba5b3f0a9c9fe30962d61436c09f7dca51354536f14352c42ff939722228c53e",
+          "rank": 3.0
+        }
+      }
+    },
+    {
+      "dataset": "students_dropout_and_academic_success",
+      "problem": "multiclass",
+      "development_rows": 368,
+      "models": {
+        "ctboost": {
+          "error": 0.5689602302432991,
+          "selected_rounds": 192,
+          "prediction_sha256": "4c3f58d01e8a1ad3bc1139b249ab07556db6d8a2a82fa8f08e0fdf6128cd421b",
+          "rank": 2.0
+        },
+        "catboost": {
+          "error": 0.5562231975059412,
+          "selected_rounds": 95,
+          "prediction_sha256": "a32703ed706bcc7d8d12abdc247c88b016c94491b1edb9e36eb8e52aa1019ed1",
+          "rank": 1.0
+        },
+        "lightgbm": {
+          "error": 0.5783479054280604,
+          "selected_rounds": 39,
+          "prediction_sha256": "aa35e96695309e3c35fb3de4c518879ebeff9a3aca6d21ad475fa61d1a2d7727",
+          "rank": 3.0
+        },
+        "xgboost": {
+          "error": 0.6105259963553178,
+          "selected_rounds": 14,
+          "prediction_sha256": "03865c50d801c7b9a755f782e5c68eea38cfa918cfe11a00d52dc98a9b824460",
+          "rank": 4.0
+        }
+      }
+    },
+    {
+      "dataset": "website_phishing",
+      "problem": "multiclass",
+      "development_rows": 112,
+      "models": {
+        "ctboost": {
+          "error": 0.25306359146079715,
+          "selected_rounds": 105,
+          "prediction_sha256": "26cb00e58306e2e67f2af5975ea5d8eed10fed8626566eafbd3d29c3cfe1f820",
+          "rank": 4.0
+        },
+        "catboost": {
+          "error": 0.23917494584530768,
+          "selected_rounds": 100,
+          "prediction_sha256": "7b282244460a924631f98ea18c4896ac2bcc4cdf861114c04d3150d08a9859ed",
+          "rank": 3.0
+        },
+        "lightgbm": {
+          "error": 0.17122445822620497,
+          "selected_rounds": 51,
+          "prediction_sha256": "12d0f5a27ff22c38c476b8736a9999156824efdac131a923d413eeed50d6a86a",
+          "rank": 1.0
+        },
+        "xgboost": {
+          "error": 0.21991577948145485,
+          "selected_rounds": 15,
+          "prediction_sha256": "d234c594067c319c5ed7a00ad036a332ba84d82f70efa863bd1f69a2dbdea019",
+          "rank": 2.0
+        }
+      }
+    },
+    {
+      "dataset": "APSFailure",
+      "problem": "binary",
+      "development_rows": 2500,
+      "models": {
+        "ctboost": {
+          "error": 0.0150951419155948,
+          "selected_rounds": 69,
+          "prediction_sha256": "2fa92263288168a6cdd05de49737e0b2b80b5173f2f53687c16bfeea02c14dc4",
+          "rank": 2.0
+        },
+        "catboost": {
+          "error": 0.01046206725488108,
+          "selected_rounds": 26,
+          "prediction_sha256": "7906b325fe14dddeaab4d2818991651773584f5b37d4958b6077324b56eb83b7",
+          "rank": 1.0
+        },
+        "lightgbm": {
+          "error": 0.02106587293150508,
+          "selected_rounds": 12,
+          "prediction_sha256": "19a0413fe9971e1a04edaaf8f64f8d8ef4cd674d37a3364a04857e5ab4e7e65b",
+          "rank": 4.0
+        },
+        "xgboost": {
+          "error": 0.019240990751568043,
+          "selected_rounds": 12,
+          "prediction_sha256": "cfe95bcb699ce07fa4edd1f41f5f6c678c58b8eecade5c1a78d5c108aa3fe8ff",
+          "rank": 3.0
+        }
+      }
+    },
+    {
+      "dataset": "Amazon_employee_access",
+      "problem": "binary",
+      "development_rows": 2500,
+      "models": {
+        "ctboost": {
+          "error": 0.2776416708371643,
+          "selected_rounds": 128,
+          "prediction_sha256": "ae60a9016489a1bf9b1c8999c17bbc6c3fd85195199904d92209b48bafb59a97",
+          "rank": 2.0
+        },
+        "catboost": {
+          "error": 0.2499810872778483,
+          "selected_rounds": 137,
+          "prediction_sha256": "17130a35113e18de8e9ae3159261d5e81231668e36e6f2ec0b0fe32dae2b2ebc",
+          "rank": 1.0
+        },
+        "lightgbm": {
+          "error": 0.3038183331199591,
+          "selected_rounds": 32,
+          "prediction_sha256": "bb2dd8e21754fe29516e50206e42d1661bf1fcc2e6584a3ee72846d434393b73",
+          "rank": 3.0
+        },
+        "xgboost": {
+          "error": 0.3581938641310042,
+          "selected_rounds": 1,
+          "prediction_sha256": "f164b642bdba9fba305106fb326b4d1444c1cff145aa9609aebe522b0ec3dac0",
+          "rank": 4.0
+        }
+      }
+    },
+    {
+      "dataset": "Another-Dataset-on-used-Fiat-500",
+      "problem": "regression",
+      "development_rows": 256,
+      "models": {
+        "ctboost": {
+          "error": 752.4202298148944,
+          "selected_rounds": 63,
+          "prediction_sha256": "04e04f79effa193c8aa671dd6afb96d12bf4bb4234c0eaa9286ada8176c8b633",
+          "rank": 1.0
+        },
+        "catboost": {
+          "error": 754.2641488231037,
+          "selected_rounds": 23,
+          "prediction_sha256": "0f3bdfd50526c6df835054e0ac690f2ca1010659c9c745ad794fbcee736895de",
+          "rank": 2.0
+        },
+        "lightgbm": {
+          "error": 765.1301164325173,
+          "selected_rounds": 21,
+          "prediction_sha256": "33eff0e0a13887209b855df906a2ffe03c846bcf6e42d16f2aae64db8516f9f3",
+          "rank": 3.0
+        },
+        "xgboost": {
+          "error": 816.7263611097507,
+          "selected_rounds": 7,
+          "prediction_sha256": "8e6fd6adb5499008c6a8504d2bee4bf7c9c12169c1ca38f5ec00dee407ebda65",
+          "rank": 4.0
+        }
+      }
+    },
+    {
+      "dataset": "Bank_Customer_Churn",
+      "problem": "binary",
+      "development_rows": 1666,
+      "models": {
+        "ctboost": {
+          "error": 0.12460074527548581,
+          "selected_rounds": 197,
+          "prediction_sha256": "6a68e896b34bfafa547dc94dedfa02bd6809737a81d1cdfc606ecf768fc6e6ad",
+          "rank": 2.0
+        },
+        "catboost": {
+          "error": 0.12370907639073725,
+          "selected_rounds": 138,
+          "prediction_sha256": "7db7cf0e68cbef4040d7e27cb304993c148af5f90cbfe026c0bededdb7c947e5",
+          "rank": 1.0
+        },
+        "lightgbm": {
+          "error": 0.13300283914470767,
+          "selected_rounds": 61,
+          "prediction_sha256": "a16a7ca5f717b7213cc374ab78b2f54988d2299b3a58d466b55643d2ddbf728e",
+          "rank": 4.0
+        },
+        "xgboost": {
+          "error": 0.12515970188980563,
+          "selected_rounds": 10,
+          "prediction_sha256": "1303a8258c9b1bae33e15db3720ce9c1acb6e46976af002339f42998de79b139",
+          "rank": 3.0
+        }
+      }
+    },
+    {
+      "dataset": "Bioresponse",
+      "problem": "binary",
+      "development_rows": 624,
+      "models": {
+        "ctboost": {
+          "error": 0.2003765465303926,
+          "selected_rounds": 107,
+          "prediction_sha256": "fef4956dfc297cf4359853a96e077f25737751c18a0d25ffd9497839df5a5e52",
+          "rank": 1.0
+        },
+        "catboost": {
+          "error": 0.20054206148880716,
+          "selected_rounds": 196,
+          "prediction_sha256": "8b775e6be600a5203506049a7bbbc56c2bfd665cff9ce65469c85c19481732a0",
+          "rank": 2.0
+        },
+        "lightgbm": {
+          "error": 0.2016179087185005,
+          "selected_rounds": 49,
+          "prediction_sha256": "03c19ed79e8c0abc9b0822987604bd5364da268f930cd5760c594fb7bb94666b",
+          "rank": 3.0
+        },
+        "xgboost": {
+          "error": 0.21002813754293037,
+          "selected_rounds": 16,
+          "prediction_sha256": "d0de905558438acf20f46346a519275a6a30b0cc1f35cb36b8c675782685d3cc",
+          "rank": 4.0
+        }
+      }
+    },
+    {
+      "dataset": "Diabetes130US",
+      "problem": "binary",
+      "development_rows": 2500,
+      "models": {
+        "ctboost": {
+          "error": 0.38458433014354065,
+          "selected_rounds": 53,
+          "prediction_sha256": "a918dd5b37f9a1b95f53d93e77e525fb1ac25a451c823e8277041f4eb5120b58",
+          "rank": 2.0
+        },
+        "catboost": {
+          "error": 0.3820923046251994,
+          "selected_rounds": 54,
+          "prediction_sha256": "e6d43a4822634416173203d1ba667cac1a5b792bc1bbcc07abcd64112d5353be",
+          "rank": 1.0
+        },
+        "lightgbm": {
+          "error": 0.4351684609250398,
+          "selected_rounds": 8,
+          "prediction_sha256": "c9c7aa22c8470736dc6696d78a3334c05a736d420a96e161be97f8d3d5872e8d",
+          "rank": 3.0
+        },
+        "xgboost": {
+          "error": 0.48408991228070175,
+          "selected_rounds": 1,
+          "prediction_sha256": "a4a1f2c54684975e91ab48a9ffb3bf194c449e0b042aa201b99cf6cabbf91019",
+          "rank": 4.0
+        }
+      }
+    },
+    {
+      "dataset": "E-CommereShippingData",
+      "problem": "binary",
+      "development_rows": 1832,
+      "models": {
+        "ctboost": {
+          "error": 0.24090070036039402,
+          "selected_rounds": 86,
+          "prediction_sha256": "dafed642b4dfe0972455743c400d5074ba64d74a65cd83a7c20bc69628bd4c71",
+          "rank": 1.0
+        },
+        "catboost": {
+          "error": 0.24273485967412256,
+          "selected_rounds": 21,
+          "prediction_sha256": "38633435bbb456a5c29c4b164e0db336f922a137f0ebfbf5188891b1c03101db",
+          "rank": 2.0
+        },
+        "lightgbm": {
+          "error": 0.2626221483248672,
+          "selected_rounds": 26,
+          "prediction_sha256": "8ebd910a21579bbb3339e34c82bfc1376e64a8e7a8822f33161161ec1f4284bc",
+          "rank": 3.0
+        },
+        "xgboost": {
+          "error": 0.2652430833685143,
+          "selected_rounds": 14,
+          "prediction_sha256": "a1aebf0271d8538be7c15de48b436524f0efeaf7259c9da3ee2314a49c5f2ec9",
+          "rank": 4.0
+        }
+      }
+    },
+    {
+      "dataset": "Fitness_Club",
+      "problem": "binary",
+      "development_rows": 250,
+      "models": {
+        "ctboost": {
+          "error": 0.20888359950859958,
+          "selected_rounds": 121,
+          "prediction_sha256": "13baef0aa42bd74151ed0b064e79f292d618525080b74718140b863281563760",
+          "rank": 1.0
+        },
+        "catboost": {
+          "error": 0.2184428746928747,
+          "selected_rounds": 48,
+          "prediction_sha256": "edaaf6bd99b2c78e090eecae9f52a171267d953a6bd92652e74b77cefd6a95e9",
+          "rank": 2.0
+        },
+        "lightgbm": {
+          "error": 0.22750307125307123,
+          "selected_rounds": 12,
+          "prediction_sha256": "b1fcf1c36e41f9ed29fe2bc61d75db2f1aefba6ea601d47aef049958b8a1189e",
+          "rank": 3.0
+        },
+        "xgboost": {
+          "error": 0.25833077395577386,
+          "selected_rounds": 3,
+          "prediction_sha256": "5cbc699c3db1467e733501e0ec82fc0d5ab2f0856f824d13d3b3d530275cfce0",
+          "rank": 4.0
+        }
+      }
+    },
+    {
+      "dataset": "Food_Delivery_Time",
+      "problem": "regression",
+      "development_rows": 2500,
+      "models": {
+        "ctboost": {
+          "error": 7.668831900104221,
+          "selected_rounds": 186,
+          "prediction_sha256": "66a0ba281f4e805371afed201204ef0d774be2e802a9ff34f28ba45f114aa45f",
+          "rank": 2.0
+        },
+        "catboost": {
+          "error": 7.667283466226232,
+          "selected_rounds": 178,
+          "prediction_sha256": "9c6d423e3a38e511bbfb1766970b5a67cf114822ed6ede906f9b0358d74bc9b8",
+          "rank": 1.0
+        },
+        "lightgbm": {
+          "error": 7.759462064297934,
+          "selected_rounds": 74,
+          "prediction_sha256": "d1c7066058b9d65ce3a6b2907a0b4d11651dd80378b01eaae4a10880a44e8cdb",
+          "rank": 3.0
+        },
+        "xgboost": {
+          "error": 8.623991942059005,
+          "selected_rounds": 3,
+          "prediction_sha256": "cee3d12f44fcb09f49b6c59acbc1a8650b82649f794d09eaca62e5985b9c87f6",
+          "rank": 4.0
+        }
+      }
+    },
+    {
+      "dataset": "HR_Analytics_Job_Change_of_Data_Scientists",
+      "problem": "binary",
+      "development_rows": 2500,
+      "models": {
+        "ctboost": {
+          "error": 0.18136993603411522,
+          "selected_rounds": 121,
+          "prediction_sha256": "42bc01212cb6fdfd944af098e240386d9d9c090b2abd48010f41e8b54fb77161",
+          "rank": 2.0
+        },
+        "catboost": {
+          "error": 0.1767574387677,
+          "selected_rounds": 98,
+          "prediction_sha256": "94c633fd87f2fb3343740c9bd3a82682a8fa524f2466c1a478a96db06e9a872d",
+          "rank": 1.0
+        },
+        "lightgbm": {
+          "error": 0.1971239270679569,
+          "selected_rounds": 24,
+          "prediction_sha256": "348ecbd04283662dc09c9e804d726bef141fb4e35956d3cfd1694dea88195207",
+          "rank": 3.0
+        },
+        "xgboost": {
+          "error": 0.20876002883931988,
+          "selected_rounds": 6,
+          "prediction_sha256": "485e659917f15216c14244c6be954ebd6223ea876186990e9fc5efa813d45eb3",
+          "rank": 4.0
+        }
+      }
+    },
+    {
+      "dataset": "Is-this-a-good-customer",
+      "problem": "binary",
+      "development_rows": 286,
+      "models": {
+        "ctboost": {
+          "error": 0.24470964566929132,
+          "selected_rounds": 91,
+          "prediction_sha256": "df9113295ed192942e4c13a945a6dd5cfae4073cd375e85333be7cc33f27b62b",
+          "rank": 2.0
+        },
+        "catboost": {
+          "error": 0.24606299212598415,
+          "selected_rounds": 49,
+          "prediction_sha256": "f038ebe3a30c4c92b1b89128d408ee36bb5a2da98b26ab0ed7b7720bcec8bfbe",
+          "rank": 3.0
+        },
+        "lightgbm": {
+          "error": 0.27060777559055127,
+          "selected_rounds": 7,
+          "prediction_sha256": "d787b3de80cea9a89fce9b795eff0213d6d1ff38d01f40fa0838a85c167f72d5",
+          "rank": 4.0
+        },
+        "xgboost": {
+          "error": 0.2231791338582677,
+          "selected_rounds": 9,
+          "prediction_sha256": "d2e0e5a1a0608cea583bb825c639947413df1f4710903911368c511d2c2835a7",
+          "rank": 1.0
+        }
+      }
+    },
+    {
+      "dataset": "Marketing_Campaign",
+      "problem": "binary",
+      "development_rows": 372,
+      "models": {
+        "ctboost": {
+          "error": 0.2105560578661846,
+          "selected_rounds": 127,
+          "prediction_sha256": "d264bb3594207d85247c8a64416b7ab343d0a207b7d156f0fa80b5a31d2c262b",
+          "rank": 3.0
+        },
+        "catboost": {
+          "error": 0.14720840867992768,
+          "selected_rounds": 130,
+          "prediction_sha256": "55dca68311334de56ffe140e7e353de86d8dbf0e800810c0f302d2e3567948a2",
+          "rank": 1.0
+        },
+        "lightgbm": {
+          "error": 0.17003842676311032,
+          "selected_rounds": 25,
+          "prediction_sha256": "9667ad5c1dbc586e3f354c45c7d106d912f607c77873f02ebe0c39c45a73320b",
+          "rank": 2.0
+        },
+        "xgboost": {
+          "error": 0.4547920433996383,
+          "selected_rounds": 1,
+          "prediction_sha256": "4781f01448a1a67ab9c2279a28d30cfa1c181827737466db9d80db3e5b85bc9e",
+          "rank": 4.0
+        }
+      }
+    },
+    {
+      "dataset": "NATICUSdroid",
+      "problem": "binary",
+      "development_rows": 1248,
+      "models": {
+        "ctboost": {
+          "error": 0.020638141947122213,
+          "selected_rounds": 193,
+          "prediction_sha256": "7f37903d3272c57b878e0ccf7caf99e19ac2a67b6258c9f4df017bbfbeedd478",
+          "rank": 4.0
+        },
+        "catboost": {
+          "error": 0.016312926320536603,
+          "selected_rounds": 176,
+          "prediction_sha256": "528f9835ccf0fe20f76191af0f5633d6f29dceffa9a671bac6dd22c2b83afb7d",
+          "rank": 1.0
+        },
+        "lightgbm": {
+          "error": 0.018922994531822446,
+          "selected_rounds": 66,
+          "prediction_sha256": "7f35e8f9ab31c12c38b86b45b6ebee2138ebb093bbe4ecd35c9e8f0720e51f2a",
+          "rank": 2.0
+        },
+        "xgboost": {
+          "error": 0.01939089012909423,
+          "selected_rounds": 52,
+          "prediction_sha256": "eaf12be6f64522c49d4f8415679dd4b700a38690804f2091f325cf5f4a07bd4b",
+          "rank": 3.0
+        }
+      }
+    },
+    {
+      "dataset": "QSAR-TID-11",
+      "problem": "regression",
+      "development_rows": 956,
+      "models": {
+        "ctboost": {
+          "error": 0.8680209706088279,
+          "selected_rounds": 200,
+          "prediction_sha256": "1ce6ca6d20487e29f239250b9a64aa851c565eca533a02a7b1c6668689aeb657",
+          "rank": 3.0
+        },
+        "catboost": {
+          "error": 0.8793247429761134,
+          "selected_rounds": 200,
+          "prediction_sha256": "9232f7745eb06b18067c4de0ff37035d1f0894c6833a39adf0a633f657b35f9d",
+          "rank": 4.0
+        },
+        "lightgbm": {
+          "error": 0.8189465170780489,
+          "selected_rounds": 200,
+          "prediction_sha256": "f26c5716313c4bef16b7b47b43c60d8298054b58d510f4d3864e39a8e8e85b92",
+          "rank": 1.0
+        },
+        "xgboost": {
+          "error": 0.8555715450808976,
+          "selected_rounds": 99,
+          "prediction_sha256": "bcef06c3391a1bf778c16552b5cb7998bc866260336996dafdb4cb3e3a51c6d0",
+          "rank": 2.0
+        }
+      }
+    },
+    {
+      "dataset": "airfoil_self_noise",
+      "problem": "regression",
+      "development_rows": 250,
+      "models": {
+        "ctboost": {
+          "error": 3.9063161164281115,
+          "selected_rounds": 184,
+          "prediction_sha256": "f173d1e822e982ec57abd90742d6fb351389e2beae652221e9f38346a9d489e3",
+          "rank": 4.0
+        },
+        "catboost": {
+          "error": 2.165915462549949,
+          "selected_rounds": 200,
+          "prediction_sha256": "aec53b0b8d74483b35d9b1748624a2cab581c4d3a1b96d3fed75c30d82f0a140",
+          "rank": 1.0
+        },
+        "lightgbm": {
+          "error": 2.1747811030463273,
+          "selected_rounds": 199,
+          "prediction_sha256": "e3c1ed2d6369c8085d8155eaf20ca5fd235202b180db652ab14ffc6fd8ffe5e8",
+          "rank": 2.0
+        },
+        "xgboost": {
+          "error": 2.285654673524772,
+          "selected_rounds": 184,
+          "prediction_sha256": "adfe1f7eef6e8d6db898a53cfa5d6fda59b9a56a7a3e13538f9689fc60f3e3f4",
+          "rank": 3.0
+        }
+      }
+    },
+    {
+      "dataset": "bank-marketing",
+      "problem": "binary",
+      "development_rows": 2500,
+      "models": {
+        "ctboost": {
+          "error": 0.23041365231496047,
+          "selected_rounds": 121,
+          "prediction_sha256": "b3a5abdd8f48ada7fd73af0cc48455e3e5e915386ca0b7ff2c9c96f0fde63b41",
+          "rank": 2.0
+        },
+        "catboost": {
+          "error": 0.22443891427831342,
+          "selected_rounds": 52,
+          "prediction_sha256": "47cb712c1d724d62423b38f28747491f8f0a4b6abc6b052bcbea4607cfdafa95",
+          "rank": 1.0
+        },
+        "lightgbm": {
+          "error": 0.23661273212820932,
+          "selected_rounds": 27,
+          "prediction_sha256": "34ac0679c772a07d6744d5e3bd6e2c0cdb17daa9640581673907fb9e6130324f",
+          "rank": 3.0
+        },
+        "xgboost": {
+          "error": 0.23691879290247386,
+          "selected_rounds": 8,
+          "prediction_sha256": "2b9dd1c6f35b690e9d63a1f921adbb8a49653963dee7041fa3f15f996baec3cc",
+          "rank": 4.0
+        }
+      }
+    },
+    {
+      "dataset": "churn",
+      "problem": "binary",
+      "development_rows": 832,
+      "models": {
+        "ctboost": {
+          "error": 0.11876275934102476,
+          "selected_rounds": 200,
+          "prediction_sha256": "c50093b17555bb2cccf2c74386617ff4505b2c043d2bd5e45ae5a589d748d492",
+          "rank": 3.0
+        },
+        "catboost": {
+          "error": 0.10641883872192948,
+          "selected_rounds": 194,
+          "prediction_sha256": "587b361a6b09daa2b1a8777a4b9538ee3107cee44c8c1bbb4391ed2a184199d7",
+          "rank": 1.0
+        },
+        "lightgbm": {
+          "error": 0.11678061054930444,
+          "selected_rounds": 40,
+          "prediction_sha256": "794aafa5d316c6249ebbdcb82cd345a36d354c9292f68f8926b72de5211e9523",
+          "rank": 2.0
+        },
+        "xgboost": {
+          "error": 0.13881569576983344,
+          "selected_rounds": 6,
+          "prediction_sha256": "3060f33d80a9e51afc4a9f9e5eba0e2b655aadceda92f03d16bab2b381325a8e",
+          "rank": 4.0
+        }
+      }
+    },
+    {
+      "dataset": "concrete_compressive_strength",
+      "problem": "regression",
+      "development_rows": 170,
+      "models": {
+        "ctboost": {
+          "error": 5.751027992444053,
+          "selected_rounds": 198,
+          "prediction_sha256": "2351ed8e4094312db4981413ff37c398326181f851b2ebd07f8cfe60610318bd",
+          "rank": 4.0
+        },
+        "catboost": {
+          "error": 4.6154819861258165,
+          "selected_rounds": 199,
+          "prediction_sha256": "080015723450bef9477c97fe448724c5733e07a2d05c41f673ffab49fce180bb",
+          "rank": 1.0
+        },
+        "lightgbm": {
+          "error": 4.748298407058376,
+          "selected_rounds": 102,
+          "prediction_sha256": "e180d105afaff8fdd8519b9cd095e8d966d6e524b8146a9712372a95bf9e4a0a",
+          "rank": 2.0
+        },
+        "xgboost": {
+          "error": 5.696826142547478,
+          "selected_rounds": 31,
+          "prediction_sha256": "5a67b30b1c6437a787f81b07a5cf68a0b55487e3a1e222388126de3310a8ab8a",
+          "rank": 3.0
+        }
+      }
+    },
+    {
+      "dataset": "credit-g",
+      "problem": "binary",
+      "development_rows": 166,
+      "models": {
+        "ctboost": {
+          "error": 0.19879310344827583,
+          "selected_rounds": 31,
+          "prediction_sha256": "a7cde22c25ed361811cedf4f061e09caa837fa92933448afb2f2e01de58ce645",
+          "rank": 2.0
+        },
+        "catboost": {
+          "error": 0.18862068965517242,
+          "selected_rounds": 63,
+          "prediction_sha256": "b30b0ecc33540adcfc13aa8080b809e457fac97539d28f15be2b851520d4f18f",
+          "rank": 1.0
+        },
+        "lightgbm": {
+          "error": 0.2397413793103449,
+          "selected_rounds": 11,
+          "prediction_sha256": "03c02093c5092e270888d32a9a9738249b0103215f690163bc8b9374e8dec2c6",
+          "rank": 4.0
+        },
+        "xgboost": {
+          "error": 0.21189655172413802,
+          "selected_rounds": 2,
+          "prediction_sha256": "5af6bdb523219a6cf51d324724c10383c0a64918985e1a8b2ce8e935aac704ec",
+          "rank": 3.0
+        }
+      }
+    },
+    {
+      "dataset": "credit_card_clients_default",
+      "problem": "binary",
+      "development_rows": 2500,
+      "models": {
+        "ctboost": {
+          "error": 0.24949632867197735,
+          "selected_rounds": 89,
+          "prediction_sha256": "4b4efcdff7ac45d662a1112b2560f02981ce2911eccbb17618c1ab256cc79d73",
+          "rank": 4.0
+        },
+        "catboost": {
+          "error": 0.2423679416446214,
+          "selected_rounds": 52,
+          "prediction_sha256": "5d73078f3f55e73b00dd2a8ee9f4f93bb848309d814863f3dc3940e44e2c16f5",
+          "rank": 1.0
+        },
+        "lightgbm": {
+          "error": 0.24284564097046235,
+          "selected_rounds": 21,
+          "prediction_sha256": "ec349681836d0244bad81d1c4dbba96b0762207374a121aa46a136b38862167f",
+          "rank": 3.0
+        },
+        "xgboost": {
+          "error": 0.24282337925430675,
+          "selected_rounds": 6,
+          "prediction_sha256": "41169a26248c2d880b696f51fc72ede9b47350f9d6703743bd7ce6f2709517fb",
+          "rank": 2.0
+        }
+      }
+    },
+    {
+      "dataset": "customer_satisfaction_in_airline",
+      "problem": "binary",
+      "development_rows": 2500,
+      "models": {
+        "ctboost": {
+          "error": 0.016756020483886247,
+          "selected_rounds": 188,
+          "prediction_sha256": "9c08a277e57bc5a668951169988ef1f3d575845ba4a363808693ca692776123f",
+          "rank": 4.0
+        },
+        "catboost": {
+          "error": 0.01350027351891292,
+          "selected_rounds": 163,
+          "prediction_sha256": "2fbb64fe070b450b62c7bf77eec65c87655a27ec024121b927f40fdb35172c18",
+          "rank": 1.0
+        },
+        "lightgbm": {
+          "error": 0.01448907506689423,
+          "selected_rounds": 111,
+          "prediction_sha256": "79b5be8b1a3380135e8f5066b33556db133b07d9041d75797ea49567e3a1f644",
+          "rank": 3.0
+        },
+        "xgboost": {
+          "error": 0.014200378599260266,
+          "selected_rounds": 39,
+          "prediction_sha256": "080d4430ebf3ae91e0add14162136486b0377ad6cda228245be179e1e860aa51",
+          "rank": 2.0
+        }
+      }
+    },
+    {
+      "dataset": "diabetes",
+      "problem": "binary",
+      "development_rows": 128,
+      "models": {
+        "ctboost": {
+          "error": 0.16734307359307365,
+          "selected_rounds": 130,
+          "prediction_sha256": "e18692e6a2b4bd7b8f1fefde242600b76f8f75f4aa7360a83333409fd97bff53",
+          "rank": 1.0
+        },
+        "catboost": {
+          "error": 0.17153679653679654,
+          "selected_rounds": 31,
+          "prediction_sha256": "7cde8c5ecb13bbc1de8fa5e0087b9f008e9171aed4ba2b6b3a1cb571fd443d0f",
+          "rank": 4.0
+        },
+        "lightgbm": {
+          "error": 0.16801948051948057,
+          "selected_rounds": 19,
+          "prediction_sha256": "89e53c1d698185996484e10d4acbdbb9113d8fc60a36a097038593f8dbbc7179",
+          "rank": 2.0
+        },
+        "xgboost": {
+          "error": 0.17045454545454541,
+          "selected_rounds": 6,
+          "prediction_sha256": "51299fa9325162b1e19d9c8fd8003039f6b9b9def0eb1dd63dece9a020177fe6",
+          "rank": 3.0
+        }
+      }
+    },
+    {
+      "dataset": "hazelnut-spread-contaminant-detection",
+      "problem": "binary",
+      "development_rows": 400,
+      "models": {
+        "ctboost": {
+          "error": 0.07467500000000005,
+          "selected_rounds": 199,
+          "prediction_sha256": "543e1687ec16d57253419ee9ba4dffb535897cfd22b6e5d3deadde9cdd347a20",
+          "rank": 4.0
+        },
+        "catboost": {
+          "error": 0.04475000000000007,
+          "selected_rounds": 157,
+          "prediction_sha256": "d58fa1c2e0be7a51cb35b4dcceb034276b98a3641ce801d203e305a5e5aedddd",
+          "rank": 2.0
+        },
+        "lightgbm": {
+          "error": 0.04614999999999991,
+          "selected_rounds": 53,
+          "prediction_sha256": "24b1fa1b337c32aa14192db53b0fa9f5d995c0ced8166239f8ad63a8d4b149c6",
+          "rank": 3.0
+        },
+        "xgboost": {
+          "error": 0.04265000000000008,
+          "selected_rounds": 41,
+          "prediction_sha256": "86dab206d9aee522bcb14a3fa3bd98e2214a7ff730a862872b9a611bca017b4c",
+          "rank": 1.0
+        }
+      }
+    },
+    {
+      "dataset": "healthcare_insurance_expenses",
+      "problem": "regression",
+      "development_rows": 222,
+      "models": {
+        "ctboost": {
+          "error": 5501.698443918508,
+          "selected_rounds": 116,
+          "prediction_sha256": "2ce798308095f87610a4c96d89450692122760963c6a2c45ea4a477e84195ffb",
+          "rank": 4.0
+        },
+        "catboost": {
+          "error": 4853.165883512105,
+          "selected_rounds": 25,
+          "prediction_sha256": "3763e8236d5899241886a9b03a7ff1f7823586f6ab7683b0d82f2fd8307370f2",
+          "rank": 2.0
+        },
+        "lightgbm": {
+          "error": 4821.501937251919,
+          "selected_rounds": 28,
+          "prediction_sha256": "029920a654f51215a264617e0b3383939f59e0be73bac2375923ccc446fd176e",
+          "rank": 1.0
+        },
+        "xgboost": {
+          "error": 4894.070416203142,
+          "selected_rounds": 8,
+          "prediction_sha256": "6fa5e08784161d5e15dc1b08fe52192815f642ae1b79456bedd66edfafc9c75a",
+          "rank": 3.0
+        }
+      }
+    },
+    {
+      "dataset": "heloc",
+      "problem": "binary",
+      "development_rows": 1742,
+      "models": {
+        "ctboost": {
+          "error": 0.19000488693998308,
+          "selected_rounds": 146,
+          "prediction_sha256": "c488194afccf5b97d9f9e62130da058b5b4934d16361e37f168b14c17478a5d7",
+          "rank": 1.0
+        },
+        "catboost": {
+          "error": 0.1901904585798817,
+          "selected_rounds": 91,
+          "prediction_sha256": "205b64565a98536d828a0c84c6ba6cc844b69b13a77ec496fd04cf8e522e7568",
+          "rank": 2.0
+        },
+        "lightgbm": {
+          "error": 0.1959359150464921,
+          "selected_rounds": 34,
+          "prediction_sha256": "84c3f9a2e07e14321a8f1c0208ea6fd991867c35db67689aea54e119f548f324",
+          "rank": 3.0
+        },
+        "xgboost": {
+          "error": 0.20632132290786154,
+          "selected_rounds": 9,
+          "prediction_sha256": "80eec8ca0e4fce5fa0e07c1c8ad7b5e2292e4cf709e75310e840aaa9e4f8c647",
+          "rank": 4.0
+        }
+      }
+    },
+    {
+      "dataset": "houses",
+      "problem": "regression",
+      "development_rows": 2500,
+      "models": {
+        "ctboost": {
+          "error": 0.23562568338247838,
+          "selected_rounds": 196,
+          "prediction_sha256": "020a292cdef7af745601c64a19e2ac50fced58b0e2b129e094784a8c94ee824d",
+          "rank": 4.0
+        },
+        "catboost": {
+          "error": 0.23030276006425948,
+          "selected_rounds": 198,
+          "prediction_sha256": "b03d34976ce9fa5314c65053c24759b3149746fd519cf139ca34ef84dbef7988",
+          "rank": 2.0
+        },
+        "lightgbm": {
+          "error": 0.22755617881729404,
+          "selected_rounds": 169,
+          "prediction_sha256": "b79d912a55986c7192e2188b1023930f3257a1256128f0662c0b4427c5b0c870",
+          "rank": 1.0
+        },
+        "xgboost": {
+          "error": 0.23108141318144151,
+          "selected_rounds": 90,
+          "prediction_sha256": "08ed3525b3296ef24d0986aebcc63d5e5d104a09fde5305ebef49695c418b4aa",
+          "rank": 3.0
+        }
+      }
+    },
+    {
+      "dataset": "in_vehicle_coupon_recommendation",
+      "problem": "binary",
+      "development_rows": 2114,
+      "models": {
+        "ctboost": {
+          "error": 0.21758707148067113,
+          "selected_rounds": 139,
+          "prediction_sha256": "5af1575f967e7d5309c30668f30f6530550bfd74e7f15c671a6c496e894617fa",
+          "rank": 4.0
+        },
+        "catboost": {
+          "error": 0.20375091174325322,
+          "selected_rounds": 199,
+          "prediction_sha256": "7cbc37a19e2b6de82115cf17a24f6569ce3e70b17c3e82f68bec67026fb3e7bf",
+          "rank": 2.0
+        },
+        "lightgbm": {
+          "error": 0.20095778628738148,
+          "selected_rounds": 137,
+          "prediction_sha256": "4d073750ca1cd30e3f30a3979593c1baaaf2358d260050f758fe459c5d61938e",
+          "rank": 1.0
+        },
+        "xgboost": {
+          "error": 0.21110184172137125,
+          "selected_rounds": 18,
+          "prediction_sha256": "68f3cd47c830978a595d4511b3a905a7f6dc7d1268afe903c75cc632aa73cd5d",
+          "rank": 3.0
+        }
+      }
+    },
+    {
+      "dataset": "jm1",
+      "problem": "binary",
+      "development_rows": 1814,
+      "models": {
+        "ctboost": {
+          "error": 0.27894443321726137,
+          "selected_rounds": 153,
+          "prediction_sha256": "7c49fa4ce39697ff8ec4bb8f63cb4f8ff6d940fe392a7fa5033e967f9d935db8",
+          "rank": 3.0
+        },
+        "catboost": {
+          "error": 0.27845281215023,
+          "selected_rounds": 150,
+          "prediction_sha256": "ebb46cbac4b9b05c3316e8eec4fdcf4ce58ae71385892758e8e4593e79c21c33",
+          "rank": 2.0
+        },
+        "lightgbm": {
+          "error": 0.28235177527670696,
+          "selected_rounds": 27,
+          "prediction_sha256": "8681112c275a98ca290b87832641bf70260ffe9397a9ef10c95eeddeda63b119",
+          "rank": 4.0
+        },
+        "xgboost": {
+          "error": 0.2692072270240019,
+          "selected_rounds": 5,
+          "prediction_sha256": "d84bafda1f26f3aba4ec1b887500da25b806a666dcf52bf27ed96a3499054922",
+          "rank": 1.0
+        }
+      }
+    },
+    {
+      "dataset": "kddcup09_appetency",
+      "problem": "binary",
+      "development_rows": 2500,
+      "models": {
+        "ctboost": {
+          "error": 0.19486375394209998,
+          "selected_rounds": 105,
+          "prediction_sha256": "e7252459a4c3000509e63e38e2096a165959b5f9cfc3f36cd247e9db9f04b787",
+          "rank": 1.0
+        },
+        "catboost": {
+          "error": 0.21750646681549202,
+          "selected_rounds": 186,
+          "prediction_sha256": "ffec5d41175ac0d197214331214a247398d602e851bd4852c50eb2c280bd7cc3",
+          "rank": 2.0
+        },
+        "lightgbm": {
+          "error": 0.42103841111229223,
+          "selected_rounds": 4,
+          "prediction_sha256": "779a1c29a4f12b986e9e172b9ce2c95391a2b78a2055c3a4f91e12ac73282782",
+          "rank": 4.0
+        },
+        "xgboost": {
+          "error": 0.3731928351227809,
+          "selected_rounds": 6,
+          "prediction_sha256": "104a57e5b736b2d11374412e171ac74b019aed326165cfea07ebae005251d4fa",
+          "rank": 3.0
+        }
+      }
+    },
+    {
+      "dataset": "miami_housing",
+      "problem": "regression",
+      "development_rows": 2296,
+      "models": {
+        "ctboost": {
+          "error": 106612.69831728756,
+          "selected_rounds": 197,
+          "prediction_sha256": "6d4ea4852076690471d67cf870fff871ec4746a11bcdebf4c30b091295964b05",
+          "rank": 4.0
+        },
+        "catboost": {
+          "error": 94746.35008973845,
+          "selected_rounds": 197,
+          "prediction_sha256": "c36c1c9f4bfb1d73914b17ad2a4230c7fcedab11543be6c65467717a45c56641",
+          "rank": 1.0
+        },
+        "lightgbm": {
+          "error": 96959.49008101685,
+          "selected_rounds": 200,
+          "prediction_sha256": "83548e9f0f4d68e1b7b73ceb5aa39e315a2edbb800309e56a13a749a86a6d3ba",
+          "rank": 2.0
+        },
+        "xgboost": {
+          "error": 99861.50145293275,
+          "selected_rounds": 128,
+          "prediction_sha256": "7537cae872783a910fedae9f3e87ef53e7160a24c6a612b2d9208e5d60f6a61e",
+          "rank": 3.0
+        }
+      }
+    },
+    {
+      "dataset": "online_shoppers_intention",
+      "problem": "binary",
+      "development_rows": 2054,
+      "models": {
+        "ctboost": {
+          "error": 0.06627865692838308,
+          "selected_rounds": 128,
+          "prediction_sha256": "fc6aee1110f2e778c7bf619bc4f555152848c4dacf638d20ad873ad20b779743",
+          "rank": 4.0
+        },
+        "catboost": {
+          "error": 0.06571530011883031,
+          "selected_rounds": 108,
+          "prediction_sha256": "b4284a30d616dae3debedb964da0f39fd961035e38f4ba84cadb2af5f77ef772",
+          "rank": 2.0
+        },
+        "lightgbm": {
+          "error": 0.06271012665565323,
+          "selected_rounds": 33,
+          "prediction_sha256": "c024ac0719b3d0534b55dc9f1b568e0bd807d3d4a6d42d522a6a1a7da8454ed6",
+          "rank": 1.0
+        },
+        "xgboost": {
+          "error": 0.06617631075558639,
+          "selected_rounds": 13,
+          "prediction_sha256": "27a02702989f509e9a87a9c1dbfd236cd3fbfc4669d9fd59415cc86f2d9da98b",
+          "rank": 3.0
+        }
+      }
+    },
+    {
+      "dataset": "physiochemical_protein",
+      "problem": "regression",
+      "development_rows": 2500,
+      "models": {
+        "ctboost": {
+          "error": 4.716043926851571,
+          "selected_rounds": 200,
+          "prediction_sha256": "c729f2cc7528a112b2df6b7505ffe39022dfe25fb7c045833e4e7077104c3766",
+          "rank": 4.0
+        },
+        "catboost": {
+          "error": 4.3641739509711535,
+          "selected_rounds": 200,
+          "prediction_sha256": "2fdbf7a71ebd5f657efd4c40dcd6dc43eba14eebbc18051954eca279d5bd0597",
+          "rank": 3.0
+        },
+        "lightgbm": {
+          "error": 4.298677977135893,
+          "selected_rounds": 196,
+          "prediction_sha256": "bf29777daae97af6a99c7b265ada96846311c376135a1b7047b707a7c7aadf29",
+          "rank": 1.0
+        },
+        "xgboost": {
+          "error": 4.332427675982032,
+          "selected_rounds": 130,
+          "prediction_sha256": "a5deaf8d2b811e25bdb335f7c0e486f44eca5e22b3441c19eb4ffcd9e74b2873",
+          "rank": 2.0
+        }
+      }
+    },
+    {
+      "dataset": "polish_companies_bankruptcy",
+      "problem": "binary",
+      "development_rows": 984,
+      "models": {
+        "ctboost": {
+          "error": 0.07527934754687904,
+          "selected_rounds": 184,
+          "prediction_sha256": "96bd66353a4eba07c28c3dc9ae6fe4e95e42df986fff21b72148ce57cc61e4ba",
+          "rank": 4.0
+        },
+        "catboost": {
+          "error": 0.056030053942974556,
+          "selected_rounds": 116,
+          "prediction_sha256": "630b241aa736fbca3a0a04344fac6417b0e95597af7cdec71fdf4ba016af558c",
+          "rank": 1.0
+        },
+        "lightgbm": {
+          "error": 0.06254816337015157,
+          "selected_rounds": 37,
+          "prediction_sha256": "0ca8a7a4dda9d9ffe3846a5d7dff60ca91d9bc379669ec3eabb736705ff35bda",
+          "rank": 3.0
+        },
+        "xgboost": {
+          "error": 0.059770742358078555,
+          "selected_rounds": 22,
+          "prediction_sha256": "76dfa7d8e58d195169b985afd3eb6e3e7396c6877ac4f68b8b7e8d9ef85430eb",
+          "rank": 2.0
+        }
+      }
+    },
+    {
+      "dataset": "qsar-biodeg",
+      "problem": "binary",
+      "development_rows": 174,
+      "models": {
+        "ctboost": {
+          "error": 0.09096313912009513,
+          "selected_rounds": 190,
+          "prediction_sha256": "e46eee01ffd817981eda27002ebf85ea50a7a2e466b73f0e9d00c7046c3b0770",
+          "rank": 3.0
+        },
+        "catboost": {
+          "error": 0.08531510107015461,
+          "selected_rounds": 172,
+          "prediction_sha256": "ba670c764cf142af6a71f6526a6cbae88eeed2d84ff7021d3b4190d9f99530df",
+          "rank": 2.0
+        },
+        "lightgbm": {
+          "error": 0.06956004756242562,
+          "selected_rounds": 44,
+          "prediction_sha256": "eece59626057b983869b3aa06faaeebc449741e5621e85d26ff32096027f9ef7",
+          "rank": 1.0
+        },
+        "xgboost": {
+          "error": 0.10240784780023782,
+          "selected_rounds": 11,
+          "prediction_sha256": "d5cfde18ea0fbe30496c255d95fcfce9897550a717a20c90f2b60c2906fce8ea",
+          "rank": 4.0
+        }
+      }
+    },
+    {
+      "dataset": "seismic-bumps",
+      "problem": "binary",
+      "development_rows": 430,
+      "models": {
+        "ctboost": {
+          "error": 0.1988717128642501,
+          "selected_rounds": 35,
+          "prediction_sha256": "598f7841d3c3a39b44c0f5450aa450da0034d68ef64c20df41d22df3998bc6f8",
+          "rank": 3.0
+        },
+        "catboost": {
+          "error": 0.2165067519545132,
+          "selected_rounds": 35,
+          "prediction_sha256": "6ef45be818eb02a3914ca2b409c38abf7bab69409bf973d121b9ebca4ed90507",
+          "rank": 4.0
+        },
+        "lightgbm": {
+          "error": 0.19722814498933894,
+          "selected_rounds": 6,
+          "prediction_sha256": "56700653d1eb2a45874dbfb3d46f21f986665a17ecfa5385682ea0b87fd97b8c",
+          "rank": 2.0
+        },
+        "xgboost": {
+          "error": 0.19207533759772577,
+          "selected_rounds": 2,
+          "prediction_sha256": "5d2714ad72793a0cbb71655ee8d3ed7ea2bea8dec5609f3eeaca261d7799bf99",
+          "rank": 1.0
+        }
+      }
+    },
+    {
+      "dataset": "superconductivity",
+      "problem": "regression",
+      "development_rows": 2500,
+      "models": {
+        "ctboost": {
+          "error": 12.017362489424313,
+          "selected_rounds": 200,
+          "prediction_sha256": "b5cd8022f14ed6867652eaed9a082f112dcb8d1faee5805687d72cf2819ee479",
+          "rank": 4.0
+        },
+        "catboost": {
+          "error": 11.42310691851065,
+          "selected_rounds": 200,
+          "prediction_sha256": "d6508c5d075b037b815cb7962bfd3f603082a2c6deac670eb8827faf113cc92f",
+          "rank": 2.0
+        },
+        "lightgbm": {
+          "error": 11.120366608235312,
+          "selected_rounds": 199,
+          "prediction_sha256": "2f04cc7669e9e0e510eb71bfecf416dd3bfed7f2c741053e3b8b9da3f1f296ff",
+          "rank": 1.0
+        },
+        "xgboost": {
+          "error": 11.529356944135248,
+          "selected_rounds": 81,
+          "prediction_sha256": "cf33df9072d62c1de1437b43b5cd952021ec5c1156763bb53063cfdff1d74b18",
+          "rank": 3.0
+        }
+      }
+    },
+    {
+      "dataset": "taiwanese_bankruptcy_prediction",
+      "problem": "binary",
+      "development_rows": 1136,
+      "models": {
+        "ctboost": {
+          "error": 0.07026043331775822,
+          "selected_rounds": 81,
+          "prediction_sha256": "276f63a02529e3bf54b8c66a194558470ea7d220cb03e6a8a8a61d4a2226a8ed",
+          "rank": 2.0
+        },
+        "catboost": {
+          "error": 0.0675552713769274,
+          "selected_rounds": 29,
+          "prediction_sha256": "8f95dd514e0bec4a3669c52ba385836ca86c22510eaf19c5174cff5d52a4a97f",
+          "rank": 1.0
+        },
+        "lightgbm": {
+          "error": 0.07264589430194524,
+          "selected_rounds": 34,
+          "prediction_sha256": "deca94d0a498c4fab7fc5b9874e4cec14919ee33d35ad82621f87170f863a999",
+          "rank": 3.0
+        },
+        "xgboost": {
+          "error": 0.07429358384772411,
+          "selected_rounds": 9,
+          "prediction_sha256": "446dde2e3565e3611bd1f4b928bc4fcebe585c556eaa92dfe01a8a27de9c7d41",
+          "rank": 4.0
+        }
+      }
+    }
+  ]
+}
