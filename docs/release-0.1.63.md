@@ -22,6 +22,10 @@ describes prediction, persistence and compatibility with earlier fits.
 The TabArena adapter now recognizes pandas 3's inferred string dtype. Previously
 a mixed frame could send these strings into numeric conversion and fail to fit.
 
+The local benchmark controller also handles a worker exiting while its memory
+usage is being sampled. Previously, that timing could interrupt the controller
+before it collected a completed fit.
+
 ## Benchmark evidence
 
 Against 0.1.62 on held-out development splits from all 51 cached TabArena

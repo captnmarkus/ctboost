@@ -265,6 +265,45 @@ def test_owned_descendants_stopped_but_reused_descendant_not_signalled(monkeypat
     assert reused.signals == []
 
 
+def test_cleanup_continues_after_one_child_exits(monkeypatch):
+    root, gone, child = FakeProcess(), FakeProcess(74), FakeProcess(75)
+    root.child_processes = [gone, child]
+    processes = {process.pid: process for process in (root, child)}
+    monkeypatch.setattr(controller.psutil, "Process", processes.__getitem__)
+    monkeypatch.setattr(controller.psutil, "wait_procs", lambda values, **_: (values, []))
+
+    def disappeared():
+        raise psutil.NoSuchProcess(gone.pid)
+
+    monkeypatch.setattr(gone, "cmdline", disappeared)
+    assert set(controller.terminate_owned_tree(controller.process_identity(root))) == {root.pid, child.pid}
+
+
+@pytest.mark.parametrize("has_result", [False, True])
+def test_worker_exit_during_tree_sampling_reconciles_artifacts(make_controller, monkeypatch, has_result):
+    run = make_controller()
+    root, child = FakeProcess(), FakeProcess(74)
+    processes = {process.pid: process for process in (root, child)}
+    monkeypatch.setattr(controller.psutil, "Process", processes.__getitem__)
+    monkeypatch.setattr(controller.psutil, "wait_procs", lambda values, **_: (values, []))
+    key = controller.parent_key(parent())
+    record = run.state["parents"][key]
+    record.update(status="running", identity=controller.process_identity(root),
+                  descendants=[controller.process_identity(child)])
+    if has_result:
+        artifact(run, parent())
+
+    def exit_during_enumeration(recursive):
+        assert recursive
+        root.alive = False
+        raise psutil.NoSuchProcess(root.pid)
+
+    monkeypatch.setattr(root, "children", exit_during_enumeration)
+    run.poll()
+    assert record["status"] == ("complete" if has_result else "failed")
+    assert child.signals == ["kill"]
+
+
 def test_controller_lock_is_exclusive_and_released(tmp_path):
     with controller.controller_lock(tmp_path), pytest.raises(
         (OSError, BlockingIOError)

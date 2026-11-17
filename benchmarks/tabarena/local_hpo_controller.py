@@ -170,21 +170,25 @@ def claim_matches_command(identity, record):
 
 
 def sample_owned_tree(identity):
+    """Return a live sample, or None if the owned root has exited."""
     process = owned_process(identity)
     if process is None:
-        return 0, []
-    children = []
-    rss = 0
-    for child in [process, *process.children(recursive=True)]:
+        return None
+    try:
+        children = process.children(recursive=True)
+        rss = process.memory_info().rss
+    except (psutil.NoSuchProcess, psutil.ZombieProcess):
+        return None
+    descendants = []
+    for child in children:
         try:
             child_identity = process_identity(child)
             if owned_process(child_identity) is not None:
                 rss += child.memory_info().rss
-                if child.pid != process.pid:
-                    children.append(child_identity)
+                descendants.append(child_identity)
         except (psutil.NoSuchProcess, psutil.ZombieProcess):
             continue
-    return rss, children
+    return rss, descendants
 
 
 def terminate_owned_tree(identity, descendants=()):
@@ -195,11 +199,14 @@ def terminate_owned_tree(identity, descendants=()):
         # Prevent the worker from launching descendants while its tree is collected.
         try:
             process.suspend()
-            targets.extend(
-                process_identity(p) for p in process.children(recursive=True)
-            )
+            children = process.children(recursive=True)
         except (psutil.NoSuchProcess, psutil.ZombieProcess):
-            pass
+            children = []
+        for child in children:
+            try:
+                targets.append(process_identity(child))
+            except (psutil.NoSuchProcess, psutil.ZombieProcess):
+                continue
     if identity is not None:
         targets.append(identity)
     seen = set()
@@ -638,11 +645,12 @@ class Controller:
             process = self.processes.get(key)
             exit_code = process.poll() if process is not None else None
             identity = record["identity"]
-            if exit_code is not None or owned_process(identity) is None:
+            sample = sample_owned_tree(identity) if exit_code is None else None
+            if sample is None:
                 self._stop(record)
                 self._finish_from_artifacts(key, fallback="failed", exit_code=exit_code)
                 continue
-            rss, descendants = sample_owned_tree(identity)
+            rss, descendants = sample
             record.update(
                 rss_bytes=rss,
                 descendants=descendants,
