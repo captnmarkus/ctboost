@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
     
     
       
@@ -31,10 +31,10 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.57a0d79d.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.fb2fffe2.min.css">
       
       
 
@@ -853,6 +853,28 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#official-tabarena-leaderboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Official TabArena leaderboard
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ctboost-0163-development-comparisons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CTBoost 0.1.63 development comparisons
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ctboost-0162-local-evidence-and-scope" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1003,6 +1025,8 @@
       
         
       
+        
+      
     
     
     
@@ -1047,6 +1071,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-0.1.63/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release 0.1.63
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1286,6 +1338,28 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#official-tabarena-leaderboard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Official TabArena leaderboard
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ctboost-0163-development-comparisons" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        CTBoost 0.1.63 development comparisons
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ctboost-0162-local-evidence-and-scope" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1400,6 +1474,58 @@
 
 
 <h1 id="benchmarks">Benchmarks<a class="headerlink" href="#benchmarks" title="Permanent link">&para;</a></h1>
+<h2 id="official-tabarena-leaderboard">Official TabArena leaderboard<a class="headerlink" href="#official-tabarena-leaderboard" title="Permanent link">&para;</a></h2>
+<p>The 17 November 2026 snapshot includes 110 rows in the models-only view with
+all datasets, task types and splits and with imputed entries included. All three
+CTBoost rows are marked verified and have 0% imputation.</p>
+<table>
+<thead>
+<tr>
+<th>CTBoost entry</th>
+<th style="text-align: right;">Elo</th>
+<th style="text-align: right;">95% interval</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Default</td>
+<td style="text-align: right;">1177</td>
+<td style="text-align: right;">1111 to 1241</td>
+</tr>
+<tr>
+<td>Tuned</td>
+<td style="text-align: right;">1298</td>
+<td style="text-align: right;">1246 to 1337</td>
+</tr>
+<tr>
+<td>Tuned + ensembled</td>
+<td style="text-align: right;">1327</td>
+<td style="text-align: right;">1279 to 1367</td>
+</tr>
+</tbody>
+</table>
+<p>The Space table omits package versions. These ratings predate 0.1.63.
+The older author-run Lite study below used a different task and competitor
+roster. <a href="https://huggingface.co/spaces/TabArena/leaderboard/blob/8ce4c3037c2b8f9385f6b35375776f610af2e9dd/data/entrants_models/imputation_yes/splits_all/tasks_all/datasets_all/website_leaderboard.csv">Versioned leaderboard table</a> and
+<a href="https://github.com/autogluon/tabarena/pull/479">Upstream adapter</a></p>
+<h2 id="ctboost-0163-development-comparisons">CTBoost 0.1.63 development comparisons<a class="headerlink" href="#ctboost-0163-development-comparisons" title="Permanent link">&para;</a></h2>
+<p>Across all 51 cached TabArena tasks at seed 0, the corrected build improved
+three, produced identical predictions on 46 and worsened two. All 102 fits
+completed. Median relative error reduction across tasks was <strong>0.00%</strong> and the
+unweighted mean was <strong>+0.17%</strong>. Each fit used a 200-round cap, 25 rounds of
+validation patience and a separate development split for scoring.</p>
+<p>The quantile-border correction restores a numeric split when rare values fell
+in the same bin as a column's minimum. A screen of the training features from
+51 cached TabArena tasks found 110 affected raw numeric columns on six tasks.
+All six were evaluated at two seeds. Three improved, one tied and two worsened.
+The median relative error reduction was 0.25% after averaging the two errors for
+each model within each task. The largest improvement was on coil insurance
+(6.81%), and the largest regression was on Bioresponse (1.13%). The study used
+held-out development rows and capped single fits. <a href="https://github.com/captnmarkus/ctboost/blob/v0.1.63/benchmarks/tabarena/QUANTILE_TIES_SCOUT.md">Paired results and reproduction</a></p>
+<p>An independent 36-fit scout compared log loss with ROC-AUC for binary early
+stopping. Across nine small tasks, selecting by ROC-AUC increased mean
+development error (1 minus ROC-AUC) from 0.2063 to 0.2160. The adapter retains
+its existing stopping policy. <a href="https://github.com/captnmarkus/ctboost/blob/v0.1.63/benchmarks/tabarena/BINARY_STOPPING_SCOUT.md">Results by task</a></p>
 <h2 id="ctboost-0162-local-evidence-and-scope">CTBoost 0.1.62: local evidence and scope<a class="headerlink" href="#ctboost-0162-local-evidence-and-scope" title="Permanent link">&para;</a></h2>
 <p><a href="../release-0.1.62/">Release 0.1.62</a> reduces prediction preparation overhead,
 improves categorical target-statistic precision, and writes compact JSON.
@@ -1700,10 +1826,10 @@ comparability must be reported alongside results.</p>
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.indexes", "navigation.top", "navigation.tracking", "content.code.copy", "search.highlight", "search.suggest", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.sections", "navigation.indexes", "navigation.top", "navigation.tracking", "content.code.copy", "search.highlight", "search.suggest", "toc.follow"], "search": "../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      <script src="../assets/javascripts/bundle.a5f9d56c.min.js"></script>
       
     
   </body>
