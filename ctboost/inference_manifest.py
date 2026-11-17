@@ -89,13 +89,16 @@ def _build_details() -> dict[str, Any]:
     return _json_ready(details)
 
 
-def _feature_value(metadata: Any, *, index: int, name: str) -> Any:
+def _feature_value(metadata: Any, *, index: int, name: str, feature_names: set[str]) -> Any:
     if not isinstance(metadata, Mapping):
         return None
-    for key in (name, str(index), index):
-        if key in metadata:
-            return _json_ready(metadata[key])
-    return None
+    if name in metadata:
+        return _json_ready(metadata[name])
+    # A numeric-looking column name can belong to a different feature. Only
+    # interpret a string key as a positional index when no column owns it.
+    if str(index) not in feature_names and str(index) in metadata:
+        return _json_ready(metadata[str(index)])
+    return _json_ready(metadata[index]) if index in metadata else None
 
 
 def _normalized_feature_names(value: Any, num_features: int) -> list[str]:
@@ -157,6 +160,8 @@ def _input_contract(
     feature_metadata = schema.get("feature_metadata")
     categorical_schema = schema.get("categorical_schema")
     categorical_set = set(categorical_indices)
+    feature_names = set(names)
+    last_categorical_position = {name: i for i, name in enumerate(names) if i in categorical_set}
     text_set: set[int] = set()
     embedding_set: set[int] = set()
     if pipeline is not None and not expects_prepared_features:
@@ -189,10 +194,24 @@ def _input_contract(
             "role": role,
             "categorical": index in categorical_set,
         }
-        metadata = _feature_value(feature_metadata, index=index, name=name)
+        metadata = _feature_value(feature_metadata, index=index, name=name, feature_names=feature_names)
         if metadata is not None:
             feature["metadata"] = metadata
-        category_contract = _feature_value(categorical_schema, index=index, name=name)
+        category_contract = _feature_value(
+            categorical_schema, index=index, name=name, feature_names=feature_names
+        )
+        if isinstance(category_contract, dict):
+            by_position = category_contract.get("pandas_category_labels_by_position")
+            if isinstance(by_position, Mapping):
+                labels = by_position.get(str(index))
+                category_contract = {"pandas_category_labels": labels} if labels is not None else None
+            elif (
+                "pandas_category_labels" in category_contract
+                and last_categorical_position.get(name) != index
+            ):
+                # With a repeated name, 0.1.63 stored only the last categorical
+                # column's vocabulary. Earlier positions have no known labels.
+                category_contract = None
         if category_contract is not None:
             feature["categorical_schema"] = category_contract
         features.append(feature)

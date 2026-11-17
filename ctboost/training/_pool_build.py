@@ -21,12 +21,15 @@ def _pool_from_data_and_label(
     baseline: Any = None,
     pairs: Any = None,
     pairs_weight: Any = None,
+    cat_features: Optional[List[int]] = None,
     feature_names: Optional[List[str]] = None,
     column_roles: Any = None,
     feature_metadata: Optional[Mapping[str, Any]] = None,
     categorical_schema: Optional[Mapping[str, Any]] = None,
 ) -> Pool:
     if isinstance(data, Pool):
+        if cat_features is not None and list(data.cat_features) != cat_features:
+            raise ValueError("cat_features must match the categorical indices of a prepared Pool")
         if (
             label is None
             and group_id is None
@@ -79,6 +82,7 @@ def _pool_from_data_and_label(
         baseline=baseline,
         pairs=pairs,
         pairs_weight=pairs_weight,
+        cat_features=cat_features,
         feature_names=feature_names,
         column_roles=column_roles,
         feature_metadata=feature_metadata,

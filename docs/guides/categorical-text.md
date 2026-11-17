@@ -24,6 +24,17 @@ pre-encoded Pools, supply training codes directly. The inference manifest
 lists the labels in code order under `pandas_category_labels` for each
 inferred column.
 
+Keep columns in their training order when two pandas names have the same text,
+such as `1` and `"1"`, or when two columns share a name. The development version
+after 0.1.63 stores a separate vocabulary for each repeated name at its original
+column position. Raw pandas prediction with these new models requires a CTBoost
+runtime that reads `pandas_category_labels_by_position`. With a 0.1.63 model
+that had multiple inferred categorical columns under one name, only the last
+such column's vocabulary was saved. Supply the training codes for each earlier
+categorical column or refit that model to recover raw-frame prediction.
+When continuing training with a prepared `Pool`, pass the original categorical
+column positions as `cat_features` along with the numeric codes.
+
 ```python
 model = CTBoostClassifier(
     cat_features=["city", "segment"],

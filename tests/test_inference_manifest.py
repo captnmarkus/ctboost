@@ -261,3 +261,30 @@ def test_manifest_recognizes_survival_objectives(objective):
         estimator_name=None,
     )
     assert contract["task"] == "survival"
+
+
+def test_numeric_column_name_does_not_give_the_next_feature_its_metadata():
+    pool = ctboost.Pool(
+        np.zeros((6, 3), dtype=np.float32), np.arange(6),
+        feature_names=["1", "qty", "size"], cat_features=[0],
+        categorical_schema={"1": {"pandas_category_labels": ["blue", "red"]}},
+        feature_metadata={"1": {"unit": "color"}, "2": {"unit": "cm"}},
+    )
+    model = ctboost.train(pool, {"objective": "RMSE"}, num_boost_round=1)
+    first, second, third = model.get_inference_manifest()["input"]["features"]
+    assert first["categorical_schema"] == {"pandas_category_labels": ["blue", "red"]}
+    assert first["metadata"] == {"unit": "color"}
+    assert "categorical_schema" not in second and "metadata" not in second
+    assert third["metadata"] == {"unit": "cm"}
+
+
+def test_manifest_only_reports_recoverable_legacy_pandas_labels():
+    pool = ctboost.Pool(
+        np.zeros((6, 3), dtype=np.float32), np.arange(6),
+        feature_names=["x", "x", "x"], cat_features=[0, 1],
+        categorical_schema={"x": {"pandas_category_labels": ["last"]}},
+    )
+    model = ctboost.train(pool, {"objective": "RMSE"}, num_boost_round=1)
+    first, second, third = model.get_inference_manifest()["input"]["features"]
+    assert "categorical_schema" not in first and "categorical_schema" not in third
+    assert second["categorical_schema"] == {"pandas_category_labels": ["last"]}
