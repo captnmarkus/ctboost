@@ -635,6 +635,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#infinite-numeric-values-and-json-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Infinite numeric values and JSON export
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1309,6 +1320,17 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#infinite-numeric-values-and-json-export" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Infinite numeric values and JSON export
+      
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1420,6 +1442,21 @@ equivalent convenience constructor.</p>
 <p>The scikit-learn estimators expose the persisted schema through
 <code>data_schema_</code>. Schema metadata also participates in snapshot/resume validation
 and is included in inference manifests.</p>
+<p>In an inference manifest, a metadata key such as <code>"1"</code> belongs to the column
+named <code>"1"</code> when that name exists. Otherwise it can identify the column at
+zero-based position 1. Use column names for metadata when the frame contains
+numeric-looking names.</p>
+<h2 id="infinite-numeric-values-and-json-export">Infinite numeric values and JSON export<a class="headerlink" href="#infinite-numeric-values-and-json-export" title="Permanent link">&para;</a></h2>
+<p>Use finite numeric values and <code>NaN</code> for missing values when training a model
+for portable JSON inference. An infinite training value can produce an
+infinite quantile border. CTBoost's Python loader can reopen a native model
+with that border, but strict JSON readers reject the <code>Infinity</code> token and the
+portable predictor exporter requires finite borders.</p>
+<p>If infinity means missing in your data, apply <code>np.where(np.isinf(X), np.nan, X)</code>
+to the numeric matrix before fitting and apply the same conversion at inference.
+If infinity has a distinct meaning, encode it in a separate finite indicator
+and use a finite replacement for the original feature. Retrain an existing
+model before exporting it with this preprocessing.</p>
 
 
 
