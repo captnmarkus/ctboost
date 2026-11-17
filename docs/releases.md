@@ -1,9 +1,8 @@
 # Release history
 
-[CTBoost 0.1.62](release-0.1.62.md) covers categorical prediction preparation,
-compact JSON persistence, precise CTR accumulation and the JVM Jackson 2.21.7
-security update addressing five reported alerts. Its release notes state the
-artifact compatibility and pending release-validation scope.
+[CTBoost 0.1.63](release-0.1.63.md) corrects automatic numeric quantization and
+pandas categorical handling.
+
 Use the current [getting-started](getting-started.md),
 [deployment](guides/deployment.md), and [compatibility](reference/compatibility.md)
 guides for supported workflows.
@@ -14,6 +13,7 @@ reported at the time. Their status statements are historical; see
 
 | Release | Notes |
 |---|---|
+| [0.1.63](release-0.1.63.md) | Rare numeric values and pandas categorical inputs |
 | [0.1.62](release-0.1.62.md) | Categorical serving, compact JSON, CTR precision, and JVM security update |
 | [0.1.61](release-0.1.61.md) | CPU inference, loss correctness, and conversion compatibility |
 | [0.1.60](release-0.1.60.md) | CTR priors, stopping history, and DART corrections |

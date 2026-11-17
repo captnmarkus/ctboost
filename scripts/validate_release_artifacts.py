@@ -40,6 +40,7 @@ _MAX_CMAKE_BYTES = 2 * 1024 * 1024
 _REQUIRED_GROUPED_SCOUT_FILES = frozenset(
     {
         "benchmarks/tabarena/ctboost_model.py",
+        "benchmarks/tabarena/g8s1_frozen_model.py",
         "benchmarks/split_research/TABARENA_GROUPED_SCOUT.md",
         "benchmarks/split_research/G8S1_SCOUT_MANIFEST.json",
         "benchmarks/split_research/G8S1_SCOUT_RUNBOOK.md",

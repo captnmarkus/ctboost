@@ -12,26 +12,18 @@ and optional CUDA acceleration.
 
 </div>
 
-[CTBoost 0.1.62](release-0.1.62.md) improves categorical CPU inference
-preparation, compact JSON persistence, and CTR accumulation precision.
-Conditional-inference feature selection and tree-growth and hyperparameter
-defaults are preserved.
-Newly fitted pipelines use format 5; existing format 1–4 pipelines retain their
-legacy arithmetic. Read the release notes before exchanging new artifacts with
-an older CTBoost runtime. The JVM binding updates Jackson to 2.21.7 for five
-reported security alerts. The release notes describe validation and compatibility.
+[CTBoost 0.1.63](release-0.1.63.md) corrects numeric quantization on rare
+values and pandas categorical handling. See the release notes for affected
+inputs and model compatibility.
 
 !!! info "Project status"
     CTBoost is an alpha project. Its API and model format are tested extensively,
     but it does not yet have the independent production history of CatBoost or
     XGBoost. Benchmark claims on this site state their dataset and protocol scope.
 
-The [October follow-up](https://github.com/captnmarkus/ctboost/tree/master/benchmarks/results/improvements_20261016_followup) records the local inference and twelve-task
-accuracy work, including unsuccessful experiments. It is separate from the
-historical 0.1.58 author-run TabArena bundle. The 9 September 2026 statement that
-the 0.1.61 Full HPO25 run was prepared but unstarted remains a dated historical
-status, not a result for 0.1.62. See [benchmark status](benchmarks.md) for the
-protocols, results, and limits.
+CTBoost appears on the public TabArena leaderboard. The [benchmark guide](benchmarks.md)
+lists the default, tuned and ensemble ratings, with the filters and revision
+needed to reproduce the lookup.
 
 <div class="grid cards" markdown>
 

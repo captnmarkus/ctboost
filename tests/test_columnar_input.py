@@ -130,6 +130,9 @@ def test_pool_accepts_cpu_dlpack_matrix_and_label():
     np.testing.assert_allclose(pool.data, matrix, rtol=0.0, atol=0.0)
     np.testing.assert_allclose(pool.label, y, rtol=0.0, atol=0.0)
 
+    model = ctboost.CTBoostClassifier(iterations=2).fit(DLPackValue(matrix), y > np.median(y))
+    np.testing.assert_array_equal(model.predict(DLPackValue(matrix)), model.predict(matrix))
+
 
 def test_pool_accepts_cuda_array_protocol_with_explicit_host_copy():
     class HostCopyCudaArray:

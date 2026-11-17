@@ -120,12 +120,14 @@ def test_tabarena_native_mixed_frame_predicts_unseen_values_and_missing_data():
             "category": pd.Series(["red", "blue", None] * 20, dtype="category"),
             "object": pd.Series(["left", "right", None] * 20, dtype=object),
             "string": pd.Series(["low", "high", pd.NA] * 20, dtype="string"),
+            "inferred": ["east", "west", None] * 20,
             "boolean": pd.Series([True, False, True] * 20, dtype=bool),
             "numeric": pd.Series([1.0, np.nan, 3.0] * 20, dtype=np.float64),
         }
     )
     target = np.tile([0, 1, 0], 20)
     normalized, categorical = normalize_tabarena_frame(frame)
+    assert categorical == ["category", "object", "string", "inferred"]
     model = CTBoostClassifier(
         iterations=8,
         max_depth=2,
@@ -140,6 +142,7 @@ def test_tabarena_native_mixed_frame_predicts_unseen_values_and_missing_data():
             "category": pd.Series(["green", None], dtype="category"),
             "object": pd.Series(["centre", None], dtype=object),
             "string": pd.Series(["medium", pd.NA], dtype="string"),
+            "inferred": ["north", None],
             "boolean": pd.Series([False, True], dtype=bool),
             "numeric": pd.Series([2.0, np.nan], dtype=np.float64),
         }

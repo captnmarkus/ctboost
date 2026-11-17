@@ -13,6 +13,7 @@ from scripts import validate_release_artifacts as release_artifacts
 _GROUPED_SCOUT_FILES = frozenset(
     {
         "benchmarks/tabarena/ctboost_model.py",
+        "benchmarks/tabarena/g8s1_frozen_model.py",
         "benchmarks/split_research/TABARENA_GROUPED_SCOUT.md",
         "benchmarks/split_research/G8S1_SCOUT_MANIFEST.json",
         "benchmarks/split_research/G8S1_SCOUT_RUNBOOK.md",
@@ -308,6 +309,7 @@ def test_release_validator_rejects_missing_cuda_runtime_and_license(tmp_path):
 @pytest.mark.parametrize(
     "missing_file",
     [
+        "benchmarks/tabarena/g8s1_frozen_model.py",
         "benchmarks/split_research/G8S1_SCOUT_MANIFEST.json",
         "benchmarks/split_research/g8s1_harness/g8s1_scout/p200.json",
     ],
@@ -345,6 +347,7 @@ def test_release_validator_rejects_missing_grouped_scout_file_in_wheel(
 @pytest.mark.parametrize(
     "missing_file",
     [
+        "benchmarks/tabarena/g8s1_frozen_model.py",
         "benchmarks/split_research/G8S1_SCOUT_MANIFEST.json",
         "benchmarks/split_research/g8s1_harness/g8s1_scout/p200.json",
     ],

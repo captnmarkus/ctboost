@@ -9,6 +9,21 @@ the tree learner.
 
 ## Categorical features
 
+When fitting the sklearn estimators directly to a pandas DataFrame with the
+default preprocessing options, CTBoost learns the category codes for object,
+string, and categorical columns from the training frame. Validation and
+prediction reuse those codes even for a single row or a different pandas
+category order. Missing and unseen labels receive the pandas code `-1`.
+Numbers and strings such as `1` and `"1"` stay distinct. Custom Python
+category objects require stable, distinct type names and representations.
+
+The fitted vocabulary travels with estimator and booster JSON and pickle
+files. A model saved before vocabularies were recorded still requires its
+original category ordering. For portable exports, numeric arrays, and
+pre-encoded Pools, supply training codes directly. The inference manifest
+lists the labels in code order under `pandas_category_labels` for each
+inferred column.
+
 ```python
 model = CTBoostClassifier(
     cat_features=["city", "segment"],

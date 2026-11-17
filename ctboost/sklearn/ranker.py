@@ -7,9 +7,8 @@ from typing import Any, Iterable, Optional
 import numpy as np
 
 from ..core import Pool
-from ..training import _pool_from_data_and_label
+from ..training import _normalize_eval_sets, _pool_from_data_and_label
 from .base import _BaseCTBoost
-from .labels import _resolve_ranker_eval_pool
 from .serialization import PathLike
 
 class CTBoostRanker(_BaseCTBoost):
@@ -233,27 +232,17 @@ class CTBoostRanker(_BaseCTBoost):
             if y is None:
                 raise ValueError("y must be provided when X is not a Pool")
             resolved_group_id = group_id
-            if self._uses_feature_pipeline():
-                train_pool = X
-            else:
-                train_pool = _pool_from_data_and_label(
-                    X,
-                    y,
-                    group_id=group_id,
-                    group_weight=group_weight,
-                    subgroup_id=subgroup_id,
-                    baseline=baseline,
-                    pairs=pairs,
-                    pairs_weight=pairs_weight,
-                )
+            train_pool = X
 
         if resolved_group_id is None:
             raise ValueError("CTBoostRanker requires group_id")
 
-        eval_pool = eval_set if self._uses_feature_pipeline() else _resolve_ranker_eval_pool(eval_set)
+        eval_pool = _normalize_eval_sets(eval_set)
+        if any(not isinstance(entry, Pool) and len(entry) != 3 for entry in eval_pool):
+            raise TypeError("ranking eval_set entries must be Pools or (X, y, group_id) tuples")
         fitted = self._fit_impl(
             train_pool,
-            y if self._uses_feature_pipeline() and not isinstance(train_pool, Pool) else None,
+            None if isinstance(train_pool, Pool) else y,
             group_id=resolved_group_id,
             group_weight=group_weight,
             subgroup_id=subgroup_id,

@@ -218,7 +218,7 @@ def _copy_bootstrap_repo(destination: Path) -> Path:
     for relative in (
         Path("benchmarks/__init__.py"),
         Path("benchmarks/tabarena/__init__.py"),
-        Path("benchmarks/tabarena/ctboost_model.py"),
+        Path("benchmarks/tabarena/g8s1_frozen_model.py"),
         Path("benchmarks/tabarena/learning_options.py"),
         Path("benchmarks/split_research/G8S1_SCOUT_MANIFEST.json"),
         Path(RUNBOOK_RELATIVE),
@@ -351,11 +351,12 @@ def test_external_bootstrap_rejects_effective_forged_runtime_cache_before_execut
 
 
 @pytest.mark.parametrize("change", ["modified", "missing"])
+@pytest.mark.parametrize("filename", ["learning_options.py", "g8s1_frozen_model.py"])
 def test_external_bootstrap_rejects_unsealed_adapter_dependency(
-    tmp_path: Path, change: str
+    tmp_path: Path, change: str, filename: str
 ) -> None:
     fresh_repo = _copy_bootstrap_repo(tmp_path)
-    dependency = fresh_repo / "benchmarks/tabarena/learning_options.py"
+    dependency = fresh_repo / "benchmarks/tabarena" / filename
     if change == "missing":
         dependency.unlink()
     else:
@@ -372,7 +373,7 @@ def test_external_bootstrap_rejects_unsealed_adapter_dependency(
         timeout=30,
     )
     assert completed.returncode != 0
-    assert "adapter source hash drifted: learning_options.py" in completed.stderr
+    assert f"adapter source hash drifted: {filename}" in completed.stderr
     assert "unsealed dependency executed" not in completed.stderr
 
 
@@ -955,7 +956,7 @@ def test_private_loader_coexists_with_public_benchmark_module(
     assert isinstance(sealed.__loader__, identity.importlib.machinery.SourceFileLoader)
     assert (
         Path(sealed.__file__).resolve()
-        == (REPO_ROOT / "benchmarks/tabarena/ctboost_model.py").resolve()
+        == (REPO_ROOT / "benchmarks/tabarena/g8s1_frozen_model.py").resolve()
     )
     loader.validate_loaded_benchmark_modules(REPO_ROOT / "benchmarks/tabarena")
 
@@ -982,7 +983,7 @@ def test_private_loader_accepts_legacy_adapter_without_learning_options(
 ) -> None:
     tabarena_root = tmp_path / "benchmarks/tabarena"
     tabarena_root.mkdir(parents=True)
-    (tabarena_root / "ctboost_model.py").write_text("LEGACY = True\n", encoding="utf-8")
+    (tabarena_root / "g8s1_frozen_model.py").write_text("LEGACY = True\n", encoding="utf-8")
     for name in tuple(sys.modules):
         if name == loader._PRIVATE_PACKAGE or name.startswith(
             f"{loader._PRIVATE_PACKAGE}."

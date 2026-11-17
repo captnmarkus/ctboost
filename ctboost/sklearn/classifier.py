@@ -11,7 +11,7 @@ from ..core import Pool
 from ..core.columnar import _columnar_vector_to_numpy
 from ..training import _pool_from_data_and_label
 from .base import _BaseCTBoost
-from .labels import _encode_classifier_eval_set, _resolve_classifier_eval_pool
+from .labels import _encode_classifier_eval_set
 from .serialization import PathLike, _serialize_value
 
 class CTBoostClassifier(ClassifierMixin, _BaseCTBoost):
@@ -235,11 +235,7 @@ class CTBoostClassifier(ClassifierMixin, _BaseCTBoost):
             raise ValueError("CTBoostClassifier requires at least two distinct classes.")
 
         label_to_index = {label: index for index, label in enumerate(self.classes_.tolist())}
-        eval_pool = (
-            _encode_classifier_eval_set(eval_set, label_to_index)
-            if self._uses_feature_pipeline()
-            else _resolve_classifier_eval_pool(eval_set, label_to_index)
-        )
+        eval_pool = _encode_classifier_eval_set(eval_set, label_to_index)
         objective = "MultiClass" if self.n_classes_ > 2 else "Logloss"
         train_params: Dict[str, Any] = {}
         if self.class_weight is not None:
@@ -260,14 +256,10 @@ class CTBoostClassifier(ClassifierMixin, _BaseCTBoost):
             train_input = _pool_from_data_and_label(X, encoded_labels, baseline=baseline)
             train_labels = None
             fit_baseline = None
-        elif self._uses_feature_pipeline():
+        else:
             train_input = X
             train_labels = encoded_labels
             fit_baseline = baseline
-        else:
-            train_input = _pool_from_data_and_label(X, encoded_labels, baseline=baseline)
-            train_labels = None
-            fit_baseline = None
         fitted = self._fit_impl(
             train_input,
             train_labels,

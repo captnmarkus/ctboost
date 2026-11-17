@@ -42,7 +42,11 @@ any TabArena module.
 ## Frozen portfolio portability
 
 The exact P200 schedule source is the hash-sealed `g8s1_scout/p200.json`
-document. The live adapter generator is checked against that document for
+document. The scout loads its original adapter from
+`benchmarks/tabarena/g8s1_frozen_model.py`. The bootstrap verifies the same
+adapter source hash used by the original protocol. The public TabArena CLI
+loads `benchmarks/tabarena/ctboost_model.py`. The scout checks its frozen
+adapter generator against the schedule document for
 identical configuration/key order and exact non-floating values; every float
 must be equal or at most one IEEE-754 binary64 ULP away. It is never used as
 the schedule source.
@@ -52,7 +56,7 @@ Linux and Windows differed by one ULP at P200 cells 87 (`ctr_prior_strength`)
 and 197 (`alpha`), despite identical source, seed, and NumPy 2.5.2. PR #17,
 now included in current `master`, supplies exact tuple canonicalization for
 those two frozen samples. The hash-sealed P200 document remains the schedule
-source, and the live adapter generator remains audited against it; do not
+source, and the frozen adapter generator remains audited against it; do not
 replace the document with platform-generated output or allowlist
 platform-specific portfolio hashes.
 

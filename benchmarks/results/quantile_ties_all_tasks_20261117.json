@@ -1,0 +1,1009 @@
+{
+  "study": "TabArena 51 cached training/stopping/development splits, 2026-11-17",
+  "seed": 0,
+  "round_cap": 200,
+  "early_stopping_patience": 25,
+  "package_versions": [
+    "0.1.62",
+    "0.1.63"
+  ],
+  "native_sha256": [
+    "4e2924a2259ad08f072be6b92d2bd0a9173e8c3c55d8ca0bcafab7f47c50d41f",
+    "21b735aa0437881e9b315edfcb29203539f64ff8fcfdca134a4ec389f62b14a4"
+  ],
+  "summary": {
+    "datasets": 51,
+    "successfully_scored_fits": 102,
+    "wins": 3,
+    "ties": 46,
+    "losses": 2,
+    "identical_prediction_arrays": 46,
+    "median_relative_error_reduction": 0.0,
+    "mean_relative_error_reduction": 0.0016595683233716913
+  },
+  "results": [
+    {
+      "dataset": "blood-transfusion-service-center",
+      "problem_type": "binary",
+      "development_rows": 62,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.41914893617021276,
+        "best_iteration": 88,
+        "predictions_sha256": "495fe0975814f10145f5325075115339dc5f3654f10be421e9d0c4486132155d"
+      },
+      "candidate": {
+        "error": 0.41914893617021276,
+        "best_iteration": 88,
+        "predictions_sha256": "495fe0975814f10145f5325075115339dc5f3654f10be421e9d0c4486132155d"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "coil2000_insurance_policies",
+      "problem_type": "binary",
+      "development_rows": 818,
+      "affected_raw_columns": [
+        "contributionLorryPolicies",
+        "contributionAgriculturalMachinesPolicies",
+        "contributionSurfboardPolicies",
+        "contributionBoatPolicies",
+        "numberOfLorryPolicies",
+        "numberOfAgriculturalMachinesPolicies",
+        "numberOfSurfboardPolicies",
+        "numberOfBoatPolicies"
+      ],
+      "baseline": {
+        "error": 0.3483983970701414,
+        "best_iteration": 48,
+        "predictions_sha256": "c1c2069154f54c838f6abb46ab2de345473f1e0fd4fa75af7f8348f13238e896"
+      },
+      "candidate": {
+        "error": 0.31986943021682024,
+        "best_iteration": 115,
+        "predictions_sha256": "6e9cdb276d034f6906fddd5f13be0f4e32491b0c1cddb31c6297ba4059cd641a"
+      },
+      "relative_error_reduction": 0.0818860450944543
+    },
+    {
+      "dataset": "GiveMeSomeCredit",
+      "problem_type": "binary",
+      "development_rows": 1250,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.14107040757984157,
+        "best_iteration": 140,
+        "predictions_sha256": "6c0e1a18b5b33970ec3c08b6ed536d51b93226ab4148f96d8d1436e9cda07b03"
+      },
+      "candidate": {
+        "error": 0.14107040757984157,
+        "best_iteration": 140,
+        "predictions_sha256": "6c0e1a18b5b33970ec3c08b6ed536d51b93226ab4148f96d8d1436e9cda07b03"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "QSAR_fish_toxicity",
+      "problem_type": "regression",
+      "development_rows": 75,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.770438147237556,
+        "best_iteration": 199,
+        "predictions_sha256": "fae528eaabd4e86572c01a242344578446c334c50aa03e39c535f9cbf5ec8eb7"
+      },
+      "candidate": {
+        "error": 0.770438147237556,
+        "best_iteration": 199,
+        "predictions_sha256": "fae528eaabd4e86572c01a242344578446c334c50aa03e39c535f9cbf5ec8eb7"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "wine_quality",
+      "problem_type": "regression",
+      "development_rows": 541,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.6748561016432743,
+        "best_iteration": 181,
+        "predictions_sha256": "9d53c4a466a27230b02c3e065add9dfb0adefcf712eddcdca4573ec4b63224bb"
+      },
+      "candidate": {
+        "error": 0.6748561016432743,
+        "best_iteration": 181,
+        "predictions_sha256": "9d53c4a466a27230b02c3e065add9dfb0adefcf712eddcdca4573ec4b63224bb"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "diamonds",
+      "problem_type": "regression",
+      "development_rows": 1250,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 663.563189417893,
+        "best_iteration": 193,
+        "predictions_sha256": "15cd33d66263132c9f9dfd89740ed72e4b79607f4961ee39bc93f281f3cc10c6"
+      },
+      "candidate": {
+        "error": 663.563189417893,
+        "best_iteration": 193,
+        "predictions_sha256": "15cd33d66263132c9f9dfd89740ed72e4b79607f4961ee39bc93f281f3cc10c6"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "MIC",
+      "problem_type": "multiclass",
+      "development_rows": 141,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.3933327126636736,
+        "best_iteration": 143,
+        "predictions_sha256": "1681d63d1ec3cdbe75ecac873a443e5f2762b5476a4cac131d1e9b1f0a2513f6"
+      },
+      "candidate": {
+        "error": 0.3933327126636736,
+        "best_iteration": 143,
+        "predictions_sha256": "1681d63d1ec3cdbe75ecac873a443e5f2762b5476a4cac131d1e9b1f0a2513f6"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "SDSS17",
+      "problem_type": "multiclass",
+      "development_rows": 1250,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.10622205592132261,
+        "best_iteration": 165,
+        "predictions_sha256": "d586ded5e339c27e371e4fd134670aea670a8cad9ffb2c3110081ef600cfebb4"
+      },
+      "candidate": {
+        "error": 0.10622205592132261,
+        "best_iteration": 165,
+        "predictions_sha256": "d586ded5e339c27e371e4fd134670aea670a8cad9ffb2c3110081ef600cfebb4"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "anneal",
+      "problem_type": "multiclass",
+      "development_rows": 74,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.0413184075545485,
+        "best_iteration": 199,
+        "predictions_sha256": "48e3cc9e9180e05a98dd4c2f560db20c896e9f813c68a87db9c98b46616978d4"
+      },
+      "candidate": {
+        "error": 0.0413184075545485,
+        "best_iteration": 199,
+        "predictions_sha256": "48e3cc9e9180e05a98dd4c2f560db20c896e9f813c68a87db9c98b46616978d4"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "hiva_agnostic",
+      "problem_type": "multiclass",
+      "development_rows": 320,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.17115155326745976,
+        "best_iteration": 2,
+        "predictions_sha256": "3fccc2434d4e974aa071c670cb20af34e40c9af6a45369acf8bc464b6afced37"
+      },
+      "candidate": {
+        "error": 0.17115155326745976,
+        "best_iteration": 2,
+        "predictions_sha256": "3fccc2434d4e974aa071c670cb20af34e40c9af6a45369acf8bc464b6afced37"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "maternal_health_risk",
+      "problem_type": "multiclass",
+      "development_rows": 84,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.7158572921763495,
+        "best_iteration": 124,
+        "predictions_sha256": "813f8ec3e31b99754dceb20f1595210e63c4193f2e425e9f29b02289df9a8c9f"
+      },
+      "candidate": {
+        "error": 0.7158572921763495,
+        "best_iteration": 124,
+        "predictions_sha256": "813f8ec3e31b99754dceb20f1595210e63c4193f2e425e9f29b02289df9a8c9f"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "splice",
+      "problem_type": "multiclass",
+      "development_rows": 265,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.12796248121070095,
+        "best_iteration": 199,
+        "predictions_sha256": "059555c130868bdc7cceb790f29afef62bc391d81d90c2165d873bbf5501622a"
+      },
+      "candidate": {
+        "error": 0.12796248121070095,
+        "best_iteration": 199,
+        "predictions_sha256": "059555c130868bdc7cceb790f29afef62bc391d81d90c2165d873bbf5501622a"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "students_dropout_and_academic_success",
+      "problem_type": "multiclass",
+      "development_rows": 368,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.5689602302432991,
+        "best_iteration": 191,
+        "predictions_sha256": "4c3f58d01e8a1ad3bc1139b249ab07556db6d8a2a82fa8f08e0fdf6128cd421b"
+      },
+      "candidate": {
+        "error": 0.5689602302432991,
+        "best_iteration": 191,
+        "predictions_sha256": "4c3f58d01e8a1ad3bc1139b249ab07556db6d8a2a82fa8f08e0fdf6128cd421b"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "website_phishing",
+      "problem_type": "multiclass",
+      "development_rows": 112,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.25306359146079715,
+        "best_iteration": 104,
+        "predictions_sha256": "26cb00e58306e2e67f2af5975ea5d8eed10fed8626566eafbd3d29c3cfe1f820"
+      },
+      "candidate": {
+        "error": 0.25306359146079715,
+        "best_iteration": 104,
+        "predictions_sha256": "26cb00e58306e2e67f2af5975ea5d8eed10fed8626566eafbd3d29c3cfe1f820"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "APSFailure",
+      "problem_type": "binary",
+      "development_rows": 2500,
+      "affected_raw_columns": [
+        "as_000",
+        "au_000",
+        "ch_000"
+      ],
+      "baseline": {
+        "error": 0.015272314942773146,
+        "best_iteration": 61,
+        "predictions_sha256": "4f1e209f00d6456a11a25a365da2a2cc44f4526cc8384b989b5e558549fbbf77"
+      },
+      "candidate": {
+        "error": 0.0150951419155948,
+        "best_iteration": 68,
+        "predictions_sha256": "2fa92263288168a6cdd05de49737e0b2b80b5173f2f53687c16bfeea02c14dc4"
+      },
+      "relative_error_reduction": 0.011600928074246175
+    },
+    {
+      "dataset": "Amazon_employee_access",
+      "problem_type": "binary",
+      "development_rows": 2500,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.2776416708371643,
+        "best_iteration": 127,
+        "predictions_sha256": "ae60a9016489a1bf9b1c8999c17bbc6c3fd85195199904d92209b48bafb59a97"
+      },
+      "candidate": {
+        "error": 0.2776416708371643,
+        "best_iteration": 127,
+        "predictions_sha256": "ae60a9016489a1bf9b1c8999c17bbc6c3fd85195199904d92209b48bafb59a97"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "Another-Dataset-on-used-Fiat-500",
+      "problem_type": "regression",
+      "development_rows": 256,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 752.4202298148944,
+        "best_iteration": 62,
+        "predictions_sha256": "04e04f79effa193c8aa671dd6afb96d12bf4bb4234c0eaa9286ada8176c8b633"
+      },
+      "candidate": {
+        "error": 752.4202298148944,
+        "best_iteration": 62,
+        "predictions_sha256": "04e04f79effa193c8aa671dd6afb96d12bf4bb4234c0eaa9286ada8176c8b633"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "Bank_Customer_Churn",
+      "problem_type": "binary",
+      "development_rows": 1666,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.12460074527548581,
+        "best_iteration": 196,
+        "predictions_sha256": "6a68e896b34bfafa547dc94dedfa02bd6809737a81d1cdfc606ecf768fc6e6ad"
+      },
+      "candidate": {
+        "error": 0.12460074527548581,
+        "best_iteration": 196,
+        "predictions_sha256": "6a68e896b34bfafa547dc94dedfa02bd6809737a81d1cdfc606ecf768fc6e6ad"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "Bioresponse",
+      "problem_type": "binary",
+      "development_rows": 624,
+      "affected_raw_columns": [
+        "D176",
+        "D193",
+        "D234",
+        "D238",
+        "D240",
+        "D242",
+        "D245",
+        "D302",
+        "D303",
+        "D304",
+        "D305",
+        "D306",
+        "D307",
+        "D333",
+        "D358",
+        "D370",
+        "D371",
+        "D372",
+        "D401",
+        "D402",
+        "D404",
+        "D405",
+        "D425",
+        "D485",
+        "D487",
+        "D488",
+        "D489",
+        "D490",
+        "D502",
+        "D503",
+        "D510",
+        "D540",
+        "D572",
+        "D573",
+        "D574",
+        "D575",
+        "D581",
+        "D637",
+        "D638",
+        "D639",
+        "D647",
+        "D648",
+        "D658",
+        "D720",
+        "D721",
+        "D726",
+        "D737",
+        "D738",
+        "D746",
+        "D782",
+        "D783",
+        "D784",
+        "D785",
+        "D787",
+        "D788",
+        "D789",
+        "D799",
+        "D801",
+        "D804",
+        "D820",
+        "D821",
+        "D822",
+        "D824",
+        "D825",
+        "D827",
+        "D828",
+        "D829",
+        "D830",
+        "D831",
+        "D838",
+        "D839",
+        "D840",
+        "D847",
+        "D854",
+        "D856",
+        "D859",
+        "D860",
+        "D861",
+        "D862",
+        "D871",
+        "D872",
+        "D873",
+        "D874",
+        "D879",
+        "D887",
+        "D888",
+        "D910",
+        "D923",
+        "D924"
+      ],
+      "baseline": {
+        "error": 0.1951317912856375,
+        "best_iteration": 155,
+        "predictions_sha256": "325f8caee340e9adc577709cb72cfaff467116b55840ccf7e31f15c2a9a940e0"
+      },
+      "candidate": {
+        "error": 0.2003765465303926,
+        "best_iteration": 106,
+        "predictions_sha256": "fef4956dfc297cf4359853a96e077f25737751c18a0d25ffd9497839df5a5e52"
+      },
+      "relative_error_reduction": -0.026878015161956537
+    },
+    {
+      "dataset": "Diabetes130US",
+      "problem_type": "binary",
+      "development_rows": 2500,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.38458433014354065,
+        "best_iteration": 52,
+        "predictions_sha256": "a918dd5b37f9a1b95f53d93e77e525fb1ac25a451c823e8277041f4eb5120b58"
+      },
+      "candidate": {
+        "error": 0.38458433014354065,
+        "best_iteration": 52,
+        "predictions_sha256": "a918dd5b37f9a1b95f53d93e77e525fb1ac25a451c823e8277041f4eb5120b58"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "E-CommereShippingData",
+      "problem_type": "binary",
+      "development_rows": 1832,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.24090070036039402,
+        "best_iteration": 85,
+        "predictions_sha256": "dafed642b4dfe0972455743c400d5074ba64d74a65cd83a7c20bc69628bd4c71"
+      },
+      "candidate": {
+        "error": 0.24090070036039402,
+        "best_iteration": 85,
+        "predictions_sha256": "dafed642b4dfe0972455743c400d5074ba64d74a65cd83a7c20bc69628bd4c71"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "Fitness_Club",
+      "problem_type": "binary",
+      "development_rows": 250,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.20888359950859958,
+        "best_iteration": 120,
+        "predictions_sha256": "13baef0aa42bd74151ed0b064e79f292d618525080b74718140b863281563760"
+      },
+      "candidate": {
+        "error": 0.20888359950859958,
+        "best_iteration": 120,
+        "predictions_sha256": "13baef0aa42bd74151ed0b064e79f292d618525080b74718140b863281563760"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "Food_Delivery_Time",
+      "problem_type": "regression",
+      "development_rows": 2500,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 7.668831900104221,
+        "best_iteration": 185,
+        "predictions_sha256": "66a0ba281f4e805371afed201204ef0d774be2e802a9ff34f28ba45f114aa45f"
+      },
+      "candidate": {
+        "error": 7.668831900104221,
+        "best_iteration": 185,
+        "predictions_sha256": "66a0ba281f4e805371afed201204ef0d774be2e802a9ff34f28ba45f114aa45f"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "HR_Analytics_Job_Change_of_Data_Scientists",
+      "problem_type": "binary",
+      "development_rows": 2500,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.18136993603411522,
+        "best_iteration": 120,
+        "predictions_sha256": "42bc01212cb6fdfd944af098e240386d9d9c090b2abd48010f41e8b54fb77161"
+      },
+      "candidate": {
+        "error": 0.18136993603411522,
+        "best_iteration": 120,
+        "predictions_sha256": "42bc01212cb6fdfd944af098e240386d9d9c090b2abd48010f41e8b54fb77161"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "Is-this-a-good-customer",
+      "problem_type": "binary",
+      "development_rows": 286,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.24470964566929132,
+        "best_iteration": 90,
+        "predictions_sha256": "df9113295ed192942e4c13a945a6dd5cfae4073cd375e85333be7cc33f27b62b"
+      },
+      "candidate": {
+        "error": 0.24470964566929132,
+        "best_iteration": 90,
+        "predictions_sha256": "df9113295ed192942e4c13a945a6dd5cfae4073cd375e85333be7cc33f27b62b"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "Marketing_Campaign",
+      "problem_type": "binary",
+      "development_rows": 372,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.2105560578661846,
+        "best_iteration": 126,
+        "predictions_sha256": "d264bb3594207d85247c8a64416b7ab343d0a207b7d156f0fa80b5a31d2c262b"
+      },
+      "candidate": {
+        "error": 0.2105560578661846,
+        "best_iteration": 126,
+        "predictions_sha256": "d264bb3594207d85247c8a64416b7ab343d0a207b7d156f0fa80b5a31d2c262b"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "NATICUSdroid",
+      "problem_type": "binary",
+      "development_rows": 1248,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.020638141947122213,
+        "best_iteration": 192,
+        "predictions_sha256": "7f37903d3272c57b878e0ccf7caf99e19ac2a67b6258c9f4df017bbfbeedd478"
+      },
+      "candidate": {
+        "error": 0.020638141947122213,
+        "best_iteration": 192,
+        "predictions_sha256": "7f37903d3272c57b878e0ccf7caf99e19ac2a67b6258c9f4df017bbfbeedd478"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "QSAR-TID-11",
+      "problem_type": "regression",
+      "development_rows": 956,
+      "affected_raw_columns": [
+        "FCFP6_1024_281",
+        "FCFP6_1024_404",
+        "FCFP6_1024_514",
+        "FCFP6_1024_543",
+        "FCFP6_1024_563",
+        "FCFP6_1024_770",
+        "FCFP6_1024_917",
+        "FCFP6_1024_962"
+      ],
+      "baseline": {
+        "error": 0.867568707160538,
+        "best_iteration": 199,
+        "predictions_sha256": "d5de7f32a3ea75a0141bfcb5d7feb923db071e0ffbf9c337dc469eec932d46b9"
+      },
+      "candidate": {
+        "error": 0.8680209706088279,
+        "best_iteration": 199,
+        "predictions_sha256": "1ce6ca6d20487e29f239250b9a64aa851c565eca533a02a7b1c6668689aeb657"
+      },
+      "relative_error_reduction": -0.000521299863119884
+    },
+    {
+      "dataset": "airfoil_self_noise",
+      "problem_type": "regression",
+      "development_rows": 250,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 3.9063161164281115,
+        "best_iteration": 183,
+        "predictions_sha256": "f173d1e822e982ec57abd90742d6fb351389e2beae652221e9f38346a9d489e3"
+      },
+      "candidate": {
+        "error": 3.9063161164281115,
+        "best_iteration": 183,
+        "predictions_sha256": "f173d1e822e982ec57abd90742d6fb351389e2beae652221e9f38346a9d489e3"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "bank-marketing",
+      "problem_type": "binary",
+      "development_rows": 2500,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.23041365231496047,
+        "best_iteration": 120,
+        "predictions_sha256": "b3a5abdd8f48ada7fd73af0cc48455e3e5e915386ca0b7ff2c9c96f0fde63b41"
+      },
+      "candidate": {
+        "error": 0.23041365231496047,
+        "best_iteration": 120,
+        "predictions_sha256": "b3a5abdd8f48ada7fd73af0cc48455e3e5e915386ca0b7ff2c9c96f0fde63b41"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "churn",
+      "problem_type": "binary",
+      "development_rows": 832,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.11876275934102476,
+        "best_iteration": 199,
+        "predictions_sha256": "c50093b17555bb2cccf2c74386617ff4505b2c043d2bd5e45ae5a589d748d492"
+      },
+      "candidate": {
+        "error": 0.11876275934102476,
+        "best_iteration": 199,
+        "predictions_sha256": "c50093b17555bb2cccf2c74386617ff4505b2c043d2bd5e45ae5a589d748d492"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "concrete_compressive_strength",
+      "problem_type": "regression",
+      "development_rows": 170,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 5.751027992444053,
+        "best_iteration": 197,
+        "predictions_sha256": "2351ed8e4094312db4981413ff37c398326181f851b2ebd07f8cfe60610318bd"
+      },
+      "candidate": {
+        "error": 5.751027992444053,
+        "best_iteration": 197,
+        "predictions_sha256": "2351ed8e4094312db4981413ff37c398326181f851b2ebd07f8cfe60610318bd"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "credit-g",
+      "problem_type": "binary",
+      "development_rows": 166,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.19879310344827583,
+        "best_iteration": 30,
+        "predictions_sha256": "a7cde22c25ed361811cedf4f061e09caa837fa92933448afb2f2e01de58ce645"
+      },
+      "candidate": {
+        "error": 0.19879310344827583,
+        "best_iteration": 30,
+        "predictions_sha256": "a7cde22c25ed361811cedf4f061e09caa837fa92933448afb2f2e01de58ce645"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "credit_card_clients_default",
+      "problem_type": "binary",
+      "development_rows": 2500,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.24949632867197735,
+        "best_iteration": 88,
+        "predictions_sha256": "4b4efcdff7ac45d662a1112b2560f02981ce2911eccbb17618c1ab256cc79d73"
+      },
+      "candidate": {
+        "error": 0.24949632867197735,
+        "best_iteration": 88,
+        "predictions_sha256": "4b4efcdff7ac45d662a1112b2560f02981ce2911eccbb17618c1ab256cc79d73"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "customer_satisfaction_in_airline",
+      "problem_type": "binary",
+      "development_rows": 2500,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.016756020483886247,
+        "best_iteration": 187,
+        "predictions_sha256": "9c08a277e57bc5a668951169988ef1f3d575845ba4a363808693ca692776123f"
+      },
+      "candidate": {
+        "error": 0.016756020483886247,
+        "best_iteration": 187,
+        "predictions_sha256": "9c08a277e57bc5a668951169988ef1f3d575845ba4a363808693ca692776123f"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "diabetes",
+      "problem_type": "binary",
+      "development_rows": 128,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.16734307359307365,
+        "best_iteration": 129,
+        "predictions_sha256": "e18692e6a2b4bd7b8f1fefde242600b76f8f75f4aa7360a83333409fd97bff53"
+      },
+      "candidate": {
+        "error": 0.16734307359307365,
+        "best_iteration": 129,
+        "predictions_sha256": "e18692e6a2b4bd7b8f1fefde242600b76f8f75f4aa7360a83333409fd97bff53"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "hazelnut-spread-contaminant-detection",
+      "problem_type": "binary",
+      "development_rows": 400,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.07467500000000005,
+        "best_iteration": 198,
+        "predictions_sha256": "543e1687ec16d57253419ee9ba4dffb535897cfd22b6e5d3deadde9cdd347a20"
+      },
+      "candidate": {
+        "error": 0.07467500000000005,
+        "best_iteration": 198,
+        "predictions_sha256": "543e1687ec16d57253419ee9ba4dffb535897cfd22b6e5d3deadde9cdd347a20"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "healthcare_insurance_expenses",
+      "problem_type": "regression",
+      "development_rows": 222,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 5501.698443918508,
+        "best_iteration": 115,
+        "predictions_sha256": "2ce798308095f87610a4c96d89450692122760963c6a2c45ea4a477e84195ffb"
+      },
+      "candidate": {
+        "error": 5501.698443918508,
+        "best_iteration": 115,
+        "predictions_sha256": "2ce798308095f87610a4c96d89450692122760963c6a2c45ea4a477e84195ffb"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "heloc",
+      "problem_type": "binary",
+      "development_rows": 1742,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.19000488693998308,
+        "best_iteration": 145,
+        "predictions_sha256": "c488194afccf5b97d9f9e62130da058b5b4934d16361e37f168b14c17478a5d7"
+      },
+      "candidate": {
+        "error": 0.19000488693998308,
+        "best_iteration": 145,
+        "predictions_sha256": "c488194afccf5b97d9f9e62130da058b5b4934d16361e37f168b14c17478a5d7"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "houses",
+      "problem_type": "regression",
+      "development_rows": 2500,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.23562568338247838,
+        "best_iteration": 195,
+        "predictions_sha256": "020a292cdef7af745601c64a19e2ac50fced58b0e2b129e094784a8c94ee824d"
+      },
+      "candidate": {
+        "error": 0.23562568338247838,
+        "best_iteration": 195,
+        "predictions_sha256": "020a292cdef7af745601c64a19e2ac50fced58b0e2b129e094784a8c94ee824d"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "in_vehicle_coupon_recommendation",
+      "problem_type": "binary",
+      "development_rows": 2114,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.21758707148067113,
+        "best_iteration": 138,
+        "predictions_sha256": "5af1575f967e7d5309c30668f30f6530550bfd74e7f15c671a6c496e894617fa"
+      },
+      "candidate": {
+        "error": 0.21758707148067113,
+        "best_iteration": 138,
+        "predictions_sha256": "5af1575f967e7d5309c30668f30f6530550bfd74e7f15c671a6c496e894617fa"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "jm1",
+      "problem_type": "binary",
+      "development_rows": 1814,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.27894443321726137,
+        "best_iteration": 152,
+        "predictions_sha256": "7c49fa4ce39697ff8ec4bb8f63cb4f8ff6d940fe392a7fa5033e967f9d935db8"
+      },
+      "candidate": {
+        "error": 0.27894443321726137,
+        "best_iteration": 152,
+        "predictions_sha256": "7c49fa4ce39697ff8ec4bb8f63cb4f8ff6d940fe392a7fa5033e967f9d935db8"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "kddcup09_appetency",
+      "problem_type": "binary",
+      "development_rows": 2500,
+      "affected_raw_columns": [
+        "Var173"
+      ],
+      "baseline": {
+        "error": 0.19486375394209998,
+        "best_iteration": 104,
+        "predictions_sha256": "e7252459a4c3000509e63e38e2096a165959b5f9cfc3f36cd247e9db9f04b787"
+      },
+      "candidate": {
+        "error": 0.19486375394209998,
+        "best_iteration": 104,
+        "predictions_sha256": "e7252459a4c3000509e63e38e2096a165959b5f9cfc3f36cd247e9db9f04b787"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "miami_housing",
+      "problem_type": "regression",
+      "development_rows": 2296,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 106612.69831728756,
+        "best_iteration": 196,
+        "predictions_sha256": "6d4ea4852076690471d67cf870fff871ec4746a11bcdebf4c30b091295964b05"
+      },
+      "candidate": {
+        "error": 106612.69831728756,
+        "best_iteration": 196,
+        "predictions_sha256": "6d4ea4852076690471d67cf870fff871ec4746a11bcdebf4c30b091295964b05"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "online_shoppers_intention",
+      "problem_type": "binary",
+      "development_rows": 2054,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.06627865692838308,
+        "best_iteration": 127,
+        "predictions_sha256": "fc6aee1110f2e778c7bf619bc4f555152848c4dacf638d20ad873ad20b779743"
+      },
+      "candidate": {
+        "error": 0.06627865692838308,
+        "best_iteration": 127,
+        "predictions_sha256": "fc6aee1110f2e778c7bf619bc4f555152848c4dacf638d20ad873ad20b779743"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "physiochemical_protein",
+      "problem_type": "regression",
+      "development_rows": 2500,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 4.716043926851571,
+        "best_iteration": 199,
+        "predictions_sha256": "c729f2cc7528a112b2df6b7505ffe39022dfe25fb7c045833e4e7077104c3766"
+      },
+      "candidate": {
+        "error": 4.716043926851571,
+        "best_iteration": 199,
+        "predictions_sha256": "c729f2cc7528a112b2df6b7505ffe39022dfe25fb7c045833e4e7077104c3766"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "polish_companies_bankruptcy",
+      "problem_type": "binary",
+      "development_rows": 984,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.07527934754687904,
+        "best_iteration": 183,
+        "predictions_sha256": "96bd66353a4eba07c28c3dc9ae6fe4e95e42df986fff21b72148ce57cc61e4ba"
+      },
+      "candidate": {
+        "error": 0.07527934754687904,
+        "best_iteration": 183,
+        "predictions_sha256": "96bd66353a4eba07c28c3dc9ae6fe4e95e42df986fff21b72148ce57cc61e4ba"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "qsar-biodeg",
+      "problem_type": "binary",
+      "development_rows": 174,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.09096313912009513,
+        "best_iteration": 189,
+        "predictions_sha256": "e46eee01ffd817981eda27002ebf85ea50a7a2e466b73f0e9d00c7046c3b0770"
+      },
+      "candidate": {
+        "error": 0.09096313912009513,
+        "best_iteration": 189,
+        "predictions_sha256": "e46eee01ffd817981eda27002ebf85ea50a7a2e466b73f0e9d00c7046c3b0770"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "seismic-bumps",
+      "problem_type": "binary",
+      "development_rows": 430,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 0.1988717128642501,
+        "best_iteration": 34,
+        "predictions_sha256": "598f7841d3c3a39b44c0f5450aa450da0034d68ef64c20df41d22df3998bc6f8"
+      },
+      "candidate": {
+        "error": 0.1988717128642501,
+        "best_iteration": 34,
+        "predictions_sha256": "598f7841d3c3a39b44c0f5450aa450da0034d68ef64c20df41d22df3998bc6f8"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "superconductivity",
+      "problem_type": "regression",
+      "development_rows": 2500,
+      "affected_raw_columns": [],
+      "baseline": {
+        "error": 12.017362489424313,
+        "best_iteration": 199,
+        "predictions_sha256": "b5cd8022f14ed6867652eaed9a082f112dcb8d1faee5805687d72cf2819ee479"
+      },
+      "candidate": {
+        "error": 12.017362489424313,
+        "best_iteration": 199,
+        "predictions_sha256": "b5cd8022f14ed6867652eaed9a082f112dcb8d1faee5805687d72cf2819ee479"
+      },
+      "relative_error_reduction": 0.0
+    },
+    {
+      "dataset": "taiwanese_bankruptcy_prediction",
+      "problem_type": "binary",
+      "development_rows": 1136,
+      "affected_raw_columns": [
+        "Liability_Assets_Flag"
+      ],
+      "baseline": {
+        "error": 0.07158842190689318,
+        "best_iteration": 80,
+        "predictions_sha256": "d3ff9ffe36f2260592620fd7d6f14fed1832c24e189cd251572bacfb78ae03ba"
+      },
+      "candidate": {
+        "error": 0.07026043331775822,
+        "best_iteration": 80,
+        "predictions_sha256": "276f63a02529e3bf54b8c66a194558470ea7d220cb03e6a8a8a61d4a2226a8ed"
+      },
+      "relative_error_reduction": 0.018550326348332202
+    }
+  ]
+}

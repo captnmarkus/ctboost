@@ -1,5 +1,6 @@
 #include "histogram_internal.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <limits>
@@ -238,6 +239,29 @@ FeatureHistogramResult BuildFeatureHistogram(const Pool& pool,
           ? ComputeUniformCuts(quantile_values, automatic_max_bins)
           : ComputeQuantileCuts(
                 std::move(quantile_values), automatic_max_bins, quantile_strategy);
+  if (border_selection_method == BorderSelectionMethod::Quantile &&
+      result.cut_values.size() == 1 && (unique_count_capped || observed_unique_values.size() > 1)) {
+    // Numeric bins use upper_bound. A lone cut at the minimum puts every
+    // observed value in the same bin, even if the feature has a rare tail.
+    const float cut = result.cut_values.front();
+    float next_cut = std::numeric_limits<float>::infinity();
+    reset_feature_cursor();
+    for (std::size_t row = 0; row < num_rows; ++row) {
+      const float value = feature_at(row);
+      if (value < cut) {
+        next_cut = cut;  // This cut already separates observed values.
+        break;
+      }
+      if (value > cut) {
+        next_cut = std::min(next_cut, value);
+      }
+    }
+    if (next_cut > cut) {
+      // A +infinity-only tail needs no infinite border in a saved model.
+      // If the minimum is already FLT_MAX, retain the original finite cut.
+      result.cut_values.front() = std::min(next_cut, std::numeric_limits<float>::max());
+    }
+  }
   const std::size_t non_missing_bins = non_missing_count == 0 ? 0U : result.cut_values.size() + 1U;
   result.num_bins = CheckedStoredBinCount(non_missing_bins, has_missing_values, "numeric");
   result.elapsed_ms =

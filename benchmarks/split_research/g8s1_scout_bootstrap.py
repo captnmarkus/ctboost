@@ -31,20 +31,20 @@ _ADAPTER_ROOT = _SOURCE_ROOT / "benchmarks" / "tabarena"
 _EXPECTED_RUNTIME_HASHES = {
     "__init__.py": "52c4a1b7167d24027e1b301423f84d7d5656290c79b447e020cfce9b5c6b34a1",
     "__main__.py": "01f5b72fa7c1e25c30001eaf3725aa2bb4f4d6a522da656ca4464f6b52d4e780",
-    "constants.py": "4615892d19a9b5457f172007eb05db9e3da60770e08f65abcadacae25c1cb9c1",
+    "constants.py": "90b5cf36b06e34186777f43ef26d7b4a525de937b2ea6589d2e49eb126271328",
     "identity.py": "5f82c0c7adad36eb5229358b2c71df8510a418bf27092d4532df3d75f181dc06",
-    "loader.py": "1a5288f8edcf9ac60d1a0b5df6dadb1249e797e2d346b8bfc256770ceb7ec915",
+    "loader.py": "f9718bdb6aa8bb33f283291cf9759e445229fcb20701a7884e2a2f0dc468c71c",
     "models.py": "855d93a1d810a9d73e16f193366bd6fbf8ca39d7084bdf2943f079c96ecfc901",
     "p200.json": "62575768f9cc68d3746d00675b81b71e8b0287bd0ab81a721321137c9605942b",
     "schedule.py": "9430666406cc22f2392f6978443ae42d0d482814dfbd745ffa902ee106090b08",
     "summary.py": "f7bc8ae20ba3044e2c65785e049ee7b000793b096941c2e2da43ca00c4439070",
 }
 _EXPECTED_ADAPTER_HASHES = {
-    "ctboost_model.py": "2419e6925c5b58f00950fe9653d997355ada27561d7d0851c0d3396654311efc",
+    "g8s1_frozen_model.py": "2419e6925c5b58f00950fe9653d997355ada27561d7d0851c0d3396654311efc",
     "learning_options.py": "cc72fc42a5dee7e89fa5282a12c5eddaa854bc324fc89115bddcf5e917c016ce",
 }
 _EXPECTED_RUNBOOK_SHA256 = (
-    "d97454c737df423504291d39352d8f07df0d355de7af8962a8140dafb0551d3d"
+    "4e4b7d78a609ce81176a6452ec5f3702862cd7399bd645d9a08f13eefb5bff11"
 )
 
 

@@ -129,19 +129,13 @@ all 51 datasets at `r0f0`, eight bag children per configuration and dataset,
 Default, tuned, and tuned-plus-ensemble Elo were 1161.9, 1262.8, and 1296.9
 respectively on the published 87-row comparison roster. The workers used
 4 CPUs and 28 GB RAM, so their timings are not comparable to canonical
-TabArena hardware. These scores measure 0.1.58; the current 0.1.60 release
-requires a separate evaluation.
+TabArena hardware. These scores measure 0.1.58 on the historical Lite roster.
 
-The current 0.1.60 evaluation is a
-[Full default-plus-25 HPO run](FULL_HPO25_0160.md), covering all 816 outer splits
-and 21,216 parent results. Its [plan](full_hpo25_0160_v1.json) was registered
-before fitting. The run is in progress; result publication requires complete
-validation. Its author-run two-CPU/8-GiB timings are not canonical TabArena timings.
-
-The [benchmark documentation](https://captnmarkus.github.io/ctboost/benchmarks/)
-records scope, historical results, and artifact provenance. Execution receipts
-remain in the archived result bundles. A TabArena-Full result requires the full
-outer-split protocol and maintainer review before leaderboard publication.
+The author-run 0.1.60 Full evaluation was retired. The separately prepared
+[0.1.61 Full HPO25 runner](https://github.com/captnmarkus/ctboost/tree/9e68e6d/benchmarks/tabarena)
+has its own plan and resource contract. For current CTBoost ratings see the
+[official Space table](https://huggingface.co/spaces/TabArena/leaderboard/blob/8ce4c3037c2b8f9385f6b35375776f610af2e9dd/data/entrants_models/imputation_yes/splits_all/tasks_all/datasets_all/website_leaderboard.csv). The [benchmark guide](../../docs/benchmarks.md)
+gives the filters, ratings and historical evaluation scope.
 
 ## Full benchmark
 

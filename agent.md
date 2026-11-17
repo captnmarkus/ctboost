@@ -24,11 +24,15 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 - Ranking metadata in `Pool`: `group_id`, `group_weight`, `subgroup_id`, `pairs`, `pairs_weight`, and `baseline`
 - TCP-based distributed training, optional CUDA builds, and Python CV helpers
 
+## Benchmark maintenance
+
+- Verify the current TabArena Space revision and filters when reporting Elo. The [benchmark guide](docs/benchmarks.md) distinguishes the official ratings from the author-run Lite roster and local development folds.
+- Compare outstanding work with the latest remote default branch before preparing a release. Older benchmark branches can contain local copies of already published evidence.
+
 ## Active Generic Backlog
 
 - Tighten the exact-equivalence guarantee surface for snapshot / resume beyond the current warm-start-based convenience flow
-- Broaden export and deployment surfaces with clearer manifests and downstream contracts
-- Add higher-level platform integration helpers for workflows such as Dask, Spark handoff, or Kaggle setup without changing learner semantics
+- Evaluate release-specific changes on the TabArena protocol and report paired results with their dataset and method roster
 
 See [BACKLOG.md](BACKLOG.md) for the prioritized roadmap.
 
@@ -38,7 +42,8 @@ See [BACKLOG.md](BACKLOG.md) for the prioritized roadmap.
 - Callback-based training control, including learning-rate schedules and callback-driven learning-rate changes
 - Callable evaluation metrics with safe early-stopping flags
 - Schema metadata round-tripping for boosters and sklearn estimators
-- Lightweight JSON predictor export
+- Inference manifests, JSON, Python, C++ and ONNX export surfaces
+- Dask, Ray and Spark training adapters
 - Text and embedding preprocessing layered around the existing learner
 
 ## Deferred Work
@@ -46,7 +51,7 @@ See [BACKLOG.md](BACKLOG.md) for the prioritized roadmap.
 - Any feature that would replace or materially rewrite the conditional-inference-tree split-selection principle
 - Native custom objectives inside the optimization loop
 - Full distributed algorithm redesign beyond the current single-model orchestration paths
-- Multi-output objectives and losses
+- New native multi-output objectives beyond the existing wrappers
 - New survival or ranking objective families that require deeper native optimization changes
 - Constraint redesign beyond the current `monotone_constraints` and `interaction_constraints` support
 

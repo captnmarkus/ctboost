@@ -1,5 +1,44 @@
 # Benchmarks
 
+## Official TabArena leaderboard
+
+The 17 November 2026 snapshot includes 110 rows in the models-only view with
+all datasets, task types and splits and with imputed entries included. All three
+CTBoost rows are marked verified and have 0% imputation.
+
+| CTBoost entry | Elo | 95% interval |
+|---|---:|---:|
+| Default | 1177 | 1111 to 1241 |
+| Tuned | 1298 | 1246 to 1337 |
+| Tuned + ensembled | 1327 | 1279 to 1367 |
+
+The Space table omits package versions. These ratings predate 0.1.63.
+The older author-run Lite study below used a different task and competitor
+roster. [Versioned leaderboard table](https://huggingface.co/spaces/TabArena/leaderboard/blob/8ce4c3037c2b8f9385f6b35375776f610af2e9dd/data/entrants_models/imputation_yes/splits_all/tasks_all/datasets_all/website_leaderboard.csv) and
+[Upstream adapter](https://github.com/autogluon/tabarena/pull/479)
+
+## CTBoost 0.1.63 development comparisons
+
+Across all 51 cached TabArena tasks at seed 0, the corrected build improved
+three, produced identical predictions on 46 and worsened two. All 102 fits
+completed. Median relative error reduction across tasks was **0.00%** and the
+unweighted mean was **+0.17%**. Each fit used a 200-round cap, 25 rounds of
+validation patience and a separate development split for scoring.
+
+The quantile-border correction restores a numeric split when rare values fell
+in the same bin as a column's minimum. A screen of the training features from
+51 cached TabArena tasks found 110 affected raw numeric columns on six tasks.
+All six were evaluated at two seeds. Three improved, one tied and two worsened.
+The median relative error reduction was 0.25% after averaging the two errors for
+each model within each task. The largest improvement was on coil insurance
+(6.81%), and the largest regression was on Bioresponse (1.13%). The study used
+held-out development rows and capped single fits. [Paired results and reproduction](https://github.com/captnmarkus/ctboost/blob/v0.1.63/benchmarks/tabarena/QUANTILE_TIES_SCOUT.md)
+
+An independent 36-fit scout compared log loss with ROC-AUC for binary early
+stopping. Across nine small tasks, selecting by ROC-AUC increased mean
+development error (1 minus ROC-AUC) from 0.2063 to 0.2160. The adapter retains
+its existing stopping policy. [Results by task](https://github.com/captnmarkus/ctboost/blob/v0.1.63/benchmarks/tabarena/BINARY_STOPPING_SCOUT.md)
+
 ## CTBoost 0.1.62: local evidence and scope
 
 [Release 0.1.62](release-0.1.62.md) reduces prediction preparation overhead,

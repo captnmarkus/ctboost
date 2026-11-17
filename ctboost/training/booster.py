@@ -16,6 +16,8 @@ from .._export import (
 from .._serialization import load_booster_document, save_booster
 from ..feature_pipeline import FeaturePipeline, _feature_pipelines_equivalent
 from ..core import Pool
+from ..core.normalization import _is_pandas_dataframe
+from ..core.pandas_categories import align_pandas_categories
 from ._booster_schema import _borders_from_quantization_schema
 from ._pool_build import _prediction_pool, _resolve_num_iteration
 from .eval_metrics import _copy_evals_result
@@ -136,6 +138,8 @@ class Booster:
                 data._feature_pipeline = self._feature_pipeline
             return data
         if self._feature_pipeline is None:
+            if _is_pandas_dataframe(data):
+                data = align_pandas_categories(data, self.data_schema.get("categorical_schema"))
             return _prediction_pool(data)
         transformed, cat_features, feature_names = self._feature_pipeline.transform_array(data)
         pool = Pool(

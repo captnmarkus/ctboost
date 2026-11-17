@@ -9,6 +9,7 @@ from sklearn.utils.validation import check_is_fitted
 
 from ..core import Pool
 from ..core.columnar import (
+    _array_protocol_to_numpy,
     _columnar_frame_metadata,
     _is_polars_lazy_frame,
 )
@@ -80,17 +81,14 @@ class _BasePredictionMixin:
                 raise ValueError(
                     "X feature names and order do not match the feature names seen during fit"
                 )
-        @staticmethod
-        def _prediction_pool(X: Any) -> Pool:
-            if isinstance(X, Pool):
-                return X
-            return Pool(data=X)
         def _transform_prediction_pool(self, X: Any) -> Pool:
+            if not hasattr(X, "shape"):
+                X = _array_protocol_to_numpy(X)
             self._validate_prediction_input(X)
             if isinstance(X, Pool):
                 return X
             if self._feature_pipeline is None:
-                return self._prediction_pool(X)
+                return self._booster._prediction_pool(X)
             transformed, cat_features, feature_names = self._feature_pipeline.transform_array(X)
             pool = Pool(
                 data=transformed,

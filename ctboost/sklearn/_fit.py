@@ -7,6 +7,8 @@ from typing import Any, Dict, Iterable, Optional
 import numpy as np
 
 from ..core import Pool
+from ..core.columnar import _array_protocol_to_numpy
+from ..core.pandas_categories import align_pandas_categories, pandas_category_schema
 from ..feature_pipeline import FeaturePipeline
 from ..training import _apply_sample_weight_to_pool, _normalize_eval_sets, _pool_from_data_and_label, train
 from ..training.eval_metrics import (
@@ -15,6 +17,8 @@ from ..training.eval_metrics import (
     _normalize_eval_metrics,
 )
 from ..training.objectives import ObjectiveSpec, _with_native_objective
+from ..training.booster import Booster
+from ..training.resume import _resolve_resume_snapshot_path
 from ..training._pool_build import (
     _assert_compatible_feature_pipeline,
     _resolve_init_model_pipeline,
@@ -52,6 +56,8 @@ class _BaseFitMixin:
             num_classes: int = 1,
             extra_train_params: Optional[Dict[str, Any]] = None,
         ) -> Any:
+            if not hasattr(X, "shape"):
+                X = _array_protocol_to_numpy(X)
             raw_feature_count, raw_feature_names = self._input_feature_metadata(X)
             resolved_eval_sets = _normalize_eval_sets(eval_set)
             resolved_init_model = init_model
@@ -114,6 +120,24 @@ class _BaseFitMixin:
                     )
             else:
                 self._feature_pipeline = None
+                seed_booster = getattr(resolved_init_model, "_booster", resolved_init_model)
+                if seed_booster is None:
+                    category_schema = pandas_category_schema(X)
+                    if category_schema and resume_from_snapshot:
+                        snapshot = _resolve_resume_snapshot_path(resume_from_snapshot, snapshot_path)
+                        if not Booster.load_model(snapshot).data_schema.get("categorical_schema"):
+                            category_schema = None
+                else:
+                    # Earlier models have no fitted vocabulary. Keep their code
+                    # space intact on continuation as well as on prediction.
+                    saved_schema = getattr(seed_booster, "data_schema", {}).get("categorical_schema")
+                    category_schema = None
+                    if isinstance(saved_schema, dict) and any(
+                        isinstance(column, dict) and "pandas_category_labels" in column
+                        for column in saved_schema.values()
+                    ):
+                        category_schema = saved_schema
+                        X = align_pandas_categories(X, category_schema)
                 train_pool = (
                     X
                     if (
@@ -125,6 +149,7 @@ class _BaseFitMixin:
                         and baseline is None
                         and pairs is None
                         and pairs_weight is None
+                        and category_schema is None
                     )
                     else _pool_from_data_and_label(
                         X,
@@ -135,18 +160,19 @@ class _BaseFitMixin:
                         baseline=baseline,
                         pairs=pairs,
                         pairs_weight=pairs_weight,
+                        categorical_schema=category_schema,
                     )
                 )
                 eval_pools = []
                 for resolved_eval_set in resolved_eval_sets:
                     if isinstance(resolved_eval_set, Pool):
                         eval_pools.append(resolved_eval_set)
-                    elif len(resolved_eval_set) == 2:
-                        X_eval, y_eval = resolved_eval_set
-                        eval_pools.append(_pool_from_data_and_label(X_eval, y_eval))
                     else:
-                        X_eval, y_eval, group_eval = resolved_eval_set
-                        eval_pools.append(_pool_from_data_and_label(X_eval, y_eval, group_id=group_eval))
+                        X_eval, y_eval = resolved_eval_set[:2]
+                        group_eval = resolved_eval_set[2] if len(resolved_eval_set) == 3 else None
+                        eval_pools.append(_pool_from_data_and_label(
+                            align_pandas_categories(X_eval, category_schema), y_eval, group_id=group_eval
+                        ))
     
             train_pool = _apply_sample_weight_to_pool(train_pool, sample_weight)
             if not eval_pools:

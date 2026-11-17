@@ -1,6 +1,6 @@
 # CTBoost Generic Feature Backlog
 
-Last updated: 2026-04-20
+Last updated 17 November 2026
 
 ## Goal
 
@@ -30,7 +30,8 @@ CTBoost now covers the core tabular baseline and several generic-library layers 
 - snapshot-path resume convenience on top of warm start, with saved config and schema validation
 - grouped ranking with `group_id`, `group_weight`, `subgroup_id`, `pairs`, `pairs_weight`, and `baseline`
 - richer schema metadata in `Pool`, boosters, and sklearn estimators
-- standalone Python export plus a lightweight JSON predictor export
+- inference manifests and JSON, Python, C++ and ONNX exports with documented input contracts
+- Dask, Ray and Spark training adapters
 - Python CV helper
 - external-memory pool staging
 
@@ -48,7 +49,7 @@ Keep the following out of the active backlog unless the project explicitly allow
 
 - any rewrite of the conditional-inference-tree split-selection principle
 - native custom objectives inside the optimization loop
-- multi-output objectives or losses
+- additional native multi-output objectives beyond the existing wrappers
 - new survival or ranking objective families that require deeper native optimization changes
 - true distributed algorithm redesign beyond the current orchestration layer
 
@@ -81,45 +82,19 @@ Acceptance:
 - periodic checkpoint behavior is documented precisely
 - any exact-equivalence claim is limited to cases the implementation really satisfies
 
-## Priority 2: Richer Export / Deployment Surface
+## Deployment and platform integrations
 
-Why second:
+The earlier export and integration milestones now ship. The
+[deployment guide](docs/guides/deployment.md) describes inference manifests,
+supported export formats and prepared-feature requirements. The
+[distributed guide](docs/guides/distributed.md) documents the Dask, Ray and
+Spark adapters and their execution limits.
 
-- JSON predictor export is landed, but deployment ergonomics can still improve
-- this is high leverage for downstream consumers without changing learner behavior
+## Benchmark evaluation
 
-Scope:
-
-- documented export manifest and prediction contract
-- richer metadata bundle for exported predictors
-- ONNX export only if the fitted ensemble maps cleanly and can be verified
-
-Caution:
-
-- do not promise CoreML or PMML parity until conversion fidelity is proven
-
-Acceptance:
-
-- one clearer deployment artifact contract beyond local JSON, pickle, Python export, and the current JSON predictor
-- round-trip verification tests for any new export surface
-
-## Priority 3: Platform Integration Helpers
-
-Why third:
-
-- useful for adoption
-- lower priority than single-node training and deployment ergonomics
-
-Scope:
-
-- thin helpers for partitioned preprocessing or dataset handoff
-- wrappers or utilities for Dask-style preprocessing flows
-- Spark or Kaggle-oriented integration helpers where the learner itself stays unchanged
-
-Important note:
-
-- thin orchestration wrappers are in scope
-- true distributed training redesign is deferred
+A release-specific change in Elo requires a fresh TabArena evaluation against
+the same comparison roster. The [benchmark guide](docs/benchmarks.md) records
+the official ratings and the development experiments used to evaluate 0.1.63.
 
 ## Recently Closed
 
@@ -128,18 +103,6 @@ Important note:
 - callable evaluation metrics with explicit early-stopping safety flags
 - schema metadata round-tripping for boosters and sklearn estimators
 - lightweight JSON predictor export via `export_format="json_predictor"`
-
-## Suggested Execution Order
-
-1. exact snapshot / resume guarantees
-2. richer export / deployment surface
-3. platform integration helpers
-
-## Minimal PR Sequence
-
-1. PR 1: tighten snapshot semantics and documented guarantees
-2. PR 2: export manifest and deployment helpers
-3. PR 3: platform integration utilities
 
 ## External Reference Matrix
 

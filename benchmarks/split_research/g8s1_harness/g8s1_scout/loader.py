@@ -19,13 +19,17 @@ from typing import Any
 from .constants import source_root
 
 _PRIVATE_PACKAGE = "_g8s1_scout_sealed_benchmark"
-_ALLOWED_MODULES = frozenset({"learning_options", "ctboost_model", "run"})
+_MODULE_FILES = {
+    "learning_options": "learning_options.py",
+    "ctboost_model": "g8s1_frozen_model.py",
+    "run": "run.py",
+}
 _OWNED_PACKAGE: types.ModuleType | None = None
 _LOADED_MODULES: dict[str, types.ModuleType] = {}
 
 
 def _private_module_name(module_name: str) -> str:
-    if module_name not in _ALLOWED_MODULES:
+    if module_name not in _MODULE_FILES:
         raise RuntimeError(
             f"benchmark module is outside the sealed allowlist: {module_name}"
         )
@@ -51,7 +55,7 @@ def _validate_private_package() -> None:
         or list(spec.submodule_search_locations) != []
     ):
         raise RuntimeError("sealed benchmark private package identity was replaced")
-    for leaf in _ALLOWED_MODULES:
+    for leaf in _MODULE_FILES:
         expected = _LOADED_MODULES.get(f"{_PRIVATE_PACKAGE}.{leaf}")
         if expected is None:
             if hasattr(package, leaf):
@@ -132,18 +136,18 @@ def validate_loaded_benchmark_modules(tabarena_root: Path) -> None:
         _validate_private_package()
     for name, module in _LOADED_MODULES.items():
         leaf = name.rsplit(".", 1)[-1]
-        if leaf not in _ALLOWED_MODULES or name != _private_module_name(leaf):
+        if leaf not in _MODULE_FILES or name != _private_module_name(leaf):
             raise RuntimeError(
                 "loaded benchmark module is outside the sealed allowlist"
             )
-        _validate_loaded_module(name, module, expected_root / f"{leaf}.py")
+        _validate_loaded_module(name, module, expected_root / _MODULE_FILES[leaf])
 
 
 def load_benchmark_module(module_name: str) -> Any:
     full_name = _private_module_name(module_name)
     root = source_root()
     tabarena_root = root / "benchmarks" / "tabarena"
-    expected_file = tabarena_root / f"{module_name}.py"
+    expected_file = tabarena_root / _MODULE_FILES[module_name]
     if not expected_file.is_file() or expected_file.is_symlink():
         raise RuntimeError(f"tracked benchmark module is missing: {module_name}")
     if full_name in _LOADED_MODULES:

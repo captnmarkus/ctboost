@@ -11,17 +11,9 @@ Python/scikit-learn interfaces.
 [Benchmarks](https://captnmarkus.github.io/ctboost/benchmarks/) ·
 [Compatibility](https://captnmarkus.github.io/ctboost/reference/compatibility/)
 
-The [0.1.62 release](https://captnmarkus.github.io/ctboost/release-0.1.62/)
-reduces CPU prediction preparation costs for eligible categorical pandas inputs
-and wide fitted schemas, writes compact JSON, and improves the precision of
-categorical target statistics. Conditional feature testing still selects a
-feature before its cut point is optimized; tree-growth and hyperparameter
-defaults remain unchanged.
-Newly fitted pipelines use format 5 for precise CTR accumulation. Formats 1–4
-remain loadable with their original arithmetic; older CTBoost versions cannot
-load format 5. The JVM binding also updates Jackson to 2.21.7 to address five
-reported security alerts. See the release notes for compatibility, validation,
-and the scope of the measured results.
+[CTBoost 0.1.63](https://captnmarkus.github.io/ctboost/release-0.1.63/) fixes
+automatic quantile borders for rare numeric values and categorical handling
+in pandas inputs. Both corrections affect ordinary tabular workflows.
 
 ## Highlights
 
@@ -99,28 +91,14 @@ for supported workflows, artifact compatibility, and a reproducible comparison.
 
 ## Evidence and project status
 
-The [October follow-up archive](https://github.com/captnmarkus/ctboost/tree/master/benchmarks/results/improvements_20261016_followup) separates production correctness,
-fixed-model inference measurements, and a twelve-task development accuracy
-study. It retains failed hypotheses, resource limits, source identities, and
-the distinction between model training and inference runtimes. These local
-studies do not establish a new TabArena Elo or a universal accuracy advantage.
+On 17 November 2026, the TabArena models-only leaderboard reported **1177 Elo**
+for CTBoost's default, **1298** for tuned CTBoost and **1327** for the tuned
+ensemble across all tasks, datasets and splits. All three entries are verified
+with 0% imputation. The Space does not identify a package version in these
+rows. [TabArena results at the checked revision](https://huggingface.co/spaces/TabArena/leaderboard/blob/8ce4c3037c2b8f9385f6b35375776f610af2e9dd/data/entrants_models/imputation_yes/splits_all/tasks_all/datasets_all/website_leaderboard.csv)
 
-The final current-data experiment completed 540 fold fits and 36 selected
-full-data fits. CTBoost's median relative error reduction was +0.21% against
-XGBoost (7/12 wins) and -0.82% against LightGBM (5/12 wins). The combined
-development target was not met, so the gated second-seed and official-test
-stages were not run. This release publishes the validated implementation
-improvements with that remaining accuracy gap documented.
-
-The [0.1.61 verification archive](https://github.com/captnmarkus/ctboost/tree/833a775/benchmarks/results/release_readiness_20260908)
-and [earlier accuracy studies](https://github.com/captnmarkus/ctboost/tree/8cc75aa/benchmarks/results/inference_accuracy_20260908/accuracy)
-remain historical evidence. The status recorded on **9 September 2026** was
-that a fresh 0.1.61 Full HPO25 evaluation had been prepared but had not started,
-and the 0.1.60 run was retired. That record is not a completed 0.1.62 evaluation.
-The published author-run 0.1.58 TabArena-Lite bundle is also separate from this
-release and is not an official leaderboard entry. The
-[benchmark page](https://captnmarkus.github.io/ctboost/benchmarks/) retains its
-scores, resource limits, and historical comparisons.
+The [benchmark guide](https://captnmarkus.github.io/ctboost/benchmarks/) covers
+local development experiments and the older author-run Lite evaluation.
 
 For opt-in CPU learning controls, see
 [safeguarded leaves and joint multiclass tests](https://captnmarkus.github.io/ctboost/guides/learning-options/).

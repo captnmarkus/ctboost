@@ -159,11 +159,14 @@ def _ctboost_histogram_threads(num_cpus: Any) -> Any:
 
 def _categorical_columns(frame: Any) -> list[str]:
     """Return columns that should use CTBoost's native categorical pipeline."""
+    import pandas as pd
+
     columns: list[str] = []
     for name, dtype in frame.dtypes.items():
-        dtype_name = str(dtype).lower()
-        if dtype_name in {"object", "category", "string"} or dtype_name.startswith(
-            "string["
+        if (
+            isinstance(dtype, pd.CategoricalDtype)
+            or pd.api.types.is_object_dtype(dtype)
+            or pd.api.types.is_string_dtype(dtype)
         ):
             columns.append(str(name))
     return columns
