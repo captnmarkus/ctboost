@@ -864,10 +864,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#blackboost-inspired-options-on-tabarena-development-splits" class="md-nav__link">
+  <a href="#ctboost-0164-learning-options-on-tabarena-development-splits" class="md-nav__link">
     <span class="md-ellipsis">
       
-        BlackBoost-inspired options on TabArena development splits
+        CTBoost 0.1.64 learning options on TabArena development splits
       
     </span>
   </a>
@@ -1038,6 +1038,8 @@
       
         
       
+        
+      
     
     
     
@@ -1082,6 +1084,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-0.1.64/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release 0.1.64
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1360,10 +1390,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#blackboost-inspired-options-on-tabarena-development-splits" class="md-nav__link">
+  <a href="#ctboost-0164-learning-options-on-tabarena-development-splits" class="md-nav__link">
     <span class="md-ellipsis">
       
-        BlackBoost-inspired options on TabArena development splits
+        CTBoost 0.1.64 learning options on TabArena development splits
       
     </span>
   </a>
@@ -1541,14 +1571,14 @@ predates 0.1.63, and the upstream CTBoost integration pins 0.1.61.
 The older author-run Lite study below used a different task and competitor
 roster. <a href="https://huggingface.co/spaces/TabArena/leaderboard/blob/8ce4c3037c2b8f9385f6b35375776f610af2e9dd/data/entrants_models/imputation_yes/splits_all/tasks_all/datasets_all/website_leaderboard.csv">Versioned leaderboard table</a> and
 <a href="https://github.com/autogluon/tabarena/blob/cc507b84d1f32d2ca5b5704326bf4f086ee6519a/packages/tabarena/src/tabarena/models/ctboost/info.py">upstream version pin</a></p>
-<h2 id="blackboost-inspired-options-on-tabarena-development-splits">BlackBoost-inspired options on TabArena development splits<a class="headerlink" href="#blackboost-inspired-options-on-tabarena-development-splits" title="Permanent link">&para;</a></h2>
+<h2 id="ctboost-0164-learning-options-on-tabarena-development-splits">CTBoost 0.1.64 learning options on TabArena development splits<a class="headerlink" href="#ctboost-0164-learning-options-on-tabarena-development-splits" title="Permanent link">&para;</a></h2>
 <p>On the 13 regression tasks, CTBoost's expectile objective reduced asymmetric
 squared error on 12 tasks when underprediction cost four times as much as
 overprediction. Across two training seeds, the median reduction was <strong>18.75%</strong>.
 Ordinary RMSE rose on all 13 tasks, with a median increase of <strong>12.18%</strong>.
 On the broader 51-task comparison, shallower trees increased median task error
 by <strong>5.14%</strong>, and fitting each tree on all rows increased it by <strong>2.08%</strong>.
-CTBoost retains the existing TabArena settings. <a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/BLACKBOOST_OPTIONS.md">Study and per-task results</a></p>
+CTBoost retains the existing TabArena settings. <a href="https://github.com/captnmarkus/ctboost/blob/612328f74cd792ace7f7bdd96ef50f583e903f52/benchmarks/tabarena/BLACKBOOST_OPTIONS.md">Study and per-task results</a></p>
 <h2 id="ctboost-0163-development-comparisons">CTBoost 0.1.63 development comparisons<a class="headerlink" href="#ctboost-0163-development-comparisons" title="Permanent link">&para;</a></h2>
 <p>In a separate four-library comparison on the 51 cached development splits,
 the public 0.1.63 wheel ranked <strong>third of four</strong> by mean task rank. CatBoost
@@ -1557,7 +1587,7 @@ CTBoost won nine tasks outright. It placed second on binary classification,
 third on multiclass classification and fourth on regression. All 204 fits
 completed using one seed and a maximum of 200 boosting rounds. Replaying
 CTBoost after the pandas schema fixes reproduced the published wheel's
-predictions on all 51 tasks. <a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/FOUR_MODEL_DEVELOPMENT.md">Four-model protocol and per-task results</a></p>
+predictions on all 51 tasks. <a href="https://github.com/captnmarkus/ctboost/blob/702058fe652ae31312aba9189c8530ba47ab4027/benchmarks/tabarena/FOUR_MODEL_DEVELOPMENT.md">Four-model protocol and per-task results</a></p>
 <p>In the earlier comparison against CTBoost 0.1.62 on these tasks, 0.1.63 improved
 three, produced identical predictions on 46 and worsened two. All 102 fits
 completed. Median relative error reduction across tasks was <strong>0.00%</strong> and the

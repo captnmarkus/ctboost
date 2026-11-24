@@ -862,6 +862,8 @@
       
         
       
+        
+      
     
     
     
@@ -906,6 +908,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../release-0.1.64/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release 0.1.64
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1091,6 +1121,17 @@
     <span class="md-ellipsis">
       
         Tests and distributions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#publishing-a-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Publishing a release
       
     </span>
   </a>
@@ -1308,6 +1349,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#publishing-a-release" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Publishing a release
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#project-layout" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1385,6 +1437,16 @@ interpreter for dependency installation, configuration, and tests.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>python<span class="w"> </span>-m<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>build
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>python<span class="w"> </span>-m<span class="w"> </span>build<span class="w"> </span>--sdist
 </code></pre></div>
+<h2 id="publishing-a-release">Publishing a release<a class="headerlink" href="#publishing-a-release" title="Permanent link">&para;</a></h2>
+<p>The five version declarations checked by the release workflow are in
+<code>pyproject.toml</code>, <code>CMakeLists.txt</code>, <code>ctboost/_version.py</code>,
+<code>bindings/R/ctboost/DESCRIPTION</code>, and <code>bindings/jvm/pom.xml</code>.
+Update the version, release page, release index, and the default version and
+release notes path in the Publish workflow together.</p>
+<p>After CI passes, pushing the corresponding <code>vX.Y.Z</code> tag starts the release.
+GitHub Actions builds and validates the wheel matrix and source distribution,
+then publishes those files to PyPI and the GitHub release. Documentation
+deploys when the documentation changes reach <code>master</code>. <a href="https://github.com/captnmarkus/ctboost/blob/master/.github/workflows/publish.yml">Publish workflow</a></p>
 <h2 id="project-layout">Project layout<a class="headerlink" href="#project-layout" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>ctboost/       Python API surface
 <a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>include/       public C++ headers
