@@ -23,7 +23,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.1">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.2">
     
     
       
@@ -864,6 +864,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#blackboost-inspired-options-on-tabarena-development-splits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BlackBoost-inspired options on TabArena development splits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ctboost-0163-development-comparisons" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1349,6 +1360,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#blackboost-inspired-options-on-tabarena-development-splits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BlackBoost-inspired options on TabArena development splits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ctboost-0163-development-comparisons" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1519,6 +1541,14 @@ predates 0.1.63, and the upstream CTBoost integration pins 0.1.61.
 The older author-run Lite study below used a different task and competitor
 roster. <a href="https://huggingface.co/spaces/TabArena/leaderboard/blob/8ce4c3037c2b8f9385f6b35375776f610af2e9dd/data/entrants_models/imputation_yes/splits_all/tasks_all/datasets_all/website_leaderboard.csv">Versioned leaderboard table</a> and
 <a href="https://github.com/autogluon/tabarena/blob/cc507b84d1f32d2ca5b5704326bf4f086ee6519a/packages/tabarena/src/tabarena/models/ctboost/info.py">upstream version pin</a></p>
+<h2 id="blackboost-inspired-options-on-tabarena-development-splits">BlackBoost-inspired options on TabArena development splits<a class="headerlink" href="#blackboost-inspired-options-on-tabarena-development-splits" title="Permanent link">&para;</a></h2>
+<p>On the 13 regression tasks, CTBoost's expectile objective reduced asymmetric
+squared error on 12 tasks when underprediction cost four times as much as
+overprediction. Across two training seeds, the median reduction was <strong>18.75%</strong>.
+Ordinary RMSE rose on all 13 tasks, with a median increase of <strong>12.18%</strong>.
+On the broader 51-task comparison, shallower trees increased median task error
+by <strong>5.14%</strong>, and fitting each tree on all rows increased it by <strong>2.08%</strong>.
+CTBoost retains the existing TabArena settings. <a href="https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/BLACKBOOST_OPTIONS.md">Study and per-task results</a></p>
 <h2 id="ctboost-0163-development-comparisons">CTBoost 0.1.63 development comparisons<a class="headerlink" href="#ctboost-0163-development-comparisons" title="Permanent link">&para;</a></h2>
 <p>In a separate four-library comparison on the 51 cached development splits,
 the public 0.1.63 wheel ranked <strong>third of four</strong> by mean task rank. CatBoost
