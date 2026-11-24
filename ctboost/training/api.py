@@ -17,6 +17,7 @@ from ._train_params import _normalize_callback_list, _resolve_native_training_pa
 from ._train_python import _train_with_python_surface
 from .booster import Booster
 from .callbacks import TrainingCallbackEnv, checkpoint_callback
+from .eval_metrics import _eval_metric_direction, _normalize_eval_metrics
 from .distributed import (
     _distributed_collective_context,
     _distributed_train_filesystem_compat,
@@ -63,7 +64,15 @@ def cv(
     random_state: Optional[int] = 0,
     stratified: Optional[bool] = None,
     early_stopping_rounds: Optional[int] = None,
+    select_num_boost_round: bool = False,
 ) -> Dict[str, Any]:
+    """Summarize training and validation histories across folds.
+
+    With ``select_num_boost_round=True``, also return the one-based boosting
+    round with the best mean primary validation metric and its score. Only
+    rounds with finite scores in every fold participate. Ties select the
+    earliest round. Fold-level early stopping can shorten the common path.
+    """
     if not isinstance(pool, Pool):
         raise TypeError("pool must be an instance of ctboost.Pool")
     if nfold < 2:
@@ -86,6 +95,7 @@ def cv(
             split_iterator = splitter.split(np.zeros(labels.shape[0], dtype=np.float32))
     train_histories: List[np.ndarray] = []
     valid_histories: List[np.ndarray] = []
+    valid_dtype = np.float64 if select_num_boost_round else np.float32
     best_iterations: List[int] = []
     for train_index, valid_index in split_iterator:
         booster = train(
@@ -96,12 +106,12 @@ def cv(
             early_stopping_rounds=early_stopping_rounds,
         )
         train_histories.append(np.asarray(booster.loss_history, dtype=np.float32))
-        valid_histories.append(np.asarray(booster.eval_loss_history, dtype=np.float32))
+        valid_histories.append(np.asarray(booster.eval_loss_history, dtype=valid_dtype))
         best_iterations.append(booster.best_iteration)
     train_matrix = _stack_histories(train_histories)
     valid_matrix = _stack_histories(valid_histories)
     iteration_count = train_matrix.shape[0]
-    return {
+    result = {
         "iterations": np.arange(1, iteration_count + 1, dtype=np.int32),
         "train_loss_mean": np.nanmean(train_matrix, axis=1),
         "train_loss_std": np.nanstd(train_matrix, axis=1),
@@ -110,6 +120,17 @@ def cv(
         "best_iteration_mean": float(np.mean(best_iterations)) if best_iterations else float("nan"),
         "best_iteration_std": float(np.std(best_iterations)) if best_iterations else float("nan"),
     }
+    if select_num_boost_round:
+        common_indices = np.flatnonzero(np.isfinite(valid_matrix).all(axis=1))
+        if not common_indices.size:
+            raise ValueError("no boosting round has a finite validation score in every fold")
+        metrics = _normalize_eval_metrics(params.get("eval_metric")) or _normalize_eval_metrics(objective)
+        higher_is_better = _eval_metric_direction(metrics[0], params)
+        scores = result["valid_loss_mean"][common_indices]
+        best = int(common_indices[np.argmax(scores) if higher_is_better else np.argmin(scores)])
+        result["best_num_boost_round"] = best + 1
+        result["best_valid_score"] = float(result["valid_loss_mean"][best])
+    return result
 
 
 def train(

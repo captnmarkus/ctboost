@@ -38,7 +38,7 @@ selection, multi-output targets, and AFT censoring.
   `PreparedTrainingData`, `prepare_training_data`, and `prepare_pool`
 - Training: `train`, `cv`, `Booster`, and `load_model`
 - Customization: `ObjectiveSpec`, `make_objective`, `EvalMetricSpec`,
-  `make_eval_metric`, `TrainingCallbackEnv`, `log_evaluation`, and
+  `make_eval_metric`, `make_expectile_loss`, `TrainingCallbackEnv`, `log_evaluation`, and
   `checkpoint_callback`
 - Inference contracts: `load_exported_predictor`, `load_inference_manifest`, and
   `validate_inference_manifest`
