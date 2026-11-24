@@ -1,6 +1,6 @@
 # CTBoost Generic Feature Backlog
 
-Last updated 17 November 2026
+Last updated 24 November 2026
 
 ## Goal
 
@@ -32,7 +32,8 @@ CTBoost now covers the core tabular baseline and several generic-library layers 
 - richer schema metadata in `Pool`, boosters, and sklearn estimators
 - inference manifests and JSON, Python, C++ and ONNX exports with documented input contracts
 - Dask, Ray and Spark training adapters
-- Python CV helper
+- cross-validated boosting-round selection for refitting
+- expectile regression with a matching weighted validation metric
 - external-memory pool staging
 
 Relevant local references:
@@ -94,7 +95,8 @@ Spark adapters and their execution limits.
 
 A release-specific change in Elo requires a fresh TabArena evaluation against
 the same comparison roster. The [benchmark guide](docs/benchmarks.md) records
-the official ratings and the development experiments used to evaluate 0.1.63.
+the dated official ratings, the four-library comparison for 0.1.63, and the
+0.1.64 expectile and tree-setting experiments on held-out development rows.
 
 ## Recently Closed
 

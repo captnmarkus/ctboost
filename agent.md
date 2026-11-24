@@ -20,9 +20,9 @@ CTBoost is a gradient boosting library centered on Conditional Inference Trees. 
 - Built-in `log_evaluation(...)`, `checkpoint_callback(...)`, `snapshot_path`, and `resume_from_snapshot` with strict config and schema validation
 - Richer schema metadata via `feature_names`, `column_roles`, `feature_metadata`, `categorical_schema`, and `Booster.data_schema`
 - Standalone Python export plus lightweight JSON predictor export through `export_format="json_predictor"`
-- Regression, classification, ranking, and survival objectives already present in the native package
+- Regression, classification, ranking, and survival objectives in the native package, plus expectile regression through the Python callable-objective interface
 - Ranking metadata in `Pool`: `group_id`, `group_weight`, `subgroup_id`, `pairs`, `pairs_weight`, and `baseline`
-- TCP-based distributed training, optional CUDA builds, and Python CV helpers
+- TCP-based distributed training, optional CUDA builds, and Python CV with an optional refit round selected from validation scores shared by all folds
 
 ## Benchmark maintenance
 

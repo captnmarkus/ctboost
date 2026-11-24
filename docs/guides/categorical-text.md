@@ -25,10 +25,10 @@ lists the labels in code order under `pandas_category_labels` for each
 inferred column.
 
 Keep columns in their training order when two pandas names have the same text,
-such as `1` and `"1"`, or when two columns share a name. The development version
-after 0.1.63 stores a separate vocabulary for each repeated name at its original
-column position. Raw pandas prediction with these new models requires a CTBoost
-runtime that reads `pandas_category_labels_by_position`. With a 0.1.63 model
+such as `1` and `"1"`, or when two columns share a name. Starting with 0.1.64,
+new fits store a separate vocabulary for each such categorical column at its
+original position. Use CTBoost 0.1.64 or later for raw pandas prediction
+with these position-specific vocabularies. With a 0.1.63 model
 that had multiple inferred categorical columns under one name, only the last
 such column's vocabulary was saved. Supply the training codes for each earlier
 categorical column or refit that model to recover raw-frame prediction.
