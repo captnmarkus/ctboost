@@ -20,7 +20,7 @@ The older author-run Lite study below used a different task and competitor
 roster. [Versioned leaderboard table](https://huggingface.co/spaces/TabArena/leaderboard/blob/8ce4c3037c2b8f9385f6b35375776f610af2e9dd/data/entrants_models/imputation_yes/splits_all/tasks_all/datasets_all/website_leaderboard.csv) and
 [upstream version pin](https://github.com/autogluon/tabarena/blob/cc507b84d1f32d2ca5b5704326bf4f086ee6519a/packages/tabarena/src/tabarena/models/ctboost/info.py)
 
-## BlackBoost-inspired options on TabArena development splits
+## CTBoost 0.1.64 learning options on TabArena development splits
 
 On the 13 regression tasks, CTBoost's expectile objective reduced asymmetric
 squared error on 12 tasks when underprediction cost four times as much as
@@ -28,7 +28,7 @@ overprediction. Across two training seeds, the median reduction was **18.75%**.
 Ordinary RMSE rose on all 13 tasks, with a median increase of **12.18%**.
 On the broader 51-task comparison, shallower trees increased median task error
 by **5.14%**, and fitting each tree on all rows increased it by **2.08%**.
-CTBoost retains the existing TabArena settings. [Study and per-task results](https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/BLACKBOOST_OPTIONS.md)
+CTBoost retains the existing TabArena settings. [Study and per-task results](https://github.com/captnmarkus/ctboost/blob/612328f74cd792ace7f7bdd96ef50f583e903f52/benchmarks/tabarena/BLACKBOOST_OPTIONS.md)
 
 ## CTBoost 0.1.63 development comparisons
 
@@ -39,7 +39,7 @@ CTBoost won nine tasks outright. It placed second on binary classification,
 third on multiclass classification and fourth on regression. All 204 fits
 completed using one seed and a maximum of 200 boosting rounds. Replaying
 CTBoost after the pandas schema fixes reproduced the published wheel's
-predictions on all 51 tasks. [Four-model protocol and per-task results](https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/FOUR_MODEL_DEVELOPMENT.md)
+predictions on all 51 tasks. [Four-model protocol and per-task results](https://github.com/captnmarkus/ctboost/blob/702058fe652ae31312aba9189c8530ba47ab4027/benchmarks/tabarena/FOUR_MODEL_DEVELOPMENT.md)
 
 In the earlier comparison against CTBoost 0.1.62 on these tasks, 0.1.63 improved
 three, produced identical predictions on 46 and worsened two. All 102 fits

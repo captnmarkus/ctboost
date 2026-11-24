@@ -1,7 +1,8 @@
 # Release history
 
-[CTBoost 0.1.63](release-0.1.63.md) corrects automatic numeric quantization and
-pandas categorical handling.
+CTBoost 0.1.64 adds expectile regression, cross-validated selection of the
+boosting-round count, and a fix for pandas columns with colliding names.
+[Release notes](release-0.1.64.md)
 
 Use the current [getting-started](getting-started.md),
 [deployment](guides/deployment.md), and [compatibility](reference/compatibility.md)
@@ -13,6 +14,7 @@ reported at the time. Their status statements are historical; see
 
 | Release | Notes |
 |---|---|
+| [0.1.64](release-0.1.64.md) | Expectile regression, round selection, and categorical column-name fixes |
 | [0.1.63](release-0.1.63.md) | Rare numeric values and pandas categorical inputs |
 | [0.1.62](release-0.1.62.md) | Categorical serving, compact JSON, CTR precision, and JVM security update |
 | [0.1.61](release-0.1.61.md) | CPU inference, loss correctness, and conversion compatibility |

@@ -61,6 +61,19 @@ python -m pip install build
 python -m build --sdist
 ```
 
+## Publishing a release
+
+The five version declarations checked by the release workflow are in
+`pyproject.toml`, `CMakeLists.txt`, `ctboost/_version.py`,
+`bindings/R/ctboost/DESCRIPTION`, and `bindings/jvm/pom.xml`.
+Update the version, release page, release index, and the default version and
+release notes path in the Publish workflow together.
+
+After CI passes, pushing the corresponding `vX.Y.Z` tag starts the release.
+GitHub Actions builds and validates the wheel matrix and source distribution,
+then publishes those files to PyPI and the GitHub release. Documentation
+deploys when the documentation changes reach `master`. [Publish workflow](https://github.com/captnmarkus/ctboost/blob/master/.github/workflows/publish.yml)
+
 ## Project layout
 
 ```text

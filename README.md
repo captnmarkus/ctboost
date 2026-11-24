@@ -11,12 +11,11 @@ Python/scikit-learn interfaces.
 [Benchmarks](https://captnmarkus.github.io/ctboost/benchmarks/) ·
 [Compatibility](https://captnmarkus.github.io/ctboost/reference/compatibility/)
 
-[CTBoost 0.1.63](https://captnmarkus.github.io/ctboost/release-0.1.63/) fixes
-automatic quantile borders for rare numeric values and categorical handling
-in pandas inputs. Both corrections affect ordinary tabular workflows.
-
-The development branch adds expectile regression for asymmetric prediction costs
-and a cross-validated boosting-round selector. [Training examples](docs/guides/training.md)
+CTBoost 0.1.64 adds expectile regression for asymmetric prediction costs and
+can select a boosting-round count for refitting from cross-validation. It also
+fixes the handling of pandas categorical columns with identical display names.
+[Release notes](https://captnmarkus.github.io/ctboost/release-0.1.64/) and
+[training examples](https://captnmarkus.github.io/ctboost/guides/training/)
 
 ## Highlights
 
@@ -100,10 +99,10 @@ ensemble across all tasks, datasets and splits. All three entries are verified
 with 0% imputation. The Space does not identify a package version in these
 rows. [TabArena results at the checked revision](https://huggingface.co/spaces/TabArena/leaderboard/blob/8ce4c3037c2b8f9385f6b35375776f610af2e9dd/data/entrants_models/imputation_yes/splits_all/tasks_all/datasets_all/website_leaderboard.csv)
 
-CTBoost ranks fourth of CatBoost, LightGBM, XGBoost and CTBoost by official
-Elo in each configuration. The public 0.1.63 wheel ranked third on 51 local
+CTBoost ranked fourth among CatBoost, LightGBM, XGBoost and CTBoost by Elo
+in each configuration in that snapshot. The public 0.1.63 wheel ranked third on 51 local
 TabArena development splits, ahead of XGBoost and behind CatBoost and LightGBM.
-All four models used one seed and a 200-round cap. [Dataset results and methodology](benchmarks/tabarena/FOUR_MODEL_DEVELOPMENT.md)
+All four models used one seed and a 200-round cap. [Dataset results and methodology](https://github.com/captnmarkus/ctboost/blob/702058fe652ae31312aba9189c8530ba47ab4027/benchmarks/tabarena/FOUR_MODEL_DEVELOPMENT.md)
 
 For opt-in CPU learning controls, see
 [safeguarded leaves and joint multiclass tests](https://captnmarkus.github.io/ctboost/guides/learning-options/).

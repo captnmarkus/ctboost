@@ -12,9 +12,9 @@ and optional CUDA acceleration.
 
 </div>
 
-[CTBoost 0.1.63](release-0.1.63.md) corrects numeric quantization on rare
-values and pandas categorical handling. See the release notes for affected
-inputs and model compatibility.
+CTBoost 0.1.64 adds expectile regression and cross-validated selection of the
+boosting-round count. It also corrects category encoding when multiple pandas
+columns have the same display name. [Release notes](release-0.1.64.md)
 
 !!! info "Project status"
     CTBoost is an alpha project. Its API and model format are tested extensively,
