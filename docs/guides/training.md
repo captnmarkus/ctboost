@@ -63,6 +63,39 @@ LightGBM's `num_leaves`, `reg_alpha`, `feature_pre_filter` and `n_jobs` are not 
 statistical feature test, not L1 regularization. The
 [API reference](../reference/api.md) lists the supported parameters.
 
+## Expectile regression
+
+Use expectile regression when a prediction that is too low has a different
+cost from an equally large prediction that is too high. With `tau=0.8`,
+underprediction costs four times as much as overprediction of the same
+size. The fitted value is a conditional expectile. This loss family is
+also available in R's mboost. [mboost ExpectReg](https://cran.r-project.org/web/packages/mboost/mboost.pdf)
+
+```python
+import numpy as np
+import ctboost
+
+objective, metric = ctboost.make_expectile_loss(0.8)
+model = ctboost.CTBoostRegressor(
+    loss_function=objective,
+    eval_metric=metric,
+    base_score=float(np.mean(y_train)),
+    iterations=200,
+)
+model.fit(X_train, y_train, eval_set=(X_valid, y_valid), early_stopping_rounds=25)
+```
+
+The metric averages squared error with weight `tau` for underprediction
+and `1 - tau` for overprediction, also respecting sample weights. At
+`tau=0.5` the derivatives match squared-error training with the same
+initial score, and the metric reports half the mean squared error. The
+example initializes the callable objective at the training mean. Without
+an explicit `base_score`, callable objectives start at zero. For low-level
+training, pass the pair as `params["objective"]` and `params["eval_metric"]`.
+The native model records the level. For portable predictor exports, store
+`tau` alongside the artifact so downstream users can interpret its predictions.
+To continue a saved fit, recreate the pair at the same level.
+
 ## Callable objectives and metrics
 
 A callable objective receives raw predictions followed by labels and returns
@@ -184,6 +217,31 @@ multi-output child fits require serializable schedules and do not allow
 callbacks; use `n_jobs=1` for callback-driven multi-output training.
 
 ## Model selection
+
+To choose one boosting-round count for a refit, enable
+`select_num_boost_round` in `ctboost.cv`. Each fold fits on its training rows
+and scores its held-out rows after each round. CTBoost selects the earliest
+round with the best mean validation metric, weighting folds equally. The
+returned `best_num_boost_round` starts at one and can be passed directly to
+`train`. This follows the common validation-risk approach in
+[mboost's cvrisk](https://github.com/boost-R/mboost/blob/52a515bce45542a85f9de0e03417ca6db22c77e0/man/cvrisk.Rd).
+
+```python
+params = {"objective": "Logloss", "eval_metric": "AUC"}
+summary = ctboost.cv(
+    train_pool, params, num_boost_round=200, nfold=5, select_num_boost_round=True,
+)
+model = ctboost.train(train_pool, params, num_boost_round=summary["best_num_boost_round"])
+print(summary["best_valid_score"])
+```
+
+With several evaluation metrics, the first controls round selection. CTBoost
+uses its declared optimization direction, so it maximizes AUC and minimizes
+RMSE. Only rounds with a finite validation score in every fold are eligible.
+With fold-level early stopping, the shortest retained history limits the
+search. Omit `early_stopping_rounds` to compare the full path. Assess the
+refitted model on separate test data. Fit any label-dependent preprocessing
+inside each training fold before scoring its validation rows.
 
 The primary scikit-learn estimators expose `grid_search(...)`,
 `randomized_search(...)`, `select_features(...)`, and `plot_metrics(...)`.

@@ -47,7 +47,9 @@ def affected_features(frame):
     return names
 
 
-def fit(directory, case, seed):
+def fit(
+    directory, case, seed, *, max_depth=6, min_samples_split=2, min_data_in_leaf=0, subsample=0.8
+):
     import pandas as pd
 
     import ctboost
@@ -73,10 +75,12 @@ def fit(directory, case, seed):
     model = model_cls(
         iterations=200,
         learning_rate=0.05,
-        max_depth=6,
+        max_depth=max_depth,
+        min_samples_split=min_samples_split,
+        min_data_in_leaf=min_data_in_leaf,
         alpha=0.05,
         lambda_l2=1,
-        subsample=0.8,
+        subsample=subsample,
         bootstrap_type="Bernoulli",
         ordered_ctr=True,
         max_cat_threshold=64,

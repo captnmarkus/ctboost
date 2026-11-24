@@ -1,0 +1,1276 @@
+{
+  "protocol": {
+    "seed": 0,
+    "round_cap": 200,
+    "patience": 25,
+    "threads_per_fit": 1,
+    "source_plan_sha256": {
+      "accuracy-grouped-scout-v1": "d53e13021fb0d5d7f29353876c9f971ca3d56cb7857937c1b3c3afe436904a7b",
+      "accuracy-remaining-scout-v1": "07cd7841988b2f32cc034470ef295fb54ad68d90c6dcf39a2b81105db1ac2e94"
+    },
+    "metrics": {
+      "binary": "1 - ROC-AUC",
+      "multiclass": "log loss",
+      "regression": "RMSE"
+    },
+    "variants": {
+      "baseline": {
+        "max_depth": 6,
+        "min_samples_split": 2,
+        "min_data_in_leaf": 0,
+        "subsample": 0.8
+      },
+      "shallow": {
+        "max_depth": 2,
+        "min_samples_split": 10,
+        "min_data_in_leaf": 4,
+        "subsample": 0.8
+      },
+      "all_rows": {
+        "max_depth": 6,
+        "min_samples_split": 2,
+        "min_data_in_leaf": 0,
+        "subsample": 1.0
+      }
+    },
+    "reference_file": "four_model_development_20261117.json",
+    "reference_sha256_lf": "ffa1bc4bd2a5bf4a9def1e5802e1985a1f918a558c8530c25debf722bfb6335c",
+    "ctboost": "0.1.63",
+    "python": "3.12.11",
+    "native_sha256": "21b735aa0437881e9b315edfcb29203539f64ff8fcfdca134a4ec389f62b14a4"
+  },
+  "groups": {
+    "all": {
+      "tasks": 51,
+      "baseline": {
+        "mean_rank": 2.7254901960784315,
+        "at_round_cap": 7
+      },
+      "shallow": {
+        "mean_rank": 3.196078431372549,
+        "at_round_cap": 17,
+        "wins": 8,
+        "ties": 0,
+        "losses": 43,
+        "positive_baseline_error_tasks": 51,
+        "mean_relative_error_reduction_pct": -11.309068697391572,
+        "median_relative_error_reduction_pct": -5.136841341377455
+      },
+      "all_rows": {
+        "mean_rank": 3.0588235294117645,
+        "at_round_cap": 9,
+        "wins": 7,
+        "ties": 0,
+        "losses": 44,
+        "positive_baseline_error_tasks": 51,
+        "mean_relative_error_reduction_pct": -4.321724221567686,
+        "median_relative_error_reduction_pct": -2.0754066681090086
+      }
+    },
+    "binary": {
+      "tasks": 30,
+      "baseline": {
+        "mean_rank": 2.466666666666667,
+        "at_round_cap": 1
+      },
+      "shallow": {
+        "mean_rank": 3.0,
+        "at_round_cap": 5,
+        "wins": 5,
+        "ties": 0,
+        "losses": 25,
+        "positive_baseline_error_tasks": 30,
+        "mean_relative_error_reduction_pct": -8.298677298267208,
+        "median_relative_error_reduction_pct": -4.149480134397894
+      },
+      "all_rows": {
+        "mean_rank": 2.8666666666666667,
+        "at_round_cap": 4,
+        "wins": 6,
+        "ties": 0,
+        "losses": 24,
+        "positive_baseline_error_tasks": 30,
+        "mean_relative_error_reduction_pct": -4.334133492183373,
+        "median_relative_error_reduction_pct": -1.8399928644506542
+      }
+    },
+    "multiclass": {
+      "tasks": 8,
+      "baseline": {
+        "mean_rank": 2.5,
+        "at_round_cap": 2
+      },
+      "shallow": {
+        "mean_rank": 3.125,
+        "at_round_cap": 4,
+        "wins": 2,
+        "ties": 0,
+        "losses": 6,
+        "positive_baseline_error_tasks": 8,
+        "mean_relative_error_reduction_pct": -19.64802328826102,
+        "median_relative_error_reduction_pct": -8.47221952704264
+      },
+      "all_rows": {
+        "mean_rank": 2.875,
+        "at_round_cap": 2,
+        "wins": 1,
+        "ties": 0,
+        "losses": 7,
+        "positive_baseline_error_tasks": 8,
+        "mean_relative_error_reduction_pct": -6.484457424878922,
+        "median_relative_error_reduction_pct": -7.216547373934134
+      }
+    },
+    "regression": {
+      "tasks": 13,
+      "baseline": {
+        "mean_rank": 3.4615384615384617,
+        "at_round_cap": 4
+      },
+      "shallow": {
+        "mean_rank": 3.6923076923076925,
+        "at_round_cap": 8,
+        "wins": 1,
+        "ties": 0,
+        "losses": 12,
+        "positive_baseline_error_tasks": 13,
+        "mean_relative_error_reduction_pct": -13.12446140868198,
+        "median_relative_error_reduction_pct": -12.418705732264556
+      },
+      "all_rows": {
+        "mean_rank": 3.6153846153846154,
+        "at_round_cap": 3,
+        "wins": 0,
+        "ties": 0,
+        "losses": 13,
+        "positive_baseline_error_tasks": 13,
+        "mean_relative_error_reduction_pct": -2.962174702724572,
+        "median_relative_error_reduction_pct": -1.5540113082423976
+      }
+    }
+  },
+  "tasks": [
+    {
+      "dataset": "blood-transfusion-service-center",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.41914893617021276,
+        "rounds": 89,
+        "prediction_sha256": "495fe0975814f10145f5325075115339dc5f3654f10be421e9d0c4486132155d",
+        "four_model_rank": 4.0
+      },
+      "shallow": {
+        "error": 0.4177304964539007,
+        "rounds": 89,
+        "prediction_sha256": "ac57f1dd07753e3c40b3b3cb94a83a53e97ae89592f638e9cccc1cce4a576910",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 0.42624113475177294,
+        "rounds": 16,
+        "prediction_sha256": "a2a97eae08d722f87724d5835f6819cb876fc4260174a053bed2caff733d52f1",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "coil2000_insurance_policies",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.31986943021682024,
+        "rounds": 116,
+        "prediction_sha256": "6e9cdb276d034f6906fddd5f13be0f4e32491b0c1cddb31c6297ba4059cd641a",
+        "four_model_rank": 2.0
+      },
+      "shallow": {
+        "error": 0.3184230779437913,
+        "rounds": 117,
+        "prediction_sha256": "3e0a8036183811cf7552fd5a55f8098812080172f01999591f525bfd2fd58aab",
+        "four_model_rank": 2.0
+      },
+      "all_rows": {
+        "error": 0.3356466123510522,
+        "rounds": 200,
+        "prediction_sha256": "2ea802f4cf3f0e08bcbe5706830d49fde809cd75be9e480c0cbdd224e4fc3995",
+        "four_model_rank": 2.0
+      }
+    },
+    {
+      "dataset": "GiveMeSomeCredit",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.14107040757984157,
+        "rounds": 141,
+        "prediction_sha256": "6c0e1a18b5b33970ec3c08b6ed536d51b93226ab4148f96d8d1436e9cda07b03",
+        "four_model_rank": 1.0
+      },
+      "shallow": {
+        "error": 0.1466194968553458,
+        "rounds": 141,
+        "prediction_sha256": "1f844d4a87822c8bba31a25af10a08ef1bf844f7439e44e7244d16f061b128f3",
+        "four_model_rank": 3.0
+      },
+      "all_rows": {
+        "error": 0.14900351221105934,
+        "rounds": 200,
+        "prediction_sha256": "9a6b0e0a59ba5866be0ec31874c4f6390fae357f812994a1932e6d82f361f93d",
+        "four_model_rank": 3.0
+      }
+    },
+    {
+      "dataset": "QSAR_fish_toxicity",
+      "problem": "regression",
+      "baseline": {
+        "error": 0.770438147237556,
+        "rounds": 200,
+        "prediction_sha256": "fae528eaabd4e86572c01a242344578446c334c50aa03e39c535f9cbf5ec8eb7",
+        "four_model_rank": 4.0
+      },
+      "shallow": {
+        "error": 0.785651010122491,
+        "rounds": 196,
+        "prediction_sha256": "54c1723a19a230adcda19e89cd631202b1916ba884202eb084aa826a801aace5",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 0.8447379447040938,
+        "rounds": 44,
+        "prediction_sha256": "565fb23bcaad48176a7848361ae5b947b13ac90eed6700774ab9f7deca231637",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "wine_quality",
+      "problem": "regression",
+      "baseline": {
+        "error": 0.6748561016432743,
+        "rounds": 182,
+        "prediction_sha256": "9d53c4a466a27230b02c3e065add9dfb0adefcf712eddcdca4573ec4b63224bb",
+        "four_model_rank": 4.0
+      },
+      "shallow": {
+        "error": 0.6964885230482756,
+        "rounds": 200,
+        "prediction_sha256": "3abcd5620e429e33ac9459835029beb231051bdce12cdb9fca44c9e17cc09d49",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 0.6853434417771745,
+        "rounds": 134,
+        "prediction_sha256": "c941ff48ab18a25f62902ebda0b6be6dfdabb353f9c7b20e639e4f9cb998203f",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "diamonds",
+      "problem": "regression",
+      "baseline": {
+        "error": 663.563189417893,
+        "rounds": 194,
+        "prediction_sha256": "15cd33d66263132c9f9dfd89740ed72e4b79607f4961ee39bc93f281f3cc10c6",
+        "four_model_rank": 3.0
+      },
+      "shallow": {
+        "error": 833.114577042266,
+        "rounds": 200,
+        "prediction_sha256": "700e2d384db0975cf2a5b208725bdbfc571cf189cf12176697e59b5522962259",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 664.2731660674427,
+        "rounds": 123,
+        "prediction_sha256": "38b8c741d68ddd470a4a7b03deead910e336556085d3ed288c65111d40b2ae36",
+        "four_model_rank": 3.0
+      }
+    },
+    {
+      "dataset": "MIC",
+      "problem": "multiclass",
+      "baseline": {
+        "error": 0.3933327126636736,
+        "rounds": 144,
+        "prediction_sha256": "1681d63d1ec3cdbe75ecac873a443e5f2762b5476a4cac131d1e9b1f0a2513f6",
+        "four_model_rank": 1.0
+      },
+      "shallow": {
+        "error": 0.41353759005694257,
+        "rounds": 139,
+        "prediction_sha256": "b8daa3630e8daa8388f1467c0c09afc20c166b32aab59c15aa10699448e9b8eb",
+        "four_model_rank": 1.0
+      },
+      "all_rows": {
+        "error": 0.42044901612506946,
+        "rounds": 41,
+        "prediction_sha256": "65b2e70349788f511ad0a6e5d831d208bd1fc1ed8459bf8edbb50d1ffa70c997",
+        "four_model_rank": 1.0
+      }
+    },
+    {
+      "dataset": "SDSS17",
+      "problem": "multiclass",
+      "baseline": {
+        "error": 0.10622205592132261,
+        "rounds": 166,
+        "prediction_sha256": "d586ded5e339c27e371e4fd134670aea670a8cad9ffb2c3110081ef600cfebb4",
+        "four_model_rank": 2.0
+      },
+      "shallow": {
+        "error": 0.12119087206112913,
+        "rounds": 190,
+        "prediction_sha256": "ea8238579bd86d150f8f0cc3a5846b0c9eae8b5ffd00276fbaa0ca3b7cb4cf54",
+        "four_model_rank": 3.0
+      },
+      "all_rows": {
+        "error": 0.11514018836256078,
+        "rounds": 200,
+        "prediction_sha256": "eaa46f165a909b9e9435cc50145169be500fb95b5bc90bda3bcb8a270a2dbb6d",
+        "four_model_rank": 3.0
+      }
+    },
+    {
+      "dataset": "anneal",
+      "problem": "multiclass",
+      "baseline": {
+        "error": 0.0413184075545485,
+        "rounds": 200,
+        "prediction_sha256": "48e3cc9e9180e05a98dd4c2f560db20c896e9f813c68a87db9c98b46616978d4",
+        "four_model_rank": 2.0
+      },
+      "shallow": {
+        "error": 0.08498118994623043,
+        "rounds": 200,
+        "prediction_sha256": "120e7ed3d4ba16804f81e54210eae2bbd9c09fac3e3a693260d756549b5be02e",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 0.04330966297445282,
+        "rounds": 200,
+        "prediction_sha256": "a75ab506d9d8dfdd1ff10582a4aa8e7b8f55518f87318c17ff582c247b92a9df",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "hiva_agnostic",
+      "problem": "multiclass",
+      "baseline": {
+        "error": 0.17115155326745976,
+        "rounds": 3,
+        "prediction_sha256": "3fccc2434d4e974aa071c670cb20af34e40c9af6a45369acf8bc464b6afced37",
+        "four_model_rank": 3.0
+      },
+      "shallow": {
+        "error": 0.17098304225256408,
+        "rounds": 3,
+        "prediction_sha256": "8fb5aa195e546dc08323b49b9bbdf6da34bd7086fae6a572e21ad6b1da29d16e",
+        "four_model_rank": 3.0
+      },
+      "all_rows": {
+        "error": 0.17031805514432033,
+        "rounds": 1,
+        "prediction_sha256": "6f2074a91ec68d574c2264c7f67a8765edd3f37b4338665603e95fc925b2ba7c",
+        "four_model_rank": 2.0
+      }
+    },
+    {
+      "dataset": "maternal_health_risk",
+      "problem": "multiclass",
+      "baseline": {
+        "error": 0.7158572921763495,
+        "rounds": 125,
+        "prediction_sha256": "813f8ec3e31b99754dceb20f1595210e63c4193f2e425e9f29b02289df9a8c9f",
+        "four_model_rank": 4.0
+      },
+      "shallow": {
+        "error": 0.6983209977066563,
+        "rounds": 200,
+        "prediction_sha256": "9de9cb023984628b605114dc368ed7fdb7995a2f0e575f2dcf7fc41bd313dda7",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 0.7800412561281873,
+        "rounds": 16,
+        "prediction_sha256": "25b7ee3799253ce4b440f784469713dac51ff4059b397a79ea9c1899b54d9fc8",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "splice",
+      "problem": "multiclass",
+      "baseline": {
+        "error": 0.12796248121070095,
+        "rounds": 200,
+        "prediction_sha256": "059555c130868bdc7cceb790f29afef62bc391d81d90c2165d873bbf5501622a",
+        "four_model_rank": 2.0
+      },
+      "shallow": {
+        "error": 0.1536165039764261,
+        "rounds": 200,
+        "prediction_sha256": "7e51b1476d8820153cbacc1fb5d0cd65a5517dec406be20abaa30d6a9cc10309",
+        "four_model_rank": 3.0
+      },
+      "all_rows": {
+        "error": 0.13760971139720696,
+        "rounds": 189,
+        "prediction_sha256": "d0509bbb626952d836bff77473928b2d8da09bfeb7a3126b9c384fc5039d00ca",
+        "four_model_rank": 2.0
+      }
+    },
+    {
+      "dataset": "students_dropout_and_academic_success",
+      "problem": "multiclass",
+      "baseline": {
+        "error": 0.5689602302432991,
+        "rounds": 192,
+        "prediction_sha256": "4c3f58d01e8a1ad3bc1139b249ab07556db6d8a2a82fa8f08e0fdf6128cd421b",
+        "four_model_rank": 2.0
+      },
+      "shallow": {
+        "error": 0.5858804637742311,
+        "rounds": 200,
+        "prediction_sha256": "de6a3ba1ca0dab053f0504d123e8b685a026d2499af7c115aa9981004cb3cbf2",
+        "four_model_rank": 3.0
+      },
+      "all_rows": {
+        "error": 0.5807684688006569,
+        "rounds": 192,
+        "prediction_sha256": "c50ef6513f8551dac7d18f0b6984efb8481d0cb34072f0252c07ff41f3207a58",
+        "four_model_rank": 3.0
+      }
+    },
+    {
+      "dataset": "website_phishing",
+      "problem": "multiclass",
+      "baseline": {
+        "error": 0.25306359146079715,
+        "rounds": 105,
+        "prediction_sha256": "26cb00e58306e2e67f2af5975ea5d8eed10fed8626566eafbd3d29c3cfe1f820",
+        "four_model_rank": 4.0
+      },
+      "shallow": {
+        "error": 0.2829443222978185,
+        "rounds": 145,
+        "prediction_sha256": "a0136548cf7b8576a66017ff320b1822e250f48ec44fa76538f2df21872ffee4",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 0.28766519424994036,
+        "rounds": 124,
+        "prediction_sha256": "3048fe6e482dd1441f3d3d9192d1651fe1bf980439931994a6149620e270f62c",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "APSFailure",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.0150951419155948,
+        "rounds": 69,
+        "prediction_sha256": "2fa92263288168a6cdd05de49737e0b2b80b5173f2f53687c16bfeea02c14dc4",
+        "four_model_rank": 2.0
+      },
+      "shallow": {
+        "error": 0.018341837638637948,
+        "rounds": 62,
+        "prediction_sha256": "9fd27329255c31b7135e5d7464ed7e81831c4a7507ca8f0f1fb8f5ecf5058164",
+        "four_model_rank": 2.0
+      },
+      "all_rows": {
+        "error": 0.015015414053364484,
+        "rounds": 61,
+        "prediction_sha256": "0affa073af69dc41a400d634cb4004dceccf2446c167a42900d39ba2478808e8",
+        "four_model_rank": 2.0
+      }
+    },
+    {
+      "dataset": "Amazon_employee_access",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.2776416708371643,
+        "rounds": 128,
+        "prediction_sha256": "ae60a9016489a1bf9b1c8999c17bbc6c3fd85195199904d92209b48bafb59a97",
+        "four_model_rank": 2.0
+      },
+      "shallow": {
+        "error": 0.27807811827143536,
+        "rounds": 127,
+        "prediction_sha256": "a630634ab72446d48fefc4f8106ebac828c69b4098634272a46e9f9855d4ecdc",
+        "four_model_rank": 2.0
+      },
+      "all_rows": {
+        "error": 0.27428248041805847,
+        "rounds": 199,
+        "prediction_sha256": "f336df35d5657b6e8f4f779ec0df7ee4708cb3d1ca23f35c3bec180c8e0c7527",
+        "four_model_rank": 2.0
+      }
+    },
+    {
+      "dataset": "Another-Dataset-on-used-Fiat-500",
+      "problem": "regression",
+      "baseline": {
+        "error": 752.4202298148944,
+        "rounds": 63,
+        "prediction_sha256": "04e04f79effa193c8aa671dd6afb96d12bf4bb4234c0eaa9286ada8176c8b633",
+        "four_model_rank": 1.0
+      },
+      "shallow": {
+        "error": 743.4373677921665,
+        "rounds": 156,
+        "prediction_sha256": "7f97c4a2df8d91ae785bb47d01bf6958d7042b7d44d626a365ff2142b6d7bdfb",
+        "four_model_rank": 1.0
+      },
+      "all_rows": {
+        "error": 763.9792384855059,
+        "rounds": 48,
+        "prediction_sha256": "92ffb948ba7fb333971f2467723cb2f3a03857bfd83af6e33d170b2c8c83d475",
+        "four_model_rank": 2.0
+      }
+    },
+    {
+      "dataset": "Bank_Customer_Churn",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.12460074527548581,
+        "rounds": 197,
+        "prediction_sha256": "6a68e896b34bfafa547dc94dedfa02bd6809737a81d1cdfc606ecf768fc6e6ad",
+        "four_model_rank": 2.0
+      },
+      "shallow": {
+        "error": 0.12844135391713252,
+        "rounds": 200,
+        "prediction_sha256": "37ee53f509baee382371912537b742a3cd1d36aeece00a563f1fc7e9efe1a771",
+        "four_model_rank": 3.0
+      },
+      "all_rows": {
+        "error": 0.12891158725933816,
+        "rounds": 99,
+        "prediction_sha256": "fdcf502ef066245edae9ad6445223f9cf5809f365a0bd2b43013a7042539e08f",
+        "four_model_rank": 3.0
+      }
+    },
+    {
+      "dataset": "Bioresponse",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.2003765465303926,
+        "rounds": 107,
+        "prediction_sha256": "fef4956dfc297cf4359853a96e077f25737751c18a0d25ffd9497839df5a5e52",
+        "four_model_rank": 1.0
+      },
+      "shallow": {
+        "error": 0.21864008772292798,
+        "rounds": 197,
+        "prediction_sha256": "95a98d635e9e859f670142a4a9772cb0a98e5ce13ab0ae510232843d6a545eff",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 0.20372822443828364,
+        "rounds": 89,
+        "prediction_sha256": "be2b27cd33d8e47fb5cfa3a2588697837a7feb6393255ce4f8a63e2e72bd38ca",
+        "four_model_rank": 3.0
+      }
+    },
+    {
+      "dataset": "Diabetes130US",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.38458433014354065,
+        "rounds": 53,
+        "prediction_sha256": "a918dd5b37f9a1b95f53d93e77e525fb1ac25a451c823e8277041f4eb5120b58",
+        "four_model_rank": 2.0
+      },
+      "shallow": {
+        "error": 0.36749202551834126,
+        "rounds": 72,
+        "prediction_sha256": "9a4ef0d0dfa2179856678afb5f1e4f2d6ff5a7c50e646d11fea41e38a4fbaf9b",
+        "four_model_rank": 1.0
+      },
+      "all_rows": {
+        "error": 0.37223883572567795,
+        "rounds": 11,
+        "prediction_sha256": "6d8e15730da2d3bda7a3838e6651b04ca76dc428d1c443379113a5c4affe369a",
+        "four_model_rank": 1.0
+      }
+    },
+    {
+      "dataset": "E-CommereShippingData",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.24090070036039402,
+        "rounds": 86,
+        "prediction_sha256": "dafed642b4dfe0972455743c400d5074ba64d74a65cd83a7c20bc69628bd4c71",
+        "four_model_rank": 1.0
+      },
+      "shallow": {
+        "error": 0.2434089735764683,
+        "rounds": 199,
+        "prediction_sha256": "3af8a902481a8808abc2d8633abea3bd7f1674902716c72d2b87058e5bb36c4c",
+        "four_model_rank": 2.0
+      },
+      "all_rows": {
+        "error": 0.24206445989796066,
+        "rounds": 179,
+        "prediction_sha256": "ba516ea89c6ac9fd37d794bec8accaabe8963a6c23276c8b47a1e25a55e4683c",
+        "four_model_rank": 1.0
+      }
+    },
+    {
+      "dataset": "Fitness_Club",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.20888359950859958,
+        "rounds": 121,
+        "prediction_sha256": "13baef0aa42bd74151ed0b064e79f292d618525080b74718140b863281563760",
+        "four_model_rank": 1.0
+      },
+      "shallow": {
+        "error": 0.21253071253071254,
+        "rounds": 121,
+        "prediction_sha256": "8c5e5d5bbbaaada054658fe79c7492b1b008f7d4712d96926138df11e1871fcf",
+        "four_model_rank": 1.0
+      },
+      "all_rows": {
+        "error": 0.20999692874692877,
+        "rounds": 42,
+        "prediction_sha256": "3fa6cbac39eab4a1e2022c29bd497c945fd1592979eec00b9766754543a6dba5",
+        "four_model_rank": 1.0
+      }
+    },
+    {
+      "dataset": "Food_Delivery_Time",
+      "problem": "regression",
+      "baseline": {
+        "error": 7.668831900104221,
+        "rounds": 186,
+        "prediction_sha256": "66a0ba281f4e805371afed201204ef0d774be2e802a9ff34f28ba45f114aa45f",
+        "four_model_rank": 2.0
+      },
+      "shallow": {
+        "error": 7.934302225867847,
+        "rounds": 200,
+        "prediction_sha256": "4ee678f4ac205f3f9b77037f702b970e308784bf1a1f9a216035685996dc2c08",
+        "four_model_rank": 3.0
+      },
+      "all_rows": {
+        "error": 7.707145937206008,
+        "rounds": 186,
+        "prediction_sha256": "dcb5301399ad584b5d8e5c4072261033669e79fe9b97fe19e477d7cfe7894ad2",
+        "four_model_rank": 2.0
+      }
+    },
+    {
+      "dataset": "HR_Analytics_Job_Change_of_Data_Scientists",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.18136993603411522,
+        "rounds": 121,
+        "prediction_sha256": "42bc01212cb6fdfd944af098e240386d9d9c090b2abd48010f41e8b54fb77161",
+        "four_model_rank": 2.0
+      },
+      "shallow": {
+        "error": 0.1893951431031654,
+        "rounds": 89,
+        "prediction_sha256": "0a983be5e999bae45ce8f5d1ffa47b6cc407c21a9b9af0cf84a52fdd84167884",
+        "four_model_rank": 2.0
+      },
+      "all_rows": {
+        "error": 0.18154633767973316,
+        "rounds": 47,
+        "prediction_sha256": "48a0dd085e168025ebd788742c44057f0dadacbd96320f5239894242773aedab",
+        "four_model_rank": 2.0
+      }
+    },
+    {
+      "dataset": "Is-this-a-good-customer",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.24470964566929132,
+        "rounds": 91,
+        "prediction_sha256": "df9113295ed192942e4c13a945a6dd5cfae4073cd375e85333be7cc33f27b62b",
+        "four_model_rank": 2.0
+      },
+      "shallow": {
+        "error": 0.25947342519685035,
+        "rounds": 113,
+        "prediction_sha256": "1010648069dee8b72ec45fcaa1db043cfc449930c47caf8ebd70d9ac6b227a3f",
+        "four_model_rank": 3.0
+      },
+      "all_rows": {
+        "error": 0.22594734251968507,
+        "rounds": 69,
+        "prediction_sha256": "12b5da580fc579983db49092844b4a67981aa7647dd7d720ccd7d5d0a243f591",
+        "four_model_rank": 2.0
+      }
+    },
+    {
+      "dataset": "Marketing_Campaign",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.2105560578661846,
+        "rounds": 127,
+        "prediction_sha256": "d264bb3594207d85247c8a64416b7ab343d0a207b7d156f0fa80b5a31d2c262b",
+        "four_model_rank": 3.0
+      },
+      "shallow": {
+        "error": 0.20795660036166375,
+        "rounds": 152,
+        "prediction_sha256": "ff6fd81f3368d3684efe14fa360981351a6081baee698199c5f43e4a2c366c1d",
+        "four_model_rank": 3.0
+      },
+      "all_rows": {
+        "error": 0.24310578661844484,
+        "rounds": 49,
+        "prediction_sha256": "c0d41734a91c998a733abbb94c0258e9e806807898c46dfbba7decb227699253",
+        "four_model_rank": 3.0
+      }
+    },
+    {
+      "dataset": "NATICUSdroid",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.020638141947122213,
+        "rounds": 193,
+        "prediction_sha256": "7f37903d3272c57b878e0ccf7caf99e19ac2a67b6258c9f4df017bbfbeedd478",
+        "four_model_rank": 4.0
+      },
+      "shallow": {
+        "error": 0.022037600766672272,
+        "rounds": 200,
+        "prediction_sha256": "2204d994348d1ade274ba1b4b1f338d9e802c6b1bf7f23ddc964eb4bc89e1134",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 0.021640171373809247,
+        "rounds": 145,
+        "prediction_sha256": "e9e8e04d5b1bbc6a6d2a0dc53f24a08ad41c2430b7611bc9ec2ea817712ade2f",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "QSAR-TID-11",
+      "problem": "regression",
+      "baseline": {
+        "error": 0.8680209706088279,
+        "rounds": 200,
+        "prediction_sha256": "1ce6ca6d20487e29f239250b9a64aa851c565eca533a02a7b1c6668689aeb657",
+        "four_model_rank": 3.0
+      },
+      "shallow": {
+        "error": 1.0946953998102282,
+        "rounds": 200,
+        "prediction_sha256": "4a4db99f7495e943ff05d4e0525ce435c098f209866cf97a31f138c51074a535",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 0.8990381646147042,
+        "rounds": 200,
+        "prediction_sha256": "5da5a7a279f3a83add9aaa8e69dc44df29ca07aa8fab562b703edf7eae6a1d6c",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "airfoil_self_noise",
+      "problem": "regression",
+      "baseline": {
+        "error": 3.9063161164281115,
+        "rounds": 184,
+        "prediction_sha256": "f173d1e822e982ec57abd90742d6fb351389e2beae652221e9f38346a9d489e3",
+        "four_model_rank": 4.0
+      },
+      "shallow": {
+        "error": 4.50928699558934,
+        "rounds": 184,
+        "prediction_sha256": "7c79437d616eb54c3cd77234a73d60b2573c1bc41ebb05fc94085c10962ebed2",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 4.132544520487563,
+        "rounds": 162,
+        "prediction_sha256": "3f442444b5697db95b3885f2f80cca05235100f05a7704219aebf9fbdad2495b",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "bank-marketing",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.23041365231496047,
+        "rounds": 121,
+        "prediction_sha256": "b3a5abdd8f48ada7fd73af0cc48455e3e5e915386ca0b7ff2c9c96f0fde63b41",
+        "four_model_rank": 2.0
+      },
+      "shallow": {
+        "error": 0.2239940853948107,
+        "rounds": 180,
+        "prediction_sha256": "9249f9eda33ba1ced56211c86a18f1437c8a56337d03bc2300bc59ef89b7db98",
+        "four_model_rank": 1.0
+      },
+      "all_rows": {
+        "error": 0.22975296192819816,
+        "rounds": 76,
+        "prediction_sha256": "38565caea4d2463773c93b49aa5868db262c5877960873e5172a0bd0125484c7",
+        "four_model_rank": 2.0
+      }
+    },
+    {
+      "dataset": "churn",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.11876275934102476,
+        "rounds": 200,
+        "prediction_sha256": "c50093b17555bb2cccf2c74386617ff4505b2c043d2bd5e45ae5a589d748d492",
+        "four_model_rank": 3.0
+      },
+      "shallow": {
+        "error": 0.12836490528414746,
+        "rounds": 200,
+        "prediction_sha256": "69c8f30f0b676f0ba968f154459222c90030fc8906b5562eab3921d688e407e3",
+        "four_model_rank": 3.0
+      },
+      "all_rows": {
+        "error": 0.12490504676446856,
+        "rounds": 60,
+        "prediction_sha256": "f51adf96578b7d64d4ba7bb1075c38374987ed6d55a31c7964def9964122b33d",
+        "four_model_rank": 3.0
+      }
+    },
+    {
+      "dataset": "concrete_compressive_strength",
+      "problem": "regression",
+      "baseline": {
+        "error": 5.751027992444053,
+        "rounds": 198,
+        "prediction_sha256": "2351ed8e4094312db4981413ff37c398326181f851b2ebd07f8cfe60610318bd",
+        "four_model_rank": 4.0
+      },
+      "shallow": {
+        "error": 6.465231235405842,
+        "rounds": 198,
+        "prediction_sha256": "9d27d215c2187dfeab448eefd3862cca1970ce4f94fede06079589f660c2d760",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 5.8441347314003504,
+        "rounds": 139,
+        "prediction_sha256": "37066e241158977de99e8160bb1c6fc5f1113f7e2369967dc255594defb832b9",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "credit-g",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.19879310344827583,
+        "rounds": 31,
+        "prediction_sha256": "a7cde22c25ed361811cedf4f061e09caa837fa92933448afb2f2e01de58ce645",
+        "four_model_rank": 2.0
+      },
+      "shallow": {
+        "error": 0.23793103448275865,
+        "rounds": 43,
+        "prediction_sha256": "08af88882d6586e5844bbca2b965abf76c6b65d798142987c07929c81ab5c8bc",
+        "four_model_rank": 3.0
+      },
+      "all_rows": {
+        "error": 0.22293103448275864,
+        "rounds": 28,
+        "prediction_sha256": "41c78aaca6efaca0a8a304d4c263138c1fc4398aafced52181288d08b04ec6c2",
+        "four_model_rank": 3.0
+      }
+    },
+    {
+      "dataset": "credit_card_clients_default",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.24949632867197735,
+        "rounds": 89,
+        "prediction_sha256": "4b4efcdff7ac45d662a1112b2560f02981ce2911eccbb17618c1ab256cc79d73",
+        "four_model_rank": 4.0
+      },
+      "shallow": {
+        "error": 0.2546299731746321,
+        "rounds": 130,
+        "prediction_sha256": "b76a5c68a3a86631308258b1b327a3438a7857feab6055b61775c1fbd7180514",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 0.2501437735835056,
+        "rounds": 72,
+        "prediction_sha256": "3a4ebe5007e415ed0ae15e23734b0ebd04f3b152e4ffdc5b1dede07eff76cfd3",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "customer_satisfaction_in_airline",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.016756020483886247,
+        "rounds": 188,
+        "prediction_sha256": "9c08a277e57bc5a668951169988ef1f3d575845ba4a363808693ca692776123f",
+        "four_model_rank": 4.0
+      },
+      "shallow": {
+        "error": 0.02958525232523379,
+        "rounds": 200,
+        "prediction_sha256": "0cbf01f46dc3ae778b597d8034ea231b409dcd04d1483c3f2048a1c6c98272a0",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 0.018731686019663685,
+        "rounds": 109,
+        "prediction_sha256": "c54d0a10c66fcd56e736a4c6693a54ee0fa64424be0cc75746686da5b50792e1",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "diabetes",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.16734307359307365,
+        "rounds": 130,
+        "prediction_sha256": "e18692e6a2b4bd7b8f1fefde242600b76f8f75f4aa7360a83333409fd97bff53",
+        "four_model_rank": 1.0
+      },
+      "shallow": {
+        "error": 0.1746482683982684,
+        "rounds": 130,
+        "prediction_sha256": "6d03dc1e92c3371793424d34a9c6b841f72a78ae1e3334a084c59f60e9f0fe54",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 0.21631493506493504,
+        "rounds": 31,
+        "prediction_sha256": "65bc5efc37cb39a3e37cf8917e01e47e06707070bfb45a212f37067f9eb6dfe8",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "hazelnut-spread-contaminant-detection",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.07467500000000005,
+        "rounds": 199,
+        "prediction_sha256": "543e1687ec16d57253419ee9ba4dffb535897cfd22b6e5d3deadde9cdd347a20",
+        "four_model_rank": 4.0
+      },
+      "shallow": {
+        "error": 0.07950000000000002,
+        "rounds": 200,
+        "prediction_sha256": "1515c167cbdf9ecec7e063f027b0b57e6ab1631b0332c27540cbd84546f2365c",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 0.08377499999999993,
+        "rounds": 200,
+        "prediction_sha256": "395df11243ae788385b586bd15b7184b390df4b7d48f5b296de2b75d5f6487f6",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "healthcare_insurance_expenses",
+      "problem": "regression",
+      "baseline": {
+        "error": 5501.698443918508,
+        "rounds": 116,
+        "prediction_sha256": "2ce798308095f87610a4c96d89450692122760963c6a2c45ea4a477e84195ffb",
+        "four_model_rank": 4.0
+      },
+      "shallow": {
+        "error": 5585.000277393166,
+        "rounds": 116,
+        "prediction_sha256": "ba0a413d7c64b66c922dec1a0dd19430f74b0ccef088cd17bf8ff3c915f791f0",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 5809.227554830785,
+        "rounds": 154,
+        "prediction_sha256": "ba0d07fc29b7a86b40824a20b805b32b319c90f1f395ec40bc19e8c088fa24a8",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "heloc",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.19000488693998308,
+        "rounds": 146,
+        "prediction_sha256": "c488194afccf5b97d9f9e62130da058b5b4934d16361e37f168b14c17478a5d7",
+        "four_model_rank": 1.0
+      },
+      "shallow": {
+        "error": 0.19259826711749795,
+        "rounds": 199,
+        "prediction_sha256": "ef1159728a3c4e3a2276d99b6ba5440314a90611f392c7e56b2847768bd8a9d0",
+        "four_model_rank": 2.0
+      },
+      "all_rows": {
+        "error": 0.19499683009298396,
+        "rounds": 55,
+        "prediction_sha256": "0ed4c50d1becb473c019ba8e0a4578c4f3ffc5d6518e6c90240339a156d2434f",
+        "four_model_rank": 2.0
+      }
+    },
+    {
+      "dataset": "houses",
+      "problem": "regression",
+      "baseline": {
+        "error": 0.23562568338247838,
+        "rounds": 196,
+        "prediction_sha256": "020a292cdef7af745601c64a19e2ac50fced58b0e2b129e094784a8c94ee824d",
+        "four_model_rank": 4.0
+      },
+      "shallow": {
+        "error": 0.2855076112051772,
+        "rounds": 200,
+        "prediction_sha256": "108c5bdaf21d020ed11b42e36eca754ff796dec874b4604dc530b8bf9827f753",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 0.23679625116629618,
+        "rounds": 153,
+        "prediction_sha256": "abae508bfcb50cdf2d1fa1ebbfb6f43cf323141f945c9bbf8ab7bef71b693c17",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "in_vehicle_coupon_recommendation",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.21758707148067113,
+        "rounds": 139,
+        "prediction_sha256": "5af1575f967e7d5309c30668f30f6530550bfd74e7f15c671a6c496e894617fa",
+        "four_model_rank": 4.0
+      },
+      "shallow": {
+        "error": 0.25646927425237065,
+        "rounds": 190,
+        "prediction_sha256": "509c6b2e545543b483fc99bfdbbbbbb9cd637c9ad704905f1122c6dd43582f49",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 0.22125547045951865,
+        "rounds": 56,
+        "prediction_sha256": "09dbbb772e3545c32ddf7beb66a5b059ce319060513e823b593847b851db0eeb",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "jm1",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.27894443321726137,
+        "rounds": 153,
+        "prediction_sha256": "7c49fa4ce39697ff8ec4bb8f63cb4f8ff6d940fe392a7fa5033e967f9d935db8",
+        "four_model_rank": 3.0
+      },
+      "shallow": {
+        "error": 0.2890634715831366,
+        "rounds": 191,
+        "prediction_sha256": "2193da1d82e2c1f0deebece9e0fa1bdaa2bda39a1fe29b1cbf9f4e259c7d7376",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 0.28339914189777393,
+        "rounds": 200,
+        "prediction_sha256": "b8be8dacd8d2a275a030b8219debeb9b78fe955804beb63e98b30ac14056f0ee",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "kddcup09_appetency",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.19486375394209998,
+        "rounds": 105,
+        "prediction_sha256": "e7252459a4c3000509e63e38e2096a165959b5f9cfc3f36cd247e9db9f04b787",
+        "four_model_rank": 1.0
+      },
+      "shallow": {
+        "error": 0.22877910066971396,
+        "rounds": 190,
+        "prediction_sha256": "6e716374834fac63bd38373ca05051ee613ed55a81871563bfd4f552f1fba01c",
+        "four_model_rank": 2.0
+      },
+      "all_rows": {
+        "error": 0.2068140746252789,
+        "rounds": 108,
+        "prediction_sha256": "d305e9d33caaabdb7edf7cab7b7adf7499db27e703513cfdaea19d25041704ca",
+        "four_model_rank": 1.0
+      }
+    },
+    {
+      "dataset": "miami_housing",
+      "problem": "regression",
+      "baseline": {
+        "error": 106612.69831728756,
+        "rounds": 197,
+        "prediction_sha256": "6d4ea4852076690471d67cf870fff871ec4746a11bcdebf4c30b091295964b05",
+        "four_model_rank": 4.0
+      },
+      "shallow": {
+        "error": 120915.91580868776,
+        "rounds": 200,
+        "prediction_sha256": "f041c899780dfbf4a6cea0644c073fb4ce71e7034b736f0a8b1604a3da8a5cea",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 112938.52040917936,
+        "rounds": 200,
+        "prediction_sha256": "0995481825b4185876bd1947777422bb336c8f014b7aa217e45e41ac7fbcf4ab",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "online_shoppers_intention",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.06627865692838308,
+        "rounds": 128,
+        "prediction_sha256": "fc6aee1110f2e778c7bf619bc4f555152848c4dacf638d20ad873ad20b779743",
+        "four_model_rank": 4.0
+      },
+      "shallow": {
+        "error": 0.06848589253108428,
+        "rounds": 180,
+        "prediction_sha256": "022b094f28cf7fa2283a2ba72688356ae3206002524655fa244c6407397a85bd",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 0.06718256383502885,
+        "rounds": 86,
+        "prediction_sha256": "ac9ea2b751531202949d03b0d3bbaaa8313a93d7a321e36ee68fd3d924af30fd",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "physiochemical_protein",
+      "problem": "regression",
+      "baseline": {
+        "error": 4.716043926851571,
+        "rounds": 200,
+        "prediction_sha256": "c729f2cc7528a112b2df6b7505ffe39022dfe25fb7c045833e4e7077104c3766",
+        "four_model_rank": 4.0
+      },
+      "shallow": {
+        "error": 5.082519116273559,
+        "rounds": 200,
+        "prediction_sha256": "efc7b727473543eb4bbb5121f78311c8b0d639337720f9473661ff4edd60dd7b",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 4.75505172617903,
+        "rounds": 97,
+        "prediction_sha256": "0e8e36b523de8d634c68d444b1d43f47a88f9deb805eb23bf0eb8b2329d8e717",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "polish_companies_bankruptcy",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.07527934754687904,
+        "rounds": 184,
+        "prediction_sha256": "96bd66353a4eba07c28c3dc9ae6fe4e95e42df986fff21b72148ce57cc61e4ba",
+        "four_model_rank": 4.0
+      },
+      "shallow": {
+        "error": 0.08073786283072182,
+        "rounds": 197,
+        "prediction_sha256": "e3224a6dd08407471849782c3ab8c838f4887ab9074849ceb8377e86ff6f8254",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 0.07380233752889798,
+        "rounds": 108,
+        "prediction_sha256": "9245c7ab648e06579efb4364116a04c11adcd6ee92507fff93f9f321aa505425",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "qsar-biodeg",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.09096313912009513,
+        "rounds": 190,
+        "prediction_sha256": "e46eee01ffd817981eda27002ebf85ea50a7a2e466b73f0e9d00c7046c3b0770",
+        "four_model_rank": 3.0
+      },
+      "shallow": {
+        "error": 0.11340665873959566,
+        "rounds": 168,
+        "prediction_sha256": "3e990648b3cd95f4b8a6f126436c57eedbd7dd74d6373d71f46ba5ef2869f722",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 0.09467895362663492,
+        "rounds": 62,
+        "prediction_sha256": "cfae2c48887965362aab472b4381e2d69250564af6990e082eaf2132630d9a21",
+        "four_model_rank": 3.0
+      }
+    },
+    {
+      "dataset": "seismic-bumps",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.1988717128642501,
+        "rounds": 35,
+        "prediction_sha256": "598f7841d3c3a39b44c0f5450aa450da0034d68ef64c20df41d22df3998bc6f8",
+        "four_model_rank": 3.0
+      },
+      "shallow": {
+        "error": 0.19953802416488986,
+        "rounds": 26,
+        "prediction_sha256": "d135e1057d68fdb9896c69e04a3a9526049039f210d3a5c3c4054723ad1a6489",
+        "four_model_rank": 3.0
+      },
+      "all_rows": {
+        "error": 0.20282515991471217,
+        "rounds": 20,
+        "prediction_sha256": "ab2f83cf5325ebc495f02747d97d99c3f9f537eb37ac0a81720e45e0f25e2c2f",
+        "four_model_rank": 3.0
+      }
+    },
+    {
+      "dataset": "superconductivity",
+      "problem": "regression",
+      "baseline": {
+        "error": 12.017362489424313,
+        "rounds": 200,
+        "prediction_sha256": "b5cd8022f14ed6867652eaed9a082f112dcb8d1faee5805687d72cf2819ee479",
+        "four_model_rank": 4.0
+      },
+      "shallow": {
+        "error": 16.79775646651362,
+        "rounds": 200,
+        "prediction_sha256": "ec37651f43a1dd233fdab5bec2fcc13120a88f7aa9003a18afaeb98084505db5",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 12.17801703755833,
+        "rounds": 200,
+        "prediction_sha256": "56a21fd019963c8ee503d5546d7e6440ac476aa33a2c30bd8b26043f4e1b0997",
+        "four_model_rank": 4.0
+      }
+    },
+    {
+      "dataset": "taiwanese_bankruptcy_prediction",
+      "problem": "binary",
+      "baseline": {
+        "error": 0.07026043331775822,
+        "rounds": 81,
+        "prediction_sha256": "276f63a02529e3bf54b8c66a194558470ea7d220cb03e6a8a8a61d4a2226a8ed",
+        "four_model_rank": 2.0
+      },
+      "shallow": {
+        "error": 0.0754002410053366,
+        "rounds": 193,
+        "prediction_sha256": "84faf66c0cd82c63974d383e21adb6f8416299f25078c3f3eb1645cac0beae62",
+        "four_model_rank": 4.0
+      },
+      "all_rows": {
+        "error": 0.08135159727516406,
+        "rounds": 94,
+        "prediction_sha256": "4d7aedc3d33fabafe777e86f8fcf624da4abd76c54a1990db9756f7334e1d4cb",
+        "four_model_rank": 4.0
+      }
+    }
+  ]
+}

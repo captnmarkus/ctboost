@@ -170,7 +170,7 @@ def _stack_histories(histories: List[np.ndarray]) -> np.ndarray:
     if not histories:
         return np.empty((0, 0), dtype=np.float32)
     max_length = max(history.shape[0] for history in histories)
-    stacked = np.full((max_length, len(histories)), np.nan, dtype=np.float32)
+    stacked = np.full((max_length, len(histories)), np.nan, dtype=histories[0].dtype)
     for column_index, history in enumerate(histories):
         stacked[: history.shape[0], column_index] = history
     return stacked

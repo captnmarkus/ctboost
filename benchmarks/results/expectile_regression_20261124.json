@@ -1,0 +1,738 @@
+{
+  "ctboost": "0.1.63",
+  "python": "3.12.11",
+  "native_sha256": "21b735aa0437881e9b315edfcb29203539f64ff8fcfdca134a4ec389f62b14a4",
+  "source_plan_sha256": {
+    "accuracy-grouped-scout-v1": "d53e13021fb0d5d7f29353876c9f971ca3d56cb7857937c1b3c3afe436904a7b",
+    "accuracy-remaining-scout-v1": "07cd7841988b2f32cc034470ef295fb54ad68d90c6dcf39a2b81105db1ac2e94"
+  },
+  "protocol": {
+    "tau": 0.8,
+    "seeds": [
+      0,
+      1
+    ],
+    "max_rounds": 200,
+    "patience": 25,
+    "threads_per_fit": 1,
+    "base_score": "arithmetic mean of training labels",
+    "selection_metric": "mean asymmetric squared error"
+  },
+  "summary_by_seed": {
+    "0": {
+      "asymmetric_mse": {
+        "mean_relative_reduction": 0.1494122906122568,
+        "median_relative_reduction": 0.18679675746584834,
+        "wins": 12,
+        "ties": 0,
+        "losses": 1
+      },
+      "rmse": {
+        "mean_relative_reduction": -0.14392851175471763,
+        "median_relative_reduction": -0.12260434577038026,
+        "wins": 0,
+        "ties": 0,
+        "losses": 13
+      }
+    },
+    "1": {
+      "asymmetric_mse": {
+        "mean_relative_reduction": 0.15793850262484949,
+        "median_relative_reduction": 0.18333775681561704,
+        "wins": 12,
+        "ties": 0,
+        "losses": 1
+      },
+      "rmse": {
+        "mean_relative_reduction": -0.1443569478368252,
+        "median_relative_reduction": -0.12276856665466873,
+        "wins": 0,
+        "ties": 0,
+        "losses": 13
+      }
+    }
+  },
+  "summary": {
+    "asymmetric_mse": {
+      "mean_relative_reduction": 0.1537348376015784,
+      "median_relative_reduction": 0.18753145810157268,
+      "wins": 12,
+      "ties": 0,
+      "losses": 1
+    },
+    "rmse": {
+      "mean_relative_reduction": -0.14410367681101263,
+      "median_relative_reduction": -0.12175946870336007,
+      "wins": 0,
+      "ties": 0,
+      "losses": 13
+    }
+  },
+  "mean_errors_by_dataset": [
+    {
+      "dataset": "QSAR_fish_toxicity",
+      "squared_error": {
+        "asymmetric_mse": 0.19223453798118362,
+        "rmse": 0.7724301191367364
+      },
+      "expectile": {
+        "asymmetric_mse": 0.2253764871556489,
+        "rmse": 0.9960972561385096
+      }
+    },
+    {
+      "dataset": "wine_quality",
+      "squared_error": {
+        "asymmetric_mse": 0.21389141805976497,
+        "rmse": 0.6750287301220452
+      },
+      "expectile": {
+        "asymmetric_mse": 0.1737800485556042,
+        "rmse": 0.7901180752813026
+      }
+    },
+    {
+      "dataset": "diamonds",
+      "squared_error": {
+        "asymmetric_mse": 200264.28713759748,
+        "rmse": 639.3411240689912
+      },
+      "expectile": {
+        "asymmetric_mse": 160904.59846447513,
+        "rmse": 689.9738397436652
+      }
+    },
+    {
+      "dataset": "Another-Dataset-on-used-Fiat-500",
+      "squared_error": {
+        "asymmetric_mse": 278525.3672929026,
+        "rmse": 754.3254692378862
+      },
+      "expectile": {
+        "asymmetric_mse": 201336.46719179058,
+        "rmse": 831.6778299968701
+      }
+    },
+    {
+      "dataset": "Food_Delivery_Time",
+      "squared_error": {
+        "asymmetric_mse": 33.6465873831942,
+        "rmse": 7.675530577566571
+      },
+      "expectile": {
+        "asymmetric_mse": 24.660394451922734,
+        "rmse": 8.610099102707471
+      }
+    },
+    {
+      "dataset": "QSAR-TID-11",
+      "squared_error": {
+        "asymmetric_mse": 0.3854358643051584,
+        "rmse": 0.8729358505066471
+      },
+      "expectile": {
+        "asymmetric_mse": 0.324889489576897,
+        "rmse": 0.9612529046322027
+      }
+    },
+    {
+      "dataset": "airfoil_self_noise",
+      "squared_error": {
+        "asymmetric_mse": 7.1625069897149665,
+        "rmse": 3.932176071801551
+      },
+      "expectile": {
+        "asymmetric_mse": 6.8200509978570585,
+        "rmse": 4.778300960661895
+      }
+    },
+    {
+      "dataset": "concrete_compressive_strength",
+      "squared_error": {
+        "asymmetric_mse": 20.41327841448289,
+        "rmse": 5.7443815864212056
+      },
+      "expectile": {
+        "asymmetric_mse": 16.399838638474744,
+        "rmse": 5.995690960490185
+      }
+    },
+    {
+      "dataset": "healthcare_insurance_expenses",
+      "squared_error": {
+        "asymmetric_mse": 18854079.906282865,
+        "rmse": 5373.017251647605
+      },
+      "expectile": {
+        "asymmetric_mse": 17737489.516196974,
+        "rmse": 6795.442144181767
+      }
+    },
+    {
+      "dataset": "houses",
+      "squared_error": {
+        "asymmetric_mse": 0.029176695133876267,
+        "rmse": 0.2354014003483259
+      },
+      "expectile": {
+        "asymmetric_mse": 0.022779221110089537,
+        "rmse": 0.2648781190036881
+      }
+    },
+    {
+      "dataset": "miami_housing",
+      "squared_error": {
+        "asymmetric_mse": 6515074702.373781,
+        "rmse": 107024.34214186858
+      },
+      "expectile": {
+        "asymmetric_mse": 5731713269.707855,
+        "rmse": 117438.79610948873
+      }
+    },
+    {
+      "dataset": "physiochemical_protein",
+      "squared_error": {
+        "asymmetric_mse": 12.29721772366807,
+        "rmse": 4.715355308342278
+      },
+      "expectile": {
+        "asymmetric_mse": 9.054845418842945,
+        "rmse": 5.4065749564306556
+      }
+    },
+    {
+      "dataset": "superconductivity",
+      "squared_error": {
+        "asymmetric_mse": 66.24635300306859,
+        "rmse": 11.95334395150757
+      },
+      "expectile": {
+        "asymmetric_mse": 54.40319310087997,
+        "rmse": 13.33797875422771
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "dataset": "QSAR_fish_toxicity",
+      "seed": 0,
+      "train_rows": 379,
+      "stopping_rows": 75,
+      "development_rows": 75,
+      "base_score": 4.099108179419525,
+      "squared_error": {
+        "asymmetric_mse": 0.1912232483740033,
+        "rmse": 0.7707831135971901,
+        "selected_rounds": 198,
+        "predictions_sha256": "f1585691aeadb3f259ae9d00996bb3809a0c9fa953290a129a4939b4c5050b7a"
+      },
+      "expectile": {
+        "asymmetric_mse": 0.2290284807048083,
+        "rmse": 1.004132838403012,
+        "selected_rounds": 200,
+        "predictions_sha256": "ff5cef11b1b469652ec45bb89b7c5309c1b004a99e995071dcf1403a3fafa4d2"
+      }
+    },
+    {
+      "dataset": "wine_quality",
+      "seed": 0,
+      "train_rows": 2708,
+      "stopping_rows": 541,
+      "development_rows": 541,
+      "base_score": 5.835302806499262,
+      "squared_error": {
+        "asymmetric_mse": 0.21213781637993517,
+        "rmse": 0.674124634028355,
+        "selected_rounds": 198,
+        "predictions_sha256": "6446ba577c18f9261cd3ef2978f0e29980278eb3e4b59ac129fa976cca4586a2"
+      },
+      "expectile": {
+        "asymmetric_mse": 0.17302321976116242,
+        "rmse": 0.7867523719895873,
+        "selected_rounds": 164,
+        "predictions_sha256": "f06bf44cff003e80163ac0f3945c40128237ad2d96bb6e604f0732ebb540b43e"
+      }
+    },
+    {
+      "dataset": "diamonds",
+      "seed": 0,
+      "train_rows": 6250,
+      "stopping_rows": 1250,
+      "development_rows": 1250,
+      "base_score": 3912.33648,
+      "squared_error": {
+        "asymmetric_mse": 224409.44323986134,
+        "rmse": 663.875105298731,
+        "selected_rounds": 189,
+        "predictions_sha256": "2c1735480970a7f40dc38145a7f9bee76d1445786dc5eca01185137025c44d9b"
+      },
+      "expectile": {
+        "asymmetric_mse": 180526.19461400417,
+        "rmse": 711.7045019011354,
+        "selected_rounds": 189,
+        "predictions_sha256": "442ec4a4502fee7227b0390b93e20e6b39378e3e4a74ec91c0a291bbd4a44844"
+      }
+    },
+    {
+      "dataset": "Another-Dataset-on-used-Fiat-500",
+      "seed": 0,
+      "train_rows": 641,
+      "stopping_rows": 128,
+      "development_rows": 256,
+      "base_score": 8569.01872074883,
+      "squared_error": {
+        "asymmetric_mse": 276064.40740425064,
+        "rmse": 752.4202298148944,
+        "selected_rounds": 63,
+        "predictions_sha256": "04e04f79effa193c8aa671dd6afb96d12bf4bb4234c0eaa9286ada8176c8b633"
+      },
+      "expectile": {
+        "asymmetric_mse": 205495.861306227,
+        "rmse": 832.6407459894668,
+        "selected_rounds": 84,
+        "predictions_sha256": "7ba21b1dbcd8e99e91dee85b21570d5f03d74d2993aad15060efe93998180fe2"
+      }
+    },
+    {
+      "dataset": "Food_Delivery_Time",
+      "seed": 0,
+      "train_rows": 6250,
+      "stopping_rows": 1250,
+      "development_rows": 2500,
+      "base_score": 26.104,
+      "squared_error": {
+        "asymmetric_mse": 33.44301410416211,
+        "rmse": 7.668458401827474,
+        "selected_rounds": 185,
+        "predictions_sha256": "136598dacf41dabf3ebd2b0abfec138eaa7b800361f588e8967d110e09e2fef4"
+      },
+      "expectile": {
+        "asymmetric_mse": 24.587750745395518,
+        "rmse": 8.623469040932578,
+        "selected_rounds": 200,
+        "predictions_sha256": "b43772870b7bb1b37de9eb6ef0263cfdf96f88acdd9aacb1478dd170c95cd67b"
+      }
+    },
+    {
+      "dataset": "QSAR-TID-11",
+      "seed": 0,
+      "train_rows": 2394,
+      "stopping_rows": 478,
+      "development_rows": 956,
+      "base_score": 6.189476608187134,
+      "squared_error": {
+        "asymmetric_mse": 0.382807516768061,
+        "rmse": 0.8680209706088279,
+        "selected_rounds": 200,
+        "predictions_sha256": "1ce6ca6d20487e29f239250b9a64aa851c565eca533a02a7b1c6668689aeb657"
+      },
+      "expectile": {
+        "asymmetric_mse": 0.3236144821448645,
+        "rmse": 0.9590235216449647,
+        "selected_rounds": 200,
+        "predictions_sha256": "674891d7f07acd314943d2c088bcb12ee4ea403e15ca80ad4d1aa48a5779c8d8"
+      }
+    },
+    {
+      "dataset": "airfoil_self_noise",
+      "seed": 0,
+      "train_rows": 627,
+      "stopping_rows": 125,
+      "development_rows": 250,
+      "base_score": 124.93544657097287,
+      "squared_error": {
+        "asymmetric_mse": 7.049615447248599,
+        "rmse": 3.906787458884343,
+        "selected_rounds": 187,
+        "predictions_sha256": "0dff0901288c12518c818cb464d2c9a0b06bba0ef804250c449a8bdeda3e43d6"
+      },
+      "expectile": {
+        "asymmetric_mse": 6.916828484196017,
+        "rmse": 4.827006852296256,
+        "selected_rounds": 87,
+        "predictions_sha256": "9449e7d53fa71a25afd359f06934def9065042585cd8420bdf937a00f9f3bb12"
+      }
+    },
+    {
+      "dataset": "concrete_compressive_strength",
+      "seed": 0,
+      "train_rows": 430,
+      "stopping_rows": 86,
+      "development_rows": 170,
+      "base_score": 34.95553711026638,
+      "squared_error": {
+        "asymmetric_mse": 20.330723039945102,
+        "rmse": 5.751027992444053,
+        "selected_rounds": 198,
+        "predictions_sha256": "2351ed8e4094312db4981413ff37c398326181f851b2ebd07f8cfe60610318bd"
+      },
+      "expectile": {
+        "asymmetric_mse": 16.06150367887359,
+        "rmse": 5.873795590493233,
+        "selected_rounds": 197,
+        "predictions_sha256": "92e60502ae31855b40f6992bbe6df44464b5bb894f65c88a1538473f4356a35d"
+      }
+    },
+    {
+      "dataset": "healthcare_insurance_expenses",
+      "seed": 0,
+      "train_rows": 559,
+      "stopping_rows": 111,
+      "development_rows": 222,
+      "base_score": 13593.090002307694,
+      "squared_error": {
+        "asymmetric_mse": 18610813.45004649,
+        "rmse": 5310.067831769734,
+        "selected_rounds": 190,
+        "predictions_sha256": "6326fa7f52d7b55224d3a51fe26db3b96f0d91d99d07919e2cd91cb9e2156d97"
+      },
+      "expectile": {
+        "asymmetric_mse": 17495336.298378285,
+        "rmse": 6705.610867996459,
+        "selected_rounds": 190,
+        "predictions_sha256": "7823b1910f5de8cddf6c155db6477aa294c563a4d455d6d64370d52b72f305f7"
+      }
+    },
+    {
+      "dataset": "houses",
+      "seed": 0,
+      "train_rows": 6250,
+      "stopping_rows": 1250,
+      "development_rows": 2500,
+      "base_score": 12.079514140426992,
+      "squared_error": {
+        "asymmetric_mse": 0.029258395648383492,
+        "rmse": 0.23562568338247838,
+        "selected_rounds": 196,
+        "predictions_sha256": "020a292cdef7af745601c64a19e2ac50fced58b0e2b129e094784a8c94ee824d"
+      },
+      "expectile": {
+        "asymmetric_mse": 0.02269576555958112,
+        "rmse": 0.2645144161402859,
+        "selected_rounds": 199,
+        "predictions_sha256": "1020dc088a3bcb84b3e2001d06ab48074c35d72a9ff73215e95761907b6720d2"
+      }
+    },
+    {
+      "dataset": "miami_housing",
+      "seed": 0,
+      "train_rows": 5740,
+      "stopping_rows": 1148,
+      "development_rows": 2296,
+      "base_score": 401532.0383275261,
+      "squared_error": {
+        "asymmetric_mse": 6520062058.297991,
+        "rmse": 106612.69831728756,
+        "selected_rounds": 197,
+        "predictions_sha256": "6d4ea4852076690471d67cf870fff871ec4746a11bcdebf4c30b091295964b05"
+      },
+      "expectile": {
+        "asymmetric_mse": 5716123642.740884,
+        "rmse": 116698.9233418784,
+        "selected_rounds": 198,
+        "predictions_sha256": "38680f06ac1a4e07281959d7d1e8337e6f81be23d4331506cd1a56d94e90cc55"
+      }
+    },
+    {
+      "dataset": "physiochemical_protein",
+      "seed": 0,
+      "train_rows": 6250,
+      "stopping_rows": 1250,
+      "development_rows": 2500,
+      "base_score": 7.8840012800000006,
+      "squared_error": {
+        "asymmetric_mse": 12.275434750607168,
+        "rmse": 4.7161060916016,
+        "selected_rounds": 194,
+        "predictions_sha256": "3ebefcda3832d5a76b90848ce1a91aad03ddf297d07b0e21cdeec7d6f608f5b3"
+      },
+      "expectile": {
+        "asymmetric_mse": 9.060125136511987,
+        "rmse": 5.4108829873829425,
+        "selected_rounds": 194,
+        "predictions_sha256": "f99eda26a5518d9cf43e953e3effbf47c2128ae22ce71c97b373a43d8fc4bfb9"
+      }
+    },
+    {
+      "dataset": "superconductivity",
+      "seed": 0,
+      "train_rows": 6250,
+      "stopping_rows": 1250,
+      "development_rows": 2500,
+      "base_score": 34.0803796768,
+      "squared_error": {
+        "asymmetric_mse": 67.26526544693795,
+        "rmse": 12.02141762808456,
+        "selected_rounds": 197,
+        "predictions_sha256": "353777163a9ecb67d2d4c053114ae391def1497b4ed7d25f33594919913c847c"
+      },
+      "expectile": {
+        "asymmetric_mse": 54.70033197137037,
+        "rmse": 13.331549637568271,
+        "selected_rounds": 200,
+        "predictions_sha256": "dbc73e25aadb096bcb59e67fa7f4e4892b083f1d9ca985d90e5f7f38363f14a0"
+      }
+    },
+    {
+      "dataset": "QSAR_fish_toxicity",
+      "seed": 1,
+      "train_rows": 379,
+      "stopping_rows": 75,
+      "development_rows": 75,
+      "base_score": 4.099108179419525,
+      "squared_error": {
+        "asymmetric_mse": 0.19324582758836392,
+        "rmse": 0.7740771246762828,
+        "selected_rounds": 150,
+        "predictions_sha256": "b1a19b95c039851513f369af783e01f7be2a722643c1201ad169ed3f408e0f16"
+      },
+      "expectile": {
+        "asymmetric_mse": 0.22172449360648946,
+        "rmse": 0.9880616738740073,
+        "selected_rounds": 193,
+        "predictions_sha256": "33533acf92ca5239a07299ec9838d8bfa76c91ceff705a8ec2a2d107b3f968ff"
+      }
+    },
+    {
+      "dataset": "wine_quality",
+      "seed": 1,
+      "train_rows": 2708,
+      "stopping_rows": 541,
+      "development_rows": 541,
+      "base_score": 5.835302806499262,
+      "squared_error": {
+        "asymmetric_mse": 0.21564501973959474,
+        "rmse": 0.6759328262157354,
+        "selected_rounds": 192,
+        "predictions_sha256": "bc89997a3093da93b73df834970a746b82a7e52094a05e2a4550bbe9fd50accd"
+      },
+      "expectile": {
+        "asymmetric_mse": 0.17453687735004594,
+        "rmse": 0.793483778573018,
+        "selected_rounds": 167,
+        "predictions_sha256": "ca4c2b3cb180b2845becd9bf5dcdfb18599dc6df9fa3bb251350e9a95011451e"
+      }
+    },
+    {
+      "dataset": "diamonds",
+      "seed": 1,
+      "train_rows": 6250,
+      "stopping_rows": 1250,
+      "development_rows": 1250,
+      "base_score": 3912.33648,
+      "squared_error": {
+        "asymmetric_mse": 176119.13103533362,
+        "rmse": 614.8071428392515,
+        "selected_rounds": 135,
+        "predictions_sha256": "b6496ef87aadf0da4f8a5bd3e716a4fa27d0abf2ccb3eea9cd9366519af7a72e"
+      },
+      "expectile": {
+        "asymmetric_mse": 141283.0023149461,
+        "rmse": 668.2431775861951,
+        "selected_rounds": 124,
+        "predictions_sha256": "2c4b98fe5c963ad0a01ff6a815779b4c4e0e6a6d3b249a8b44a343c7955d67ba"
+      }
+    },
+    {
+      "dataset": "Another-Dataset-on-used-Fiat-500",
+      "seed": 1,
+      "train_rows": 641,
+      "stopping_rows": 128,
+      "development_rows": 256,
+      "base_score": 8569.01872074883,
+      "squared_error": {
+        "asymmetric_mse": 280986.3271815546,
+        "rmse": 756.2307086608779,
+        "selected_rounds": 55,
+        "predictions_sha256": "3329d352ebf1cfae34a723bea10c6ebf5b0dd7e60009841b4a144351cc2267df"
+      },
+      "expectile": {
+        "asymmetric_mse": 197177.07307735417,
+        "rmse": 830.7149140042732,
+        "selected_rounds": 136,
+        "predictions_sha256": "be28f746307f9b7525ba834d313a88ce20b2e2516e195a0caa124ba3ac2012bc"
+      }
+    },
+    {
+      "dataset": "Food_Delivery_Time",
+      "seed": 1,
+      "train_rows": 6250,
+      "stopping_rows": 1250,
+      "development_rows": 2500,
+      "base_score": 26.104,
+      "squared_error": {
+        "asymmetric_mse": 33.85016066222629,
+        "rmse": 7.682602753305667,
+        "selected_rounds": 164,
+        "predictions_sha256": "cc028f69d617f8bb32c46f1b54fdd4d91a6e88919616fafc7b35b69ce88978d9"
+      },
+      "expectile": {
+        "asymmetric_mse": 24.733038158449954,
+        "rmse": 8.596729164482364,
+        "selected_rounds": 195,
+        "predictions_sha256": "984d9e32f8b2ebb55db1aae8b61d56a4de368667a4b7cf1b34fec5772adb5a64"
+      }
+    },
+    {
+      "dataset": "QSAR-TID-11",
+      "seed": 1,
+      "train_rows": 2394,
+      "stopping_rows": 478,
+      "development_rows": 956,
+      "base_score": 6.189476608187134,
+      "squared_error": {
+        "asymmetric_mse": 0.38806421184225576,
+        "rmse": 0.8778507304044665,
+        "selected_rounds": 200,
+        "predictions_sha256": "d0f65510528ee25e6dc56906dd95af3bdcfcf1b17786f3f20aedae803f8e9c2c"
+      },
+      "expectile": {
+        "asymmetric_mse": 0.3261644970089295,
+        "rmse": 0.9634822876194408,
+        "selected_rounds": 200,
+        "predictions_sha256": "f0b66fdc9925fe2dbf4ac7faefd7dfc9880e0c6f68b3a6e9c8efe3af9b037d33"
+      }
+    },
+    {
+      "dataset": "airfoil_self_noise",
+      "seed": 1,
+      "train_rows": 627,
+      "stopping_rows": 125,
+      "development_rows": 250,
+      "base_score": 124.93544657097287,
+      "squared_error": {
+        "asymmetric_mse": 7.275398532181333,
+        "rmse": 3.957564684718759,
+        "selected_rounds": 200,
+        "predictions_sha256": "be516816cd07f445d1120782c3ad9144ce760739cd41057b18169991e7c72a30"
+      },
+      "expectile": {
+        "asymmetric_mse": 6.7232735115181,
+        "rmse": 4.729595069027533,
+        "selected_rounds": 73,
+        "predictions_sha256": "fd6061f41728cf7fc3161368268e22f8d5672c946204a80bc61ab4909b3e64ec"
+      }
+    },
+    {
+      "dataset": "concrete_compressive_strength",
+      "seed": 1,
+      "train_rows": 430,
+      "stopping_rows": 86,
+      "development_rows": 170,
+      "base_score": 34.95553711026638,
+      "squared_error": {
+        "asymmetric_mse": 20.49583378902068,
+        "rmse": 5.737735180398358,
+        "selected_rounds": 188,
+        "predictions_sha256": "179e9e7f64373a80a2175bfdb5dc316fea0dff23073514bc9c940ff8ab2d50a1"
+      },
+      "expectile": {
+        "asymmetric_mse": 16.7381735980759,
+        "rmse": 6.117586330487137,
+        "selected_rounds": 200,
+        "predictions_sha256": "a6c72f7c0d23b522978a2e08132dedea8e5b17f9444f89608d89f027edba6a9e"
+      }
+    },
+    {
+      "dataset": "healthcare_insurance_expenses",
+      "seed": 1,
+      "train_rows": 559,
+      "stopping_rows": 111,
+      "development_rows": 222,
+      "base_score": 13593.090002307694,
+      "squared_error": {
+        "asymmetric_mse": 19097346.362519234,
+        "rmse": 5435.966671525476,
+        "selected_rounds": 168,
+        "predictions_sha256": "d4bb01c975a5822f9770ce22ac4c94dba08fcf4dbd48ad3d61754468c304dc0c"
+      },
+      "expectile": {
+        "asymmetric_mse": 17979642.734015662,
+        "rmse": 6885.273420367073,
+        "selected_rounds": 145,
+        "predictions_sha256": "55f37fbd118165eed0f54d548f816c8940bfb9502d2ae90e83f4a659422cf463"
+      }
+    },
+    {
+      "dataset": "houses",
+      "seed": 1,
+      "train_rows": 6250,
+      "stopping_rows": 1250,
+      "development_rows": 2500,
+      "base_score": 12.079514140426992,
+      "squared_error": {
+        "asymmetric_mse": 0.029094994619369038,
+        "rmse": 0.2351771173141734,
+        "selected_rounds": 183,
+        "predictions_sha256": "006403cd0132b11063fa2dfd6cf3768f04ba136a96a8f9943da827cfc3060f83"
+      },
+      "expectile": {
+        "asymmetric_mse": 0.022862676660597953,
+        "rmse": 0.2652418218670902,
+        "selected_rounds": 198,
+        "predictions_sha256": "3e915d7af054b78d231de2d48d84b6def6721c05283009901290f342c52e15aa"
+      }
+    },
+    {
+      "dataset": "miami_housing",
+      "seed": 1,
+      "train_rows": 5740,
+      "stopping_rows": 1148,
+      "development_rows": 2296,
+      "base_score": 401532.0383275261,
+      "squared_error": {
+        "asymmetric_mse": 6510087346.449573,
+        "rmse": 107435.9859664496,
+        "selected_rounds": 199,
+        "predictions_sha256": "1c4a738b3d322ad50d32dec4ef5d744163ce1d08eeb3778969bcba59a614821b"
+      },
+      "expectile": {
+        "asymmetric_mse": 5747302896.674827,
+        "rmse": 118178.66887709906,
+        "selected_rounds": 199,
+        "predictions_sha256": "133173beff6178233ce40d3eafb1a63029432087a08fc4d6cd315907a33ed639"
+      }
+    },
+    {
+      "dataset": "physiochemical_protein",
+      "seed": 1,
+      "train_rows": 6250,
+      "stopping_rows": 1250,
+      "development_rows": 2500,
+      "base_score": 7.8840012800000006,
+      "squared_error": {
+        "asymmetric_mse": 12.319000696728972,
+        "rmse": 4.714604525082955,
+        "selected_rounds": 197,
+        "predictions_sha256": "96827306e1010f1a7289c47ad702f876246359e036d1f90ccf4b355f1c836888"
+      },
+      "expectile": {
+        "asymmetric_mse": 9.0495657011739,
+        "rmse": 5.402266925478369,
+        "selected_rounds": 199,
+        "predictions_sha256": "e3c3acff1fe07d8b088296d807770657583a1eaaa692f8c35e42f86a13e680a1"
+      }
+    },
+    {
+      "dataset": "superconductivity",
+      "seed": 1,
+      "train_rows": 6250,
+      "stopping_rows": 1250,
+      "development_rows": 2500,
+      "base_score": 34.0803796768,
+      "squared_error": {
+        "asymmetric_mse": 65.22744055919924,
+        "rmse": 11.88527027493058,
+        "selected_rounds": 200,
+        "predictions_sha256": "1e26c92d3246046a041479f9aa8b834e927e63ff18302b379ea7d2474ac943b5"
+      },
+      "expectile": {
+        "asymmetric_mse": 54.10605423038957,
+        "rmse": 13.344407870887148,
+        "selected_rounds": 200,
+        "predictions_sha256": "ee4d75dc1e3c8029b1eeb89f5777c574f3e4585a61124cced42ea57117cea781"
+      }
+    }
+  ]
+}

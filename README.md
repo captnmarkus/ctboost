@@ -15,6 +15,9 @@ Python/scikit-learn interfaces.
 automatic quantile borders for rare numeric values and categorical handling
 in pandas inputs. Both corrections affect ordinary tabular workflows.
 
+The development branch adds expectile regression for asymmetric prediction costs
+and a cross-validated boosting-round selector. [Training examples](docs/guides/training.md)
+
 ## Highlights
 
 - Regression, classification, query-group ranking, survival, multi-output,

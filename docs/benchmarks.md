@@ -20,6 +20,16 @@ The older author-run Lite study below used a different task and competitor
 roster. [Versioned leaderboard table](https://huggingface.co/spaces/TabArena/leaderboard/blob/8ce4c3037c2b8f9385f6b35375776f610af2e9dd/data/entrants_models/imputation_yes/splits_all/tasks_all/datasets_all/website_leaderboard.csv) and
 [upstream version pin](https://github.com/autogluon/tabarena/blob/cc507b84d1f32d2ca5b5704326bf4f086ee6519a/packages/tabarena/src/tabarena/models/ctboost/info.py)
 
+## BlackBoost-inspired options on TabArena development splits
+
+On the 13 regression tasks, CTBoost's expectile objective reduced asymmetric
+squared error on 12 tasks when underprediction cost four times as much as
+overprediction. Across two training seeds, the median reduction was **18.75%**.
+Ordinary RMSE rose on all 13 tasks, with a median increase of **12.18%**.
+On the broader 51-task comparison, shallower trees increased median task error
+by **5.14%**, and fitting each tree on all rows increased it by **2.08%**.
+CTBoost retains the existing TabArena settings. [Study and per-task results](https://github.com/captnmarkus/ctboost/blob/master/benchmarks/tabarena/BLACKBOOST_OPTIONS.md)
+
 ## CTBoost 0.1.63 development comparisons
 
 In a separate four-library comparison on the 51 cached development splits,
