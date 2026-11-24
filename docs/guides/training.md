@@ -92,6 +92,8 @@ initial score, and the metric reports half the mean squared error. The
 example initializes the callable objective at the training mean. Without
 an explicit `base_score`, callable objectives start at zero. For low-level
 training, pass the pair as `params["objective"]` and `params["eval_metric"]`.
+The native model records the level. For portable predictor exports, store
+`tau` alongside the artifact so downstream users can interpret its predictions.
 To continue a saved fit, recreate the pair at the same level.
 
 ## Callable objectives and metrics

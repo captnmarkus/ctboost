@@ -163,13 +163,13 @@ def fit_xgboost(case, train, stop, dev, seed):
     return model.predict(matrix(X_dev), iteration_range=(0, retained)), retained
 
 
-def run_task(library, directory, case):
+def run_task(library, directory, case, *, ctboost_fitter=fit_ctboost):
     import numpy as np
     from sklearn.metrics import log_loss, roc_auc_score
 
     dev = load_role(directory, case, "development")
     if library == "ctboost":
-        model = fit_ctboost(directory, case, seed=0)
+        model = ctboost_fitter(directory, case, seed=0)
         rounds = model.get_best_iteration() + 1
         if case["problem_type"] == "regression":
             prediction = model.predict(dev["X"])
